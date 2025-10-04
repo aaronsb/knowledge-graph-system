@@ -13,7 +13,7 @@ echo "📥 Knowledge Graph System - Restore"
 echo "==================================="
 
 # Check if Neo4j is running
-if ! docker ps --format '{{.Names}}' | grep -q neo4j-kg; then
+if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-neo4j; then
     echo -e "${RED}✗ Neo4j is not running${NC}"
     echo -e "${YELLOW}  Start it with: docker-compose up -d${NC}"
     exit 1
@@ -43,22 +43,22 @@ fi
 
 # Clear existing data
 echo -e "\n${YELLOW}Clearing existing data...${NC}"
-docker exec neo4j-kg cypher-shell -u neo4j -p password \
+docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
     "MATCH (n) DETACH DELETE n" 2>/dev/null
 echo -e "${GREEN}✓ Existing data cleared${NC}"
 
 # Restore from backup
 echo -e "\n${YELLOW}Restoring data...${NC}"
-docker exec -i neo4j-kg cypher-shell -u neo4j -p password < "$backup_file"
+docker exec -i knowledge-graph-neo4j cypher-shell -u neo4j -p password < "$backup_file"
 echo -e "${GREEN}✓ Data restored${NC}"
 
 # Verify restoration
 echo -e "\n${YELLOW}Verifying restoration...${NC}"
-node_count=$(docker exec neo4j-kg cypher-shell -u neo4j -p password \
+node_count=$(docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
     "MATCH (n) RETURN count(n)" --format plain 2>/dev/null | tail -1)
 echo -e "  Nodes restored: ${GREEN}${node_count}${NC}"
 
-rel_count=$(docker exec neo4j-kg cypher-shell -u neo4j -p password \
+rel_count=$(docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
     "MATCH ()-[r]->() RETURN count(r)" --format plain 2>/dev/null | tail -1)
 echo -e "  Relationships restored: ${GREEN}${rel_count}${NC}"
 

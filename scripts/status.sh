@@ -12,8 +12,8 @@ echo "=================================="
 
 # Check Docker containers
 echo -e "\n${BLUE}Docker Containers:${NC}"
-if docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -q neo4j-kg; then
-    docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep neo4j-kg
+if docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -q knowledge-graph-neo4j; then
+    docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep knowledge-graph-neo4j
     echo -e "${GREEN}✓ Neo4j is running${NC}"
 else
     echo -e "${RED}✗ Neo4j is not running${NC}"
@@ -22,25 +22,25 @@ fi
 
 # Check Neo4j connection
 echo -e "\n${BLUE}Database Connection:${NC}"
-if docker exec neo4j-kg cypher-shell -u neo4j -p password "RETURN 1" &> /dev/null; then
+if docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password "RETURN 1" &> /dev/null; then
     echo -e "${GREEN}✓ Can connect to Neo4j${NC}"
 
     # Get node counts
     echo -e "\n${BLUE}Database Statistics:${NC}"
 
-    concept_count=$(docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    concept_count=$(docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH (c:Concept) RETURN count(c)" --format plain 2>/dev/null | tail -1)
     echo -e "  Concepts: ${GREEN}${concept_count:-0}${NC}"
 
-    source_count=$(docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    source_count=$(docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH (s:Source) RETURN count(s)" --format plain 2>/dev/null | tail -1)
     echo -e "  Sources: ${GREEN}${source_count:-0}${NC}"
 
-    instance_count=$(docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    instance_count=$(docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH (i:Instance) RETURN count(i)" --format plain 2>/dev/null | tail -1)
     echo -e "  Instances: ${GREEN}${instance_count:-0}${NC}"
 
-    rel_count=$(docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    rel_count=$(docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH ()-[r]->() RETURN count(r)" --format plain 2>/dev/null | tail -1)
     echo -e "  Relationships: ${GREEN}${rel_count:-0}${NC}"
 else
@@ -104,7 +104,7 @@ fi
 
 # URLs and access
 echo -e "\n${BLUE}Access Points:${NC}"
-if docker ps | grep -q neo4j-kg; then
+if docker ps | grep -q knowledge-graph-neo4j; then
     echo -e "  Neo4j Browser: ${GREEN}http://localhost:7474${NC}"
     echo -e "  Bolt Protocol: ${GREEN}bolt://localhost:7687${NC}"
     echo -e "  Credentials: neo4j/password"

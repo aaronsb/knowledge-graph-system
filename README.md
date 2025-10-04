@@ -86,6 +86,50 @@ After configuration:
 
 ## Usage Examples
 
+### Via Command Line (CLI)
+
+The CLI provides direct access to the knowledge graph without needing Claude Desktop. It's useful for:
+- Testing and debugging
+- Understanding how the system works
+- Inspecting query results
+- Quick exploration
+
+```bash
+# Activate Python environment first
+source venv/bin/activate
+
+# Search for concepts
+python cli.py search "linear thinking" --limit 5
+
+# Get concept details with evidence
+python cli.py details linear-scanning-system
+
+# Find related concepts (graph traversal)
+python cli.py related intelligence-limitation --depth 3
+
+# Find connection between concepts
+python cli.py connect linear-scanning-system genetic-intervention
+
+# List all documents
+python cli.py list-documents
+
+# Show database statistics
+python cli.py stats
+```
+
+**CLI Commands:**
+- `search <query>` - Semantic search for concepts
+  - `--limit N` - Max results (default: 10)
+  - `--min-similarity X` - Min similarity score (default: 0.7)
+- `details <concept-id>` - Show concept with all evidence and relationships
+- `related <concept-id>` - Find related concepts via graph traversal
+  - `--depth N` - Max traversal depth (default: 2)
+  - `--types TYPE1 TYPE2` - Filter by relationship types
+- `connect <from-id> <to-id>` - Find shortest path between concepts
+  - `--max-hops N` - Max path length (default: 5)
+- `list-documents` - List all documents with concept counts
+- `stats` - Show database statistics
+
 ### Via Claude Desktop
 
 Once configured, you can ask Claude:

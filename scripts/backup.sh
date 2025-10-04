@@ -15,7 +15,7 @@ echo "💾 Knowledge Graph System - Backup"
 echo "==================================="
 
 # Check if Neo4j is running
-if ! docker ps --format '{{.Names}}' | grep -q neo4j-kg; then
+if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-neo4j; then
     echo -e "${RED}✗ Neo4j is not running${NC}"
     echo -e "${YELLOW}  Start it with: docker-compose up -d${NC}"
     exit 1
@@ -27,7 +27,7 @@ mkdir -p "$BACKUP_DIR"
 echo -e "\n${YELLOW}Creating backup...${NC}"
 
 # Export all data as Cypher statements
-docker exec neo4j-kg cypher-shell -u neo4j -p password \
+docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
     "CALL apoc.export.cypher.all('backup.cypher', {format: 'cypher-shell'})" 2>/dev/null || {
     # Fallback: Manual export of nodes and relationships
     echo -e "${YELLOW}Note: APOC not available, using manual export${NC}"
@@ -42,22 +42,22 @@ docker exec neo4j-kg cypher-shell -u neo4j -p password \
 EOF
 
     # Export Concepts
-    docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH (c:Concept) RETURN c" --format plain 2>/dev/null | \
         grep -v "^c$" | grep -v "^+--" | grep -v "rows available" >> "$BACKUP_FILE" || true
 
     # Export Sources
-    docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH (s:Source) RETURN s" --format plain 2>/dev/null | \
         grep -v "^s$" | grep -v "^+--" | grep -v "rows available" >> "$BACKUP_FILE" || true
 
     # Export Instances
-    docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH (i:Instance) RETURN i" --format plain 2>/dev/null | \
         grep -v "^i$" | grep -v "^+--" | grep -v "rows available" >> "$BACKUP_FILE" || true
 
     # Export Relationships
-    docker exec neo4j-kg cypher-shell -u neo4j -p password \
+    docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password \
         "MATCH (a)-[r]->(b) RETURN a, type(r), properties(r), b" --format plain 2>/dev/null | \
         grep -v "^a\|type" | grep -v "^+--" | grep -v "rows available" >> "$BACKUP_FILE" || true
 }
