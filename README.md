@@ -33,14 +33,13 @@ Before starting, ensure you have:
    - Set up Python virtual environment
    - Install and build MCP server
 
-3. **Edit `.env` with your API keys:**
+3. **Edit `.env` with your API key:**
    ```bash
    nano .env
    ```
 
-   Add your keys:
-   - `OPENAI_API_KEY` - For embeddings and LLM processing
-   - `ANTHROPIC_API_KEY` - For Claude integration
+   Add your OpenAI API key:
+   - `OPENAI_API_KEY` - For GPT-4 concept extraction and embeddings
 
 4. **Ingest a test document:**
    ```bash
