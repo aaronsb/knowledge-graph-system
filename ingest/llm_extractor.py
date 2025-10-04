@@ -1,5 +1,5 @@
 """
-LLM-based concept extraction using Claude and OpenAI.
+LLM-based concept extraction using OpenAI.
 
 Handles concept extraction from text and embedding generation.
 """
@@ -7,7 +7,6 @@ Handles concept extraction from text and embedding generation.
 import os
 import json
 from typing import Dict, List, Any, Optional
-from anthropic import Anthropic
 from openai import OpenAI
 
 
@@ -72,7 +71,7 @@ def extract_concepts(
     existing_concepts: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
-    Extract concepts, instances, and relationships from text using Claude.
+    Extract concepts, instances, and relationships from text using OpenAI GPT-4.
 
     Args:
         text: The text to analyze
@@ -84,12 +83,12 @@ def extract_concepts(
         Dictionary with 'concepts', 'instances', and 'relationships' keys
 
     Raises:
-        ValueError: If ANTHROPIC_API_KEY not set
+        ValueError: If OPENAI_API_KEY not set
         Exception: If API call fails or response parsing fails
     """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+        raise ValueError("OPENAI_API_KEY environment variable not set")
 
     # Format existing concepts for the prompt
     existing_str = "None"
@@ -102,27 +101,33 @@ def extract_concepts(
     prompt = EXTRACTION_PROMPT.format(existing_concepts=existing_str)
 
     try:
-        client = Anthropic(api_key=api_key)
+        client = OpenAI(api_key=api_key)
 
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=4096,
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
                     "role": "user",
-                    "content": f"{prompt}\n\nText to analyze:\n\n{text}"
+                    "content": f"Text to analyze:\n\n{text}"
                 }
-            ]
+            ],
+            max_tokens=4096,
+            temperature=0.3,  # Lower temperature for more consistent extraction
+            response_format={"type": "json_object"}  # Force JSON response
         )
 
         # Extract text content from response
-        response_text = message.content[0].text
+        response_text = response.choices[0].message.content
 
         # Parse JSON response
         try:
             result = json.loads(response_text)
         except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse JSON response from Claude: {e}\nResponse: {response_text}")
+            raise Exception(f"Failed to parse JSON response from OpenAI: {e}\nResponse: {response_text}")
 
         # Validate structure
         if not isinstance(result, dict):

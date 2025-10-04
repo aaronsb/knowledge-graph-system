@@ -43,9 +43,8 @@ echo -e "\n${YELLOW}Setting up environment...${NC}"
 if [ ! -f .env ]; then
     cp .env.example .env
     echo -e "${GREEN}✓ Created .env file${NC}"
-    echo -e "${YELLOW}⚠ Please edit .env and add your API keys:${NC}"
-    echo "   - ANTHROPIC_API_KEY"
-    echo "   - OPENAI_API_KEY"
+    echo -e "${YELLOW}⚠ Please edit .env and add your API key:${NC}"
+    echo "   - OPENAI_API_KEY (for GPT-4 concept extraction and embeddings)"
     read -p "Press enter when ready to continue..."
 else
     echo -e "${GREEN}✓ .env file exists${NC}"
