@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5.15-community
+    container_name: knowledge-graph-neo4j
+    ports:
+      - "7474:7474"  # HTTP browser interface
+      - "7687:7687"  # Bolt protocol
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      # Enable APOC procedures if needed
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      # Configure memory (adjust based on your system)
+      - NEO4J_dbms_memory_heap_initial__size=512m
+      - NEO4J_dbms_memory_heap_max__size=2G
+      - NEO4J_dbms_memory_pagecache_size=512m
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+      # Mount init script
+      - ./schema/init.cypher:/var/lib/neo4j/import/init.cypher
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p password 'RETURN 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+  neo4j_import:
+    driver: local
+  neo4j_plugins:
+    driver: local

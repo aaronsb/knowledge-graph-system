@@ -1,0 +1,4 @@
+anthropic>=0.18.0
+neo4j>=5.15.0
+openai>=1.10.0
+python-dotenv>=1.0.0
