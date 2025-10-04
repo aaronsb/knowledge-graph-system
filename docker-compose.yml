@@ -21,8 +21,6 @@ services:
       - neo4j_logs:/logs
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
-      # Mount init script
-      - ./schema/init.cypher:/var/lib/neo4j/import/init.cypher
     healthcheck:
       test: ["CMD-SHELL", "cypher-shell -u neo4j -p password 'RETURN 1' || exit 1"]
       interval: 10s
