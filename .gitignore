@@ -68,6 +68,7 @@ neo4j_data/
 *.db
 *.sqlite
 backups/
+ingestion_logs/
 
 # ----------------------------------------------------------------------------
 # Temporary Files

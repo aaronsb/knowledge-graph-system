@@ -311,6 +311,29 @@ Interactive teardown:
 - Optionally removes node_modules
 - Preserves source code and `.env`
 
+### Document Ingestion
+
+```bash
+# Ingest a document (interactive)
+./scripts/ingest.sh ingest_source/watts_lecture_1.txt
+
+# Specify document name
+./scripts/ingest.sh ingest_source/watts_lecture_1.txt --name "Watts Doc 1"
+
+# Process multiple paragraphs at once
+./scripts/ingest.sh docs/paper.txt --name "Research Paper" --batch-size 5
+
+# See all options
+./scripts/ingest.sh --help
+```
+
+Ingestion features:
+- Validates Neo4j is running
+- Shows document stats before processing
+- Saves logs to `logs/` directory
+- Shows database stats after completion
+- Interactive confirmation before starting
+
 ### Backup & Restore
 
 ```bash
