@@ -11,7 +11,7 @@ echo "🛑 Knowledge Graph System - Teardown"
 echo "===================================="
 
 # Check if containers are running
-if ! docker ps --format '{{.Names}}' | grep -q neo4j-kg; then
+if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-neo4j; then
     echo -e "${YELLOW}⚠ No running containers found${NC}"
 else
     echo -e "\n${YELLOW}Stopping Docker containers...${NC}"

@@ -59,7 +59,7 @@ docker-compose up -d
 echo -e "${YELLOW}Waiting for Neo4j to be ready...${NC}"
 max_attempts=30
 attempt=0
-until docker exec neo4j-kg cypher-shell -u neo4j -p password "RETURN 1" &> /dev/null || [ $attempt -eq $max_attempts ]; do
+until docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password "RETURN 1" &> /dev/null || [ $attempt -eq $max_attempts ]; do
     echo -n "."
     sleep 2
     ((attempt++))
@@ -73,7 +73,7 @@ echo -e "\n${GREEN}✓ Neo4j is ready${NC}"
 
 # Initialize database schema
 echo -e "\n${YELLOW}Initializing database schema...${NC}"
-docker exec -i neo4j-kg cypher-shell -u neo4j -p password < schema/init.cypher
+docker exec -i knowledge-graph-neo4j cypher-shell -u neo4j -p password < schema/init.cypher
 echo -e "${GREEN}✓ Database schema initialized${NC}"
 
 # Python environment setup
