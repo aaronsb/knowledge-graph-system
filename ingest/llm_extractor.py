@@ -22,7 +22,6 @@ For each concept, provide:
 - search_terms: Alternative terms/phrases that refer to this concept
 
 For each instance, provide:
-- instance_id: A unique identifier (e.g., "instance_001")
 - concept_id: The concept this instance evidences
 - quote: The exact quote from the text
 
@@ -46,7 +45,6 @@ Return your response as a JSON object with this structure:
   ],
   "instances": [
     {{
-      "instance_id": "instance_001",
       "concept_id": "concept_001",
       "quote": "Exact quote from text"
     }}

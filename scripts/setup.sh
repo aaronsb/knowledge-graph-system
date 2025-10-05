@@ -42,13 +42,28 @@ echo -e "\n${YELLOW}Setting up environment...${NC}"
 
 if [ ! -f .env ]; then
     cp .env.example .env
-    echo -e "${GREEN}✓ Created .env file${NC}"
-    echo -e "${YELLOW}⚠ Please edit .env and add your API key:${NC}"
-    echo "   - OPENAI_API_KEY (for GPT-4 concept extraction and embeddings)"
+    echo -e "${GREEN}✓ Created .env file from template${NC}"
+    echo -e "${YELLOW}⚠ Please edit .env and configure:${NC}"
+    echo "   - OPENAI_API_KEY (required for embeddings and extraction)"
+    echo "   - NEO4J_USER / NEO4J_PASSWORD (defaults are set)"
+    echo "   - AI_PROVIDER (openai or anthropic)"
     read -p "Press enter when ready to continue..."
 else
     echo -e "${GREEN}✓ .env file exists${NC}"
 fi
+
+# Load environment variables
+set -a
+source .env
+set +a
+
+# Validate Neo4j credentials are set
+if [ -z "$NEO4J_URI" ] || [ -z "$NEO4J_USER" ] || [ -z "$NEO4J_PASSWORD" ]; then
+    echo -e "${RED}✗ Neo4j credentials not configured in .env${NC}"
+    echo -e "${YELLOW}  Required: NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✓ Neo4j credentials configured${NC}"
 
 # Start Docker services
 echo -e "\n${YELLOW}Starting Neo4j database...${NC}"
@@ -59,7 +74,7 @@ echo -e "${YELLOW}Waiting for Neo4j to be ready...${NC}"
 max_attempts=30
 attempt=0
 while [ $attempt -lt $max_attempts ]; do
-    if docker exec knowledge-graph-neo4j cypher-shell -u neo4j -p password "RETURN 1" &> /dev/null; then
+    if docker exec knowledge-graph-neo4j cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" "RETURN 1" &> /dev/null; then
         echo -e "\n${GREEN}✓ Neo4j is ready${NC}"
         break
     fi
@@ -75,7 +90,7 @@ fi
 
 # Initialize database schema
 echo -e "\n${YELLOW}Initializing database schema...${NC}"
-docker exec -i knowledge-graph-neo4j cypher-shell -u neo4j -p password < schema/init.cypher
+docker exec -i knowledge-graph-neo4j cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" < schema/init.cypher
 echo -e "${GREEN}✓ Database schema initialized${NC}"
 
 # Python environment setup

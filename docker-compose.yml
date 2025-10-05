@@ -8,7 +8,8 @@ services:
       - "7474:7474"  # HTTP browser interface
       - "7687:7687"  # Bolt protocol
     environment:
-      - NEO4J_AUTH=neo4j/password
+      # Auth credentials from .env file
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-password}
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
       # Enable APOC procedures if needed
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*
@@ -22,7 +23,7 @@ services:
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p password 'RETURN 1' || exit 1"]
+      test: ["CMD-SHELL", "cypher-shell -u ${NEO4J_USER:-neo4j} -p ${NEO4J_PASSWORD:-password} 'RETURN 1' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
