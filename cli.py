@@ -7,6 +7,7 @@ This CLI provides the same functionality as the MCP server, allowing you to:
 - Get detailed concept information with evidence
 - Find related concepts through graph traversal
 - Explore connections between concepts
+- Visualize concepts as Mermaid diagrams
 
 Usage:
     python cli.py search "linear thinking"
@@ -15,6 +16,7 @@ Usage:
     python cli.py connect linear-scanning-system genetic-intervention
     python cli.py list-documents
     python cli.py stats
+    python cli.py visualize concept_005 --depth 1 | mmm
 """
 
 import argparse
@@ -30,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from neo4j import GraphDatabase
 from openai import OpenAI
 from dotenv import load_dotenv
+from graph_to_mermaid import get_concept_graph, get_search_results_graph, generate_mermaid
 
 # Load environment variables
 load_dotenv()
@@ -328,6 +331,26 @@ class KnowledgeGraphCLI:
                 for rel in rel_type_list:
                     print(f"  {rel['rel_type']}: {Colors.OKGREEN}{rel['count']}{Colors.ENDC}")
 
+    def visualize(self, concept_ids: List[str], depth: int = 1, diagram_type: str = 'graph'):
+        """Generate Mermaid diagram for concept(s)"""
+        from ingest.neo4j_client import Neo4jClient
+
+        # Create Neo4j client for graph queries
+        neo4j_client = Neo4jClient()
+
+        try:
+            with neo4j_client:
+                if len(concept_ids) == 1:
+                    graph_data = get_concept_graph(neo4j_client, concept_ids[0], depth)
+                else:
+                    graph_data = get_search_results_graph(neo4j_client, concept_ids)
+
+                # Generate and output mermaid (suitable for piping to mmm)
+                mermaid = generate_mermaid(graph_data, diagram_type)
+                print(mermaid)
+        finally:
+            neo4j_client.close()
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -374,6 +397,13 @@ Examples:
     # Stats command
     subparsers.add_parser('stats', help='Show database statistics')
 
+    # Visualize command
+    viz_parser = subparsers.add_parser('visualize', help='Generate Mermaid diagram for concept(s)')
+    viz_parser.add_argument('concept_ids', nargs='+', help='One or more concept IDs to visualize')
+    viz_parser.add_argument('--depth', type=int, default=1, help='Relationship depth (default: 1)')
+    viz_parser.add_argument('--type', choices=['graph', 'flowchart'], default='graph',
+                           help='Diagram type (default: graph)')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -396,6 +426,8 @@ Examples:
             cli.list_documents()
         elif args.command == 'stats':
             cli.show_stats()
+        elif args.command == 'visualize':
+            cli.visualize(args.concept_ids, args.depth, args.type)
     except Exception as e:
         print(f"{Colors.FAIL}Error: {e}{Colors.ENDC}", file=sys.stderr)
         sys.exit(1)
