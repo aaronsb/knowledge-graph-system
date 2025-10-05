@@ -19,9 +19,9 @@ from pathlib import Path
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
-from parser import parse_text_file
-from neo4j_client import Neo4jClient
-from llm_extractor import extract_concepts, generate_embedding
+from ingest.parser import parse_text_file
+from ingest.neo4j_client import Neo4jClient
+from ingest.llm_extractor import extract_concepts, generate_embedding
 
 
 class IngestionStats:
