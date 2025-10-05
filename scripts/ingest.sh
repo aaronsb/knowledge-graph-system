@@ -135,6 +135,6 @@ if command -v python &> /dev/null; then
 fi
 
 echo -e "\n${YELLOW}Next steps:${NC}"
-echo "  - View in Neo4j Browser: ${BLUE}http://localhost:7474${NC}"
-echo "  - Query via CLI: ${BLUE}python cli.py search \"your query\"${NC}"
+echo -e "  - View in Neo4j Browser: ${BLUE}http://localhost:7474${NC}"
+echo -e "  - Query via CLI: ${BLUE}python cli.py search \"your query\"${NC}"
 echo "  - Use with Claude Desktop (if MCP configured)"
