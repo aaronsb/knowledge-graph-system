@@ -118,7 +118,7 @@ echo -e "\n${YELLOW}Starting ingestion...${NC}\n"
 
 source venv/bin/activate
 
-python ingest/ingest.py "$DOCUMENT_PATH" \
+python -m ingest.ingest "$DOCUMENT_PATH" \
     --document-name "$DOCUMENT_NAME" \
     2>&1 | tee "logs/ingest_$(date +%Y%m%d_%H%M%S).log" || {
     echo -e "\n${RED}✗ Ingestion failed${NC}"

@@ -25,7 +25,7 @@ class Neo4jClient:
 
         Args:
             uri: Neo4j connection URI (defaults to NEO4J_URI env var)
-            username: Neo4j username (defaults to NEO4J_USERNAME env var)
+            username: Neo4j username (defaults to NEO4J_USER env var)
             password: Neo4j password (defaults to NEO4J_PASSWORD env var)
 
         Raises:
@@ -34,13 +34,13 @@ class Neo4jClient:
             AuthError: If authentication fails
         """
         self.uri = uri or os.getenv("NEO4J_URI")
-        self.username = username or os.getenv("NEO4J_USERNAME")
+        self.username = username or os.getenv("NEO4J_USER") or os.getenv("NEO4J_USERNAME")
         self.password = password or os.getenv("NEO4J_PASSWORD")
 
         if not all([self.uri, self.username, self.password]):
             raise ValueError(
                 "Missing Neo4j connection details. Provide via parameters or "
-                "set NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD environment variables."
+                "set NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD environment variables."
             )
 
         try:
@@ -357,17 +357,15 @@ class Neo4jClient:
         if not 0.0 <= threshold <= 1.0:
             raise ValueError(f"Threshold must be between 0.0 and 1.0, got {threshold}")
 
-        # Using cosine similarity for vector search
+        # Using native vector index for similarity search
         query = """
-        MATCH (c:Concept)
-        WITH c,
-             gds.similarity.cosine($embedding, c.embedding) AS similarity
-        WHERE similarity >= $threshold
+        CALL db.index.vector.queryNodes('concept-embeddings', $limit, $embedding)
+        YIELD node AS c, score
+        WHERE score >= $threshold
         RETURN c.concept_id AS concept_id,
                c.label AS label,
-               similarity
+               score AS similarity
         ORDER BY similarity DESC
-        LIMIT $limit
         """
 
         try:

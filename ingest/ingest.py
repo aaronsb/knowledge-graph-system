@@ -15,6 +15,7 @@ Ingests text files into Neo4j knowledge graph by:
 import os
 import sys
 import argparse
+import uuid
 from pathlib import Path
 from typing import List, Dict, Any
 from dotenv import load_dotenv
@@ -164,7 +165,8 @@ def process_paragraph(
 
     # Step 4: Create Instance nodes and link them
     for instance in extraction["instances"]:
-        instance_id = instance["instance_id"]
+        # Generate globally unique instance ID (ignore LLM-provided ID)
+        instance_id = f"{source_id}_inst_{uuid.uuid4().hex[:8]}"
         concept_id = instance["concept_id"]
         quote = instance["quote"]
 
