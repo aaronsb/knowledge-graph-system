@@ -1,13 +1,12 @@
 """
-LLM-based concept extraction using OpenAI.
+LLM-based concept extraction using configurable AI providers.
 
-Handles concept extraction from text and embedding generation.
+Supports OpenAI and Anthropic with model configuration.
 """
 
 import os
-import json
 from typing import Dict, List, Any, Optional
-from openai import OpenAI
+from ingest.ai_providers import get_provider
 
 
 # System prompt for concept extraction
@@ -68,75 +67,41 @@ Only return the JSON object, no additional text."""
 def extract_concepts(
     text: str,
     source_id: str,
-    existing_concepts: Optional[List[Dict[str, Any]]] = None
+    existing_concepts: Optional[List[Dict[str, Any]]] = None,
+    provider_name: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Extract concepts, instances, and relationships from text using OpenAI GPT-4.
+    Extract concepts, instances, and relationships from text using configured AI provider.
 
     Args:
         text: The text to analyze
         source_id: Identifier for the source document/paragraph
         existing_concepts: List of existing concepts to avoid duplication
                           Each dict should have 'concept_id' and 'label'
+        provider_name: Override provider (default: from AI_PROVIDER env var)
 
     Returns:
         Dictionary with 'concepts', 'instances', and 'relationships' keys
 
     Raises:
-        ValueError: If OPENAI_API_KEY not set
+        ValueError: If API key not set
         Exception: If API call fails or response parsing fails
+
+    Environment Variables:
+        AI_PROVIDER: "openai" or "anthropic" (default: "openai")
+        OPENAI_API_KEY / ANTHROPIC_API_KEY: Required based on provider
+        OPENAI_EXTRACTION_MODEL / ANTHROPIC_EXTRACTION_MODEL: Optional model override
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable not set")
-
-    # Format existing concepts for the prompt
-    existing_str = "None"
-    if existing_concepts:
-        existing_str = "\n".join([
-            f"- {c.get('concept_id', 'unknown')}: {c.get('label', 'unknown')}"
-            for c in existing_concepts
-        ])
-
-    prompt = EXTRACTION_PROMPT.format(existing_concepts=existing_str)
-
     try:
-        client = OpenAI(api_key=api_key)
+        # Get configured provider
+        provider = get_provider(provider_name)
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "system",
-                    "content": prompt
-                },
-                {
-                    "role": "user",
-                    "content": f"Text to analyze:\n\n{text}"
-                }
-            ],
-            max_tokens=4096,
-            temperature=0.3,  # Lower temperature for more consistent extraction
-            response_format={"type": "json_object"}  # Force JSON response
+        # Extract concepts using provider
+        result = provider.extract_concepts(
+            text=text,
+            system_prompt=EXTRACTION_PROMPT,
+            existing_concepts=existing_concepts
         )
-
-        # Extract text content from response
-        response_text = response.choices[0].message.content
-
-        # Parse JSON response
-        try:
-            result = json.loads(response_text)
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse JSON response from OpenAI: {e}\nResponse: {response_text}")
-
-        # Validate structure
-        if not isinstance(result, dict):
-            raise Exception(f"Expected dict response, got {type(result)}")
-
-        # Ensure all required keys exist
-        result.setdefault("concepts", [])
-        result.setdefault("instances", [])
-        result.setdefault("relationships", [])
 
         # Add source_id context
         result["source_id"] = source_id
@@ -147,33 +112,72 @@ def extract_concepts(
         raise Exception(f"Concept extraction failed: {e}")
 
 
-def generate_embedding(text: str) -> List[float]:
+def generate_embedding(
+    text: str,
+    provider_name: Optional[str] = None
+) -> List[float]:
     """
-    Generate vector embedding for text using OpenAI.
+    Generate vector embedding for text using configured AI provider.
 
     Args:
         text: Text to embed
+        provider_name: Override provider (default: from AI_PROVIDER env var)
 
     Returns:
         List of floats representing the embedding vector
 
     Raises:
-        ValueError: If OPENAI_API_KEY not set
+        ValueError: If API key not set
         Exception: If API call fails
+
+    Environment Variables:
+        AI_PROVIDER: "openai" or "anthropic" (default: "openai")
+        OPENAI_API_KEY: Required (even for Anthropic, which uses OpenAI for embeddings)
+        OPENAI_EMBEDDING_MODEL: Optional embedding model override
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable not set")
-
     try:
-        client = OpenAI(api_key=api_key)
+        # Get configured provider
+        provider = get_provider(provider_name)
 
-        response = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=text
-        )
-
-        return response.data[0].embedding
+        # Generate embedding using provider
+        return provider.generate_embedding(text)
 
     except Exception as e:
         raise Exception(f"Embedding generation failed: {e}")
+
+
+def validate_provider_config(provider_name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Validate provider configuration and return status info.
+
+    Args:
+        provider_name: Provider to validate (default: from AI_PROVIDER env var)
+
+    Returns:
+        Dictionary with validation results:
+        {
+            "provider": "openai",
+            "api_key_valid": True,
+            "extraction_model": "gpt-4o",
+            "embedding_model": "text-embedding-3-small",
+            "available_models": {...}
+        }
+    """
+    try:
+        provider = get_provider(provider_name)
+
+        result = {
+            "provider": provider.get_provider_name(),
+            "extraction_model": provider.get_extraction_model(),
+            "embedding_model": provider.get_embedding_model(),
+            "api_key_valid": provider.validate_api_key(),
+            "available_models": provider.list_available_models()
+        }
+
+        return result
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "provider": provider_name or os.getenv("AI_PROVIDER", "openai")
+        }
