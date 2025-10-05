@@ -21,6 +21,9 @@ fi
 
 source venv/bin/activate
 
+# Load .env file
+export $(grep -v '^#' .env | xargs)
+
 # Function to test provider
 test_provider() {
     local provider=$1
