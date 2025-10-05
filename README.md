@@ -33,13 +33,25 @@ Before starting, ensure you have:
    - Set up Python virtual environment
    - Install and build MCP server
 
-3. **Edit `.env` with your API key:**
+3. **Configure AI provider:**
    ```bash
-   nano .env
+   ./scripts/configure-ai.sh
    ```
 
-   Add your OpenAI API key:
-   - `OPENAI_API_KEY` - For GPT-4 concept extraction and embeddings
+   This interactive script helps you:
+   - Choose between OpenAI or Anthropic
+   - Validate API keys
+   - Select extraction and embedding models
+   - Test provider configuration
+
+   Or manually edit `.env`:
+   - `AI_PROVIDER` - Choose "openai" (default) or "anthropic"
+   - `OPENAI_API_KEY` - Required for OpenAI, or for embeddings with Anthropic
+   - `ANTHROPIC_API_KEY` - Required only if using Anthropic
+   - Model overrides (optional):
+     - `OPENAI_EXTRACTION_MODEL` (default: gpt-4o)
+     - `OPENAI_EMBEDDING_MODEL` (default: text-embedding-3-small)
+     - `ANTHROPIC_EXTRACTION_MODEL` (default: claude-sonnet-4-20250514)
 
 4. **Ingest a test document:**
    ```bash
@@ -309,6 +321,26 @@ Interactive teardown:
 - Optionally removes Python venv
 - Optionally removes node_modules
 - Preserves source code and `.env`
+
+### AI Provider Configuration
+
+```bash
+# Configure and test AI providers
+./scripts/configure-ai.sh
+```
+
+AI configuration features:
+- Test current provider configuration
+- Validate API keys
+- Switch between OpenAI and Anthropic
+- Configure extraction and embedding models
+- View available models for each provider
+
+**Supported Providers:**
+- **OpenAI**: GPT-4o, GPT-4o-mini, o1-preview, o1-mini
+- **Anthropic**: Claude Sonnet 4.5 (SOTA), Claude 3.5 Sonnet, Claude 3 Opus
+
+**Note:** Anthropic uses OpenAI for embeddings, so `OPENAI_API_KEY` is required even when using Anthropic for extraction.
 
 ### Document Ingestion
 
