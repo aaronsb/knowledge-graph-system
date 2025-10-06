@@ -20,9 +20,9 @@ Before starting, ensure you have:
    cd knowledge-graph-system
    ```
 
-2. **Run the initialization script:**
+2. **Run the setup script:**
    ```bash
-   ./init.sh
+   ./scripts/setup.sh
    ```
 
    The script will:
@@ -234,28 +234,39 @@ Data Flow:
 
 ```
 knowledge-graph-system/
-├── init.sh                 # Setup script
 ├── docker-compose.yml      # Neo4j service definition
 ├── .env                    # Environment variables (API keys)
+│
+├── scripts/                # Management scripts
+│   ├── setup.sh           # Initial system setup
+│   ├── reset.sh           # Clear database and restart
+│   ├── status.sh          # Check system health
+│   ├── ingest.sh          # Ingest documents (smart chunking)
+│   ├── configure-ai.sh    # Configure AI provider
+│   ├── backup.sh          # Backup database
+│   ├── restore.sh         # Restore from backup
+│   └── teardown.sh        # Stop and cleanup
 │
 ├── schema/
 │   └── init.cypher        # Neo4j schema and constraints
 │
 ├── ingest/
-│   ├── ingest.py          # Main ingestion pipeline
-│   ├── extractors.py      # Concept extraction logic
-│   └── embeddings.py      # Vector embedding generation
+│   ├── ingest_chunked.py  # Main ingestion pipeline
+│   ├── chunker.py         # Smart text chunking
+│   ├── checkpoint.py      # Position tracking & resume
+│   ├── llm_extractor.py   # LLM concept extraction
+│   ├── neo4j_client.py    # Graph database operations
+│   └── ai_providers.py    # Modular AI provider support
 │
 ├── mcp-server/
 │   ├── package.json       # Node.js dependencies
 │   ├── tsconfig.json      # TypeScript configuration
 │   └── src/
 │       ├── index.ts       # MCP server entry point
-│       ├── tools.ts       # MCP tool definitions
-│       └── database.ts    # Neo4j connection
+│       └── neo4j.ts       # Neo4j queries and operations
 │
 └── docs/
-    └── watts_lecture_1.txt  # Sample test document
+    └── QUICKSTART.md      # Quick start guide
 ```
 
 ## Management Scripts
@@ -344,26 +355,36 @@ AI configuration features:
 
 ### Document Ingestion
 
+The ingestion system uses smart chunking to handle any document type:
+
 ```bash
-# Ingest a document (interactive)
-./scripts/ingest.sh ingest_source/watts_lecture_1.txt
+# Basic ingestion
+./scripts/ingest.sh ingest_source/watts_lecture_1.txt --name "Watts Lecture"
 
-# Specify document name
-./scripts/ingest.sh ingest_source/watts_lecture_1.txt --name "Watts Doc 1"
+# Large documents with custom chunk sizes
+./scripts/ingest.sh transcript.txt --name "Transcript" \
+  --target-words 1500 --max-words 2000
 
-# Process multiple paragraphs at once
-./scripts/ingest.sh docs/paper.txt --name "Research Paper" --batch-size 5
+# Resume interrupted ingestion
+./scripts/ingest.sh transcript.txt --name "Transcript" --resume
 
 # See all options
 ./scripts/ingest.sh --help
 ```
 
-Ingestion features:
-- Validates Neo4j is running
-- Shows document stats before processing
-- Saves logs to `logs/` directory
-- Shows database stats after completion
-- Interactive confirmation before starting
+**How it works:**
+- **Smart boundary detection**: Finds natural breaks (paragraphs, sentences, pauses)
+- **Checkpoint & resume**: Saves progress every N chunks, resume if interrupted
+- **Graph-aware**: Queries recent concepts before processing new chunks
+- **Vector deduplication**: Matches similar concepts to prevent duplicates
+- **Works for any document**: Structured (paragraphs) or continuous (transcripts)
+
+**Key Options:**
+- `--target-words N` - Target chunk size (default: 1000)
+- `--max-words N` - Maximum chunk size (default: 1500)
+- `--overlap-words N` - Context overlap between chunks (default: 200)
+- `--checkpoint-interval N` - Save every N chunks (default: 5)
+- `--resume` - Continue from last checkpoint
 
 ### Backup & Restore
 

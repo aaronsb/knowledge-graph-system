@@ -83,7 +83,7 @@ echo -e "${GREEN}✓ Database cleared${NC}"
 # Clear log files
 echo -e "\n${YELLOW}Clearing log files...${NC}"
 if [ -d "logs" ]; then
-    rm -f logs/ingest_*.log logs/ingest_chunked_*.log
+    rm -f logs/ingest_*.log
     echo -e "${GREEN}✓ Log files cleared${NC}"
 else
     echo -e "${YELLOW}  No log directory found${NC}"

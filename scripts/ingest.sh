@@ -9,7 +9,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo "📥 Knowledge Graph - Document Ingestion"
-echo "======================================="
+echo "========================================"
 
 # Check if Neo4j is running
 if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-neo4j; then
@@ -28,7 +28,12 @@ fi
 # Parse arguments
 DOCUMENT_PATH=""
 DOCUMENT_NAME=""
-BATCH_SIZE=1
+RESUME=false
+TARGET_WORDS=1000
+MIN_WORDS=800
+MAX_WORDS=1500
+OVERLAP_WORDS=200
+CHECKPOINT_INTERVAL=5
 
 show_help() {
     cat << EOF
@@ -38,14 +43,24 @@ Arguments:
   document-path         Path to document to ingest (required)
 
 Options:
-  -n, --name NAME      Document name/title (default: filename)
-  -b, --batch-size N   Process N paragraphs at once (default: 1)
-  -h, --help           Show this help message
+  -n, --name NAME           Document name/title (default: filename)
+  -r, --resume              Resume from checkpoint if available
+  --target-words N          Target words per chunk (default: 1000)
+  --min-words N             Minimum words per chunk (default: 800)
+  --max-words N             Maximum words per chunk (default: 1500)
+  --overlap-words N         Overlap between chunks (default: 200)
+  --checkpoint-interval N   Save checkpoint every N chunks (default: 5)
+  -h, --help                Show this help message
 
 Examples:
-  $0 ingest_source/watts_lecture_1.txt
-  $0 ingest_source/watts_lecture_1.txt --name "Watts Doc 1"
-  $0 docs/paper.txt --name "Research Paper" --batch-size 5
+  # Basic usage
+  $0 ingest_source/large_transcript.txt --name "Watts Taoism 02"
+
+  # Resume interrupted ingestion
+  $0 ingest_source/large_transcript.txt --name "Watts Taoism 02" --resume
+
+  # Custom chunk sizes
+  $0 document.txt --name "Doc" --target-words 1500 --max-words 2000
 
 EOF
 }
@@ -57,8 +72,28 @@ while [[ $# -gt 0 ]]; do
             DOCUMENT_NAME="$2"
             shift 2
             ;;
-        -b|--batch-size)
-            BATCH_SIZE="$2"
+        -r|--resume)
+            RESUME=true
+            shift
+            ;;
+        --target-words)
+            TARGET_WORDS="$2"
+            shift 2
+            ;;
+        --min-words)
+            MIN_WORDS="$2"
+            shift 2
+            ;;
+        --max-words)
+            MAX_WORDS="$2"
+            shift 2
+            ;;
+        --overlap-words)
+            OVERLAP_WORDS="$2"
+            shift 2
+            ;;
+        --checkpoint-interval)
+            CHECKPOINT_INTERVAL="$2"
             shift 2
             ;;
         -h|--help)
@@ -99,30 +134,65 @@ fi
 echo -e "\n${BLUE}Configuration:${NC}"
 echo -e "  Document: ${GREEN}$DOCUMENT_PATH${NC}"
 echo -e "  Name: ${GREEN}$DOCUMENT_NAME${NC}"
-echo -e "  Batch size: ${GREEN}$BATCH_SIZE${NC}"
+echo -e "  Resume: ${GREEN}$RESUME${NC}"
+echo -e "  Target words/chunk: ${GREEN}$TARGET_WORDS${NC}"
+echo -e "  Min words/chunk: ${GREEN}$MIN_WORDS${NC}"
+echo -e "  Max words/chunk: ${GREEN}$MAX_WORDS${NC}"
+echo -e "  Overlap words: ${GREEN}$OVERLAP_WORDS${NC}"
+echo -e "  Checkpoint interval: ${GREEN}every $CHECKPOINT_INTERVAL chunks${NC}"
 
 # Check file size
 FILE_SIZE=$(du -h "$DOCUMENT_PATH" | cut -f1)
-echo -e "  Size: ${GREEN}$FILE_SIZE${NC}"
+WORD_COUNT=$(wc -w < "$DOCUMENT_PATH")
+EST_CHUNKS=$((WORD_COUNT / TARGET_WORDS))
 
-# Count paragraphs
-PARA_COUNT=$(grep -c '^$' "$DOCUMENT_PATH" || true)
-echo -e "  Approx paragraphs: ${GREEN}~$PARA_COUNT${NC}"
+echo -e "\n${BLUE}Document Stats:${NC}"
+echo -e "  Size: ${GREEN}$FILE_SIZE${NC}"
+echo -e "  Words: ${GREEN}$(printf "%'d" $WORD_COUNT)${NC}"
+echo -e "  Estimated chunks: ${GREEN}~$EST_CHUNKS${NC}"
+
+# Check for existing checkpoint
+if [ -f ".checkpoints/${DOCUMENT_NAME,,}.json" ]; then
+    echo -e "\n${YELLOW}⚠ Checkpoint exists for this document${NC}"
+    if [ "$RESUME" = false ]; then
+        echo -e "${YELLOW}  Use --resume to continue from checkpoint${NC}"
+        echo -e "${YELLOW}  Or the checkpoint will be ignored and ingestion starts fresh${NC}"
+    else
+        echo -e "${GREEN}  Will resume from checkpoint${NC}"
+    fi
+fi
 
 # Confirm
-echo -e "\n${YELLOW}Press Enter to start ingestion (Ctrl+C to cancel)${NC}"
-read
+if [ "$RESUME" = false ]; then
+    echo -e "\n${YELLOW}Press Enter to start ingestion (Ctrl+C to cancel)${NC}"
+    read
+fi
+
+# Build command (use -u for unbuffered output)
+CMD="python -u -m ingest.ingest_chunked \"$DOCUMENT_PATH\" --document-name \"$DOCUMENT_NAME\""
+CMD="$CMD --target-words $TARGET_WORDS"
+CMD="$CMD --min-words $MIN_WORDS"
+CMD="$CMD --max-words $MAX_WORDS"
+CMD="$CMD --overlap-words $OVERLAP_WORDS"
+CMD="$CMD --checkpoint-interval $CHECKPOINT_INTERVAL"
+
+if [ "$RESUME" = true ]; then
+    CMD="$CMD --resume"
+fi
 
 # Activate virtual environment and run ingestion
 echo -e "\n${YELLOW}Starting ingestion...${NC}\n"
 
 source venv/bin/activate
 
-python -m ingest.ingest "$DOCUMENT_PATH" \
-    --document-name "$DOCUMENT_NAME" \
-    2>&1 | tee "logs/ingest_$(date +%Y%m%d_%H%M%S).log" || {
-    echo -e "\n${RED}✗ Ingestion failed${NC}"
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
+# Use stdbuf to disable buffering on tee as well
+eval $CMD 2>&1 | stdbuf -oL tee "logs/ingest_$(date +%Y%m%d_%H%M%S).log" || {
+    echo -e "\n${RED}✗ Ingestion failed or interrupted${NC}"
     echo -e "${YELLOW}Check the log file for details${NC}"
+    echo -e "${YELLOW}Use --resume to continue from last checkpoint${NC}"
     exit 1
 }
 
