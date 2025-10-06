@@ -156,6 +156,15 @@ python cli.py database stats
 python cli.py database info
 python cli.py database health
 
+# Learned knowledge synthesis
+python cli.py learn connect concept-id-1 concept-id-2 \
+  --evidence "Both emphasize data-driven transparency" \
+  --creator your-name
+python cli.py learn list
+python cli.py learn list --creator aaron
+python cli.py learn list --cognitive-leap HIGH
+python cli.py learn delete learned_2025-10-06_001
+
 # JSON output for tool integration
 python cli.py --json ontology list
 python cli.py --json database stats
