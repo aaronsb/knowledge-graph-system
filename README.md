@@ -116,7 +116,16 @@ python cli.py details <concept-id>
 python cli.py ontology list  # List all ontologies
 python cli.py ontology info "My Ontology"  # View ontology details
 python cli.py database stats  # Database statistics
-python cli.py --json ontology list  # JSON output for tool integration
+
+# 5. Create learned knowledge connections (optional)
+python cli.py learn connect <concept-id-1> <concept-id-2> \
+  --evidence "Both emphasize data-driven transparency" \
+  --creator your-name
+python cli.py learn list  # View learned knowledge
+python cli.py learn list --cognitive-leap HIGH  # Filter by cognitive leap
+
+# JSON output for tool integration
+python cli.py --json ontology list
 ```
 
 **For Claude Desktop/Code integration:** See [MCP Setup Guide](docs/MCP_SETUP.md)
@@ -145,6 +154,48 @@ Document → Smart Chunking → LLM Extraction → Graph Construction → Semant
 - **Modular AI Providers**: Swap between OpenAI, Anthropic, or add your own
 - **Full-Text + Vector Search**: Combined semantic and exact-match capabilities
 - **Evidence Preservation**: Every concept links to source quotes with paragraph references
+- **Learned Knowledge Synthesis**: Manually create connections between concepts with provenance tracking and similarity validation
+
+## Learned Knowledge Synthesis
+
+Beyond document extraction, you can create **learned connections** between concepts to capture "aha!" moments and cross-ontology insights:
+
+```bash
+# Create a learned relationship with similarity validation
+python cli.py learn connect chapter_01_chunk2_c56c2ab3 signals_pillar1_signal1_62e52f23 \
+  --evidence "Both emphasize transparency through measurable signals" \
+  --creator your-name
+
+# Output shows "smell test" results:
+# Similarity to concept 1: 87.23%
+# Similarity to concept 2: 84.56%
+# Cognitive leap: LOW ✓ (obvious connection)
+```
+
+**Features:**
+- **Smell Test Validation**: Calculates similarity between evidence and both concepts
+- **Cognitive Leap Ratings**:
+  - LOW (>85%): Obvious connection - "why didn't we think of this earlier?"
+  - MEDIUM (70-85%): Reasonable connection
+  - HIGH (<70%): Unusual connection - warns but allows
+- **Provenance Tracking**: Every learned connection tracks creator, timestamp, and similarity score
+- **Safe Operations**: Only deletes learned knowledge (never document-extracted data)
+
+**Query learned knowledge:**
+```bash
+python cli.py learn list                      # All learned connections
+python cli.py learn list --creator aaron      # Filter by creator
+python cli.py learn list --cognitive-leap HIGH  # Find unusual connections
+python cli.py learn list --min-similarity 0.8  # High-confidence only
+```
+
+**Use cases:**
+- Bridge concepts across ontologies (e.g., "Governed Agility" ↔ "Role-Based Intelligence")
+- Document expert insights that LLMs missed
+- Create synthesis concepts that unify multiple ideas
+- Track hypothesis connections for validation
+
+See [Learned Knowledge MCP Plan](docs/LEARNED_KNOWLEDGE_MCP.md) for future AI-assisted synthesis features.
 
 ## Use Cases
 
