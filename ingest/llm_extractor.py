@@ -82,7 +82,7 @@ def extract_concepts(
         provider_name: Override provider (default: from AI_PROVIDER env var)
 
     Returns:
-        Dictionary with 'concepts', 'instances', and 'relationships' keys
+        Dictionary with 'result' (concepts/instances/relationships), 'tokens', and 'source_id'
 
     Raises:
         ValueError: If API key not set
@@ -97,17 +97,24 @@ def extract_concepts(
         # Get configured provider
         provider = get_provider(provider_name)
 
-        # Extract concepts using provider
-        result = provider.extract_concepts(
+        # Extract concepts using provider (returns dict with 'result' and 'tokens')
+        response = provider.extract_concepts(
             text=text,
             system_prompt=EXTRACTION_PROMPT,
             existing_concepts=existing_concepts
         )
 
+        # Extract result and tokens
+        result = response.get("result", {})
+        tokens = response.get("tokens", 0)
+
         # Add source_id context
         result["source_id"] = source_id
 
-        return result
+        return {
+            "result": result,
+            "tokens": tokens
+        }
 
     except Exception as e:
         raise Exception(f"Concept extraction failed: {e}")
@@ -116,7 +123,7 @@ def extract_concepts(
 def generate_embedding(
     text: str,
     provider_name: Optional[str] = None
-) -> List[float]:
+) -> Dict[str, Any]:
     """
     Generate vector embedding for text using configured AI provider.
 
@@ -125,7 +132,7 @@ def generate_embedding(
         provider_name: Override provider (default: from AI_PROVIDER env var)
 
     Returns:
-        List of floats representing the embedding vector
+        Dictionary with 'embedding' (vector) and 'tokens' (usage count)
 
     Raises:
         ValueError: If API key not set
@@ -140,7 +147,7 @@ def generate_embedding(
         # Get configured provider
         provider = get_provider(provider_name)
 
-        # Generate embedding using provider
+        # Generate embedding using provider (returns dict with 'embedding' and 'tokens')
         return provider.generate_embedding(text)
 
     except Exception as e:
