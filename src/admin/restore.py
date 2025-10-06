@@ -115,31 +115,13 @@ class RestoreCLI:
                 Console.warning("Restore cancelled")
                 sys.exit(0)
 
-        # Offer semantic re-stitching if external dependencies exist
+        # Note about external dependencies (informational only)
         restitch_plan = None
         if assessment["external_dependencies"]["concepts"]:
-            Console.warning("\n⚠ This backup has external concept dependencies")
-            Console.info("  Semantic re-stitching can reconnect these to similar concepts in the target database")
-
-            if Console.confirm("Analyze re-stitching options?"):
-                matcher = ConceptMatcher(self.conn, similarity_threshold=0.85)
-
-                with self.conn.session() as session:
-                    external_concepts = matcher.find_external_concepts(backup_data)
-
-                    # Enrich with concept data from backup if available
-                    concept_map = {c["concept_id"]: c for c in backup_data["data"]["concepts"]}
-                    for ext in external_concepts:
-                        # External concepts aren't in backup, but we can check relationships
-                        ext["label"] = ext["concept_id"]  # Fallback to ID
-
-                    restitch_plan = matcher.create_restitch_plan(external_concepts, session)
-
-                matcher.print_restitch_plan(restitch_plan)
-
-                if restitch_plan["matched"]:
-                    if not Console.confirm("\nApply semantic re-stitching?"):
-                        restitch_plan = None
+            Console.info("\nℹ This backup has external concept dependencies")
+            Console.info("  These relationships will be left dangling after restore")
+            Console.info("  You can reconnect them later using: python -m src.admin.stitch")
+            Console.info("  Or leave isolated for strict ontology boundaries")
 
         # Check for conflicts
         if backup_data.get('ontology'):
@@ -247,7 +229,11 @@ class RestoreCLI:
             else:
                 Console.success("✓ No integrity issues detected")
 
-            self._show_tips()
+            # Show tips, mention stitcher if external deps exist
+            if assessment["external_dependencies"]["concepts"]:
+                self._show_tips(backup_file=backup_file)
+            else:
+                self._show_tips()
 
         except Exception as e:
             Console.error(f"✗ Restore failed: {e}")
@@ -255,12 +241,17 @@ class RestoreCLI:
             traceback.print_exc()
             sys.exit(1)
 
-    def _show_tips(self):
+    def _show_tips(self, backup_file: Optional[Path] = None):
         """Show helpful tips"""
         Console.warning("\n💡 Next steps:")
         print("  • Verify data: python cli.py database stats")
         print("  • Query concepts: python cli.py search \"your query\"")
         print("  • View in browser: http://localhost:7474")
+
+        if backup_file:
+            Console.info("\nℹ Optional: Reconnect external relationships using semantic stitcher")
+            print(f"  {Colors.OKCYAN}python -m src.admin.stitch --backup {backup_file}{Colors.ENDC}")
+            print("  (Or leave isolated if you prefer strict ontology boundaries)")
 
     def restore_non_interactive(self, backup_file: str, overwrite: bool = False):
         """Non-interactive restore for automation"""
