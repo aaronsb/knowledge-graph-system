@@ -105,8 +105,9 @@ The system understood:
 # 2. Configure AI provider (OpenAI or Anthropic)
 ./scripts/configure-ai.sh
 
-# 3. Ingest a document
-./scripts/ingest.sh your-document.txt --name "Document Title"
+# 3. Ingest documents into an ontology
+./scripts/ingest.sh file1.txt --name "My Ontology"
+./scripts/ingest.sh file2.txt --name "My Ontology"  # Adds to same ontology
 
 # 4. Query the graph
 source venv/bin/activate
@@ -133,6 +134,7 @@ Document → Smart Chunking → LLM Extraction → Graph Construction → Semant
 
 ## Architecture Highlights
 
+- **Multi-Document Ontologies**: Group related documents into named ontologies - concepts automatically connect across files
 - **Graph-Aware Chunking**: Queries recent concepts before processing new chunks, enabling cross-chunk relationship detection
 - **Vector Deduplication**: Uses cosine similarity to merge concepts across document boundaries
 - **Checkpoint & Resume**: Position tracking for large documents - resume if interrupted
