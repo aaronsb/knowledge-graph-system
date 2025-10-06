@@ -386,3 +386,81 @@ class Neo4jClient:
                 ]
         except Exception as e:
             raise Exception(f"Vector search failed: {e}")
+
+    def get_document_concepts(
+        self,
+        document_name: str,
+        limit: int = 50,
+        recent_chunks_only: Optional[int] = None,
+        warn_on_empty: bool = False
+    ) -> tuple[List[Dict[str, Any]], bool]:
+        """
+        Retrieve concepts from a specific document for context awareness.
+
+        Args:
+            document_name: Name of the document
+            limit: Maximum number of concepts to return
+            recent_chunks_only: If set, only get concepts from last N chunks/paragraphs
+            warn_on_empty: If True, returns flag indicating empty database warnings
+
+        Returns:
+            Tuple of (list of concept dicts, has_empty_db_warnings)
+
+        Raises:
+            Exception: If query fails
+        """
+        if recent_chunks_only:
+            # Get concepts from recent chunks only
+            query = """
+            MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $document})
+            WITH c, s
+            ORDER BY s.paragraph DESC
+            LIMIT $chunk_limit
+            WITH DISTINCT c
+            RETURN c.concept_id AS concept_id, c.label AS label
+            LIMIT $limit
+            """
+            params = {
+                "document": document_name,
+                "chunk_limit": recent_chunks_only * 10,  # Assume ~10 concepts per chunk
+                "limit": limit
+            }
+        else:
+            # Get all concepts from document
+            query = """
+            MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $document})
+            RETURN DISTINCT c.concept_id AS concept_id, c.label AS label
+            LIMIT $limit
+            """
+            params = {
+                "document": document_name,
+                "limit": limit
+            }
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(query, **params)
+                concepts = [
+                    {
+                        "concept_id": record["concept_id"],
+                        "label": record["label"]
+                    }
+                    for record in result
+                ]
+
+                # Check for notifications about missing schema elements (empty DB)
+                has_empty_warnings = False
+                if warn_on_empty and hasattr(result, '_summary') and result._summary:
+                    notifications = getattr(result._summary, 'notifications', [])
+                    if notifications:
+                        # Check if warnings are about missing labels/relationships
+                        for notif in notifications:
+                            if hasattr(notif, 'description'):
+                                desc = str(notif.description).lower()
+                                if 'not available' in desc or 'missing' in desc:
+                                    has_empty_warnings = True
+                                    break
+
+                return concepts, has_empty_warnings
+        except Exception as e:
+            raise Exception(f"Failed to get document concepts: {e}")
