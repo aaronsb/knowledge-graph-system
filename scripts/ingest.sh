@@ -29,6 +29,7 @@ fi
 DOCUMENT_PATH=""
 ONTOLOGY_NAME=""
 RESUME=false
+YES=false
 TARGET_WORDS=1000
 MIN_WORDS=800
 MAX_WORDS=1500
@@ -45,6 +46,7 @@ Arguments:
 Options:
   -n, --name NAME           Ontology name for grouping documents (required)
   -r, --resume              Resume from checkpoint if available
+  -y, --yes                 Skip confirmation prompt
   --target-words N          Target words per chunk (default: 1000)
   --min-words N             Minimum words per chunk (default: 800)
   --max-words N             Maximum words per chunk (default: 1500)
@@ -77,6 +79,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -r|--resume)
             RESUME=true
+            shift
+            ;;
+        -y|--yes)
+            YES=true
             shift
             ;;
         --target-words)
@@ -157,6 +163,93 @@ echo -e "  Size: ${GREEN}$FILE_SIZE${NC}"
 echo -e "  Words: ${GREEN}$(printf "%'d" $WORD_COUNT)${NC}"
 echo -e "  Estimated chunks: ${GREEN}~$EST_CHUNKS${NC}"
 
+# Load .env for cost configuration
+if [ -f ".env" ]; then
+    source .env
+fi
+
+# Cost estimation
+echo -e "\n${BLUE}Estimated API Costs:${NC}"
+
+# Determine extraction model and cost
+AI_PROVIDER=${AI_PROVIDER:-openai}
+if [ "$AI_PROVIDER" = "anthropic" ]; then
+    EXTRACTION_MODEL=${ANTHROPIC_EXTRACTION_MODEL:-claude-sonnet-4-20250514}
+    EXTRACTION_COST_PER_M=${TOKEN_COST_CLAUDE_SONNET_4:-9.00}
+else
+    EXTRACTION_MODEL=${OPENAI_EXTRACTION_MODEL:-gpt-4o}
+    case $EXTRACTION_MODEL in
+        gpt-4o)
+            EXTRACTION_COST_PER_M=${TOKEN_COST_GPT4O:-6.25}
+            ;;
+        gpt-4o-mini)
+            EXTRACTION_COST_PER_M=${TOKEN_COST_GPT4O_MINI:-0.375}
+            ;;
+        o1-preview)
+            EXTRACTION_COST_PER_M=${TOKEN_COST_O1_PREVIEW:-30.00}
+            ;;
+        o1-mini)
+            EXTRACTION_COST_PER_M=${TOKEN_COST_O1_MINI:-5.50}
+            ;;
+        *)
+            EXTRACTION_COST_PER_M=${TOKEN_COST_GPT4O:-6.25}
+            ;;
+    esac
+fi
+
+# Determine embedding model and cost
+EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+case $EMBEDDING_MODEL in
+    text-embedding-3-large)
+        EMBEDDING_COST_PER_M=${TOKEN_COST_EMBEDDING_LARGE:-0.13}
+        ;;
+    *)
+        EMBEDDING_COST_PER_M=${TOKEN_COST_EMBEDDING_SMALL:-0.02}
+        ;;
+esac
+
+# Estimate extraction cost (chunks × avg 500-800 tokens per chunk)
+EXTRACTION_TOKENS_LOW=$((EST_CHUNKS * 500))
+EXTRACTION_TOKENS_HIGH=$((EST_CHUNKS * 800))
+
+# Calculate costs (multiply by 100 to avoid floating point, then divide)
+EXTRACTION_COST_LOW_CENTS=$(echo "($EXTRACTION_TOKENS_LOW * ${EXTRACTION_COST_PER_M%.*}00) / 1000000" | bc 2>/dev/null || echo "0")
+EXTRACTION_COST_HIGH_CENTS=$(echo "($EXTRACTION_TOKENS_HIGH * ${EXTRACTION_COST_PER_M%.*}00) / 1000000" | bc 2>/dev/null || echo "0")
+
+# Estimate embedding cost (5-8 concepts per chunk × 80-120 tokens per concept)
+CONCEPTS_LOW=$((EST_CHUNKS * 5))
+CONCEPTS_HIGH=$((EST_CHUNKS * 8))
+EMBEDDING_TOKENS_LOW=$((CONCEPTS_LOW * 80))
+EMBEDDING_TOKENS_HIGH=$((CONCEPTS_HIGH * 120))
+
+EMBEDDING_COST_LOW_CENTS=$(echo "($EMBEDDING_TOKENS_LOW * ${EMBEDDING_COST_PER_M%.*}00) / 1000000" | bc 2>/dev/null || echo "0")
+EMBEDDING_COST_HIGH_CENTS=$(echo "($EMBEDDING_TOKENS_HIGH * ${EMBEDDING_COST_PER_M%.*}00) / 1000000" | bc 2>/dev/null || echo "0")
+
+# Total cost in cents
+TOTAL_COST_LOW_CENTS=$((EXTRACTION_COST_LOW_CENTS + EMBEDDING_COST_LOW_CENTS))
+TOTAL_COST_HIGH_CENTS=$((EXTRACTION_COST_HIGH_CENTS + EMBEDDING_COST_HIGH_CENTS))
+
+# Convert to dollars (divide by 100)
+if command -v bc &> /dev/null; then
+    TOTAL_LOW=$(echo "scale=2; $TOTAL_COST_LOW_CENTS / 100" | bc)
+    TOTAL_HIGH=$(echo "scale=2; $TOTAL_COST_HIGH_CENTS / 100" | bc)
+
+    # Show costs with model names
+    echo -e "  Extraction (${EXTRACTION_MODEL}): ~${GREEN}\$${TOTAL_LOW}${NC}"
+    if [ "$TOTAL_HIGH" != "$TOTAL_LOW" ]; then
+        echo -e "  Embeddings (${EMBEDDING_MODEL}): included above"
+        echo -e "  ${YELLOW}Estimated total: \$${TOTAL_LOW} - \$${TOTAL_HIGH}${NC}"
+    else
+        echo -e "  ${YELLOW}Estimated total: ~\$${TOTAL_LOW}${NC}"
+    fi
+else
+    # Fallback if bc not available - rough estimate
+    TOTAL_APPROX=$((TOTAL_COST_LOW_CENTS / 100))
+    echo -e "  ${YELLOW}Estimated total: ~\$${TOTAL_APPROX}${NC}"
+fi
+
+echo -e "  ${BLUE}(Actual cost reported after ingestion)${NC}"
+
 # Check for existing checkpoint (keyed by filename, not ontology)
 if [ -f ".checkpoints/${FILENAME,,}.json" ]; then
     echo -e "\n${YELLOW}⚠ Checkpoint exists for this file${NC}"
@@ -169,9 +262,17 @@ if [ -f ".checkpoints/${FILENAME,,}.json" ]; then
 fi
 
 # Confirm
-if [ "$RESUME" = false ]; then
-    echo -e "\n${YELLOW}Press Enter to start ingestion (Ctrl+C to cancel)${NC}"
-    read
+if [ "$RESUME" = false ] && [ "$YES" = false ]; then
+    echo -e "\n${YELLOW}Press Enter to start ingestion (Esc to cancel)${NC}"
+
+    # Read single key press
+    read -s -n1 key
+
+    # Check if Escape key was pressed (ASCII 27 or \e)
+    if [ "$key" = $'\e' ]; then
+        echo -e "\n${RED}✗ Ingestion cancelled${NC}"
+        exit 0
+    fi
 fi
 
 # Build command (use -u for unbuffered output)
