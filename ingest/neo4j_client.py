@@ -513,15 +513,30 @@ class Neo4jClient:
                 emb1 = record["emb1"]
                 emb2 = record["emb2"]
 
+                if emb1 is None or emb2 is None:
+                    raise ValueError(f"One or both concepts do not have embeddings")
+
                 # Calculate cosine similarity
-                from numpy import dot
-                from numpy.linalg import norm
+                import numpy as np
+
+                # Convert embeddings to lists if needed (Neo4j sometimes returns them as other types)
+                if not isinstance(emb1, list):
+                    emb1 = list(emb1)
+                if not isinstance(emb2, list):
+                    emb2 = list(emb2)
+                if not isinstance(evidence_embedding, list):
+                    evidence_embedding = list(evidence_embedding)
+
+                # Convert embeddings to numpy arrays
+                evidence_emb = np.array(evidence_embedding, dtype=float)
+                emb1_arr = np.array(emb1, dtype=float)
+                emb2_arr = np.array(emb2, dtype=float)
 
                 def cosine_similarity(a, b):
-                    return float(dot(a, b) / (norm(a) * norm(b)))
+                    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
-                sim1 = cosine_similarity(evidence_embedding, emb1)
-                sim2 = cosine_similarity(evidence_embedding, emb2)
+                sim1 = cosine_similarity(evidence_emb, emb1_arr)
+                sim2 = cosine_similarity(evidence_emb, emb2_arr)
                 avg_sim = (sim1 + sim2) / 2
 
                 # Determine cognitive leap
