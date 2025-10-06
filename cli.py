@@ -67,9 +67,14 @@ class KnowledgeGraphCLI:
     def __init__(self):
         self.driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         self.openai = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+        # Neo4jClient for learned knowledge operations
+        from ingest.neo4j_client import Neo4jClient
+        self.client = Neo4jClient()
 
     def close(self):
         self.driver.close()
+        if hasattr(self, 'client'):
+            self.client.close()
 
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for text using OpenAI"""
@@ -661,6 +666,189 @@ class KnowledgeGraphCLI:
         finally:
             neo4j_client.close()
 
+    def learn_connect(
+        self,
+        from_concept_id: str,
+        to_concept_id: str,
+        evidence: str,
+        relationship_type: str,
+        creator: str,
+        auto_confirm: bool = False,
+        json_output: bool = False
+    ):
+        """Create a learned relationship between two concepts"""
+        from ingest.ai_providers import get_provider
+        from datetime import datetime
+
+        try:
+            # Generate embedding for evidence
+            print(f"{Colors.HEADER}Generating embedding for evidence...{Colors.ENDC}")
+            provider = get_provider()
+            embedding_result = provider.generate_embedding(evidence)
+
+            # Extract embedding vector (provider returns dict with 'embedding' key)
+            if isinstance(embedding_result, dict):
+                evidence_embedding = embedding_result['embedding']
+            else:
+                evidence_embedding = embedding_result
+
+            # Validate connection (smell test)
+            print(f"{Colors.HEADER}Validating connection...{Colors.ENDC}")
+            validation = self.client.validate_learned_connection(
+                evidence_embedding,
+                from_concept_id,
+                to_concept_id
+            )
+
+            if not json_output:
+                print(f"\n{Colors.OKBLUE}Validation Results:{Colors.ENDC}")
+                print(f"  Similarity to concept 1: {Colors.OKCYAN}{validation['similarity_to_concept1']:.2%}{Colors.ENDC}")
+                print(f"  Similarity to concept 2: {Colors.OKCYAN}{validation['similarity_to_concept2']:.2%}{Colors.ENDC}")
+                print(f"  Average similarity: {Colors.BOLD}{validation['avg_similarity']:.2%}{Colors.ENDC}")
+                print(f"  Cognitive leap: {Colors.WARNING if validation['cognitive_leap'] == 'HIGH' else Colors.OKGREEN}{validation['cognitive_leap']}{Colors.ENDC}")
+
+                if validation['cognitive_leap'] == 'HIGH':
+                    print(f"\n{Colors.WARNING}⚠️  Warning: Low similarity detected (unusual connection){Colors.ENDC}")
+                elif validation['cognitive_leap'] == 'LOW':
+                    print(f"\n{Colors.OKGREEN}✓ High similarity (obvious connection){Colors.ENDC}")
+
+            # Confirm before creating
+            if not auto_confirm and not json_output:
+                response = input(f"\n{Colors.BOLD}Create this learned relationship? [y/N]: {Colors.ENDC}")
+                if response.lower() != 'y':
+                    print(f"{Colors.WARNING}Cancelled.{Colors.ENDC}")
+                    return
+
+            # Generate unique learned ID
+            date_str = datetime.now().strftime('%Y-%m-%d')
+            # Count existing learned knowledge today to generate sequence number
+            existing = self.client.list_learned_knowledge(limit=1000)
+            today_count = sum(1 for item in existing if item['learned_id'].startswith(f'learned_{date_str}'))
+            learned_id = f'learned_{date_str}_{today_count+1:03d}'
+
+            # Create learned source
+            print(f"{Colors.HEADER}Creating learned source...{Colors.ENDC}")
+            source_node = self.client.create_learned_source(
+                source_id=learned_id,
+                evidence=evidence,
+                created_by=creator,
+                similarity_score=validation['avg_similarity'],
+                cognitive_leap=validation['cognitive_leap']
+            )
+
+            # Create relationship
+            print(f"{Colors.HEADER}Creating relationship...{Colors.ENDC}")
+            success = self.client.create_learned_relationship(
+                from_concept_id,
+                to_concept_id,
+                relationship_type,
+                learned_id
+            )
+
+            if json_output:
+                result = {
+                    "learned_id": learned_id,
+                    "from_concept_id": from_concept_id,
+                    "to_concept_id": to_concept_id,
+                    "relationship_type": relationship_type,
+                    "validation": validation,
+                    "created": success
+                }
+                print(json.dumps(result, indent=2))
+            else:
+                print(f"\n{Colors.OKGREEN}✓ Learned relationship created:{Colors.ENDC}")
+                print(f"  Learned ID: {Colors.OKCYAN}{learned_id}{Colors.ENDC}")
+                print(f"  Type: {Colors.BOLD}{relationship_type}{Colors.ENDC}")
+                print(f"  Creator: {Colors.BOLD}{creator}{Colors.ENDC}")
+
+        except Exception as e:
+            if json_output:
+                print(json.dumps({"error": str(e)}, indent=2))
+            else:
+                raise
+
+    def learn_list(
+        self,
+        creator: Optional[str] = None,
+        min_similarity: Optional[float] = None,
+        cognitive_leap: Optional[str] = None,
+        limit: int = 20,
+        offset: int = 0,
+        json_output: bool = False
+    ):
+        """List learned knowledge with filters"""
+        try:
+            results = self.client.list_learned_knowledge(
+                creator=creator,
+                min_similarity=min_similarity,
+                cognitive_leap=cognitive_leap,
+                limit=limit,
+                offset=offset
+            )
+
+            if json_output:
+                print(json.dumps({"total": len(results), "results": results}, indent=2))
+            else:
+                if not results:
+                    print(f"{Colors.WARNING}No learned knowledge found with specified filters.{Colors.ENDC}")
+                    return
+
+                print(f"{Colors.HEADER}Learned Knowledge ({len(results)} results):{Colors.ENDC}\n")
+
+                for item in results:
+                    leap_color = {
+                        'LOW': Colors.OKGREEN,
+                        'MEDIUM': Colors.OKCYAN,
+                        'HIGH': Colors.WARNING
+                    }.get(item['cognitive_leap'], Colors.ENDC)
+
+                    print(f"{Colors.BOLD}{item['learned_id']}{Colors.ENDC}")
+                    print(f"  Creator: {Colors.OKCYAN}{item['creator']}{Colors.ENDC}")
+                    print(f"  Created: {item['created_at'][:19]}")
+                    print(f"  Similarity: {item['similarity']:.2%}")
+                    print(f"  Cognitive Leap: {leap_color}{item['cognitive_leap']}{Colors.ENDC}")
+                    print(f"  Evidence: {item['evidence'][:80]}...")
+                    print()
+
+        except Exception as e:
+            if json_output:
+                print(json.dumps({"error": str(e)}, indent=2))
+            else:
+                raise
+
+    def learn_delete(
+        self,
+        learned_id: str,
+        auto_confirm: bool = False,
+        json_output: bool = False
+    ):
+        """Delete learned knowledge"""
+        try:
+            # Confirm deletion
+            if not auto_confirm and not json_output:
+                response = input(f"{Colors.WARNING}Delete learned knowledge '{learned_id}'? [y/N]: {Colors.ENDC}")
+                if response.lower() != 'y':
+                    print(f"{Colors.WARNING}Cancelled.{Colors.ENDC}")
+                    return
+
+            # Delete
+            result = self.client.delete_learned_knowledge(learned_id)
+
+            if json_output:
+                print(json.dumps(result, indent=2))
+            else:
+                if result['source_deleted'] == 0:
+                    print(f"{Colors.FAIL}Error: Learned knowledge '{learned_id}' not found.{Colors.ENDC}")
+                else:
+                    print(f"{Colors.OKGREEN}✓ Deleted learned knowledge '{learned_id}'{Colors.ENDC}")
+                    print(f"  Relationships deleted: {result['relationships_deleted']}")
+
+        except Exception as e:
+            if json_output:
+                print(json.dumps({"error": str(e)}, indent=2))
+            else:
+                raise
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -816,6 +1004,67 @@ Examples:
     viz_parser.add_argument('--type', choices=['graph', 'flowchart'], default='graph',
                            help='Diagram type (default: graph)')
 
+    # Learn command (knowledge synthesis)
+    learn_parser = subparsers.add_parser('learn',
+        help='Create and manage learned knowledge connections',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s connect chapter_01_chunk2_c56c2ab3 role-based-intelligence_chunk1_5ae79fc8 \\
+      --evidence "Both emphasize transparency through measurable signals" --creator aaron
+  %(prog)s list --creator aaron
+  %(prog)s list --cognitive-leap HIGH
+  %(prog)s delete learned_2025-10-06_001
+        """)
+    learn_subparsers = learn_parser.add_subparsers(dest='learn_command', help='Learn operations')
+
+    # learn connect
+    connect_learn_parser = learn_subparsers.add_parser('connect',
+        help='Create learned relationship between two concepts',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s concept_id_1 concept_id_2 --evidence "Rationale text"
+  %(prog)s concept_id_1 concept_id_2 --evidence "Text" --type BRIDGES --creator aaron
+        """)
+    connect_learn_parser.add_argument('from_concept_id', help='Starting concept ID')
+    connect_learn_parser.add_argument('to_concept_id', help='Target concept ID')
+    connect_learn_parser.add_argument('--evidence', required=True, help='Evidence/rationale for connection')
+    connect_learn_parser.add_argument('--type', default='LEARNED_CONNECTION',
+                                     help='Relationship type (default: LEARNED_CONNECTION)')
+    connect_learn_parser.add_argument('--creator', default=os.getenv('USER', 'cli-user'),
+                                     help='Creator identifier (default: current username)')
+
+    # learn list
+    list_learn_parser = learn_subparsers.add_parser('list',
+        help='List learned knowledge with optional filters',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s
+  %(prog)s --creator aaron
+  %(prog)s --min-similarity 0.8
+  %(prog)s --cognitive-leap HIGH
+  %(prog)s --limit 50
+        """)
+    list_learn_parser.add_argument('--creator', help='Filter by creator')
+    list_learn_parser.add_argument('--min-similarity', type=float, help='Minimum similarity score')
+    list_learn_parser.add_argument('--cognitive-leap', choices=['LOW', 'MEDIUM', 'HIGH'],
+                                   help='Filter by cognitive leap')
+    list_learn_parser.add_argument('--limit', type=int, default=20, help='Maximum results (default: 20)')
+    list_learn_parser.add_argument('--offset', type=int, default=0, help='Results offset (default: 0)')
+
+    # learn delete
+    delete_learn_parser = learn_subparsers.add_parser('delete',
+        help='Delete learned knowledge (requires confirmation)',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s learned_2025-10-06_001
+  %(prog)s learned_2025-10-06_001 --yes
+        """)
+    delete_learn_parser.add_argument('learned_id', help='Learned source ID to delete')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -856,6 +1105,30 @@ Examples:
                 cli.database_health(json_output=args.json)
         elif args.command == 'visualize':
             cli.visualize(args.concept_ids, args.depth, args.type)
+        elif args.command == 'learn':
+            if args.learn_command == 'connect':
+                cli.learn_connect(
+                    args.from_concept_id,
+                    args.to_concept_id,
+                    args.evidence,
+                    args.type,
+                    args.creator,
+                    args.yes,
+                    args.json
+                )
+            elif args.learn_command == 'list':
+                cli.learn_list(
+                    args.creator,
+                    args.min_similarity,
+                    args.cognitive_leap,
+                    args.limit,
+                    args.offset,
+                    args.json
+                )
+            elif args.learn_command == 'delete':
+                cli.learn_delete(args.learned_id, args.yes, args.json)
+            else:
+                learn_parser.print_help()
     except Exception as e:
         print(f"{Colors.FAIL}Error: {e}{Colors.ENDC}", file=sys.stderr)
         sys.exit(1)
