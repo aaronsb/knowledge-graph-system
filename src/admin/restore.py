@@ -115,13 +115,33 @@ class RestoreCLI:
                 Console.warning("Restore cancelled")
                 sys.exit(0)
 
-        # Note about external dependencies (informational only)
-        restitch_plan = None
+        # Handle external dependencies - MUST choose stitch or prune
+        restitch_action = None
         if assessment["external_dependencies"]["concepts"]:
-            Console.info("\nℹ This backup has external concept dependencies")
-            Console.info("  These relationships will be left dangling after restore")
-            Console.info("  You can reconnect them later using: python -m src.admin.stitch")
-            Console.info("  Or leave isolated for strict ontology boundaries")
+            Console.warning("\n⚠ This backup has external concept dependencies")
+            Console.warning("  Dangling relationships WILL break graph integrity")
+            Console.warning("  You MUST choose how to handle them:")
+            print("")
+            print("  1) Prune - Remove dangling relationships (keep isolated)")
+            print("  2) Stitch later - Defer to manual stitching tool")
+            print("  3) Cancel restore")
+            print("")
+            choice = input("Select option [1-3]: ").strip()
+
+            if choice == "1":
+                restitch_action = "prune"
+                Console.info("\n✓ Will prune dangling relationships after restore")
+            elif choice == "2":
+                restitch_action = "defer"
+                Console.warning("\n⚠ WARNING: Graph will have dangling refs until you run:")
+                Console.info(f"  python -m src.admin.stitch --backup {backup_file}")
+                Console.info("  Or: python -m src.admin.prune")
+                if not Console.confirm("\nProceed with restore (graph will be broken)?"):
+                    Console.warning("Restore cancelled")
+                    sys.exit(0)
+            else:
+                Console.warning("Restore cancelled")
+                sys.exit(0)
 
         # Check for conflicts
         if backup_data.get('ontology'):
@@ -177,20 +197,27 @@ class RestoreCLI:
             Console.info(f"  Instances: {import_stats['instances_created']}")
             Console.info(f"  Relationships: {import_stats['relationships_created']}")
 
-            # Apply semantic re-stitching if requested
-            if restitch_plan:
-                Console.section("Semantic Re-stitching")
+            # Handle dangling relationships based on user choice
+            if restitch_action == "prune":
+                Console.section("Pruning Dangling Relationships")
+                Console.info("Removing relationships to external concepts...")
+
                 with self.conn.session() as session:
-                    matcher = ConceptMatcher(self.conn)
-                    restitch_stats = matcher.execute_restitch(
-                        restitch_plan,
+                    prune_result = DatabaseIntegrity.prune_dangling_relationships(
                         session,
-                        create_placeholders=False
+                        ontology=backup_data.get('ontology'),
+                        dry_run=False
                     )
 
-                Console.success(f"\n✓ Re-stitched {restitch_stats['restitched']} relationships")
-                if restitch_stats["skipped"] > 0:
-                    Console.warning(f"  ⚠ Skipped {restitch_stats['skipped']} unmatched references")
+                if prune_result["total_pruned"] > 0:
+                    Console.success(f"✓ Pruned {prune_result['total_pruned']} dangling relationships")
+                    Console.info("  Graph is now clean and isolated")
+                else:
+                    Console.success("✓ No dangling relationships found")
+
+            elif restitch_action == "defer":
+                Console.warning("\n⚠ Graph has dangling relationships - integrity compromised")
+                Console.warning("  Run stitcher or pruner immediately!")
 
             # Validate integrity after restore
             Console.info("\nValidating database integrity...")
@@ -229,10 +256,15 @@ class RestoreCLI:
             else:
                 Console.success("✓ No integrity issues detected")
 
-            # Show tips, mention stitcher if external deps exist
-            if assessment["external_dependencies"]["concepts"]:
-                self._show_tips(backup_file=backup_file)
+            # Show tips based on action taken
+            if restitch_action == "defer":
+                # URGENT: graph is broken
+                self._show_tips(backup_file=backup_file, urgent=True)
+            elif assessment["external_dependencies"]["concepts"]:
+                # Pruned - graph is clean
+                self._show_tips(backup_file=None, urgent=False)
             else:
+                # No external deps
                 self._show_tips()
 
         except Exception as e:
@@ -241,17 +273,25 @@ class RestoreCLI:
             traceback.print_exc()
             sys.exit(1)
 
-    def _show_tips(self, backup_file: Optional[Path] = None):
+    def _show_tips(self, backup_file: Optional[Path] = None, urgent: bool = False):
         """Show helpful tips"""
-        Console.warning("\n💡 Next steps:")
-        print("  • Verify data: python cli.py database stats")
-        print("  • Query concepts: python cli.py search \"your query\"")
-        print("  • View in browser: http://localhost:7474")
+        if urgent:
+            Console.error("\n⚠ URGENT: Graph integrity compromised!")
+            Console.error("  Dangling relationships will break traversal queries")
+            Console.warning("\nRun ONE of these immediately:")
+            print(f"  {Colors.FAIL}python -m src.admin.stitch --backup {backup_file}{Colors.ENDC}")
+            print(f"  {Colors.FAIL}python -m src.admin.prune{Colors.ENDC}")
+            Console.warning("\nUntil you do, the graph is in an inconsistent state!")
+        else:
+            Console.warning("\n💡 Next steps:")
+            print("  • Verify data: python cli.py database stats")
+            print("  • Query concepts: python cli.py search \"your query\"")
+            print("  • View in browser: http://localhost:7474")
 
-        if backup_file:
-            Console.info("\nℹ Optional: Reconnect external relationships using semantic stitcher")
-            print(f"  {Colors.OKCYAN}python -m src.admin.stitch --backup {backup_file}{Colors.ENDC}")
-            print("  (Or leave isolated if you prefer strict ontology boundaries)")
+            if backup_file:
+                Console.info("\nℹ Optional: Reconnect external relationships using semantic stitcher")
+                print(f"  {Colors.OKCYAN}python -m src.admin.stitch --backup {backup_file}{Colors.ENDC}")
+                print("  (Or leave isolated if you prefer strict ontology boundaries)")
 
     def restore_non_interactive(self, backup_file: str, overwrite: bool = False):
         """Non-interactive restore for automation"""

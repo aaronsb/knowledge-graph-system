@@ -398,3 +398,140 @@ class DatabaseIntegrity:
             result = session.run(query).single()
 
         return result["repairs"]
+
+    @staticmethod
+    def prune_dangling_relationships(
+        session: Session,
+        ontology: Optional[str] = None,
+        dry_run: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Remove dangling relationships that point to non-existent concepts
+
+        This "trims the torn fabric" by removing relationships where either the
+        source or target concept no longer exists in the database.
+
+        Args:
+            session: Neo4j session
+            ontology: Optional ontology to scope pruning
+            dry_run: If True, only report what would be pruned
+
+        Returns:
+            Dictionary with pruning statistics and pruned relationships
+        """
+        result = {
+            "dangling_relationships": [],
+            "total_pruned": 0,
+            "by_type": {}
+        }
+
+        # Find dangling relationships
+        if ontology:
+            # Find relationships from concepts in this ontology pointing to non-existent concepts
+            query = """
+                MATCH (c1:Concept)-[:APPEARS_IN]->(:Source {document: $ontology})
+                MATCH (c1)-[r]->(c2:Concept)
+                WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
+                RETURN type(r) as rel_type,
+                       c1.concept_id as from_id,
+                       c1.label as from_label,
+                       id(c2) as to_node_id,
+                       c2.concept_id as to_id,
+                       c2.label as to_label,
+                       id(r) as rel_id
+            """
+            dangling = session.run(query, ontology=ontology)
+        else:
+            # Find all dangling relationships in database
+            query = """
+                MATCH (c1:Concept)-[r]->(c2:Concept)
+                WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
+                   OR NOT EXISTS((c1)-[:APPEARS_IN]->(:Source))
+                RETURN type(r) as rel_type,
+                       c1.concept_id as from_id,
+                       c1.label as from_label,
+                       c2.concept_id as to_id,
+                       c2.label as to_label,
+                       id(r) as rel_id
+            """
+            dangling = session.run(query)
+
+        # Collect dangling relationships
+        for record in dangling:
+            rel_info = {
+                "type": record["rel_type"],
+                "from_id": record["from_id"],
+                "from_label": record["from_label"],
+                "to_id": record["to_id"],
+                "to_label": record["to_label"],
+                "rel_id": record["rel_id"]
+            }
+            result["dangling_relationships"].append(rel_info)
+
+            # Count by type
+            rel_type = record["rel_type"]
+            if rel_type not in result["by_type"]:
+                result["by_type"][rel_type] = 0
+            result["by_type"][rel_type] += 1
+
+        result["total_pruned"] = len(result["dangling_relationships"])
+
+        # Delete if not dry-run
+        if not dry_run and result["total_pruned"] > 0:
+            if ontology:
+                delete_query = """
+                    MATCH (c1:Concept)-[:APPEARS_IN]->(:Source {document: $ontology})
+                    MATCH (c1)-[r]->(c2:Concept)
+                    WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
+                    DELETE r
+                    RETURN count(r) as deleted
+                """
+                session.run(delete_query, ontology=ontology)
+            else:
+                delete_query = """
+                    MATCH (c1:Concept)-[r]->(c2:Concept)
+                    WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
+                       OR NOT EXISTS((c1)-[:APPEARS_IN]->(:Source))
+                    DELETE r
+                    RETURN count(r) as deleted
+                """
+                session.run(delete_query)
+
+        return result
+
+    @staticmethod
+    def print_pruning_report(pruning_result: Dict[str, Any], dry_run: bool = False):
+        """Print pruning report to console"""
+        if dry_run:
+            Console.section("Pruning Preview (Dry-Run)")
+        else:
+            Console.section("Pruning Results")
+
+        total = pruning_result["total_pruned"]
+        if total == 0:
+            Console.success("✓ No dangling relationships found")
+            return
+
+        Console.warning(f"Found {total} dangling relationships")
+
+        # By type
+        Console.info("\nBy relationship type:")
+        for rel_type, count in pruning_result["by_type"].items():
+            Console.key_value(f"  {rel_type}", str(count), Colors.BOLD, Colors.WARNING)
+
+        # Sample
+        Console.info("\nSample dangling relationships:")
+        for i, rel in enumerate(pruning_result["dangling_relationships"][:5], 1):
+            print(f"\n  {i}. {Colors.OKCYAN}{rel['from_label']}{Colors.ENDC}")
+            print(f"     --[{Colors.WARNING}{rel['type']}{Colors.ENDC}]-->")
+            print(f"     {Colors.FAIL}{rel['to_label']} (DANGLING){Colors.ENDC}")
+
+        if total > 5:
+            Console.info(f"\n  ... and {total - 5} more")
+
+        if dry_run:
+            Console.warning("\n[DRY-RUN] No changes applied")
+            Console.info("  Run without --dry-run to prune these relationships")
+        else:
+            Console.success(f"\n✓ Pruned {total} dangling relationships")
+            Console.info("  Graph is now clean - no broken traversal paths")
