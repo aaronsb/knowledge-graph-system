@@ -81,7 +81,10 @@ class OpenAIProvider(AIProvider):
         system_prompt: str,
         existing_concepts: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
-        """Extract concepts using OpenAI GPT models"""
+        """Extract concepts using OpenAI GPT models
+
+        Returns dict with 'result' (extracted data) and 'tokens' (usage info)
+        """
 
         # Format existing concepts for context
         existing_str = "None"
@@ -113,19 +116,41 @@ class OpenAIProvider(AIProvider):
             result.setdefault("instances", [])
             result.setdefault("relationships", [])
 
-            return result
+            # Extract token usage
+            tokens = 0
+            if hasattr(response, 'usage') and response.usage:
+                tokens = response.usage.total_tokens
+
+            return {
+                "result": result,
+                "tokens": tokens
+            }
 
         except Exception as e:
             raise Exception(f"OpenAI concept extraction failed: {e}")
 
-    def generate_embedding(self, text: str) -> List[float]:
-        """Generate embedding using OpenAI embedding models"""
+    def generate_embedding(self, text: str) -> Dict[str, Any]:
+        """Generate embedding using OpenAI embedding models
+
+        Returns dict with 'embedding' (vector) and 'tokens' (usage info)
+        """
         try:
             response = self.client.embeddings.create(
                 model=self.embedding_model,
                 input=text
             )
-            return response.data[0].embedding
+
+            embedding = response.data[0].embedding
+
+            # Extract token usage
+            tokens = 0
+            if hasattr(response, 'usage') and response.usage:
+                tokens = response.usage.total_tokens
+
+            return {
+                "embedding": embedding,
+                "tokens": tokens
+            }
 
         except Exception as e:
             raise Exception(f"OpenAI embedding generation failed: {e}")
@@ -205,7 +230,10 @@ class AnthropicProvider(AIProvider):
         system_prompt: str,
         existing_concepts: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
-        """Extract concepts using Anthropic Claude models"""
+        """Extract concepts using Anthropic Claude models
+
+        Returns dict with 'result' (extracted data) and 'tokens' (usage info)
+        """
 
         # Format existing concepts for context
         existing_str = "None"
@@ -238,7 +266,15 @@ class AnthropicProvider(AIProvider):
             result.setdefault("instances", [])
             result.setdefault("relationships", [])
 
-            return result
+            # Extract token usage from Anthropic response
+            tokens = 0
+            if hasattr(message, 'usage') and message.usage:
+                tokens = message.usage.input_tokens + message.usage.output_tokens
+
+            return {
+                "result": result,
+                "tokens": tokens
+            }
 
         except Exception as e:
             raise Exception(f"Anthropic concept extraction failed: {e}")

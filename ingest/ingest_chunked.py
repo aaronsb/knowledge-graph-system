@@ -44,6 +44,8 @@ class ChunkedIngestionStats:
         self.concepts_linked = 0
         self.instances_created = 0
         self.relationships_created = 0
+        self.extraction_tokens = 0
+        self.embedding_tokens = 0
 
     def to_dict(self) -> Dict[str, int]:
         """Convert stats to dictionary."""
@@ -53,7 +55,9 @@ class ChunkedIngestionStats:
             "concepts_created": self.concepts_created,
             "concepts_linked": self.concepts_linked,
             "instances_created": self.instances_created,
-            "relationships_created": self.relationships_created
+            "relationships_created": self.relationships_created,
+            "extraction_tokens": self.extraction_tokens,
+            "embedding_tokens": self.embedding_tokens
         }
 
     def from_dict(self, data: Dict[str, int]) -> None:
@@ -64,6 +68,8 @@ class ChunkedIngestionStats:
         self.concepts_linked = data.get("concepts_linked", 0)
         self.instances_created = data.get("instances_created", 0)
         self.relationships_created = data.get("relationships_created", 0)
+        self.extraction_tokens = data.get("extraction_tokens", 0)
+        self.embedding_tokens = data.get("embedding_tokens", 0)
 
     def print_summary(self):
         """Print ingestion summary."""
@@ -76,6 +82,28 @@ class ChunkedIngestionStats:
         print(f"Concepts linked (reuse): {self.concepts_linked}")
         print(f"Instance nodes created:  {self.instances_created}")
         print(f"Relationships created:   {self.relationships_created}")
+
+        if self.extraction_tokens > 0 or self.embedding_tokens > 0:
+            print()
+            print("Token Usage:")
+            if self.extraction_tokens > 0:
+                print(f"  Extraction:            {self.extraction_tokens:,} tokens")
+            if self.embedding_tokens > 0:
+                print(f"  Embeddings:            {self.embedding_tokens:,} tokens")
+
+            total_tokens = self.extraction_tokens + self.embedding_tokens
+            print(f"  Total:                 {total_tokens:,} tokens")
+
+            # Estimate cost (approximate pricing)
+            # GPT-4o: ~$5/1M tokens (average of input/output)
+            # Embeddings: $0.02/1M tokens
+            extraction_cost = (self.extraction_tokens / 1_000_000) * 5.0
+            embedding_cost = (self.embedding_tokens / 1_000_000) * 0.02
+            total_cost = extraction_cost + embedding_cost
+
+            if total_cost > 0:
+                print(f"  Estimated cost:        ${total_cost:.4f}")
+
         print("=" * 60)
 
 
@@ -130,11 +158,15 @@ def process_chunk(
 
     # Step 2: Extract concepts via LLM (with context from recent concepts)
     try:
-        extraction = extract_concepts(
+        extraction_response = extract_concepts(
             text=chunk.text,
             source_id=source_id,
             existing_concepts=existing_concepts
         )
+        extraction = extraction_response["result"]
+        extraction_tokens = extraction_response.get("tokens", 0)
+        stats.extraction_tokens += extraction_tokens
+
         print(f"  ✓ Extracted {len(extraction['concepts'])} concepts, "
               f"{len(extraction['instances'])} instances, "
               f"{len(extraction['relationships'])} relationships")
@@ -165,7 +197,10 @@ def process_chunk(
 
         # Generate embedding
         try:
-            embedding = generate_embedding(label)
+            embedding_response = generate_embedding(label)
+            embedding = embedding_response["embedding"]
+            embedding_tokens = embedding_response.get("tokens", 0)
+            stats.embedding_tokens += embedding_tokens
         except Exception as e:
             failed_concepts.append({"label": label, "reason": f"embedding: {e}"})
             if verbose:
