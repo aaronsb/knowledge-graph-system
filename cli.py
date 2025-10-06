@@ -18,7 +18,9 @@ Usage:
     python cli.py ontology info "My Ontology"
     python cli.py ontology files "My Ontology"
     python cli.py ontology delete "My Ontology"
-    python cli.py stats
+    python cli.py database stats
+    python cli.py database info
+    python cli.py database health
     python cli.py visualize concept_005 --depth 1 | mmm
 """
 
@@ -481,7 +483,7 @@ class KnowledgeGraphCLI:
                     print(f"{Colors.OKGREEN}✓ Cleaned up {orphaned} orphaned concepts{Colors.ENDC}")
                 print(f"\n{Colors.OKGREEN}Ontology '{ontology_name}' successfully deleted{Colors.ENDC}")
 
-    def show_stats(self, json_output: bool = False):
+    def database_stats(self, json_output: bool = False):
         """Show database statistics"""
         with self.driver.session() as session:
             # Node counts
@@ -531,6 +533,114 @@ class KnowledgeGraphCLI:
                 for rel in rel_type_list:
                     print(f"  {rel['rel_type']}: {Colors.OKGREEN}{rel['count']}{Colors.ENDC}")
 
+    def database_info(self, json_output: bool = False):
+        """Show database connection information"""
+        info = {
+            "uri": NEO4J_URI,
+            "user": NEO4J_USER,
+            "connected": False,
+            "version": None
+        }
+
+        try:
+            with self.driver.session() as session:
+                result = session.run("CALL dbms.components() YIELD name, versions, edition")
+                component = result.single()
+                if component:
+                    info["connected"] = True
+                    info["version"] = component["versions"][0] if component["versions"] else None
+                    info["edition"] = component["edition"]
+        except Exception as e:
+            info["error"] = str(e)
+
+        if json_output:
+            print(json.dumps(info, indent=2))
+            return
+
+        print(f"{Colors.HEADER}Database Connection Info{Colors.ENDC}\n")
+        print(f"{Colors.BOLD}URI:{Colors.ENDC} {info['uri']}")
+        print(f"{Colors.BOLD}User:{Colors.ENDC} {info['user']}")
+
+        if info["connected"]:
+            print(f"{Colors.BOLD}Status:{Colors.ENDC} {Colors.OKGREEN}Connected{Colors.ENDC}")
+            if info.get("version"):
+                print(f"{Colors.BOLD}Version:{Colors.ENDC} {info['version']}")
+            if info.get("edition"):
+                print(f"{Colors.BOLD}Edition:{Colors.ENDC} {info['edition']}")
+        else:
+            print(f"{Colors.BOLD}Status:{Colors.ENDC} {Colors.FAIL}Disconnected{Colors.ENDC}")
+            if info.get("error"):
+                print(f"{Colors.FAIL}Error:{Colors.ENDC} {info['error']}")
+
+    def database_health(self, json_output: bool = False):
+        """Check database health and connectivity"""
+        health = {
+            "status": "unknown",
+            "responsive": False,
+            "checks": {}
+        }
+
+        try:
+            with self.driver.session() as session:
+                # Check basic connectivity
+                result = session.run("RETURN 1 as ping")
+                if result.single()["ping"] == 1:
+                    health["responsive"] = True
+                    health["checks"]["connectivity"] = "ok"
+
+                # Check indexes
+                indexes = session.run("SHOW INDEXES")
+                index_count = len(list(indexes))
+                health["checks"]["indexes"] = {"count": index_count, "status": "ok" if index_count > 0 else "warning"}
+
+                # Check constraints
+                constraints = session.run("SHOW CONSTRAINTS")
+                constraint_count = len(list(constraints))
+                health["checks"]["constraints"] = {"count": constraint_count, "status": "ok" if constraint_count > 0 else "warning"}
+
+                # Overall status
+                if health["responsive"] and index_count > 0:
+                    health["status"] = "healthy"
+                elif health["responsive"]:
+                    health["status"] = "degraded"
+                else:
+                    health["status"] = "unhealthy"
+
+        except Exception as e:
+            health["status"] = "unhealthy"
+            health["error"] = str(e)
+
+        if json_output:
+            print(json.dumps(health, indent=2))
+            return
+
+        print(f"{Colors.HEADER}Database Health Check{Colors.ENDC}\n")
+
+        status_color = Colors.OKGREEN if health["status"] == "healthy" else Colors.WARNING if health["status"] == "degraded" else Colors.FAIL
+        print(f"{Colors.BOLD}Status:{Colors.ENDC} {status_color}{health['status'].upper()}{Colors.ENDC}")
+
+        if health["responsive"]:
+            print(f"{Colors.BOLD}Responsive:{Colors.ENDC} {Colors.OKGREEN}Yes{Colors.ENDC}")
+        else:
+            print(f"{Colors.BOLD}Responsive:{Colors.ENDC} {Colors.FAIL}No{Colors.ENDC}")
+
+        if health.get("checks"):
+            print(f"\n{Colors.BOLD}Checks:{Colors.ENDC}")
+            for check_name, check_data in health["checks"].items():
+                if isinstance(check_data, dict):
+                    check_status = check_data.get("status", "unknown")
+                    check_color = Colors.OKGREEN if check_status == "ok" else Colors.WARNING
+                    print(f"  {check_name}: {check_color}{check_status}{Colors.ENDC}", end="")
+                    if check_data.get("count") is not None:
+                        print(f" ({check_data['count']})")
+                    else:
+                        print()
+                else:
+                    print(f"  {check_name}: {Colors.OKGREEN}{check_data}{Colors.ENDC}")
+
+        if health.get("error"):
+            print(f"\n{Colors.FAIL}Error:{Colors.ENDC} {health['error']}")
+
     def visualize(self, concept_ids: List[str], depth: int = 1, diagram_type: str = 'graph'):
         """Generate Mermaid diagram for concept(s)"""
         from ingest.neo4j_client import Neo4jClient
@@ -568,7 +678,9 @@ Examples:
   %(prog)s ontology delete "My Ontology"
   %(prog)s --yes ontology delete "My Ontology"  # Skip confirmation
   %(prog)s --json ontology list  # JSON output for tool integration
-  %(prog)s stats
+  %(prog)s database stats
+  %(prog)s database info
+  %(prog)s database health
         """
     )
 
@@ -621,8 +733,18 @@ Examples:
     delete_parser = ontology_subparsers.add_parser('delete', help='Delete an ontology and all its data')
     delete_parser.add_argument('name', help='Ontology name')
 
-    # Stats command
-    subparsers.add_parser('stats', help='Show database statistics')
+    # Database command group
+    database_parser = subparsers.add_parser('database', help='Database operations and information')
+    database_subparsers = database_parser.add_subparsers(dest='database_command', help='Database operations')
+
+    # database stats
+    database_subparsers.add_parser('stats', help='Show database statistics')
+
+    # database info
+    database_subparsers.add_parser('info', help='Show database connection information')
+
+    # database health
+    database_subparsers.add_parser('health', help='Check database health and connectivity')
 
     # Visualize command
     viz_parser = subparsers.add_parser('visualize', help='Generate Mermaid diagram for concept(s)')
@@ -660,8 +782,15 @@ Examples:
                 cli.ontology_files(args.name, json_output=args.json)
             elif args.ontology_command == 'delete':
                 cli.ontology_delete(args.name, force=args.yes, json_output=args.json)
-        elif args.command == 'stats':
-            cli.show_stats(json_output=args.json)
+        elif args.command == 'database':
+            if not args.database_command:
+                parser.error("database command requires a subcommand (stats, info, health)")
+            if args.database_command == 'stats':
+                cli.database_stats(json_output=args.json)
+            elif args.database_command == 'info':
+                cli.database_info(json_output=args.json)
+            elif args.database_command == 'health':
+                cli.database_health(json_output=args.json)
         elif args.command == 'visualize':
             cli.visualize(args.concept_ids, args.depth, args.type)
     except Exception as e:

@@ -115,6 +115,7 @@ python cli.py search "your query here"
 python cli.py details <concept-id>
 python cli.py ontology list  # List all ontologies
 python cli.py ontology info "My Ontology"  # View ontology details
+python cli.py database stats  # Database statistics
 python cli.py --json ontology list  # JSON output for tool integration
 ```
 
