@@ -6,14 +6,18 @@
 
 ## What We've Built (Honest Assessment)
 
-**TL;DR:** This is a **well-executed synthesis** of existing techniques (LLM extraction + graph storage + vector search) inspired by GraphRAG research, with some genuinely novel implementation details (graph-aware chunking). We're not inventing GraphRAG—we're exploring the space and discovering useful patterns.
+**TL;DR:** This is a **synthesis** of existing techniques (LLM extraction + graph storage + vector search) inspired by GraphRAG research. We're not inventing GraphRAG—we're exploring the space and trying patterns we haven't seen documented elsewhere.
 
 📊 **[Read Full Technical Assessment](docs/ASSESSMENT.md)** - Honest self-assessment of novelty vs standard practice, comparisons to Microsoft GraphRAG/LightRAG, and future directions *(Oct 5, 2025)*
 
-**Novel Implementation Details:**
-- **Graph-aware chunking** - feeds recent concepts back to LLM during extraction for better cross-chunk relationships
+**The Main Pattern (Inspired by Coding Agents):**
+- **Iterative graph traversal during upsert** - The graph serves as both OUTPUT and ACTIVE INPUT during ingestion. Each chunk queries recent concepts → feeds to LLM → extracts new concepts → upserts to graph → next chunk uses enriched graph. Similar to how coding agents replay conversation context as they generate code.
+- We haven't found others doing this specific pattern, but we don't yet know if it's more effective than batch processing approaches.
+- Observationally: hit rate goes from 0% (chunk 1) to 83% (chunk 15) as the graph provides growing context.
+
+**Supporting Implementation:**
 - **Instance-level evidence** - three-tier provenance model (Quote → Instance → Concept → Source)
-- **Real-time deduplication** - concepts merge automatically during ingestion via vector similarity
+- **Real-time deduplication** - concepts merge during ingestion, feeding back into the traversal loop
 
 **What We're Missing (and exploring next):**
 - Community detection & hierarchical summaries (Microsoft GraphRAG)

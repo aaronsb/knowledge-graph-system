@@ -5,9 +5,9 @@
 
 ## TL;DR
 
-This is a **well-executed synthesis** of existing techniques (LLM extraction + graph storage + vector search) with **some genuinely novel implementation details** (graph-aware chunking). It's not research-novel, but it's a working, production-quality system that explores what happens when you combine these approaches thoughtfully.
+This is a **synthesis** of existing techniques (LLM extraction + graph storage + vector search) with an **iterative graph traversal pattern during upsert** that we haven't found documented elsewhere. The graph serves as both output AND active input—it provides growing context AS documents are ingested, not after. Inspired by how coding agents replay conversation context as they generate code.
 
-We're not inventing GraphRAG. We're building a practical implementation and discovering useful patterns along the way.
+We're not inventing GraphRAG. We're exploring the space and trying patterns to see what works.
 
 ---
 
@@ -27,13 +27,18 @@ A knowledge graph system that:
 
 ## What's Novel vs What's Standard Practice
 
-### ✨ Novel Implementation Details
+### ✨ Patterns We Haven't Found Documented Elsewhere
 
-**1. Graph-Aware Chunking**
-- **What it is:** Query recent concepts from the graph BEFORE processing new chunks, feed this context to the LLM during extraction
-- **Why it matters:** Helps LLM detect cross-chunk relationships instead of treating each chunk in isolation
-- **Research comparison:** Microsoft GraphRAG does community detection POST-extraction. LightRAG has dual-level retrieval. Neither feeds graph context back into the extraction phase.
-- **Status:** We haven't seen this specific pattern documented. It's a genuine insight.
+**1. Iterative Graph Traversal During Upsert**
+- **What it is:** The graph serves as both OUTPUT and ACTIVE INPUT during ingestion. Each chunk queries recent concepts → feeds them to LLM → extracts new concepts → upserts to graph → next chunk uses the enriched graph. A self-reinforcing feedback loop.
+- **The mechanism:**
+  - Chunk 1: Empty graph → LLM works in isolation
+  - Chunk 2: Query recent concepts → LLM has context → better relationship detection
+  - Chunk 15: Dense graph → 83% hit rate → concepts automatically link across chunks
+  - The graph provides growing context AS the document is ingested, not after
+- **Inspiration:** Coding agents that replay entire conversation context as they generate code
+- **Research comparison:** Microsoft GraphRAG does extraction → THEN post-processing. LightRAG has dual-level retrieval but extraction is batch-oriented. Neither makes the graph part of the extraction loop in real-time.
+- **Status:** We haven't found this specific pattern documented. We don't yet know if it's more effective than batch approaches—observationally it seems to help with cross-chunk relationships.
 
 **2. Instance-Level Evidence Granularity**
 - **What it is:** Explicit `Instance` nodes creating a three-tier evidence model: `Quote → Instance → Concept → Source`
@@ -42,10 +47,10 @@ A knowledge graph system that:
 - **Status:** More granular than typical implementations we found.
 
 **3. Real-Time Cross-Chunk Deduplication**
-- **What it is:** Vector similarity matching DURING ingestion, concepts merge as they're created
-- **Why it matters:** Cross-document concept synthesis happens automatically during ingestion, not as post-processing
-- **Research comparison:** LightRAG has incremental updates, but this real-time deduplication approach is tighter integration.
-- **Status:** Implementation detail that works well in practice.
+- **What it is:** Vector similarity matching DURING ingestion, concepts merge as they're created. Part of the iterative traversal loop.
+- **Why it matters:** Cross-document concept synthesis happens automatically during ingestion, not as post-processing. The deduplication feeds back into the graph context for subsequent chunks.
+- **Research comparison:** LightRAG has incremental updates, but this real-time deduplication within the traversal loop creates tighter integration.
+- **Status:** Implementation detail that compounds the value of the iterative traversal pattern.
 
 ### ✅ Standard Practice (Well-Executed)
 
@@ -246,10 +251,12 @@ After honest assessment, here's what we think is actually valuable:
 
 ## What We Learned Building This
 
-**1. Graph-Aware Chunking Works**
-- Feeding recent concepts to LLM improves relationship detection
-- Cross-chunk concept linking becomes more accurate
-- The feedback loop is worth the complexity
+**1. Iterative Graph Traversal During Upsert Shows Promise**
+- Making the graph an active participant in extraction (not just the output) creates a feedback loop
+- The graph provides more context with each chunk: 0% hit rate → 83% hit rate by chunk 15
+- Cross-chunk relationships seem to improve because LLM sees growing context
+- The feedback loop changes ingestion from linear processing to iterative knowledge building
+- We don't yet know if this is more effective than batch approaches, but observationally it seems helpful
 
 **2. Evidence Granularity Matters**
 - Being able to trace back to exact quotes is valuable
@@ -347,20 +354,18 @@ Full research compiled in:
 
 ## Conclusion
 
-**What we've built:** A practical, working knowledge graph system with some clever implementation details.
+**What we've built:** A working knowledge graph system that combines existing techniques with an iterative graph traversal pattern during upsert.
 
 **What we haven't built:** A fundamentally new paradigm or research breakthrough.
 
-**What matters:** It works, it's useful, and it explores an important question (do graphs improve RAG?) with honest execution.
+**What matters:** It works, and it explores an important question (do graphs improve RAG?) through practical experimentation.
 
-**The insight:** Graph-aware chunking is genuinely novel and valuable. Everything else is synthesis, but good synthesis has value too.
+**The main pattern:** Iterative graph traversal during upsert—making the graph both output AND active input during extraction. Inspired by how coding agents work. We haven't found this specific pattern documented elsewhere, but we don't yet know if it's more effective than batch processing. Observationally, cross-chunk relationships seem to improve as the graph provides growing context.
 
-**Our contribution:** Not novelty. Execution, exploration, and documentation of what works in practice.
+**Our contribution:** Not innovation. Exploration of a pattern we tried, plus documentation of what we found.
 
-And that's perfectly okay.
+And that's okay.
 
 ---
-
-*"Well-executed synthesis > poorly-executed novelty."*
 
 **Last Updated:** October 5, 2025
