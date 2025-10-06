@@ -119,7 +119,7 @@ python cli.py database stats  # Database statistics
 python cli.py --json ontology list  # JSON output for tool integration
 ```
 
-**For Claude Desktop integration:** See [MCP Setup Guide](docs/QUICKSTART.md#claude-desktop-configuration)
+**For Claude Desktop/Code integration:** See [MCP Setup Guide](docs/MCP_SETUP.md)
 
 ## How It Works
 
@@ -178,6 +178,7 @@ This is **not** a new embedding model or vector database. It's a synthesis:
 - 📖 [Concept Deep Dive](docs/CONCEPT.md) - Why knowledge graphs vs RAG
 - 🏗️ [Architecture](docs/ARCHITECTURE.md) - How the system works
 - 🚀 [Quick Start Guide](docs/QUICKSTART.md) - Get running in 5 minutes
+- 🔌 [MCP Setup Guide](docs/MCP_SETUP.md) - Configure Claude Desktop/Code integration
 - 💡 [Examples & Demos](docs/EXAMPLES.md) - Real queries with actual results
 - ⚙️ [AI Provider Configuration](docs/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
 - 📚 [Concepts & Terminology](docs/CONCEPTS_AND_TERMINOLOGY.md) - Understanding ontologies, stitching, pruning, and graph integrity
@@ -208,10 +209,11 @@ knowledge-graph-system/
 │   └── init.cypher        # Neo4j schema and indexes
 │
 └── docs/                  # Documentation
-    ├── CONCEPT.md         # Why knowledge graphs (coming soon)
-    ├── ARCHITECTURE.md    # System design (existing)
-    ├── QUICKSTART.md      # Getting started (existing)
-    └── EXAMPLES.md        # Real query examples (coming soon)
+    ├── CONCEPT.md         # Why knowledge graphs
+    ├── ARCHITECTURE.md    # System design
+    ├── QUICKSTART.md      # Getting started
+    ├── MCP_SETUP.md       # Claude Desktop/Code integration
+    └── EXAMPLES.md        # Real query examples
 ```
 
 ## Technology Stack
