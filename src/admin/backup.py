@@ -25,6 +25,7 @@ from src.lib.console import Console, Colors
 from src.lib.config import Config
 from src.lib.neo4j_ops import Neo4jConnection, Neo4jQueries
 from src.lib.serialization import DataExporter
+from src.lib.integrity import BackupAssessment
 
 
 class BackupCLI:
@@ -213,6 +214,9 @@ class BackupCLI:
             with self.conn.session() as session:
                 backup_data = DataExporter.export_ontology_backup(session, ontology)
 
+            # Assess backup integrity
+            assessment = BackupAssessment.analyze_backup(backup_data)
+
             # Write
             with open(backup_file, 'w') as f:
                 json.dump(backup_data, f, indent=2)
@@ -220,6 +224,14 @@ class BackupCLI:
             file_size = backup_file.stat().st_size
             size_mb = file_size / (1024 * 1024)
             Console.success(f"✓ Backed up ({size_mb:.2f} MB)")
+
+            # Show warnings if external dependencies exist
+            if assessment["warnings"] or assessment["issues"]:
+                Console.warning(f"  ⚠ {len(assessment['warnings'])} warnings, {len(assessment['issues'])} issues")
+                if assessment["external_dependencies"]["concepts"]:
+                    ext_count = len(assessment["external_dependencies"]["concepts"])
+                    Console.warning(f"  ⚠ {ext_count} relationships to external concepts")
+
             backup_files.append(backup_file)
 
         # Summary
