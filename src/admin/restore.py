@@ -24,6 +24,8 @@ from src.lib.console import Console, Colors
 from src.lib.config import Config
 from src.lib.neo4j_ops import Neo4jConnection, Neo4jQueries
 from src.lib.serialization import DataImporter, BackupFormat
+from src.lib.integrity import BackupAssessment, DatabaseIntegrity
+from src.lib.restitching import ConceptMatcher
 
 
 class RestoreCLI:
@@ -101,20 +103,43 @@ class RestoreCLI:
             Console.error(f"✗ Invalid backup file: {e}")
             sys.exit(1)
 
-        # Show backup info
-        Console.info("\nBackup Information:")
-        Console.key_value("  Type", backup_data['type'])
-        Console.key_value("  Timestamp", backup_data['timestamp'])
+        # Assess backup before restore
+        Console.info("\nAnalyzing backup...")
+        assessment = BackupAssessment.analyze_backup(backup_data)
+        BackupAssessment.print_assessment(assessment)
 
-        if backup_data.get('ontology'):
-            Console.key_value("  Ontology", backup_data['ontology'])
+        # Check for serious issues
+        if assessment["issues"]:
+            Console.error("\n⚠ This backup has integrity issues!")
+            if not Console.confirm("Continue anyway?"):
+                Console.warning("Restore cancelled")
+                sys.exit(0)
 
-        stats = backup_data.get('statistics', {})
-        Console.info("\nData to restore:")
-        Console.key_value("  Concepts", str(stats.get('concepts', 0)), Colors.BOLD, Colors.OKGREEN)
-        Console.key_value("  Sources", str(stats.get('sources', 0)), Colors.BOLD, Colors.OKGREEN)
-        Console.key_value("  Instances", str(stats.get('instances', 0)), Colors.BOLD, Colors.OKGREEN)
-        Console.key_value("  Relationships", str(stats.get('relationships', 0)), Colors.BOLD, Colors.OKGREEN)
+        # Offer semantic re-stitching if external dependencies exist
+        restitch_plan = None
+        if assessment["external_dependencies"]["concepts"]:
+            Console.warning("\n⚠ This backup has external concept dependencies")
+            Console.info("  Semantic re-stitching can reconnect these to similar concepts in the target database")
+
+            if Console.confirm("Analyze re-stitching options?"):
+                matcher = ConceptMatcher(self.conn, similarity_threshold=0.85)
+
+                with self.conn.session() as session:
+                    external_concepts = matcher.find_external_concepts(backup_data)
+
+                    # Enrich with concept data from backup if available
+                    concept_map = {c["concept_id"]: c for c in backup_data["data"]["concepts"]}
+                    for ext in external_concepts:
+                        # External concepts aren't in backup, but we can check relationships
+                        ext["label"] = ext["concept_id"]  # Fallback to ID
+
+                    restitch_plan = matcher.create_restitch_plan(external_concepts, session)
+
+                matcher.print_restitch_plan(restitch_plan)
+
+                if restitch_plan["matched"]:
+                    if not Console.confirm("\nApply semantic re-stitching?"):
+                        restitch_plan = None
 
         # Check for conflicts
         if backup_data.get('ontology'):
@@ -170,10 +195,64 @@ class RestoreCLI:
             Console.info(f"  Instances: {import_stats['instances_created']}")
             Console.info(f"  Relationships: {import_stats['relationships_created']}")
 
+            # Apply semantic re-stitching if requested
+            if restitch_plan:
+                Console.section("Semantic Re-stitching")
+                with self.conn.session() as session:
+                    matcher = ConceptMatcher(self.conn)
+                    restitch_stats = matcher.execute_restitch(
+                        restitch_plan,
+                        session,
+                        create_placeholders=False
+                    )
+
+                Console.success(f"\n✓ Re-stitched {restitch_stats['restitched']} relationships")
+                if restitch_stats["skipped"] > 0:
+                    Console.warning(f"  ⚠ Skipped {restitch_stats['skipped']} unmatched references")
+
+            # Validate integrity after restore
+            Console.info("\nValidating database integrity...")
+            with self.conn.session() as session:
+                integrity = DatabaseIntegrity.check_integrity(
+                    session,
+                    ontology=backup_data.get('ontology')
+                )
+
+            if integrity["issues"] or integrity["warnings"]:
+                DatabaseIntegrity.print_integrity_report(integrity)
+
+                # Offer repair
+                if integrity["issues"]:
+                    Console.warning("\n⚠ Integrity issues detected after restore")
+                    if Console.confirm("Attempt automatic repair?"):
+                        Console.info("Repairing orphaned concepts...")
+                        with self.conn.session() as session:
+                            repairs = DatabaseIntegrity.repair_orphaned_concepts(
+                                session,
+                                ontology=backup_data.get('ontology')
+                            )
+                        Console.success(f"✓ Repaired {repairs} orphaned concepts")
+
+                        # Re-check
+                        Console.info("Re-validating...")
+                        with self.conn.session() as session:
+                            integrity = DatabaseIntegrity.check_integrity(
+                                session,
+                                ontology=backup_data.get('ontology')
+                            )
+                        if not integrity["issues"]:
+                            Console.success("✓ All issues resolved")
+                        else:
+                            Console.warning("⚠ Some issues remain - manual intervention may be needed")
+            else:
+                Console.success("✓ No integrity issues detected")
+
             self._show_tips()
 
         except Exception as e:
             Console.error(f"✗ Restore failed: {e}")
+            import traceback
+            traceback.print_exc()
             sys.exit(1)
 
     def _show_tips(self):
