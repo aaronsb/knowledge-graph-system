@@ -665,23 +665,7 @@ class KnowledgeGraphCLI:
 def main():
     parser = argparse.ArgumentParser(
         description='Knowledge Graph CLI - Query and explore the graph database',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s search "linear thinking" --limit 5
-  %(prog)s details linear-scanning-system
-  %(prog)s related intelligence-limitation --depth 3
-  %(prog)s connect linear-scanning-system genetic-intervention
-  %(prog)s ontology list
-  %(prog)s ontology info "My Ontology"
-  %(prog)s ontology files "My Ontology"
-  %(prog)s ontology delete "My Ontology"
-  %(prog)s --yes ontology delete "My Ontology"  # Skip confirmation
-  %(prog)s --json ontology list  # JSON output for tool integration
-  %(prog)s database stats
-  %(prog)s database info
-  %(prog)s database health
-        """
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     # Global flags
@@ -693,61 +677,140 @@ Examples:
     subparsers = parser.add_subparsers(dest='command', help='Command to execute')
 
     # Search command
-    search_parser = subparsers.add_parser('search', help='Search for concepts using semantic similarity')
+    search_parser = subparsers.add_parser('search',
+        help='Search for concepts using semantic similarity',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s "linear thinking"
+  %(prog)s "machine learning" --limit 5
+  %(prog)s "consciousness" --min-similarity 0.8
+  %(prog)s --json "agility" --limit 3
+        """)
     search_parser.add_argument('query', help='Search query')
     search_parser.add_argument('--limit', type=int, default=10, help='Maximum number of results (default: 10)')
     search_parser.add_argument('--min-similarity', type=float, default=0.7, help='Minimum similarity score (default: 0.7)')
 
     # Details command
-    details_parser = subparsers.add_parser('details', help='Get detailed information about a concept')
+    details_parser = subparsers.add_parser('details',
+        help='Get detailed information about a concept',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s linear-scanning-system
+  %(prog)s concept_005
+        """)
     details_parser.add_argument('concept_id', help='Concept ID')
 
     # Related command
-    related_parser = subparsers.add_parser('related', help='Find related concepts through graph traversal')
+    related_parser = subparsers.add_parser('related',
+        help='Find related concepts through graph traversal',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s intelligence-limitation
+  %(prog)s linear-scanning-system --depth 3
+  %(prog)s concept_005 --types SUPPORTS IMPLIES
+        """)
     related_parser.add_argument('concept_id', help='Starting concept ID')
     related_parser.add_argument('--types', nargs='+', help='Filter by relationship types')
     related_parser.add_argument('--depth', type=int, default=2, help='Maximum traversal depth (default: 2)')
 
     # Connect command
-    connect_parser = subparsers.add_parser('connect', help='Find shortest path between two concepts')
+    connect_parser = subparsers.add_parser('connect',
+        help='Find shortest path between two concepts',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s linear-scanning-system genetic-intervention
+  %(prog)s concept_001 concept_010 --max-hops 3
+        """)
     connect_parser.add_argument('from_id', help='Starting concept ID')
     connect_parser.add_argument('to_id', help='Target concept ID')
     connect_parser.add_argument('--max-hops', type=int, default=5, help='Maximum number of hops (default: 5)')
 
     # Ontology command group
-    ontology_parser = subparsers.add_parser('ontology', help='Manage ontologies (CRUD operations)')
+    ontology_parser = subparsers.add_parser('ontology',
+        help='Manage ontologies (CRUD operations)',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s list
+  %(prog)s info "My Ontology"
+  %(prog)s files "My Ontology"
+  %(prog)s delete "My Ontology"
+  %(prog)s --yes delete "My Ontology"
+  %(prog)s --json list
+        """)
     ontology_subparsers = ontology_parser.add_subparsers(dest='ontology_command', help='Ontology operations')
 
     # ontology list
-    ontology_subparsers.add_parser('list', help='List all ontologies')
+    ontology_subparsers.add_parser('list',
+        help='List all ontologies',
+        epilog="Example: %(prog)s")
 
     # ontology info
-    info_parser = ontology_subparsers.add_parser('info', help='Get detailed information about an ontology')
+    info_parser = ontology_subparsers.add_parser('info',
+        help='Get detailed information about an ontology',
+        epilog='Example: %(prog)s "My Ontology"')
     info_parser.add_argument('name', help='Ontology name')
 
     # ontology files
-    files_parser = ontology_subparsers.add_parser('files', help='List files in an ontology')
+    files_parser = ontology_subparsers.add_parser('files',
+        help='List files in an ontology',
+        epilog='Example: %(prog)s "My Ontology"')
     files_parser.add_argument('name', help='Ontology name')
 
     # ontology delete
-    delete_parser = ontology_subparsers.add_parser('delete', help='Delete an ontology and all its data')
+    delete_parser = ontology_subparsers.add_parser('delete',
+        help='Delete an ontology and all its data',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s "Test Ontology"
+  %(prog)s --yes "Test Ontology"  # Skip confirmation
+        """)
     delete_parser.add_argument('name', help='Ontology name')
 
     # Database command group
-    database_parser = subparsers.add_parser('database', help='Database operations and information')
+    database_parser = subparsers.add_parser('database',
+        help='Database operations and information',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s stats
+  %(prog)s info
+  %(prog)s health
+  %(prog)s --json stats
+        """)
     database_subparsers = database_parser.add_subparsers(dest='database_command', help='Database operations')
 
     # database stats
-    database_subparsers.add_parser('stats', help='Show database statistics')
+    database_subparsers.add_parser('stats',
+        help='Show database statistics',
+        epilog="Example: %(prog)s")
 
     # database info
-    database_subparsers.add_parser('info', help='Show database connection information')
+    database_subparsers.add_parser('info',
+        help='Show database connection information',
+        epilog="Example: %(prog)s")
 
     # database health
-    database_subparsers.add_parser('health', help='Check database health and connectivity')
+    database_subparsers.add_parser('health',
+        help='Check database health and connectivity',
+        epilog="Example: %(prog)s")
 
     # Visualize command
-    viz_parser = subparsers.add_parser('visualize', help='Generate Mermaid diagram for concept(s)')
+    viz_parser = subparsers.add_parser('visualize',
+        help='Generate Mermaid diagram for concept(s)',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s concept_005
+  %(prog)s concept_005 --depth 2
+  %(prog)s concept_001 concept_002 concept_003
+  %(prog)s concept_005 --type flowchart | mmm
+        """)
     viz_parser.add_argument('concept_ids', nargs='+', help='One or more concept IDs to visualize')
     viz_parser.add_argument('--depth', type=int, default=1, help='Relationship depth (default: 1)')
     viz_parser.add_argument('--type', choices=['graph', 'flowchart'], default='graph',
