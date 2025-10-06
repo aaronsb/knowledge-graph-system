@@ -176,7 +176,7 @@ async function main() {
         {
           name: 'find_shortest_path',
           description:
-            'Find the shortest path(s) between two concepts in the knowledge graph. Returns up to 5 paths with nodes, relationships, and hop count.',
+            'Find the shortest path(s) between two concepts in the knowledge graph. Searches up to 100 hops by default. Returns up to 10 paths with nodes, relationships, and hop count.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -190,9 +190,9 @@ async function main() {
               },
               max_hops: {
                 type: 'number',
-                description: 'Maximum path length, default: 5',
+                description: 'Maximum path length to search, default: 100',
                 minimum: 1,
-                maximum: 10,
+                maximum: 100,
               },
             },
             required: ['from_concept_id', 'to_concept_id'],
@@ -381,7 +381,7 @@ async function main() {
         }
 
         case 'find_shortest_path': {
-          const { from_concept_id, to_concept_id, max_hops = 5 } = args as {
+          const { from_concept_id, to_concept_id, max_hops = 100 } = args as {
             from_concept_id: string;
             to_concept_id: string;
             max_hops?: number;
@@ -413,6 +413,33 @@ async function main() {
             };
           }
 
+          // Chunk paths longer than 5 hops into segments for readability
+          const processedPaths = paths.map(path => {
+            if (path.hops > 5) {
+              const segments = [];
+              const chunkSize = 5;
+              for (let i = 0; i < path.nodes.length; i += chunkSize) {
+                segments.push({
+                  nodes: path.nodes.slice(i, Math.min(i + chunkSize + 1, path.nodes.length)),
+                  relationships: path.relationships.slice(i, Math.min(i + chunkSize, path.relationships.length)),
+                  segment: Math.floor(i / chunkSize) + 1,
+                  totalSegments: Math.ceil(path.nodes.length / chunkSize)
+                });
+              }
+              return {
+                totalHops: path.hops,
+                segmented: true,
+                segments
+              };
+            }
+            return {
+              totalHops: path.hops,
+              segmented: false,
+              nodes: path.nodes,
+              relationships: path.relationships
+            };
+          });
+
           return {
             content: [
               {
@@ -422,7 +449,7 @@ async function main() {
                     from_concept_id,
                     to_concept_id,
                     pathsFound: paths.length,
-                    paths,
+                    paths: processedPaths,
                   },
                   null,
                   2
