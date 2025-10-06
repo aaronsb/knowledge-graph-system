@@ -126,9 +126,10 @@ Once configured, Claude can use these tools:
 
 | Tool | Description | Example Usage |
 |------|-------------|---------------|
-| `search_concepts` | Semantic search for concepts | "Search for concepts about governance" |
+| `search_concepts` | Semantic search for concepts (supports pagination via offset parameter) | "Search for concepts about governance" |
 | `get_concept_details` | Detailed info about a concept | "Get details for concept ID xyz" |
 | `find_related_concepts` | Graph traversal from a concept | "Find concepts related to VUCA" |
+| `find_shortest_path` | Find shortest path(s) between two concepts | "Find path from concept X to concept Y" |
 | `list_ontologies` | List all ontologies | "What ontologies exist?" |
 | `get_ontology_info` | Stats for an ontology | "Show stats for Governed Agility" |
 | `get_database_stats` | Overall database statistics | "What's in the database?" |
@@ -328,6 +329,18 @@ After setup:
 1. Try semantic search: "Find concepts about risk management"
 2. Explore relationships: "Show me concepts related to [concept_id]"
 3. Compare ontologies: "What are the differences between ontology A and B?"
-4. Build queries: "Find connections between concept X and Y"
+4. Find concept connections: "Find the shortest path from concept X to concept Y"
+5. Paginate results: "Search for governance concepts, show results 10-20" (uses offset parameter)
+
+**Example traversal query:**
+```
+Find the shortest path between the concept about "Sensible Transparency"
+and the concept about "Signal-Based Decision Making"
+```
+
+**Example pagination query:**
+```
+Search for concepts related to "leadership", show me the next 10 results
+```
 
 For more examples, see `docs/EXAMPLES.md`.

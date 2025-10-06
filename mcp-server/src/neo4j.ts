@@ -48,13 +48,17 @@ function getSession(): Session {
 export async function vectorSearch(
   embedding: number[],
   threshold: number = 0.7,
-  limit: number = 10
+  limit: number = 10,
+  offset: number = 0
 ): Promise<any[]> {
   const session = getSession();
   try {
+    // Neo4j vector search doesn't support offset directly, so we fetch more and skip
+    const fetchLimit = limit + offset;
+
     const result = await session.run(
       `
-      CALL db.index.vector.queryNodes('concept-embeddings', $limit, $embedding)
+      CALL db.index.vector.queryNodes('concept-embeddings', $fetchLimit, $embedding)
       YIELD node, score
       WHERE score >= $threshold
       WITH node, score
@@ -65,10 +69,12 @@ export async function vectorSearch(
              node.label AS label,
              node.search_terms AS search_terms,
              score,
-             evidence[0..3] AS sample_evidence
+             evidence[0..1] AS sample_evidence
       ORDER BY score DESC
+      SKIP $offset
+      LIMIT $limit
       `,
-      { embedding, threshold, limit }
+      { embedding, threshold, fetchLimit, offset, limit }
     );
 
     return result.records.map(record => ({
@@ -325,6 +331,45 @@ export async function getOntologyInfo(ontologyName: string): Promise<any> {
       relationships,
       files: stats.get('files')
     };
+  } finally {
+    await session.close();
+  }
+}
+
+/**
+ * Find shortest path between two concepts
+ * @param fromId - Starting concept ID
+ * @param toId - Target concept ID
+ * @param maxHops - Maximum path length (default: 5)
+ * @returns Array of paths with nodes and relationships
+ */
+export async function findShortestPath(
+  fromId: string,
+  toId: string,
+  maxHops: number = 5
+): Promise<any[]> {
+  const session = getSession();
+  try {
+    // Build query dynamically since Cypher doesn't allow parameters in relationship ranges
+    const query = `
+      MATCH path = shortestPath(
+        (from:Concept {concept_id: $fromId})-[*..${maxHops}]-(to:Concept {concept_id: $toId})
+      )
+      WITH path, [rel in relationships(path) | type(rel)] as rel_types
+      RETURN
+        [node in nodes(path) | {id: node.concept_id, label: node.label}] as path_nodes,
+        rel_types,
+        length(path) as hops
+      LIMIT 5
+    `;
+
+    const result = await session.run(query, { fromId, toId });
+
+    return result.records.map(record => ({
+      nodes: record.get('path_nodes'),
+      relationships: record.get('rel_types'),
+      hops: record.get('hops').toNumber()
+    }));
   } finally {
     await session.close();
   }

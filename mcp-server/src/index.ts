@@ -16,6 +16,7 @@ import {
   listOntologies,
   getOntologyInfo,
   getDatabaseStats,
+  findShortestPath,
 } from './neo4j.js';
 
 // Initialize OpenAI client for embeddings
@@ -85,6 +86,11 @@ async function main() {
                 description: 'Maximum number of results to return, default: 10',
                 minimum: 1,
                 maximum: 100,
+              },
+              offset: {
+                type: 'number',
+                description: 'Number of results to skip for pagination, default: 0',
+                minimum: 0,
               },
             },
             required: ['query'],
@@ -167,6 +173,31 @@ async function main() {
             properties: {},
           },
         },
+        {
+          name: 'find_shortest_path',
+          description:
+            'Find the shortest path(s) between two concepts in the knowledge graph. Returns up to 5 paths with nodes, relationships, and hop count.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              from_concept_id: {
+                type: 'string',
+                description: 'Starting concept ID',
+              },
+              to_concept_id: {
+                type: 'string',
+                description: 'Target concept ID',
+              },
+              max_hops: {
+                type: 'number',
+                description: 'Maximum path length, default: 5',
+                minimum: 1,
+                maximum: 10,
+              },
+            },
+            required: ['from_concept_id', 'to_concept_id'],
+          },
+        },
       ],
     };
   });
@@ -180,17 +211,18 @@ async function main() {
 
       switch (name) {
         case 'search_concepts': {
-          const { query, threshold = 0.7, limit = 10 } = args as {
+          const { query, threshold = 0.7, limit = 10, offset = 0 } = args as {
             query: string;
             threshold?: number;
             limit?: number;
+            offset?: number;
           };
 
           // Generate embedding for the query
           const embedding = await generateEmbedding(query);
 
           // Perform vector search
-          const results = await vectorSearch(embedding, threshold, limit);
+          const results = await vectorSearch(embedding, threshold, limit, offset);
 
           return {
             content: [
@@ -200,6 +232,7 @@ async function main() {
                   {
                     query,
                     resultsCount: results.length,
+                    offset,
                     concepts: results,
                   },
                   null,
@@ -337,6 +370,54 @@ async function main() {
               {
                 type: 'text',
                 text: JSON.stringify(stats, null, 2),
+              },
+            ],
+          };
+        }
+
+        case 'find_shortest_path': {
+          const { from_concept_id, to_concept_id, max_hops = 5 } = args as {
+            from_concept_id: string;
+            to_concept_id: string;
+            max_hops?: number;
+          };
+
+          const paths = await findShortestPath(from_concept_id, to_concept_id, max_hops);
+
+          if (paths.length === 0) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      message: `No path found between "${from_concept_id}" and "${to_concept_id}" within ${max_hops} hops`,
+                      from_concept_id,
+                      to_concept_id,
+                      max_hops,
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+            };
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    from_concept_id,
+                    to_concept_id,
+                    pathsFound: paths.length,
+                    paths,
+                  },
+                  null,
+                  2
+                ),
               },
             ],
           };
