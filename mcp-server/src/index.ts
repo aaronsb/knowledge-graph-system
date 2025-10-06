@@ -13,6 +13,9 @@ import {
   vectorSearch,
   getConceptDetails,
   findRelatedConcepts,
+  listOntologies,
+  getOntologyInfo,
+  getDatabaseStats,
 } from './neo4j.js';
 
 // Initialize OpenAI client for embeddings
@@ -131,6 +134,39 @@ async function main() {
             required: ['concept_id'],
           },
         },
+        {
+          name: 'list_ontologies',
+          description:
+            'List all ontologies in the database with their concept and source counts. Use this to discover what knowledge domains are available.',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+        {
+          name: 'get_ontology_info',
+          description:
+            'Get detailed statistics and information about a specific ontology, including concept counts, relationships, and source files.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              ontology_name: {
+                type: 'string',
+                description: 'The name of the ontology to get information about',
+              },
+            },
+            required: ['ontology_name'],
+          },
+        },
+        {
+          name: 'get_database_stats',
+          description:
+            'Get overall database statistics including total concepts, sources, instances, relationships, and ontology count.',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
       ],
     };
   });
@@ -235,6 +271,72 @@ async function main() {
                   null,
                   2
                 ),
+              },
+            ],
+          };
+        }
+
+        case 'list_ontologies': {
+          const ontologies = await listOntologies();
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    count: ontologies.length,
+                    ontologies,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        }
+
+        case 'get_ontology_info': {
+          const { ontology_name } = args as { ontology_name: string };
+
+          const info = await getOntologyInfo(ontology_name);
+
+          if (!info) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      error: `Ontology "${ontology_name}" not found`,
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(info, null, 2),
+              },
+            ],
+          };
+        }
+
+        case 'get_database_stats': {
+          const stats = await getDatabaseStats();
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(stats, null, 2),
               },
             ],
           };

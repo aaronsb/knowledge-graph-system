@@ -204,9 +204,9 @@ export async function findRelatedConcepts(
       ? `:${relationshipTypes.join('|')}`
       : '';
 
-    const result = await session.run(
-      `
-      MATCH path = (start:Concept {concept_id: $conceptId})-[${relTypeFilter}*1..$maxDepth]->(related:Concept)
+    // Build query dynamically since Cypher doesn't allow parameters in relationship ranges
+    const query = `
+      MATCH path = (start:Concept {concept_id: $conceptId})-[${relTypeFilter}*1..${maxDepth}]->(related:Concept)
       WITH related, path, relationships(path) AS rels
       OPTIONAL MATCH (related)-[:EVIDENCED_BY]->(i:Instance)
       WITH related, path, rels, collect(i.quote)[0..2] AS sample_quotes
@@ -218,9 +218,9 @@ export async function findRelatedConcepts(
              [r IN rels | r.confidence] AS confidence_path,
              sample_quotes
       ORDER BY distance, related.label
-      `,
-      { conceptId, maxDepth }
-    );
+    `;
+
+    const result = await session.run(query, { conceptId });
 
     return result.records.map(record => ({
       concept_id: record.get('concept_id'),
@@ -231,6 +231,172 @@ export async function findRelatedConcepts(
       confidence_path: record.get('confidence_path'),
       sample_evidence: record.get('sample_quotes')
     }));
+  } finally {
+    await session.close();
+  }
+}
+
+/**
+ * List all ontologies in the database with concept counts
+ * @returns Array of ontology objects with names and statistics
+ */
+export async function listOntologies(): Promise<any[]> {
+  const session = getSession();
+  try {
+    const result = await session.run(
+      `
+      MATCH (s:Source)
+      WITH DISTINCT s.document AS ontology
+      OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(src:Source {document: ontology})
+      RETURN ontology,
+             count(DISTINCT c) AS concept_count,
+             count(DISTINCT src) AS source_count
+      ORDER BY ontology
+      `
+    );
+
+    return result.records.map(record => ({
+      name: record.get('ontology'),
+      concepts: record.get('concept_count').toNumber(),
+      sources: record.get('source_count').toNumber()
+    }));
+  } finally {
+    await session.close();
+  }
+}
+
+/**
+ * Get detailed statistics for a specific ontology
+ * @param ontologyName - The name of the ontology
+ * @returns Ontology statistics object
+ */
+export async function getOntologyInfo(ontologyName: string): Promise<any> {
+  const session = getSession();
+  try {
+    // Get basic stats
+    const statsResult = await session.run(
+      `
+      MATCH (s:Source {document: $ontologyName})
+      WITH s
+      OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s)
+      OPTIONAL MATCH (c)-[:EVIDENCED_BY]->(i:Instance)
+      OPTIONAL MATCH (c)-[r:IMPLIES|SUPPORTS|CONTRADICTS|PART_OF]->(other:Concept)
+      RETURN count(DISTINCT s) AS sources,
+             count(DISTINCT c) AS concepts,
+             count(DISTINCT i) AS instances,
+             count(DISTINCT r) AS relationships,
+             collect(DISTINCT s.file_path) AS files
+      `,
+      { ontologyName }
+    );
+
+    if (statsResult.records.length === 0) {
+      return null;
+    }
+
+    const stats = statsResult.records[0];
+
+    // Get relationship breakdown
+    const relResult = await session.run(
+      `
+      MATCH (s:Source {document: $ontologyName})<-[:APPEARS_IN]-(c:Concept)
+      OPTIONAL MATCH (c)-[r]->(other:Concept)
+      WHERE type(r) IN ['IMPLIES', 'SUPPORTS', 'CONTRADICTS', 'PART_OF']
+      RETURN type(r) AS rel_type, count(r) AS count
+      ORDER BY count DESC
+      `,
+      { ontologyName }
+    );
+
+    const relationships: any = {};
+    relResult.records.forEach(record => {
+      const relType = record.get('rel_type');
+      if (relType) {
+        relationships[relType] = record.get('count').toNumber();
+      }
+    });
+
+    return {
+      name: ontologyName,
+      sources: stats.get('sources').toNumber(),
+      concepts: stats.get('concepts').toNumber(),
+      instances: stats.get('instances').toNumber(),
+      total_relationships: stats.get('relationships').toNumber(),
+      relationships,
+      files: stats.get('files')
+    };
+  } finally {
+    await session.close();
+  }
+}
+
+/**
+ * Get overall database statistics
+ * @returns Database statistics object
+ */
+export async function getDatabaseStats(): Promise<any> {
+  const session = getSession();
+  try {
+    // Get node counts
+    const nodeResult = await session.run(
+      `
+      MATCH (c:Concept)
+      WITH count(c) AS concepts
+      MATCH (s:Source)
+      WITH concepts, count(s) AS sources
+      MATCH (i:Instance)
+      RETURN concepts, sources, count(i) AS instances
+      `
+    );
+
+    const nodes = nodeResult.records[0];
+
+    // Get relationship counts
+    const relResult = await session.run(
+      `
+      MATCH ()-[r]->()
+      RETURN count(r) AS total
+      `
+    );
+
+    const totalRels = relResult.records[0].get('total').toNumber();
+
+    // Get concept relationship breakdown
+    const conceptRelResult = await session.run(
+      `
+      MATCH (c:Concept)-[r]->(other:Concept)
+      WHERE type(r) IN ['IMPLIES', 'SUPPORTS', 'CONTRADICTS', 'PART_OF']
+      RETURN type(r) AS rel_type, count(r) AS count
+      ORDER BY count DESC
+      `
+    );
+
+    const conceptRelationships: any = {};
+    conceptRelResult.records.forEach(record => {
+      const relType = record.get('rel_type');
+      conceptRelationships[relType] = record.get('count').toNumber();
+    });
+
+    // Get ontology count
+    const ontologyResult = await session.run(
+      `
+      MATCH (s:Source)
+      RETURN count(DISTINCT s.document) AS ontologies
+      `
+    );
+
+    return {
+      nodes: {
+        concepts: nodes.get('concepts').toNumber(),
+        sources: nodes.get('sources').toNumber(),
+        instances: nodes.get('instances').toNumber()
+      },
+      relationships: {
+        total: totalRels,
+        concept_relationships: conceptRelationships
+      },
+      ontologies: ontologyResult.records[0].get('ontologies').toNumber()
+    };
   } finally {
     await session.close();
   }
