@@ -426,6 +426,7 @@ class DataImporter:
                 MATCH (s:Source {source_id: $source_id})
                 MERGE (c)-[:EVIDENCED_BY]->(i)
                 MERGE (i)-[:FROM_SOURCE]->(s)
+                MERGE (c)-[:APPEARS_IN]->(s)
             """
 
             session.run(merge_query, **instance)
@@ -438,13 +439,13 @@ class DataImporter:
 
             # Dynamic relationship type (IMPLIES, SUPPORTS, etc.)
             query = f"""
-                MATCH (c1:Concept {{concept_id: $from}})
-                MATCH (c2:Concept {{concept_id: $to}})
+                MATCH (c1:Concept {{concept_id: $from_id}})
+                MATCH (c2:Concept {{concept_id: $to_id}})
                 MERGE (c1)-[r:{rel['type']}]->(c2)
                 SET r = $properties
             """
 
-            session.run(query, from_concept=rel["from"], to_concept=rel["to"], properties=rel["properties"])
+            session.run(query, from_id=rel["from"], to_id=rel["to"], properties=rel["properties"])
             stats["relationships_created"] += 1
 
         return stats
