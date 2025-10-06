@@ -119,32 +119,44 @@ class RestoreCLI:
         restitch_action = None
         if assessment["external_dependencies"]["concepts"]:
             ext_count = len(assessment["external_dependencies"]["concepts"])
-            Console.warning(f"\n⚠ This backup has {ext_count} external concept dependencies")
-            Console.warning("  ALL external references MUST be handled to maintain graph integrity")
-            Console.warning("  Choose how to handle them:")
-            print("")
-            print("  1) Auto-prune after restore (keep isolated)")
-            print("  2) Stitch later (defer - WARNING: graph will be broken!)")
-            print("  3) Cancel restore")
-            print("")
-            choice = input("Select option [1-3]: ").strip()
 
-            if choice == "1":
+            # Check if target database is empty (nothing to stitch to)
+            with self.conn.session() as session:
+                existing_concepts = session.run("MATCH (c:Concept) RETURN count(c) as count").single()["count"]
+
+            if existing_concepts == 0:
+                # Clean database - stitching is impossible, auto-prune
+                Console.info(f"\n✓ Target database is empty ({ext_count} external references detected)")
+                Console.info("  No existing concepts to stitch to - will auto-prune to keep ontology isolated")
                 restitch_action = "prune"
-                Console.info(f"\n✓ Will prune {ext_count} dangling relationships after restore")
-            elif choice == "2":
-                restitch_action = "defer"
-                Console.error("\n⚠ DANGER: Graph will have dangling refs until you fix it!")
-                Console.warning("  You MUST run ONE of these immediately after restore:")
-                Console.info(f"    python -m src.admin.stitch --backup {backup_file}")
-                Console.info(f"    python -m src.admin.prune")
-                Console.warning("\n  Stitcher will handle matched refs AND auto-prune unmatched")
-                if not Console.confirm("\nI understand the graph will be broken - proceed?"):
-                    Console.warning("Restore cancelled - wise choice!")
-                    sys.exit(0)
             else:
-                Console.warning("Restore cancelled")
-                sys.exit(0)
+                # Database has concepts - offer stitching options
+                Console.warning(f"\n⚠ This backup has {ext_count} external concept dependencies")
+                Console.warning("  ALL external references MUST be handled to maintain graph integrity")
+                Console.warning("  Choose how to handle them:")
+                print("")
+                print("  1) Auto-prune after restore (keep isolated)")
+                print("  2) Stitch later (defer - WARNING: graph will be broken!)")
+                print("  3) Cancel restore")
+                print("")
+                choice = input("Select option [1-3]: ").strip()
+
+                if choice == "1":
+                    restitch_action = "prune"
+                    Console.info(f"\n✓ Will prune {ext_count} dangling relationships after restore")
+                elif choice == "2":
+                    restitch_action = "defer"
+                    Console.error("\n⚠ DANGER: Graph will have dangling refs until you fix it!")
+                    Console.warning("  You MUST run ONE of these immediately after restore:")
+                    Console.info(f"    python -m src.admin.stitch --backup {backup_file}")
+                    Console.info(f"    python -m src.admin.prune")
+                    Console.warning("\n  Stitcher will handle matched refs AND auto-prune unmatched")
+                    if not Console.confirm("\nI understand the graph will be broken - proceed?"):
+                        Console.warning("Restore cancelled - wise choice!")
+                        sys.exit(0)
+                else:
+                    Console.warning("Restore cancelled")
+                    sys.exit(0)
 
         # Check for conflicts
         if backup_data.get('ontology'):
