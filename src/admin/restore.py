@@ -118,26 +118,29 @@ class RestoreCLI:
         # Handle external dependencies - MUST choose stitch or prune
         restitch_action = None
         if assessment["external_dependencies"]["concepts"]:
-            Console.warning("\n⚠ This backup has external concept dependencies")
-            Console.warning("  Dangling relationships WILL break graph integrity")
-            Console.warning("  You MUST choose how to handle them:")
+            ext_count = len(assessment["external_dependencies"]["concepts"])
+            Console.warning(f"\n⚠ This backup has {ext_count} external concept dependencies")
+            Console.warning("  ALL external references MUST be handled to maintain graph integrity")
+            Console.warning("  Choose how to handle them:")
             print("")
-            print("  1) Prune - Remove dangling relationships (keep isolated)")
-            print("  2) Stitch later - Defer to manual stitching tool")
+            print("  1) Auto-prune after restore (keep isolated)")
+            print("  2) Stitch later (defer - WARNING: graph will be broken!)")
             print("  3) Cancel restore")
             print("")
             choice = input("Select option [1-3]: ").strip()
 
             if choice == "1":
                 restitch_action = "prune"
-                Console.info("\n✓ Will prune dangling relationships after restore")
+                Console.info(f"\n✓ Will prune {ext_count} dangling relationships after restore")
             elif choice == "2":
                 restitch_action = "defer"
-                Console.warning("\n⚠ WARNING: Graph will have dangling refs until you run:")
-                Console.info(f"  python -m src.admin.stitch --backup {backup_file}")
-                Console.info("  Or: python -m src.admin.prune")
-                if not Console.confirm("\nProceed with restore (graph will be broken)?"):
-                    Console.warning("Restore cancelled")
+                Console.error("\n⚠ DANGER: Graph will have dangling refs until you fix it!")
+                Console.warning("  You MUST run ONE of these immediately after restore:")
+                Console.info(f"    python -m src.admin.stitch --backup {backup_file}")
+                Console.info(f"    python -m src.admin.prune")
+                Console.warning("\n  Stitcher will handle matched refs AND auto-prune unmatched")
+                if not Console.confirm("\nI understand the graph will be broken - proceed?"):
+                    Console.warning("Restore cancelled - wise choice!")
                     sys.exit(0)
             else:
                 Console.warning("Restore cancelled")
