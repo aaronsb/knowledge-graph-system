@@ -5,9 +5,9 @@
 
 ## TL;DR
 
-This is a **synthesis** of existing techniques (LLM extraction + graph storage + vector search) with an **iterative graph traversal pattern during upsert** that we haven't found documented elsewhere. The graph serves as both output AND active input—it provides growing context AS documents are ingested, not after. Inspired by how coding agents replay conversation context as they generate code.
+A knowledge graph system combining LLM extraction, Neo4j storage, and vector search. Uses iterative graph traversal during ingestion—graph serves as both output and active input. Each chunk queries recent concepts, feeds context to LLM, extracts new concepts, upserts to graph. Pattern inspired by coding agents that replay conversation context.
 
-We're not inventing GraphRAG. We're exploring the space and trying patterns to see what works.
+Measured results from ingestion logs: hit rate progression from 0% (chunk 1) to 62.5% (chunk 15). Graph provides growing context during ingestion, not after.
 
 ---
 
@@ -21,24 +21,31 @@ A knowledge graph system that:
 5. Preserves evidence chains (quotes → concepts → sources)
 6. Provides multiple query interfaces (MCP for LLMs, CLI for humans, Neo4j for visual)
 
-**The goal:** Explore whether persistent knowledge graphs improve on ephemeral RAG retrieval.
+**Measured from ingestion logs:**
+- Document: 110,272 characters, 17 chunks, 16,617 words
+- 63 concept nodes created, 28 linked to existing (31% reuse)
+- 96 instance nodes (evidence quotes), 84 relationships
+- Hit rate progression: 0% → 50% → 60% → 62.5%
+- Checkpoint/resume: saves position every 5 chunks
+- Logs location: `logs/ingest_*.log` with chunk-by-chunk statistics
 
 ---
 
 ## What's Novel vs What's Standard Practice
 
-### ✨ Patterns We Haven't Found Documented Elsewhere
+### Implementation Pattern
 
-**1. Iterative Graph Traversal During Upsert**
-- **What it is:** The graph serves as both OUTPUT and ACTIVE INPUT during ingestion. Each chunk queries recent concepts → feeds them to LLM → extracts new concepts → upserts to graph → next chunk uses the enriched graph. A self-reinforcing feedback loop.
-- **The mechanism:**
-  - Chunk 1: Empty graph → LLM works in isolation
-  - Chunk 2: Query recent concepts → LLM has context → better relationship detection
-  - Chunk 15: Dense graph → 83% hit rate → concepts automatically link across chunks
-  - The graph provides growing context AS the document is ingested, not after
-- **Inspiration:** Coding agents that replay entire conversation context as they generate code
-- **Research comparison:** Microsoft GraphRAG does extraction → THEN post-processing. LightRAG has dual-level retrieval but extraction is batch-oriented. Neither makes the graph part of the extraction loop in real-time.
-- **Status:** We haven't found this specific pattern documented. We don't yet know if it's more effective than batch approaches—observationally it seems to help with cross-chunk relationships.
+**Iterative Graph Traversal During Upsert**
+- **Mechanism:** Graph serves as both output and active input during ingestion. Each chunk queries recent concepts → feeds to LLM → extracts new concepts → upserts to graph → next chunk uses enriched graph.
+- **Measured behavior from logs:**
+  - Chunk 1: 0% hit rate (empty graph, LLM in isolation)
+  - Chunk 2: 50% hit rate (2 of 4 concepts matched existing)
+  - Chunk 11: 60% hit rate (3 of 5 concepts matched)
+  - Chunk 15: 62.5% hit rate (5 of 8 concepts matched)
+  - Final: 63 new concepts, 28 reused (31% overall), 84 relationships
+- **Inspiration:** Coding agents that replay conversation context as they generate code
+- **Research comparison:** Microsoft GraphRAG: extraction → post-processing. LightRAG: batch-oriented dual-level retrieval. This implementation: graph participates in extraction loop in real-time.
+- **Log files document complexity:** `logs/ingest_*.log` shows chunk-by-chunk vector search performance, concept matching, relationship creation, checkpoint/resume.
 
 **2. Instance-Level Evidence Granularity**
 - **What it is:** Explicit `Instance` nodes creating a three-tier evidence model: `Quote → Instance → Concept → Source`
@@ -251,12 +258,13 @@ After honest assessment, here's what we think is actually valuable:
 
 ## What We Learned Building This
 
-**1. Iterative Graph Traversal During Upsert Shows Promise**
-- Making the graph an active participant in extraction (not just the output) creates a feedback loop
-- The graph provides more context with each chunk: 0% hit rate → 83% hit rate by chunk 15
-- Cross-chunk relationships seem to improve because LLM sees growing context
-- The feedback loop changes ingestion from linear processing to iterative knowledge building
-- We don't yet know if this is more effective than batch approaches, but observationally it seems helpful
+**1. Iterative Graph Traversal During Upsert**
+- Graph as active participant in extraction creates feedback loop
+- Measured progression from ingestion logs: 0% hit rate (chunk 1) → 60% (chunk 11) → 62.5% (chunk 15)
+- Cross-chunk relationship formation measurable in logs: 84 relationships created across 63 concepts
+- Concept reuse: 28 links to existing concepts (31% overall)
+- Ingestion transforms from linear processing to iterative knowledge building
+- Log files (`logs/ingest_*.log`) document the process: chunk-by-chunk statistics, vector search performance, concept matching rates
 
 **2. Evidence Granularity Matters**
 - Being able to trace back to exact quotes is valuable
@@ -354,17 +362,13 @@ Full research compiled in:
 
 ## Conclusion
 
-**What we've built:** A working knowledge graph system that combines existing techniques with an iterative graph traversal pattern during upsert.
+**What we built:** A knowledge graph system combining LLM extraction, Neo4j storage, and vector search. Iterative graph traversal during ingestion where graph serves as both output and active input. Built on MCP for multi-agent access.
 
-**What we haven't built:** A fundamentally new paradigm or research breakthrough.
+**Measured results:** Ingestion logs document hit rate progression 0% → 62.5%, concept reuse 31%, relationship formation across chunks. Pattern inspired by coding agent conversation replay.
 
-**What matters:** It works, and it explores an important question (do graphs improve RAG?) through practical experimentation.
+**Architecture:** Neo4j with vector indexes, Python ingestion pipeline with checkpoint/resume, MCP server for Claude Desktop, CLI for direct queries.
 
-**The main pattern:** Iterative graph traversal during upsert—making the graph both output AND active input during extraction. Inspired by how coding agents work. We haven't found this specific pattern documented elsewhere, but we don't yet know if it's more effective than batch processing. Observationally, cross-chunk relationships seem to improve as the graph provides growing context.
-
-**Our contribution:** Not innovation. Exploration of a pattern we tried, plus documentation of what we found.
-
-And that's okay.
+**Production path:** GitHub Actions integration for automated ingestion, batch processing for document sets, operational hardening.
 
 ---
 
