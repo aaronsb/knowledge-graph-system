@@ -221,8 +221,13 @@ async function main() {
           // Generate embedding for the query
           const embedding = await generateEmbedding(query);
 
-          // Perform vector search
-          const results = await vectorSearch(embedding, threshold, limit, offset);
+          // Perform vector search (ensure integers)
+          const results = await vectorSearch(
+            embedding,
+            threshold,
+            Math.floor(limit),
+            Math.floor(offset)
+          );
 
           return {
             content: [
@@ -382,7 +387,11 @@ async function main() {
             max_hops?: number;
           };
 
-          const paths = await findShortestPath(from_concept_id, to_concept_id, max_hops);
+          const paths = await findShortestPath(
+            from_concept_id,
+            to_concept_id,
+            Math.floor(max_hops)
+          );
 
           if (paths.length === 0) {
             return {
