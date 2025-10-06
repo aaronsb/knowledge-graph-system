@@ -5,6 +5,27 @@
 // - Unique constraints to ensure data integrity
 // - Indexes for query performance
 // - Vector index for semantic search capabilities
+// - Enhanced Source nodes for learned knowledge synthesis
+// ============================================================================
+//
+// SOURCE NODE SCHEMA:
+// Document sources (extracted from ingested files):
+//   - source_id: unique identifier
+//   - document: document name
+//   - paragraph: paragraph number
+//   - full_text: complete paragraph text
+//   - type: "DOCUMENT"
+//
+// Learned sources (AI/human synthesized knowledge):
+//   - source_id: "learned_YYYY-MM-DD_NNN"
+//   - document: "User synthesis" | "AI synthesis"
+//   - paragraph: 0
+//   - full_text: evidence/rationale text
+//   - type: "LEARNED"
+//   - created_by: "username" | "claude-mcp" | "claude-code"
+//   - created_at: ISO timestamp
+//   - similarity_score: float (smell test result)
+//   - cognitive_leap: "LOW" | "MEDIUM" | "HIGH"
 // ============================================================================
 
 // ----------------------------------------------------------------------------
@@ -42,6 +63,16 @@ ON (c.label);
 CREATE INDEX source_document_index IF NOT EXISTS
 FOR (s:Source)
 ON (s.document);
+
+// Index on Source type for filtering document vs learned knowledge
+CREATE INDEX source_type_index IF NOT EXISTS
+FOR (s:Source)
+ON (s.type);
+
+// Index on Source creator for filtering learned knowledge by author
+CREATE INDEX source_creator_index IF NOT EXISTS
+FOR (s:Source)
+ON (s.created_by);
 
 // Index on Instance text for full-text search (optional, can be replaced with full-text index)
 CREATE INDEX instance_text_index IF NOT EXISTS
