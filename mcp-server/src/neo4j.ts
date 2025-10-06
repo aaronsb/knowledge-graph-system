@@ -53,8 +53,10 @@ export async function vectorSearch(
 ): Promise<any[]> {
   const session = getSession();
   try {
-    // Neo4j vector search doesn't support offset directly, so we fetch more and skip
-    const fetchLimit = limit + offset;
+    // Ensure integer values for Neo4j
+    const limitInt = Math.floor(limit);
+    const offsetInt = Math.floor(offset);
+    const fetchLimit = limitInt + offsetInt;
 
     const result = await session.run(
       `
@@ -74,7 +76,7 @@ export async function vectorSearch(
       SKIP $offset
       LIMIT $limit
       `,
-      { embedding, threshold, fetchLimit, offset, limit }
+      { embedding, threshold, fetchLimit, offset: offsetInt, limit: limitInt }
     );
 
     return result.records.map(record => ({
@@ -350,10 +352,13 @@ export async function findShortestPath(
 ): Promise<any[]> {
   const session = getSession();
   try {
+    // Ensure integer value for Neo4j
+    const maxHopsInt = Math.floor(maxHops);
+
     // Build query dynamically since Cypher doesn't allow parameters in relationship ranges
     const query = `
       MATCH path = shortestPath(
-        (from:Concept {concept_id: $fromId})-[*..${maxHops}]-(to:Concept {concept_id: $toId})
+        (from:Concept {concept_id: $fromId})-[*..${maxHopsInt}]-(to:Concept {concept_id: $toId})
       )
       WITH path, [rel in relationships(path) | type(rel)] as rel_types
       RETURN
