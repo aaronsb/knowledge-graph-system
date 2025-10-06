@@ -71,8 +71,13 @@ class ChunkedIngestionStats:
         self.extraction_tokens = data.get("extraction_tokens", 0)
         self.embedding_tokens = data.get("embedding_tokens", 0)
 
-    def print_summary(self):
-        """Print ingestion summary."""
+    def print_summary(self, extraction_model: str = None, embedding_model: str = None):
+        """Print ingestion summary with token usage and cost estimation.
+
+        Args:
+            extraction_model: Name of the extraction model used (for cost calculation)
+            embedding_model: Name of the embedding model used (for cost calculation)
+        """
         print("\n" + "=" * 60)
         print("CHUNKED INGESTION SUMMARY")
         print("=" * 60)
@@ -94,17 +99,64 @@ class ChunkedIngestionStats:
             total_tokens = self.extraction_tokens + self.embedding_tokens
             print(f"  Total:                 {total_tokens:,} tokens")
 
-            # Estimate cost (approximate pricing)
-            # GPT-4o: ~$5/1M tokens (average of input/output)
-            # Embeddings: $0.02/1M tokens
-            extraction_cost = (self.extraction_tokens / 1_000_000) * 5.0
-            embedding_cost = (self.embedding_tokens / 1_000_000) * 0.02
+            # Calculate cost based on configured pricing
+            extraction_cost = self._get_extraction_cost(self.extraction_tokens, extraction_model)
+            embedding_cost = self._get_embedding_cost(self.embedding_tokens, embedding_model)
             total_cost = extraction_cost + embedding_cost
 
             if total_cost > 0:
                 print(f"  Estimated cost:        ${total_cost:.4f}")
 
         print("=" * 60)
+
+    def _get_extraction_cost(self, tokens: int, model: str = None) -> float:
+        """Calculate extraction cost based on model and configured pricing."""
+        if tokens == 0:
+            return 0.0
+
+        # Map model names to environment variable names
+        model_cost_map = {
+            "gpt-4o": "TOKEN_COST_GPT4O",
+            "gpt-4o-mini": "TOKEN_COST_GPT4O_MINI",
+            "o1-preview": "TOKEN_COST_O1_PREVIEW",
+            "o1-mini": "TOKEN_COST_O1_MINI",
+            "claude-sonnet-4-20250514": "TOKEN_COST_CLAUDE_SONNET_4",
+        }
+
+        # Default cost per 1M tokens (GPT-4o average)
+        default_cost = 6.25
+
+        # Get cost from environment or use default
+        if model:
+            cost_var = model_cost_map.get(model, "TOKEN_COST_GPT4O")
+            cost_per_million = float(os.getenv(cost_var, default_cost))
+        else:
+            cost_per_million = float(os.getenv("TOKEN_COST_GPT4O", default_cost))
+
+        return (tokens / 1_000_000) * cost_per_million
+
+    def _get_embedding_cost(self, tokens: int, model: str = None) -> float:
+        """Calculate embedding cost based on model and configured pricing."""
+        if tokens == 0:
+            return 0.0
+
+        # Map model names to environment variable names
+        model_cost_map = {
+            "text-embedding-3-small": "TOKEN_COST_EMBEDDING_SMALL",
+            "text-embedding-3-large": "TOKEN_COST_EMBEDDING_LARGE",
+        }
+
+        # Default cost per 1M tokens (small embedding model)
+        default_cost = 0.02
+
+        # Get cost from environment or use default
+        if model:
+            cost_var = model_cost_map.get(model, "TOKEN_COST_EMBEDDING_SMALL")
+            cost_per_million = float(os.getenv(cost_var, default_cost))
+        else:
+            cost_per_million = float(os.getenv("TOKEN_COST_EMBEDDING_SMALL", default_cost))
+
+        return (tokens / 1_000_000) * cost_per_million
 
 
 def process_chunk(
@@ -383,6 +435,17 @@ def main():
     # Load environment variables
     load_dotenv()
 
+    # Get AI provider info for cost calculation
+    from ingest.ai_providers import get_provider
+    try:
+        provider = get_provider()
+        extraction_model = provider.get_extraction_model()
+        embedding_model = provider.get_embedding_model()
+    except Exception:
+        # If provider fails to initialize, cost calculation will use defaults
+        extraction_model = None
+        embedding_model = None
+
     # Validate file exists
     filepath = Path(args.filepath)
     if not filepath.exists():
@@ -532,18 +595,18 @@ def main():
                 recent_concept_ids=recent_concept_ids,
                 stats=stats.to_dict()
             )
-        stats.print_summary()
+        stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)
         sys.exit(1)
     except Exception as e:
         print(f"\n\n✗ Ingestion failed: {e}")
-        stats.print_summary()
+        stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)
         sys.exit(1)
 
     # Clean up checkpoint on successful completion
     checkpoint_mgr.delete(args.document_name)
 
     # Print summary
-    stats.print_summary()
+    stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)
     print("\n✓ Ingestion completed successfully")
 
 
