@@ -4,25 +4,41 @@
 
 ![Knowledge Graph Visualization](docs/media/neo4j-ui.jpeg)
 
-## What We've Built (Honest Assessment)
+## What This Is
 
-**TL;DR:** This is a **synthesis** of existing techniques (LLM extraction + graph storage + vector search) inspired by GraphRAG research. We're not inventing GraphRAG—we're exploring the space and trying patterns we haven't seen documented elsewhere.
+A knowledge graph system using LLM extraction, Neo4j storage, and vector search. Built on Model Context Protocol (MCP) for multi-agent access.
 
-📊 **[Read Full Technical Assessment](docs/ASSESSMENT.md)** - Honest self-assessment of novelty vs standard practice, comparisons to Microsoft GraphRAG/LightRAG, and future directions *(Oct 5, 2025)*
+📊 **[Technical Assessment](docs/ASSESSMENT.md)** - Architecture comparison, research context, implementation details *(Oct 5, 2025)*
 
-**The Main Pattern (Inspired by Coding Agents):**
-- **Iterative graph traversal during upsert** - The graph serves as both OUTPUT and ACTIVE INPUT during ingestion. Each chunk queries recent concepts → feeds to LLM → extracts new concepts → upserts to graph → next chunk uses enriched graph. Similar to how coding agents replay conversation context as they generate code.
-- We haven't found others doing this specific pattern, but we don't yet know if it's more effective than batch processing approaches.
-- Observationally: hit rate goes from 0% (chunk 1) to 83% (chunk 15) as the graph provides growing context.
+**Core Pattern:**
+Iterative graph traversal during ingestion. Each chunk:
+1. Queries recent concepts from graph
+2. Feeds context to LLM
+3. Extracts new concepts and relationships
+4. Upserts to graph
+5. Next chunk uses enriched graph
 
-**Supporting Implementation:**
-- **Instance-level evidence** - three-tier provenance model (Quote → Instance → Concept → Source)
-- **Real-time deduplication** - concepts merge during ingestion, feeding back into the traversal loop
+The graph serves as both output and active input. Inspired by how coding agents replay conversation context.
 
-**What We're Missing (and exploring next):**
-- Community detection & hierarchical summaries (Microsoft GraphRAG)
-- Token optimization (LightRAG achieves 99% reduction)
-- Advanced graph algorithms (PageRank, Louvain - Neo4j has them, we're not using yet)
+**Measured Results:**
+From ingestion logs (`logs/ingest_*.log`):
+- 17 chunks, 16,617 words processed
+- Chunk 1: 0% hit rate (graph empty)
+- Chunk 11: 60% hit rate
+- Chunk 15: 62.5% hit rate
+- 63 concepts created, 28 linked to existing, 84 relationships
+
+**Architecture:**
+- Neo4j graph database with vector indexes
+- MCP server for Claude Desktop integration
+- Python ingestion pipeline with checkpoint/resume
+- CLI for direct queries
+- Full-text + vector search
+
+**Production Path:**
+- GitHub Actions integration for automated ingestion
+- Batch processing for large document sets
+- Scale testing and operational hardening
 
 ---
 
