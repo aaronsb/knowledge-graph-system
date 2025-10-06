@@ -66,14 +66,20 @@ OPTIONS {
 };
 
 // ----------------------------------------------------------------------------
-// OPTIONAL: Full-Text Search Index
+// FULL-TEXT SEARCH INDEX
 // ----------------------------------------------------------------------------
-// Uncomment if you need advanced full-text search on Instance text
-// This enables phrase queries, fuzzy matching, and stemming
+// Enables advanced full-text search on Instance quotes
+// Supports: phrase queries, fuzzy matching, stemming, boolean operators
+// Use: CALL db.index.fulltext.queryNodes('instance_fulltext', 'query')
 
-// CREATE FULLTEXT INDEX instance_fulltext IF NOT EXISTS
-// FOR (i:Instance)
-// ON EACH [i.text];
+CREATE FULLTEXT INDEX instance_fulltext IF NOT EXISTS
+FOR (i:Instance)
+ON EACH [i.quote];
+
+// Full-text search on Concept labels and search terms
+CREATE FULLTEXT INDEX concept_fulltext IF NOT EXISTS
+FOR (c:Concept)
+ON EACH [c.label, c.search_terms];
 
 // ============================================================================
 // Schema initialization complete
