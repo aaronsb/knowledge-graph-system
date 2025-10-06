@@ -194,8 +194,22 @@ Note:
             if stats["placeholders"] > 0:
                 Console.info(f"  Created {stats['placeholders']} placeholder concepts")
 
-            if stats["skipped"] > 0:
-                Console.warning(f"  ⚠ Skipped {stats['skipped']} unmatched references")
+            # MUST prune unmatched references - 100% edge handling
+            if restitch_plan["unmatched"]:
+                Console.warning(f"\n⚠ {len(restitch_plan['unmatched'])} external concepts could not be matched")
+                Console.info("  Pruning relationships to unmatched concepts...")
+
+                ontology = backup_data.get('ontology')
+                with conn.session() as session:
+                    prune_result = DatabaseIntegrity.prune_dangling_relationships(
+                        session,
+                        ontology=ontology,
+                        dry_run=False
+                    )
+
+                if prune_result["total_pruned"] > 0:
+                    Console.success(f"✓ Pruned {prune_result['total_pruned']} unmatched relationships")
+                    Console.info("  All external references handled - graph is clean")
 
             # Show next steps
             Console.warning("\n💡 Next steps:")
@@ -217,7 +231,8 @@ Note:
 
             DatabaseIntegrity.print_pruning_report(prune_result, dry_run=False)
 
-            Console.warning("\n💡 Ontology is now isolated - no cross-ontology relationships")
+            Console.success("\n✓ All external references handled - graph is clean")
+            Console.info("  Ontology is now isolated - no cross-ontology relationships")
         else:
             Console.warning("\nNo action taken - dangling relationships remain")
             Console.info("  You can:")
