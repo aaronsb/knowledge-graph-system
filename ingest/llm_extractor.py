@@ -17,7 +17,7 @@ EXTRACTION_PROMPT = """You are a knowledge graph extraction agent. Your task is 
 3. **Relationships**: How concepts relate to each other
 
 For each concept, provide:
-- concept_id: A unique identifier (e.g., "concept_001")
+- concept_id: A unique identifier (e.g., "concept_001", "concept_002", etc.)
 - label: A clear, concise name for the concept
 - search_terms: Alternative terms/phrases that refer to this concept
 
@@ -26,12 +26,15 @@ For each instance, provide:
 - quote: The exact quote from the text
 
 For relationships between concepts, provide:
-- from_concept_id: Source concept
-- to_concept_id: Target concept
+- from_concept_id: Source concept (use actual ID from existing concepts if referencing them)
+- to_concept_id: Target concept (use actual ID from existing concepts if referencing them)
 - relationship_type: One of [IMPLIES, CONTRADICTS, SUPPORTS, PART_OF]
 - confidence: A score from 0.0 to 1.0 indicating confidence in the relationship
 
-Consider the following existing concepts when extracting to avoid duplication:
+IMPORTANT: When creating relationships to existing concepts, use their actual concept_id from the list below.
+When creating relationships between newly extracted concepts, use the concept_001, concept_002 style IDs.
+
+Existing concepts to consider (to avoid duplication and for relationships):
 {existing_concepts}
 
 Return your response as a JSON object with this structure:

@@ -88,3 +88,4 @@ temp/
 ._*
 Desktop.ini
 $RECYCLE.BIN/
+.mcp.json
