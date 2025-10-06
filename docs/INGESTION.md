@@ -90,6 +90,85 @@ The ingestion process uses **iterative graph traversal** - each chunk queries th
 
 This creates a **self-reinforcing feedback loop** where the graph becomes more connected as ingestion progresses.
 
+## Concept Matching and Deduplication
+
+During ingestion, each extracted concept goes through a **vector similarity matching** process to prevent duplicates and link related ideas across documents.
+
+### How Matching Works
+
+**For each concept extracted by the LLM:**
+
+1. **Generate embedding** - Convert `label + search_terms` into a 1536-dimensional vector using OpenAI's `text-embedding-3-small`
+2. **Vector search** - Query existing concepts using cosine similarity
+3. **Match decision**:
+   - **Similarity ≥ 85%** → Link to existing concept (reuse)
+   - **Similarity < 85%** → Create new concept node
+
+**Example output during ingestion:**
+```
+LINKED TO EXISTING (5):
+  • 'Patterns of Work' → 'Patterns of Work' (99%)
+  • 'Traditional Governance' → 'Traditional Governance Challenges' (89%)
+  • 'High Performing Agile Organizations' → 'Hierarchy in Agile Organizations' (86%)
+  • 'VUCA Environment' → 'VUCA Environment' (99%)
+  • 'The Flow System' → 'Design for Flow' (87%)
+```
+
+The percentages shown are **cosine similarity scores** - higher means more semantically similar.
+
+### Why This Matters
+
+**Cross-document concept linking:**
+- Documents about similar topics automatically share concepts
+- "Agile Governance" in Chapter 1 links to "Agile Governance" in Chapter 5
+- Relationships span documents without manual intervention
+
+**Prevents fragmentation:**
+- Without vector matching, similar concepts would duplicate
+- "distributed authority", "authority distribution", "distributed governance" → single concept
+- Graph stays coherent as it grows
+
+**Semantic flexibility:**
+- Matches concepts even with different wording
+- "Legacy governance frameworks" (89%) → "Traditional governance challenges"
+- LLM's synonyms in `search_terms` increase match likelihood
+
+### Tuning the Threshold
+
+The **0.85 threshold** balances precision vs. recall:
+
+- **Higher (0.90+)**: More new concepts created, less aggressive merging
+- **Lower (0.75-0.80)**: More reuse, risk of false matches
+- **Current (0.85)**: Sweet spot for most ontologies
+
+**When you might see different match rates:**
+- **Domain-specific terminology**: Narrow domains → higher reuse (70-80%)
+- **Diverse topics**: Broad ontologies → lower reuse (30-50%)
+- **Sequential chapters**: Later chapters reuse more as graph grows
+
+### Technical Details
+
+**Embedding generation:**
+```python
+# Concatenate label and search terms
+text = f"{label} {' '.join(search_terms)}"
+embedding = openai.embeddings.create(
+    model="text-embedding-3-small",
+    input=text
+).data[0].embedding  # 1536 dimensions
+```
+
+**Vector search query:**
+```cypher
+CALL db.index.vector.queryNodes('concept-embeddings', $limit, $embedding)
+YIELD node, score
+WHERE score >= 0.85
+RETURN node.concept_id, node.label, score
+ORDER BY score DESC
+```
+
+**Cost:** Embeddings cost ~$0.02 per 1M tokens (negligible compared to extraction)
+
 ## Checkpoint & Resume
 
 For large documents, ingestion automatically saves checkpoints:
