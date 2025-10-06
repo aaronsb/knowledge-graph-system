@@ -32,11 +32,24 @@ This will:
 
 Choose option 1 to test your current provider (OpenAI by default).
 
-### 3. Ingest a Document
+### 3. Ingest Documents
 
+**Single document:**
 ```bash
-./scripts/ingest.sh ingest_source/watts_lecture_1.txt --name "Watts Doc 1"
+./scripts/ingest.sh ingest_source/watts_lecture_1.txt --name "Watts Taoism"
 ```
+
+**Multiple documents into same ontology:**
+```bash
+# First document creates the ontology
+./scripts/ingest.sh ingest_source/file1.md --name "My Ontology"
+
+# Additional documents contribute to the same conceptual graph
+./scripts/ingest.sh ingest_source/file2.md --name "My Ontology"
+./scripts/ingest.sh ingest_source/file3.md --name "My Ontology"
+```
+
+The `--name` parameter is the ontology name (logical grouping). Each file gets unique source tracking while contributing concepts to the shared ontology.
 
 ### 4. Query the Graph
 
