@@ -153,6 +153,11 @@ def process_chunk(
     # Map LLM concept_ids to actual concept_ids for relationship processing
     concept_id_map = {}
 
+    # Pre-populate with existing concepts so LLM can reference them in relationships
+    for existing in existing_concepts:
+        # Existing concepts already have their actual IDs
+        concept_id_map[existing["concept_id"]] = existing["concept_id"]
+
     for concept in extraction["concepts"]:
         llm_concept_id = concept["concept_id"]  # LLM-provided ID (may not be unique)
         label = concept["label"]
@@ -188,6 +193,9 @@ def process_chunk(
 
                 neo4j_client.link_concept_to_source(actual_concept_id, source_id)
                 stats.concepts_linked += 1
+
+                # Map LLM ID to actual ID for relationships
+                concept_id_map[llm_concept_id] = actual_concept_id
             else:
                 # Create new concept with unique ID
                 actual_concept_id = f"{source_id}_{uuid.uuid4().hex[:8]}"

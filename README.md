@@ -1,523 +1,216 @@
 # Knowledge Graph System
 
-A multi-dimensional knowledge extraction system that transforms linear documents into interconnected concept graphs, enabling Claude to understand and traverse ideas beyond sequential reading.
+**Transform documents into queryable concept networks, not just retrievable text.**
 
-## Prerequisites
+![Knowledge Graph Visualization](docs/media/neo4j-ui.jpeg)
 
-Before starting, ensure you have:
+## What is This?
 
-- **Docker** (20.10+) - [Install Docker](https://docs.docker.com/get-docker/)
-- **Docker Compose** (2.0+) - [Install Docker Compose](https://docs.docker.com/compose/install/)
-- **Python** (3.11+) - [Install Python](https://www.python.org/downloads/)
-- **Node.js** (18+) - [Install Node.js](https://nodejs.org/)
-- **npm** (9+) - Included with Node.js
+Most AI systems retrieve text chunks based on similarity. This system **extracts concepts, understands relationships, and builds a persistent knowledge graph** that can be explored, traversed, and queried semantically.
+
+Instead of asking "what text is similar to my query?", you ask:
+- "What concepts relate to uselessness in Taoist philosophy?"
+- "Show me evidence for the AI Sandwich model"
+- "How does variety connect to human-AI collaboration?"
+
+**The difference:**
+- 🔍 **RAG**: Find similar text → stuff into context → hope for the best
+- 🕸️ **Knowledge Graph**: Extract concepts → model relationships → traverse connections → provide evidence
+
+## Why Does This Matter?
+
+Traditional RAG systems:
+- Rebuild knowledge on every query (ephemeral)
+- Retrieve based on vector similarity alone
+- Treat documents as isolated text chunks
+- Provide no concept-level understanding
+
+This system:
+- ✅ **Persistent concept extraction** - ideas become first-class entities with labels and search terms
+- ✅ **Relationship modeling** - concepts IMPLY, SUPPORT, CONTRADICT each other
+- ✅ **Graph traversal** - explore connections between ideas, not just similarity scores
+- ✅ **Evidence provenance** - every concept links back to source quotes
+- ✅ **Cross-document synthesis** - concepts from different sources automatically connect
+- ✅ **Multi-modal access** - Query via MCP (for LLMs), CLI (for humans), or Neo4j Browser (visual)
+
+## Live Example
+
+After ingesting Alan Watts lectures and a technical paper on AI systems:
+
+```bash
+# Query: "uselessness"
+→ Found: "Value of Uselessness" (89.5% similarity)
+  Evidence: "The whole notion of something of life...being useful...
+             is to a Taoist absurd."
+  Related to: "Ideal Useless Man" → "Admiration of Nature"
+
+# Query: "variety requisite human capability"
+→ Found: "Requisite Variety" (Ashby's Law)
+  Relationships: SUPPORTS "AI Sandwich Systems Model"
+                IMPLIES "Variety Mismatch" failure patterns
+  Evidence: 3 source quotes with paragraph references
+```
+
+The system understood:
+- Taoist philosophy concepts across multiple lectures
+- Technical framework relationships in the AI paper
+- How "variety" functions as a mechanism, not just a keyword
 
 ## Quick Start
 
-1. **Clone and navigate to the project:**
-   ```bash
-   git clone <repository-url>
-   cd knowledge-graph-system
-   ```
-
-2. **Run the setup script:**
-   ```bash
-   ./scripts/setup.sh
-   ```
-
-   The script will:
-   - Check all prerequisites
-   - Create `.env` file from template
-   - Start Neo4j database
-   - Initialize database schema
-   - Set up Python virtual environment
-   - Install and build MCP server
-
-3. **Configure AI provider:**
-   ```bash
-   ./scripts/configure-ai.sh
-   ```
-
-   This interactive script helps you:
-   - Choose between OpenAI or Anthropic
-   - Validate API keys
-   - Select extraction and embedding models
-   - Test provider configuration
-
-   Or manually edit `.env`:
-   - `AI_PROVIDER` - Choose "openai" (default) or "anthropic"
-   - `OPENAI_API_KEY` - Required for OpenAI, or for embeddings with Anthropic
-   - `ANTHROPIC_API_KEY` - Required only if using Anthropic
-   - Model overrides (optional):
-     - `OPENAI_EXTRACTION_MODEL` (default: gpt-4o)
-     - `OPENAI_EMBEDDING_MODEL` (default: text-embedding-3-small)
-     - `ANTHROPIC_EXTRACTION_MODEL` (default: claude-sonnet-4-20250514)
-
-4. **Ingest a test document:**
-   ```bash
-   source venv/bin/activate
-   python ingest/ingest.py docs/watts_lecture_1.txt --document-name "Watts Doc 1"
-   ```
-
-5. **Configure Claude Desktop** (see below)
-
-## Claude Desktop Configuration
-
-Add the MCP server to your Claude Desktop configuration:
-
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
-**Linux:** `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "knowledge-graph": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/knowledge-graph-system/mcp-server/build/index.js"
-      ],
-      "env": {
-        "NEO4J_URI": "bolt://localhost:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "password",
-        "OPENAI_API_KEY": "your-openai-api-key-here"
-      }
-    }
-  }
-}
-```
-
-**Important:** Replace `/absolute/path/to/knowledge-graph-system` with your actual project path.
-
-After configuration:
-1. Restart Claude Desktop
-2. Look for the 🔌 MCP tools icon in the chat interface
-3. The knowledge graph tools should be available
-
-## Usage Examples
-
-### Via Command Line (CLI)
-
-The CLI provides direct access to the knowledge graph without needing Claude Desktop. It's useful for:
-- Testing and debugging
-- Understanding how the system works
-- Inspecting query results
-- Quick exploration
+**Prerequisites:** Docker, Python 3.11+, Node.js 18+
 
 ```bash
-# Activate Python environment first
+# 1. Setup system (one-time)
+./scripts/setup.sh
+
+# 2. Configure AI provider (OpenAI or Anthropic)
+./scripts/configure-ai.sh
+
+# 3. Ingest a document
+./scripts/ingest.sh your-document.txt --name "Document Title"
+
+# 4. Query the graph
 source venv/bin/activate
-
-# Search for concepts
-python cli.py search "linear thinking" --limit 5
-
-# Get concept details with evidence
-python cli.py details linear-scanning-system
-
-# Find related concepts (graph traversal)
-python cli.py related intelligence-limitation --depth 3
-
-# Find connection between concepts
-python cli.py connect linear-scanning-system genetic-intervention
-
-# List all documents
-python cli.py list-documents
-
-# Show database statistics
-python cli.py stats
+python cli.py search "your query here"
+python cli.py details <concept-id>
 ```
 
-**CLI Commands:**
-- `search <query>` - Semantic search for concepts
-  - `--limit N` - Max results (default: 10)
-  - `--min-similarity X` - Min similarity score (default: 0.7)
-- `details <concept-id>` - Show concept with all evidence and relationships
-- `related <concept-id>` - Find related concepts via graph traversal
-  - `--depth N` - Max traversal depth (default: 2)
-  - `--types TYPE1 TYPE2` - Filter by relationship types
-- `connect <from-id> <to-id>` - Find shortest path between concepts
-  - `--max-hops N` - Max path length (default: 5)
-- `list-documents` - List all documents with concept counts
-- `stats` - Show database statistics
+**For Claude Desktop integration:** See [MCP Setup Guide](docs/QUICKSTART.md#claude-desktop-configuration)
 
-### Via Claude Desktop
-
-Once configured, you can ask Claude:
-
-**Search for concepts:**
-```
-"What concepts are related to 'linear scanning'?"
-```
-
-**Find connections:**
-```
-"Show me how 'human intelligence' connects to 'genetic intervention'"
-```
-
-**Explore a concept:**
-```
-"What does the knowledge graph say about 'consciousness'?"
-```
-
-**Get evidence:**
-```
-"Find all quotes about 'limitations of linear thinking'"
-```
-
-### Via Neo4j Browser
-
-Access the graph directly:
-
-1. Open: http://localhost:7474
-2. Login: `neo4j` / `password`
-3. Run queries:
-
-```cypher
-// Find all concepts
-MATCH (c:Concept) RETURN c LIMIT 25
-
-// Find concept relationships
-MATCH (c1:Concept)-[r]->(c2:Concept)
-WHERE c1.label CONTAINS 'intelligence'
-RETURN c1, r, c2
-
-// Get concept with evidence
-MATCH (c:Concept {label: 'linear scanning'})-[:EVIDENCED_BY]->(i:Instance)
-RETURN c, i.quote
-```
-
-## Architecture
+## How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Claude Desktop                         │
-│                  (User Interface Layer)                     │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ MCP Protocol
-                      ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   MCP Server (Node.js)                      │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  Tools: search_concepts, find_connections,           │  │
-│  │         get_concept_evidence, traverse_graph         │  │
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ Cypher Queries
-                      ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    Neo4j Graph Database                     │
-│  ┌──────────────┬──────────────────┬───────────────────┐   │
-│  │   Concepts   │   Relationships  │   Instances       │   │
-│  │   (Nodes)    │    (Edges)       │   (Evidence)      │   │
-│  └──────────────┴──────────────────┴───────────────────┘   │
-└─────────────────────┬───────────────────────────────────────┘
-                      ↑
-                      │ Document Ingestion
-                      │
-┌─────────────────────────────────────────────────────────────┐
-│              Python Ingestion Pipeline                      │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  1. Parse document (TXT/PDF/DOCX)                    │  │
-│  │  2. Extract concepts (Claude API)                    │  │
-│  │  3. Generate embeddings (OpenAI)                     │  │
-│  │  4. Detect relationships (LLM reasoning)             │  │
-│  │  5. Store in Neo4j                                   │  │
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-
-Data Flow:
-  Documents → Ingestion → Neo4j → MCP Server → Claude Desktop
+Document → Smart Chunking → LLM Extraction → Graph Construction → Semantic Query
+            ↓                ↓                 ↓                   ↓
+         Boundaries      Concepts +        Neo4j with          Vector Search
+         Detected        Relationships     Evidence Links      + Traversal
 ```
+
+1. **Smart Chunking**: Breaks documents at natural boundaries (paragraphs, sentences) with context overlap
+2. **Concept Extraction**: LLM identifies concepts, evidence quotes, and relationships
+3. **Graph Construction**: Stores in Neo4j with vector embeddings for similarity search
+4. **Deduplication**: Automatically merges similar concepts across chunks/documents
+5. **Query & Traverse**: Semantic search + graph traversal with evidence retrieval
+
+## Architecture Highlights
+
+- **Graph-Aware Chunking**: Queries recent concepts before processing new chunks, enabling cross-chunk relationship detection
+- **Vector Deduplication**: Uses cosine similarity to merge concepts across document boundaries
+- **Checkpoint & Resume**: Position tracking for large documents - resume if interrupted
+- **Modular AI Providers**: Swap between OpenAI, Anthropic, or add your own
+- **Full-Text + Vector Search**: Combined semantic and exact-match capabilities
+- **Evidence Preservation**: Every concept links to source quotes with paragraph references
+
+## Use Cases
+
+**Research & Learning:**
+- Explore philosophical texts by concept relationships, not linear reading
+- Connect ideas across multiple papers or books
+- Find evidence for specific claims with source attribution
+
+**Documentation Understanding:**
+- Navigate large codebases by architectural concepts
+- Understand design decisions and their relationships
+- Trace dependencies between system components
+
+**Knowledge Synthesis:**
+- Find connections between seemingly unrelated documents
+- Build concept maps from lecture series or technical documentation
+- Generate semantic overviews without reading everything linearly
+
+## What Makes This Different?
+
+This is **not** a new embedding model or vector database. It's a synthesis:
+
+1. **LLM-powered extraction** (not just embeddings) - understands concepts, not just words
+2. **Graph storage** (not vector-only) - models relationships between ideas
+3. **Evidence-based retrieval** (not just chunks) - provides source quotes for every concept
+4. **Persistent knowledge** (not ephemeral RAG) - builds understanding over time
+5. **Human + AI queryable** (not just AI) - CLI, MCP, and Neo4j Browser access
+
+## Learn More
+
+- 📖 [Concept Deep Dive](docs/CONCEPT.md) - Why knowledge graphs vs RAG
+- 🏗️ [Architecture](docs/ARCHITECTURE.md) - How the system works
+- 🚀 [Quick Start Guide](docs/QUICKSTART.md) - Get running in 5 minutes
+- 💡 [Examples & Demos](docs/EXAMPLES.md) - Real queries with actual results
+- ⚙️ [AI Provider Configuration](docs/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
 
 ## Project Structure
 
 ```
 knowledge-graph-system/
-├── docker-compose.yml      # Neo4j service definition
-├── .env                    # Environment variables (API keys)
-│
 ├── scripts/                # Management scripts
 │   ├── setup.sh           # Initial system setup
 │   ├── reset.sh           # Clear database and restart
-│   ├── status.sh          # Check system health
 │   ├── ingest.sh          # Ingest documents (smart chunking)
-│   ├── configure-ai.sh    # Configure AI provider
-│   ├── backup.sh          # Backup database
-│   ├── restore.sh         # Restore from backup
-│   └── teardown.sh        # Stop and cleanup
+│   └── configure-ai.sh    # Configure AI provider
 │
-├── schema/
-│   └── init.cypher        # Neo4j schema and constraints
-│
-├── ingest/
-│   ├── ingest_chunked.py  # Main ingestion pipeline
+├── ingest/                 # Python ingestion pipeline
+│   ├── ingest_chunked.py  # Main ingestion with chunking
 │   ├── chunker.py         # Smart text chunking
-│   ├── checkpoint.py      # Position tracking & resume
 │   ├── llm_extractor.py   # LLM concept extraction
-│   ├── neo4j_client.py    # Graph database operations
-│   └── ai_providers.py    # Modular AI provider support
+│   └── neo4j_client.py    # Graph database operations
 │
-├── mcp-server/
-│   ├── package.json       # Node.js dependencies
-│   ├── tsconfig.json      # TypeScript configuration
+├── mcp-server/            # MCP server for Claude Desktop
 │   └── src/
 │       ├── index.ts       # MCP server entry point
 │       └── neo4j.ts       # Neo4j queries and operations
 │
-└── docs/
-    └── QUICKSTART.md      # Quick start guide
+├── schema/
+│   └── init.cypher        # Neo4j schema and indexes
+│
+└── docs/                  # Documentation
+    ├── CONCEPT.md         # Why knowledge graphs (coming soon)
+    ├── ARCHITECTURE.md    # System design (existing)
+    ├── QUICKSTART.md      # Getting started (existing)
+    └── EXAMPLES.md        # Real query examples (coming soon)
 ```
 
-## Management Scripts
+## Technology Stack
 
-The `scripts/` directory contains utilities for managing the knowledge graph system:
+- **Neo4j 5.15+** - Graph database with vector search
+- **Python 3.11+** - Ingestion pipeline
+- **OpenAI / Anthropic** - LLM concept extraction
+- **Node.js 18+** - MCP server
+- **Docker Compose** - Infrastructure
 
-### Setup & Initialization
+## Current Status
 
-```bash
-# Initial setup (run once)
-./scripts/setup.sh
-```
+**Working:**
+- ✅ Document ingestion with smart chunking
+- ✅ LLM concept extraction (OpenAI & Anthropic)
+- ✅ Graph construction with relationships
+- ✅ Vector similarity search
+- ✅ Full-text search
+- ✅ MCP server for Claude Desktop
+- ✅ CLI for direct querying
+- ✅ Checkpoint & resume for large documents
+- ✅ Cross-document concept deduplication
 
-Sets up the entire system:
-- Checks prerequisites (Docker, Python, Node.js)
-- Creates `.env` from template
-- Starts Neo4j database
-- Initializes database schema
-- Sets up Python virtual environment
-- Builds MCP server
-- Prints Claude Desktop configuration
-
-### System Status
-
-```bash
-# Check system status
-./scripts/status.sh
-```
-
-Shows:
-- Docker container status
-- Database connection health
-- Node/relationship counts
-- Python environment status
-- MCP server build status
-- Configuration validation
-- Disk usage
-- Access URLs
-
-### Reset Database
-
-```bash
-# Reset database to empty state
-./scripts/reset.sh
-```
-
-**Warning:** Deletes all graph data!
-- Stops containers
-- Removes database volumes
-- Restarts with fresh database
-- Reinitializes schema
-
-### Teardown
-
-```bash
-# Clean up system
-./scripts/teardown.sh
-```
-
-Interactive teardown:
-- Stops Docker containers
-- Optionally removes data volumes
-- Optionally removes Python venv
-- Optionally removes node_modules
-- Preserves source code and `.env`
-
-### AI Provider Configuration
-
-```bash
-# Configure and test AI providers
-./scripts/configure-ai.sh
-```
-
-AI configuration features:
-- Test current provider configuration
-- Validate API keys
-- Switch between OpenAI and Anthropic
-- Configure extraction and embedding models
-- View available models for each provider
-
-**Supported Providers:**
-- **OpenAI**: GPT-4o, GPT-4o-mini, o1-preview, o1-mini
-- **Anthropic**: Claude Sonnet 4.5 (SOTA), Claude 3.5 Sonnet, Claude 3 Opus
-
-**Note:** Anthropic uses OpenAI for embeddings, so `OPENAI_API_KEY` is required even when using Anthropic for extraction.
-
-### Document Ingestion
-
-The ingestion system uses smart chunking to handle any document type:
-
-```bash
-# Basic ingestion
-./scripts/ingest.sh ingest_source/watts_lecture_1.txt --name "Watts Lecture"
-
-# Large documents with custom chunk sizes
-./scripts/ingest.sh transcript.txt --name "Transcript" \
-  --target-words 1500 --max-words 2000
-
-# Resume interrupted ingestion
-./scripts/ingest.sh transcript.txt --name "Transcript" --resume
-
-# See all options
-./scripts/ingest.sh --help
-```
-
-**How it works:**
-- **Smart boundary detection**: Finds natural breaks (paragraphs, sentences, pauses)
-- **Checkpoint & resume**: Saves progress every N chunks, resume if interrupted
-- **Graph-aware**: Queries recent concepts before processing new chunks
-- **Vector deduplication**: Matches similar concepts to prevent duplicates
-- **Works for any document**: Structured (paragraphs) or continuous (transcripts)
-
-**Key Options:**
-- `--target-words N` - Target chunk size (default: 1000)
-- `--max-words N` - Maximum chunk size (default: 1500)
-- `--overlap-words N` - Context overlap between chunks (default: 200)
-- `--checkpoint-interval N` - Save every N chunks (default: 5)
-- `--resume` - Continue from last checkpoint
-
-### Backup & Restore
-
-```bash
-# Create backup
-./scripts/backup.sh
-
-# Restore from backup
-./scripts/restore.sh
-```
-
-Backup features:
-- Exports all graph data to Cypher format
-- Saves to `backups/` directory with timestamp
-- Preserves environment template (without API keys)
-
-Restore features:
-- Lists available backups
-- Clears existing data
-- Restores selected backup
-- Verifies restoration
-
-## Development
-
-### Useful Commands
-
-```bash
-# Start all services
-docker-compose up -d
-
-# Stop all services
-docker-compose down
-
-# View logs
-docker-compose logs -f neo4j
-
-# Access Neo4j shell
-docker exec -it neo4j-kg cypher-shell -u neo4j -p password
-
-# Activate Python environment
-source venv/bin/activate
-
-# Rebuild MCP server
-cd mcp-server && npm run build
-
-# Run ingestion with debug output
-LOG_LEVEL=DEBUG python ingest/ingest.py docs/your_document.txt
-```
-
-### Troubleshooting
-
-**Neo4j won't start:**
-- Check if port 7474 or 7687 is already in use: `lsof -i :7474`
-- View logs: `docker-compose logs neo4j`
-- Reset database: `docker-compose down -v` (WARNING: deletes data)
-
-**MCP server not showing in Claude:**
-- Verify the path in `claude_desktop_config.json` is absolute
-- Check MCP server built successfully: `ls mcp-server/build/index.js`
-- Restart Claude Desktop completely
-- Check Claude Desktop logs (macOS: `~/Library/Logs/Claude/`)
-
-**Ingestion fails:**
-- Verify API keys in `.env` are correct
-- Check Neo4j is running: `docker ps | grep neo4j`
-- Test Neo4j connection: `docker exec neo4j cypher-shell -u neo4j -p password "RETURN 1;"`
-- Enable debug logging: `LOG_LEVEL=DEBUG python ingest/ingest.py ...`
-
-**Embeddings not working:**
-- Verify `OPENAI_API_KEY` is set correctly
-- Check API quota/billing: https://platform.openai.com/account/usage
-- Try reducing batch size in ingestion script
-
-**Concept deduplication issues:**
-- Lower similarity threshold in extraction config
-- Check embedding quality (view in Neo4j)
-- Manually merge concepts via Cypher:
-  ```cypher
-  MATCH (c1:Concept {label: 'old'}), (c2:Concept {label: 'new'})
-  CALL apoc.refactor.mergeNodes([c1, c2]) YIELD node
-  RETURN node
-  ```
-
-### Running Tests
-
-```bash
-# Python tests
-source venv/bin/activate
-pytest tests/
-
-# MCP server tests
-cd mcp-server
-npm test
-
-# Integration test (full pipeline)
-./test_pipeline.sh
-```
-
-### Adding New Document Types
-
-To support additional document formats:
-
-1. Add parser to `ingest/parsers.py`
-2. Register in `ingest/ingest.py`
-3. Update `requirements.txt` if needed
-4. Test with sample document
-
-### Performance Tuning
-
-**Neo4j:**
-- Increase memory: Edit `docker-compose.yml` → `NEO4J_dbms_memory_heap_max__size`
-- Add indexes: Create for frequently queried properties
-- Monitor: http://localhost:7474 → Database Information
-
-**Ingestion:**
-- Batch processing: Use `--batch-size` flag
-- Parallel workers: Use `--workers` flag
-- Cache embeddings: Enable in config
-
-## License
-
-MIT License - see LICENSE file for details
+**Roadmap:**
+- [ ] Async ingestion with job queues
+- [ ] Advanced graph algorithms (PageRank, community detection)
+- [ ] Web UI for exploration
+- [ ] Export to GraphML/JSON
+- [ ] Incremental updates (avoid re-processing)
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests
-5. Submit a pull request
+This is an experimental project exploring the boundaries between RAG, knowledge graphs, and LLM-powered extraction. Feedback, issues, and contributions welcome.
 
-## Support
+## License
 
-- Issues: [GitHub Issues](https://github.com/yourusername/knowledge-graph-system/issues)
-- Documentation: [Wiki](https://github.com/yourusername/knowledge-graph-system/wiki)
-- Discussions: [GitHub Discussions](https://github.com/yourusername/knowledge-graph-system/discussions)
+[Add your license here]
+
+## Acknowledgments
+
+Built with:
+- [Neo4j](https://neo4j.com/) - Graph database platform
+- [Model Context Protocol](https://modelcontextprotocol.io/) - LLM integration standard
+- [OpenAI](https://openai.com/) / [Anthropic](https://anthropic.com/) - LLM providers
+
+---
+
+*Not just retrieval. Understanding.*
