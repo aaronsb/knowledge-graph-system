@@ -381,6 +381,77 @@ export async function findShortestPath(
 }
 
 /**
+ * Find shortest path between concepts by searching for keywords/phrases
+ * @param fromQuery - Natural language query for starting concept
+ * @param toQuery - Natural language query for target concept
+ * @param fromEmbedding - Embedding vector for fromQuery
+ * @param toEmbedding - Embedding vector for toQuery
+ * @param maxHops - Maximum path length (default: 100)
+ * @returns Object with matched concepts and paths between them
+ */
+export async function findPathBySearch(
+  fromQuery: string,
+  toQuery: string,
+  fromEmbedding: number[],
+  toEmbedding: number[],
+  maxHops: number = 100
+): Promise<any> {
+  // Find best matching concepts for both queries
+  const fromMatches = await vectorSearch(fromEmbedding, 0.7, 3, 0);
+  const toMatches = await vectorSearch(toEmbedding, 0.7, 3, 0);
+
+  if (fromMatches.length === 0 || toMatches.length === 0) {
+    return {
+      fromQuery,
+      toQuery,
+      fromMatches: fromMatches.length,
+      toMatches: toMatches.length,
+      paths: [],
+      message: fromMatches.length === 0
+        ? `No concepts found matching "${fromQuery}"`
+        : `No concepts found matching "${toQuery}"`
+    };
+  }
+
+  // Try to find paths between top matches
+  const pathResults = [];
+  for (const fromConcept of fromMatches.slice(0, 2)) {
+    for (const toConcept of toMatches.slice(0, 2)) {
+      const paths = await findShortestPath(
+        fromConcept.concept_id,
+        toConcept.concept_id,
+        maxHops
+      );
+
+      if (paths.length > 0) {
+        pathResults.push({
+          fromConcept: {
+            id: fromConcept.concept_id,
+            label: fromConcept.label,
+            similarity: fromConcept.similarity
+          },
+          toConcept: {
+            id: toConcept.concept_id,
+            label: toConcept.label,
+            similarity: toConcept.similarity
+          },
+          paths
+        });
+      }
+    }
+  }
+
+  return {
+    fromQuery,
+    toQuery,
+    fromMatches: fromMatches.map(m => ({ id: m.concept_id, label: m.label, similarity: m.similarity })),
+    toMatches: toMatches.map(m => ({ id: m.concept_id, label: m.label, similarity: m.similarity })),
+    pathResults,
+    totalPathsFound: pathResults.reduce((sum, r) => sum + r.paths.length, 0)
+  };
+}
+
+/**
  * Get overall database statistics
  * @returns Database statistics object
  */
