@@ -80,10 +80,8 @@ class KnowledgeGraphCLI:
         )
         return response.data[0].embedding
 
-    def search_concepts(self, query: str, limit: int = 10, min_similarity: float = 0.7):
+    def search_concepts(self, query: str, limit: int = 10, min_similarity: float = 0.7, json_output: bool = False):
         """Search for concepts using semantic similarity"""
-        print(f"{Colors.HEADER}Searching for: {Colors.BOLD}{query}{Colors.ENDC}\n")
-
         # Generate embedding
         embedding = self.generate_embedding(query)
 
@@ -107,12 +105,21 @@ class KnowledgeGraphCLI:
                 ORDER BY score DESC
             """, embedding=embedding, limit=limit, min_similarity=min_similarity)
 
-            results = list(result)
+            results = [dict(record) for record in result]
+
+            if json_output:
+                print(json.dumps({
+                    "query": query,
+                    "count": len(results),
+                    "results": results
+                }, indent=2))
+                return
 
             if not results:
                 print(f"{Colors.WARNING}No concepts found matching '{query}'{Colors.ENDC}")
                 return
 
+            print(f"{Colors.HEADER}Searching for: {Colors.BOLD}{query}{Colors.ENDC}\n")
             print(f"{Colors.OKGREEN}Found {len(results)} concepts:{Colors.ENDC}\n")
 
             for i, record in enumerate(results, 1):
@@ -268,10 +275,8 @@ class KnowledgeGraphCLI:
                         print(f"    ↓ {Colors.OKBLUE}{rels[j]}{Colors.ENDC}")
                 print()
 
-    def ontology_list(self):
+    def ontology_list(self, json_output: bool = False):
         """List all ontologies in the graph"""
-        print(f"{Colors.HEADER}Ontologies in Knowledge Graph{Colors.ENDC}\n")
-
         with self.driver.session() as session:
             result = session.run("""
                 MATCH (s:Source)
@@ -286,12 +291,20 @@ class KnowledgeGraphCLI:
                 ORDER BY ontology
             """)
 
-            results = list(result)
+            results = [dict(record) for record in result]
+
+            if json_output:
+                print(json.dumps({
+                    "count": len(results),
+                    "ontologies": results
+                }, indent=2))
+                return
 
             if not results:
                 print(f"{Colors.WARNING}No ontologies found{Colors.ENDC}")
                 return
 
+            print(f"{Colors.HEADER}Ontologies in Knowledge Graph{Colors.ENDC}\n")
             print(f"{Colors.OKGREEN}Found {len(results)} ontologies:{Colors.ENDC}\n")
 
             for ont in results:
@@ -301,10 +314,8 @@ class KnowledgeGraphCLI:
                 print(f"  Concepts: {ont['concept_count']}")
                 print()
 
-    def ontology_info(self, ontology_name: str):
+    def ontology_info(self, ontology_name: str, json_output: bool = False):
         """Get detailed information about a specific ontology"""
-        print(f"{Colors.HEADER}Ontology: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
-
         with self.driver.session() as session:
             # Check if ontology exists
             exists = session.run("""
@@ -313,7 +324,10 @@ class KnowledgeGraphCLI:
             """, ontology=ontology_name)
 
             if not exists.single()['exists']:
-                print(f"{Colors.FAIL}Ontology '{ontology_name}' not found{Colors.ENDC}")
+                if json_output:
+                    print(json.dumps({"error": f"Ontology '{ontology_name}' not found"}))
+                else:
+                    print(f"{Colors.FAIL}Ontology '{ontology_name}' not found{Colors.ENDC}")
                 return
 
             # Get statistics
@@ -332,22 +346,30 @@ class KnowledgeGraphCLI:
                 RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
             """, ontology=ontology_name).single()
 
+            data = dict(stats)
+
+            if json_output:
+                print(json.dumps({
+                    "ontology": ontology_name,
+                    "statistics": data
+                }, indent=2))
+                return
+
+            print(f"{Colors.HEADER}Ontology: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
             print(f"{Colors.BOLD}Statistics:{Colors.ENDC}")
-            print(f"  Files: {Colors.OKGREEN}{stats['file_count']}{Colors.ENDC}")
-            print(f"  Chunks: {Colors.OKGREEN}{stats['source_count']}{Colors.ENDC}")
-            print(f"  Concepts: {Colors.OKGREEN}{stats['concept_count']}{Colors.ENDC}")
-            print(f"  Evidence: {Colors.OKGREEN}{stats['instance_count']}{Colors.ENDC}")
-            print(f"  Relationships: {Colors.OKGREEN}{stats['relationship_count']}{Colors.ENDC}")
+            print(f"  Files: {Colors.OKGREEN}{data['file_count']}{Colors.ENDC}")
+            print(f"  Chunks: {Colors.OKGREEN}{data['source_count']}{Colors.ENDC}")
+            print(f"  Concepts: {Colors.OKGREEN}{data['concept_count']}{Colors.ENDC}")
+            print(f"  Evidence: {Colors.OKGREEN}{data['instance_count']}{Colors.ENDC}")
+            print(f"  Relationships: {Colors.OKGREEN}{data['relationship_count']}{Colors.ENDC}")
 
             print(f"\n{Colors.BOLD}Files:{Colors.ENDC}")
-            for file_path in stats['files']:
+            for file_path in data['files']:
                 if file_path:
                     print(f"  • {file_path}")
 
-    def ontology_files(self, ontology_name: str):
+    def ontology_files(self, ontology_name: str, json_output: bool = False):
         """List all files in a specific ontology with their statistics"""
-        print(f"{Colors.HEADER}Files in: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
-
         with self.driver.session() as session:
             result = session.run("""
                 MATCH (s:Source {document: $ontology})
@@ -361,12 +383,21 @@ class KnowledgeGraphCLI:
                 ORDER BY file_path
             """, ontology=ontology_name)
 
-            results = list(result)
+            results = [dict(record) for record in result]
+
+            if json_output:
+                print(json.dumps({
+                    "ontology": ontology_name,
+                    "count": len(results),
+                    "files": results
+                }, indent=2))
+                return
 
             if not results:
                 print(f"{Colors.WARNING}No files found in ontology '{ontology_name}'{Colors.ENDC}")
                 return
 
+            print(f"{Colors.HEADER}Files in: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
             print(f"{Colors.OKGREEN}Found {len(results)} files:{Colors.ENDC}\n")
 
             for file_info in results:
@@ -375,10 +406,8 @@ class KnowledgeGraphCLI:
                 print(f"  Concepts: {file_info['concept_count']}")
                 print()
 
-    def ontology_delete(self, ontology_name: str, force: bool = False):
+    def ontology_delete(self, ontology_name: str, force: bool = False, json_output: bool = False):
         """Delete an ontology and all its data"""
-        print(f"{Colors.HEADER}Delete Ontology: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
-
         with self.driver.session() as session:
             # Check if ontology exists and get stats
             check = session.run("""
@@ -389,24 +418,32 @@ class KnowledgeGraphCLI:
             """, ontology=ontology_name).single()
 
             if check['source_count'] == 0:
-                print(f"{Colors.FAIL}Ontology '{ontology_name}' not found{Colors.ENDC}")
+                if json_output:
+                    print(json.dumps({"error": f"Ontology '{ontology_name}' not found", "deleted": False}))
+                else:
+                    print(f"{Colors.FAIL}Ontology '{ontology_name}' not found{Colors.ENDC}")
                 return
 
-            print(f"{Colors.WARNING}This will delete:{Colors.ENDC}")
-            print(f"  • {check['source_count']} source chunks")
-            print(f"  • {check['concept_count']} concept associations")
-            print(f"  • All related instances and evidence")
+            if not json_output:
+                print(f"{Colors.HEADER}Delete Ontology: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
+                print(f"{Colors.WARNING}This will delete:{Colors.ENDC}")
+                print(f"  • {check['source_count']} source chunks")
+                print(f"  • {check['concept_count']} concept associations")
+                print(f"  • All related instances and evidence")
 
             # Confirm deletion
             if not force:
+                if json_output:
+                    print(json.dumps({"error": "Cannot delete in JSON mode without --yes flag", "deleted": False}))
+                    return
                 print(f"\n{Colors.FAIL}WARNING: This action cannot be undone!{Colors.ENDC}")
                 response = input(f"Type '{ontology_name}' to confirm deletion: ")
                 if response != ontology_name:
                     print(f"{Colors.WARNING}Deletion cancelled{Colors.ENDC}")
                     return
 
-            # Delete all data for this ontology
-            print(f"\n{Colors.OKCYAN}Deleting ontology data...{Colors.ENDC}")
+            if not json_output:
+                print(f"\n{Colors.OKCYAN}Deleting ontology data...{Colors.ENDC}")
 
             # Delete instances linked to sources in this ontology
             session.run("""
@@ -431,15 +468,21 @@ class KnowledgeGraphCLI:
                 RETURN count(c) as orphaned_count
             """).single()['orphaned_count']
 
-            print(f"{Colors.OKGREEN}✓ Deleted {deleted} sources{Colors.ENDC}")
-            if orphaned > 0:
-                print(f"{Colors.OKGREEN}✓ Cleaned up {orphaned} orphaned concepts{Colors.ENDC}")
-            print(f"\n{Colors.OKGREEN}Ontology '{ontology_name}' successfully deleted{Colors.ENDC}")
+            if json_output:
+                print(json.dumps({
+                    "ontology": ontology_name,
+                    "deleted": True,
+                    "sources_deleted": deleted,
+                    "orphaned_concepts_deleted": orphaned
+                }, indent=2))
+            else:
+                print(f"{Colors.OKGREEN}✓ Deleted {deleted} sources{Colors.ENDC}")
+                if orphaned > 0:
+                    print(f"{Colors.OKGREEN}✓ Cleaned up {orphaned} orphaned concepts{Colors.ENDC}")
+                print(f"\n{Colors.OKGREEN}Ontology '{ontology_name}' successfully deleted{Colors.ENDC}")
 
-    def show_stats(self):
+    def show_stats(self, json_output: bool = False):
         """Show database statistics"""
-        print(f"{Colors.HEADER}Knowledge Graph Statistics{Colors.ENDC}\n")
-
         with self.driver.session() as session:
             # Node counts
             stats = {}
@@ -458,6 +501,23 @@ class KnowledgeGraphCLI:
                 ORDER BY count DESC
             """)
 
+            rel_type_list = [dict(record) for record in rel_types]
+
+            if json_output:
+                print(json.dumps({
+                    "nodes": {
+                        "concepts": stats['Concept'],
+                        "sources": stats['Source'],
+                        "instances": stats['Instance']
+                    },
+                    "relationships": {
+                        "total": stats['Relationships'],
+                        "by_type": rel_type_list
+                    }
+                }, indent=2))
+                return
+
+            print(f"{Colors.HEADER}Knowledge Graph Statistics{Colors.ENDC}\n")
             print(f"{Colors.BOLD}Nodes:{Colors.ENDC}")
             print(f"  Concepts: {Colors.OKGREEN}{stats['Concept']}{Colors.ENDC}")
             print(f"  Sources: {Colors.OKGREEN}{stats['Source']}{Colors.ENDC}")
@@ -466,7 +526,6 @@ class KnowledgeGraphCLI:
             print(f"\n{Colors.BOLD}Relationships:{Colors.ENDC}")
             print(f"  Total: {Colors.OKGREEN}{stats['Relationships']}{Colors.ENDC}")
 
-            rel_type_list = list(rel_types)
             if rel_type_list:
                 print(f"\n{Colors.BOLD}Concept Relationships:{Colors.ENDC}")
                 for rel in rel_type_list:
@@ -508,6 +567,7 @@ Examples:
   %(prog)s ontology files "My Ontology"
   %(prog)s ontology delete "My Ontology"
   %(prog)s --yes ontology delete "My Ontology"  # Skip confirmation
+  %(prog)s --json ontology list  # JSON output for tool integration
   %(prog)s stats
         """
     )
@@ -515,6 +575,8 @@ Examples:
     # Global flags
     parser.add_argument('--yes', '-y', action='store_true',
                        help='Auto-confirm all prompts (for create/update/delete operations)')
+    parser.add_argument('--json', action='store_true',
+                       help='Output results as JSON (for tool integration)')
 
     subparsers = parser.add_subparsers(dest='command', help='Command to execute')
 
@@ -580,7 +642,7 @@ Examples:
 
     try:
         if args.command == 'search':
-            cli.search_concepts(args.query, args.limit, args.min_similarity)
+            cli.search_concepts(args.query, args.limit, args.min_similarity, json_output=args.json)
         elif args.command == 'details':
             cli.get_concept_details(args.concept_id)
         elif args.command == 'related':
@@ -591,15 +653,15 @@ Examples:
             if not args.ontology_command:
                 parser.error("ontology command requires a subcommand (list, info, files, delete)")
             if args.ontology_command == 'list':
-                cli.ontology_list()
+                cli.ontology_list(json_output=args.json)
             elif args.ontology_command == 'info':
-                cli.ontology_info(args.name)
+                cli.ontology_info(args.name, json_output=args.json)
             elif args.ontology_command == 'files':
-                cli.ontology_files(args.name)
+                cli.ontology_files(args.name, json_output=args.json)
             elif args.ontology_command == 'delete':
-                cli.ontology_delete(args.name, force=args.yes)
+                cli.ontology_delete(args.name, force=args.yes, json_output=args.json)
         elif args.command == 'stats':
-            cli.show_stats()
+            cli.show_stats(json_output=args.json)
         elif args.command == 'visualize':
             cli.visualize(args.concept_ids, args.depth, args.type)
     except Exception as e:
