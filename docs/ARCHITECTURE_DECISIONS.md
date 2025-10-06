@@ -951,4 +951,199 @@ python -m src.admin.backup "$@"
 ### Related ADRs
 
 - ADR-006: Staging and Migration Workflows (uses similar backup/restore concepts)
-- Future: ADR-012: GUI Architecture (will use these shared libraries)
+- ADR-012: Full-Stack Functional Testing Strategy (below)
+- Future: ADR-013: GUI Architecture (will use these shared libraries)
+
+---
+
+## ADR-012: Full-Stack Functional Testing Strategy
+
+**Status:** Accepted
+**Date:** 2025-10-06
+**Context:** Need reliable testing for complex knowledge graph system with LLM extraction, Neo4j storage, and vector search
+
+### Problem
+
+The system has grown to include:
+- Complex graph integrity logic (stitching, pruning, validation)
+- LLM-based concept extraction (non-deterministic)
+- Neo4j database operations with vector embeddings
+- Backup/restore with semantic matching
+- Multi-ontology relationship handling
+
+**Traditional unit testing challenges:**
+- Mocking Neo4j loses real graph behavior
+- Mocking LLMs loses extraction variability
+- Code coverage ≠ functional correctness
+- Integration issues only found in production
+
+### Decision
+
+**Adopt full-stack functional testing with real infrastructure:**
+
+1. **Real Infrastructure Stack**
+   - Use actual Neo4j via Docker (already in `setup.sh`)
+   - Real OpenAI API calls (require valid API key)
+   - Real file I/O for backup/restore
+   - No mocking of core dependencies
+
+2. **Test Environment Setup**
+   - Clone repo → run `./scripts/setup.sh` → ready to test
+   - Assumes Docker installed (developer machine)
+   - Assumes valid `OPENAI_API_KEY` in `.env`
+   - Neo4j container automatically configured
+
+3. **Non-Deterministic Acceptance**
+   - LLM extraction may produce 6 concepts in one run, 7 in another
+   - Test for functional correctness, not exact outputs
+   - Assertions: "concepts >= 5" not "concepts == 6"
+   - Validate graph structure, not specific labels
+
+4. **Functional Over Coverage**
+   - Focus: Does backup/restore preserve data?
+   - Focus: Does stitching reconnect relationships?
+   - Focus: Does integrity checking catch issues?
+   - NOT focus: 100% line coverage
+
+5. **Test Data Strategy**
+   - Use real test documents (small, predictable)
+   - Version control expected ranges (min/max concepts)
+   - Test fixtures for backup files
+   - Documented ontology scenarios
+
+### Testing Approach
+
+**Test Categories:**
+
+1. **Smoke Tests** (fastest)
+   - Neo4j connection works
+   - API keys valid
+   - Core libraries import correctly
+
+2. **Functional Tests** (core workflows)
+   - Ingest → concepts created
+   - Backup → restore → data preserved
+   - Partial restore → stitch → relationships reconnected
+   - Integrity check → issues detected
+   - Pruning → dangling refs removed
+
+3. **Scenario Tests** (real-world use cases)
+   - Multi-ontology ingestion
+   - Cross-ontology relationship handling
+   - Clean database restore
+   - Token cost validation (embeddings preserved)
+
+4. **Regression Tests** (prevent known issues)
+   - APPEARS_IN relationships created (previous bug)
+   - Relationship counter accurate (previous bug)
+   - Clean database auto-prune (previous enhancement)
+
+**Assertion Style:**
+```python
+# ❌ Brittle - exact match
+assert len(concepts) == 7
+
+# ✅ Functional - range validation
+assert 5 <= len(concepts) <= 10, "Expected 5-10 concepts from test doc"
+
+# ✅ Structural - graph integrity
+assert all(c.has_relationship('APPEARS_IN') for c in concepts)
+
+# ✅ Semantic - meaning preserved
+assert any('linear thinking' in c.label.lower() for c in concepts)
+```
+
+### Test Framework
+
+**Tools:**
+- `pytest` - Test runner with fixtures
+- `pytest-docker` - Manage Neo4j container lifecycle
+- `pytest-env` - Inject test environment variables
+- Real OpenAI API (accept cost as necessary)
+
+**Structure:**
+```
+tests/
+├── conftest.py              # Shared fixtures (Neo4j, test data)
+├── fixtures/                # Test documents, sample backups
+│   ├── sample_document.txt
+│   ├── minimal_backup.json
+│   └── multi_ontology.json
+├── smoke/                   # Fast sanity checks
+│   └── test_connections.py
+├── functional/              # Core workflows
+│   ├── test_ingestion.py
+│   ├── test_backup_restore.py
+│   ├── test_stitching.py
+│   └── test_integrity.py
+├── scenarios/               # Real-world use cases
+│   └── test_workflows.py
+└── regression/              # Prevent known bugs
+    └── test_bug_fixes.py
+```
+
+### CI/CD Integration (Future)
+
+**GitHub Actions workflow:**
+```yaml
+name: Full-Stack Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5.15
+        env:
+          NEO4J_AUTH: neo4j/password
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install -r requirements.txt
+      - run: pytest tests/
+```
+
+**Cost control:**
+- Use smallest test documents
+- Cache LLM responses where possible
+- Monthly budget alerts on OpenAI account
+
+### Trade-offs
+
+**Positive:**
+- ✅ Tests match production behavior
+- ✅ Catches integration issues early
+- ✅ Simple setup (clone → setup.sh → test)
+- ✅ No mock maintenance burden
+- ✅ Real-world confidence
+
+**Negative:**
+- ❌ Slower than unit tests (Neo4j startup, LLM calls)
+- ❌ Requires API key (cost per test run)
+- ❌ Non-deterministic outputs (need range assertions)
+- ❌ Docker dependency (but already required for dev)
+
+**Neutral:**
+- Test failures may be environmental (API rate limits, network)
+- Need good error messages to distinguish real vs. flaky failures
+
+### Alternatives Considered
+
+1. **Heavy Mocking** - Rejected: Loses real behavior, fragile tests
+2. **In-Memory Neo4j** - Rejected: Doesn't exist, would still need Docker
+3. **Mock LLM Responses** - Rejected: Loses variability testing
+4. **Unit Tests Only** - Rejected: Misses integration issues
+
+### Success Metrics
+
+- All critical workflows have functional tests
+- Regression tests for each discovered bug
+- CI passes consistently (< 10% flaky failures)
+- New features include scenario tests
+- Documentation includes test data expectations
+
+### Related ADRs
+
+- ADR-011: Separation of CLI and Admin Tooling (provides testable modules)
+- Future: ADR-013: Test Data Versioning (managing expected ranges)
