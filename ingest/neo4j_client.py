@@ -468,3 +468,272 @@ class Neo4jClient:
                 return concepts, has_empty_warnings
         except Exception as e:
             raise Exception(f"Failed to get document concepts: {e}")
+
+    def validate_learned_connection(
+        self,
+        evidence_embedding: List[float],
+        concept_id_1: str,
+        concept_id_2: str
+    ) -> Dict[str, Any]:
+        """
+        Validate a learned connection using semantic similarity (smell test).
+
+        Calculates similarity between evidence and both concepts to determine
+        cognitive leap required for the connection.
+
+        Args:
+            evidence_embedding: Embedding vector for the evidence/rationale text
+            concept_id_1: First concept ID
+            concept_id_2: Second concept ID
+
+        Returns:
+            Dictionary with similarity scores and cognitive leap rating:
+            {
+                "similarity_to_concept1": float,
+                "similarity_to_concept2": float,
+                "avg_similarity": float,
+                "cognitive_leap": "LOW" | "MEDIUM" | "HIGH",
+                "valid": bool
+            }
+        """
+        query = """
+        MATCH (c1:Concept {concept_id: $concept_id_1})
+        MATCH (c2:Concept {concept_id: $concept_id_2})
+        RETURN c1.embedding as emb1, c2.embedding as emb2
+        """
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(query, concept_id_1=concept_id_1, concept_id_2=concept_id_2)
+                record = result.single()
+
+                if not record:
+                    raise ValueError(f"One or both concepts not found: {concept_id_1}, {concept_id_2}")
+
+                emb1 = record["emb1"]
+                emb2 = record["emb2"]
+
+                # Calculate cosine similarity
+                from numpy import dot
+                from numpy.linalg import norm
+
+                def cosine_similarity(a, b):
+                    return float(dot(a, b) / (norm(a) * norm(b)))
+
+                sim1 = cosine_similarity(evidence_embedding, emb1)
+                sim2 = cosine_similarity(evidence_embedding, emb2)
+                avg_sim = (sim1 + sim2) / 2
+
+                # Determine cognitive leap
+                if avg_sim >= 0.85:
+                    cognitive_leap = "LOW"  # Obvious connection
+                elif avg_sim >= 0.70:
+                    cognitive_leap = "MEDIUM"  # Reasonable leap
+                else:
+                    cognitive_leap = "HIGH"  # Unusual connection
+
+                return {
+                    "similarity_to_concept1": sim1,
+                    "similarity_to_concept2": sim2,
+                    "avg_similarity": avg_sim,
+                    "cognitive_leap": cognitive_leap,
+                    "valid": True
+                }
+
+        except Exception as e:
+            raise Exception(f"Failed to validate connection: {e}")
+
+    def create_learned_source(
+        self,
+        source_id: str,
+        evidence: str,
+        created_by: str,
+        similarity_score: float,
+        cognitive_leap: str
+    ) -> Dict[str, Any]:
+        """
+        Create a learned Source node with provenance metadata.
+
+        Args:
+            source_id: Unique identifier (e.g., "learned_2025-10-06_001")
+            evidence: Rationale/evidence text
+            created_by: Creator identifier ("username", "claude-mcp", etc.)
+            similarity_score: Average similarity from validation
+            cognitive_leap: "LOW", "MEDIUM", or "HIGH"
+
+        Returns:
+            Dictionary with created node properties
+        """
+        from datetime import datetime, timezone
+
+        query = """
+        CREATE (s:Source {
+            source_id: $source_id,
+            document: $document,
+            paragraph: 0,
+            full_text: $evidence,
+            type: 'LEARNED',
+            created_by: $created_by,
+            created_at: $created_at,
+            similarity_score: $similarity_score,
+            cognitive_leap: $cognitive_leap
+        })
+        RETURN s
+        """
+
+        document = "AI synthesis" if created_by.startswith("claude") else "User synthesis"
+        created_at = datetime.now(timezone.utc).isoformat()
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(
+                    query,
+                    source_id=source_id,
+                    document=document,
+                    evidence=evidence,
+                    created_by=created_by,
+                    created_at=created_at,
+                    similarity_score=similarity_score,
+                    cognitive_leap=cognitive_leap
+                )
+                record = result.single()
+                return dict(record["s"]) if record else {}
+        except Exception as e:
+            raise Exception(f"Failed to create learned Source node: {e}")
+
+    def create_learned_relationship(
+        self,
+        from_concept_id: str,
+        to_concept_id: str,
+        relationship_type: str,
+        learned_source_id: str
+    ) -> bool:
+        """
+        Create a relationship between concepts with learned source provenance.
+
+        Args:
+            from_concept_id: Starting concept ID
+            to_concept_id: Target concept ID
+            relationship_type: Type of relationship (BRIDGES, LEARNED_CONNECTION, etc.)
+            learned_source_id: ID of the learned Source node for provenance
+
+        Returns:
+            True if relationship created successfully
+        """
+        query = f"""
+        MATCH (c1:Concept {{concept_id: $from_id}})
+        MATCH (c2:Concept {{concept_id: $to_id}})
+        MATCH (s:Source {{source_id: $source_id, type: 'LEARNED'}})
+        CREATE (c1)-[r:{relationship_type} {{learned_id: $source_id}}]->(c2)
+        RETURN r
+        """
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(
+                    query,
+                    from_id=from_concept_id,
+                    to_id=to_concept_id,
+                    source_id=learned_source_id
+                )
+                return result.single() is not None
+        except Exception as e:
+            raise Exception(f"Failed to create learned relationship: {e}")
+
+    def list_learned_knowledge(
+        self,
+        creator: Optional[str] = None,
+        min_similarity: Optional[float] = None,
+        cognitive_leap: Optional[str] = None,
+        limit: int = 20,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """
+        Query learned knowledge with optional filters.
+
+        Args:
+            creator: Filter by creator username/identifier
+            min_similarity: Minimum similarity score threshold
+            cognitive_leap: Filter by "LOW", "MEDIUM", or "HIGH"
+            limit: Maximum results to return
+            offset: Number of results to skip (pagination)
+
+        Returns:
+            List of learned knowledge records with metadata
+        """
+        conditions = ["s.type = 'LEARNED'"]
+        if creator:
+            conditions.append("s.created_by = $creator")
+        if min_similarity is not None:
+            conditions.append("s.similarity_score >= $min_similarity")
+        if cognitive_leap:
+            conditions.append("s.cognitive_leap = $cognitive_leap")
+
+        where_clause = " AND ".join(conditions)
+
+        query = f"""
+        MATCH (s:Source)
+        WHERE {where_clause}
+        RETURN s.source_id as learned_id,
+               s.full_text as evidence,
+               s.created_by as creator,
+               s.created_at as created_at,
+               s.similarity_score as similarity,
+               s.cognitive_leap as cognitive_leap
+        ORDER BY s.created_at DESC
+        SKIP $offset
+        LIMIT $limit
+        """
+
+        params = {"offset": offset, "limit": limit}
+        if creator:
+            params["creator"] = creator
+        if min_similarity is not None:
+            params["min_similarity"] = min_similarity
+        if cognitive_leap:
+            params["cognitive_leap"] = cognitive_leap
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(query, **params)
+                return [dict(record) for record in result]
+        except Exception as e:
+            raise Exception(f"Failed to list learned knowledge: {e}")
+
+    def delete_learned_knowledge(
+        self,
+        learned_id: str
+    ) -> Dict[str, int]:
+        """
+        Delete a learned Source node and its relationships.
+
+        Only deletes nodes with type='LEARNED' to prevent accidental deletion
+        of document-extracted knowledge.
+
+        Args:
+            learned_id: Source ID of the learned knowledge to delete
+
+        Returns:
+            Dictionary with counts: {"source_deleted": 1, "relationships_deleted": N}
+        """
+        query = """
+        MATCH (s:Source {source_id: $learned_id, type: 'LEARNED'})
+        OPTIONAL MATCH ()-[r {learned_id: $learned_id}]-()
+        WITH s, collect(r) as rels
+        FOREACH (rel in rels | DELETE rel)
+        DELETE s
+        RETURN 1 as source_deleted, size(rels) as relationships_deleted
+        """
+
+        try:
+            with self.driver.session() as session:
+                result = session.run(query, learned_id=learned_id)
+                record = result.single()
+                if not record:
+                    return {"source_deleted": 0, "relationships_deleted": 0}
+                return {
+                    "source_deleted": record["source_deleted"],
+                    "relationships_deleted": record["relationships_deleted"]
+                }
+        except Exception as e:
+            raise Exception(f"Failed to delete learned knowledge: {e}")
