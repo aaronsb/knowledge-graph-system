@@ -438,14 +438,20 @@ class DataImporter:
             Console.progress(i + 1, len(data["relationships"]), "Relationships")
 
             # Dynamic relationship type (IMPLIES, SUPPORTS, etc.)
+            # Use OPTIONAL MATCH to handle missing nodes gracefully
             query = f"""
-                MATCH (c1:Concept {{concept_id: $from_id}})
-                MATCH (c2:Concept {{concept_id: $to_id}})
+                OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
+                OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})
+                WITH c1, c2
+                WHERE c1 IS NOT NULL AND c2 IS NOT NULL
                 MERGE (c1)-[r:{rel['type']}]->(c2)
                 SET r = $properties
+                RETURN count(r) as created
             """
 
-            session.run(query, from_id=rel["from"], to_id=rel["to"], properties=rel["properties"])
-            stats["relationships_created"] += 1
+            result = session.run(query, from_id=rel["from"], to_id=rel["to"], properties=rel["properties"])
+            record = result.single()
+            if record and record["created"] > 0:
+                stats["relationships_created"] += 1
 
         return stats
