@@ -4,6 +4,24 @@
 
 ![Knowledge Graph Visualization](docs/media/neo4j-ui.jpeg)
 
+## What We've Built (Honest Assessment)
+
+**TL;DR:** This is a **well-executed synthesis** of existing techniques (LLM extraction + graph storage + vector search) inspired by GraphRAG research, with some genuinely novel implementation details (graph-aware chunking). We're not inventing GraphRAG—we're exploring the space and discovering useful patterns.
+
+📊 **[Read Full Technical Assessment](docs/ASSESSMENT.md)** - Honest self-assessment of novelty vs standard practice, comparisons to Microsoft GraphRAG/LightRAG, and future directions *(Oct 5, 2025)*
+
+**Novel Implementation Details:**
+- **Graph-aware chunking** - feeds recent concepts back to LLM during extraction for better cross-chunk relationships
+- **Instance-level evidence** - three-tier provenance model (Quote → Instance → Concept → Source)
+- **Real-time deduplication** - concepts merge automatically during ingestion via vector similarity
+
+**What We're Missing (and exploring next):**
+- Community detection & hierarchical summaries (Microsoft GraphRAG)
+- Token optimization (LightRAG achieves 99% reduction)
+- Advanced graph algorithms (PageRank, Louvain - Neo4j has them, we're not using yet)
+
+---
+
 ## What is This?
 
 Most AI systems retrieve text chunks based on similarity. This system **extracts concepts, understands relationships, and builds a persistent knowledge graph** that can be explored, traversed, and queried semantically.
