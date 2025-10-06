@@ -237,18 +237,35 @@ class BackupCLI:
         # Summary
         Console.section("Backup Complete")
         Console.success(f"✓ Created {len(backup_files)} backups")
+
+        # Check if any backup has external deps
+        has_external_deps = False
         for f in backup_files:
-            print(f"  • {f.name}")
+            with open(f, 'r') as bf:
+                backup_data = json.load(bf)
+            assessment = BackupAssessment.analyze_backup(backup_data)
+            if assessment["external_dependencies"]["concepts"]:
+                has_external_deps = True
+                print(f"  • {f.name} {Colors.WARNING}(has external dependencies){Colors.ENDC}")
+            else:
+                print(f"  • {f.name}")
 
-        self._show_tips()
+        self._show_tips(show_stitch_warning=has_external_deps)
 
-    def _show_tips(self):
+    def _show_tips(self, show_stitch_warning: bool = False):
         """Show helpful tips"""
         Console.warning("\n💡 Tips:")
         print("  • Backup files are portable - share or move them as needed")
         print("  • Use restore.py to restore ontologies into this or another database")
         print("  • Ontology backups can be selectively restored without affecting other data")
         print("  • Backups include full embeddings (1536-dim vectors) and all text")
+
+        if show_stitch_warning:
+            Console.info("\nℹ External Dependencies Detected:")
+            print("  This backup has cross-ontology relationships (external concept references)")
+            print("  After restoring, you can optionally reconnect them using the semantic stitcher:")
+            print(f"    {Colors.OKCYAN}python -m src.admin.stitch --backup <backup-file>{Colors.ENDC}")
+            print("  Or leave them isolated if you prefer strict ontology boundaries")
 
     def backup_non_interactive(self, ontology: Optional[str] = None, output: Optional[str] = None):
         """Non-interactive backup for automation"""
