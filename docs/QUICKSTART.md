@@ -151,6 +151,10 @@ python cli.py ontology list
 python cli.py ontology info "My Ontology"
 python cli.py ontology files "My Ontology"
 
+# JSON output for tool integration
+python cli.py --json ontology list
+python cli.py --json stats
+
 # Database stats
 python cli.py stats
 ```
