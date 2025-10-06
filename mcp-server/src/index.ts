@@ -17,6 +17,7 @@ import {
   getOntologyInfo,
   getDatabaseStats,
   findShortestPath,
+  findPathBySearch,
 } from './neo4j.js';
 
 // Initialize OpenAI client for embeddings
@@ -196,6 +197,31 @@ async function main() {
               },
             },
             required: ['from_concept_id', 'to_concept_id'],
+          },
+        },
+        {
+          name: 'find_path_by_search',
+          description:
+            'Find shortest path between concepts by searching for keywords or phrases. First searches for concepts matching each query, then finds paths between top matches. More user-friendly than find_shortest_path when you don\'t have exact concept IDs.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              from_query: {
+                type: 'string',
+                description: 'Natural language query for starting concept (e.g., "Sensible Transparency")',
+              },
+              to_query: {
+                type: 'string',
+                description: 'Natural language query for target concept (e.g., "Role-Based Intelligence")',
+              },
+              max_hops: {
+                type: 'number',
+                description: 'Maximum path length to search, default: 100',
+                minimum: 1,
+                maximum: 100,
+              },
+            },
+            required: ['from_query', 'to_query'],
           },
         },
       ],
@@ -454,6 +480,67 @@ async function main() {
                   null,
                   2
                 ),
+              },
+            ],
+          };
+        }
+
+        case 'find_path_by_search': {
+          const { from_query, to_query, max_hops = 100 } = args as {
+            from_query: string;
+            to_query: string;
+            max_hops?: number;
+          };
+
+          // Generate embeddings for both queries
+          const fromEmbedding = await generateEmbedding(from_query);
+          const toEmbedding = await generateEmbedding(to_query);
+
+          const result = await findPathBySearch(
+            from_query,
+            to_query,
+            fromEmbedding,
+            toEmbedding,
+            Math.floor(max_hops)
+          );
+
+          // Process paths with segmentation if needed
+          if (result.pathResults) {
+            result.pathResults = result.pathResults.map((pathResult: any) => ({
+              ...pathResult,
+              paths: pathResult.paths.map((path: any) => {
+                if (path.hops > 5) {
+                  const segments = [];
+                  const chunkSize = 5;
+                  for (let i = 0; i < path.nodes.length; i += chunkSize) {
+                    segments.push({
+                      nodes: path.nodes.slice(i, Math.min(i + chunkSize + 1, path.nodes.length)),
+                      relationships: path.relationships.slice(i, Math.min(i + chunkSize, path.relationships.length)),
+                      segment: Math.floor(i / chunkSize) + 1,
+                      totalSegments: Math.ceil(path.nodes.length / chunkSize)
+                    });
+                  }
+                  return {
+                    totalHops: path.hops,
+                    segmented: true,
+                    segments
+                  };
+                }
+                return {
+                  totalHops: path.hops,
+                  segmented: false,
+                  nodes: path.nodes,
+                  relationships: path.relationships
+                };
+              })
+            }));
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
               },
             ],
           };
