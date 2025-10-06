@@ -146,11 +146,19 @@ python cli.py related concept-id --depth 2
 # Find connections
 python cli.py connect from-id to-id
 
-# List documents
-python cli.py list-documents
+# Ontology management
+python cli.py ontology list
+python cli.py ontology info "My Ontology"
+python cli.py ontology files "My Ontology"
 
-# Database stats
-python cli.py stats
+# Database operations
+python cli.py database stats
+python cli.py database info
+python cli.py database health
+
+# JSON output for tool integration
+python cli.py --json ontology list
+python cli.py --json database stats
 ```
 
 ## Troubleshooting
