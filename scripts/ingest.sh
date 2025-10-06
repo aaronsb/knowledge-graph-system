@@ -207,7 +207,7 @@ echo -e "\n${GREEN}✅ Ingestion complete!${NC}"
 # Show stats
 echo -e "\n${BLUE}Database Statistics:${NC}"
 if command -v python &> /dev/null; then
-    python cli.py stats
+    python cli.py database stats
 fi
 
 echo -e "\n${YELLOW}Next steps:${NC}"
