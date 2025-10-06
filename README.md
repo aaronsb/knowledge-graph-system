@@ -113,6 +113,8 @@ The system understood:
 source venv/bin/activate
 python cli.py search "your query here"
 python cli.py details <concept-id>
+python cli.py ontology list  # List all ontologies
+python cli.py ontology info "My Ontology"  # View ontology details
 ```
 
 **For Claude Desktop integration:** See [MCP Setup Guide](docs/QUICKSTART.md#claude-desktop-configuration)

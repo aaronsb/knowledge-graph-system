@@ -14,7 +14,10 @@ Usage:
     python cli.py details linear-scanning-system
     python cli.py related linear-scanning-system --depth 2
     python cli.py connect linear-scanning-system genetic-intervention
-    python cli.py list-documents
+    python cli.py ontology list
+    python cli.py ontology info "My Ontology"
+    python cli.py ontology files "My Ontology"
+    python cli.py ontology delete "My Ontology"
     python cli.py stats
     python cli.py visualize concept_005 --depth 1 | mmm
 """
@@ -265,35 +268,173 @@ class KnowledgeGraphCLI:
                         print(f"    ↓ {Colors.OKBLUE}{rels[j]}{Colors.ENDC}")
                 print()
 
-    def list_documents(self):
-        """List all documents in the graph"""
-        print(f"{Colors.HEADER}Documents in Knowledge Graph{Colors.ENDC}\n")
+    def ontology_list(self):
+        """List all ontologies in the graph"""
+        print(f"{Colors.HEADER}Ontologies in Knowledge Graph{Colors.ENDC}\n")
 
         with self.driver.session() as session:
             result = session.run("""
                 MATCH (s:Source)
-                WITH DISTINCT s.document as document
-                MATCH (src:Source {document: document})
-                WITH document, count(src) as paragraph_count
-                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: document})
-                WITH document, paragraph_count, count(DISTINCT c) as concept_count
-                RETURN document, paragraph_count, concept_count
-                ORDER BY document
+                WITH DISTINCT s.document as ontology
+                MATCH (src:Source {document: ontology})
+                WITH ontology,
+                     count(DISTINCT src) as source_count,
+                     count(DISTINCT src.file_path) as file_count
+                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: ontology})
+                WITH ontology, source_count, file_count, count(DISTINCT c) as concept_count
+                RETURN ontology, source_count, file_count, concept_count
+                ORDER BY ontology
             """)
 
             results = list(result)
 
             if not results:
-                print(f"{Colors.WARNING}No documents found{Colors.ENDC}")
+                print(f"{Colors.WARNING}No ontologies found{Colors.ENDC}")
                 return
 
-            print(f"{Colors.OKGREEN}Found {len(results)} documents:{Colors.ENDC}\n")
+            print(f"{Colors.OKGREEN}Found {len(results)} ontologies:{Colors.ENDC}\n")
 
-            for doc in results:
-                print(f"{Colors.BOLD}{doc['document']}{Colors.ENDC}")
-                print(f"  Paragraphs: {doc['paragraph_count']}")
-                print(f"  Concepts: {doc['concept_count']}")
+            for ont in results:
+                print(f"{Colors.BOLD}{ont['ontology']}{Colors.ENDC}")
+                print(f"  Files: {ont['file_count']}")
+                print(f"  Chunks: {ont['source_count']}")
+                print(f"  Concepts: {ont['concept_count']}")
                 print()
+
+    def ontology_info(self, ontology_name: str):
+        """Get detailed information about a specific ontology"""
+        print(f"{Colors.HEADER}Ontology: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
+
+        with self.driver.session() as session:
+            # Check if ontology exists
+            exists = session.run("""
+                MATCH (s:Source {document: $ontology})
+                RETURN count(s) > 0 as exists
+            """, ontology=ontology_name)
+
+            if not exists.single()['exists']:
+                print(f"{Colors.FAIL}Ontology '{ontology_name}' not found{Colors.ENDC}")
+                return
+
+            # Get statistics
+            stats = session.run("""
+                MATCH (s:Source {document: $ontology})
+                WITH count(DISTINCT s) as source_count,
+                     count(DISTINCT s.file_path) as file_count,
+                     collect(DISTINCT s.file_path) as files
+                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(src:Source {document: $ontology})
+                WITH source_count, file_count, files, count(DISTINCT c) as concept_count
+                OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {document: $ontology})
+                WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
+                OPTIONAL MATCH (c1:Concept)-[r]->(c2:Concept)
+                WHERE (c1)-[:APPEARS_IN]->(:Source {document: $ontology})
+                   OR (c2)-[:APPEARS_IN]->(:Source {document: $ontology})
+                RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
+            """, ontology=ontology_name).single()
+
+            print(f"{Colors.BOLD}Statistics:{Colors.ENDC}")
+            print(f"  Files: {Colors.OKGREEN}{stats['file_count']}{Colors.ENDC}")
+            print(f"  Chunks: {Colors.OKGREEN}{stats['source_count']}{Colors.ENDC}")
+            print(f"  Concepts: {Colors.OKGREEN}{stats['concept_count']}{Colors.ENDC}")
+            print(f"  Evidence: {Colors.OKGREEN}{stats['instance_count']}{Colors.ENDC}")
+            print(f"  Relationships: {Colors.OKGREEN}{stats['relationship_count']}{Colors.ENDC}")
+
+            print(f"\n{Colors.BOLD}Files:{Colors.ENDC}")
+            for file_path in stats['files']:
+                if file_path:
+                    print(f"  • {file_path}")
+
+    def ontology_files(self, ontology_name: str):
+        """List all files in a specific ontology with their statistics"""
+        print(f"{Colors.HEADER}Files in: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
+
+        with self.driver.session() as session:
+            result = session.run("""
+                MATCH (s:Source {document: $ontology})
+                WITH DISTINCT s.file_path as file_path
+                WHERE file_path IS NOT NULL
+                MATCH (src:Source {document: $ontology, file_path: file_path})
+                WITH file_path, count(src) as chunk_count
+                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology, file_path: file_path})
+                WITH file_path, chunk_count, count(DISTINCT c) as concept_count
+                RETURN file_path, chunk_count, concept_count
+                ORDER BY file_path
+            """, ontology=ontology_name)
+
+            results = list(result)
+
+            if not results:
+                print(f"{Colors.WARNING}No files found in ontology '{ontology_name}'{Colors.ENDC}")
+                return
+
+            print(f"{Colors.OKGREEN}Found {len(results)} files:{Colors.ENDC}\n")
+
+            for file_info in results:
+                print(f"{Colors.BOLD}{file_info['file_path']}{Colors.ENDC}")
+                print(f"  Chunks: {file_info['chunk_count']}")
+                print(f"  Concepts: {file_info['concept_count']}")
+                print()
+
+    def ontology_delete(self, ontology_name: str, force: bool = False):
+        """Delete an ontology and all its data"""
+        print(f"{Colors.HEADER}Delete Ontology: {Colors.BOLD}{ontology_name}{Colors.ENDC}\n")
+
+        with self.driver.session() as session:
+            # Check if ontology exists and get stats
+            check = session.run("""
+                MATCH (s:Source {document: $ontology})
+                WITH count(s) as source_count
+                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})
+                RETURN source_count, count(DISTINCT c) as concept_count
+            """, ontology=ontology_name).single()
+
+            if check['source_count'] == 0:
+                print(f"{Colors.FAIL}Ontology '{ontology_name}' not found{Colors.ENDC}")
+                return
+
+            print(f"{Colors.WARNING}This will delete:{Colors.ENDC}")
+            print(f"  • {check['source_count']} source chunks")
+            print(f"  • {check['concept_count']} concept associations")
+            print(f"  • All related instances and evidence")
+
+            # Confirm deletion
+            if not force:
+                print(f"\n{Colors.FAIL}WARNING: This action cannot be undone!{Colors.ENDC}")
+                response = input(f"Type '{ontology_name}' to confirm deletion: ")
+                if response != ontology_name:
+                    print(f"{Colors.WARNING}Deletion cancelled{Colors.ENDC}")
+                    return
+
+            # Delete all data for this ontology
+            print(f"\n{Colors.OKCYAN}Deleting ontology data...{Colors.ENDC}")
+
+            # Delete instances linked to sources in this ontology
+            session.run("""
+                MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {document: $ontology})
+                DETACH DELETE i
+            """, ontology=ontology_name)
+
+            # Delete sources
+            result = session.run("""
+                MATCH (s:Source {document: $ontology})
+                DETACH DELETE s
+                RETURN count(s) as deleted_count
+            """, ontology=ontology_name)
+
+            deleted = result.single()['deleted_count']
+
+            # Clean up orphaned concepts (concepts with no sources)
+            orphaned = session.run("""
+                MATCH (c:Concept)
+                WHERE NOT (c)-[:APPEARS_IN]->(:Source)
+                DETACH DELETE c
+                RETURN count(c) as orphaned_count
+            """).single()['orphaned_count']
+
+            print(f"{Colors.OKGREEN}✓ Deleted {deleted} sources{Colors.ENDC}")
+            if orphaned > 0:
+                print(f"{Colors.OKGREEN}✓ Cleaned up {orphaned} orphaned concepts{Colors.ENDC}")
+            print(f"\n{Colors.OKGREEN}Ontology '{ontology_name}' successfully deleted{Colors.ENDC}")
 
     def show_stats(self):
         """Show database statistics"""
@@ -362,10 +503,18 @@ Examples:
   %(prog)s details linear-scanning-system
   %(prog)s related intelligence-limitation --depth 3
   %(prog)s connect linear-scanning-system genetic-intervention
-  %(prog)s list-documents
+  %(prog)s ontology list
+  %(prog)s ontology info "My Ontology"
+  %(prog)s ontology files "My Ontology"
+  %(prog)s ontology delete "My Ontology"
+  %(prog)s --yes ontology delete "My Ontology"  # Skip confirmation
   %(prog)s stats
         """
     )
+
+    # Global flags
+    parser.add_argument('--yes', '-y', action='store_true',
+                       help='Auto-confirm all prompts (for create/update/delete operations)')
 
     subparsers = parser.add_subparsers(dest='command', help='Command to execute')
 
@@ -391,8 +540,24 @@ Examples:
     connect_parser.add_argument('to_id', help='Target concept ID')
     connect_parser.add_argument('--max-hops', type=int, default=5, help='Maximum number of hops (default: 5)')
 
-    # List documents command
-    subparsers.add_parser('list-documents', help='List all documents in the graph')
+    # Ontology command group
+    ontology_parser = subparsers.add_parser('ontology', help='Manage ontologies (CRUD operations)')
+    ontology_subparsers = ontology_parser.add_subparsers(dest='ontology_command', help='Ontology operations')
+
+    # ontology list
+    ontology_subparsers.add_parser('list', help='List all ontologies')
+
+    # ontology info
+    info_parser = ontology_subparsers.add_parser('info', help='Get detailed information about an ontology')
+    info_parser.add_argument('name', help='Ontology name')
+
+    # ontology files
+    files_parser = ontology_subparsers.add_parser('files', help='List files in an ontology')
+    files_parser.add_argument('name', help='Ontology name')
+
+    # ontology delete
+    delete_parser = ontology_subparsers.add_parser('delete', help='Delete an ontology and all its data')
+    delete_parser.add_argument('name', help='Ontology name')
 
     # Stats command
     subparsers.add_parser('stats', help='Show database statistics')
@@ -422,8 +587,17 @@ Examples:
             cli.find_related_concepts(args.concept_id, args.types, args.depth)
         elif args.command == 'connect':
             cli.find_connection(args.from_id, args.to_id, args.max_hops)
-        elif args.command == 'list-documents':
-            cli.list_documents()
+        elif args.command == 'ontology':
+            if not args.ontology_command:
+                parser.error("ontology command requires a subcommand (list, info, files, delete)")
+            if args.ontology_command == 'list':
+                cli.ontology_list()
+            elif args.ontology_command == 'info':
+                cli.ontology_info(args.name)
+            elif args.ontology_command == 'files':
+                cli.ontology_files(args.name)
+            elif args.ontology_command == 'delete':
+                cli.ontology_delete(args.name, force=args.yes)
         elif args.command == 'stats':
             cli.show_stats()
         elif args.command == 'visualize':
