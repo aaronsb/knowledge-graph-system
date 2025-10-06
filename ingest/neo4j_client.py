@@ -73,16 +73,18 @@ class Neo4jClient:
         source_id: str,
         document: str,
         paragraph: int,
-        full_text: str
+        full_text: str,
+        file_path: str = None
     ) -> Dict[str, Any]:
         """
         Create a Source node in the graph.
 
         Args:
             source_id: Unique identifier for the source
-            document: Document name/title
-            paragraph: Paragraph number in the document
+            document: Document/ontology name for logical grouping
+            paragraph: Paragraph/chunk number in the document
             full_text: Full text content of the paragraph
+            file_path: Path to the source file (optional)
 
         Returns:
             Dictionary with created node properties
@@ -95,7 +97,8 @@ class Neo4jClient:
             source_id: $source_id,
             document: $document,
             paragraph: $paragraph,
-            full_text: $full_text
+            full_text: $full_text,
+            file_path: $file_path
         })
         RETURN s
         """
@@ -107,7 +110,8 @@ class Neo4jClient:
                     source_id=source_id,
                     document=document,
                     paragraph=paragraph,
-                    full_text=full_text
+                    full_text=full_text,
+                    file_path=file_path
                 )
                 record = result.single()
                 return dict(record["s"]) if record else {}

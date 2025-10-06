@@ -161,7 +161,9 @@ class ChunkedIngestionStats:
 
 def process_chunk(
     chunk: Chunk,
-    document_name: str,
+    ontology_name: str,
+    filename: str,
+    file_path: str,
     neo4j_client: Neo4jClient,
     stats: ChunkedIngestionStats,
     existing_concepts: List[Dict[str, Any]],
@@ -173,7 +175,9 @@ def process_chunk(
 
     Args:
         chunk: Chunk object to process
-        document_name: Name of the source document
+        ontology_name: Name of the ontology/collection (shared across documents)
+        filename: Unique filename for source tracking
+        file_path: Full path to the source file
         neo4j_client: Neo4j client instance
         stats: Statistics tracker
         existing_concepts: List of existing concepts for LLM context
@@ -186,8 +190,8 @@ def process_chunk(
     Raises:
         Exception: If processing fails
     """
-    # Generate source ID using chunk number
-    source_id = f"{document_name.replace(' ', '_').lower()}_chunk{chunk.chunk_number}"
+    # Generate unique source ID using filename (not ontology name)
+    source_id = f"{filename.replace(' ', '_').lower()}_chunk{chunk.chunk_number}"
 
     print(f"\n{'='*70}")
     print(f"[Chunk {chunk.chunk_number}] {chunk.word_count} words, "
@@ -199,9 +203,10 @@ def process_chunk(
     try:
         neo4j_client.create_source_node(
             source_id=source_id,
-            document=document_name,
+            document=ontology_name,  # Ontology name for logical grouping
             paragraph=chunk.chunk_number,  # Using chunk number as paragraph
-            full_text=chunk.text
+            full_text=chunk.text,
+            file_path=file_path  # Track actual source file
         )
         stats.sources_created += 1
         print(f"  ✓ Created Source node: {source_id}")
@@ -421,7 +426,7 @@ def main():
         description="Ingest large documents using smart chunking"
     )
     parser.add_argument("filepath", help="Path to the text file to ingest")
-    parser.add_argument("--document-name", required=True, help="Name/title of the document")
+    parser.add_argument("--ontology", required=True, help="Ontology/collection name for grouping documents")
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint")
     parser.add_argument("--target-words", type=int, default=1000, help="Target words per chunk")
     parser.add_argument("--min-words", type=int, default=800, help="Minimum words per chunk")
@@ -452,22 +457,25 @@ def main():
         print(f"Error: File not found: {args.filepath}")
         sys.exit(1)
 
+    # Extract filename for source tracking (unique per file)
+    filename = filepath.stem  # filename without extension
+
     print("=" * 60)
     print("CHUNKED KNOWLEDGE GRAPH INGESTION")
     print("=" * 60)
-    print(f"Document: {args.document_name}")
+    print(f"Ontology: {args.ontology}")
     print(f"File: {args.filepath}")
 
     # Initialize checkpoint manager
     checkpoint_mgr = IngestionCheckpoint()
 
-    # Check for existing checkpoint
+    # Check for existing checkpoint (keyed by filename, not ontology)
     start_position = 0
     stats = ChunkedIngestionStats()
     recent_concept_ids = []
 
     if args.resume:
-        checkpoint = checkpoint_mgr.load(args.document_name)
+        checkpoint = checkpoint_mgr.load(filename)
         if checkpoint:
             if checkpoint_mgr.validate(checkpoint):
                 start_position = checkpoint["char_position"]
@@ -479,7 +487,7 @@ def main():
             else:
                 print("\n⚠ Checkpoint invalid, starting from beginning")
         else:
-            print(f"\n⚠ No checkpoint found for '{args.document_name}'")
+            print(f"\n⚠ No checkpoint found for '{filename}'")
 
     # Load full text
     try:
@@ -531,7 +539,7 @@ def main():
                 sys.stderr = open(os.devnull, 'w')
 
                 existing_concepts, has_empty_warnings = neo4j_client.get_document_concepts(
-                    document_name=args.document_name,
+                    document_name=args.ontology,
                     recent_chunks_only=3,  # Last 3 chunks for context
                     warn_on_empty=True
                 )
@@ -556,17 +564,19 @@ def main():
                 # Process the chunk
                 recent_concept_ids = process_chunk(
                     chunk=chunk,
-                    document_name=args.document_name,
+                    ontology_name=args.ontology,
+                    filename=filename,
+                    file_path=str(filepath.absolute()),
                     neo4j_client=neo4j_client,
                     stats=stats,
                     existing_concepts=existing_concepts,
                     recent_concept_ids=recent_concept_ids
                 )
 
-                # Periodically save checkpoint
+                # Periodically save checkpoint (keyed by filename, not ontology)
                 if (idx + 1) % args.checkpoint_interval == 0:
                     checkpoint_mgr.save(
-                        document_name=args.document_name,
+                        document_name=filename,
                         file_path=str(filepath.absolute()),
                         char_position=chunk.end_char,
                         chunks_processed=stats.chunks_processed,
@@ -574,21 +584,21 @@ def main():
                         stats=stats.to_dict()
                     )
 
-                # Refresh context from graph every few chunks
+                # Refresh context from graph every few chunks (by ontology)
                 if (idx + 1) % 3 == 0:
                     existing_concepts, _ = neo4j_client.get_document_concepts(
-                        document_name=args.document_name,
+                        document_name=args.ontology,
                         recent_chunks_only=3,
                         warn_on_empty=False  # Don't warn after first check
                     )
 
     except KeyboardInterrupt:
         print("\n\n⚠ Ingestion interrupted by user")
-        # Save checkpoint on interrupt
+        # Save checkpoint on interrupt (keyed by filename)
         if chunks and stats.chunks_processed > 0:
             last_chunk = chunks[stats.chunks_processed - 1]
             checkpoint_mgr.save(
-                document_name=args.document_name,
+                document_name=filename,
                 file_path=str(filepath.absolute()),
                 char_position=last_chunk.end_char,
                 chunks_processed=stats.chunks_processed,
@@ -602,8 +612,8 @@ def main():
         stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)
         sys.exit(1)
 
-    # Clean up checkpoint on successful completion
-    checkpoint_mgr.delete(args.document_name)
+    # Clean up checkpoint on successful completion (keyed by filename)
+    checkpoint_mgr.delete(filename)
 
     # Print summary
     stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)

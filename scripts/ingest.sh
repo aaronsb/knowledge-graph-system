@@ -27,7 +27,7 @@ fi
 
 # Parse arguments
 DOCUMENT_PATH=""
-DOCUMENT_NAME=""
+ONTOLOGY_NAME=""
 RESUME=false
 TARGET_WORDS=1000
 MIN_WORDS=800
@@ -43,7 +43,7 @@ Arguments:
   document-path         Path to document to ingest (required)
 
 Options:
-  -n, --name NAME           Document name/title (default: filename)
+  -n, --name NAME           Ontology name for grouping documents (required)
   -r, --resume              Resume from checkpoint if available
   --target-words N          Target words per chunk (default: 1000)
   --min-words N             Minimum words per chunk (default: 800)
@@ -53,14 +53,17 @@ Options:
   -h, --help                Show this help message
 
 Examples:
-  # Basic usage
-  $0 ingest_source/large_transcript.txt --name "Watts Taoism 02"
+  # Basic usage - single document into ontology
+  $0 ingest_source/file1.txt --name "My Ontology"
+
+  # Add another document to same ontology
+  $0 ingest_source/file2.txt --name "My Ontology"
 
   # Resume interrupted ingestion
-  $0 ingest_source/large_transcript.txt --name "Watts Taoism 02" --resume
+  $0 ingest_source/large_file.txt --name "My Ontology" --resume
 
   # Custom chunk sizes
-  $0 document.txt --name "Doc" --target-words 1500 --max-words 2000
+  $0 document.txt --name "My Ontology" --target-words 1500 --max-words 2000
 
 EOF
 }
@@ -69,7 +72,7 @@ EOF
 while [[ $# -gt 0 ]]; do
     case $1 in
         -n|--name)
-            DOCUMENT_NAME="$2"
+            ONTOLOGY_NAME="$2"
             shift 2
             ;;
         -r|--resume)
@@ -124,16 +127,19 @@ if [ ! -f "$DOCUMENT_PATH" ]; then
     exit 1
 fi
 
-# Default document name to filename if not provided
-if [ -z "$DOCUMENT_NAME" ]; then
-    DOCUMENT_NAME=$(basename "$DOCUMENT_PATH" | sed 's/\.[^.]*$//')
-    echo -e "${YELLOW}Using document name: $DOCUMENT_NAME${NC}"
+# Validate ontology name is provided
+if [ -z "$ONTOLOGY_NAME" ]; then
+    echo -e "${RED}✗ Ontology name is required (use --name)${NC}"
+    show_help
+    exit 1
 fi
 
 # Show configuration
+FILENAME=$(basename "$DOCUMENT_PATH" | sed 's/\.[^.]*$//')
+
 echo -e "\n${BLUE}Configuration:${NC}"
-echo -e "  Document: ${GREEN}$DOCUMENT_PATH${NC}"
-echo -e "  Name: ${GREEN}$DOCUMENT_NAME${NC}"
+echo -e "  File: ${GREEN}$DOCUMENT_PATH${NC}"
+echo -e "  Ontology: ${GREEN}$ONTOLOGY_NAME${NC}"
 echo -e "  Resume: ${GREEN}$RESUME${NC}"
 echo -e "  Target words/chunk: ${GREEN}$TARGET_WORDS${NC}"
 echo -e "  Min words/chunk: ${GREEN}$MIN_WORDS${NC}"
@@ -151,9 +157,9 @@ echo -e "  Size: ${GREEN}$FILE_SIZE${NC}"
 echo -e "  Words: ${GREEN}$(printf "%'d" $WORD_COUNT)${NC}"
 echo -e "  Estimated chunks: ${GREEN}~$EST_CHUNKS${NC}"
 
-# Check for existing checkpoint
-if [ -f ".checkpoints/${DOCUMENT_NAME,,}.json" ]; then
-    echo -e "\n${YELLOW}⚠ Checkpoint exists for this document${NC}"
+# Check for existing checkpoint (keyed by filename, not ontology)
+if [ -f ".checkpoints/${FILENAME,,}.json" ]; then
+    echo -e "\n${YELLOW}⚠ Checkpoint exists for this file${NC}"
     if [ "$RESUME" = false ]; then
         echo -e "${YELLOW}  Use --resume to continue from checkpoint${NC}"
         echo -e "${YELLOW}  Or the checkpoint will be ignored and ingestion starts fresh${NC}"
@@ -169,7 +175,7 @@ if [ "$RESUME" = false ]; then
 fi
 
 # Build command (use -u for unbuffered output)
-CMD="python -u -m ingest.ingest_chunked \"$DOCUMENT_PATH\" --document-name \"$DOCUMENT_NAME\""
+CMD="python -u -m ingest.ingest_chunked \"$DOCUMENT_PATH\" --ontology \"$ONTOLOGY_NAME\""
 CMD="$CMD --target-words $TARGET_WORDS"
 CMD="$CMD --min-words $MIN_WORDS"
 CMD="$CMD --max-words $MAX_WORDS"
