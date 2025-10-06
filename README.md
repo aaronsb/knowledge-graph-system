@@ -180,6 +180,8 @@ This is **not** a new embedding model or vector database. It's a synthesis:
 - 🚀 [Quick Start Guide](docs/QUICKSTART.md) - Get running in 5 minutes
 - 💡 [Examples & Demos](docs/EXAMPLES.md) - Real queries with actual results
 - ⚙️ [AI Provider Configuration](docs/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
+- 📚 [Concepts & Terminology](docs/CONCEPTS_AND_TERMINOLOGY.md) - Understanding ontologies, stitching, pruning, and graph integrity
+- 💾 [Backup & Restore Guide](docs/BACKUP_RESTORE.md) - Protecting your LLM token investment
 
 ## Project Structure
 
