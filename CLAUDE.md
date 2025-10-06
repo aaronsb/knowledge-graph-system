@@ -81,7 +81,7 @@ docker-compose up -d
 source venv/bin/activate
 
 # Run tests/development
-python cli.py stats
+python cli.py database stats
 
 # Check logs
 docker logs knowledge-graph-neo4j
@@ -251,7 +251,7 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
 
 # Test queries
 python cli.py search "linear thinking"
-python cli.py stats
+python cli.py database stats
 ```
 
 ### Integration Testing
@@ -259,7 +259,7 @@ python cli.py stats
 # Full pipeline test
 ./scripts/reset.sh
 ./scripts/ingest.sh <test-file>
-python cli.py stats  # Verify counts
+python cli.py database stats  # Verify counts
 ```
 
 ### MCP Testing

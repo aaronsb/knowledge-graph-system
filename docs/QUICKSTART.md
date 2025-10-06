@@ -151,12 +151,14 @@ python cli.py ontology list
 python cli.py ontology info "My Ontology"
 python cli.py ontology files "My Ontology"
 
+# Database operations
+python cli.py database stats
+python cli.py database info
+python cli.py database health
+
 # JSON output for tool integration
 python cli.py --json ontology list
-python cli.py --json stats
-
-# Database stats
-python cli.py stats
+python cli.py --json database stats
 ```
 
 ## Troubleshooting
