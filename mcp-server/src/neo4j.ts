@@ -342,13 +342,13 @@ export async function getOntologyInfo(ontologyName: string): Promise<any> {
  * Find shortest path between two concepts
  * @param fromId - Starting concept ID
  * @param toId - Target concept ID
- * @param maxHops - Maximum path length (default: 5)
+ * @param maxHops - Maximum path length (default: 100)
  * @returns Array of paths with nodes and relationships
  */
 export async function findShortestPath(
   fromId: string,
   toId: string,
-  maxHops: number = 5
+  maxHops: number = 100
 ): Promise<any[]> {
   const session = getSession();
   try {
@@ -365,7 +365,7 @@ export async function findShortestPath(
         [node in nodes(path) | {id: node.concept_id, label: node.label}] as path_nodes,
         rel_types,
         length(path) as hops
-      LIMIT 5
+      LIMIT 10
     `;
 
     const result = await session.run(query, { fromId, toId });
