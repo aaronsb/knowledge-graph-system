@@ -53,10 +53,10 @@ export async function vectorSearch(
 ): Promise<any[]> {
   const session = getSession();
   try {
-    // Ensure integer values for Neo4j
-    const limitInt = Math.floor(limit);
-    const offsetInt = Math.floor(offset);
-    const fetchLimit = limitInt + offsetInt;
+    // Convert to Neo4j integers
+    const limitInt = neo4j.int(Math.floor(limit));
+    const offsetInt = neo4j.int(Math.floor(offset));
+    const fetchLimit = neo4j.int(Math.floor(limit) + Math.floor(offset));
 
     const result = await session.run(
       `
