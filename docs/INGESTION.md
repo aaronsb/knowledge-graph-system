@@ -133,6 +133,78 @@ The percentages shown are **cosine similarity scores** - higher means more seman
 - "Legacy governance frameworks" (89%) → "Traditional governance challenges"
 - LLM's synonyms in `search_terms` increase match likelihood
 
+### Cross-Ontology Matching Behavior
+
+**Important:** Vector search is **database-wide**, not scoped to the current ontology being ingested.
+
+When ingesting a document, the system searches for similar concepts across **all ontologies** in the database:
+
+**Example scenario:**
+```bash
+# Existing ontology in database
+./scripts/ingest.sh ml-fundamentals.pdf --name "Machine Learning Basics"
+# Creates concepts: "Neural Networks", "Gradient Descent", "Overfitting"
+
+# New ontology ingestion
+./scripts/ingest.sh deep-learning-guide.pdf --name "Advanced Deep Learning"
+# Encounters concept "Neural Networks" (99% match) → links to existing
+# Encounters concept "Transformer Architecture" → creates new
+```
+
+**Result:** The "Advanced Deep Learning" ontology **shares** the "Neural Networks" concept with "Machine Learning Basics".
+
+**Why this design?**
+
+1. **Knowledge unification** - Related domains naturally connect
+2. **Prevents redundancy** - "risk management", "managing risk", "risk mitigation" → single shared concept
+3. **Emergent insights** - Discover unexpected connections across domains
+4. **Token efficiency** - Reuse existing embeddings instead of duplicating
+
+**When concepts match across ontologies:**
+- Both ontologies reference the same concept node
+- Relationships within each ontology remain separate
+- Evidence (quotes) track back to original sources
+- Queries can filter by ontology or explore cross-domain
+
+**Example: Cross-ontology shared concept**
+
+```
+Ontology: "Project Management 101"        Ontology: "Startup Operations"
+   ↓                                          ↓
+Document: pm-basics.pdf                   Document: ops-handbook.md
+   ↓                                          ↓
+(:Source)-[:APPEARS_IN]-→ (:Concept {label: "Risk Management"}) ←-[:APPEARS_IN]-(:Source)
+                              ↑
+                         Shared concept node
+                         (86% similarity match during ingestion)
+```
+
+Both ontologies contribute evidence to the same "Risk Management" concept, but maintain separate source tracking.
+
+**Isolating ontologies:**
+
+If you want ontologies to remain conceptually separate (no cross-matching):
+- Ingest into different Neo4j databases
+- Use backup/restore to move between environments
+- Future enhancement: scope vector search by ontology (see [Issue #12](https://github.com/aaronsb/knowledge-graph-system/issues/12))
+
+**Trade-offs:**
+
+| Approach | Benefits | Drawbacks |
+|----------|----------|-----------|
+| **Database-wide matching (current)** | Natural knowledge unification, emergent insights, token efficiency | Unintended concept merging if domains use identical terms differently |
+| **Ontology-scoped matching (future)** | Clean separation, no cross-contamination | Duplicate concepts, miss legitimate connections, higher token costs |
+
+**When cross-ontology matching causes issues:**
+
+If a term has **different meanings** in different domains:
+
+Example: "Sprint" in "Agile Software" vs. "Track Athletics"
+- Software context: time-boxed iteration
+- Athletics context: short-distance race
+
+**Current workaround:** Use more specific concept labels and search terms during extraction to prevent false matches.
+
 ### Tuning the Threshold
 
 The **0.85 threshold** balances precision vs. recall:
