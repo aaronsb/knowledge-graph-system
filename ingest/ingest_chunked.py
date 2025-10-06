@@ -20,6 +20,10 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
+# Force unbuffered output for real-time display
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
 from ingest.chunker import SmartChunker, ChunkingConfig, Chunk
 from ingest.checkpoint import IngestionCheckpoint
 from ingest.neo4j_client import Neo4jClient
@@ -109,6 +113,7 @@ def process_chunk(
     print(f"[Chunk {chunk.chunk_number}] {chunk.word_count} words, "
           f"boundary: {chunk.boundary_type}")
     print(f"{'='*70}")
+    sys.stdout.flush()  # Ensure immediate display
 
     # Step 1: Create Source node
     try:
@@ -133,6 +138,7 @@ def process_chunk(
         print(f"  ✓ Extracted {len(extraction['concepts'])} concepts, "
               f"{len(extraction['instances'])} instances, "
               f"{len(extraction['relationships'])} relationships")
+        sys.stdout.flush()  # Show extraction results immediately
     except Exception as e:
         raise Exception(f"Failed to extract concepts: {e}")
 
@@ -309,6 +315,7 @@ def process_chunk(
         print(f"\n📝 Instances: {len([i for i in extraction['instances'] if concept_id_map.get(i['concept_id'])])}")
         print(f"🔀 Relationships: {len([r for r in extraction['relationships'] if concept_id_map.get(r['from_concept_id']) and concept_id_map.get(r['to_concept_id'])])}")
         print(f"{'-'*70}\n")
+        sys.stdout.flush()  # Ensure summary appears immediately
 
     return recent_concept_ids
 

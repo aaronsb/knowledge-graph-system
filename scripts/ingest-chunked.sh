@@ -168,8 +168,8 @@ if [ "$RESUME" = false ]; then
     read
 fi
 
-# Build command
-CMD="python -m ingest.ingest_chunked \"$DOCUMENT_PATH\" --document-name \"$DOCUMENT_NAME\""
+# Build command (use -u for unbuffered output)
+CMD="python -u -m ingest.ingest_chunked \"$DOCUMENT_PATH\" --document-name \"$DOCUMENT_NAME\""
 CMD="$CMD --target-words $TARGET_WORDS"
 CMD="$CMD --min-words $MIN_WORDS"
 CMD="$CMD --max-words $MAX_WORDS"
@@ -188,7 +188,8 @@ source venv/bin/activate
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
-eval $CMD 2>&1 | tee "logs/ingest_chunked_$(date +%Y%m%d_%H%M%S).log" || {
+# Use stdbuf to disable buffering on tee as well
+eval $CMD 2>&1 | stdbuf -oL tee "logs/ingest_chunked_$(date +%Y%m%d_%H%M%S).log" || {
     echo -e "\n${RED}✗ Ingestion failed or interrupted${NC}"
     echo -e "${YELLOW}Check the log file for details${NC}"
     echo -e "${YELLOW}Use --resume to continue from last checkpoint${NC}"
