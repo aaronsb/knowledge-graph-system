@@ -102,7 +102,7 @@ Modular abstraction for LLM providers:
 **CLI Tool (`cli.py`):**
 - Direct database access
 - Color-coded output
-- Commands: search, details, related, connect, list-documents, stats
+- Commands: search, details, related, connect, ontology (list/info/files/delete), stats
 
 **MCP Server (`mcp-server/`):**
 - Claude Desktop integration
