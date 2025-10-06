@@ -130,6 +130,7 @@ Once configured, Claude can use these tools:
 | `get_concept_details` | Detailed info about a concept | "Get details for concept ID xyz" |
 | `find_related_concepts` | Graph traversal from a concept | "Find concepts related to VUCA" |
 | `find_shortest_path` | Find shortest path(s) between two concepts (searches up to 100 hops, auto-segments paths > 5 hops) | "Find path from concept X to concept Y" |
+| `find_path_by_search` | Find path between concepts using natural language queries (searches for matches first, then finds paths) | "Find path from 'Sensible Transparency' to 'Role-Based Intelligence'" |
 | `list_ontologies` | List all ontologies | "What ontologies exist?" |
 | `get_ontology_info` | Stats for an ontology | "Show stats for Governed Agility" |
 | `get_database_stats` | Overall database statistics | "What's in the database?" |
