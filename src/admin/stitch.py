@@ -31,6 +31,7 @@ from src.lib.config import Config
 from src.lib.neo4j_ops import Neo4jConnection
 from src.lib.restitching import ConceptMatcher
 from src.lib.serialization import DataImporter
+from src.lib.integrity import DatabaseIntegrity
 
 
 def main():
@@ -155,14 +156,29 @@ Note:
         conn.close()
         sys.exit(0)
 
-    # Confirm or auto-apply
+    # Offer choices
     if restitch_plan["matched"]:
         if args.auto_apply:
             Console.warning("\n[AUTO-APPLY MODE] Applying stitches automatically...")
             apply = True
+            prune = False
         else:
+            Console.warning("\n⚠ What would you like to do with external references?")
+            print("  1) Re-stitch to similar concepts (semantic merging)")
+            print("  2) Prune dangling relationships (keep isolated)")
+            print("  3) Leave as-is (accept dangling references)")
             print("")
-            apply = Console.confirm("Apply proposed re-stitching?")
+            choice = input("Select option [1-3]: ").strip()
+
+            if choice == "1":
+                apply = True
+                prune = False
+            elif choice == "2":
+                apply = False
+                prune = True
+            else:
+                apply = False
+                prune = False
 
         if apply:
             Console.section("Applying Re-stitching")
@@ -186,9 +202,28 @@ Note:
             print("  • Verify stitches: python cli.py ontology info \"Ontology Name\"")
             print("  • Check integrity: python -m src.admin.check_integrity")
             print("  • Query concepts: python cli.py search \"your query\"")
+        elif prune:
+            # Prune dangling relationships
+            Console.section("Pruning Dangling Relationships")
+            Console.info("Removing relationships to external concepts...")
+
+            ontology = backup_data.get('ontology')
+            with conn.session() as session:
+                prune_result = DatabaseIntegrity.prune_dangling_relationships(
+                    session,
+                    ontology=ontology,
+                    dry_run=False
+                )
+
+            DatabaseIntegrity.print_pruning_report(prune_result, dry_run=False)
+
+            Console.warning("\n💡 Ontology is now isolated - no cross-ontology relationships")
         else:
-            Console.warning("\nRe-stitching cancelled")
-            Console.info("  You can re-run with different --threshold to adjust matches")
+            Console.warning("\nNo action taken - dangling relationships remain")
+            Console.info("  You can:")
+            print("    • Re-run with different --threshold to adjust matches")
+            print("    • Use: python -m src.admin.prune to remove danglers")
+            print("    • Leave as-is if queries don't traverse these relationships")
     else:
         Console.warning("\nNo matches found - all external references would remain dangling")
 
