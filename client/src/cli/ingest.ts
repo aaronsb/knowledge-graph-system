@@ -7,7 +7,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import * as fs from 'fs';
 import { createClientFromEnv } from '../api/client';
-import { IngestRequest, JobStatus } from '../types';
+import { IngestRequest, JobStatus, DuplicateJobResponse, JobSubmitResponse } from '../types';
 
 export const ingestCommand = new Command('ingest')
   .description('Ingest documents into the knowledge graph');
@@ -50,29 +50,32 @@ ingestCommand
 
       // Check if duplicate
       if ('duplicate' in result && result.duplicate) {
+        const dupResult = result as DuplicateJobResponse;
         console.log(chalk.yellow('\n⚠ Duplicate detected'));
-        console.log(chalk.gray(`  Existing job: ${result.existing_job_id}`));
-        console.log(chalk.gray(`  Status: ${result.status}`));
-        console.log(chalk.gray(`\n  ${result.message}`));
+        console.log(chalk.gray(`  Existing job: ${dupResult.existing_job_id}`));
+        console.log(chalk.gray(`  Status: ${dupResult.status}`));
+        console.log(chalk.gray(`\n  ${dupResult.message}`));
 
-        if (result.use_force) {
-          console.log(chalk.gray(`  ${result.use_force}`));
+        if (dupResult.use_force) {
+          console.log(chalk.gray(`  ${dupResult.use_force}`));
         }
 
-        if (result.result) {
+        if (dupResult.result) {
           console.log(chalk.green('\n✓ Previous ingestion completed:'));
-          printJobResult(result.result);
+          printJobResult(dupResult.result);
         }
 
         return;
       }
 
-      console.log(chalk.green(`\n✓ Job submitted: ${result.job_id}`));
+      // Type narrowed: result is JobSubmitResponse
+      const submitResult = result as JobSubmitResponse;
+      console.log(chalk.green(`\n✓ Job submitted: ${submitResult.job_id}`));
 
       if (options.wait) {
-        await pollJobWithProgress(client, result.job_id);
+        await pollJobWithProgress(client, submitResult.job_id);
       } else {
-        console.log(chalk.gray(`\nPoll status with: kg jobs status ${result.job_id}`));
+        console.log(chalk.gray(`\nPoll status with: kg jobs status ${submitResult.job_id}`));
       }
     } catch (error: any) {
       console.error(chalk.red('\n✗ Ingestion failed'));
@@ -111,17 +114,20 @@ ingestCommand
 
       // Check if duplicate
       if ('duplicate' in result && result.duplicate) {
+        const dupResult = result as DuplicateJobResponse;
         console.log(chalk.yellow('\n⚠ Duplicate detected'));
-        console.log(chalk.gray(`  ${result.message}`));
+        console.log(chalk.gray(`  ${dupResult.message}`));
         return;
       }
 
-      console.log(chalk.green(`\n✓ Job submitted: ${result.job_id}`));
+      // Type narrowed: result is JobSubmitResponse
+      const submitResult = result as JobSubmitResponse;
+      console.log(chalk.green(`\n✓ Job submitted: ${submitResult.job_id}`));
 
       if (options.wait) {
-        await pollJobWithProgress(client, result.job_id);
+        await pollJobWithProgress(client, submitResult.job_id);
       } else {
-        console.log(chalk.gray(`\nPoll status with: kg jobs status ${result.job_id}`));
+        console.log(chalk.gray(`\nPoll status with: kg jobs status ${submitResult.job_id}`));
       }
     } catch (error: any) {
       console.error(chalk.red('\n✗ Ingestion failed'));
