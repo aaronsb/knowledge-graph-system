@@ -2,32 +2,47 @@
 
 Practical Cypher queries for exploring and analyzing the knowledge graph.
 
+## Query Types
+
+Queries are organized into two main categories:
+
+**📊 Data-Driven Results** - Tabular output for analysis, statistics, and reporting
+**🕸️ Graph-Driven Results** - Visual network views for exploration and relationships
+
 ## Table of Contents
 
-- [Basic Exploration](#basic-exploration)
-- [Evidence Chains](#evidence-chains)
-- [Concept Relationships](#concept-relationships)
+### Data-Driven Results (Tables & Statistics)
+- [Node Counts & Lists](#node-counts--lists)
+- [Evidence Analysis](#evidence-analysis)
 - [Cross-Document Analysis](#cross-document-analysis)
-- [Vector Search](#vector-search)
-- [Graph Traversal](#graph-traversal)
+- [Vector & Text Search](#vector--text-search)
 - [Metrics & Statistics](#metrics--statistics)
-- [Debugging](#debugging)
+- [Debugging & Validation](#debugging--validation)
+
+### Graph-Driven Results (Network Views)
+- [Concept Networks](#concept-networks)
+- [Evidence Chains (Visual)](#evidence-chains-visual)
+- [Relationship Exploration](#relationship-exploration)
+- [Path Finding](#path-finding)
+- [Neighborhood Views](#neighborhood-views)
 
 ---
 
-## Basic Exploration
+# 📊 Data-Driven Results
 
-### Count nodes by type
+Queries that return tabular data, counts, and statistics. Best for analysis and reporting.
+
+## Node Counts & Lists
+
+### Count all nodes by type
 
 ```cypher
-MATCH (n:Concept) RETURN count(n) as concepts
-UNION
-MATCH (n:Instance) RETURN count(n) as instances
-UNION
-MATCH (n:Source) RETURN count(n) as sources
+MATCH (n)
+RETURN labels(n)[0] AS type, count(n) AS count
+ORDER BY count DESC
 ```
 
-### View random concepts with their labels
+### View sample concepts with labels
 
 ```cypher
 MATCH (c:Concept)
@@ -35,27 +50,35 @@ RETURN c.concept_id, c.label, c.search_terms
 LIMIT 10
 ```
 
-### Find all documents ingested
+### Find all documents (ontologies) ingested
 
 ```cypher
 MATCH (s:Source)
-RETURN DISTINCT s.document
-ORDER BY s.document
+RETURN DISTINCT s.document as ontology
+ORDER BY ontology
 ```
 
-### List all concepts from a specific document
+### List all concepts from a specific ontology
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: "Variety as a fulcrum"})
+MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: "WattsTest"})
 RETURN DISTINCT c.label, c.search_terms
 ORDER BY c.label
 ```
 
+### All relationship types in the graph
+
+```cypher
+MATCH (c1:Concept)-[r]->(c2:Concept)
+RETURN DISTINCT type(r) as relationship_type, count(*) as count
+ORDER BY count DESC
+```
+
 ---
 
-## Evidence Chains
+## Evidence Analysis
 
-### Trace concept back to source quotes
+### Trace concept back to source quotes (tabular)
 
 ```cypher
 MATCH (c:Concept {label: "Human Variety"})
@@ -78,16 +101,6 @@ ORDER BY evidence_count DESC
 LIMIT 10
 ```
 
-### Full provenance path
-
-```cypher
-MATCH path = (c:Concept {label: "AI Sandwich Systems Model"})
-             -[:EVIDENCED_BY]->(i:Instance)
-             -[:FROM_SOURCE]->(s:Source)
-RETURN path
-LIMIT 3
-```
-
 ### Find all quotes for a concept
 
 ```cypher
@@ -96,52 +109,15 @@ MATCH (c:Concept {label: "Requisite Variety"})
 RETURN i.quote
 ```
 
----
-
-## Concept Relationships
-
-### Find what a concept implies
+### Concepts appearing in multiple sources
 
 ```cypher
-MATCH (c:Concept {label: "Requisite Variety"})
-      -[r:IMPLIES]->(related:Concept)
-RETURN c.label as from_concept,
-       related.label as implies,
-       r.confidence
-```
-
-### Find all relationship types in graph
-
-```cypher
-MATCH (c1:Concept)-[r]->(c2:Concept)
-RETURN DISTINCT type(r) as relationship_type, count(*) as count
-ORDER BY count DESC
-```
-
-### Concepts that support each other
-
-```cypher
-MATCH (c1:Concept)-[:SUPPORTS]->(c2:Concept)
-RETURN c1.label, c2.label
+MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+WITH c, count(DISTINCT s) as source_count
+WHERE source_count > 1
+RETURN c.label, source_count
+ORDER BY source_count DESC
 LIMIT 10
-```
-
-### Contradictions in the graph
-
-```cypher
-MATCH (c1:Concept)-[:CONTRADICTS]->(c2:Concept)
-RETURN c1.label as concept,
-       c2.label as contradicts
-```
-
-### All relationships for a specific concept
-
-```cypher
-MATCH (c:Concept {label: "Human Variety"})-[r]->(related:Concept)
-RETURN type(r) as relationship,
-       related.label as related_concept,
-       r.confidence as confidence
-ORDER BY r.confidence DESC
 ```
 
 ---
@@ -202,7 +178,7 @@ ORDER BY shared_concepts DESC
 
 ---
 
-## Vector Search
+## Vector & Text Search
 
 ### Find similar concepts by embedding
 
@@ -268,18 +244,181 @@ LIMIT 10
 
 ---
 
-## Graph Traversal
+## Debugging & Validation
 
-### Find concepts within 2 hops of a starting concept
+### Orphaned concepts (no evidence)
 
 ```cypher
-MATCH path = (start:Concept {label: "Requisite Variety"})
-             -[*1..2]-(related:Concept)
-WHERE start <> related
-RETURN DISTINCT related.label,
-       length(path) as hops
-ORDER BY hops, related.label
+MATCH (c:Concept)
+WHERE NOT (c)-[:EVIDENCED_BY]->()
+RETURN c.concept_id, c.label
 ```
+
+### Orphaned instances (no source)
+
+```cypher
+MATCH (i:Instance)
+WHERE NOT (i)-[:FROM_SOURCE]->()
+RETURN i.instance_id, i.quote
+LIMIT 10
+```
+
+### Concepts missing embeddings
+
+```cypher
+MATCH (c:Concept)
+WHERE c.embedding IS NULL
+RETURN count(c) as concepts_missing_embeddings
+```
+
+### Check vector index status
+
+```cypher
+SHOW INDEXES
+YIELD name, type, entityType, labelsOrTypes, properties, state
+WHERE type = "VECTOR"
+RETURN name, state, labelsOrTypes, properties
+```
+
+### View database schema
+
+```cypher
+CALL db.schema.visualization()
+```
+
+---
+
+# 🕸️ Graph-Driven Results
+
+Queries that return visual network graphs. Best viewed in Neo4j Browser graph mode.
+
+## Concept Networks
+
+### View all concepts and their relationships
+
+```cypher
+MATCH (c:Concept)
+OPTIONAL MATCH path = (c)-[r]-(c2:Concept)
+RETURN c, path
+LIMIT 50
+```
+
+### Only connected concepts (network view)
+
+```cypher
+MATCH path = (c1:Concept)-[r]-(c2:Concept)
+RETURN path
+LIMIT 50
+```
+
+### Concepts from specific ontology with relationships
+
+```cypher
+MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: "WattsTest"})
+WITH DISTINCT c
+OPTIONAL MATCH path = (c)-[r]-(c2:Concept)
+RETURN c, path
+LIMIT 50
+```
+
+### Concept network by relationship type
+
+```cypher
+MATCH path = (c1:Concept)-[r:IMPLIES|SUPPORTS]->(c2:Concept)
+RETURN path
+LIMIT 50
+```
+
+### High-connectivity concept hubs (visual)
+
+```cypher
+MATCH (c:Concept)
+WHERE size((c)-[]-()) > 3
+MATCH path = (c)-[r]-(other:Concept)
+RETURN path
+LIMIT 100
+```
+
+---
+
+## Evidence Chains (Visual)
+
+### Full evidence chain for a concept
+
+```cypher
+MATCH path = (c:Concept {label: "AI Sandwich Systems Model"})
+             -[:EVIDENCED_BY]->(i:Instance)
+             -[:FROM_SOURCE]->(s:Source)
+RETURN path
+LIMIT 10
+```
+
+### Multi-hop evidence path
+
+```cypher
+MATCH path = (c:Concept)-[:APPEARS_IN]->(s:Source)
+             <-[:FROM_SOURCE]-(i:Instance)
+             <-[:EVIDENCED_BY]-(c)
+RETURN path
+LIMIT 20
+```
+
+### Concepts with their evidence network
+
+```cypher
+MATCH (c:Concept {label: "Human Variety"})
+OPTIONAL MATCH evidence = (c)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source)
+OPTIONAL MATCH concepts = (c)-[r]-(c2:Concept)
+RETURN c, evidence, concepts
+LIMIT 30
+```
+
+---
+
+## Relationship Exploration
+
+### Concept implications network
+
+```cypher
+MATCH path = (c:Concept)-[r:IMPLIES]->(related:Concept)
+RETURN path
+LIMIT 30
+```
+
+### Support relationships
+
+```cypher
+MATCH path = (c1:Concept)-[:SUPPORTS]->(c2:Concept)
+RETURN path
+LIMIT 30
+```
+
+### Contradictions visualization
+
+```cypher
+MATCH path = (c1:Concept)-[:CONTRADICTS]->(c2:Concept)
+RETURN path
+```
+
+### All relationships for a specific concept
+
+```cypher
+MATCH (c:Concept {label: "Human Variety"})
+MATCH path = (c)-[r]->(related:Concept)
+RETURN path
+```
+
+### Multi-relationship network
+
+```cypher
+MATCH path = (c:Concept)-[r:IMPLIES|SUPPORTS|CONTRADICTS|PART_OF]-(other:Concept)
+RETURN path
+LIMIT 50
+```
+
+---
+
+## Path Finding
 
 ### Shortest path between two concepts
 
@@ -291,34 +430,76 @@ MATCH path = shortestPath(
 RETURN path
 ```
 
-### All paths between two concepts (up to 4 hops)
+### All paths between concepts (up to 4 hops)
 
 ```cypher
 MATCH path = (c1:Concept {label: "Human Variety"})
              -[*1..4]-(c2:Concept {label: "AI Transformation"})
 WHERE c1 <> c2
 RETURN path
-LIMIT 5
+LIMIT 10
 ```
 
-### Neighborhood around a concept
+### Concepts within N hops (network expansion)
+
+```cypher
+MATCH path = (start:Concept {label: "Requisite Variety"})
+             -[*1..2]-(related:Concept)
+WHERE start <> related
+RETURN path
+LIMIT 50
+```
+
+### Directional path exploration
+
+```cypher
+MATCH path = (start:Concept {label: "Requisite Variety"})
+             -[:IMPLIES|SUPPORTS*1..3]->(related:Concept)
+RETURN path
+LIMIT 30
+```
+
+---
+
+## Neighborhood Views
+
+### Complete neighborhood around a concept
 
 ```cypher
 MATCH (c:Concept {label: "AI Sandwich Systems Model"})
-OPTIONAL MATCH (c)-[r1:IMPLIES|SUPPORTS]->(out:Concept)
-OPTIONAL MATCH (in:Concept)-[r2:IMPLIES|SUPPORTS]->(c)
-OPTIONAL MATCH (c)-[:EVIDENCED_BY]->(i:Instance)
-RETURN c, out, in, i, r1, r2
+OPTIONAL MATCH out = (c)-[r1:IMPLIES|SUPPORTS]->(out_c:Concept)
+OPTIONAL MATCH in = (in_c:Concept)-[r2:IMPLIES|SUPPORTS]->(c)
+OPTIONAL MATCH evidence = (c)-[:EVIDENCED_BY]->(i:Instance)
+RETURN c, out, in, evidence
 ```
 
-### Explore concept network (outbound relationships)
+### Two-hop neighborhood
 
 ```cypher
-MATCH (start:Concept {label: "Requisite Variety"})
-      -[r:IMPLIES|SUPPORTS|CONTRADICTS*1..3]->(related:Concept)
-WITH DISTINCT related, min(length(r)) as distance
-RETURN related.label, distance
-ORDER BY distance, related.label
+MATCH (c:Concept {label: "Human Variety"})
+MATCH path = (c)-[*1..2]-(related)
+RETURN path
+LIMIT 100
+```
+
+### Neighborhood with evidence
+
+```cypher
+MATCH (c:Concept {label: "Requisite Variety"})
+OPTIONAL MATCH concept_path = (c)-[r]-(related:Concept)
+OPTIONAL MATCH evidence_path = (c)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source)
+RETURN c, concept_path, evidence_path
+LIMIT 50
+```
+
+### Cross-document bridge concepts
+
+```cypher
+MATCH (c:Concept)-[:APPEARS_IN]->(s1:Source),
+      (c)-[:APPEARS_IN]->(s2:Source)
+WHERE s1.document <> s2.document
+MATCH path = (s1)<-[:APPEARS_IN]-(c)-[:APPEARS_IN]->(s2)
+RETURN path
 LIMIT 20
 ```
 
@@ -399,88 +580,6 @@ ORDER BY concepts DESC
 
 ---
 
-## Debugging
-
-### Orphaned concepts (no evidence)
-
-```cypher
-MATCH (c:Concept)
-WHERE NOT (c)-[:EVIDENCED_BY]->()
-RETURN c.concept_id, c.label
-```
-
-### Orphaned instances (no source)
-
-```cypher
-MATCH (i:Instance)
-WHERE NOT (i)-[:FROM_SOURCE]->()
-RETURN i.instance_id, i.quote
-LIMIT 10
-```
-
-### Concepts missing embeddings
-
-```cypher
-MATCH (c:Concept)
-WHERE c.embedding IS NULL
-RETURN count(c) as concepts_missing_embeddings
-```
-
-### Instances missing quotes
-
-```cypher
-MATCH (i:Instance)
-WHERE i.quote IS NULL OR i.quote = ""
-RETURN count(i) as instances_missing_quotes
-```
-
-### Broken relationship references
-
-```cypher
-// Find relationships referencing non-existent concept IDs
-MATCH (c:Concept)-[r]->(target)
-WHERE NOT exists((target:Concept))
-RETURN c.concept_id, c.label, type(r), target
-LIMIT 10
-```
-
-### View database schema
-
-```cypher
-CALL db.schema.visualization()
-```
-
-### View indexes
-
-```cypher
-SHOW INDEXES
-```
-
-### Check vector index status
-
-```cypher
-SHOW INDEXES
-YIELD name, type, entityType, labelsOrTypes, properties, state
-WHERE type = "VECTOR"
-RETURN name, state, labelsOrTypes, properties
-```
-
-### Sample of each node type
-
-```cypher
-MATCH (c:Concept)
-WITH c LIMIT 1
-MATCH (i:Instance)
-WITH c, i LIMIT 1
-MATCH (s:Source)
-WITH c, i, s LIMIT 1
-RETURN c as sample_concept,
-       i as sample_instance,
-       s as sample_source
-```
-
----
-
 ## Advanced Examples
 
 ### Find concepts bridging two documents
@@ -535,18 +634,46 @@ LIMIT 10
 
 ---
 
+---
+
 ## Query Tips
+
+### Choosing Between Data vs Graph Views
+
+**Use Data-Driven queries when:**
+- You need counts, statistics, or metrics
+- Exporting data to spreadsheets or reports
+- Running aggregations or analytics
+- Debugging data quality issues
+- Searching for specific information
+
+**Use Graph-Driven queries when:**
+- Exploring concept relationships visually
+- Understanding network structure
+- Finding paths between concepts
+- Discovering clusters and patterns
+- Presenting to stakeholders
 
 ### Performance
 
-- Use `LIMIT` on exploratory queries to avoid overwhelming results
-- Create parameters for frequently used values: `:param document => "Variety as a fulcrum"`
-- Use `PROFILE` or `EXPLAIN` to analyze query performance: `PROFILE MATCH ...`
+- Use `LIMIT` on graph queries to avoid overwhelming visualizations (50-100 nodes max)
+- Data queries can handle larger limits for reporting
+- Create parameters: `:param ontology => "WattsTest"`
+- Use `PROFILE` to analyze performance: `PROFILE MATCH ...`
+
+### Neo4j Browser Graph View Tips
+
+1. After running a graph query, click the **graph icon** (top right)
+2. **Drag nodes** to arrange the layout
+3. **Double-click** a node to expand its connections
+4. **Click relationships** to see their types and properties
+5. **Right-click** nodes for more options
+6. Use **Settings** (bottom right) to change colors and sizes
 
 ### Formatting Results
 
 ```cypher
-// Pretty-print multiple properties
+// Pretty-print for data analysis
 MATCH (c:Concept)
 RETURN c.label as Concept,
        size(c.search_terms) as SearchTermCount,
@@ -554,18 +681,13 @@ RETURN c.label as Concept,
 LIMIT 5
 ```
 
-### Exporting Results
+### Using Parameters
 
 ```cypher
-// From Neo4j Browser, use Download button or:
-// apoc.export.json.query() if APOC plugin installed
-```
-
-### Using Parameters in Neo4j Browser
-
-```cypher
+:param ontology => "WattsTest"
 :param concept_label => "Human Variety"
 
+// Then use in queries
 MATCH (c:Concept {label: $concept_label})
 RETURN c
 ```
@@ -600,15 +722,21 @@ RETURN c
 3. Paste query into editor
 4. Click Run or press Ctrl+Enter
 
-### Python CLI
+### Python CLI (Legacy)
 ```bash
-python cli.py query "MATCH (c:Concept) RETURN count(c)"
+python scripts/cli.py query "MATCH (c:Concept) RETURN count(c)"
 ```
 
-### Cypher Shell
+### Cypher Shell (Terminal)
 ```bash
 docker exec -it knowledge-graph-neo4j cypher-shell -u neo4j -p password
 ```
+
+### Neo4j Browser Visualization
+- **Best for:** Graph-driven queries
+- **Graph view:** Shows visual network
+- **Table view:** Shows tabular data
+- **Switch views:** Use icons in top right corner
 
 ---
 
