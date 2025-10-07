@@ -21,20 +21,43 @@ npm run build
 
 ### Run CLI
 
+**Option 1: Use wrapper script (recommended - no permissions needed)**
 ```bash
-# Using npm
-npm start -- health
+# From project root
+./scripts/kg-cli.sh health
+./scripts/kg-cli.sh ingest file document.txt --ontology "Test"
+./scripts/kg-cli.sh jobs list
 
-# Or use node directly
-node dist/index.js health
-
-# Or make it executable (recommended)
-chmod +x dist/index.js
-./dist/index.js health
-
-# Or install globally (creates 'kg' command)
-npm link
+# Or add alias to your shell (.bashrc, .zshrc):
+alias kg='/path/to/project/scripts/kg-cli.sh'
 kg health
+```
+
+**Option 2: Run directly with node**
+```bash
+node client/dist/index.js health
+node client/dist/index.js jobs list
+```
+
+**Option 3: Add to PATH (recommended for frequent use)**
+```bash
+# Add this to your ~/.bashrc or ~/.zshrc:
+export PATH="/path/to/knowledge-graph-system/scripts:$PATH"
+alias kg='kg-cli.sh'
+
+# Then use anywhere:
+kg health
+kg ingest file doc.txt --ontology "Test"
+```
+
+**Option 4: npm link (may require sudo on some systems)**
+```bash
+cd client
+npm link  # May need: sudo npm link
+kg health
+
+# To unlink later:
+npm unlink -g @kg/client
 ```
 
 ## CLI Usage
@@ -166,7 +189,7 @@ When `MCP_SERVER_MODE=true`, the client runs as an MCP server:
   "mcpServers": {
     "knowledge-graph": {
       "command": "node",
-      "args": ["/path/to/client/dist/index.js"],
+      "args": ["/absolute/path/to/client/dist/index.js"],
       "env": {
         "MCP_SERVER_MODE": "true",
         "KG_API_URL": "http://localhost:8000"
@@ -309,9 +332,14 @@ client/
 - Verify `KG_API_URL` is correct
 - Check firewall/network settings
 
-**"Command not found: kg":**
-- Run `npm link` in client directory
-- Or use `node dist/index.js` directly
+**"CLI not built" error:**
+- Run `cd client && npm run build`
+- Check for TypeScript errors
+
+**"Permission denied" with npm link:**
+- Use the wrapper script instead: `./scripts/kg-cli.sh`
+- Or run directly: `node client/dist/index.js`
+- Or add to PATH (see installation options above)
 
 **Types don't match API:**
 - API types are in `src/types/index.ts`
