@@ -276,7 +276,7 @@ if [ "$RESUME" = false ] && [ "$YES" = false ]; then
 fi
 
 # Build command (use -u for unbuffered output)
-CMD="python -u -m ingest.ingest_chunked \"$DOCUMENT_PATH\" --ontology \"$ONTOLOGY_NAME\""
+CMD="python -u -m src.ingest.ingest_chunked \"$DOCUMENT_PATH\" --ontology \"$ONTOLOGY_NAME\""
 CMD="$CMD --target-words $TARGET_WORDS"
 CMD="$CMD --min-words $MIN_WORDS"
 CMD="$CMD --max-words $MAX_WORDS"

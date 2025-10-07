@@ -24,10 +24,10 @@ from dotenv import load_dotenv
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
-from ingest.chunker import SmartChunker, ChunkingConfig, Chunk
-from ingest.checkpoint import IngestionCheckpoint
-from ingest.neo4j_client import Neo4jClient
-from ingest.llm_extractor import extract_concepts, generate_embedding
+from src.ingest.chunker import SmartChunker, ChunkingConfig, Chunk
+from src.ingest.checkpoint import IngestionCheckpoint
+from src.ingest.neo4j_client import Neo4jClient
+from src.ingest.llm_extractor import extract_concepts, generate_embedding
 
 # Suppress Neo4j notification warnings (they're informational, not errors)
 import logging
@@ -441,7 +441,7 @@ def main():
     load_dotenv()
 
     # Get AI provider info for cost calculation
-    from ingest.ai_providers import get_provider
+    from src.ingest.ai_providers import get_provider
     try:
         provider = get_provider()
         extraction_model = provider.get_extraction_model()

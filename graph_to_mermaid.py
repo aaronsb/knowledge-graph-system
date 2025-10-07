@@ -20,7 +20,7 @@ import sys
 import json
 import argparse
 from typing import Dict, List, Any, Set, Tuple
-from ingest.neo4j_client import Neo4jClient
+from src.ingest.neo4j_client import Neo4jClient
 
 
 def sanitize_id(text: str) -> str:
