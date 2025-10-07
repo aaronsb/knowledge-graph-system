@@ -7,6 +7,7 @@ reporting progress back to the job queue.
 
 import os
 import tempfile
+import base64
 from pathlib import Path
 from typing import Dict, Any
 from datetime import datetime
@@ -41,7 +42,10 @@ def run_ingestion_worker(
     Raises:
         Exception: If ingestion fails
     """
-    content = job_data["content"]
+    # Decode base64-encoded content
+    content_b64 = job_data["content"]
+    content = base64.b64decode(content_b64)
+
     ontology = job_data["ontology"]
     options = job_data.get("options", {})
     filename = job_data.get("filename", f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
@@ -112,9 +116,17 @@ def run_ingestion_worker(
         neo4j_client = Neo4jClient()
 
         # Get existing concepts for context
-        existing_concepts = neo4j_client.get_concepts_for_llm_context(
-            ontology_name=ontology
+        existing_concepts, has_empty_warnings = neo4j_client.get_document_concepts(
+            document_name=ontology,
+            recent_chunks_only=3,  # Last 3 chunks for context
+            warn_on_empty=True  # Let warnings flow through to logs
         )
+
+        # Log database state (empty is fine - just informational)
+        if len(existing_concepts) == 0:
+            print(f"ℹ️  Starting with empty database (first ingestion for '{ontology}') - all concepts will be new")
+        else:
+            print(f"ℹ️  Found {len(existing_concepts)} existing concepts in '{ontology}' for context")
 
         # Process each chunk
         for i, chunk in enumerate(chunks, 1):

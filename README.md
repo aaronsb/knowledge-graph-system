@@ -98,6 +98,10 @@ The system understood:
 
 **Prerequisites:** Docker, Python 3.11+, Node.js 18+
 
+> **⚠️ Architecture Transition:** We're transitioning to a client-server architecture with a FastAPI server and TypeScript unified client. The new approach is in **Phase 1** (working but not production-ready). Legacy Python CLI remains available during transition.
+
+### New Approach (API Server + TypeScript Client)
+
 ```bash
 # 1. Setup system (one-time)
 ./scripts/setup.sh
@@ -105,27 +109,59 @@ The system understood:
 # 2. Configure AI provider (OpenAI or Anthropic)
 ./scripts/configure-ai.sh
 
-# 3. Ingest documents into an ontology
+# 3. Start the API server
+source venv/bin/activate
+uvicorn src.api.main:app --reload --port 8000
+
+# 4. In another terminal: Build TypeScript client
+cd client
+npm install
+npm run build
+cd ..
+
+# 5. Ingest documents via API
+./scripts/kg-cli.sh ingest file document.txt --ontology "My Ontology"
+
+# 6. Monitor job status
+./scripts/kg-cli.sh jobs list
+./scripts/kg-cli.sh jobs status <job-id>
+```
+
+**Phase 1 Status:**
+- ✅ Async ingestion with job queue
+- ✅ Content deduplication
+- ✅ Cost tracking
+- ✅ Background processing
+- ⏳ Graph queries (use legacy CLI below)
+- ⏳ MCP server mode (Phase 2)
+
+See [ADR-012](docs/ADR-012-api-server-architecture.md) and [ADR-013](docs/ADR-013-unified-typescript-client.md) for architecture details.
+
+### Legacy Approach (Direct Python CLI)
+
+**Note:** This approach remains functional but will eventually be replaced by the API server + unified client.
+
+```bash
+# 1. Setup system (one-time)
+./scripts/setup.sh
+
+# 2. Configure AI provider
+./scripts/configure-ai.sh
+
+# 3. Ingest documents (direct to Neo4j)
 ./scripts/ingest.sh file1.txt --name "My Ontology"
-./scripts/ingest.sh file2.txt --name "My Ontology"  # Adds to same ontology
 
 # 4. Query the graph
 source venv/bin/activate
-python cli.py search "your query here"
-python cli.py details <concept-id>
-python cli.py ontology list  # List all ontologies
-python cli.py ontology info "My Ontology"  # View ontology details
-python cli.py database stats  # Database statistics
+python scripts/cli.py search "your query here"
+python scripts/cli.py details <concept-id>
+python scripts/cli.py ontology list
+python scripts/cli.py database stats
 
-# 5. Create learned knowledge connections (optional)
-python cli.py learn connect <concept-id-1> <concept-id-2> \
+# 5. Create learned knowledge connections
+python scripts/cli.py learn connect <concept-id-1> <concept-id-2> \
   --evidence "Both emphasize data-driven transparency" \
   --creator your-name
-python cli.py learn list  # View learned knowledge
-python cli.py learn list --cognitive-leap HIGH  # Filter by cognitive leap
-
-# JSON output for tool integration
-python cli.py --json ontology list
 ```
 
 **For Claude Desktop/Code integration:** See [MCP Setup Guide](docs/MCP_SETUP.md)
@@ -239,57 +275,90 @@ This is **not** a new embedding model or vector database. It's a synthesis:
 
 ```
 knowledge-graph-system/
-├── scripts/                # Management scripts
-│   ├── setup.sh           # Initial system setup
-│   ├── reset.sh           # Clear database and restart
-│   ├── ingest.sh          # Ingest documents (smart chunking)
-│   └── configure-ai.sh    # Configure AI provider
+├── src/                    # Python source code
+│   ├── api/               # FastAPI server (Phase 1)
+│   │   ├── main.py        # API entry point
+│   │   ├── routes/        # REST endpoints
+│   │   ├── services/      # Job queue, deduplication
+│   │   ├── workers/       # Background ingestion
+│   │   └── models/        # Pydantic schemas
+│   └── ingest/            # Ingestion pipeline
+│       ├── ingest_chunked.py  # Main ingestion with chunking
+│       ├── chunker.py         # Smart text chunking
+│       ├── llm_extractor.py   # LLM concept extraction
+│       └── neo4j_client.py    # Graph database operations
 │
-├── ingest/                 # Python ingestion pipeline
-│   ├── ingest_chunked.py  # Main ingestion with chunking
-│   ├── chunker.py         # Smart text chunking
-│   ├── llm_extractor.py   # LLM concept extraction
-│   └── neo4j_client.py    # Graph database operations
+├── client/                # TypeScript unified client
+│   ├── src/
+│   │   ├── index.ts       # Entry point (CLI or MCP mode)
+│   │   ├── api/           # HTTP client for API server
+│   │   ├── cli/           # CLI commands (Phase 1)
+│   │   ├── mcp/           # MCP server mode (Phase 2)
+│   │   └── types/         # TypeScript interfaces
+│   └── README.md          # Client documentation
 │
-├── mcp-server/            # MCP server for Claude Desktop
-│   └── src/
-│       ├── index.ts       # MCP server entry point
-│       └── neo4j.ts       # Neo4j queries and operations
+├── scripts/               # Management scripts & legacy tools
+│   ├── setup.sh          # Initial system setup
+│   ├── reset.sh          # Clear database and restart
+│   ├── ingest.sh         # Legacy: Direct ingestion
+│   ├── kg-cli.sh         # Wrapper for TypeScript CLI
+│   ├── cli.py            # Legacy: Python CLI (retained)
+│   └── configure-ai.sh   # Configure AI provider
+│
+├── mcp-server/           # Legacy MCP server (direct Neo4j)
+│   └── src/              # Will migrate to client/src/mcp
 │
 ├── schema/
-│   └── init.cypher        # Neo4j schema and indexes
+│   └── init.cypher       # Neo4j schema and indexes
 │
-└── docs/                  # Documentation
-    ├── CONCEPT.md         # Why knowledge graphs
-    ├── ARCHITECTURE.md    # System design
-    ├── QUICKSTART.md      # Getting started
-    ├── MCP_SETUP.md       # Claude Desktop/Code integration
-    └── EXAMPLES.md        # Real query examples
+├── docs/                 # Documentation
+│   ├── ADR-012-api-server-architecture.md
+│   ├── ADR-013-unified-typescript-client.md
+│   ├── ARCHITECTURE.md   # System design
+│   └── ...               # Other docs
+│
+└── logs/                 # Application logs
+    └── api_*.log         # API server logs
 ```
 
 ## Technology Stack
 
 - **Neo4j 5.15+** - Graph database with vector search
-- **Python 3.11+** - Ingestion pipeline
+- **FastAPI** - Python REST API server (Phase 1)
+- **Python 3.11+** - Ingestion pipeline & API server
+- **TypeScript/Node.js 18+** - Unified client (CLI + future MCP)
 - **OpenAI / Anthropic** - LLM concept extraction
-- **Node.js 18+** - MCP server
+- **SQLite** - Job queue persistence (Phase 1, will migrate to Redis)
 - **Docker Compose** - Infrastructure
 
 ## Current Status
 
-**Working:**
-- ✅ Document ingestion with smart chunking
+**Phase 1 (Current - Working but not production-ready):**
+- ✅ FastAPI server with async job queue
+- ✅ TypeScript CLI for ingestion & job management
+- ✅ Background processing with progress tracking
+- ✅ Content-based deduplication (SHA-256)
+- ✅ Cost tracking and reporting
+- ✅ Logging to files
 - ✅ LLM concept extraction (OpenAI & Anthropic)
 - ✅ Graph construction with relationships
 - ✅ Vector similarity search
-- ✅ Full-text search
-- ✅ MCP server for Claude Desktop
-- ✅ CLI for direct querying
-- ✅ Checkpoint & resume for large documents
-- ✅ Cross-document concept deduplication
 
-**Roadmap:**
-- [ ] Async ingestion with job queues
+**Legacy (Still Functional):**
+- ✅ Python CLI for graph querying
+- ✅ Direct ingestion via scripts
+- ✅ MCP server for Claude Desktop
+- ✅ Checkpoint & resume for large documents
+
+**Phase 2 Roadmap:**
+- [ ] Redis-based distributed job queue
+- [ ] Full API authentication & authorization
+- [ ] MCP server mode in unified TypeScript client
+- [ ] Graph query endpoints in API
+- [ ] Real-time updates (WebSocket/SSE)
+- [ ] Rate limiting & request validation
+
+**Future:**
 - [ ] Advanced graph algorithms (PageRank, community detection)
 - [ ] Web UI for exploration
 - [ ] Export to GraphML/JSON

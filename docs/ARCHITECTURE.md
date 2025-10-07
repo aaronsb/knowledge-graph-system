@@ -7,31 +7,69 @@ The Knowledge Graph System transforms linear documents into interconnected conce
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Document Ingestion                        │
-│  .txt files → Python → LLM Processing → Graph Upsert         │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                    Document Ingestion                         │
+│  .txt/.pdf files → API Server → Background Jobs → Neo4j      │
+└──────────────────────────────────────────────────────────────┘
                             ↓
-┌─────────────────────────────────────────────────────────────┐
-│                Neo4j Graph Database                          │
-│  • Concepts (nodes with vector embeddings)                   │
-│  • Instances (evidence quotes)                               │
-│  • Sources (document paragraphs)                             │
-│  • Relationships (IMPLIES, SUPPORTS, CONTRADICTS, etc.)      │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   FastAPI Server (Phase 1)                    │
+│  • REST endpoints (ingest, jobs)                              │
+│  • Job queue (in-memory + SQLite)                             │
+│  • Content deduplication (SHA-256)                            │
+│  • Placeholder auth (X-Client-ID, X-API-Key)                  │
+└──────────────────────────────────────────────────────────────┘
                             ↓
-                    ┌───────┴───────┐
-                    │               │
-         ┌──────────▼─────┐  ┌─────▼──────────┐
-         │  MCP SERVER    │  │  CLI TOOL      │
-         │  (Claude       │  │  (Direct       │
-         │   Desktop)     │  │   Access)      │
-         └────────────────┘  └────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                Neo4j Graph Database                           │
+│  • Concepts (nodes with vector embeddings)                    │
+│  • Instances (evidence quotes)                                │
+│  • Sources (document paragraphs)                              │
+│  • Relationships (IMPLIES, SUPPORTS, CONTRADICTS, etc.)       │
+└──────────────────────────────────────────────────────────────┘
+                            ↓
+                    ┌───────┴───────────┐
+                    │                   │
+         ┌──────────▼─────┐  ┌──────────▼─────────┐
+         │  TypeScript    │  │  MCP Server        │
+         │  CLI (kg)      │  │  (Phase 2)         │
+         │  • Ingest      │  │  • Claude Desktop  │
+         │  • Jobs        │  │  • Same codebase   │
+         └────────────────┘  └────────────────────┘
 ```
 
 ## Core Components
 
-### 1. AI Provider Layer (`ingest/ai_providers.py`)
+### 1. API Server Layer (`src/api/`)
+
+**FastAPI REST Server** (Phase 1):
+- **Routes**: Ingestion (`POST /ingest`), job management (`GET/POST /jobs/*`)
+- **Services**: Job queue (abstract interface), content hasher (deduplication)
+- **Workers**: Background ingestion processing with progress updates
+- **Models**: Pydantic request/response schemas matching TypeScript client
+- **Middleware**: Placeholder authentication (X-Client-ID, X-API-Key headers)
+
+**Job Queue Pattern**:
+```python
+# Abstract interface for Phase 1 → Phase 2 migration
+class JobQueue(ABC):
+    def enqueue(job_type, job_data) -> job_id
+    def get_job(job_id) -> JobStatus
+    def update_job(job_id, updates) -> None
+
+# Phase 1: InMemoryJobQueue (SQLite persistence)
+# Phase 2: RedisJobQueue (distributed workers)
+```
+
+**Content Deduplication**:
+- SHA-256 hash of document content + ontology name
+- Prevents expensive re-ingestion ($50-100 per document)
+- Returns existing job results if already completed
+- Force flag to override when intentional
+
+See [ADR-012](ADR-012-api-server-architecture.md) for detailed design.
+
+### 2. AI Provider Layer (`src/ingest/ai_providers.py`)
 
 Modular abstraction for LLM providers:
 
@@ -43,24 +81,50 @@ Modular abstraction for LLM providers:
 - Extraction: Claude Sonnet 4.5, Claude 3.5 Sonnet, Claude 3 Opus
 - Embeddings: Delegates to OpenAI (Anthropic doesn't provide embeddings)
 
-### 2. Ingestion Pipeline (`ingest/`)
+### 3. Ingestion Pipeline (`src/ingest/`)
 
 **Components:**
 - `parser.py` - Document parsing (text, PDF, DOCX)
 - `llm_extractor.py` - LLM-based concept extraction
 - `neo4j_client.py` - Graph database operations
-- `ingest.py` - Main orchestration
+- `ingest_chunked.py` - Main orchestration with chunking
 
 **Flow:**
-1. Parse document → paragraphs
-2. For each paragraph:
+1. **API Submission**: Client POSTs file → API returns job_id
+2. **Background Processing**: Worker pulls job from queue
+3. **Parse & Chunk**: Document → semantic chunks with overlap
+4. **For each chunk**:
+   - Query recent concepts from graph (context)
    - Extract concepts using LLM
    - Generate embeddings
-   - Match against existing concepts (vector similarity)
-   - Create/update nodes and relationships
-   - Store instances (quotes) as evidence
+   - Match against existing concepts (vector similarity > 0.85)
+   - Upsert to Neo4j (create/update nodes and relationships)
+   - Update job progress (percent, concepts created)
+5. **Complete**: Worker writes final stats to job result
 
-### 3. Graph Database (Neo4j)
+### 4. Client Layer (`client/`)
+
+**Unified TypeScript Client** (CLI + MCP in one codebase):
+
+**Shared Components**:
+- `src/types/` - TypeScript interfaces matching FastAPI Pydantic models
+- `src/api/client.ts` - HTTP client wrapping REST API endpoints
+- Configuration: Environment variables (`KG_API_URL`, `KG_CLIENT_ID`)
+
+**CLI Mode** (Phase 1 - Complete):
+- Commands: `kg health`, `kg ingest file/text`, `kg jobs status/list/cancel`
+- User experience: Color-coded output, progress spinners, duplicate detection
+- Installation: Wrapper script (`scripts/kg-cli.sh`), direct node, or npm link
+
+**MCP Server Mode** (Phase 2 - Future):
+- Entry point detects `MCP_SERVER_MODE=true` environment variable
+- Runs as MCP server for Claude Desktop/Code
+- Tools use same API client as CLI
+- Claude Desktop config: Node.js + environment variables
+
+See [ADR-013](ADR-013-unified-typescript-client.md) for detailed design.
+
+### 5. Graph Database (Neo4j)
 
 **Node Types:**
 
@@ -97,27 +161,42 @@ Modular abstraction for LLM providers:
 - `SUPPORTS` - Concept → Concept
 - `PART_OF` - Concept → Concept
 
-### 4. Query Interfaces
+### 6. Legacy Query Interfaces
 
-**CLI Tool (`cli.py`):**
-- Direct database access
+**Legacy Python CLI (`scripts/cli.py`):**
+- Direct Neo4j database access
 - Color-coded output
 - Commands: search, details, related, connect, ontology (list/info/files/delete), database (stats/info/health)
+- **Status**: Retained during TypeScript client migration
 
-**MCP Server (`mcp-server/`):**
+**Legacy MCP Server (`mcp-server/`):**
+- Direct Neo4j database access
 - Claude Desktop integration
 - Tools: search_concepts, get_concept_details, find_related_concepts, etc.
-- Real-time graph exploration through conversation
+- **Status**: Will migrate to unified TypeScript client (Phase 2)
 
 ## Data Flow
 
-### Ingestion Flow
+### Ingestion Flow (Current Architecture)
 
 ```
-Document
-  ↓ parse
-Paragraphs
-  ↓ for each paragraph
+Client (kg CLI)
+  ↓ POST /ingest (file + ontology)
+API Server
+  ├→ Calculate SHA-256 hash
+  ├→ Check for duplicate (hash + ontology)
+  │   ├→ Duplicate found: return existing job result
+  │   └→ No duplicate: continue
+  ├→ Create job in SQLite
+  ├→ Enqueue to in-memory queue
+  ├→ Return job_id immediately
+  └→ Background worker starts
+
+Background Worker
+  ↓ Parse & chunk document
+Chunks with context overlap
+  ↓ for each chunk
+  ├→ Query recent concepts from graph (context for LLM)
   ├→ Extract concepts (LLM)
   │   ├→ concepts: [{id, label, search_terms}]
   │   ├→ instances: [{concept_id, quote}]
@@ -129,10 +208,20 @@ Paragraphs
   │   ├→ similarity > 0.85: use existing
   │   └→ else: create new
   │
-  └→ Upsert to Neo4j
-      ├→ CREATE/UPDATE concepts
-      ├→ CREATE instances
-      └→ CREATE relationships
+  ├→ Upsert to Neo4j
+  │   ├→ CREATE/UPDATE concepts
+  │   ├→ CREATE instances
+  │   └→ CREATE relationships
+  │
+  └→ Update job progress (SQLite)
+      └→ percent, chunks_processed, concepts_created
+
+Client polls GET /jobs/{job_id}
+  ↓ every 2 seconds
+Job Status Response
+  ├→ status: queued | processing | completed | failed
+  ├→ progress: {percent, chunks_processed, concepts_created}
+  └→ result: {stats, cost} (if completed)
 ```
 
 ### Query Flow
@@ -155,6 +244,7 @@ Return structured results
 
 ### Environment Variables
 
+**API Server** (`.env`):
 ```bash
 # AI Provider Selection
 AI_PROVIDER=openai  # or "anthropic"
@@ -172,6 +262,22 @@ ANTHROPIC_EXTRACTION_MODEL=claude-sonnet-4-20250514
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=password
+
+# Authentication (Phase 1: disabled)
+AUTH_ENABLED=false
+AUTH_REQUIRE_CLIENT_ID=false
+AUTH_API_KEYS=  # Comma-separated keys for Phase 2
+```
+
+**TypeScript Client**:
+```bash
+# API connection
+KG_API_URL=http://localhost:8000
+KG_CLIENT_ID=my-client
+KG_API_KEY=  # Optional, for Phase 2
+
+# Mode selection (CLI vs MCP)
+MCP_SERVER_MODE=false  # or "true" for MCP server mode
 ```
 
 ## Concept Matching Algorithm
@@ -194,17 +300,24 @@ Multi-stage matching to prevent duplicates:
 
 ## Scalability Considerations
 
-### Current Design (MVF)
-- Single Neo4j instance
-- Synchronous processing
-- In-memory vector search
+### Phase 1 (Current)
+- **API Server**: Single FastAPI instance with BackgroundTasks
+- **Job Queue**: In-memory dict + SQLite persistence
+- **Database**: Single Neo4j instance
+- **Limitations**: No distributed workers, no multi-instance API
+
+### Phase 2 (Planned)
+- **Job Queue**: Redis-based distributed queue
+- **Workers**: Separate worker processes (can scale horizontally)
+- **API Server**: Multiple instances behind load balancer
+- **Real-time Updates**: WebSocket/SSE for job progress
+- **Authentication**: Full API key validation and rate limiting
 
 ### Future Enhancements
 - Neo4j cluster for HA
-- Async batch processing
 - Dedicated vector database (Pinecone, Weaviate)
-- Incremental updates
-- Caching layer (Redis)
+- Incremental updates (avoid re-processing)
+- Caching layer for query results
 
 ## Security
 

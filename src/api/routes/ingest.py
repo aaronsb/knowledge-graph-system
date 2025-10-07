@@ -4,6 +4,7 @@ from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException,
 from fastapi.responses import JSONResponse
 from typing import Optional
 import json
+import base64
 
 from ..services.job_queue import get_job_queue
 from ..services.content_hasher import ContentHasher
@@ -81,7 +82,7 @@ async def ingest_document(
     )
 
     job_data = {
-        "content": content,
+        "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
         "content_hash": content_hash,
         "ontology": ontology,
         "filename": use_filename,

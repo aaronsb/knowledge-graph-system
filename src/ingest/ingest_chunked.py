@@ -158,6 +158,14 @@ class ChunkedIngestionStats:
 
         return (tokens / 1_000_000) * cost_per_million
 
+    def calculate_extraction_cost(self, model: str = None) -> float:
+        """Public method to calculate extraction cost based on tracked tokens."""
+        return self._get_extraction_cost(self.extraction_tokens, model)
+
+    def calculate_embedding_cost(self, model: str = None) -> float:
+        """Public method to calculate embedding cost based on tracked tokens."""
+        return self._get_embedding_cost(self.embedding_tokens, model)
+
 
 def process_chunk(
     chunk: Chunk,
