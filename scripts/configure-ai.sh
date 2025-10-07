@@ -32,7 +32,7 @@ test_provider() {
     python -c "
 import sys
 sys.path.insert(0, '.')
-from ingest.llm_extractor import validate_provider_config
+from src.ingest.llm_extractor import validate_provider_config
 
 result = validate_provider_config('$provider')
 if 'error' in result:

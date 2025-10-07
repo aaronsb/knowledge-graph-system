@@ -68,7 +68,7 @@ class KnowledgeGraphCLI:
         self.driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         self.openai = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
         # Neo4jClient for learned knowledge operations
-        from ingest.neo4j_client import Neo4jClient
+        from src.ingest.neo4j_client import Neo4jClient
         self.client = Neo4jClient()
 
     def close(self):
@@ -648,7 +648,7 @@ class KnowledgeGraphCLI:
 
     def visualize(self, concept_ids: List[str], depth: int = 1, diagram_type: str = 'graph'):
         """Generate Mermaid diagram for concept(s)"""
-        from ingest.neo4j_client import Neo4jClient
+        from src.ingest.neo4j_client import Neo4jClient
 
         # Create Neo4j client for graph queries
         neo4j_client = Neo4jClient()
@@ -677,7 +677,7 @@ class KnowledgeGraphCLI:
         json_output: bool = False
     ):
         """Create a learned relationship between two concepts"""
-        from ingest.ai_providers import get_provider
+        from src.ingest.ai_providers import get_provider
         from datetime import datetime
 
         try:

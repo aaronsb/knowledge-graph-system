@@ -6,7 +6,7 @@ Supports OpenAI and Anthropic with model configuration.
 
 import os
 from typing import Dict, List, Any, Optional
-from ingest.ai_providers import get_provider
+from src.ingest.ai_providers import get_provider
 
 
 # System prompt for concept extraction
