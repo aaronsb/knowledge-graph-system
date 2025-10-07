@@ -1,6 +1,6 @@
 """Ingestion API routes"""
 
-from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException, Form, Depends
 from fastapi.responses import JSONResponse
 from typing import Optional
 import json
@@ -9,6 +9,7 @@ from ..services.job_queue import get_job_queue
 from ..services.content_hasher import ContentHasher
 from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
+from ..middleware.auth import get_current_user
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
@@ -27,7 +28,8 @@ async def ingest_document(
     target_words: int = Form(1000, description="Target words per chunk"),
     min_words: Optional[int] = Form(None, description="Minimum words per chunk"),
     max_words: Optional[int] = Form(None, description="Maximum words per chunk"),
-    overlap_words: int = Form(200, description="Overlap between chunks")
+    overlap_words: int = Form(200, description="Overlap between chunks"),
+    current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
     Submit a document for async ingestion into the knowledge graph.
@@ -83,6 +85,7 @@ async def ingest_document(
         "content_hash": content_hash,
         "ontology": ontology,
         "filename": use_filename,
+        "client_id": current_user["client_id"],  # Track job owner
         "options": {
             "target_words": options.target_words,
             "min_words": options.get_min_words(),
@@ -119,7 +122,8 @@ async def ingest_text(
     filename: Optional[str] = Form(None, description="Filename for source tracking"),
     force: bool = Form(False, description="Force re-ingestion even if duplicate"),
     target_words: int = Form(1000, description="Target words per chunk"),
-    overlap_words: int = Form(200, description="Overlap between chunks")
+    overlap_words: int = Form(200, description="Overlap between chunks"),
+    current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
     Submit raw text for ingestion (alternative to file upload).
@@ -159,6 +163,7 @@ async def ingest_text(
         "content_hash": content_hash,
         "ontology": ontology,
         "filename": use_filename,
+        "client_id": current_user["client_id"],  # Track job owner
         "options": {
             "target_words": target_words,
             "min_words": int(target_words * 0.8),

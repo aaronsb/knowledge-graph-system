@@ -98,6 +98,7 @@ class InMemoryJobQueue(JobQueue):
                 job_type TEXT NOT NULL,
                 content_hash TEXT,
                 ontology TEXT,
+                client_id TEXT,
                 status TEXT NOT NULL,
                 progress TEXT,
                 result TEXT,
@@ -139,6 +140,7 @@ class InMemoryJobQueue(JobQueue):
             "job_type": row["job_type"],
             "content_hash": row["content_hash"],
             "ontology": row["ontology"],
+            "client_id": row.get("client_id", "anonymous"),  # Phase 2 field
             "status": row["status"],
             "progress": json.loads(row["progress"]) if row["progress"] else None,
             "result": json.loads(row["result"]) if row["result"] else None,
@@ -152,12 +154,13 @@ class InMemoryJobQueue(JobQueue):
     def _save_to_db(self, job: Dict):
         """Persist job to SQLite"""
         self.db.execute("""
-            INSERT OR REPLACE INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             job["job_id"],
             job["job_type"],
             job.get("content_hash"),
             job.get("ontology"),
+            job.get("client_id", "anonymous"),  # Phase 2 field
             job["status"],
             json.dumps(job["progress"]) if job["progress"] else None,
             json.dumps(job["result"]) if job["result"] else None,
@@ -183,6 +186,7 @@ class InMemoryJobQueue(JobQueue):
                 "job_type": job_type,
                 "content_hash": job_data.get("content_hash"),
                 "ontology": job_data.get("ontology"),
+                "client_id": job_data.get("client_id", "anonymous"),  # Phase 2 field
                 "status": "queued",
                 "progress": None,
                 "result": None,
