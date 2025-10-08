@@ -1,37 +1,18 @@
-#!/usr/bin/env python3
 """
-Chunked ingestion script for large documents.
+Ingestion library for processing document chunks into knowledge graph.
 
-Supports:
-- Smart chunking with natural boundaries
-- Position tracking and checkpointing
-- Resume from interruption
-- Graph context awareness (recent concepts)
-
-Usage:
-    python ingest/ingest_chunked.py <filepath> --document-name "Document Name"
-    python ingest/ingest_chunked.py <filepath> --document-name "Name" --resume
+Contains statistics tracking and chunk processing logic used by API workers.
+Extracted from POC code for API-first architecture.
 """
 
 import os
 import sys
-import argparse
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from dotenv import load_dotenv
+import uuid
+from typing import List, Dict, Any
 
-# Force unbuffered output for real-time display
-sys.stdout.reconfigure(line_buffering=True)
-sys.stderr.reconfigure(line_buffering=True)
-
-from src.ingest.chunker import SmartChunker, ChunkingConfig, Chunk
-from src.ingest.checkpoint import IngestionCheckpoint
-from src.ingest.neo4j_client import Neo4jClient
-from src.ingest.llm_extractor import extract_concepts, generate_embedding
-
-# Suppress Neo4j notification warnings (they're informational, not errors)
-import logging
-logging.getLogger("neo4j.notifications").setLevel(logging.ERROR)
+from src.api.lib.chunker import Chunk
+from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.llm_extractor import extract_concepts, generate_embedding
 
 
 class ChunkedIngestionStats:
@@ -240,7 +221,6 @@ def process_chunk(
         raise Exception(f"Failed to extract concepts: {e}")
 
     # Step 3: Process each concept
-    import uuid
 
     # Track concept processing results for summary
     new_concepts = []
@@ -426,207 +406,3 @@ def process_chunk(
         sys.stdout.flush()  # Ensure summary appears immediately
 
     return recent_concept_ids
-
-
-def main():
-    """Main chunked ingestion entry point."""
-    parser = argparse.ArgumentParser(
-        description="Ingest large documents using smart chunking"
-    )
-    parser.add_argument("filepath", help="Path to the text file to ingest")
-    parser.add_argument("--ontology", required=True, help="Ontology/collection name for grouping documents")
-    parser.add_argument("--resume", action="store_true", help="Resume from checkpoint")
-    parser.add_argument("--target-words", type=int, default=1000, help="Target words per chunk")
-    parser.add_argument("--min-words", type=int, default=800, help="Minimum words per chunk")
-    parser.add_argument("--max-words", type=int, default=1500, help="Maximum words per chunk")
-    parser.add_argument("--overlap-words", type=int, default=200, help="Overlap between chunks")
-    parser.add_argument("--checkpoint-interval", type=int, default=5,
-                       help="Save checkpoint every N chunks")
-
-    args = parser.parse_args()
-
-    # Load environment variables
-    load_dotenv()
-
-    # Get AI provider info for cost calculation
-    from src.ingest.ai_providers import get_provider
-    try:
-        provider = get_provider()
-        extraction_model = provider.get_extraction_model()
-        embedding_model = provider.get_embedding_model()
-    except Exception:
-        # If provider fails to initialize, cost calculation will use defaults
-        extraction_model = None
-        embedding_model = None
-
-    # Validate file exists
-    filepath = Path(args.filepath)
-    if not filepath.exists():
-        print(f"Error: File not found: {args.filepath}")
-        sys.exit(1)
-
-    # Extract filename for source tracking (unique per file)
-    filename = filepath.stem  # filename without extension
-
-    print("=" * 60)
-    print("CHUNKED KNOWLEDGE GRAPH INGESTION")
-    print("=" * 60)
-    print(f"Ontology: {args.ontology}")
-    print(f"File: {args.filepath}")
-
-    # Initialize checkpoint manager
-    checkpoint_mgr = IngestionCheckpoint()
-
-    # Check for existing checkpoint (keyed by filename, not ontology)
-    start_position = 0
-    stats = ChunkedIngestionStats()
-    recent_concept_ids = []
-
-    if args.resume:
-        checkpoint = checkpoint_mgr.load(filename)
-        if checkpoint:
-            if checkpoint_mgr.validate(checkpoint):
-                start_position = checkpoint["char_position"]
-                stats.from_dict(checkpoint["stats"])
-                recent_concept_ids = checkpoint["recent_concept_ids"]
-                print(f"\n✓ Resuming from checkpoint:")
-                print(f"  Position: {start_position:,} characters")
-                print(f"  Chunks processed: {stats.chunks_processed}")
-            else:
-                print("\n⚠ Checkpoint invalid, starting from beginning")
-        else:
-            print(f"\n⚠ No checkpoint found for '{filename}'")
-
-    # Load full text
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            full_text = f.read()
-        print(f"\n✓ Loaded document: {len(full_text):,} characters")
-    except Exception as e:
-        print(f"Error reading file: {e}")
-        sys.exit(1)
-
-    # Configure chunker
-    config = ChunkingConfig(
-        target_words=args.target_words,
-        min_words=args.min_words,
-        max_words=args.max_words,
-        overlap_words=args.overlap_words
-    )
-
-    # Create chunks
-    print("\n📊 Chunking document...")
-    chunker = SmartChunker(config)
-    chunks = chunker.chunk_text(full_text, start_position=start_position)
-    print(chunker.get_chunk_summary(chunks))
-
-    if not chunks:
-        print("No chunks to process")
-        sys.exit(0)
-
-    # Initialize Neo4j client
-    try:
-        neo4j_client = Neo4jClient()
-        print("\n✓ Connected to Neo4j")
-    except Exception as e:
-        print(f"Error connecting to Neo4j: {e}")
-        sys.exit(1)
-
-    # Process chunks
-    print(f"\n🚀 Processing {len(chunks)} chunks...\n")
-
-    try:
-        with neo4j_client:
-            # Get existing concepts from document for context awareness
-            try:
-                import sys
-                import os
-
-                # Temporarily suppress stderr to hide Neo4j's informational warnings
-                old_stderr = sys.stderr
-                sys.stderr = open(os.devnull, 'w')
-
-                existing_concepts, has_empty_warnings = neo4j_client.get_document_concepts(
-                    document_name=args.ontology,
-                    recent_chunks_only=3,  # Last 3 chunks for context
-                    warn_on_empty=True
-                )
-
-                # Restore stderr
-                sys.stderr.close()
-                sys.stderr = old_stderr
-
-                # Show friendly message if database was empty
-                if len(existing_concepts) == 0:
-                    print(f"ℹ️  Database is empty (first ingestion) - all concepts will be new\n")
-
-                print(f"✓ Loaded {len(existing_concepts)} existing concepts for context\n")
-            except Exception as e:
-                if 'old_stderr' in locals():
-                    sys.stderr = old_stderr  # Ensure stderr restored on error
-                print(f"⚠ Could not load existing concepts: {e}\n")
-                existing_concepts = []
-            for idx, chunk in enumerate(chunks):
-                stats.chunks_processed += 1
-
-                # Process the chunk
-                recent_concept_ids = process_chunk(
-                    chunk=chunk,
-                    ontology_name=args.ontology,
-                    filename=filename,
-                    file_path=str(filepath.absolute()),
-                    neo4j_client=neo4j_client,
-                    stats=stats,
-                    existing_concepts=existing_concepts,
-                    recent_concept_ids=recent_concept_ids
-                )
-
-                # Periodically save checkpoint (keyed by filename, not ontology)
-                if (idx + 1) % args.checkpoint_interval == 0:
-                    checkpoint_mgr.save(
-                        document_name=filename,
-                        file_path=str(filepath.absolute()),
-                        char_position=chunk.end_char,
-                        chunks_processed=stats.chunks_processed,
-                        recent_concept_ids=recent_concept_ids,
-                        stats=stats.to_dict()
-                    )
-
-                # Refresh context from graph every few chunks (by ontology)
-                if (idx + 1) % 3 == 0:
-                    existing_concepts, _ = neo4j_client.get_document_concepts(
-                        document_name=args.ontology,
-                        recent_chunks_only=3,
-                        warn_on_empty=False  # Don't warn after first check
-                    )
-
-    except KeyboardInterrupt:
-        print("\n\n⚠ Ingestion interrupted by user")
-        # Save checkpoint on interrupt (keyed by filename)
-        if chunks and stats.chunks_processed > 0:
-            last_chunk = chunks[stats.chunks_processed - 1]
-            checkpoint_mgr.save(
-                document_name=filename,
-                file_path=str(filepath.absolute()),
-                char_position=last_chunk.end_char,
-                chunks_processed=stats.chunks_processed,
-                recent_concept_ids=recent_concept_ids,
-                stats=stats.to_dict()
-            )
-        stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n\n✗ Ingestion failed: {e}")
-        stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)
-        sys.exit(1)
-
-    # Clean up checkpoint on successful completion (keyed by filename)
-    checkpoint_mgr.delete(filename)
-
-    # Print summary
-    stats.print_summary(extraction_model=extraction_model, embedding_model=embedding_model)
-    print("\n✓ Ingestion completed successfully")
-
-
-if __name__ == "__main__":
-    main()

@@ -8,6 +8,7 @@ import ora from 'ora';
 import * as fs from 'fs';
 import { createClientFromEnv } from '../api/client';
 import { IngestRequest, JobStatus, DuplicateJobResponse, JobSubmitResponse } from '../types';
+import { getConfig } from '../lib/config';
 
 export const ingestCommand = new Command('ingest')
   .description('Ingest documents into the knowledge graph');
@@ -18,6 +19,7 @@ ingestCommand
   .description('Ingest a document file')
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
+  .option('-y, --yes', 'Auto-approve job (skip approval step)', false)
   .option('--filename <name>', 'Override filename for tracking')
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('--overlap-words <n>', 'Overlap between chunks', '200')
@@ -31,11 +33,16 @@ ingestCommand
       }
 
       const client = createClientFromEnv();
+      const config = getConfig();
+
+      // ADR-014: Use --yes flag if provided, otherwise check global config
+      const autoApprove = options.yes !== undefined ? options.yes : config.getAutoApprove();
 
       const request: IngestRequest = {
         ontology: options.ontology,
         filename: options.filename,
         force: options.force,
+        auto_approve: autoApprove,  // ADR-014: Auto-approve flag
         options: {
           target_words: parseInt(options.targetWords),
           overlap_words: parseInt(options.overlapWords),
@@ -90,17 +97,23 @@ ingestCommand
   .description('Ingest raw text')
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
+  .option('-y, --yes', 'Auto-approve job (skip approval step)', false)
   .option('--filename <name>', 'Filename for tracking', 'text_input')
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('--no-wait', 'Submit and exit (don\'t wait for completion)')
   .action(async (text: string, options) => {
     try {
       const client = createClientFromEnv();
+      const config = getConfig();
+
+      // ADR-014: Use --yes flag if provided, otherwise check global config
+      const autoApprove = options.yes !== undefined ? options.yes : config.getAutoApprove();
 
       const request: IngestRequest = {
         ontology: options.ontology,
         filename: options.filename,
         force: options.force,
+        auto_approve: autoApprove,  // ADR-014: Auto-approve flag
         options: {
           target_words: parseInt(options.targetWords),
         },
@@ -147,7 +160,9 @@ async function pollJobWithProgress(client: any, jobId: string) {
       if (job.status === 'processing' && job.progress) {
         const p = job.progress;
         if (p.percent !== undefined) {
-          spinner.text = `Processing... ${p.percent}% (${p.chunks_processed}/${p.chunks_total} chunks, ${p.concepts_created || 0} concepts)`;
+          const conceptsTotal = (p.concepts_created || 0) + (p.concepts_linked || 0);
+          const hitRate = conceptsTotal > 0 ? Math.round((p.concepts_linked || 0) / conceptsTotal * 100) : 0;
+          spinner.text = `Processing... ${p.percent}% (${p.chunks_processed}/${p.chunks_total} chunks) | Concepts: ${conceptsTotal} (${hitRate}% reused) | Relationships: ${p.relationships_created || 0}`;
         } else {
           spinner.text = `Processing... ${p.stage}`;
         }

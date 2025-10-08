@@ -62,6 +62,11 @@ class JobQueue(ABC):
         """List jobs, optionally filtered by status"""
         pass
 
+    @abstractmethod
+    def delete_job(self, job_id: str) -> bool:
+        """Permanently delete a job from the queue"""
+        pass
+
 
 class InMemoryJobQueue(JobQueue):
     """
@@ -121,12 +126,27 @@ class InMemoryJobQueue(JobQueue):
             ON jobs(status)
         """)
 
+        # Migration: Add ADR-014 approval workflow fields
+        # Check if columns exist before adding (SQLite doesn't have IF NOT EXISTS for ALTER)
+        cursor = self.db.execute("PRAGMA table_info(jobs)")
+        existing_columns = {row[1] for row in cursor.fetchall()}
+
+        if "analysis" not in existing_columns:
+            self.db.execute("ALTER TABLE jobs ADD COLUMN analysis TEXT")
+        if "approved_at" not in existing_columns:
+            self.db.execute("ALTER TABLE jobs ADD COLUMN approved_at TEXT")
+        if "approved_by" not in existing_columns:
+            self.db.execute("ALTER TABLE jobs ADD COLUMN approved_by TEXT")
+        if "expires_at" not in existing_columns:
+            self.db.execute("ALTER TABLE jobs ADD COLUMN expires_at TEXT")
+
         self.db.commit()
 
     def _load_active_jobs(self):
-        """Load queued/processing jobs into memory on startup"""
+        """Load active jobs into memory on startup"""
+        # ADR-014: Include new workflow states
         cursor = self.db.execute(
-            "SELECT * FROM jobs WHERE status IN ('queued', 'processing')"
+            "SELECT * FROM jobs WHERE status IN ('pending', 'awaiting_approval', 'approved', 'queued', 'processing')"
         )
 
         for row in cursor.fetchall():
@@ -135,12 +155,19 @@ class InMemoryJobQueue(JobQueue):
 
     def _row_to_dict(self, row: sqlite3.Row) -> Dict:
         """Convert SQLite row to job dict"""
+        # Helper to safely get optional fields from sqlite3.Row
+        def safe_get(row, key, default=None):
+            try:
+                return row[key]
+            except (KeyError, IndexError):
+                return default
+
         return {
             "job_id": row["job_id"],
             "job_type": row["job_type"],
             "content_hash": row["content_hash"],
             "ontology": row["ontology"],
-            "client_id": row.get("client_id", "anonymous"),  # Phase 2 field
+            "client_id": safe_get(row, "client_id", "anonymous"),  # Phase 2 field
             "status": row["status"],
             "progress": json.loads(row["progress"]) if row["progress"] else None,
             "result": json.loads(row["result"]) if row["result"] else None,
@@ -148,13 +175,18 @@ class InMemoryJobQueue(JobQueue):
             "created_at": row["created_at"],
             "started_at": row["started_at"],
             "completed_at": row["completed_at"],
-            "job_data": json.loads(row["job_data"])
+            "job_data": json.loads(row["job_data"]),
+            # ADR-014: Approval workflow fields
+            "analysis": json.loads(safe_get(row, "analysis")) if safe_get(row, "analysis") else None,
+            "approved_at": safe_get(row, "approved_at"),
+            "approved_by": safe_get(row, "approved_by"),
+            "expires_at": safe_get(row, "expires_at")
         }
 
     def _save_to_db(self, job: Dict):
         """Persist job to SQLite"""
         self.db.execute("""
-            INSERT OR REPLACE INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             job["job_id"],
             job["job_type"],
@@ -168,7 +200,12 @@ class InMemoryJobQueue(JobQueue):
             job["created_at"],
             job.get("started_at"),
             job.get("completed_at"),
-            json.dumps(job.get("job_data", {}))
+            json.dumps(job.get("job_data", {})),
+            # ADR-014: Approval workflow fields
+            json.dumps(job.get("analysis")) if job.get("analysis") else None,
+            job.get("approved_at"),
+            job.get("approved_by"),
+            job.get("expires_at")
         ))
         self.db.commit()
 
@@ -187,14 +224,19 @@ class InMemoryJobQueue(JobQueue):
                 "content_hash": job_data.get("content_hash"),
                 "ontology": job_data.get("ontology"),
                 "client_id": job_data.get("client_id", "anonymous"),  # Phase 2 field
-                "status": "queued",
+                "status": "pending",  # ADR-014: Start as "pending" for analysis
                 "progress": None,
                 "result": None,
                 "error": None,
                 "created_at": datetime.now().isoformat(),
                 "started_at": None,
                 "completed_at": None,
-                "job_data": job_data
+                "job_data": job_data,
+                # ADR-014: Approval workflow fields
+                "analysis": None,  # Will be populated by JobAnalyzer
+                "approved_at": None,
+                "approved_by": None,
+                "expires_at": None  # Will be set when status -> awaiting_approval
             }
 
             # Store in memory and DB
@@ -240,13 +282,15 @@ class InMemoryJobQueue(JobQueue):
             return True
 
     def cancel_job(self, job_id: str) -> bool:
-        """Cancel a job (only if queued)"""
+        """Cancel a job (if not already processing)"""
         with self.lock:
             job = self.jobs.get(job_id)
             if not job:
                 return False
 
-            if job["status"] != "queued":
+            # ADR-014: Can cancel pending/awaiting_approval/approved/queued, but not processing
+            cancellable_states = ["pending", "awaiting_approval", "approved", "queued"]
+            if job["status"] not in cancellable_states:
                 return False  # Can't cancel running jobs in Phase 1
 
             job["status"] = "cancelled"
@@ -258,21 +302,43 @@ class InMemoryJobQueue(JobQueue):
     def list_jobs(
         self,
         status: Optional[str] = None,
+        client_id: Optional[str] = None,
         limit: int = 50
     ) -> List[Dict]:
-        """List jobs from DB"""
-        if status:
-            cursor = self.db.execute(
-                "SELECT * FROM jobs WHERE status = ? ORDER BY created_at DESC LIMIT ?",
-                (status, limit)
-            )
-        else:
-            cursor = self.db.execute(
-                "SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?",
-                (limit,)
-            )
+        """List jobs from DB, optionally filtered by status and/or client_id"""
+        conditions = []
+        params = []
 
+        if status:
+            conditions.append("status = ?")
+            params.append(status)
+
+        if client_id:
+            conditions.append("client_id = ?")
+            params.append(client_id)
+
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        query = f"SELECT * FROM jobs WHERE {where_clause} ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+
+        cursor = self.db.execute(query, tuple(params))
         return [self._row_to_dict(row) for row in cursor.fetchall()]
+
+    def delete_job(self, job_id: str) -> bool:
+        """
+        Permanently delete a job from database.
+        Used by scheduler for cleanup of old jobs.
+        """
+        with self.lock:
+            # Remove from memory
+            if job_id in self.jobs:
+                del self.jobs[job_id]
+
+            # Delete from database
+            self.db.execute("DELETE FROM jobs WHERE job_id = ?", (job_id,))
+            self.db.commit()
+
+            return True
 
     def execute_job(self, job_id: str):
         """

@@ -87,6 +87,10 @@ export class KnowledgeGraphClient {
       form.append('force', 'true');
     }
 
+    if (request.auto_approve) {
+      form.append('auto_approve', 'true');
+    }
+
     if (request.options) {
       if (request.options.target_words !== undefined) {
         form.append('target_words', String(request.options.target_words));
@@ -128,6 +132,10 @@ export class KnowledgeGraphClient {
       form.append('force', 'true');
     }
 
+    if (request.auto_approve) {
+      form.append('auto_approve', 'true');
+    }
+
     if (request.options?.target_words !== undefined) {
       form.append('target_words', String(request.options.target_words));
     }
@@ -156,11 +164,15 @@ export class KnowledgeGraphClient {
    */
   async listJobs(
     status?: string,
+    clientId?: string,
     limit: number = 50
   ): Promise<JobStatus[]> {
     const params: any = { limit };
     if (status) {
       params.status = status;
+    }
+    if (clientId) {
+      params.client_id = clientId;
     }
 
     const response = await this.client.get('/jobs', { params });
@@ -172,6 +184,14 @@ export class KnowledgeGraphClient {
    */
   async cancelJob(jobId: string): Promise<{ job_id: string; cancelled: boolean; message: string }> {
     const response = await this.client.delete(`/jobs/${jobId}`);
+    return response.data;
+  }
+
+  /**
+   * Approve a job for processing (ADR-014)
+   */
+  async approveJob(jobId: string): Promise<{ job_id: string; status: string; message: string }> {
+    const response = await this.client.post(`/jobs/${jobId}/approve`);
     return response.data;
   }
 
@@ -343,6 +363,22 @@ export class KnowledgeGraphClient {
    */
   async resetDatabase(request: ResetRequest): Promise<ResetResponse> {
     const response = await this.client.post('/admin/reset', request);
+    return response.data;
+  }
+
+  /**
+   * Get job scheduler status and statistics (ADR-014)
+   */
+  async getSchedulerStatus(): Promise<any> {
+    const response = await this.client.get('/admin/scheduler/status');
+    return response.data;
+  }
+
+  /**
+   * Manually trigger job scheduler cleanup (ADR-014)
+   */
+  async triggerSchedulerCleanup(): Promise<any> {
+    const response = await this.client.post('/admin/scheduler/cleanup');
     return response.data;
   }
 }
