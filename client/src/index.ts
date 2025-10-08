@@ -16,8 +16,8 @@ if (process.env.MCP_SERVER_MODE === 'true') {
   process.exit(1);
 } else {
   // CLI mode
-  import('./cli/commands').then(({ registerCommands }) => {
-    registerCommands(program);
+  import('./cli/commands').then(async ({ registerCommands }) => {
+    await registerCommands(program);
     program.parse();
   });
 }
