@@ -29,24 +29,31 @@ Complete migration from Neo4j Community Edition to Apache AGE (PostgreSQL graph 
 
 ## Task 02: Infrastructure Setup [Week 1]
 
-**Status:** Pending
+**Status:** ✅ Complete
 **Complexity:** Medium
 **Dependencies:** Task 01 complete
 
 ### Sub-tasks:
-- [ ] Update docker-compose.yml to use apache/age image
-- [ ] Create schema/init_age.sql for extension setup
-- [ ] Configure PostgreSQL environment variables in .env.example
-- [ ] Remove Neo4j service from docker-compose.yml
-- [ ] Update volume mounts (postgres_data instead of neo4j_data)
-- [ ] Test Docker Compose startup with AGE image
-- [ ] Verify AGE extension loads correctly
-- [ ] Update .gitignore for PostgreSQL data directory
+- [✔] Update docker-compose.yml to use apache/age image
+- [✔] Create schema/init_age.sql for extension setup
+- [✔] Configure PostgreSQL environment variables in .env.example
+- [✔] Remove Neo4j service from docker-compose.yml
+- [✔] Update volume mounts (postgres_data instead of neo4j_data)
+- [✔] Test Docker Compose startup with AGE image
+- [✔] Verify AGE extension loads correctly
+- [✔] Update .gitignore for PostgreSQL data directory
 
 **Acceptance Criteria:**
-- `docker-compose up -d` starts PostgreSQL with AGE extension
-- Can connect with `psql` and query `SELECT * FROM ag_catalog.ag_graph;`
-- Extensions verified: `SELECT * FROM pg_extension;` shows `age` and `pgvector`
+- ✅ `docker-compose up -d` starts PostgreSQL with AGE extension
+- ✅ Can connect with `psql` and query `SELECT * FROM ag_catalog.ag_graph;`
+- ✅ AGE verified: Created test concept and queried successfully
+- ✅ Application tables created (users, api_keys, jobs, etc.)
+- ✅ RBAC roles created (kg_read_only, kg_contributor, kg_admin)
+
+**Notes:**
+- pgvector not included in base apache/age image - using JSONB for embeddings
+- Vertex/edge labels created automatically on first use (no explicit DDL needed)
+- Graph indexes will be added after initial data load
 
 ---
 

@@ -64,7 +64,8 @@ Thumbs.db
 # ----------------------------------------------------------------------------
 *.log
 logs/
-neo4j_data/
+postgres_data/
+postgres_import/
 *.db
 *.sqlite
 backups/
