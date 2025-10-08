@@ -69,7 +69,7 @@ class JobQueue(ABC):
 
 See [ADR-012](ADR-012-api-server-architecture.md) for detailed design.
 
-### 2. AI Provider Layer (`src/ingest/ai_providers.py`)
+### 2. AI Provider Layer (`src/api/lib/ai_providers.py`)
 
 Modular abstraction for LLM providers:
 
@@ -81,13 +81,15 @@ Modular abstraction for LLM providers:
 - Extraction: Claude Sonnet 4.5, Claude 3.5 Sonnet, Claude 3 Opus
 - Embeddings: Delegates to OpenAI (Anthropic doesn't provide embeddings)
 
-### 3. Ingestion Pipeline (`src/ingest/`)
+### 3. Ingestion Library (`src/api/lib/`)
 
 **Components:**
 - `parser.py` - Document parsing (text, PDF, DOCX)
 - `llm_extractor.py` - LLM-based concept extraction
 - `neo4j_client.py` - Graph database operations
-- `ingest_chunked.py` - Main orchestration with chunking
+- `chunker.py` - Smart document chunking with semantic boundaries
+- `ingestion.py` - Chunk processing and statistics tracking
+- `checkpoint.py` - Ingestion checkpoint management
 
 **Flow:**
 1. **API Submission**: Client POSTs file → API returns job_id
@@ -163,17 +165,13 @@ See [ADR-013](ADR-013-unified-typescript-client.md) for detailed design.
 
 ### 6. Legacy Query Interfaces
 
-**Legacy Python CLI (`scripts/cli.py`):**
-- Direct Neo4j database access
-- Color-coded output
-- Commands: search, details, related, connect, ontology (list/info/files/delete), database (stats/info/health)
-- **Status**: Retained during TypeScript client migration
-
 **Legacy MCP Server (`mcp-server/`):**
 - Direct Neo4j database access
 - Claude Desktop integration
 - Tools: search_concepts, get_concept_details, find_related_concepts, etc.
 - **Status**: Will migrate to unified TypeScript client (Phase 2)
+
+**Note**: The legacy Python CLI (`scripts/cli.py`) has been deprecated and removed in favor of the unified TypeScript client (`kg` command).
 
 ## Data Flow
 
