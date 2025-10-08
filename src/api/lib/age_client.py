@@ -293,7 +293,7 @@ class AGEClient:
                 fetch_one=True
             )
             if results:
-                agtype_result = results[0].get('result')
+                agtype_result = results.get('s')  # 's' from RETURN s
                 parsed = self._parse_agtype(agtype_result)
                 return parsed.get('properties', {}) if isinstance(parsed, dict) else {}
             return {}
@@ -344,7 +344,7 @@ class AGEClient:
                 fetch_one=True
             )
             if results:
-                agtype_result = results[0].get('result')
+                agtype_result = results.get('c')  # 'c' from RETURN c
                 parsed = self._parse_agtype(agtype_result)
                 return parsed.get('properties', {}) if isinstance(parsed, dict) else {}
             return {}
@@ -387,7 +387,7 @@ class AGEClient:
                 fetch_one=True
             )
             if results:
-                agtype_result = results[0].get('result')
+                agtype_result = results.get('i')  # 'i' from RETURN i
                 parsed = self._parse_agtype(agtype_result)
                 return parsed.get('properties', {}) if isinstance(parsed, dict) else {}
             return {}
@@ -728,8 +728,8 @@ class AGEClient:
             if not results:
                 raise ValueError(f"One or both concepts not found: {concept_id_1}, {concept_id_2}")
 
-            emb1_agtype = results[0].get("emb1")
-            emb2_agtype = results[0].get("emb2")
+            emb1_agtype = results.get("emb1")
+            emb2_agtype = results.get("emb2")
 
             # Parse embeddings from agtype
             try:
@@ -831,7 +831,7 @@ class AGEClient:
                 fetch_one=True
             )
             if results:
-                agtype_result = results[0].get('result')
+                agtype_result = results.get('s')  # 's' from RETURN s
                 parsed = self._parse_agtype(agtype_result)
                 return parsed.get('properties', {}) if isinstance(parsed, dict) else {}
             return {}
@@ -977,8 +977,8 @@ class AGEClient:
                 return {"source_deleted": 0, "relationships_deleted": 0}
 
             return {
-                "source_deleted": int(str(results[0].get("source_deleted", 0))),
-                "relationships_deleted": int(str(results[0].get("relationships_deleted", 0)))
+                "source_deleted": int(str(results.get("source_deleted", 0))),
+                "relationships_deleted": int(str(results.get("relationships_deleted", 0)))
             }
         except Exception as e:
             raise Exception(f"Failed to delete learned knowledge: {e}")
