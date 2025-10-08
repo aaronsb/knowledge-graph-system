@@ -6,6 +6,7 @@ API endpoints for system administration:
 - Database backup
 - Database restore
 - Database reset
+- Job scheduler management (ADR-014)
 """
 
 from fastapi import APIRouter, HTTPException, status
@@ -22,6 +23,7 @@ from ..models.admin import (
     ResetResponse,
 )
 from ..services.admin_service import AdminService
+from ..services.job_scheduler import get_job_scheduler
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -250,4 +252,123 @@ async def reset_database(request: ResetRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Reset failed: {str(e)}"
+        )
+
+
+# ========== Job Scheduler Endpoints (ADR-014) ==========
+
+@router.get("/scheduler/status")
+async def get_scheduler_status():
+    """
+    Get job scheduler status and statistics (ADR-014)
+
+    Returns current scheduler configuration and statistics:
+    - Running status
+    - Configuration (cleanup interval, retention periods)
+    - Job counts by status
+    - Last cleanup time
+    - Next scheduled cleanup
+
+    Example response:
+    ```json
+    {
+        "running": true,
+        "config": {
+            "cleanup_interval": 3600,
+            "approval_timeout": 24,
+            "completed_retention": 48,
+            "failed_retention": 168
+        },
+        "stats": {
+            "jobs_by_status": {
+                "pending": 2,
+                "awaiting_approval": 5,
+                "approved": 1,
+                "completed": 100
+            },
+            "last_cleanup": "2025-10-07T10:30:00",
+            "next_cleanup": "2025-10-07T11:30:00"
+        }
+    }
+    ```
+    """
+    scheduler = get_job_scheduler()
+
+    if scheduler is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Job scheduler not initialized"
+        )
+
+    stats = scheduler.get_stats()
+
+    return {
+        "running": scheduler.running,
+        "config": {
+            "cleanup_interval": scheduler.cleanup_interval,
+            "approval_timeout": scheduler.approval_timeout,
+            "completed_retention": scheduler.completed_retention,
+            "failed_retention": scheduler.failed_retention,
+        },
+        "stats": stats
+    }
+
+
+@router.post("/scheduler/cleanup")
+async def trigger_scheduler_cleanup():
+    """
+    Manually trigger job scheduler cleanup (ADR-014)
+
+    Forces an immediate cleanup cycle:
+    - Cancels unapproved jobs older than approval_timeout
+    - Deletes old completed/cancelled jobs
+    - Deletes old failed jobs
+
+    Useful for:
+    - Testing scheduler behavior
+    - Emergency cleanup
+    - Manual intervention
+
+    Returns cleanup results showing what was processed.
+
+    Example response:
+    ```json
+    {
+        "success": true,
+        "message": "Cleanup completed",
+        "processed": {
+            "expired_jobs_cancelled": 3,
+            "completed_jobs_deleted": 15,
+            "failed_jobs_deleted": 2
+        }
+    }
+    ```
+    """
+    scheduler = get_job_scheduler()
+
+    if scheduler is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Job scheduler not initialized"
+        )
+
+    if not scheduler.running:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Job scheduler not running"
+        )
+
+    try:
+        # Manually trigger cleanup
+        await scheduler.cleanup_jobs()
+
+        return {
+            "success": True,
+            "message": "Cleanup completed successfully",
+            "note": "Check scheduler stats for detailed counts"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Cleanup failed: {str(e)}"
         )

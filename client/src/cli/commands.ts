@@ -16,6 +16,7 @@ import { configCommand } from './config';
 import { adminCommand } from './admin';
 import { createClientFromEnv } from '../api/client';
 import { VERSION_INFO } from '../version';
+import { getConfig } from '../lib/config';
 
 /**
  * Display stylized banner with API status
@@ -41,6 +42,13 @@ async function showBanner() {
     console.log(`  ${colors.ui.key('API:')} ${colors.ui.value(apiUrl)} ${colors.status.success('✓')}`);
   } catch (error) {
     console.log(`  ${colors.ui.key('API:')} ${colors.ui.value(apiUrl)} ${colors.status.error('✗')}`);
+  }
+
+  // Show auto-approve status (ADR-014) - only if enabled
+  const config = getConfig();
+  const autoApprove = config.getAutoApprove();
+  if (autoApprove) {
+    console.log(`  ${colors.ui.key('Auto-Approve:')} ${colors.status.warning('enabled')} ${colors.status.dim('(jobs skip manual review)')}`);
   }
 
   // Show version info

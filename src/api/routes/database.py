@@ -16,7 +16,7 @@ from ..models.database import (
     DatabaseInfoResponse,
     DatabaseHealthResponse
 )
-from src.ingest.neo4j_client import Neo4jClient
+from src.api.lib.neo4j_client import Neo4jClient
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/database", tags=["database"])

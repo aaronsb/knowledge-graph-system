@@ -6,7 +6,10 @@
 
 import { Command } from 'commander';
 import * as readline from 'readline';
+import * as fs from 'fs';
+import * as path from 'path';
 import { createClientFromEnv } from '../api/client';
+import { getConfig } from '../lib/config';
 import * as colors from './colors';
 import { separator } from './colors';
 import { configureColoredHelp } from './help-formatter';
@@ -207,6 +210,15 @@ const backupCommand = new Command('backup')
 
       console.log(colors.status.info('\nCreating backup...'));
 
+      // TODO: Implement ADR-015 streaming architecture
+      // See: docs/ADR-015-backup-restore-streaming.md
+      //
+      // Current limitation: API creates backup on server-side
+      // Target: API should stream backup data to client
+      //   1. API creates backup in memory/temp
+      //   2. Stream backup JSON to client with progress bar
+      //   3. Client saves to configured directory (~/.local/share/kg/backups)
+      //   4. API deletes temp file immediately
       const result = await client.createBackup({
         backup_type: backupType,
         ontology_name: ontologyName,
@@ -215,6 +227,8 @@ const backupCommand = new Command('backup')
 
       console.log('\n' + separator());
       console.log(colors.status.success('✓ Backup Complete'));
+      console.log(colors.status.warning('⚠ Backup created on server-side (./backups)'));
+      console.log(colors.status.dim('   TODO: Download to configured directory'));
       console.log(separator());
       console.log(`\n  ${colors.ui.key('File:')} ${colors.ui.value(result.backup_file)}`);
       console.log(`  ${colors.ui.key('Size:')} ${colors.ui.value(result.file_size_mb.toFixed(2) + ' MB')}`);
@@ -243,35 +257,62 @@ const backupCommand = new Command('backup')
 // ========== List Backups Command ==========
 
 const listBackupsCommand = new Command('list-backups')
-  .description('List available backup files')
+  .description('List available backup files from configured directory')
   .action(async () => {
     try {
-      const client = createClientFromEnv();
+      const config = getConfig();
+      const backupDir = config.getBackupDir();
 
-      const result = await client.listBackups();
+      // Ensure backup directory exists
+      if (!fs.existsSync(backupDir)) {
+        console.log('\n' + separator());
+        console.log(colors.ui.title('📁 Available Backups'));
+        console.log(separator());
+        console.log(`\n  ${colors.status.dim('No backups found - directory does not exist')}`);
+        console.log(`  ${colors.status.dim(`Directory: ${backupDir}`)}`);
+        console.log(`  ${colors.status.dim('Run "kg admin backup" to create your first backup')}\n`);
+        console.log(separator() + '\n');
+        return;
+      }
+
+      // Read backup files
+      const files = fs.readdirSync(backupDir)
+        .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
+        .map(filename => {
+          const filepath = path.join(backupDir, filename);
+          const stats = fs.statSync(filepath);
+          return {
+            filename,
+            path: filepath,
+            size_mb: stats.size / (1024 * 1024),
+            created: stats.mtime.toISOString()
+          };
+        })
+        .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()); // newest first
 
       console.log('\n' + separator());
-      console.log(colors.ui.title(`📁 Available Backups (${result.count})`));
+      console.log(colors.ui.title(`📁 Available Backups (${files.length})`));
       console.log(separator());
 
-      if (result.backups.length === 0) {
+      if (files.length === 0) {
         console.log(`\n  ${colors.status.dim('No backups found')}`);
-        console.log(`  ${colors.status.dim(`Directory: ${result.backup_dir}`)}\n`);
+        console.log(`  ${colors.status.dim(`Directory: ${backupDir}`)}`);
+        console.log(`  ${colors.status.dim('Run "kg admin backup" to create your first backup')}\n`);
       } else {
         console.log('');
-        result.backups.forEach((backup, i) => {
+        files.forEach((backup, i) => {
           console.log(`  ${colors.ui.bullet(`${i + 1}.`)} ${colors.ui.value(backup.filename)}`);
           console.log(`     ${colors.status.dim(`Size: ${backup.size_mb.toFixed(2)} MB`)}`);
           console.log(`     ${colors.status.dim(`Created: ${new Date(backup.created).toLocaleString()}`)}`);
         });
-        console.log(`\n  ${colors.status.dim(`Directory: ${result.backup_dir}`)}`);
+        console.log(`\n  ${colors.status.dim(`Directory: ${backupDir}`)}`);
       }
 
       console.log('\n' + separator() + '\n');
 
     } catch (error: any) {
       console.error(colors.status.error('✗ Failed to list backups'));
-      console.error(colors.status.error(error.response?.data?.detail || error.message));
+      console.error(colors.status.error(error.message));
       process.exit(1);
     }
   });
@@ -280,47 +321,91 @@ const listBackupsCommand = new Command('list-backups')
 
 const restoreCommand = new Command('restore')
   .description('Restore a database backup (requires authentication)')
-  .option('--file <path>', 'Backup file path')
+  .option('--file <name>', 'Backup filename (from configured directory)')
+  .option('--path <path>', 'Custom backup file path (overrides configured directory)')
   .option('--overwrite', 'Overwrite existing data', false)
   .option('--deps <action>', 'How to handle external dependencies: prune, stitch, defer', 'prune')
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
+      const config = getConfig();
+      const backupDir = config.getBackupDir();
 
       console.log('\n' + separator());
       console.log(colors.ui.title('📥 Database Restore'));
       console.log(colors.status.warning('⚠️  Potentially destructive operation - authentication required'));
       console.log(separator());
 
-      // Get backup file
-      let backupFile = options.file;
-      if (!backupFile) {
-        const backups = await client.listBackups();
+      // Determine backup file path
+      let backupFilePath: string;
+      let backupFilename: string;
 
-        if (backups.count === 0) {
+      if (options.path) {
+        // Custom path specified
+        backupFilePath = options.path;
+        backupFilename = path.basename(backupFilePath);
+      } else if (options.file) {
+        // Filename specified, use configured directory
+        backupFilePath = path.join(backupDir, options.file);
+        backupFilename = options.file;
+      } else {
+        // Interactive selection from configured directory
+        if (!fs.existsSync(backupDir)) {
+          console.error(colors.status.error('\n✗ No backups available - directory does not exist'));
+          console.log(colors.status.dim(`Directory: ${backupDir}\n`));
+          process.exit(1);
+        }
+
+        const backups = fs.readdirSync(backupDir)
+          .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
+          .map(filename => {
+            const filepath = path.join(backupDir, filename);
+            const stats = fs.statSync(filepath);
+            return {
+              filename,
+              path: filepath,
+              size_mb: stats.size / (1024 * 1024)
+            };
+          })
+          .sort((a, b) => b.size_mb - a.size_mb);
+
+        if (backups.length === 0) {
           console.error(colors.status.error('\n✗ No backups available'));
+          console.log(colors.status.dim(`Directory: ${backupDir}\n`));
           process.exit(1);
         }
 
         console.log('\n' + colors.ui.key('Available Backups:'));
-        backups.backups.slice(0, 10).forEach((backup, i) => {
+        backups.slice(0, 10).forEach((backup, i) => {
           console.log(`  ${i + 1}. ${backup.filename} (${backup.size_mb.toFixed(2)} MB)`);
         });
 
-        const choice = await prompt('\nSelect backup [1-10] or enter path: ');
+        const choice = await prompt('\nSelect backup [1-10] or enter filename: ');
 
         if (/^\d+$/.test(choice)) {
           const index = parseInt(choice) - 1;
-          if (index >= 0 && index < backups.backups.length) {
-            backupFile = backups.backups[index].path;
+          if (index >= 0 && index < backups.length) {
+            backupFilePath = backups[index].path;
+            backupFilename = backups[index].filename;
           } else {
             console.error(colors.status.error('✗ Invalid selection'));
             process.exit(1);
           }
         } else {
-          backupFile = choice;
+          backupFilename = choice;
+          backupFilePath = path.join(backupDir, choice);
         }
       }
+
+      // Verify file exists
+      if (!fs.existsSync(backupFilePath)) {
+        console.error(colors.status.error(`\n✗ Backup file not found: ${backupFilePath}\n`));
+        process.exit(1);
+      }
+
+      console.log(colors.status.dim(`\nBackup file: ${backupFilePath}`));
+      const fileStats = fs.statSync(backupFilePath);
+      console.log(colors.status.dim(`Size: ${(fileStats.size / (1024 * 1024)).toFixed(2)} MB`));
 
       // Get authentication
       console.log('\n' + colors.status.warning('Authentication required:'));
@@ -334,10 +419,21 @@ const restoreCommand = new Command('restore')
 
       console.log(colors.status.info('\nRestoring backup...'));
 
+      // TODO: Implement ADR-015 streaming architecture
+      // See: docs/ADR-015-backup-restore-streaming.md
+      //
+      // Current limitation: API expects server-side filename
+      // Target: Client should stream file data to API
+      //   1. Read backup file from local directory
+      //   2. Upload via multipart with progress bar
+      //   3. API saves to temp location
+      //   4. API runs integrity checks
+      //   5. API performs restore with progress updates
+      //   6. API deletes temp file
       const result = await client.restoreBackup({
         username,
         password,
-        backup_file: backupFile,
+        backup_file: backupFilename,
         overwrite: options.overwrite,
         handle_external_deps: options.deps
       });
@@ -435,15 +531,113 @@ const resetCommand = new Command('reset')
     }
   });
 
+// ========== Scheduler Commands (ADR-014) ==========
+
+const schedulerStatusCommand = new Command('status')
+  .description('Show job scheduler status and configuration')
+  .action(async () => {
+    try {
+      const client = createClientFromEnv();
+
+      console.log('\n' + separator());
+      console.log(colors.ui.title('⏱️  Job Scheduler Status'));
+      console.log(separator());
+
+      const status = await client.getSchedulerStatus();
+
+      // Running status
+      console.log('\n' + colors.ui.header('Scheduler'));
+      if (status.running) {
+        console.log(`  ${colors.status.success('✓')} Running`);
+      } else {
+        console.log(`  ${colors.status.error('✗')} Not running`);
+      }
+
+      // Configuration
+      console.log('\n' + colors.ui.header('Configuration'));
+      console.log(`  ${colors.ui.key('Cleanup Interval:')} ${colors.ui.value(status.config.cleanup_interval + 's')} (${(status.config.cleanup_interval / 3600).toFixed(1)}h)`);
+      console.log(`  ${colors.ui.key('Approval Timeout:')} ${colors.ui.value(status.config.approval_timeout + 'h')}`);
+      console.log(`  ${colors.ui.key('Completed Retention:')} ${colors.ui.value(status.config.completed_retention + 'h')}`);
+      console.log(`  ${colors.ui.key('Failed Retention:')} ${colors.ui.value(status.config.failed_retention + 'h')}`);
+
+      // Statistics
+      if (status.stats) {
+        console.log('\n' + colors.ui.header('Job Statistics'));
+
+        if (status.stats.jobs_by_status) {
+          Object.entries(status.stats.jobs_by_status).forEach(([jobStatus, count]) => {
+            console.log(`  ${colors.ui.key(jobStatus + ':')} ${colors.coloredCount(count as number)}`);
+          });
+        }
+
+        if (status.stats.last_cleanup) {
+          console.log(`\n  ${colors.ui.key('Last Cleanup:')} ${colors.ui.value(new Date(status.stats.last_cleanup).toLocaleString())}`);
+        }
+
+        if (status.stats.next_cleanup) {
+          console.log(`  ${colors.ui.key('Next Cleanup:')} ${colors.ui.value(new Date(status.stats.next_cleanup).toLocaleString())}`);
+        }
+      }
+
+      console.log('\n' + separator() + '\n');
+
+    } catch (error: any) {
+      console.error(colors.status.error('✗ Failed to get scheduler status'));
+      console.error(colors.status.error(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
+const schedulerCleanupCommand = new Command('cleanup')
+  .description('Manually trigger scheduler cleanup (cancels expired jobs, deletes old jobs)')
+  .action(async () => {
+    try {
+      const client = createClientFromEnv();
+
+      console.log('\n' + separator());
+      console.log(colors.ui.title('🧹 Manual Scheduler Cleanup'));
+      console.log(separator());
+
+      console.log(colors.status.info('\nTriggering cleanup...'));
+
+      const result = await client.triggerSchedulerCleanup();
+
+      console.log('\n' + separator());
+      console.log(colors.status.success('✓ Cleanup Complete'));
+      console.log(separator());
+
+      if (result.message) {
+        console.log(`\n  ${colors.ui.value(result.message)}`);
+      }
+
+      if (result.note) {
+        console.log(`  ${colors.status.dim(result.note)}`);
+      }
+
+      console.log('\n' + separator() + '\n');
+
+    } catch (error: any) {
+      console.error(colors.status.error('✗ Cleanup failed'));
+      console.error(colors.status.error(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
+const schedulerCommand = new Command('scheduler')
+  .description('Job scheduler management (ADR-014)')
+  .addCommand(schedulerStatusCommand)
+  .addCommand(schedulerCleanupCommand);
+
 // ========== Main Admin Command ==========
 
 export const adminCommand = new Command('admin')
-  .description('System administration (status, backup, restore, reset)')
+  .description('System administration (status, backup, restore, reset, scheduler)')
   .addCommand(statusCommand)
   .addCommand(backupCommand)
   .addCommand(listBackupsCommand)
   .addCommand(restoreCommand)
-  .addCommand(resetCommand);
+  .addCommand(resetCommand)
+  .addCommand(schedulerCommand);
 
 // Configure colored help for all admin commands
-[statusCommand, backupCommand, listBackupsCommand, restoreCommand, resetCommand].forEach(configureColoredHelp);
+[statusCommand, backupCommand, listBackupsCommand, restoreCommand, resetCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand].forEach(configureColoredHelp);

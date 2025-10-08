@@ -162,7 +162,53 @@ export const configCommand = new Command('config')
             console.log('\n' + separator());
             console.log(colors.ui.title('⚙️  Configuration'));
             console.log(separator());
-            console.log('\n' + colors.ui.value(JSON.stringify(allConfig, null, 2)));
+
+            // Display config keys and values
+            console.log();
+
+            // Simple top-level keys
+            if (allConfig.username !== undefined) {
+              console.log(`${colors.ui.key('username:')} ${colors.ui.value(allConfig.username)}`);
+            }
+            if (allConfig.secret !== undefined) {
+              console.log(`${colors.ui.key('secret:')} ${colors.status.dim('***hidden***')}`);
+            }
+            if (allConfig.api_url !== undefined) {
+              console.log(`${colors.ui.key('api_url:')} ${colors.ui.value(allConfig.api_url)}`);
+            }
+            if (allConfig.backup_dir !== undefined) {
+              console.log(`${colors.ui.key('backup_dir:')} ${colors.ui.value(allConfig.backup_dir)}`);
+            }
+
+            // Auto-approve with boolean value
+            if (allConfig.auto_approve !== undefined) {
+              const value = allConfig.auto_approve ? colors.status.warning('true') : colors.status.dim('false');
+              console.log(`${colors.ui.key('auto_approve:')} ${value}`);
+            }
+
+            // MCP configuration (nested)
+            if (allConfig.mcp) {
+              console.log();
+              console.log(colors.ui.key('mcp:'));
+
+              if (allConfig.mcp.enabled !== undefined) {
+                const value = allConfig.mcp.enabled ? colors.status.success('true') : colors.status.dim('false');
+                console.log(`  ${colors.ui.key('enabled:')} ${value}`);
+              }
+
+              if (allConfig.mcp.tools && Object.keys(allConfig.mcp.tools).length > 0) {
+                console.log(`  ${colors.ui.key('tools:')}`);
+                Object.entries(allConfig.mcp.tools).forEach(([name, toolConfig]: [string, any]) => {
+                  const status = toolConfig.enabled ? colors.status.success('✓') : colors.status.dim('✗');
+                  console.log(`    ${status} ${colors.ui.value(name)}`);
+                });
+              }
+            }
+
+            // Config file location and usage hint
+            console.log();
+            console.log(colors.status.dim(`Config file: ${config.getConfigPath()}`));
+            console.log(colors.status.dim(`Usage: kg config set <key> <value>`));
             console.log('\n' + separator());
           }
         } catch (error: any) {
@@ -322,6 +368,58 @@ export const configCommand = new Command('config')
           }
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to get MCP config'));
+          console.error(colors.status.error(error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('auto-approve')
+      .description('Enable/disable auto-approval of jobs (ADR-014)')
+      .argument('[value]', 'Enable (true/on/yes) or disable (false/off/no)', 'status')
+      .action(async (value) => {
+        try {
+          const config = getConfig();
+
+          // If no value, show current status
+          if (value === 'status') {
+            const current = config.getAutoApprove();
+            console.log('\n' + separator());
+            console.log(colors.ui.title('🔄 Auto-Approve Configuration'));
+            console.log(separator());
+            const statusText = current ? colors.status.success('✓ enabled') : colors.status.dim('✗ disabled');
+            console.log(`\n${colors.ui.key('Status:')} ${statusText}`);
+            console.log(colors.status.dim('\nWhen enabled, all jobs are automatically approved without manual review'));
+            console.log(colors.status.dim('Override: Use --yes flag on individual ingest commands\n'));
+            console.log(separator());
+            return;
+          }
+
+          // Parse boolean value
+          const enableValues = ['true', 'on', 'yes', 'enable', 'enabled', '1'];
+          const disableValues = ['false', 'off', 'no', 'disable', 'disabled', '0'];
+
+          let newValue: boolean;
+          if (enableValues.includes(value.toLowerCase())) {
+            newValue = true;
+          } else if (disableValues.includes(value.toLowerCase())) {
+            newValue = false;
+          } else {
+            console.error(colors.status.error(`✗ Invalid value: ${value}`));
+            console.log(colors.status.dim('Use: true/false, on/off, yes/no, enable/disable'));
+            process.exit(1);
+          }
+
+          config.setAutoApprove(newValue);
+          const statusText = newValue ? colors.status.success('enabled') : colors.status.dim('disabled');
+          console.log(colors.status.success(`✓ Auto-approve ${statusText}`));
+
+          if (newValue) {
+            console.log(colors.status.warning('\n⚠️  All jobs will now be automatically approved'));
+            console.log(colors.status.dim('Jobs will skip the analysis review step and start processing immediately\n'));
+          }
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to configure auto-approve'));
           console.error(colors.status.error(error.message));
           process.exit(1);
         }

@@ -98,9 +98,7 @@ The system understood:
 
 **Prerequisites:** Docker, Python 3.11+, Node.js 18+
 
-> **⚠️ Architecture Transition:** We're transitioning to a client-server architecture with a FastAPI server and TypeScript unified client. The new approach is in **Phase 1** (working but not production-ready). Legacy Python CLI remains available during transition.
-
-### New Approach (API Server + TypeScript Client)
+### API Server + TypeScript Client
 
 ```bash
 # 1. Setup system (one-time)
@@ -127,42 +125,17 @@ cd ..
 ./scripts/kg-cli.sh jobs status <job-id>
 ```
 
-**Phase 1 Status:**
-- ✅ Async ingestion with job queue
+**Current Status:**
+- ✅ Async ingestion with job queue (ADR-014)
 - ✅ Content deduplication
-- ✅ Cost tracking
-- ✅ Background processing
-- ⏳ Graph queries (use legacy CLI below)
+- ✅ Cost tracking and analysis
+- ✅ Background processing with progress tracking
+- ✅ Job approval workflow
+- ✅ TypeScript CLI client (`kg` command)
+- ⏳ Graph query commands (planned for TypeScript client)
 - ⏳ MCP server mode (Phase 2)
 
-See [ADR-012](docs/ADR-012-api-server-architecture.md) and [ADR-013](docs/ADR-013-unified-typescript-client.md) for architecture details.
-
-### Legacy Approach (Direct Python CLI)
-
-**Note:** This approach remains functional but will eventually be replaced by the API server + unified client.
-
-```bash
-# 1. Setup system (one-time)
-./scripts/setup.sh
-
-# 2. Configure AI provider
-./scripts/configure-ai.sh
-
-# 3. Ingest documents (direct to Neo4j)
-./scripts/ingest.sh file1.txt --name "My Ontology"
-
-# 4. Query the graph
-source venv/bin/activate
-python scripts/cli.py search "your query here"
-python scripts/cli.py details <concept-id>
-python scripts/cli.py ontology list
-python scripts/cli.py database stats
-
-# 5. Create learned knowledge connections
-python scripts/cli.py learn connect <concept-id-1> <concept-id-2> \
-  --evidence "Both emphasize data-driven transparency" \
-  --creator your-name
-```
+See [ADR-012](docs/ADR-012-api-server-architecture.md), [ADR-013](docs/ADR-013-unified-typescript-client.md), and [ADR-014](docs/ADR-014-job-approval-workflow.md) for architecture details.
 
 **For Claude Desktop/Code integration:** See [MCP Setup Guide](docs/MCP_SETUP.md)
 
@@ -276,17 +249,19 @@ This is **not** a new embedding model or vector database. It's a synthesis:
 ```
 knowledge-graph-system/
 ├── src/                    # Python source code
-│   ├── api/               # FastAPI server (Phase 1)
-│   │   ├── main.py        # API entry point
-│   │   ├── routes/        # REST endpoints
-│   │   ├── services/      # Job queue, deduplication
-│   │   ├── workers/       # Background ingestion
-│   │   └── models/        # Pydantic schemas
-│   └── ingest/            # Ingestion pipeline
-│       ├── ingest_chunked.py  # Main ingestion with chunking
-│       ├── chunker.py         # Smart text chunking
-│       ├── llm_extractor.py   # LLM concept extraction
-│       └── neo4j_client.py    # Graph database operations
+│   └── api/               # FastAPI server
+│       ├── main.py        # API entry point
+│       ├── routes/        # REST endpoints
+│       ├── services/      # Job queue, scheduler, deduplication
+│       ├── workers/       # Background ingestion workers
+│       ├── models/        # Pydantic schemas
+│       └── lib/           # Shared ingestion library
+│           ├── chunker.py         # Smart text chunking
+│           ├── llm_extractor.py   # LLM concept extraction
+│           ├── neo4j_client.py    # Graph database operations
+│           ├── ingestion.py       # Chunk processing & stats
+│           ├── ai_providers.py    # Modular AI provider abstraction
+│           └── parser.py          # Document parsing
 │
 ├── client/                # TypeScript unified client
 │   ├── src/
@@ -297,12 +272,10 @@ knowledge-graph-system/
 │   │   └── types/         # TypeScript interfaces
 │   └── README.md          # Client documentation
 │
-├── scripts/               # Management scripts & legacy tools
+├── scripts/               # Management scripts
 │   ├── setup.sh          # Initial system setup
 │   ├── reset.sh          # Clear database and restart
-│   ├── ingest.sh         # Legacy: Direct ingestion
 │   ├── kg-cli.sh         # Wrapper for TypeScript CLI
-│   ├── cli.py            # Legacy: Python CLI (retained)
 │   └── configure-ai.sh   # Configure AI provider
 │
 ├── mcp-server/           # Legacy MCP server (direct Neo4j)

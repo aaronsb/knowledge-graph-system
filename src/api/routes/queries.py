@@ -28,8 +28,8 @@ from ..models.queries import (
     PathNode
 )
 from ..services.query_service import QueryService
-from src.ingest.neo4j_client import Neo4jClient
-from src.ingest.ai_providers import get_provider
+from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.ai_providers import get_provider
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/query", tags=["queries"])

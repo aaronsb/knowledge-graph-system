@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import Dict, Any
 from datetime import datetime
 
-from src.ingest.chunker import SmartChunker, ChunkingConfig
-from src.ingest.checkpoint import IngestionCheckpoint
-from src.ingest.neo4j_client import Neo4jClient
-from src.ingest.ingest_chunked import ChunkedIngestionStats, process_chunk
-from src.ingest.ai_providers import get_provider
+from src.api.lib.chunker import SmartChunker, ChunkingConfig
+from src.api.lib.checkpoint import IngestionCheckpoint
+from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.ingestion import ChunkedIngestionStats, process_chunk
+from src.api.lib.ai_providers import get_provider
 
 
 def run_ingestion_worker(
@@ -143,7 +143,7 @@ def run_ingestion_worker(
                 verbose=False  # Suppress detailed output in background
             )
 
-            # Update progress
+            # Update progress with detailed stats
             percent = int((i / len(chunks)) * 100)
             job_queue.update_job(job_id, {
                 "progress": {
@@ -153,7 +153,10 @@ def run_ingestion_worker(
                     "percent": percent,
                     "current_chunk": i,
                     "concepts_created": stats.concepts_created,
-                    "sources_created": stats.sources_created
+                    "concepts_linked": stats.concepts_linked,  # Hit rate: existing concepts reused
+                    "sources_created": stats.sources_created,
+                    "instances_created": stats.instances_created,
+                    "relationships_created": stats.relationships_created
                 }
             })
 
