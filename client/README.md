@@ -1,17 +1,114 @@
 # Knowledge Graph TypeScript Client
 
-Unified TypeScript client for the Knowledge Graph system. Can run as:
-1. **CLI tool** - command-line interface for ingestion and job management
-2. **MCP server** - Model Context Protocol server for Claude Desktop (Phase 2)
+Unified TypeScript client that runs as both a CLI tool and MCP server (future).
 
-## Quick Start
+## Installation
 
-### Install Dependencies
+### User-Local Installation (Recommended)
+
+Install to `~/.local/bin/` (no sudo required):
 
 ```bash
 cd client
-npm install
+./install.sh
 ```
+
+This will:
+1. Build the TypeScript code
+2. Install `kg` command to `~/.local/bin/`
+3. Check if `~/.local/bin` is in your PATH
+
+**Add to PATH** (if needed):
+
+Add this to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
+
+```bash
+export PATH="${HOME}/.local/bin:${PATH}"
+```
+
+Then reload your shell:
+```bash
+source ~/.bashrc  # or source ~/.zshrc
+```
+
+### Verify Installation
+
+```bash
+kg --version
+kg health
+```
+
+### Uninstall
+
+```bash
+cd client
+./uninstall.sh
+```
+
+## Usage
+
+### Search & Exploration
+
+```bash
+# Search for concepts
+kg search query "thinking patterns" --limit 5
+
+# Get concept details
+kg search details <concept-id>
+
+# Find related concepts
+kg search related <concept-id> --depth 2
+
+# Find path between concepts
+kg search connect <from-id> <to-id>
+```
+
+### Database Operations
+
+```bash
+# Database statistics
+kg database stats
+
+# Connection info
+kg database info
+
+# Health check
+kg database health
+```
+
+### Ontology Management
+
+```bash
+# List all ontologies
+kg ontology list
+
+# Ontology details
+kg ontology info "Ontology Name"
+
+# List files in ontology
+kg ontology files "Ontology Name"
+
+# Delete ontology (requires --force)
+kg ontology delete "Ontology Name" --force
+```
+
+### Ingestion
+
+```bash
+# Ingest a file
+kg ingest file document.txt --ontology "My Ontology"
+
+# Ingest text
+kg ingest text "Content here..." --ontology "My Ontology"
+
+# Check ingestion job status
+kg jobs status <job-id>
+
+# List all jobs
+kg jobs list
+```
+
+## Development
 
 ### Build
 
@@ -19,172 +116,59 @@ npm install
 npm run build
 ```
 
-### Run CLI
+### Watch Mode
 
-**Option 1: Use wrapper script (recommended - no permissions needed)**
 ```bash
-# From project root
-./scripts/kg-cli.sh health
-./scripts/kg-cli.sh ingest file document.txt --ontology "Test"
-./scripts/kg-cli.sh jobs list
-
-# Or add alias to your shell (.bashrc, .zshrc):
-alias kg='/path/to/project/scripts/kg-cli.sh'
-kg health
+npm run dev
 ```
 
-**Option 2: Run directly with node**
+### Type Check
+
 ```bash
-node client/dist/index.js health
-node client/dist/index.js jobs list
+npm run type-check
 ```
 
-**Option 3: Add to PATH (recommended for frequent use)**
-```bash
-# Add this to your ~/.bashrc or ~/.zshrc:
-export PATH="/path/to/knowledge-graph-system/scripts:$PATH"
-alias kg='kg-cli.sh'
-
-# Then use anywhere:
-kg health
-kg ingest file doc.txt --ontology "Test"
-```
-
-**Option 4: npm link (may require sudo on some systems)**
-```bash
-cd client
-npm link  # May need: sudo npm link
-kg health
-
-# To unlink later:
-npm unlink -g @kg/client
-```
-
-## CLI Usage
-
-### Health Check
+### Run Without Installing
 
 ```bash
-kg health
-```
-
-### Ingest Documents
-
-**Ingest a file:**
-```bash
-kg ingest file mydocument.txt --ontology "My Ontology"
-
-# With options
-kg ingest file document.pdf \
-  --ontology "My Ontology" \
-  --target-words 1500 \
-  --overlap-words 300 \
-  --force
-
-# Submit and exit (don't wait)
-kg ingest file large.txt \
-  --ontology "My Ontology" \
-  --no-wait
-```
-
-**Ingest raw text:**
-```bash
-kg ingest text "This is my document content..." \
-  --ontology "Test" \
-  --filename "test.txt"
-```
-
-### Job Management
-
-**Get job status:**
-```bash
-kg jobs status job_abc123
-
-# Watch until completion
-kg jobs status job_abc123 --watch
-```
-
-**List jobs:**
-```bash
-# All jobs
-kg jobs list
-
-# Filter by status
-kg jobs list --status completed
-kg jobs list --status processing
-
-# Limit results
-kg jobs list --limit 10
-```
-
-**Cancel a job:**
-```bash
-kg jobs cancel job_abc123
+node dist/index.js <command>
 ```
 
 ## Configuration
 
-### Environment Variables
+Set these environment variables:
 
 ```bash
-# API endpoint (default: http://localhost:8000)
-export KG_API_URL=http://localhost:8000
-
-# Client ID for multi-tenancy (optional)
-export KG_CLIENT_ID=my-client
-
-# API key for authentication (optional, Phase 2)
-export KG_API_KEY=your-api-key
+export KG_API_URL=http://localhost:8000  # API server URL
+export KG_CLIENT_ID=my-client            # Optional client ID
+export KG_API_KEY=your-key               # Optional API key
 ```
 
-### Command-line Options
-
-All commands support global options:
+Or use command-line flags:
 
 ```bash
-kg --api-url http://prod-api.example.com health
-kg --client-id my-client jobs list
-kg --api-key secret-key ingest file doc.txt --ontology "Test"
+kg --api-url http://localhost:8000 search query "test"
 ```
 
-## API Client Library
+## Architecture
 
-The client can also be used as a library:
+- **Entry Point**: `src/index.ts` - Mode detection (CLI vs MCP)
+- **API Client**: `src/api/client.ts` - HTTP client wrapper
+- **CLI Commands**: `src/cli/` - Commander.js command definitions
+- **Types**: `src/types/` - TypeScript interfaces matching FastAPI models
 
-```typescript
-import { KnowledgeGraphClient } from '@kg/client';
+Both CLI and future MCP server share the same `KnowledgeGraphClient` class.
 
-const client = new KnowledgeGraphClient({
-  baseUrl: 'http://localhost:8000',
-  clientId: 'my-app',
-  apiKey: 'optional-key'
-});
+## Future: MCP Server Mode
 
-// Ingest a file
-const result = await client.ingestFile('document.txt', {
-  ontology: 'My Ontology',
-  force: false,
-  options: {
-    target_words: 1000
-  }
-});
+To run as MCP server (Phase 2):
 
-console.log(`Job ID: ${result.job_id}`);
-
-// Poll for completion
-const job = await client.pollJob(result.job_id, (job) => {
-  console.log(`Progress: ${job.progress?.percent}%`);
-});
-
-console.log('Completed!', job.result);
+```bash
+MCP_SERVER_MODE=true node dist/index.js
 ```
 
-## MCP Server Mode (Phase 2)
-
-When `MCP_SERVER_MODE=true`, the client runs as an MCP server:
-
+Configure in Claude Desktop:
 ```json
-// claude_desktop_config.json
 {
   "mcpServers": {
     "knowledge-graph": {
@@ -198,163 +182,3 @@ When `MCP_SERVER_MODE=true`, the client runs as an MCP server:
   }
 }
 ```
-
-**Not implemented yet - coming in Phase 2!**
-
-## Development
-
-### Watch mode (auto-rebuild)
-
-```bash
-npm run dev
-```
-
-### Type checking
-
-```bash
-npm run type-check
-```
-
-### Clean build
-
-```bash
-npm run clean
-npm run build
-```
-
-## Available Commands
-
-```
-kg health                           # Check API health
-kg ingest file <path>               # Ingest a document file
-kg ingest text <text>               # Ingest raw text
-kg jobs status <job-id>             # Get job status
-kg jobs list                        # List recent jobs
-kg jobs cancel <job-id>             # Cancel a job
-```
-
-## Examples
-
-### Basic Workflow
-
-```bash
-# 1. Check API is running
-kg health
-
-# 2. Ingest a document
-kg ingest file research_paper.pdf --ontology "Research Papers"
-
-# Output: ✓ Job submitted: job_abc123
-# 3. Watch progress
-kg jobs status job_abc123 --watch
-
-# Output:
-# Processing: 45% (23/50 chunks)
-# ...
-# ✓ Ingestion completed!
-# Results:
-#   Chunks processed: 50
-#   Concepts created: 127
-#   ...
-#   Total cost: $2.46
-```
-
-### Batch Ingestion
-
-```bash
-# Ingest multiple files (submit all, don't wait)
-for file in documents/*.txt; do
-  kg ingest file "$file" \
-    --ontology "My Collection" \
-    --no-wait
-done
-
-# Monitor all jobs
-kg jobs list --status processing
-```
-
-### Error Handling
-
-```bash
-# If duplicate detected
-kg ingest file doc.txt --ontology "Test"
-# ⚠ Duplicate detected
-#   Existing job: job_xyz789
-#   Use --force to re-ingest
-
-# Force re-ingestion
-kg ingest file doc.txt --ontology "Test" --force
-```
-
-## Publishing (Future)
-
-When ready to publish:
-
-```bash
-# 1. Update version in package.json
-# 2. Build
-npm run build
-
-# 3. Publish to npm
-npm publish --access public
-
-# Or install from GitHub before publishing
-npx github:owner/repo/client
-```
-
-## Architecture
-
-```
-client/
-├── src/
-│   ├── index.ts           # Entry point (CLI or MCP mode)
-│   ├── types/             # TypeScript interfaces
-│   │   └── index.ts       # API types matching FastAPI models
-│   ├── api/               # API client
-│   │   └── client.ts      # HTTP client wrapping FastAPI endpoints
-│   ├── cli/               # CLI commands
-│   │   ├── commands.ts    # Command registration
-│   │   ├── health.ts      # Health check
-│   │   ├── ingest.ts      # Ingestion commands
-│   │   └── jobs.ts        # Job management
-│   └── mcp/               # MCP server (Phase 2)
-│       └── (empty)
-├── dist/                  # Compiled output
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-## Troubleshooting
-
-**"Cannot connect to API":**
-- Check API is running: `curl http://localhost:8000/health`
-- Verify `KG_API_URL` is correct
-- Check firewall/network settings
-
-**"CLI not built" error:**
-- Run `cd client && npm run build`
-- Check for TypeScript errors
-
-**"Permission denied" with npm link:**
-- Use the wrapper script instead: `./scripts/kg-cli.sh`
-- Or run directly: `node client/dist/index.js`
-- Or add to PATH (see installation options above)
-
-**Types don't match API:**
-- API types are in `src/types/index.ts`
-- Must match FastAPI Pydantic models
-- Rebuild after API changes: `npm run build`
-
-## Phase 2 Roadmap
-
-- [ ] MCP server implementation
-- [ ] Real-time job updates (WebSocket/SSE)
-- [ ] Concept search commands
-- [ ] Cypher query command
-- [ ] Graph visualization
-- [ ] Ontology management
-
-## License
-
-MIT

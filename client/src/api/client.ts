@@ -12,7 +12,21 @@ import {
   JobStatus,
   JobSubmitResponse,
   DuplicateJobResponse,
-  IngestRequest
+  IngestRequest,
+  SearchRequest,
+  SearchResponse,
+  ConceptDetailsResponse,
+  RelatedConceptsRequest,
+  RelatedConceptsResponse,
+  FindConnectionRequest,
+  FindConnectionResponse,
+  DatabaseStatsResponse,
+  DatabaseInfoResponse,
+  DatabaseHealthResponse,
+  OntologyListResponse,
+  OntologyInfoResponse,
+  OntologyFilesResponse,
+  OntologyDeleteResponse
 } from '../types';
 
 export class KnowledgeGraphClient {
@@ -182,15 +196,124 @@ export class KnowledgeGraphClient {
       await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
   }
+
+  // ========== Query Methods ==========
+
+  /**
+   * Search for concepts using semantic similarity
+   */
+  async searchConcepts(request: SearchRequest): Promise<SearchResponse> {
+    const response = await this.client.post('/query/search', request);
+    return response.data;
+  }
+
+  /**
+   * Get detailed information about a concept
+   */
+  async getConceptDetails(conceptId: string): Promise<ConceptDetailsResponse> {
+    const response = await this.client.get(`/query/concept/${conceptId}`);
+    return response.data;
+  }
+
+  /**
+   * Find concepts related through graph traversal
+   */
+  async findRelatedConcepts(request: RelatedConceptsRequest): Promise<RelatedConceptsResponse> {
+    const response = await this.client.post('/query/related', request);
+    return response.data;
+  }
+
+  /**
+   * Find shortest paths between two concepts
+   */
+  async findConnection(request: FindConnectionRequest): Promise<FindConnectionResponse> {
+    const response = await this.client.post('/query/connect', request);
+    return response.data;
+  }
+
+  // ========== Database Methods ==========
+
+  /**
+   * Get database statistics
+   */
+  async getDatabaseStats(): Promise<DatabaseStatsResponse> {
+    const response = await this.client.get('/database/stats');
+    return response.data;
+  }
+
+  /**
+   * Get database connection information
+   */
+  async getDatabaseInfo(): Promise<DatabaseInfoResponse> {
+    const response = await this.client.get('/database/info');
+    return response.data;
+  }
+
+  /**
+   * Check database health
+   */
+  async getDatabaseHealth(): Promise<DatabaseHealthResponse> {
+    const response = await this.client.get('/database/health');
+    return response.data;
+  }
+
+  // ========== Ontology Methods ==========
+
+  /**
+   * List all ontologies
+   */
+  async listOntologies(): Promise<OntologyListResponse> {
+    const response = await this.client.get('/ontology/');
+    return response.data;
+  }
+
+  /**
+   * Get ontology information
+   */
+  async getOntologyInfo(ontologyName: string): Promise<OntologyInfoResponse> {
+    const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}`);
+    return response.data;
+  }
+
+  /**
+   * List files in an ontology
+   */
+  async getOntologyFiles(ontologyName: string): Promise<OntologyFilesResponse> {
+    const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}/files`);
+    return response.data;
+  }
+
+  /**
+   * Delete an ontology
+   */
+  async deleteOntology(
+    ontologyName: string,
+    force: boolean = false
+  ): Promise<OntologyDeleteResponse> {
+    const response = await this.client.delete(`/ontology/${encodeURIComponent(ontologyName)}`, {
+      params: { force }
+    });
+    return response.data;
+  }
 }
 
 /**
- * Create a client from environment variables
+ * Create a client from environment variables and config file
+ * Priority: CLI flags > env vars > config file > defaults
  */
 export function createClientFromEnv(): KnowledgeGraphClient {
+  // Lazy load config to avoid circular dependencies
+  let config: any = null;
+  try {
+    const { getConfig } = require('../lib/config');
+    config = getConfig();
+  } catch (e) {
+    // Config not available, use env vars only
+  }
+
   return new KnowledgeGraphClient({
-    baseUrl: process.env.KG_API_URL || 'http://localhost:8000',
-    clientId: process.env.KG_CLIENT_ID,
-    apiKey: process.env.KG_API_KEY,
+    baseUrl: process.env.KG_API_URL || config?.getApiUrl() || 'http://localhost:8000',
+    clientId: process.env.KG_CLIENT_ID || config?.getClientId(),
+    apiKey: process.env.KG_API_KEY || config?.getApiKey(),
   });
 }
