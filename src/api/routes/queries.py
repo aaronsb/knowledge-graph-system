@@ -28,16 +28,16 @@ from ..models.queries import (
     PathNode
 )
 from ..services.query_service import QueryService
-from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.age_client import AGEClient
 from src.api.lib.ai_providers import get_provider
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/query", tags=["queries"])
 
 
-def get_neo4j_client() -> Neo4jClient:
-    """Get Neo4j client instance"""
-    return Neo4jClient()
+def get_neo4j_client() -> AGEClient:
+    """Get AGE client instance"""
+    return AGEClient()
 
 
 @router.post("/search", response_model=SearchResponse)

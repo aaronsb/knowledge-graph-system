@@ -20,15 +20,15 @@ from ..models.ontology import (
     OntologyDeleteRequest,
     OntologyDeleteResponse
 )
-from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.age_client import AGEClient
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ontology", tags=["ontology"])
 
 
-def get_neo4j_client() -> Neo4jClient:
-    """Get Neo4j client instance"""
-    return Neo4jClient()
+def get_neo4j_client() -> AGEClient:
+    """Get AGE client instance"""
+    return AGEClient()
 
 
 @router.get("/", response_model=OntologyListResponse)

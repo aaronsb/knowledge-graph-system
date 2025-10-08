@@ -14,7 +14,7 @@ from datetime import datetime
 
 from src.api.lib.chunker import SmartChunker, ChunkingConfig
 from src.api.lib.checkpoint import IngestionCheckpoint
-from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.age_client import AGEClient
 from src.api.lib.ingestion import ChunkedIngestionStats, process_chunk
 from src.api.lib.ai_providers import get_provider
 
@@ -113,7 +113,7 @@ def run_ingestion_worker(
         })
 
         # Initialize Neo4j client
-        neo4j_client = Neo4jClient()
+        neo4j_client = AGEClient()
 
         # Get existing concepts for context
         existing_concepts, has_empty_warnings = neo4j_client.get_document_concepts(
