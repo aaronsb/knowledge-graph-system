@@ -6,7 +6,10 @@
 
 import { Command } from 'commander';
 import * as readline from 'readline';
+import * as fs from 'fs';
+import * as path from 'path';
 import { createClientFromEnv } from '../api/client';
+import { getConfig } from '../lib/config';
 import * as colors from './colors';
 import { separator } from './colors';
 import { configureColoredHelp } from './help-formatter';
@@ -243,35 +246,62 @@ const backupCommand = new Command('backup')
 // ========== List Backups Command ==========
 
 const listBackupsCommand = new Command('list-backups')
-  .description('List available backup files')
+  .description('List available backup files from configured directory')
   .action(async () => {
     try {
-      const client = createClientFromEnv();
+      const config = getConfig();
+      const backupDir = config.getBackupDir();
 
-      const result = await client.listBackups();
+      // Ensure backup directory exists
+      if (!fs.existsSync(backupDir)) {
+        console.log('\n' + separator());
+        console.log(colors.ui.title('📁 Available Backups'));
+        console.log(separator());
+        console.log(`\n  ${colors.status.dim('No backups found - directory does not exist')}`);
+        console.log(`  ${colors.status.dim(`Directory: ${backupDir}`)}`);
+        console.log(`  ${colors.status.dim('Run "kg admin backup" to create your first backup')}\n`);
+        console.log(separator() + '\n');
+        return;
+      }
+
+      // Read backup files
+      const files = fs.readdirSync(backupDir)
+        .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
+        .map(filename => {
+          const filepath = path.join(backupDir, filename);
+          const stats = fs.statSync(filepath);
+          return {
+            filename,
+            path: filepath,
+            size_mb: stats.size / (1024 * 1024),
+            created: stats.mtime.toISOString()
+          };
+        })
+        .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()); // newest first
 
       console.log('\n' + separator());
-      console.log(colors.ui.title(`📁 Available Backups (${result.count})`));
+      console.log(colors.ui.title(`📁 Available Backups (${files.length})`));
       console.log(separator());
 
-      if (result.backups.length === 0) {
+      if (files.length === 0) {
         console.log(`\n  ${colors.status.dim('No backups found')}`);
-        console.log(`  ${colors.status.dim(`Directory: ${result.backup_dir}`)}\n`);
+        console.log(`  ${colors.status.dim(`Directory: ${backupDir}`)}`);
+        console.log(`  ${colors.status.dim('Run "kg admin backup" to create your first backup')}\n`);
       } else {
         console.log('');
-        result.backups.forEach((backup, i) => {
+        files.forEach((backup, i) => {
           console.log(`  ${colors.ui.bullet(`${i + 1}.`)} ${colors.ui.value(backup.filename)}`);
           console.log(`     ${colors.status.dim(`Size: ${backup.size_mb.toFixed(2)} MB`)}`);
           console.log(`     ${colors.status.dim(`Created: ${new Date(backup.created).toLocaleString()}`)}`);
         });
-        console.log(`\n  ${colors.status.dim(`Directory: ${result.backup_dir}`)}`);
+        console.log(`\n  ${colors.status.dim(`Directory: ${backupDir}`)}`);
       }
 
       console.log('\n' + separator() + '\n');
 
     } catch (error: any) {
       console.error(colors.status.error('✗ Failed to list backups'));
-      console.error(colors.status.error(error.response?.data?.detail || error.message));
+      console.error(colors.status.error(error.message));
       process.exit(1);
     }
   });
@@ -280,47 +310,91 @@ const listBackupsCommand = new Command('list-backups')
 
 const restoreCommand = new Command('restore')
   .description('Restore a database backup (requires authentication)')
-  .option('--file <path>', 'Backup file path')
+  .option('--file <name>', 'Backup filename (from configured directory)')
+  .option('--path <path>', 'Custom backup file path (overrides configured directory)')
   .option('--overwrite', 'Overwrite existing data', false)
   .option('--deps <action>', 'How to handle external dependencies: prune, stitch, defer', 'prune')
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
+      const config = getConfig();
+      const backupDir = config.getBackupDir();
 
       console.log('\n' + separator());
       console.log(colors.ui.title('📥 Database Restore'));
       console.log(colors.status.warning('⚠️  Potentially destructive operation - authentication required'));
       console.log(separator());
 
-      // Get backup file
-      let backupFile = options.file;
-      if (!backupFile) {
-        const backups = await client.listBackups();
+      // Determine backup file path
+      let backupFilePath: string;
+      let backupFilename: string;
 
-        if (backups.count === 0) {
+      if (options.path) {
+        // Custom path specified
+        backupFilePath = options.path;
+        backupFilename = path.basename(backupFilePath);
+      } else if (options.file) {
+        // Filename specified, use configured directory
+        backupFilePath = path.join(backupDir, options.file);
+        backupFilename = options.file;
+      } else {
+        // Interactive selection from configured directory
+        if (!fs.existsSync(backupDir)) {
+          console.error(colors.status.error('\n✗ No backups available - directory does not exist'));
+          console.log(colors.status.dim(`Directory: ${backupDir}\n`));
+          process.exit(1);
+        }
+
+        const backups = fs.readdirSync(backupDir)
+          .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
+          .map(filename => {
+            const filepath = path.join(backupDir, filename);
+            const stats = fs.statSync(filepath);
+            return {
+              filename,
+              path: filepath,
+              size_mb: stats.size / (1024 * 1024)
+            };
+          })
+          .sort((a, b) => b.size_mb - a.size_mb);
+
+        if (backups.length === 0) {
           console.error(colors.status.error('\n✗ No backups available'));
+          console.log(colors.status.dim(`Directory: ${backupDir}\n`));
           process.exit(1);
         }
 
         console.log('\n' + colors.ui.key('Available Backups:'));
-        backups.backups.slice(0, 10).forEach((backup, i) => {
+        backups.slice(0, 10).forEach((backup, i) => {
           console.log(`  ${i + 1}. ${backup.filename} (${backup.size_mb.toFixed(2)} MB)`);
         });
 
-        const choice = await prompt('\nSelect backup [1-10] or enter path: ');
+        const choice = await prompt('\nSelect backup [1-10] or enter filename: ');
 
         if (/^\d+$/.test(choice)) {
           const index = parseInt(choice) - 1;
-          if (index >= 0 && index < backups.backups.length) {
-            backupFile = backups.backups[index].path;
+          if (index >= 0 && index < backups.length) {
+            backupFilePath = backups[index].path;
+            backupFilename = backups[index].filename;
           } else {
             console.error(colors.status.error('✗ Invalid selection'));
             process.exit(1);
           }
         } else {
-          backupFile = choice;
+          backupFilename = choice;
+          backupFilePath = path.join(backupDir, choice);
         }
       }
+
+      // Verify file exists
+      if (!fs.existsSync(backupFilePath)) {
+        console.error(colors.status.error(`\n✗ Backup file not found: ${backupFilePath}\n`));
+        process.exit(1);
+      }
+
+      console.log(colors.status.dim(`\nBackup file: ${backupFilePath}`));
+      const fileStats = fs.statSync(backupFilePath);
+      console.log(colors.status.dim(`Size: ${(fileStats.size / (1024 * 1024)).toFixed(2)} MB`));
 
       // Get authentication
       console.log('\n' + colors.status.warning('Authentication required:'));
@@ -334,10 +408,12 @@ const restoreCommand = new Command('restore')
 
       console.log(colors.status.info('\nRestoring backup...'));
 
+      // TODO: Update API to accept backup data (base64) instead of filename
+      // For now, sending filename - API expects file to be on server-side
       const result = await client.restoreBackup({
         username,
         password,
-        backup_file: backupFile,
+        backup_file: backupFilename,
         overwrite: options.overwrite,
         handle_external_deps: options.deps
       });
