@@ -210,8 +210,8 @@ const backupCommand = new Command('backup')
 
       console.log(colors.status.info('\nCreating backup...'));
 
-      // TODO: Implement proper streaming architecture
-      // See: docs/TODO-backup-restore-streaming.md
+      // TODO: Implement ADR-015 streaming architecture
+      // See: docs/ADR-015-backup-restore-streaming.md
       //
       // Current limitation: API creates backup on server-side
       // Target: API should stream backup data to client
@@ -419,8 +419,8 @@ const restoreCommand = new Command('restore')
 
       console.log(colors.status.info('\nRestoring backup...'));
 
-      // TODO: Implement proper streaming architecture
-      // See: docs/TODO-backup-restore-streaming.md
+      // TODO: Implement ADR-015 streaming architecture
+      // See: docs/ADR-015-backup-restore-streaming.md
       //
       // Current limitation: API expects server-side filename
       // Target: Client should stream file data to API
