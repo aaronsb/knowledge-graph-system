@@ -281,9 +281,12 @@ async def delete_ontology(
         sources_deleted = result['deleted_count'] if result else 0
 
         # Clean up orphaned concepts (concepts with no sources)
+        # AGE doesn't support WHERE NOT with patterns, use OPTIONAL MATCH instead
         orphaned_result = client._execute_cypher("""
             MATCH (c:Concept)
-            WHERE NOT (c)-[:APPEARS_IN]->(:Source)
+            OPTIONAL MATCH (c)-[:APPEARS_IN]->(s:Source)
+            WITH c, s
+            WHERE s IS NULL
             DETACH DELETE c
             RETURN count(c) as orphaned_count
         """, fetch_one=True)
