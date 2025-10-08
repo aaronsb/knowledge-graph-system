@@ -19,7 +19,7 @@ import time
 
 from .services.job_queue import init_job_queue, get_job_queue
 from .workers.ingestion_worker import run_ingestion_worker
-from .routes import ingest, jobs, queries, database, ontology
+from .routes import ingest, jobs, queries, database, ontology, admin
 from .logging_config import setup_logging
 
 # Load environment variables
@@ -109,6 +109,7 @@ app.include_router(jobs.router)
 app.include_router(queries.router)
 app.include_router(database.router)
 app.include_router(ontology.router)
+app.include_router(admin.router)
 
 
 # Root endpoint

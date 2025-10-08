@@ -26,7 +26,15 @@ import {
   OntologyListResponse,
   OntologyInfoResponse,
   OntologyFilesResponse,
-  OntologyDeleteResponse
+  OntologyDeleteResponse,
+  SystemStatusResponse,
+  BackupRequest,
+  BackupResponse,
+  ListBackupsResponse,
+  RestoreRequest,
+  RestoreResponse,
+  ResetRequest,
+  ResetResponse
 } from '../types';
 
 export class KnowledgeGraphClient {
@@ -293,6 +301,48 @@ export class KnowledgeGraphClient {
     const response = await this.client.delete(`/ontology/${encodeURIComponent(ontologyName)}`, {
       params: { force }
     });
+    return response.data;
+  }
+
+  // ========== Admin Methods ==========
+
+  /**
+   * Get system status
+   */
+  async getSystemStatus(): Promise<SystemStatusResponse> {
+    const response = await this.client.get('/admin/status');
+    return response.data;
+  }
+
+  /**
+   * List available backup files
+   */
+  async listBackups(): Promise<ListBackupsResponse> {
+    const response = await this.client.get('/admin/backups');
+    return response.data;
+  }
+
+  /**
+   * Create a database backup
+   */
+  async createBackup(request: BackupRequest): Promise<BackupResponse> {
+    const response = await this.client.post('/admin/backup', request);
+    return response.data;
+  }
+
+  /**
+   * Restore a database backup
+   */
+  async restoreBackup(request: RestoreRequest): Promise<RestoreResponse> {
+    const response = await this.client.post('/admin/restore', request);
+    return response.data;
+  }
+
+  /**
+   * Reset database (destructive - requires authentication)
+   */
+  async resetDatabase(request: ResetRequest): Promise<ResetResponse> {
+    const response = await this.client.post('/admin/reset', request);
     return response.data;
   }
 }
