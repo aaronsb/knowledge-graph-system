@@ -210,6 +210,15 @@ const backupCommand = new Command('backup')
 
       console.log(colors.status.info('\nCreating backup...'));
 
+      // TODO: Implement proper streaming architecture
+      // See: docs/TODO-backup-restore-streaming.md
+      //
+      // Current limitation: API creates backup on server-side
+      // Target: API should stream backup data to client
+      //   1. API creates backup in memory/temp
+      //   2. Stream backup JSON to client with progress bar
+      //   3. Client saves to configured directory (~/.local/share/kg/backups)
+      //   4. API deletes temp file immediately
       const result = await client.createBackup({
         backup_type: backupType,
         ontology_name: ontologyName,
@@ -218,6 +227,8 @@ const backupCommand = new Command('backup')
 
       console.log('\n' + separator());
       console.log(colors.status.success('✓ Backup Complete'));
+      console.log(colors.status.warning('⚠ Backup created on server-side (./backups)'));
+      console.log(colors.status.dim('   TODO: Download to configured directory'));
       console.log(separator());
       console.log(`\n  ${colors.ui.key('File:')} ${colors.ui.value(result.backup_file)}`);
       console.log(`  ${colors.ui.key('Size:')} ${colors.ui.value(result.file_size_mb.toFixed(2) + ' MB')}`);
@@ -408,8 +419,17 @@ const restoreCommand = new Command('restore')
 
       console.log(colors.status.info('\nRestoring backup...'));
 
-      // TODO: Update API to accept backup data (base64) instead of filename
-      // For now, sending filename - API expects file to be on server-side
+      // TODO: Implement proper streaming architecture
+      // See: docs/TODO-backup-restore-streaming.md
+      //
+      // Current limitation: API expects server-side filename
+      // Target: Client should stream file data to API
+      //   1. Read backup file from local directory
+      //   2. Upload via multipart with progress bar
+      //   3. API saves to temp location
+      //   4. API runs integrity checks
+      //   5. API performs restore with progress updates
+      //   6. API deletes temp file
       const result = await client.restoreBackup({
         username,
         password,
