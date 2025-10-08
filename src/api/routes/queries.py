@@ -73,33 +73,44 @@ async def search_concepts(request: SearchRequest):
         else:
             embedding = embedding_result
 
-        # Vector similarity search
+        # Vector similarity search using AGE client
         client = get_neo4j_client()
         try:
-            with client.driver.session() as session:
-                records = QueryService.execute_search(
-                    session,
-                    embedding,
-                    request.limit,
-                    request.min_similarity
-                )
+            # Use AGEClient's vector_search method
+            matches = client.vector_search(embedding, top_k=request.limit)
 
-                results = [
-                    ConceptSearchResult(
-                        concept_id=record['concept_id'],
-                        label=record['label'],
-                        score=record['score'],
-                        documents=record['documents'],
-                        evidence_count=record['evidence_count']
-                    )
-                    for record in records
-                ]
+            # Filter by minimum similarity and gather document/evidence info
+            results = []
+            for match in matches:
+                if match['score'] < request.min_similarity:
+                    continue
 
-                return SearchResponse(
-                    query=request.query,
-                    count=len(results),
-                    results=results
+                # Get documents and evidence count
+                concept_id = match['concept_id']
+                docs_query = client._execute_cypher(
+                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS_IN]->(s:Source) RETURN DISTINCT s.document as doc"
                 )
+                documents = [r['doc'] for r in (docs_query or [])]
+
+                evidence_query = client._execute_cypher(
+                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as count",
+                    fetch_one=True
+                )
+                evidence_count = evidence_query['count'] if evidence_query else 0
+
+                results.append(ConceptSearchResult(
+                    concept_id=concept_id,
+                    label=match['label'],
+                    score=match['score'],
+                    documents=documents,
+                    evidence_count=evidence_count
+                ))
+
+            return SearchResponse(
+                query=request.query,
+                count=len(results),
+                results=results
+            )
         finally:
             client.close()
 
@@ -132,43 +143,73 @@ async def get_concept_details(concept_id: str):
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            data = QueryService.execute_concept_details(session, concept_id)
+        # Get concept and documents
+        concept_result = client._execute_cypher(
+            f"""
+            MATCH (c:Concept {{concept_id: '{concept_id}'}})
+            OPTIONAL MATCH (c)-[:APPEARS_IN]->(s:Source)
+            WITH c, collect(DISTINCT s.document) as documents
+            RETURN c, documents
+            """,
+            fetch_one=True
+        )
 
-            if not data:
-                raise HTTPException(status_code=404, detail=f"Concept '{concept_id}' not found")
+        if not concept_result:
+            raise HTTPException(status_code=404, detail=f"Concept '{concept_id}' not found")
 
-            concept = data['concept']
-            documents = data['documents']
+        concept = concept_result['c']
+        documents = concept_result['documents']
 
-            instances = [
-                ConceptInstance(
-                    quote=record['quote'],
-                    document=record['document'],
-                    paragraph=record['paragraph'],
-                    source_id=record['source_id']
-                )
-                for record in data['instances']
-            ]
+        # Get instances
+        instances_result = client._execute_cypher(f"""
+            MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)
+            MATCH (i)-[:FROM_SOURCE]->(s:Source)
+            RETURN
+                i.quote as quote,
+                s.document as document,
+                s.paragraph as paragraph,
+                s.source_id as source_id
+            ORDER BY s.document, s.paragraph
+        """)
 
-            relationships = [
-                ConceptRelationship(
-                    to_id=record['to_id'],
-                    to_label=record['to_label'],
-                    rel_type=record['rel_type'],
-                    confidence=record['props'].get('confidence')
-                )
-                for record in data['relationships']
-            ]
-
-            return ConceptDetailsResponse(
-                concept_id=concept['concept_id'],
-                label=concept['label'],
-                search_terms=concept.get('search_terms', []),
-                documents=documents,
-                instances=instances,
-                relationships=relationships
+        instances = [
+            ConceptInstance(
+                quote=record['quote'],
+                document=record['document'],
+                paragraph=record['paragraph'],
+                source_id=record['source_id']
             )
+            for record in (instances_result or [])
+        ]
+
+        # Get relationships
+        relationships_result = client._execute_cypher(f"""
+            MATCH (c:Concept {{concept_id: '{concept_id}'}})-[r]->(related:Concept)
+            RETURN
+                related.concept_id as to_id,
+                related.label as to_label,
+                type(r) as rel_type,
+                properties(r) as props
+        """)
+
+        relationships = [
+            ConceptRelationship(
+                to_id=record['to_id'],
+                to_label=record['to_label'],
+                rel_type=record['rel_type'],
+                confidence=record['props'].get('confidence') if record['props'] else None
+            )
+            for record in (relationships_result or [])
+        ]
+
+        return ConceptDetailsResponse(
+            concept_id=concept['concept_id'],
+            label=concept['label'],
+            search_terms=concept.get('search_terms', []),
+            documents=documents,
+            instances=instances,
+            relationships=relationships
+        )
 
     except HTTPException:
         raise
@@ -203,30 +244,32 @@ async def find_related_concepts(request: RelatedConceptsRequest):
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            records = QueryService.execute_related_concepts(
-                session,
-                request.concept_id,
-                request.max_depth,
-                request.relationship_types
-            )
+        # Build and execute related concepts query
+        query = QueryService.build_related_concepts_query(
+            request.max_depth,
+            request.relationship_types
+        )
 
-            results = [
-                RelatedConcept(
-                    concept_id=record['concept_id'],
-                    label=record['label'],
-                    distance=record['distance'],
-                    path_types=record['path_types']
-                )
-                for record in records
-            ]
+        records = client._execute_cypher(
+            query.replace("$concept_id", f"'{request.concept_id}'")
+        )
 
-            return RelatedConceptsResponse(
-                concept_id=request.concept_id,
-                max_depth=request.max_depth,
-                count=len(results),
-                results=results
+        results = [
+            RelatedConcept(
+                concept_id=record['concept_id'],
+                label=record['label'],
+                distance=record['distance'],
+                path_types=record['path_types']
             )
+            for record in (records or [])
+        ]
+
+        return RelatedConceptsResponse(
+            concept_id=request.concept_id,
+            max_depth=request.max_depth,
+            count=len(results),
+            results=results
+        )
 
     except Exception as e:
         logger.error(f"Failed to find related concepts: {e}", exc_info=True)
@@ -259,30 +302,30 @@ async def find_connection(request: FindConnectionRequest):
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            records = QueryService.execute_shortest_path(
-                session,
-                request.from_id,
-                request.to_id,
-                request.max_hops
-            )
+        # Build and execute shortest path query
+        query = QueryService.build_shortest_path_query(request.max_hops)
 
-            paths = [
-                ConnectionPath(
-                    nodes=[PathNode(id=n['id'], label=n['label']) for n in record['path_nodes']],
-                    relationships=record['rel_types'],
-                    hops=record['hops']
-                )
-                for record in records
-            ]
+        records = client._execute_cypher(
+            query.replace("$from_id", f"'{request.from_id}'")
+                 .replace("$to_id", f"'{request.to_id}'")
+        )
 
-            return FindConnectionResponse(
-                from_id=request.from_id,
-                to_id=request.to_id,
-                max_hops=request.max_hops,
-                count=len(paths),
-                paths=paths
+        paths = [
+            ConnectionPath(
+                nodes=[PathNode(id=n['id'], label=n['label']) for n in record['path_nodes']],
+                relationships=record['rel_types'],
+                hops=record['hops']
             )
+            for record in (records or [])
+        ]
+
+        return FindConnectionResponse(
+            from_id=request.from_id,
+            to_id=request.to_id,
+            max_hops=request.max_hops,
+            count=len(paths),
+            paths=paths
+        )
 
     except Exception as e:
         logger.error(f"Failed to find connection: {e}", exc_info=True)

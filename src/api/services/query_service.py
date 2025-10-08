@@ -6,7 +6,6 @@ well-documented query building.
 """
 
 from typing import List, Dict, Optional, Any
-from neo4j import Session
 import logging
 
 logger = logging.getLogger(__name__)
@@ -170,7 +169,7 @@ class QueryService:
 
     @staticmethod
     def execute_search(
-        session: Session,
+        session: Any,
         embedding: List[float],
         limit: int,
         min_similarity: float
@@ -198,7 +197,7 @@ class QueryService:
 
     @staticmethod
     def execute_concept_details(
-        session: Session,
+        session: Any,
         concept_id: str
     ) -> Dict[str, Any]:
         """
@@ -237,7 +236,7 @@ class QueryService:
 
     @staticmethod
     def execute_related_concepts(
-        session: Session,
+        session: Any,
         concept_id: str,
         max_depth: int,
         relationship_types: Optional[List[str]] = None
@@ -260,7 +259,7 @@ class QueryService:
 
     @staticmethod
     def execute_shortest_path(
-        session: Session,
+        session: Any,
         from_id: str,
         to_id: str,
         max_hops: int
