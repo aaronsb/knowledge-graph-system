@@ -163,45 +163,52 @@ export const configCommand = new Command('config')
             console.log(colors.ui.title('⚙️  Configuration'));
             console.log(separator());
 
-            // Display config values in a formatted way
+            // Display config keys and values
             console.log();
-            if (allConfig.username) {
-              console.log(`${colors.ui.key('Username:')} ${colors.ui.value(allConfig.username)}`);
+
+            // Simple top-level keys
+            if (allConfig.username !== undefined) {
+              console.log(`${colors.ui.key('username:')} ${colors.ui.value(allConfig.username)}`);
             }
-            if (allConfig.api_url) {
-              console.log(`${colors.ui.key('API URL:')} ${colors.ui.value(allConfig.api_url)}`);
+            if (allConfig.secret !== undefined) {
+              console.log(`${colors.ui.key('secret:')} ${colors.status.dim('***hidden***')}`);
             }
-            if (allConfig.backup_dir) {
-              console.log(`${colors.ui.key('Backup Directory:')} ${colors.ui.value(allConfig.backup_dir)}`);
+            if (allConfig.api_url !== undefined) {
+              console.log(`${colors.ui.key('api_url:')} ${colors.ui.value(allConfig.api_url)}`);
+            }
+            if (allConfig.backup_dir !== undefined) {
+              console.log(`${colors.ui.key('backup_dir:')} ${colors.ui.value(allConfig.backup_dir)}`);
             }
 
-            // Auto-approve status
-            const autoApproveStatus = allConfig.auto_approve
-              ? colors.status.warning('enabled')
-              : colors.status.dim('disabled');
-            console.log(`${colors.ui.key('Auto-Approve:')} ${autoApproveStatus}`);
+            // Auto-approve with boolean value
+            if (allConfig.auto_approve !== undefined) {
+              const value = allConfig.auto_approve ? colors.status.warning('true') : colors.status.dim('false');
+              console.log(`${colors.ui.key('auto_approve:')} ${value}`);
+            }
 
-            // MCP configuration
+            // MCP configuration (nested)
             if (allConfig.mcp) {
               console.log();
-              console.log(colors.ui.key('MCP Configuration:'));
-              const mcpEnabled = allConfig.mcp.enabled ? colors.status.success('enabled') : colors.status.dim('disabled');
-              console.log(`  ${colors.ui.key('Enabled:')} ${mcpEnabled}`);
+              console.log(colors.ui.key('mcp:'));
+
+              if (allConfig.mcp.enabled !== undefined) {
+                const value = allConfig.mcp.enabled ? colors.status.success('true') : colors.status.dim('false');
+                console.log(`  ${colors.ui.key('enabled:')} ${value}`);
+              }
 
               if (allConfig.mcp.tools && Object.keys(allConfig.mcp.tools).length > 0) {
-                const enabledTools = Object.entries(allConfig.mcp.tools)
-                  .filter(([_, config]: [string, any]) => config.enabled)
-                  .map(([name, _]) => name);
-
-                if (enabledTools.length > 0) {
-                  console.log(`  ${colors.ui.key('Tools:')} ${colors.ui.value(enabledTools.join(', '))}`);
-                }
+                console.log(`  ${colors.ui.key('tools:')}`);
+                Object.entries(allConfig.mcp.tools).forEach(([name, toolConfig]: [string, any]) => {
+                  const status = toolConfig.enabled ? colors.status.success('✓') : colors.status.dim('✗');
+                  console.log(`    ${status} ${colors.ui.value(name)}`);
+                });
               }
             }
 
-            // Config file location
+            // Config file location and usage hint
             console.log();
             console.log(colors.status.dim(`Config file: ${config.getConfigPath()}`));
+            console.log(colors.status.dim(`Usage: kg config set <key> <value>`));
             console.log('\n' + separator());
           }
         } catch (error: any) {
