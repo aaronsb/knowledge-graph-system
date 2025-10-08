@@ -82,7 +82,7 @@ async def search_concepts(request: SearchRequest):
             # Filter by minimum similarity and gather document/evidence info
             results = []
             for match in matches:
-                if match['score'] < request.min_similarity:
+                if match['similarity'] < request.min_similarity:
                     continue
 
                 # Get documents and evidence count
@@ -101,7 +101,7 @@ async def search_concepts(request: SearchRequest):
                 results.append(ConceptSearchResult(
                     concept_id=concept_id,
                     label=match['label'],
-                    score=match['score'],
+                    score=match['similarity'],
                     documents=documents,
                     evidence_count=evidence_count
                 ))
