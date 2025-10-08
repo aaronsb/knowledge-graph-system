@@ -162,7 +162,46 @@ export const configCommand = new Command('config')
             console.log('\n' + separator());
             console.log(colors.ui.title('⚙️  Configuration'));
             console.log(separator());
-            console.log('\n' + colors.ui.value(JSON.stringify(allConfig, null, 2)));
+
+            // Display config values in a formatted way
+            console.log();
+            if (allConfig.username) {
+              console.log(`${colors.ui.key('Username:')} ${colors.ui.value(allConfig.username)}`);
+            }
+            if (allConfig.api_url) {
+              console.log(`${colors.ui.key('API URL:')} ${colors.ui.value(allConfig.api_url)}`);
+            }
+            if (allConfig.backup_dir) {
+              console.log(`${colors.ui.key('Backup Directory:')} ${colors.ui.value(allConfig.backup_dir)}`);
+            }
+
+            // Auto-approve status
+            const autoApproveStatus = allConfig.auto_approve
+              ? colors.status.warning('enabled')
+              : colors.status.dim('disabled');
+            console.log(`${colors.ui.key('Auto-Approve:')} ${autoApproveStatus}`);
+
+            // MCP configuration
+            if (allConfig.mcp) {
+              console.log();
+              console.log(colors.ui.key('MCP Configuration:'));
+              const mcpEnabled = allConfig.mcp.enabled ? colors.status.success('enabled') : colors.status.dim('disabled');
+              console.log(`  ${colors.ui.key('Enabled:')} ${mcpEnabled}`);
+
+              if (allConfig.mcp.tools && Object.keys(allConfig.mcp.tools).length > 0) {
+                const enabledTools = Object.entries(allConfig.mcp.tools)
+                  .filter(([_, config]: [string, any]) => config.enabled)
+                  .map(([name, _]) => name);
+
+                if (enabledTools.length > 0) {
+                  console.log(`  ${colors.ui.key('Tools:')} ${colors.ui.value(enabledTools.join(', '))}`);
+                }
+              }
+            }
+
+            // Config file location
+            console.log();
+            console.log(colors.status.dim(`Config file: ${config.getConfigPath()}`));
             console.log('\n' + separator());
           }
         } catch (error: any) {
