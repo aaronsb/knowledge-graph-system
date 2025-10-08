@@ -13,6 +13,7 @@ import { searchCommand } from './search';
 import { databaseCommand } from './database';
 import { ontologyCommand } from './ontology';
 import { configCommand } from './config';
+import { adminCommand } from './admin';
 import { createClientFromEnv } from '../api/client';
 import { VERSION_INFO } from '../version';
 
@@ -73,7 +74,8 @@ export async function registerCommands(program: Command) {
     jobsCommand,
     searchCommand,
     databaseCommand,
-    ontologyCommand
+    ontologyCommand,
+    adminCommand
   ];
 
   subcommands.forEach(cmd => {
