@@ -206,7 +206,18 @@ class AGEClient:
         if not columns:
             return "result agtype"
 
-        return ", ".join(f"{col} agtype" for col in columns)
+        # De-duplicate column names by adding suffix if needed
+        seen = {}
+        unique_columns = []
+        for col in columns:
+            if col in seen:
+                seen[col] += 1
+                unique_columns.append(f"{col}_{seen[col]}")
+            else:
+                seen[col] = 0
+                unique_columns.append(col)
+
+        return ", ".join(f"{col} agtype" for col in unique_columns)
 
     def _parse_agtype(self, agtype_value: Any) -> Any:
         """
