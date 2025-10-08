@@ -541,7 +541,7 @@ class AGEClient:
         self,
         embedding: List[float],
         threshold: float = 0.85,
-        limit: int = 5
+        top_k: int = 5
     ) -> List[Dict[str, Any]]:
         """
         Search for similar concepts using vector similarity.
@@ -552,7 +552,7 @@ class AGEClient:
         Args:
             embedding: Query embedding vector
             threshold: Minimum similarity threshold (0.0-1.0)
-            limit: Maximum number of results to return
+            top_k: Maximum number of results to return
 
         Returns:
             List of dictionaries with concept_id, label, and similarity score
@@ -614,7 +614,7 @@ class AGEClient:
 
             # Sort by similarity and limit
             similarities.sort(key=lambda x: x['similarity'], reverse=True)
-            return similarities[:limit]
+            return similarities[:top_k]
 
         except Exception as e:
             raise Exception(f"Vector search failed: {e}")
