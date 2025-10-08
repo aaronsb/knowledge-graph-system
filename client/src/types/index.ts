@@ -257,3 +257,120 @@ export interface OntologyDeleteResponse {
   orphaned_concepts_deleted: number;
   error?: string;
 }
+
+// ========== Admin Types ==========
+
+export interface DockerStatus {
+  running: boolean;
+  container_name?: string;
+  status?: string;
+  ports?: string;
+}
+
+export interface DatabaseConnection {
+  connected: boolean;
+  uri: string;
+  error?: string;
+}
+
+export interface DatabaseStatsAdmin {
+  concepts: number;
+  sources: number;
+  instances: number;
+  relationships: number;
+}
+
+export interface PythonEnvironment {
+  venv_exists: boolean;
+  python_version?: string;
+}
+
+export interface ConfigurationStatus {
+  env_exists: boolean;
+  anthropic_key_configured: boolean;
+  openai_key_configured: boolean;
+}
+
+export interface SystemStatusResponse {
+  docker: DockerStatus;
+  database_connection: DatabaseConnection;
+  database_stats?: DatabaseStatsAdmin;
+  python_env: PythonEnvironment;
+  configuration: ConfigurationStatus;
+  neo4j_browser_url?: string;
+  bolt_url?: string;
+}
+
+export interface BackupRequest {
+  backup_type: 'full' | 'ontology';
+  ontology_name?: string;
+  output_filename?: string;
+}
+
+export interface BackupIntegrityAssessment {
+  external_dependencies_count: number;
+  warnings_count: number;
+  issues_count: number;
+  has_external_deps: boolean;
+  details: Record<string, any>;
+}
+
+export interface BackupResponse {
+  success: boolean;
+  backup_file: string;
+  file_size_mb: number;
+  statistics: Record<string, number>;
+  integrity_assessment?: BackupIntegrityAssessment;
+  message: string;
+}
+
+export interface BackupInfo {
+  filename: string;
+  path: string;
+  size_mb: number;
+  created: string;
+}
+
+export interface ListBackupsResponse {
+  backups: BackupInfo[];
+  backup_dir: string;
+  count: number;
+}
+
+export interface RestoreRequest {
+  username: string;
+  password: string;
+  backup_file: string;
+  overwrite?: boolean;
+  handle_external_deps?: 'prune' | 'stitch' | 'defer';
+}
+
+export interface RestoreResponse {
+  success: boolean;
+  restored_counts: Record<string, number>;
+  warnings: string[];
+  message: string;
+  external_deps_handled?: string;
+}
+
+export interface ResetRequest {
+  username: string;
+  password: string;
+  confirm: boolean;
+  clear_logs?: boolean;
+  clear_checkpoints?: boolean;
+}
+
+export interface SchemaValidation {
+  constraints_count: number;
+  vector_index_exists: boolean;
+  node_count: number;
+  schema_test_passed: boolean;
+}
+
+export interface ResetResponse {
+  success: boolean;
+  schema_validation: SchemaValidation;
+  message: string;
+  warnings: string[];
+}
