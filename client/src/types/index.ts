@@ -94,3 +94,166 @@ export interface ApiConfig {
   clientId?: string;
   apiKey?: string;
 }
+
+// Query types
+export interface SearchRequest {
+  query: string;
+  limit?: number;
+  min_similarity?: number;
+}
+
+export interface ConceptSearchResult {
+  concept_id: string;
+  label: string;
+  score: number;
+  documents: string[];
+  evidence_count: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  count: number;
+  results: ConceptSearchResult[];
+}
+
+export interface ConceptInstance {
+  quote: string;
+  document: string;
+  paragraph: number;
+  source_id: string;
+}
+
+export interface ConceptRelationship {
+  to_id: string;
+  to_label: string;
+  rel_type: string;
+  confidence?: number;
+}
+
+export interface ConceptDetailsResponse {
+  concept_id: string;
+  label: string;
+  search_terms: string[];
+  documents: string[];
+  instances: ConceptInstance[];
+  relationships: ConceptRelationship[];
+}
+
+export interface RelatedConceptsRequest {
+  concept_id: string;
+  relationship_types?: string[];
+  max_depth?: number;
+}
+
+export interface RelatedConcept {
+  concept_id: string;
+  label: string;
+  distance: number;
+  path_types: string[];
+}
+
+export interface RelatedConceptsResponse {
+  concept_id: string;
+  max_depth: number;
+  count: number;
+  results: RelatedConcept[];
+}
+
+export interface FindConnectionRequest {
+  from_id: string;
+  to_id: string;
+  max_hops?: number;
+}
+
+export interface PathNode {
+  id: string;
+  label: string;
+}
+
+export interface ConnectionPath {
+  nodes: PathNode[];
+  relationships: string[];
+  hops: number;
+}
+
+export interface FindConnectionResponse {
+  from_id: string;
+  to_id: string;
+  max_hops: number;
+  count: number;
+  paths: ConnectionPath[];
+}
+
+// Database types
+export interface DatabaseStatsResponse {
+  nodes: {
+    concepts: number;
+    sources: number;
+    instances: number;
+  };
+  relationships: {
+    total: number;
+    by_type: Array<{ rel_type: string; count: number }>;
+  };
+}
+
+export interface DatabaseInfoResponse {
+  uri: string;
+  user: string;
+  connected: boolean;
+  version?: string;
+  edition?: string;
+  error?: string;
+}
+
+export interface DatabaseHealthResponse {
+  status: string;
+  responsive: boolean;
+  checks: Record<string, any>;
+  error?: string;
+}
+
+// Ontology types
+export interface OntologyItem {
+  ontology: string;
+  source_count: number;
+  file_count: number;
+  concept_count: number;
+}
+
+export interface OntologyListResponse {
+  count: number;
+  ontologies: OntologyItem[];
+}
+
+export interface OntologyInfoResponse {
+  ontology: string;
+  statistics: {
+    source_count: number;
+    file_count: number;
+    concept_count: number;
+    instance_count: number;
+    relationship_count: number;
+  };
+  files: string[];
+}
+
+export interface OntologyFileInfo {
+  file_path: string;
+  chunk_count: number;
+  concept_count: number;
+}
+
+export interface OntologyFilesResponse {
+  ontology: string;
+  count: number;
+  files: OntologyFileInfo[];
+}
+
+export interface OntologyDeleteResponse {
+  ontology: string;
+  deleted: boolean;
+  sources_deleted: number;
+  orphaned_concepts_deleted: number;
+  error?: string;
+}
