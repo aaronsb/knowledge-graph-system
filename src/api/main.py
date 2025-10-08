@@ -18,6 +18,7 @@ import logging
 import time
 
 from .services.job_queue import init_job_queue, get_job_queue
+from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .workers.ingestion_worker import run_ingestion_worker
 from .routes import ingest, jobs, queries, database, ontology, admin
 from .logging_config import setup_logging
@@ -90,6 +91,11 @@ async def startup_event():
     queue.register_worker("ingestion", run_ingestion_worker)
     logger.info("✅ Workers registered: ingestion")
 
+    # ADR-014: Initialize and start job scheduler
+    scheduler = init_job_scheduler()
+    scheduler.start()
+    logger.info("✅ Job scheduler started (lifecycle management enabled)")
+
     logger.info("🎉 API ready!")
     logger.info(f"📚 Docs: http://localhost:8000/docs")
     logger.info(f"📚 ReDoc: http://localhost:8000/redoc")
@@ -99,6 +105,15 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup on shutdown"""
     logger.info("👋 Shutting down API...")
+
+    # ADR-014: Stop scheduler gracefully
+    try:
+        scheduler = get_job_scheduler()
+        await scheduler.stop()
+        logger.info("✅ Job scheduler stopped")
+    except RuntimeError:
+        pass  # Scheduler not initialized
+
     # TODO: Gracefully finish pending jobs
     logger.info("Shutdown complete")
 
@@ -119,23 +134,29 @@ async def root():
     try:
         queue = get_job_queue()
 
-        # Get queue stats
+        # Get queue stats (ADR-014: include new states)
+        pending = queue.list_jobs(status="pending", limit=1000)
+        awaiting_approval = queue.list_jobs(status="awaiting_approval", limit=1000)
+        approved = queue.list_jobs(status="approved", limit=1000)
         queued = queue.list_jobs(status="queued", limit=1000)
         processing = queue.list_jobs(status="processing", limit=1000)
 
         return {
             "service": "Knowledge Graph API",
-            "version": "0.1.0",
+            "version": "0.1.0 (ADR-014: Approval Workflow)",
             "status": "healthy",
             "queue": {
                 "type": "inmemory",  # Phase 1
-                "queued": len(queued),
+                "pending": len(pending),
+                "awaiting_approval": len(awaiting_approval),
+                "approved": len(approved),
+                "queued": len(queued),  # Legacy
                 "processing": len(processing)
             },
             "docs": "/docs",
             "endpoints": {
                 "ingest": "POST /ingest (upload file) or POST /ingest/text (raw text)",
-                "jobs": "GET /jobs/{job_id} for status"
+                "jobs": "GET /jobs/{job_id} for status, POST /jobs/{job_id}/approve to start processing"
             }
         }
     except Exception as e:

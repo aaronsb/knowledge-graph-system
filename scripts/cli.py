@@ -38,6 +38,7 @@ from neo4j import GraphDatabase
 from openai import OpenAI
 from dotenv import load_dotenv
 from graph_to_mermaid import get_concept_graph, get_search_results_graph, generate_mermaid
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -47,6 +48,7 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 # ANSI color codes for output
 class Colors:

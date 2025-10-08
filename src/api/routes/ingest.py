@@ -5,14 +5,85 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 import json
 import base64
+from datetime import datetime, timedelta
+import tempfile
+from pathlib import Path
 
 from ..services.job_queue import get_job_queue
 from ..services.content_hasher import ContentHasher
+from ..services.job_analysis import JobAnalyzer
 from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
 from ..middleware.auth import get_current_user
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
+
+
+async def run_job_analysis(job_id: str, auto_approve: bool = False):
+    """
+    Background task to analyze job and optionally auto-approve.
+
+    ADR-014 workflow:
+    1. Analyze job (fast, no LLM calls)
+    2. Update job with analysis and status -> awaiting_approval
+    3. If auto_approve, immediately approve and execute
+    """
+    queue = get_job_queue()
+    analyzer = JobAnalyzer()
+
+    try:
+        job = queue.get_job(job_id)
+        if not job:
+            return
+
+        # Decode content to temp file for analysis
+        content = base64.b64decode(job["job_data"]["content"])
+
+        with tempfile.NamedTemporaryFile(mode='wb', delete=False, suffix='.txt') as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+
+        try:
+            # Prepare analysis data
+            analysis_data = {
+                "file_path": tmp_path,
+                "ontology": job["job_data"]["ontology"],
+                **job["job_data"]["options"]
+            }
+
+            # Run analysis (fast - no LLM calls)
+            analysis = analyzer.analyze_ingestion_job(analysis_data)
+
+            # Calculate expiration (24 hours from now)
+            expires_at = (datetime.now() + timedelta(hours=24)).isoformat()
+
+            # Update job with analysis
+            queue.update_job(job_id, {
+                "status": "awaiting_approval",
+                "analysis": analysis,
+                "expires_at": expires_at
+            })
+
+            # Auto-approve if requested
+            if auto_approve:
+                queue.update_job(job_id, {
+                    "status": "approved",
+                    "approved_at": datetime.now().isoformat(),
+                    "approved_by": "auto"
+                })
+                # Execute immediately
+                queue.execute_job(job_id)
+
+        finally:
+            # Clean up temp file
+            Path(tmp_path).unlink(missing_ok=True)
+
+    except Exception as e:
+        # If analysis fails, mark job as failed
+        queue.update_job(job_id, {
+            "status": "failed",
+            "error": f"Analysis failed: {str(e)}"
+        })
 
 
 @router.post(
@@ -26,6 +97,7 @@ async def ingest_document(
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Override filename"),
     force: bool = Form(False, description="Force re-ingestion even if duplicate"),
+    auto_approve: bool = Form(False, description="Auto-approve job (skip approval step)"),
     target_words: int = Form(1000, description="Target words per chunk"),
     min_words: Optional[int] = Form(None, description="Minimum words per chunk"),
     max_words: Optional[int] = Form(None, description="Maximum words per chunk"),
@@ -33,10 +105,13 @@ async def ingest_document(
     current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
-    Submit a document for async ingestion into the knowledge graph.
+    Submit a document for async ingestion into the knowledge graph (ADR-014).
 
-    The document is queued for processing and a job_id is returned immediately.
-    Use the /jobs/{job_id} endpoint to poll for status and results.
+    **Approval Workflow:**
+    1. Job queued with status `pending` (analysis runs automatically)
+    2. Analysis complete → status `awaiting_approval` (check cost estimates)
+    3. Manual approval required (POST /jobs/{job_id}/approve)
+    4. OR use `auto_approve=true` to skip approval step
 
     **Deduplication:**
     - Documents are hashed to detect duplicates
@@ -44,7 +119,7 @@ async def ingest_document(
     - Use `force=true` to override duplicate detection
 
     **Returns:**
-    - If new: job_id and "queued" status
+    - If new: job_id and "pending" status
     - If duplicate: existing job info with suggestion to use force flag
     """
     queue = get_job_queue()
@@ -95,19 +170,20 @@ async def ingest_document(
         }
     }
 
-    # Enqueue job
+    # Enqueue job (status: "pending")
     job_id = queue.enqueue("ingestion", job_data)
 
-    # Schedule background execution
-    background_tasks.add_task(queue.execute_job, job_id)
+    # ADR-014: Trigger analysis instead of immediate execution
+    background_tasks.add_task(run_job_analysis, job_id, auto_approve)
 
     # Return job info
+    status_msg = "pending (analyzing)" if not auto_approve else "pending (analyzing, will auto-approve)"
     return JobSubmitResponse(
         job_id=job_id,
-        status="queued",
+        status=status_msg,
         content_hash=content_hash,
         position=None,  # Phase 1: no queue position tracking
-        message="Job queued for processing. Poll /jobs/{job_id} for status."
+        message="Job queued. Analysis running. Poll /jobs/{job_id} for status and cost estimates."
     )
 
 
@@ -122,14 +198,20 @@ async def ingest_text(
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Filename for source tracking"),
     force: bool = Form(False, description="Force re-ingestion even if duplicate"),
+    auto_approve: bool = Form(False, description="Auto-approve job (skip approval step)"),
     target_words: int = Form(1000, description="Target words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
     current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
-    Submit raw text for ingestion (alternative to file upload).
+    Submit raw text for ingestion (ADR-014 approval workflow).
 
-    Useful for:
+    **Approval Workflow:**
+    1. Job queued with status `pending` (analysis runs automatically)
+    2. Analysis complete → status `awaiting_approval` (check cost estimates)
+    3. Manual approval required OR use `auto_approve=true`
+
+    **Useful for:**
     - Pasting text directly
     - Sending text from other systems
     - Testing with small documents
@@ -173,14 +255,18 @@ async def ingest_text(
         }
     }
 
-    # Enqueue
+    # Enqueue job (status: "pending")
     job_id = queue.enqueue("ingestion", job_data)
-    background_tasks.add_task(queue.execute_job, job_id)
 
+    # ADR-014: Trigger analysis instead of immediate execution
+    background_tasks.add_task(run_job_analysis, job_id, auto_approve)
+
+    # Return job info
+    status_msg = "pending (analyzing)" if not auto_approve else "pending (analyzing, will auto-approve)"
     return JobSubmitResponse(
         job_id=job_id,
-        status="queued",
+        status=status_msg,
         content_hash=content_hash,
         position=None,
-        message="Job queued for processing."
+        message="Job queued. Analysis running. Poll /jobs/{job_id} for status and cost estimates."
     )
