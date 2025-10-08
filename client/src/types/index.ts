@@ -44,7 +44,7 @@ export interface JobResult {
 export interface JobStatus {
   job_id: string;
   job_type: string;
-  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'awaiting_approval' | 'approved' | 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
   progress?: JobProgress;
   result?: JobResult;
   error?: string;
@@ -54,6 +54,10 @@ export interface JobStatus {
   content_hash?: string;
   ontology?: string;
   client_id?: string;
+  analysis?: any;  // Pre-ingestion analysis (ADR-014)
+  approved_at?: string;
+  approved_by?: string;
+  expires_at?: string;
 }
 
 export interface JobSubmitResponse {
@@ -86,6 +90,7 @@ export interface IngestRequest {
   ontology: string;
   filename?: string;
   force?: boolean;
+  auto_approve?: boolean;  // ADR-014: Skip approval step
   options?: IngestionOptions;
 }
 

@@ -263,6 +263,41 @@ GET /jobs?status=completed&limit=10
 }
 ```
 
+**POST /jobs/{job_id}/approve** (ADR-014)
+```json
+{
+  "job_id": "job_abc123",
+  "status": "approved",
+  "message": "Job approved for processing"
+}
+```
+
+### Admin & Scheduler (ADR-014)
+
+**GET /admin/scheduler/status**
+```json
+{
+  "running": true,
+  "config": {
+    "cleanup_interval": 3600,
+    "approval_timeout": 24,
+    "completed_retention": 48,
+    "failed_retention": 168
+  },
+  "stats": {
+    "jobs_by_status": {...}
+  }
+}
+```
+
+**POST /admin/scheduler/cleanup**
+```json
+{
+  "success": true,
+  "message": "Cleanup completed successfully"
+}
+```
+
 ## Consequences
 
 ### Positive
@@ -336,6 +371,7 @@ CREATE INDEX idx_client_id ON jobs(client_id);
 
 - **ADR-011**: Project Structure (why code lives in `src/`)
 - **ADR-013**: Unified TypeScript Client (CLI + MCP consumer of this API)
+- **ADR-014**: Job Approval Workflow (pre-ingestion analysis and scheduler)
 
 ## References
 
@@ -345,5 +381,5 @@ CREATE INDEX idx_client_id ON jobs(client_id);
 
 ---
 
-**Last Updated:** 2025-10-06
+**Last Updated:** 2025-10-07 (Added ADR-014 endpoints)
 **Next Review:** Before Phase 2 Redis implementation

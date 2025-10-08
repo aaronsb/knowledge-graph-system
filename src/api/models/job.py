@@ -52,7 +52,7 @@ class JobStatus(BaseModel):
     """Complete job status response"""
     job_id: str = Field(..., description="Unique job identifier")
     job_type: str = Field(..., description="Type of job")
-    status: str = Field(..., description="Job status: queued|processing|completed|failed|cancelled")
+    status: str = Field(..., description="Job status: pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled")
     progress: Optional[JobProgress] = Field(None, description="Progress information")
     result: Optional[JobResult] = Field(None, description="Result data (if completed)")
     error: Optional[str] = Field(None, description="Error message (if failed)")
@@ -61,6 +61,11 @@ class JobStatus(BaseModel):
     completed_at: Optional[str] = Field(None, description="Job completion timestamp")
     content_hash: Optional[str] = Field(None, description="Content hash for deduplication")
     ontology: Optional[str] = Field(None, description="Target ontology")
+    # ADR-014: Approval workflow fields
+    analysis: Optional[Dict[str, Any]] = Field(None, description="Pre-ingestion analysis (file stats, cost estimates)")
+    approved_at: Optional[str] = Field(None, description="Approval timestamp")
+    approved_by: Optional[str] = Field(None, description="User who approved (Phase 2)")
+    expires_at: Optional[str] = Field(None, description="Expiration timestamp for unapproved jobs")
 
 
 class JobSubmitResponse(BaseModel):

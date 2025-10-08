@@ -328,6 +328,58 @@ export const configCommand = new Command('config')
       })
   )
   .addCommand(
+    new Command('auto-approve')
+      .description('Enable/disable auto-approval of jobs (ADR-014)')
+      .argument('[value]', 'Enable (true/on/yes) or disable (false/off/no)', 'status')
+      .action(async (value) => {
+        try {
+          const config = getConfig();
+
+          // If no value, show current status
+          if (value === 'status') {
+            const current = config.getAutoApprove();
+            console.log('\n' + separator());
+            console.log(colors.ui.title('🔄 Auto-Approve Configuration'));
+            console.log(separator());
+            const statusText = current ? colors.status.success('✓ enabled') : colors.status.dim('✗ disabled');
+            console.log(`\n${colors.ui.key('Status:')} ${statusText}`);
+            console.log(colors.status.dim('\nWhen enabled, all jobs are automatically approved without manual review'));
+            console.log(colors.status.dim('Override: Use --yes flag on individual ingest commands\n'));
+            console.log(separator());
+            return;
+          }
+
+          // Parse boolean value
+          const enableValues = ['true', 'on', 'yes', 'enable', 'enabled', '1'];
+          const disableValues = ['false', 'off', 'no', 'disable', 'disabled', '0'];
+
+          let newValue: boolean;
+          if (enableValues.includes(value.toLowerCase())) {
+            newValue = true;
+          } else if (disableValues.includes(value.toLowerCase())) {
+            newValue = false;
+          } else {
+            console.error(colors.status.error(`✗ Invalid value: ${value}`));
+            console.log(colors.status.dim('Use: true/false, on/off, yes/no, enable/disable'));
+            process.exit(1);
+          }
+
+          config.setAutoApprove(newValue);
+          const statusText = newValue ? colors.status.success('enabled') : colors.status.dim('disabled');
+          console.log(colors.status.success(`✓ Auto-approve ${statusText}`));
+
+          if (newValue) {
+            console.log(colors.status.warning('\n⚠️  All jobs will now be automatically approved'));
+            console.log(colors.status.dim('Jobs will skip the analysis review step and start processing immediately\n'));
+          }
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to configure auto-approve'));
+          console.error(colors.status.error(error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
     new Command('update-secret')
       .description('Authenticate and update API secret/key')
       .option('-u, --username <username>', 'Username (will prompt if not provided)')

@@ -23,6 +23,7 @@ export interface KgConfig {
   secret?: string;  // API key (never store password!)
   api_url?: string;
   backup_dir?: string;
+  auto_approve?: boolean;  // ADR-014: Auto-approve all jobs by default
   mcp?: McpConfig;
 }
 
@@ -77,6 +78,7 @@ export class ConfigManager {
     return {
       api_url: 'http://localhost:8000',
       backup_dir: path.join(os.homedir(), '.local', 'share', 'kg', 'backups'),
+      auto_approve: false,  // ADR-014: Require manual approval by default
       mcp: {
         enabled: true,
         tools: {
@@ -289,6 +291,21 @@ export class ConfigManager {
       fs.mkdirSync(dir, { recursive: true });
     }
     return dir;
+  }
+
+  /**
+   * Get auto-approve setting (ADR-014)
+   */
+  getAutoApprove(): boolean {
+    return this.config.auto_approve ?? false;
+  }
+
+  /**
+   * Set auto-approve setting (ADR-014)
+   */
+  setAutoApprove(value: boolean): void {
+    this.config.auto_approve = value;
+    this.save();
   }
 }
 
