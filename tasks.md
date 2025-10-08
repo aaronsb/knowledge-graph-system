@@ -66,33 +66,34 @@ Complete migration from Neo4j Community Edition to Apache AGE (PostgreSQL graph 
 ### Sub-tasks:
 
 #### Graph Schema (AGE)
-- [ ] Create schema/graph_schema.sql with vertex labels (Concept, Source, Instance)
-- [ ] Create edge labels (APPEARS_IN, EVIDENCED_BY, FROM_SOURCE, RELATES_TO, etc.)
-- [ ] Create vector index for concept embeddings using pgvector
-- [ ] Create property indexes for common queries (label, concept_id, source_id)
-- [ ] Test graph creation: `SELECT create_graph('knowledge_graph');`
+- [✔] Create schema/graph_schema.sql with vertex labels (Concept, Source, Instance)
+- [✔] Create edge labels (APPEARS_IN, EVIDENCED_BY, FROM_SOURCE, RELATES_TO, etc.)
+- [ ] Create vector index for concept embeddings using pgvector (deferred - not in base image)
+- [ ] Create property indexes for common queries (deferred - added after first data load)
+- [✔] Test graph creation: `SELECT create_graph('knowledge_graph');`
 
 #### Application Schema (PostgreSQL)
-- [ ] Create schema/app_schema.sql with users table
-- [ ] Create api_keys table with foreign key to users
-- [ ] Create sessions table for authentication
-- [ ] Create ingestion_jobs table with status tracking
-- [ ] Create restore_jobs table (ADR-015 compatibility)
-- [ ] Create audit_log table with row-level security policies
-- [ ] Create documents table for source text storage
-- [ ] Create backups metadata table
+- [✔] Create schema/app_schema.sql with users table
+- [✔] Create api_keys table with foreign key to users
+- [✔] Create sessions table for authentication
+- [✔] Create ingestion_jobs table with status tracking
+- [✔] Create restore_jobs table (ADR-015 compatibility)
+- [✔] Create audit_log table with row-level security policies
+- [✔] Create documents table for source text storage
+- [✔] Create backups metadata table
 
 #### RBAC Setup
-- [ ] Create roles: kg_read_only, kg_contributor, kg_admin
-- [ ] Define GRANT statements for each role
-- [ ] Create row-level security policies for audit_log
-- [ ] Document RBAC model in docs/RBAC.md
+- [✔] Create roles: kg_read_only, kg_contributor, kg_admin
+- [✔] Define GRANT statements for each role
+- [ ] Create row-level security policies for audit_log (deferred to Task 09)
+- [ ] Document RBAC model in docs/RBAC.md (deferred to Task 12)
 
 **Acceptance Criteria:**
-- All schema files execute without errors
-- Graph created: `SELECT * FROM ag_catalog.ag_graph WHERE name = 'knowledge_graph';`
-- All tables exist: `\dt` shows users, api_keys, jobs, audit_log, documents
-- Roles created: `\du` shows kg_read_only, kg_contributor, kg_admin
+- ✅ All schema files execute without errors
+- ✅ Graph created: `SELECT * FROM ag_catalog.ag_graph WHERE name = 'knowledge_graph';`
+- ✅ All tables exist: `\dt` shows users, api_keys, sessions, ingestion_jobs, restore_jobs, audit_log, documents, backups
+- ✅ Roles created: `\du` shows kg_read_only, kg_contributor, kg_admin
+- ✅ Default admin user created
 
 ---
 
@@ -136,7 +137,7 @@ Complete migration from Neo4j Community Edition to Apache AGE (PostgreSQL graph 
 - [✔] Update requirements.txt: neo4j → psycopg2-binary
 - [✔] Update scripts/start-api.sh: check PostgreSQL
 - [✔] Install dependencies: pip install psycopg2-binary
-- [ ] Update ingest/neo4j_client.py imports → age_client.py (legacy, not used)
+- [✔] Remove obsolete src/api/lib/neo4j_client.py
 - [ ] Update CLI to use AGEClient (deferred to Task 07)
 
 **Acceptance Criteria:**
