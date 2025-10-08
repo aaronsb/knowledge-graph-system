@@ -20,7 +20,7 @@ from ..models.ontology import (
     OntologyDeleteRequest,
     OntologyDeleteResponse
 )
-from src.ingest.neo4j_client import Neo4jClient
+from src.api.lib.neo4j_client import Neo4jClient
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ontology", tags=["ontology"])

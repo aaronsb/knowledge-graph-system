@@ -160,7 +160,9 @@ async function pollJobWithProgress(client: any, jobId: string) {
       if (job.status === 'processing' && job.progress) {
         const p = job.progress;
         if (p.percent !== undefined) {
-          spinner.text = `Processing... ${p.percent}% (${p.chunks_processed}/${p.chunks_total} chunks, ${p.concepts_created || 0} concepts)`;
+          const conceptsTotal = (p.concepts_created || 0) + (p.concepts_linked || 0);
+          const hitRate = conceptsTotal > 0 ? Math.round((p.concepts_linked || 0) / conceptsTotal * 100) : 0;
+          spinner.text = `Processing... ${p.percent}% (${p.chunks_processed}/${p.chunks_total} chunks) | Concepts: ${conceptsTotal} (${hitRate}% reused) | Relationships: ${p.relationships_created || 0}`;
         } else {
           spinner.text = `Processing... ${p.stage}`;
         }

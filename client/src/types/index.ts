@@ -9,7 +9,10 @@ export interface JobProgress {
   percent?: number;
   current_chunk?: number;
   concepts_created?: number;
+  concepts_linked?: number;  // Existing concepts reused (hit rate)
   sources_created?: number;
+  instances_created?: number;
+  relationships_created?: number;
 }
 
 export interface JobCost {

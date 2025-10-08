@@ -34,9 +34,13 @@ jobsCommand
           } else if (job.status === 'processing' && job.progress) {
             const p = job.progress;
             if (p.percent !== undefined) {
+              const conceptsTotal = (p.concepts_created || 0) + (p.concepts_linked || 0);
+              const hitRate = conceptsTotal > 0 ? Math.round((p.concepts_linked || 0) / conceptsTotal * 100) : 0;
               process.stdout.write(
                 chalk.blue(`Processing: ${p.percent}% `) +
-                chalk.gray(`(${p.chunks_processed}/${p.chunks_total} chunks)`)
+                chalk.gray(`(${p.chunks_processed}/${p.chunks_total} chunks) `) +
+                chalk.gray(`| Concepts: ${conceptsTotal} (${hitRate}% reused) `) +
+                chalk.gray(`| Rels: ${p.relationships_created || 0}`)
               );
             } else {
               process.stdout.write(chalk.blue(`Processing: ${p.stage}`));
@@ -384,8 +388,22 @@ function printJobStatus(job: JobStatus) {
     if (p.chunks_total) {
       console.log(chalk.gray(`  Chunks: ${p.chunks_processed}/${p.chunks_total}`));
     }
-    if (p.concepts_created) {
-      console.log(chalk.gray(`  Concepts: ${p.concepts_created}`));
+
+    // Concept statistics
+    const conceptsNew = p.concepts_created || 0;
+    const conceptsLinked = p.concepts_linked || 0;
+    const conceptsTotal = conceptsNew + conceptsLinked;
+    if (conceptsTotal > 0) {
+      const hitRate = Math.round((conceptsLinked / conceptsTotal) * 100);
+      console.log(chalk.gray(`  Concepts: ${conceptsTotal} total (${conceptsNew} new, ${conceptsLinked} reused)`));
+      console.log(chalk.gray(`  Hit rate: ${hitRate}% (existing concepts reused)`));
+    }
+
+    if (p.instances_created) {
+      console.log(chalk.gray(`  Instances: ${p.instances_created}`));
+    }
+    if (p.relationships_created) {
+      console.log(chalk.gray(`  Relationships: ${p.relationships_created}`));
     }
   }
 
