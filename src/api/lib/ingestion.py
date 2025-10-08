@@ -257,7 +257,7 @@ def process_chunk(
             matches = neo4j_client.vector_search(
                 embedding=embedding,
                 threshold=0.85,
-                limit=5
+                top_k=5
             )
 
             if matches:
