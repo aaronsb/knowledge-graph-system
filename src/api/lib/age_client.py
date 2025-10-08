@@ -121,11 +121,14 @@ class AGEClient:
                     else:
                         query = query.replace(f"${key}", str(value))
 
-            # Wrap Cypher in AGE SELECT statement
+            # Extract column names from RETURN clause to preserve them in AGE results
+            column_spec = self._extract_column_spec(query)
+
+            # Wrap Cypher in AGE SELECT statement with dynamic column specification
             age_query = f"""
                 SELECT * FROM cypher('{self.graph_name}', $$
                     {query}
-                $$) as (result agtype);
+                $$) as ({column_spec});
             """
 
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
@@ -133,14 +136,77 @@ class AGEClient:
 
                 if fetch_one:
                     result = cur.fetchone()
-                    return [dict(result)] if result else []
+                    if result:
+                        # Parse all agtype values in the result dict
+                        return {k: self._parse_agtype(v) for k, v in result.items()}
+                    return None
                 else:
                     results = cur.fetchall()
-                    return [dict(row) for row in results]
+                    # Parse all agtype values in each result dict
+                    return [
+                        {k: self._parse_agtype(v) for k, v in row.items()}
+                        for row in results
+                    ]
 
         finally:
             conn.commit()
             self.pool.putconn(conn)
+
+    def _extract_column_spec(self, query: str) -> str:
+        """
+        Extract column names from Cypher RETURN clause to build AGE column specification.
+
+        Parses patterns like:
+        - RETURN count(n) as node_count -> "node_count agtype"
+        - RETURN n.id, n.label -> "id agtype, label agtype"
+        - RETURN n -> "n agtype"
+
+        Args:
+            query: Cypher query string
+
+        Returns:
+            Column specification string for AGE query (e.g., "col1 agtype, col2 agtype")
+        """
+        import re
+
+        # Find the RETURN clause (case-insensitive)
+        # Match everything after RETURN until ORDER BY, LIMIT, or end of string
+        return_match = re.search(r'\bRETURN\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)', query, re.IGNORECASE | re.DOTALL)
+
+        if not return_match:
+            # No RETURN clause found, default to single result column
+            return "result agtype"
+
+        return_clause = return_match.group(1).strip()
+
+        # Extract column names/aliases
+        # Pattern: matches "expr as alias" or just "expr"
+        columns = []
+        for part in return_clause.split(','):
+            part = part.strip()
+
+            # Check for "as alias" pattern
+            as_match = re.search(r'\s+as\s+(\w+)', part, re.IGNORECASE)
+            if as_match:
+                # Use the alias
+                columns.append(as_match.group(1))
+            else:
+                # Extract last identifier (e.g., "n.label" -> "label", "count(n)" -> "count")
+                # This is a simplified heuristic
+                # For complex expressions, use a generic name
+                tokens = re.findall(r'\w+', part)
+                if tokens:
+                    # Use the last token as column name
+                    col_name = tokens[-1]
+                    columns.append(col_name)
+                else:
+                    columns.append(f"col{len(columns)}")
+
+        # Build column specification
+        if not columns:
+            return "result agtype"
+
+        return ", ".join(f"{col} agtype" for col in columns)
 
     def _parse_agtype(self, agtype_value: Any) -> Any:
         """

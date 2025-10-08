@@ -47,34 +47,33 @@ async def list_ontologies():
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            result = session.run("""
-                MATCH (s:Source)
-                WITH DISTINCT s.document as ontology
-                MATCH (src:Source {document: ontology})
-                WITH ontology,
-                     count(DISTINCT src) as source_count,
-                     count(DISTINCT src.file_path) as file_count
-                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: ontology})
-                WITH ontology, source_count, file_count, count(DISTINCT c) as concept_count
-                RETURN ontology, source_count, file_count, concept_count
-                ORDER BY ontology
-            """)
+        result = client._execute_cypher("""
+            MATCH (s:Source)
+            WITH DISTINCT s.document as ontology
+            MATCH (src:Source {document: ontology})
+            WITH ontology,
+                 count(DISTINCT src) as source_count,
+                 count(DISTINCT src.file_path) as file_count
+            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: ontology})
+            WITH ontology, source_count, file_count, count(DISTINCT c) as concept_count
+            RETURN ontology, source_count, file_count, concept_count
+            ORDER BY ontology
+        """)
 
-            ontologies = [
-                OntologyItem(
-                    ontology=record['ontology'],
-                    source_count=record['source_count'],
-                    file_count=record['file_count'],
-                    concept_count=record['concept_count']
-                )
-                for record in result
-            ]
-
-            return OntologyListResponse(
-                count=len(ontologies),
-                ontologies=ontologies
+        ontologies = [
+            OntologyItem(
+                ontology=record['ontology'],
+                source_count=record['source_count'],
+                file_count=record['file_count'],
+                concept_count=record['concept_count']
             )
+            for record in (result or [])
+        ]
+
+        return OntologyListResponse(
+            count=len(ontologies),
+            ontologies=ontologies
+        )
 
     except Exception as e:
         logger.error(f"Failed to list ontologies: {e}", exc_info=True)
@@ -109,48 +108,47 @@ async def get_ontology_info(ontology_name: str):
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            # Check if ontology exists
-            exists = session.run("""
-                MATCH (s:Source {document: $ontology})
-                RETURN count(s) > 0 as exists
-            """, ontology=ontology_name)
+        # Check if ontology exists
+        exists = client._execute_cypher(
+            f"MATCH (s:Source {{document: '{ontology_name}'}}) RETURN count(s) > 0 as exists",
+            fetch_one=True
+        )
 
-            if not exists.single()['exists']:
-                raise HTTPException(status_code=404, detail=f"Ontology '{ontology_name}' not found")
+        if not exists or not exists['exists']:
+            raise HTTPException(status_code=404, detail=f"Ontology '{ontology_name}' not found")
 
-            # Get statistics
-            stats = session.run("""
-                MATCH (s:Source {document: $ontology})
-                WITH count(DISTINCT s) as source_count,
-                     count(DISTINCT s.file_path) as file_count,
-                     collect(DISTINCT s.file_path) as files
-                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(src:Source {document: $ontology})
-                WITH source_count, file_count, files, count(DISTINCT c) as concept_count
-                OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {document: $ontology})
-                WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
-                OPTIONAL MATCH (c1:Concept)-[r]->(c2:Concept)
-                WHERE (c1)-[:APPEARS_IN]->(:Source {document: $ontology})
-                   OR (c2)-[:APPEARS_IN]->(:Source {document: $ontology})
-                RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
-            """, ontology=ontology_name).single()
+        # Get statistics
+        stats = client._execute_cypher(f"""
+            MATCH (s:Source {{document: '{ontology_name}'}})
+            WITH count(DISTINCT s) as source_count,
+                 count(DISTINCT s.file_path) as file_count,
+                 collect(DISTINCT s.file_path) as files
+            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(src:Source {{document: '{ontology_name}'}})
+            WITH source_count, file_count, files, count(DISTINCT c) as concept_count
+            OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {{document: '{ontology_name}'}})
+            WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
+            OPTIONAL MATCH (c1:Concept)-[r]->(c2:Concept)
+            WHERE (c1)-[:APPEARS_IN]->(:Source {{document: '{ontology_name}'}})
+               OR (c2)-[:APPEARS_IN]->(:Source {{document: '{ontology_name}'}})
+            RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
+        """, fetch_one=True)
 
-            statistics = {
-                "source_count": stats['source_count'],
-                "file_count": stats['file_count'],
-                "concept_count": stats['concept_count'],
-                "instance_count": stats['instance_count'],
-                "relationship_count": stats['relationship_count']
-            }
+        statistics = {
+            "source_count": stats['source_count'],
+            "file_count": stats['file_count'],
+            "concept_count": stats['concept_count'],
+            "instance_count": stats['instance_count'],
+            "relationship_count": stats['relationship_count']
+        }
 
-            # Filter out None values from files list
-            files = [f for f in stats['files'] if f is not None]
+        # Filter out None values from files list
+        files = [f for f in stats['files'] if f is not None]
 
-            return OntologyInfoResponse(
-                ontology=ontology_name,
-                statistics=statistics,
-                files=files
-            )
+        return OntologyInfoResponse(
+            ontology=ontology_name,
+            statistics=statistics,
+            files=files
+        )
 
     except HTTPException:
         raise
@@ -180,39 +178,38 @@ async def get_ontology_files(ontology_name: str):
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            result = session.run("""
-                MATCH (s:Source {document: $ontology})
-                WITH DISTINCT s.file_path as file_path
-                WHERE file_path IS NOT NULL
-                MATCH (src:Source {document: $ontology, file_path: file_path})
-                WITH file_path, count(src) as chunk_count
-                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology, file_path: file_path})
-                WITH file_path, chunk_count, count(DISTINCT c) as concept_count
-                RETURN file_path, chunk_count, concept_count
-                ORDER BY file_path
-            """, ontology=ontology_name)
+        result = client._execute_cypher(f"""
+            MATCH (s:Source {{document: '{ontology_name}'}})
+            WITH DISTINCT s.file_path as file_path
+            WHERE file_path IS NOT NULL
+            MATCH (src:Source {{document: '{ontology_name}', file_path: file_path}})
+            WITH file_path, count(src) as chunk_count
+            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {{document: '{ontology_name}', file_path: file_path}})
+            WITH file_path, chunk_count, count(DISTINCT c) as concept_count
+            RETURN file_path, chunk_count, concept_count
+            ORDER BY file_path
+        """)
 
-            files = [
-                OntologyFileInfo(
-                    file_path=record['file_path'],
-                    chunk_count=record['chunk_count'],
-                    concept_count=record['concept_count']
-                )
-                for record in result
-            ]
-
-            if not files:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"No files found in ontology '{ontology_name}'"
-                )
-
-            return OntologyFilesResponse(
-                ontology=ontology_name,
-                count=len(files),
-                files=files
+        files = [
+            OntologyFileInfo(
+                file_path=record['file_path'],
+                chunk_count=record['chunk_count'],
+                concept_count=record['concept_count']
             )
+            for record in (result or [])
+        ]
+
+        if not files:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No files found in ontology '{ontology_name}'"
+            )
+
+        return OntologyFilesResponse(
+            ontology=ontology_name,
+            count=len(files),
+            files=files
+        )
 
     except HTTPException:
         raise
@@ -253,53 +250,52 @@ async def delete_ontology(
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            # Check if ontology exists
-            if not force:
-                check = session.run("""
-                    MATCH (s:Source {document: $ontology})
-                    WITH count(s) as source_count
-                    OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})
-                    RETURN source_count, count(DISTINCT c) as concept_count
-                """, ontology=ontology_name).single()
+        # Check if ontology exists
+        if not force:
+            check = client._execute_cypher(f"""
+                MATCH (s:Source {{document: '{ontology_name}'}})
+                WITH count(s) as source_count
+                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {{document: '{ontology_name}'}})
+                RETURN source_count, count(DISTINCT c) as concept_count
+            """, fetch_one=True)
 
-                if check['source_count'] == 0:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"Ontology '{ontology_name}' not found"
-                    )
+            if not check or check['source_count'] == 0:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Ontology '{ontology_name}' not found"
+                )
 
-            # Delete instances linked to sources in this ontology
-            session.run("""
-                MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {document: $ontology})
-                DETACH DELETE i
-            """, ontology=ontology_name)
+        # Delete instances linked to sources in this ontology
+        client._execute_cypher(f"""
+            MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {{document: '{ontology_name}'}})
+            DETACH DELETE i
+        """)
 
-            # Delete sources
-            result = session.run("""
-                MATCH (s:Source {document: $ontology})
-                DETACH DELETE s
-                RETURN count(s) as deleted_count
-            """, ontology=ontology_name)
+        # Delete sources
+        result = client._execute_cypher(f"""
+            MATCH (s:Source {{document: '{ontology_name}'}})
+            DETACH DELETE s
+            RETURN count(s) as deleted_count
+        """, fetch_one=True)
 
-            sources_deleted = result.single()['deleted_count']
+        sources_deleted = result['deleted_count'] if result else 0
 
-            # Clean up orphaned concepts (concepts with no sources)
-            orphaned_result = session.run("""
-                MATCH (c:Concept)
-                WHERE NOT (c)-[:APPEARS_IN]->(:Source)
-                DETACH DELETE c
-                RETURN count(c) as orphaned_count
-            """)
+        # Clean up orphaned concepts (concepts with no sources)
+        orphaned_result = client._execute_cypher("""
+            MATCH (c:Concept)
+            WHERE NOT (c)-[:APPEARS_IN]->(:Source)
+            DETACH DELETE c
+            RETURN count(c) as orphaned_count
+        """, fetch_one=True)
 
-            orphaned_count = orphaned_result.single()['orphaned_count']
+        orphaned_count = orphaned_result['orphaned_count'] if orphaned_result else 0
 
-            return OntologyDeleteResponse(
-                ontology=ontology_name,
-                deleted=True,
-                sources_deleted=sources_deleted,
-                orphaned_concepts_deleted=orphaned_count
-            )
+        return OntologyDeleteResponse(
+            ontology=ontology_name,
+            deleted=True,
+            sources_deleted=sources_deleted,
+            orphaned_concepts_deleted=orphaned_count
+        )
 
     except HTTPException:
         raise
