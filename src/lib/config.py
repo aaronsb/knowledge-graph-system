@@ -42,7 +42,7 @@ class Config:
             raise ValueError(f"Required environment variable {key} is not set")
         return value
 
-    # Neo4j Configuration
+    # Neo4j Configuration (Legacy - for migration compatibility)
     @staticmethod
     def neo4j_uri() -> str:
         return Config.get("NEO4J_URI", "bolt://localhost:7687")
@@ -54,6 +54,27 @@ class Config:
     @staticmethod
     def neo4j_password() -> str:
         return Config.get("NEO4J_PASSWORD", "password")
+
+    # PostgreSQL / Apache AGE Configuration
+    @staticmethod
+    def postgres_host() -> str:
+        return Config.get("POSTGRES_HOST", "localhost")
+
+    @staticmethod
+    def postgres_port() -> int:
+        return int(Config.get("POSTGRES_PORT", "5432"))
+
+    @staticmethod
+    def postgres_db() -> str:
+        return Config.get("POSTGRES_DB", "knowledge_graph")
+
+    @staticmethod
+    def postgres_user() -> str:
+        return Config.get("POSTGRES_USER", "admin")
+
+    @staticmethod
+    def postgres_password() -> str:
+        return Config.get("POSTGRES_PASSWORD", "password")
 
     # OpenAI Configuration
     @staticmethod
