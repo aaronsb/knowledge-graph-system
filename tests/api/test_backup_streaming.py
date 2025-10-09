@@ -70,11 +70,22 @@ async def test_create_backup_stream_full_backup():
     mock_backup_data = {
         "version": "1.0",
         "type": "full_backup",
-        "data": {"concepts": [], "sources": [], "instances": [], "relationships": []}
+        "timestamp": "2025-10-09T10:00:00",
+        "data": {"concepts": [], "sources": [], "instances": [], "relationships": []},
+        "statistics": {"concepts": 0, "sources": 0, "instances": 0, "relationships": 0}
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter:
+    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+
         mock_exporter.export_full_backup.return_value = mock_backup_data
+
+        # Mock successful validation
+        mock_integrity = Mock()
+        mock_integrity.valid = True
+        mock_integrity.statistics = mock_backup_data["statistics"]
+        mock_integrity.warnings = []
+        mock_check.return_value = mock_integrity
 
         stream, filename = await create_backup_stream(
             client=mock_client,
@@ -103,11 +114,22 @@ async def test_create_backup_stream_ontology_backup():
         "version": "1.0",
         "type": "ontology_backup",
         "ontology": "Test Ontology",
-        "data": {"concepts": [], "sources": [], "instances": [], "relationships": []}
+        "timestamp": "2025-10-09T10:00:00",
+        "data": {"concepts": [], "sources": [], "instances": [], "relationships": []},
+        "statistics": {"concepts": 0, "sources": 0, "instances": 0, "relationships": 0}
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter:
+    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+
         mock_exporter.export_ontology_backup.return_value = mock_backup_data
+
+        # Mock successful validation
+        mock_integrity = Mock()
+        mock_integrity.valid = True
+        mock_integrity.statistics = mock_backup_data["statistics"]
+        mock_integrity.warnings = []
+        mock_check.return_value = mock_integrity
 
         stream, filename = await create_backup_stream(
             client=mock_client,
@@ -170,6 +192,253 @@ def test_get_backup_size():
     json_str = json.dumps(backup_data, indent=2)
     expected_size = len(json_str.encode('utf-8'))
     assert size == expected_size
+
+
+# ============================================================================
+# Unit Tests - Backup Validation (Defense in Depth)
+# ============================================================================
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_create_backup_stream_validates_backup_data():
+    """Test that create_backup_stream validates backup before streaming"""
+    from src.api.lib.backup_streaming import create_backup_stream
+
+    mock_client = Mock()
+    valid_backup_data = {
+        "version": "1.0",
+        "type": "full_backup",
+        "timestamp": "2025-10-09T10:00:00",
+        "data": {
+            "concepts": [],
+            "sources": [],
+            "instances": [],
+            "relationships": []
+        },
+        "statistics": {
+            "concepts": 0,
+            "sources": 0,
+            "instances": 0,
+            "relationships": 0
+        }
+    }
+
+    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+
+        mock_exporter.export_full_backup.return_value = valid_backup_data
+
+        # Mock successful validation
+        mock_integrity = Mock()
+        mock_integrity.valid = True
+        mock_integrity.statistics = valid_backup_data["statistics"]
+        mock_integrity.warnings = []
+        mock_check.return_value = mock_integrity
+
+        stream, filename = await create_backup_stream(
+            client=mock_client,
+            backup_type="full"
+        )
+
+        # Verify validation was called
+        mock_check.assert_called_once_with(valid_backup_data)
+
+        # Verify stream is generated (validation passed)
+        chunks = []
+        async for chunk in stream:
+            chunks.append(chunk)
+        assert len(chunks) > 0
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_create_backup_stream_fails_on_invalid_backup():
+    """Test that create_backup_stream raises error when validation fails"""
+    from src.api.lib.backup_streaming import create_backup_stream
+
+    mock_client = Mock()
+    invalid_backup_data = {
+        "version": "1.0",
+        "type": "full_backup",
+        # Missing required fields
+    }
+
+    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+
+        mock_exporter.export_full_backup.return_value = invalid_backup_data
+
+        # Mock failed validation
+        mock_integrity = Mock()
+        mock_integrity.valid = False
+        mock_error = Mock()
+        mock_error.category = "format"
+        mock_error.message = "Missing required fields"
+        mock_integrity.errors = [mock_error]
+        mock_check.return_value = mock_integrity
+
+        # Should raise ValueError with error details
+        with pytest.raises(ValueError, match="Backup generation failed validation"):
+            await create_backup_stream(
+                client=mock_client,
+                backup_type="full"
+            )
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_create_backup_stream_logs_validation_success(caplog):
+    """Test that successful validation logs statistics"""
+    from src.api.lib.backup_streaming import create_backup_stream
+    import logging
+
+    caplog.set_level(logging.INFO)
+
+    mock_client = Mock()
+    valid_backup_data = {
+        "version": "1.0",
+        "type": "full_backup",
+        "timestamp": "2025-10-09T10:00:00",
+        "data": {
+            "concepts": [],
+            "sources": [],
+            "instances": [],
+            "relationships": []
+        },
+        "statistics": {
+            "concepts": 42,
+            "sources": 10,
+            "instances": 50,
+            "relationships": 15
+        }
+    }
+
+    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+
+        mock_exporter.export_full_backup.return_value = valid_backup_data
+
+        # Mock successful validation
+        mock_integrity = Mock()
+        mock_integrity.valid = True
+        mock_integrity.statistics = valid_backup_data["statistics"]
+        mock_integrity.warnings = []
+        mock_check.return_value = mock_integrity
+
+        stream, filename = await create_backup_stream(
+            client=mock_client,
+            backup_type="full"
+        )
+
+        # Verify success log contains statistics
+        assert any("Backup validated successfully" in record.message
+                   for record in caplog.records)
+        assert any("Concepts: 42" in record.message
+                   for record in caplog.records)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_create_backup_stream_logs_validation_warnings(caplog):
+    """Test that validation warnings are logged"""
+    from src.api.lib.backup_streaming import create_backup_stream
+    import logging
+
+    caplog.set_level(logging.WARNING)
+
+    mock_client = Mock()
+    valid_backup_data = {
+        "version": "1.0",
+        "type": "full_backup",
+        "timestamp": "2025-10-09T10:00:00",
+        "data": {
+            "concepts": [],
+            "sources": [],
+            "instances": [],
+            "relationships": []
+        },
+        "statistics": {
+            "concepts": 0,
+            "sources": 0,
+            "instances": 0,
+            "relationships": 0
+        }
+    }
+
+    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+
+        mock_exporter.export_full_backup.return_value = valid_backup_data
+
+        # Mock validation with warnings
+        mock_integrity = Mock()
+        mock_integrity.valid = True
+        mock_integrity.statistics = valid_backup_data["statistics"]
+
+        mock_warning = Mock()
+        mock_warning.category = "consistency"
+        mock_warning.message = "Statistics mismatch detected"
+        mock_integrity.warnings = [mock_warning]
+
+        mock_check.return_value = mock_integrity
+
+        stream, filename = await create_backup_stream(
+            client=mock_client,
+            backup_type="full"
+        )
+
+        # Verify warning log
+        assert any("Backup validation warning" in record.message and
+                   "Statistics mismatch detected" in record.message
+                   for record in caplog.records)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_create_backup_stream_ontology_validates():
+    """Test that ontology backups are also validated"""
+    from src.api.lib.backup_streaming import create_backup_stream
+
+    mock_client = Mock()
+    valid_backup_data = {
+        "version": "1.0",
+        "type": "ontology_backup",
+        "ontology": "Test Ontology",
+        "timestamp": "2025-10-09T10:00:00",
+        "data": {
+            "concepts": [],
+            "sources": [],
+            "instances": [],
+            "relationships": []
+        },
+        "statistics": {
+            "concepts": 0,
+            "sources": 0,
+            "instances": 0,
+            "relationships": 0
+        }
+    }
+
+    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+
+        mock_exporter.export_ontology_backup.return_value = valid_backup_data
+
+        # Mock successful validation
+        mock_integrity = Mock()
+        mock_integrity.valid = True
+        mock_integrity.statistics = valid_backup_data["statistics"]
+        mock_integrity.warnings = []
+        mock_check.return_value = mock_integrity
+
+        stream, filename = await create_backup_stream(
+            client=mock_client,
+            backup_type="ontology",
+            ontology_name="Test Ontology"
+        )
+
+        # Verify validation was called for ontology backup too
+        mock_check.assert_called_once_with(valid_backup_data)
 
 
 # ============================================================================
