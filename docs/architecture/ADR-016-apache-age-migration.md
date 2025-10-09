@@ -43,11 +43,15 @@ The current Neo4j Community Edition implementation has critical production block
 
 ### What is Apache AGE?
 
-Apache AGE adds graph database capabilities to PostgreSQL using Cypher query language:
-- ~90% Cypher compatibility with Neo4j
+Apache AGE adds graph database capabilities to PostgreSQL using **openCypher** query language:
+- openCypher is an open-source variant of Cypher, the declarative graph query language
+- openCypher is the foundation for **ISO/IEC 39075:2024 GQL (Graph Query Language)** standard
+- ~90% compatibility with Neo4j's proprietary Cypher implementation
 - Graph data stored as PostgreSQL extension
 - Full access to PostgreSQL's mature RBAC system
-- Can mix graph queries with relational SQL
+- Can mix openCypher graph queries with relational SQL
+
+**Note:** Syntax differences between AGE and Neo4j stem from AGE implementing openCypher rather than Neo4j's proprietary Cypher extensions. See "Cypher Compatibility" section below for specific differences.
 
 ### Unified Architecture
 
@@ -698,21 +702,29 @@ kg database stats
 
 ## Notes
 
-### Cypher Compatibility
+### openCypher Compatibility
 
-AGE supports most Cypher constructs but has some differences:
+Apache AGE implements **openCypher**, the open-source graph query language standard that serves as the foundation for **ISO/IEC 39075:2024 GQL (Graph Query Language)**.
 
-**Supported:**
+**Key Distinction:**
+- **openCypher:** Open-source specification maintained by the openCypher project
+- **Neo4j Cypher:** Proprietary implementation with Neo4j-specific extensions
+- **GQL Standard:** ISO/IEC standardized graph query language based on openCypher
+
+AGE supports most openCypher constructs but differs from Neo4j's proprietary extensions:
+
+**Supported (openCypher standard):**
 - MATCH, CREATE, MERGE, DELETE
 - WHERE, RETURN, ORDER BY, LIMIT
 - Relationship patterns
 - Property access
 - Aggregation functions
 
-**Not Supported (as of 2025):**
+**Not Supported (Neo4j-specific extensions):**
+- `ON CREATE SET` / `ON MATCH SET` in MERGE (Neo4j proprietary)
 - Some advanced path algorithms
 - Certain built-in functions (may need PostgreSQL equivalents)
-- APOC procedures (Neo4j-specific)
+- APOC procedures (Neo4j-specific library)
 
 **Workarounds:**
 - Use PostgreSQL functions for missing Cypher features
