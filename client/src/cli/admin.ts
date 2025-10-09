@@ -134,58 +134,128 @@ async function trackJobWithSSE(
 }
 
 /**
- * Update spinner text based on job progress (shared logic for SSE and polling)
+ * State tracker for multi-line progress display
  */
-function updateSpinnerForProgress(spinner: any, progress: JobProgress) {
+interface ProgressState {
+  currentStage: string | null;
+  spinner: any;
+  stageStats: Map<string, { items: number; total: number }>;
+}
+
+/**
+ * Update spinner text based on job progress (shared logic for SSE and polling)
+ *
+ * Shows each stage on a new line for better visibility of progress history.
+ */
+function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
+  const ora = require('ora');
+
+  // Initialize progress state if not exists
+  if (!(spinner as any).__progressState) {
+    (spinner as any).__progressState = {
+      currentStage: null,
+      spinner: spinner,
+      stageStats: new Map()
+    } as ProgressState;
+  }
+
+  const state: ProgressState = (spinner as any).__progressState;
+
+  // Detect stage change
+  const stageChanged = state.currentStage && state.currentStage !== progress.stage;
+
+  if (stageChanged) {
+    // Complete previous stage with final stats
+    const prevStats = state.stageStats.get(state.currentStage!);
+    if (prevStats) {
+      state.spinner.succeed(getStageName(state.currentStage!) + ` ${prevStats.items}/${prevStats.total} (100%)`);
+    } else {
+      state.spinner.succeed(getStageName(state.currentStage!));
+    }
+
+    // Start new spinner for new stage
+    state.spinner = ora(getStageName(progress.stage)).start();
+    state.currentStage = progress.stage;
+  } else if (!state.currentStage) {
+    // First stage
+    state.currentStage = progress.stage;
+  }
+
+  // Update current stage stats
+  if (progress.message) {
+    // Extract items from message: "Restoring concepts: 10/114 (8%)"
+    const match = progress.message.match(/(\d+)\/(\d+)/);
+    if (match) {
+      state.stageStats.set(progress.stage, {
+        items: parseInt(match[1]),
+        total: parseInt(match[2])
+      });
+    }
+  }
+
+  // Update spinner text based on stage
   switch (progress.stage) {
     case 'creating_checkpoint':
-      spinner.text = `Creating checkpoint backup... ${progress.percent || 0}%`;
+      state.spinner.text = `Creating checkpoint backup... ${progress.percent || 0}%`;
       break;
     case 'loading_backup':
-      spinner.text = `Loading backup file... ${progress.percent || 0}%`;
+      state.spinner.text = `Loading backup file... ${progress.percent || 0}%`;
       break;
     case 'restoring_concepts':
-      if (progress.items_total && progress.items_processed !== undefined) {
-        spinner.text = `Restoring concepts... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-      } else {
-        spinner.text = `Restoring concepts... ${progress.percent || 0}%`;
-      }
-      break;
     case 'restoring_sources':
-      if (progress.items_total && progress.items_processed !== undefined) {
-        spinner.text = `Restoring sources... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-      } else {
-        spinner.text = `Restoring sources... ${progress.percent || 0}%`;
-      }
-      break;
     case 'restoring_instances':
-      if (progress.items_total && progress.items_processed !== undefined) {
-        spinner.text = `Restoring instances... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-      } else {
-        spinner.text = `Restoring instances... ${progress.percent || 0}%`;
-      }
-      break;
     case 'restoring_relationships':
-      if (progress.items_total && progress.items_processed !== undefined) {
-        spinner.text = `Restoring relationships... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+      if (progress.message) {
+        // Use message which has the format: "Restoring concepts: 10/114 (8%)"
+        const stageName = getStageName(progress.stage);
+        const detailMatch = progress.message.match(/:\s*(.+)/);
+        if (detailMatch) {
+          state.spinner.text = `${stageName} ${detailMatch[1]}`;
+        } else {
+          state.spinner.text = progress.message;
+        }
+      } else if (progress.items_total && progress.items_processed !== undefined) {
+        const stageName = getStageName(progress.stage);
+        state.spinner.text = `${stageName} ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
       } else {
-        spinner.text = `Restoring relationships... ${progress.percent || 0}%`;
+        state.spinner.text = `${getStageName(progress.stage)} ${progress.percent || 0}%`;
       }
       break;
     case 'rollback':
-      spinner.fail('Restore failed - rolling back to checkpoint');
-      spinner = require('ora')(progress.message || 'Rolling back...').start();
+      state.spinner.fail('Restore failed - rolling back to checkpoint');
+      state.spinner = ora(progress.message || 'Rolling back...').start();
+      state.currentStage = progress.stage;
       break;
     case 'completed':
-      spinner.text = `Restore complete! ${progress.percent || 100}%`;
+      state.spinner.text = `Restore complete! ${progress.percent || 100}%`;
       break;
     default:
       if (progress.message) {
-        spinner.text = progress.message;
+        state.spinner.text = progress.message;
       } else {
-        spinner.text = `Restoring... ${progress.percent || 0}%`;
+        state.spinner.text = `Restoring... ${progress.percent || 0}%`;
       }
   }
+
+  return state.spinner;
+}
+
+/**
+ * Get user-friendly stage name
+ */
+function getStageName(stage: string): string {
+  const stageNames: Record<string, string> = {
+    'creating_checkpoint': 'Creating checkpoint backup',
+    'loading_backup': 'Loading backup file',
+    'restoring_concepts': 'Restoring concepts',
+    'restoring_sources': 'Restoring sources',
+    'restoring_instances': 'Restoring instances',
+    'restoring_relationships': 'Restoring relationships',
+    'completed': 'Restore complete',
+    'rollback': 'Rolling back'
+  };
+
+  return stageNames[stage] || stage;
 }
 
 // ========== Status Command ==========
