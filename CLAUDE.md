@@ -55,9 +55,11 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 - `client/install.sh` - Install kg CLI globally
 
 ### Documentation
-- `docs/ARCHITECTURE.md` - System design
-- `docs/QUICKSTART.md` - Getting started guide
-- `docs/AI_PROVIDERS.md` - AI configuration details
+- `docs/README.md` - Documentation index
+- `docs/architecture/ARCHITECTURE.md` - System design
+- `docs/architecture/ADR-016-apache-age-migration.md` - Apache AGE migration
+- `docs/guides/QUICKSTART.md` - Getting started guide
+- `docs/guides/AI_PROVIDERS.md` - AI configuration details
 - `README.md` - Main documentation
 
 ## Development Workflow
