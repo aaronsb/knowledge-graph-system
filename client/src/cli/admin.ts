@@ -86,18 +86,27 @@ async function trackJobWithSSE(
         spinner = updateSpinnerForProgress(spinner, progress);
       },
       onCompleted: async (result) => {
-        // Complete the final stage
+        // Complete the final stage with consistent stopAndPersist
         const state: ProgressState = (spinner as any).__progressState;
         if (state && state.currentStage) {
           const finalStats = state.stageStats.get(state.currentStage);
           if (finalStats) {
             const progressBar = createProgressBar(finalStats.total, finalStats.total);
-            state.spinner.succeed(getStageName(state.currentStage) + ` ${progressBar} ${finalStats.total}/${finalStats.total}`);
+            state.spinner.stopAndPersist({
+              symbol: colors.status.success('✓'),
+              text: getStageName(state.currentStage) + ` ${progressBar} ${finalStats.total}/${finalStats.total}`
+            });
           } else {
-            state.spinner.succeed(getStageName(state.currentStage));
+            state.spinner.stopAndPersist({
+              symbol: colors.status.success('✓'),
+              text: getStageName(state.currentStage)
+            });
           }
         } else {
-          spinner.succeed('Restore complete!');
+          spinner.stopAndPersist({
+            symbol: colors.status.success('✓'),
+            text: 'Restore complete!'
+          });
         }
 
         // Fetch final job status for complete information
@@ -177,29 +186,7 @@ function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
 
   const state: ProgressState = (spinner as any).__progressState;
 
-  // Detect stage change
-  const stageChanged = state.currentStage && state.currentStage !== progress.stage;
-
-  if (stageChanged) {
-    // Complete previous stage with final stats and progress bar
-    const prevStats = state.stageStats.get(state.currentStage!);
-    if (prevStats) {
-      const progressBar = createProgressBar(prevStats.total, prevStats.total);
-      state.spinner.succeed(getStageName(state.currentStage!) + ` ${progressBar} ${prevStats.total}/${prevStats.total}`);
-    } else {
-      state.spinner.succeed(getStageName(state.currentStage!));
-    }
-
-    // Start new spinner for new stage
-    state.spinner = ora(getStageName(progress.stage)).start();
-    state.currentStage = progress.stage;
-  } else if (!state.currentStage) {
-    // First stage
-    state.currentStage = progress.stage;
-    state.spinner.start();
-  }
-
-  // Update current stage stats
+  // Update current stage stats FIRST (before detecting stage change)
   if (progress.message) {
     // Extract items from message: "Restoring concepts: 10/114 (8%)"
     const match = progress.message.match(/(\d+)\/(\d+)/);
@@ -209,6 +196,35 @@ function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
         total: parseInt(match[2])
       });
     }
+  }
+
+  // Detect stage change
+  const stageChanged = state.currentStage && state.currentStage !== progress.stage;
+
+  if (stageChanged) {
+    // Complete previous stage with final stats and progress bar
+    const prevStats = state.stageStats.get(state.currentStage!);
+    if (prevStats) {
+      const progressBar = createProgressBar(prevStats.total, prevStats.total);
+      state.spinner.stopAndPersist({
+        symbol: colors.status.success('✓'),
+        text: getStageName(state.currentStage!) + ` ${progressBar} ${prevStats.total}/${prevStats.total}`
+      });
+    } else {
+      state.spinner.stopAndPersist({
+        symbol: colors.status.success('✓'),
+        text: getStageName(state.currentStage!)
+      });
+    }
+
+    // Small delay to ensure line is written
+    // Start new spinner for new stage
+    state.spinner = ora(getStageName(progress.stage)).start();
+    state.currentStage = progress.stage;
+  } else if (!state.currentStage) {
+    // First stage
+    state.currentStage = progress.stage;
+    state.spinner.start();
   }
 
   // Update spinner text based on stage
