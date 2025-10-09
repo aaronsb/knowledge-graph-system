@@ -807,3 +807,276 @@ gunzip -c backup_20251008.sql.gz | psql knowledge_graph
 ```
 
 This unification directly impacts ADR-015 (Backup/Restore Streaming) by eliminating the need for custom backup logic - standard PostgreSQL tools handle everything.
+
+### pgvector Adoption for Embeddings Management
+
+**Why pgvector:**
+
+pgvector is a PostgreSQL extension purpose-built for vector similarity search, providing the foundation for our semantic concept search capabilities.
+
+**Key Advantages:**
+1. **Native PostgreSQL Integration:** No external vector database needed
+2. **ACID Transactions:** Vector operations within PostgreSQL transactions
+3. **Multiple Distance Metrics:** Cosine, L2 (Euclidean), Inner Product
+4. **Approximate Nearest Neighbor (ANN):** IVFFlat and HNSW indexes for fast search
+5. **Hybrid Queries:** Mix vector search with graph traversal in single query
+6. **Mature & Production-Ready:** Used by companies like Supabase, Neon
+
+**Installation & Setup:**
+
+```sql
+-- Enable pgvector extension
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Verify installation
+SELECT * FROM pg_extension WHERE extname = 'vector';
+```
+
+**Embedding Storage Strategy:**
+
+AGE stores concept properties as JSONB, embeddings are stored as JSONB arrays and cast to vector type for similarity operations:
+
+```sql
+-- Concept vertex with embedding (AGE)
+SELECT * FROM cypher('knowledge_graph', $$
+    CREATE (c:Concept {
+        concept_id: 'linear-thinking',
+        label: 'Linear Thinking Pattern',
+        embedding: [0.123, -0.456, 0.789, ...]  -- Stored as JSONB array
+    })
+$$) as (result agtype);
+
+-- Extract and index embeddings (PostgreSQL + pgvector)
+CREATE INDEX concept_embedding_idx
+ON ag_catalog.concept
+USING ivfflat ((properties->>'embedding')::vector(1536) vector_cosine_ops)
+WITH (lists = 100);
+```
+
+**Vector Search Implementation:**
+
+```python
+# src/api/lib/age_client.py
+def vector_search(
+    self,
+    embedding: List[float],
+    top_k: int = 10,
+    threshold: float = 0.7
+) -> List[Dict[str, Any]]:
+    """
+    Semantic search using pgvector cosine similarity.
+
+    Args:
+        embedding: Query embedding vector (1536 dims for OpenAI)
+        top_k: Number of results to return
+        threshold: Minimum similarity score (0.0-1.0)
+
+    Returns:
+        List of concepts with similarity scores
+    """
+    # Convert embedding to PostgreSQL vector literal
+    vector_str = '[' + ','.join(map(str, embedding)) + ']'
+
+    # pgvector uses <-> for cosine distance (lower is more similar)
+    # Convert to similarity: 1 - distance
+    query = """
+        SELECT
+            properties->>'concept_id' as concept_id,
+            properties->>'label' as label,
+            1 - ((properties->>'embedding')::vector <-> %s::vector) as similarity
+        FROM ag_catalog.concept
+        WHERE 1 - ((properties->>'embedding')::vector <-> %s::vector) >= %s
+        ORDER BY (properties->>'embedding')::vector <-> %s::vector
+        LIMIT %s
+    """
+
+    results = self._execute_sql(
+        query,
+        (vector_str, vector_str, threshold, vector_str, top_k)
+    )
+
+    return [
+        {
+            'concept_id': row['concept_id'],
+            'label': row['label'],
+            'similarity': float(row['similarity'])
+        }
+        for row in results
+    ]
+```
+
+**Index Types and Performance:**
+
+pgvector provides two index types for approximate nearest neighbor (ANN) search:
+
+**1. IVFFlat (Inverted File Flat):**
+- Best for: Medium-sized datasets (10K-1M vectors)
+- Faster index build time
+- Lower memory usage
+- Good recall/performance balance
+
+```sql
+-- IVFFlat index (current implementation)
+CREATE INDEX concept_embedding_ivf
+ON ag_catalog.concept
+USING ivfflat ((properties->>'embedding')::vector(1536) vector_cosine_ops)
+WITH (lists = 100);
+
+-- Tuning parameter: lists
+-- - Rule of thumb: lists = rows / 1000 (between 10-10000)
+-- - 10K concepts: lists = 10
+-- - 100K concepts: lists = 100
+-- - 1M concepts: lists = 1000
+```
+
+**2. HNSW (Hierarchical Navigable Small World):**
+- Best for: Large datasets (>1M vectors)
+- Slower index build, but faster queries
+- Higher memory usage
+- Better recall than IVFFlat
+
+```sql
+-- HNSW index (recommended for production at scale)
+CREATE INDEX concept_embedding_hnsw
+ON ag_catalog.concept
+USING hnsw ((properties->>'embedding')::vector(1536) vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
+
+-- Tuning parameters:
+-- - m: Number of connections per layer (default 16)
+--   Higher = better recall but slower build and more memory
+-- - ef_construction: Size of dynamic candidate list (default 64)
+--   Higher = better recall but slower index build
+```
+
+**Distance Metrics:**
+
+pgvector supports three distance operators:
+
+```sql
+-- Cosine distance: <-> (RECOMMENDED for normalized embeddings)
+-- Range: 0 (identical) to 2 (opposite)
+-- Convert to similarity: 1 - distance
+SELECT 1 - (embedding <-> query::vector) as cosine_similarity;
+
+-- L2 (Euclidean) distance: <->
+-- Range: 0 (identical) to ∞
+SELECT embedding <-> query::vector as l2_distance;
+
+-- Inner product (negative): <#>
+-- Range: -∞ to 0
+-- For normalized vectors, equivalent to cosine similarity
+SELECT -(embedding <#> query::vector) as inner_product;
+```
+
+**For OpenAI embeddings (normalized), use cosine distance (`<->`) with `vector_cosine_ops` index.**
+
+**Hybrid Queries (Vector + Graph):**
+
+Combine pgvector similarity search with AGE graph traversal:
+
+```sql
+-- Find similar concepts and traverse relationships
+WITH similar_concepts AS (
+    SELECT
+        properties->>'concept_id' as concept_id,
+        1 - ((properties->>'embedding')::vector <-> %s::vector) as similarity
+    FROM ag_catalog.concept
+    ORDER BY (properties->>'embedding')::vector <-> %s::vector
+    LIMIT 10
+)
+SELECT * FROM cypher('knowledge_graph', $$
+    MATCH (c:Concept)-[r]->(related:Concept)
+    WHERE c.concept_id IN $similar_ids
+    RETURN c.concept_id, c.label, type(r), related.label
+$$) as (concept_id agtype, label agtype, rel_type agtype, related_label agtype);
+```
+
+**Performance Benchmarks:**
+
+Expected performance characteristics (based on pgvector documentation):
+
+| Dataset Size | Index Type | Build Time | Query Time (k=10) | Recall@10 |
+|--------------|-----------|------------|-------------------|-----------|
+| 10K vectors  | IVFFlat   | ~1s        | ~10ms             | 95%       |
+| 100K vectors | IVFFlat   | ~10s       | ~20ms             | 93%       |
+| 1M vectors   | IVFFlat   | ~100s      | ~50ms             | 90%       |
+| 1M vectors   | HNSW      | ~300s      | ~10ms             | 98%       |
+| 10M vectors  | HNSW      | ~3000s     | ~15ms             | 97%       |
+
+**Memory Requirements:**
+
+```
+IVFFlat: ~4 bytes per dimension × dataset size
+HNSW: ~4 bytes per dimension × dataset size × (m + 1)
+
+For 1536-dimensional embeddings (OpenAI):
+- 100K concepts with IVFFlat: ~600 MB
+- 100K concepts with HNSW (m=16): ~10 GB
+```
+
+**Monitoring and Maintenance:**
+
+```sql
+-- Check index usage
+SELECT
+    schemaname,
+    tablename,
+    indexname,
+    idx_scan as index_scans,
+    idx_tup_read as tuples_read,
+    idx_tup_fetch as tuples_fetched
+FROM pg_stat_user_indexes
+WHERE indexname LIKE '%embedding%';
+
+-- Rebuild index after bulk inserts
+REINDEX INDEX CONCURRENTLY concept_embedding_idx;
+
+-- Analyze table for query planner
+ANALYZE ag_catalog.concept;
+
+-- Monitor query performance
+EXPLAIN ANALYZE
+SELECT properties->>'concept_id'
+FROM ag_catalog.concept
+ORDER BY (properties->>'embedding')::vector <-> '[...]'::vector
+LIMIT 10;
+```
+
+**Migration Path:**
+
+**Phase 1 (Current - IVFFlat):**
+- Use IVFFlat for development and initial production
+- Simple setup, good enough for <100K concepts
+- Tune `lists` parameter based on dataset growth
+
+**Phase 2 (Production Scale - HNSW):**
+- Switch to HNSW when dataset exceeds 500K concepts
+- Monitor query latency and recall metrics
+- Tune `m` and `ef_construction` for optimal performance
+
+**Future Optimization:**
+
+```sql
+-- Pre-filter with graph constraints THEN vector search
+-- More efficient than vector search over entire corpus
+SELECT * FROM cypher('knowledge_graph', $$
+    MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+    WHERE s.ontology = 'philosophy'
+    RETURN c
+$$) as concept_subgraph
+JOIN LATERAL (
+    SELECT
+        1 - ((properties->>'embedding')::vector <-> %s::vector) as similarity
+    FROM ag_catalog.concept
+    WHERE id = concept_subgraph.id
+    ORDER BY similarity DESC
+    LIMIT 10
+) vector_results ON true;
+```
+
+**References:**
+- pgvector Documentation: https://github.com/pgvector/pgvector
+- Performance Tuning Guide: https://github.com/pgvector/pgvector#performance
+- HNSW Paper: https://arxiv.org/abs/1603.09320
+- IVFFlat Algorithm: https://hal.inria.fr/inria-00514462/document
