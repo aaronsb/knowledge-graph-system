@@ -353,11 +353,65 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Create a database backup
+   * Create a database backup (ADR-015 Phase 2: Streaming Download)
+   *
+   * Downloads backup as a stream and saves to specified path.
+   * Provides progress callback for tracking download.
+   *
+   * @param request Backup request (type and optional ontology)
+   * @param savePath Where to save the backup file
+   * @param onProgress Optional callback for progress updates (bytes downloaded, total bytes, percent)
+   * @returns Metadata about the downloaded backup
    */
-  async createBackup(request: BackupRequest): Promise<BackupResponse> {
-    const response = await this.client.post('/admin/backup', request);
-    return response.data;
+  async createBackup(
+    request: BackupRequest,
+    savePath: string,
+    onProgress?: (downloaded: number, total: number, percent: number) => void
+  ): Promise<{ filename: string; path: string; size: number }> {
+    const response = await this.client.post('/admin/backup', request, {
+      responseType: 'stream'
+    });
+
+    // Extract filename from Content-Disposition header
+    const contentDisposition = response.headers['content-disposition'];
+    const filenameMatch = contentDisposition?.match(/filename=(.+)/);
+    const filename = filenameMatch ? filenameMatch[1] : 'backup.json';
+
+    // Get content length if available
+    const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+
+    // Create write stream
+    const writer = fs.createWriteStream(savePath);
+    let downloadedBytes = 0;
+
+    // Pipe response to file with progress tracking
+    response.data.on('data', (chunk: Buffer) => {
+      downloadedBytes += chunk.length;
+      if (onProgress && totalBytes > 0) {
+        const percent = Math.round((downloadedBytes / totalBytes) * 100);
+        onProgress(downloadedBytes, totalBytes, percent);
+      }
+    });
+
+    // Wait for download to complete
+    await new Promise<void>((resolve, reject) => {
+      response.data.pipe(writer);
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+      response.data.on('error', reject);
+    });
+
+    // Rename file to use server-provided filename if different
+    const finalPath = savePath.replace(/[^/]+\.json$/, filename);
+    if (finalPath !== savePath && fs.existsSync(savePath)) {
+      fs.renameSync(savePath, finalPath);
+    }
+
+    return {
+      filename,
+      path: finalPath,
+      size: downloadedBytes
+    };
   }
 
   /**
