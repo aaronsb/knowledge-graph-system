@@ -12,21 +12,23 @@ This uses the same concept matching algorithm as ingestion:
 """
 
 from typing import Dict, Any, List, Tuple, Optional
-from neo4j import Session
+import json
+import numpy as np
 
 from .console import Console, Colors
-from .neo4j_ops import Neo4jConnection
+from .age_ops import AGEConnection
+from .age_client import AGEClient
 
 
 class ConceptMatcher:
     """Match external concepts to similar concepts in target database"""
 
-    def __init__(self, conn: Neo4jConnection, similarity_threshold: float = 0.85):
+    def __init__(self, conn: AGEConnection, similarity_threshold: float = 0.85):
         """
         Initialize concept matcher
 
         Args:
-            conn: Neo4j connection
+            conn: AGE connection
             similarity_threshold: Minimum similarity for matching (default: 0.85)
         """
         self.conn = conn
@@ -89,14 +91,14 @@ class ConceptMatcher:
     def match_concept_in_database(
         self,
         external_concept: Dict[str, Any],
-        session: Session
+        client: AGEClient
     ) -> Optional[Dict[str, Any]]:
         """
         Find similar concept in target database using vector similarity
 
         Args:
             external_concept: External concept metadata
-            session: Neo4j session
+            client: AGE client
 
         Returns:
             Matched concept with similarity score, or None if no match
@@ -111,39 +113,60 @@ class ConceptMatcher:
             # Can't match without label or embedding
             return None
 
-        # Vector similarity search
-        result = session.run("""
-            CALL db.index.vector.queryNodes('concept-embeddings', 5, $embedding)
-            YIELD node, score
-            WHERE score > $threshold
-            RETURN node.concept_id as concept_id,
-                   node.label as label,
-                   score
-            ORDER BY score DESC
-            LIMIT 1
-        """, embedding=embedding, threshold=self.threshold)
+        # Fetch all concepts with embeddings
+        query = """
+            MATCH (c:Concept)
+            WHERE c.embedding IS NOT NULL
+            RETURN c.concept_id as concept_id,
+                   c.label as label,
+                   c.embedding as embedding
+        """
+        results = client._execute_cypher(query)
 
-        match = result.single()
-        if match:
-            return {
-                "concept_id": match["concept_id"],
-                "label": match["label"],
-                "similarity": match["score"]
-            }
+        if not results:
+            return None
 
-        return None
+        # Compute cosine similarity in Python
+        embedding_vec = np.array(embedding)
+        best_match = None
+        best_score = self.threshold
+
+        for record in results:
+            concept_id = str(record.get("concept_id", "")).strip('"')
+            label = str(record.get("label", "")).strip('"')
+            embedding_str = str(record.get("embedding", "[]"))
+
+            try:
+                candidate_embedding = json.loads(embedding_str)
+                candidate_vec = np.array(candidate_embedding)
+
+                # Cosine similarity
+                similarity = float(np.dot(embedding_vec, candidate_vec) /
+                                 (np.linalg.norm(embedding_vec) * np.linalg.norm(candidate_vec)))
+
+                if similarity > best_score:
+                    best_score = similarity
+                    best_match = {
+                        "concept_id": concept_id,
+                        "label": label,
+                        "similarity": similarity
+                    }
+            except (json.JSONDecodeError, ValueError):
+                continue
+
+        return best_match
 
     def create_restitch_plan(
         self,
         external_concepts: List[Dict[str, Any]],
-        session: Session
+        client: AGEClient
     ) -> Dict[str, Any]:
         """
         Create re-stitching plan for external concepts
 
         Args:
             external_concepts: List of external concept references
-            session: Neo4j session
+            client: AGE client
 
         Returns:
             Re-stitching plan with matches and recommendations
@@ -162,7 +185,7 @@ class ConceptMatcher:
         Console.info(f"Analyzing {len(external_concepts)} external concept references...")
 
         for ext_concept in external_concepts:
-            match = self.match_concept_in_database(ext_concept, session)
+            match = self.match_concept_in_database(ext_concept, client)
 
             if match:
                 similarity = match["similarity"]
@@ -237,7 +260,7 @@ class ConceptMatcher:
     def execute_restitch(
         self,
         plan: Dict[str, Any],
-        session: Session,
+        client: AGEClient,
         create_placeholders: bool = False
     ) -> Dict[str, int]:
         """
@@ -245,7 +268,7 @@ class ConceptMatcher:
 
         Args:
             plan: Re-stitching plan from create_restitch_plan()
-            session: Neo4j session
+            client: AGE client
             create_placeholders: If True, create placeholder concepts for unmatched
 
         Returns:
@@ -271,7 +294,7 @@ class ConceptMatcher:
                         MERGE (from_concept)-[r:""" + rel["type"] + """]->(target_concept)
                         RETURN count(r) as created
                     """
-                    session.run(query, from_id=rel["from"], target_id=match["target_id"])
+                    client._execute_cypher(query, params={"from_id": rel["from"], "target_id": match["target_id"]})
                 else:
                     # External concept is the 'from' side
                     # Update relationship: (external)-[type]->(to) → (target)-[type]->(to)
@@ -281,7 +304,7 @@ class ConceptMatcher:
                         MERGE (target_concept)-[r:""" + rel["type"] + """]->(to_concept)
                         RETURN count(r) as created
                     """
-                    session.run(query, to_id=rel["to"], target_id=match["target_id"])
+                    client._execute_cypher(query, params={"to_id": rel["to"], "target_id": match["target_id"]})
 
             stats["restitched"] += len(match["relationships"])
             Console.progress(stats["restitched"],
@@ -300,7 +323,7 @@ class ConceptMatcher:
                                   c.search_terms = []
                     RETURN c
                 """
-                session.run(query, concept_id=unmatch["external_id"])
+                client._execute_cypher(query, params={"concept_id": unmatch["external_id"]})
                 stats["placeholders"] += 1
         else:
             stats["skipped"] = len(plan["unmatched"])
