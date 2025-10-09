@@ -245,9 +245,100 @@ def safe_operation_with_checkpoint(operation_func, *args, **kwargs):
 - Multi-user coordination (prevent concurrent risky ops)
 - Checkpoint retention policies (keep last N failures for debugging)
 
-## Implementation
+## Implementation Status
 
-### Phase 1: Backup Download (Priority: High)
+### Phase 1: Backup Download ✅ COMPLETED
+**Status:** Merged in PR #17 (2025-10-09)
+**Commits:** 8b1aac7, 654bb90, 88bd10d
+
+**Implemented:**
+- Server-side streaming backup generation (`src/api/lib/backup_streaming.py`)
+- Client-side streaming download with progress (`client/src/api/client.ts`)
+- Ora spinner showing download progress (MB downloaded/total)
+- Automatic filename extraction from Content-Disposition header
+- Client-side storage in configured directory (`~/.local/share/kg/backups`)
+- Comprehensive test coverage (100% on backup_streaming.py)
+
+**Verified:**
+- Full database backup: 5.62 MB streamed successfully
+- Download progress indicator works correctly
+- File saved with server-provided timestamped filename
+- `kg admin list-backups` correctly shows downloaded backups
+
+### Phase 2: Restore Upload 🚧 IN PROGRESS
+**Status:** Partially complete
+**Branch:** feature/api-restore-upload-streaming
+
+**Completed:**
+- ✅ Backup integrity checker (`src/api/lib/backup_integrity.py`) - commit d0553c4
+  - Validates JSON format, required fields, data completeness
+  - Checks reference integrity (concept_id, source_id consistency)
+  - Detects external dependencies in ontology backups
+  - Validates statistics consistency
+  - 24 comprehensive tests (100% pass rate)
+- ✅ Data contract pattern (`src/api/constants.py`) - commit d0553c4
+  - Centralized schema governance (RELATIONSHIP_TYPES, BACKUP_TYPES, etc.)
+  - Single source of truth for graph schema
+  - Supports forward compatibility (old backups remain valid)
+  - Updated LLM extractor to use shared constants
+
+**Remaining:**
+- 📋 Restore upload endpoint (UploadFile with multipart streaming)
+- 📋 Restore worker with job queue integration
+- 📋 Client-side restore upload with progress bar
+- 📋 Restore progress polling (match ingestion pattern)
+- 📋 Temp file cleanup (worker finally block + startup cleanup)
+- 📋 Full backup/restore cycle testing with checkpoint rollback
+
+### Phase 3: Integrity Checks ✅ COMPLETED
+**Status:** Implemented with data contract pattern
+**Commit:** d0553c4 (2025-10-09)
+
+**Implementation:** `src/api/lib/backup_integrity.py` (175 lines, 72% coverage)
+- `BackupIntegrityChecker` class with comprehensive validation
+- Validates format, references, statistics, external dependencies
+- Forward-compatible with schema evolution (warnings for unknown types)
+- Supports both file and in-memory data validation
+
+**Tests:** `tests/api/test_backup_integrity.py` (24 tests, 100% pass)
+- Unit tests: format, references, statistics, external deps
+- Integration tests: file operations, convenience functions
+- Edge cases: empty backups, missing fields, invalid JSON
+
+**Usage:**
+```python
+from src.api.lib.backup_integrity import check_backup_integrity
+
+result = check_backup_integrity("/path/to/backup.json")
+if result.valid:
+    restore_backup(backup_file)
+else:
+    for error in result.errors:
+        print(f"ERROR: {error.message}")
+```
+
+### Phase 4: Progress Tracking 📋 PENDING
+**Priority:** Medium
+**Depends on:** Phase 2 restore worker implementation
+
+**Planned:**
+- Use existing job queue pattern from ingestion
+- Worker updates progress during restore (nodes, relationships, percent)
+- Client polls for progress updates with ora spinner
+- Match POC quality (detailed feedback during operations)
+
+### Phase 5: Temp File Cleanup 📋 PENDING
+**Priority:** High
+**Depends on:** Phase 2 restore worker implementation
+
+**Planned:**
+- Worker cleanup in finally block (always runs)
+- Startup cleanup for abandoned files (>24 hours old)
+- UUID-based temp filenames to avoid conflicts
+
+## Implementation Details
+
+### Phase 1: Backup Download (Implementation)
 
 **Client Changes:**
 ```typescript
