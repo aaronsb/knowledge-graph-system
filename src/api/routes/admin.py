@@ -192,10 +192,10 @@ async def reset_database(request: ResetRequest):
 
     ⚠️ **DANGER**: This operation:
     - Stops all containers
-    - Deletes the Neo4j database
+    - Deletes the PostgreSQL database
     - Removes all data volumes
     - Restarts with a clean database
-    - Re-initializes schema
+    - Re-initializes AGE schema
 
     **Authentication required**: Must provide username and password.
     (Currently placeholder - will be validated in Phase 2)

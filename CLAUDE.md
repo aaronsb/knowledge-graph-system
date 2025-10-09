@@ -21,10 +21,17 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 
 **Tech Stack:**
 - Python 3.11+ FastAPI (REST API server + ingestion pipeline)
-- Apache AGE / PostgreSQL 16 (graph database)
+- Apache AGE / PostgreSQL 16 (graph database using openCypher)
 - TypeScript/Node.js (unified CLI + MCP client)
 - Docker Compose (infrastructure)
 - OpenAI/Anthropic APIs (LLM providers)
+
+**Query Language:**
+- **openCypher:** Open-source graph query language implemented by Apache AGE
+- **ISO/IEC 39075:2024 GQL:** Standardized graph query language based on openCypher
+- **Important:** AGE uses openCypher, not Neo4j's proprietary Cypher implementation
+  - This explains syntax differences (e.g., no `ON CREATE SET` / `ON MATCH SET`)
+  - See ADR-016 "openCypher Compatibility" section for details
 
 ## Important Files
 
@@ -373,8 +380,14 @@ kg database stats  # Verify counts
 
 ## Resources
 
+### Graph Database & Query Language
 - Apache AGE: https://age.apache.org/
-- AGE Cypher Guide: https://age.apache.org/age-manual/master/intro/overview.html
+- AGE Manual: https://age.apache.org/age-manual/master/intro/overview.html
+- openCypher: https://opencypher.org/
+- ISO/IEC 39075 GQL Standard: https://www.iso.org/standard/76120.html
+- openCypher Language Reference: https://s3.amazonaws.com/artifacts.opencypher.org/openCypher9.pdf
+
+### Frameworks & APIs
 - FastAPI: https://fastapi.tiangolo.com/
 - MCP Protocol: https://spec.modelcontextprotocol.io/
 - OpenAI API: https://platform.openai.com/docs

@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
+from ..lib.age_client import AGEClient
+
 from ..models.admin import (
     SystemStatusResponse,
     DockerStatus,
@@ -64,7 +66,7 @@ class AdminService:
             ),
             database_connection=DatabaseConnection(
                 connected=db_connected,
-                uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+                uri=f"postgresql://{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'knowledge_graph')}",
                 error=db_error,
             ),
             database_stats=db_stats,
@@ -77,8 +79,8 @@ class AdminService:
                 anthropic_key_configured=anthropic_configured,
                 openai_key_configured=openai_configured,
             ),
-            neo4j_browser_url="http://localhost:7474" if docker_running else None,
-            bolt_url="bolt://localhost:7687" if docker_running else None,
+            neo4j_browser_url=f"postgresql://{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'knowledge_graph')}" if docker_running else None,
+            bolt_url=None,  # PostgreSQL doesn't use Bolt protocol
         )
 
     async def list_backups(self) -> ListBackupsResponse:
@@ -265,20 +267,20 @@ class AdminService:
     # ========== Helper Methods ==========
 
     async def _check_docker_running(self) -> bool:
-        """Check if Neo4j Docker container is running"""
+        """Check if PostgreSQL Docker container is running"""
         proc = await asyncio.create_subprocess_exec(
             "docker", "ps", "--format", "{{.Names}}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await proc.communicate()
-        return "knowledge-graph-neo4j" in stdout.decode()
+        return "knowledge-graph-postgres" in stdout.decode()
 
     async def _get_docker_info(self) -> Dict[str, str]:
         """Get Docker container info"""
         proc = await asyncio.create_subprocess_exec(
             "docker", "ps",
-            "--filter", "name=knowledge-graph-neo4j",
+            "--filter", "name=knowledge-graph-postgres",
             "--format", "{{.Names}}\t{{.Status}}\t{{.Ports}}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -291,10 +293,12 @@ class AdminService:
 
     async def _check_database_connection(self) -> tuple[bool, Optional[str]]:
         """Check if database is connectable"""
+        postgres_user = os.getenv("POSTGRES_USER", "admin")
+        postgres_db = os.getenv("POSTGRES_DB", "knowledge_graph")
         proc = await asyncio.create_subprocess_exec(
-            "docker", "exec", "knowledge-graph-neo4j",
-            "cypher-shell", "-u", "neo4j", "-p", "password",
-            "RETURN 1",
+            "docker", "exec", "knowledge-graph-postgres",
+            "psql", "-U", postgres_user, "-d", postgres_db,
+            "-c", "SELECT 1",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -304,30 +308,54 @@ class AdminService:
         return connected, error
 
     async def _get_database_stats(self) -> DatabaseStats:
-        """Get database statistics"""
-        async def query_count(cypher: str) -> int:
-            proc = await asyncio.create_subprocess_exec(
-                "docker", "exec", "knowledge-graph-neo4j",
-                "cypher-shell", "-u", "neo4j", "-p", "password",
-                cypher, "--format", "plain",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+        """Get database statistics using Apache AGE via AGEClient"""
+        try:
+            # Use AGEClient which handles all AGE connection logic
+            client = AGEClient()
+
+            # Execute count queries using AGEClient
+            def query_count(cypher_query: str) -> int:
+                try:
+                    results = client._execute_cypher(cypher_query, fetch_one=True)
+                    if results:
+                        # Get the count value (column name depends on the RETURN clause)
+                        count_value = list(results.values())[0] if results else 0
+                        return int(count_value)
+                    return 0
+                except Exception:
+                    return 0
+
+            # Run queries in thread pool to avoid blocking async
+            loop = asyncio.get_event_loop()
+            concepts = await loop.run_in_executor(
+                None, query_count, "MATCH (c:Concept) RETURN count(c)"
             )
-            stdout, _ = await proc.communicate()
-            lines = stdout.decode().strip().split("\n")
-            return int(lines[-1]) if lines else 0
+            sources = await loop.run_in_executor(
+                None, query_count, "MATCH (s:Source) RETURN count(s)"
+            )
+            instances = await loop.run_in_executor(
+                None, query_count, "MATCH (i:Instance) RETURN count(i)"
+            )
+            relationships = await loop.run_in_executor(
+                None, query_count, "MATCH ()-[r]->() RETURN count(r)"
+            )
 
-        concepts = await query_count("MATCH (c:Concept) RETURN count(c)")
-        sources = await query_count("MATCH (s:Source) RETURN count(s)")
-        instances = await query_count("MATCH (i:Instance) RETURN count(i)")
-        relationships = await query_count("MATCH ()-[r]->() RETURN count(r)")
+            client.close()
 
-        return DatabaseStats(
-            concepts=concepts,
-            sources=sources,
-            instances=instances,
-            relationships=relationships,
-        )
+            return DatabaseStats(
+                concepts=concepts,
+                sources=sources,
+                instances=instances,
+                relationships=relationships,
+            )
+        except Exception as e:
+            # If AGEClient fails, return zeros
+            return DatabaseStats(
+                concepts=0,
+                sources=0,
+                instances=0,
+                relationships=0,
+            )
 
     async def _get_python_version(self) -> Optional[str]:
         """Get Python version from venv"""

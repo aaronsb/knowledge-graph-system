@@ -10,7 +10,12 @@ Analyzes backup completeness and database integrity to detect:
 """
 
 from typing import Dict, Any, List, Set, Optional
-from neo4j import Session
+import sys
+from pathlib import Path
+
+# Add parent directory to path for AGEClient import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from api.lib.age_client import AGEClient
 
 from .console import Console, Colors
 
@@ -184,17 +189,19 @@ class DatabaseIntegrity:
     """Validate database integrity after restore"""
 
     @staticmethod
-    def check_integrity(session: Session, ontology: Optional[str] = None) -> Dict[str, Any]:
+    def check_integrity(client: AGEClient, ontology: Optional[str] = None) -> Dict[str, Any]:
         """
         Check database integrity
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Optional ontology to check (None = entire database)
 
         Returns:
             Integrity report
         """
+        import json
+
         report = {
             "ontology": ontology,
             "checks": {},
@@ -210,21 +217,28 @@ class DatabaseIntegrity:
                   AND EXISTS((c)-[:EVIDENCED_BY]->(:Instance)-[:FROM_SOURCE]->(:Source {document: $ontology}))
                 RETURN count(c) as orphan_count, collect(c.concept_id)[..10] as sample_ids
             """
-            result = session.run(query, ontology=ontology).single()
+            result = client._execute_cypher(query, params={"ontology": ontology}, fetch_one=True)
         else:
             query = """
                 MATCH (c:Concept)
                 WHERE NOT EXISTS((c)-[:APPEARS_IN]->(:Source))
                 RETURN count(c) as orphan_count, collect(c.concept_id)[..10] as sample_ids
             """
-            result = session.run(query).single()
+            result = client._execute_cypher(query, fetch_one=True)
 
-        orphan_count = result["orphan_count"]
+        orphan_count = int(str(result.get("orphan_count", 0))) if result else 0
         if orphan_count > 0:
+            # Parse sample_ids from agtype
+            sample_ids_raw = str(result.get("sample_ids", "[]"))
+            try:
+                sample_ids = json.loads(sample_ids_raw)
+            except json.JSONDecodeError:
+                sample_ids = []
+
             report["issues"].append(f"{orphan_count} orphaned concepts (no APPEARS_IN relationship)")
             report["checks"]["orphaned_concepts"] = {
                 "count": orphan_count,
-                "sample": result["sample_ids"]
+                "sample": sample_ids
             }
 
         # Check for dangling relationships (pointing to non-existent concepts)
@@ -233,8 +247,8 @@ class DatabaseIntegrity:
             WHERE c1.concept_id IS NULL OR c2.concept_id IS NULL
             RETURN count(r) as dangling_count
         """
-        result = session.run(query).single()
-        dangling_count = result["dangling_count"]
+        result = client._execute_cypher(query, fetch_one=True)
+        dangling_count = int(str(result.get("dangling_count", 0))) if result else 0
         if dangling_count > 0:
             report["issues"].append(f"{dangling_count} dangling relationships")
             report["checks"]["dangling_relationships"] = dangling_count
@@ -246,21 +260,28 @@ class DatabaseIntegrity:
                 WHERE c.embedding IS NULL OR size(c.embedding) = 0
                 RETURN count(c) as missing_embedding_count, collect(c.concept_id)[..10] as sample_ids
             """
-            result = session.run(query, ontology=ontology).single()
+            result = client._execute_cypher(query, params={"ontology": ontology}, fetch_one=True)
         else:
             query = """
                 MATCH (c:Concept)
                 WHERE c.embedding IS NULL OR size(c.embedding) = 0
                 RETURN count(c) as missing_embedding_count, collect(c.concept_id)[..10] as sample_ids
             """
-            result = session.run(query).single()
+            result = client._execute_cypher(query, fetch_one=True)
 
-        missing_emb_count = result["missing_embedding_count"]
+        missing_emb_count = int(str(result.get("missing_embedding_count", 0))) if result else 0
         if missing_emb_count > 0:
+            # Parse sample_ids from agtype
+            sample_ids_raw = str(result.get("sample_ids", "[]"))
+            try:
+                sample_ids = json.loads(sample_ids_raw)
+            except json.JSONDecodeError:
+                sample_ids = []
+
             report["issues"].append(f"{missing_emb_count} concepts missing embeddings")
             report["checks"]["missing_embeddings"] = {
                 "count": missing_emb_count,
-                "sample": result["sample_ids"]
+                "sample": sample_ids
             }
 
         # Check for instances with missing concept or source references
@@ -271,7 +292,7 @@ class DatabaseIntegrity:
                    OR NOT EXISTS((i)-[:FROM_SOURCE]->(:Source))
                 RETURN count(i) as orphan_instance_count
             """
-            result = session.run(query, ontology=ontology).single()
+            result = client._execute_cypher(query, params={"ontology": ontology}, fetch_one=True)
         else:
             query = """
                 MATCH (i:Instance)
@@ -279,9 +300,9 @@ class DatabaseIntegrity:
                    OR NOT EXISTS((i)-[:FROM_SOURCE]->(:Source))
                 RETURN count(i) as orphan_instance_count
             """
-            result = session.run(query).single()
+            result = client._execute_cypher(query, fetch_one=True)
 
-        orphan_inst_count = result["orphan_instance_count"]
+        orphan_inst_count = int(str(result.get("orphan_instance_count", 0))) if result else 0
         if orphan_inst_count > 0:
             report["warnings"].append(f"{orphan_inst_count} instances with missing references")
             report["checks"]["orphan_instances"] = orphan_inst_count
@@ -296,17 +317,28 @@ class DatabaseIntegrity:
                        collect(DISTINCT type(r)) as rel_types,
                        collect(DISTINCT c2.concept_id)[..10] as external_concepts
             """
-            result = session.run(query, ontology=ontology).single()
-            cross_ont_count = result["cross_ontology_rels"]
+            result = client._execute_cypher(query, params={"ontology": ontology}, fetch_one=True)
+            cross_ont_count = int(str(result.get("cross_ontology_rels", 0))) if result else 0
 
             if cross_ont_count > 0:
+                # Parse rel_types and external_concepts from agtype
+                rel_types_raw = str(result.get("rel_types", "[]"))
+                external_concepts_raw = str(result.get("external_concepts", "[]"))
+
+                try:
+                    rel_types = json.loads(rel_types_raw)
+                    external_concepts = json.loads(external_concepts_raw)
+                except json.JSONDecodeError:
+                    rel_types = []
+                    external_concepts = []
+
                 report["warnings"].append(
                     f"{cross_ont_count} relationships to concepts in other ontologies"
                 )
                 report["checks"]["cross_ontology_relationships"] = {
                     "count": cross_ont_count,
-                    "relationship_types": result["rel_types"],
-                    "external_concepts_sample": result["external_concepts"]
+                    "relationship_types": rel_types,
+                    "external_concepts_sample": external_concepts
                 }
 
         return report
@@ -365,12 +397,12 @@ class DatabaseIntegrity:
             print("  • Deleting ontologies may orphan concepts referenced by other ontologies")
 
     @staticmethod
-    def repair_orphaned_concepts(session: Session, ontology: Optional[str] = None) -> int:
+    def repair_orphaned_concepts(client: AGEClient, ontology: Optional[str] = None) -> int:
         """
         Repair orphaned concepts by creating missing APPEARS_IN relationships
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Optional ontology filter
 
         Returns:
@@ -385,7 +417,7 @@ class DatabaseIntegrity:
                 MERGE (c)-[:APPEARS_IN]->(s)
                 RETURN count(*) as repairs
             """
-            result = session.run(query, ontology=ontology).single()
+            result = client._execute_cypher(query, params={"ontology": ontology}, fetch_one=True)
         else:
             query = """
                 MATCH (c:Concept)
@@ -395,13 +427,13 @@ class DatabaseIntegrity:
                 MERGE (c)-[:APPEARS_IN]->(s)
                 RETURN count(*) as repairs
             """
-            result = session.run(query).single()
+            result = client._execute_cypher(query, fetch_one=True)
 
-        return result["repairs"]
+        return int(str(result.get("repairs", 0))) if result else 0
 
     @staticmethod
     def prune_dangling_relationships(
-        session: Session,
+        client: AGEClient,
         ontology: Optional[str] = None,
         dry_run: bool = False
     ) -> Dict[str, Any]:
@@ -412,7 +444,7 @@ class DatabaseIntegrity:
         source or target concept no longer exists in the database.
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Optional ontology to scope pruning
             dry_run: If True, only report what would be pruned
 
@@ -440,7 +472,7 @@ class DatabaseIntegrity:
                        c2.label as to_label,
                        id(r) as rel_id
             """
-            dangling = session.run(query, ontology=ontology)
+            dangling = client._execute_cypher(query, params={"ontology": ontology})
         else:
             # Find all dangling relationships in database
             query = """
@@ -454,22 +486,22 @@ class DatabaseIntegrity:
                        c2.label as to_label,
                        id(r) as rel_id
             """
-            dangling = session.run(query)
+            dangling = client._execute_cypher(query)
 
         # Collect dangling relationships
         for record in dangling:
             rel_info = {
-                "type": record["rel_type"],
-                "from_id": record["from_id"],
-                "from_label": record["from_label"],
-                "to_id": record["to_id"],
-                "to_label": record["to_label"],
-                "rel_id": record["rel_id"]
+                "type": str(record.get("rel_type", "")).strip('"'),
+                "from_id": str(record.get("from_id", "")).strip('"'),
+                "from_label": str(record.get("from_label", "")).strip('"'),
+                "to_id": str(record.get("to_id", "")).strip('"'),
+                "to_label": str(record.get("to_label", "")).strip('"'),
+                "rel_id": int(str(record.get("rel_id", 0)))
             }
             result["dangling_relationships"].append(rel_info)
 
             # Count by type
-            rel_type = record["rel_type"]
+            rel_type = rel_info["type"]
             if rel_type not in result["by_type"]:
                 result["by_type"][rel_type] = 0
             result["by_type"][rel_type] += 1
@@ -486,7 +518,7 @@ class DatabaseIntegrity:
                     DELETE r
                     RETURN count(r) as deleted
                 """
-                session.run(delete_query, ontology=ontology)
+                client._execute_cypher(delete_query, params={"ontology": ontology})
             else:
                 delete_query = """
                     MATCH (c1:Concept)-[r]->(c2:Concept)
@@ -495,7 +527,7 @@ class DatabaseIntegrity:
                     DELETE r
                     RETURN count(r) as deleted
                 """
-                session.run(delete_query)
+                client._execute_cypher(delete_query)
 
         return result
 

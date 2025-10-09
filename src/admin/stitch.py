@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.lib.console import Console, Colors
 from src.lib.config import Config
-from src.lib.neo4j_ops import Neo4jConnection
+from src.lib.age_ops import AGEConnection
 from src.lib.restitching import ConceptMatcher
 from src.lib.serialization import DataImporter
 from src.lib.integrity import DatabaseIntegrity
@@ -109,10 +109,10 @@ Note:
         sys.exit(1)
 
     # Connect to database
-    conn = Neo4jConnection()
+    conn = AGEConnection()
     if not conn.test_connection():
-        Console.error("✗ Cannot connect to Neo4j database")
-        Console.warning(f"  Check connection: {Config.neo4j_uri()}")
+        Console.error("✗ Cannot connect to Apache AGE database")
+        Console.warning(f"  Check connection: {Config.postgres_host()}:{Config.postgres_port()}")
         sys.exit(1)
 
     Console.success("✓ Connected to target database")
@@ -138,8 +138,8 @@ Note:
 
     # Create re-stitching plan
     Console.info("Searching target database for similar concepts...")
-    with conn.session() as session:
-        restitch_plan = matcher.create_restitch_plan(external_concepts, session)
+    client = conn.get_client()
+    restitch_plan = matcher.create_restitch_plan(external_concepts, client)
 
     # Print plan
     matcher.print_restitch_plan(restitch_plan)
@@ -182,12 +182,12 @@ Note:
 
         if apply:
             Console.section("Applying Re-stitching")
-            with conn.session() as session:
-                stats = matcher.execute_restitch(
-                    restitch_plan,
-                    session,
-                    create_placeholders=args.create_placeholders
-                )
+            client = conn.get_client()
+            stats = matcher.execute_restitch(
+                restitch_plan,
+                client,
+                create_placeholders=args.create_placeholders
+            )
 
             Console.success(f"\n✓ Re-stitched {stats['restitched']} relationships")
 
@@ -200,12 +200,12 @@ Note:
                 Console.info("  Pruning relationships to unmatched concepts...")
 
                 ontology = backup_data.get('ontology')
-                with conn.session() as session:
-                    prune_result = DatabaseIntegrity.prune_dangling_relationships(
-                        session,
-                        ontology=ontology,
-                        dry_run=False
-                    )
+                client = conn.get_client()
+                prune_result = DatabaseIntegrity.prune_dangling_relationships(
+                    client,
+                    ontology=ontology,
+                    dry_run=False
+                )
 
                 if prune_result["total_pruned"] > 0:
                     Console.success(f"✓ Pruned {prune_result['total_pruned']} unmatched relationships")
@@ -222,12 +222,12 @@ Note:
             Console.info("Removing relationships to external concepts...")
 
             ontology = backup_data.get('ontology')
-            with conn.session() as session:
-                prune_result = DatabaseIntegrity.prune_dangling_relationships(
-                    session,
-                    ontology=ontology,
-                    dry_run=False
-                )
+            client = conn.get_client()
+            prune_result = DatabaseIntegrity.prune_dangling_relationships(
+                client,
+                ontology=ontology,
+                dry_run=False
+            )
 
             DatabaseIntegrity.print_pruning_report(prune_result, dry_run=False)
 
@@ -244,12 +244,12 @@ Note:
 
         if args.create_placeholders:
             Console.warning(f"Creating {len(restitch_plan['unmatched'])} placeholder concepts...")
-            with conn.session() as session:
-                stats = matcher.execute_restitch(
-                    restitch_plan,
-                    session,
-                    create_placeholders=True
-                )
+            client = conn.get_client()
+            stats = matcher.execute_restitch(
+                restitch_plan,
+                client,
+                create_placeholders=True
+            )
             Console.success(f"✓ Created {stats['placeholders']} placeholder concepts")
             Console.warning("  ⚠ Placeholders need manual review and connection")
         else:

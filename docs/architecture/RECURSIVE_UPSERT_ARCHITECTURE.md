@@ -1,8 +1,14 @@
-# Knowledge Graph System Architecture Specification
+# Knowledge Graph System - Recursive Upsert Architecture
 
-**Version:** 1.0  
-**Date:** October 4, 2025  
-**Purpose:** Multi-document knowledge extraction, graph construction, and non-linear exploration
+## Semantic Matching & Intelligent Merge Pattern
+
+**Version:** 1.0
+**Date:** October 4, 2025
+**Purpose:** Multi-document knowledge extraction using recursive concept matching and semantic upsert
+
+> **Core Innovation:** This specification documents our recursive concept upsert pattern - a semantic matching system that intelligently merges or creates concepts based on vector similarity. This pattern is reusable for agent memory systems, thinking/reasoning traces, and any knowledge accumulation workflow.
+
+**Current Implementation Status:** See [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md) for as-built system details using Apache AGE + FastAPI + TypeScript client.
 
 ---
 
@@ -75,29 +81,48 @@ Build a system that:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    DOCUMENT INGESTION                        │
+│                    TYPESCRIPT CLIENT LAYER                   │
 │                                                              │
-│  Client Docs → Parser → LLM Processing → Graph Upsert       │
-│  (PDF/DOCX)    (Para)    (JSON Output)    (Database)        │
+│  kg CLI + MCP Server (Unified Client)                       │
+│  • Ingest documents via REST API                             │
+│  • Query concepts via natural language                       │
+│  • Manage ontologies and backups                             │
+│                                                              │
+│  See: ADR-013 (Unified TypeScript Client)                   │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    FASTAPI REST API SERVER                   │
+│                                                              │
+│  Python FastAPI + Job Queue                                 │
+│  • /ingest - Document processing with approval              │
+│  • /query - Semantic search & graph traversal               │
+│  • /admin - Backup/restore/integrity tools                  │
+│  • LLM extraction pipeline (GPT-4/Claude)                   │
+│                                                              │
+│  See: ADR-012 (API Server Architecture)                     │
+│  See: ADR-014 (Job Approval Workflow)                       │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                    KNOWLEDGE GRAPH DATABASE                  │
 │                                                              │
-│  PostgreSQL + pgvector (Phase 1)                            │
-│  OR Neo4j + Vector Plugin (Phase 2)                         │
+│  Apache AGE (PostgreSQL + openCypher)                       │
+│  + pgvector for semantic search                             │
 │                                                              │
-│  • Concepts as nodes                                         │
+│  • Concepts as vertices (RECURSIVE UPSERT)                  │
 │  • Relationships as edges                                    │
 │  • Full text instances with quotes                           │
 │  • Source provenance tracking                                │
-│  • Vector embeddings for semantic search                     │
+│  • 1536-dim embeddings (OpenAI ada-002)                     │
+│                                                              │
+│  See: ADR-016 (Apache AGE Migration with openCypher)       │
 └─────────────────────────────────────────────────────────────┘
                             ↓
                     ┌───────┴───────┐
                     │               │
          ┌──────────▼─────┐  ┌─────▼──────────┐
-         │  MCP SERVER    │  │  WEB APP       │
+         │  MCP TOOLS     │  │  WEB APP       │
          │  (Claude       │  │  (3D Graph     │
          │   Desktop)     │  │   Visualization)│
          └────────────────┘  └────────────────┘
