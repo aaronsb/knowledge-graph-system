@@ -162,6 +162,13 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Get job status (alias for getJob)
+   */
+  async getJobStatus(jobId: string): Promise<JobStatus> {
+    return this.getJob(jobId);
+  }
+
+  /**
    * List jobs
    */
   async listJobs(
