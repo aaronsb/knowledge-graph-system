@@ -422,38 +422,144 @@ const restoreCommand = new Command('restore')
         process.exit(1);
       }
 
-      console.log(colors.status.info('\nRestoring backup...'));
+      // Upload backup with progress tracking (ADR-015 Phase 2)
+      const ora = require('ora');
+      let spinner = ora('Uploading backup...').start();
 
-      // TODO: Implement ADR-015 streaming architecture
-      // See: docs/ADR-015-backup-restore-streaming.md
-      //
-      // Current limitation: API expects server-side filename
-      // Target: Client should stream file data to API
-      //   1. Read backup file from local directory
-      //   2. Upload via multipart with progress bar
-      //   3. API saves to temp location
-      //   4. API runs integrity checks
-      //   5. API performs restore with progress updates
-      //   6. API deletes temp file
-      const result = await client.restoreBackup({
-        username,
-        password,
-        backup_file: backupFilename,
-        overwrite: options.overwrite,
-        handle_external_deps: options.deps
-      });
+      try {
+        const uploadResult = await client.restoreBackup(
+          backupFilePath,
+          username,
+          password,
+          options.overwrite,
+          options.deps,
+          (uploaded: number, total: number, percent: number) => {
+            const uploadedMB = (uploaded / (1024 * 1024)).toFixed(2);
+            const totalMB = (total / (1024 * 1024)).toFixed(2);
+            spinner.text = `Uploading backup... ${percent}% (${uploadedMB}/${totalMB} MB)`;
+          }
+        );
 
-      console.log('\n' + separator());
-      console.log(colors.status.success('✓ Restore Complete'));
-      console.log(separator());
-      console.log(`\n  ${colors.ui.value(result.message)}`);
+        spinner.succeed('Backup uploaded successfully!');
 
-      if (result.warnings.length > 0) {
-        console.log(`\n  ${colors.status.warning('Warnings:')}`);
-        result.warnings.forEach(w => console.log(`    ${colors.status.dim('• ' + w)}`));
+        // Show backup stats if available
+        if (uploadResult.backup_stats) {
+          console.log(colors.status.dim(`\nBackup contains: ${uploadResult.backup_stats.concepts || 0} concepts, ${uploadResult.backup_stats.sources || 0} sources`));
+        }
+
+        if (uploadResult.integrity_warnings > 0) {
+          console.log(colors.status.warning(`⚠️  Backup has ${uploadResult.integrity_warnings} validation warnings`));
+        }
+
+        // Poll restore job for progress
+        spinner = ora('Preparing restore...').start();
+        const jobId = uploadResult.job_id;
+
+        const finalJob = await client.pollJob(jobId, (job) => {
+          const progress = job.progress;
+
+          if (progress) {
+            // Update spinner based on stage
+            switch (progress.stage) {
+              case 'creating_checkpoint':
+                spinner.text = `Creating checkpoint backup... ${progress.percent || 0}%`;
+                break;
+              case 'loading_backup':
+                spinner.text = `Loading backup file... ${progress.percent || 0}%`;
+                break;
+              case 'restoring_concepts':
+                if (progress.items_total && progress.items_processed !== undefined) {
+                  spinner.text = `Restoring concepts... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+                } else {
+                  spinner.text = `Restoring concepts... ${progress.percent || 0}%`;
+                }
+                break;
+              case 'restoring_sources':
+                if (progress.items_total && progress.items_processed !== undefined) {
+                  spinner.text = `Restoring sources... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+                } else {
+                  spinner.text = `Restoring sources... ${progress.percent || 0}%`;
+                }
+                break;
+              case 'restoring_instances':
+                if (progress.items_total && progress.items_processed !== undefined) {
+                  spinner.text = `Restoring instances... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+                } else {
+                  spinner.text = `Restoring instances... ${progress.percent || 0}%`;
+                }
+                break;
+              case 'restoring_relationships':
+                if (progress.items_total && progress.items_processed !== undefined) {
+                  spinner.text = `Restoring relationships... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+                } else {
+                  spinner.text = `Restoring relationships... ${progress.percent || 0}%`;
+                }
+                break;
+              case 'rollback':
+                spinner.fail('Restore failed - rolling back to checkpoint');
+                spinner = ora(progress.message || 'Rolling back...').start();
+                break;
+              case 'completed':
+                spinner.text = `Restore complete! ${progress.percent || 100}%`;
+                break;
+              default:
+                if (progress.message) {
+                  spinner.text = progress.message;
+                } else {
+                  spinner.text = `Restoring... ${progress.percent || 0}%`;
+                }
+            }
+          }
+        });
+
+        if (finalJob.status === 'completed') {
+          spinner.succeed('Restore completed successfully!');
+
+          console.log('\n' + separator());
+          console.log(colors.status.success('✓ Restore Complete'));
+          console.log(separator());
+
+          // Show restore statistics if available
+          if (finalJob.result?.restore_stats) {
+            const stats = finalJob.result.restore_stats;
+            console.log('\n' + colors.ui.header('Restored:'));
+            console.log(`  ${colors.ui.key('Concepts:')} ${colors.coloredCount(stats.concepts || 0)}`);
+            console.log(`  ${colors.ui.key('Sources:')} ${colors.coloredCount(stats.sources || 0)}`);
+            console.log(`  ${colors.ui.key('Instances:')} ${colors.coloredCount(stats.instances || 0)}`);
+            console.log(`  ${colors.ui.key('Relationships:')} ${colors.coloredCount(stats.relationships || 0)}`);
+          }
+
+          // Show checkpoint info
+          if (finalJob.result?.checkpoint_created) {
+            console.log('\n' + colors.status.dim('✓ Checkpoint backup created and deleted after successful restore'));
+          }
+
+          console.log('\n' + separator() + '\n');
+
+        } else if (finalJob.status === 'failed') {
+          spinner.fail('Restore failed');
+
+          console.log('\n' + separator());
+          console.log(colors.status.error('✗ Restore Failed'));
+          console.log(separator());
+
+          if (finalJob.error) {
+            console.log(`\n  ${colors.status.error(finalJob.error)}`);
+          }
+
+          // Check if rollback happened
+          if (finalJob.error && finalJob.error.includes('rolled back')) {
+            console.log(`\n  ${colors.status.success('✓ Database rolled back to checkpoint - no data loss')}`);
+          }
+
+          console.log('\n' + separator() + '\n');
+          process.exit(1);
+        }
+
+      } catch (uploadError) {
+        spinner.fail('Restore upload failed');
+        throw uploadError;
       }
-
-      console.log('\n' + separator() + '\n');
 
     } catch (error: any) {
       console.error(colors.status.error('✗ Restore failed'));
