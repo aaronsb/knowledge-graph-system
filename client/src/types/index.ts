@@ -13,6 +13,10 @@ export interface JobProgress {
   sources_created?: number;
   instances_created?: number;
   relationships_created?: number;
+  // Restore-specific progress fields (ADR-015 Phase 2)
+  items_total?: number;  // Total items to restore (concepts, sources, etc.)
+  items_processed?: number;  // Items processed so far
+  message?: string;  // Progress message
 }
 
 export interface JobCost {
@@ -42,6 +46,16 @@ export interface JobResult {
   filename?: string;
   chunks_processed?: number;
   message?: string;
+  // Restore-specific result fields (ADR-015 Phase 2)
+  restore_stats?: {
+    concepts: number;
+    sources: number;
+    instances: number;
+    relationships: number;
+  };
+  checkpoint_created?: boolean;
+  checkpoint_deleted?: boolean;
+  temp_file_cleaned?: boolean;
 }
 
 export interface JobStatus {

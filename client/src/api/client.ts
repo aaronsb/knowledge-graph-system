@@ -415,10 +415,46 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Restore a database backup
+   * Restore a database backup (ADR-015 Phase 2: Multipart Upload)
+   *
+   * Uploads backup file as multipart/form-data and queues restore job.
+   * Server validates backup, creates checkpoint, then executes restore with progress tracking.
+   *
+   * @param backupFilePath Path to backup JSON file
+   * @param username Username for authentication
+   * @param password Password for authentication
+   * @param overwrite Whether to overwrite existing data
+   * @param handleExternalDeps How to handle external dependencies ('prune', 'stitch', 'defer')
+   * @param onUploadProgress Optional callback for upload progress (bytes uploaded, total bytes, percent)
+   * @returns Job ID and initial status for polling restore progress
    */
-  async restoreBackup(request: RestoreRequest): Promise<RestoreResponse> {
-    const response = await this.client.post('/admin/restore', request);
+  async restoreBackup(
+    backupFilePath: string,
+    username: string,
+    password: string,
+    overwrite: boolean = false,
+    handleExternalDeps: string = 'prune',
+    onUploadProgress?: (uploaded: number, total: number, percent: number) => void
+  ): Promise<{ job_id: string; status: string; message: string; backup_stats: any; integrity_warnings: number }> {
+    const form = new FormData();
+    form.append('file', fs.createReadStream(backupFilePath));
+    form.append('username', username);
+    form.append('password', password);
+    form.append('overwrite', String(overwrite));
+    form.append('handle_external_deps', handleExternalDeps);
+
+    const response = await this.client.post('/admin/restore', form, {
+      headers: form.getHeaders(),
+      onUploadProgress: (progressEvent) => {
+        if (onUploadProgress && progressEvent.total) {
+          const uploaded = progressEvent.loaded;
+          const total = progressEvent.total;
+          const percent = Math.round((uploaded / total) * 100);
+          onUploadProgress(uploaded, total, percent);
+        }
+      }
+    });
+
     return response.data;
   }
 
