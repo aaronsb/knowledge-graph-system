@@ -2,25 +2,27 @@
 
 ## Project Overview
 
-A multi-dimensional knowledge extraction system that transforms linear documents into interconnected concept graphs using Neo4j, enabling semantic exploration beyond sequential reading.
+A multi-dimensional knowledge extraction system that transforms linear documents into interconnected concept graphs using Apache AGE (PostgreSQL graph extension), enabling semantic exploration beyond sequential reading.
 
 **Key Components:**
-- Neo4j graph database for concept storage
+- Apache AGE (PostgreSQL) graph database for concept storage
 - Modular AI providers (OpenAI GPT-4, Anthropic Claude)
-- Python ingestion pipeline with LLM extraction
-- MCP server for Claude Desktop integration
-- CLI tool for direct graph querying
+- Python FastAPI server with LLM extraction pipeline
+- TypeScript hybrid client (CLI + MCP server)
+- REST API for all graph operations
 
 ## Architecture
 
 ```
-Documents → LLM Extraction → Neo4j Graph → Query Interfaces (MCP + CLI)
+Documents → REST API → LLM Extraction → Apache AGE Graph
+                ↓
+         TypeScript Client (kg CLI + MCP Server)
 ```
 
 **Tech Stack:**
-- Python 3.11+ (ingestion pipeline)
-- Neo4j 5.15 (graph database)
-- TypeScript/Node.js (MCP server)
+- Python 3.11+ FastAPI (REST API server + ingestion pipeline)
+- Apache AGE / PostgreSQL 16 (graph database)
+- TypeScript/Node.js (unified CLI + MCP client)
 - Docker Compose (infrastructure)
 - OpenAI/Anthropic APIs (LLM providers)
 
@@ -29,24 +31,28 @@ Documents → LLM Extraction → Neo4j Graph → Query Interfaces (MCP + CLI)
 ### Configuration
 - `.env` - API keys and configuration (gitignored)
 - `.env.example` - Configuration template
-- `docker-compose.yml` - Neo4j container setup
-- `schema/init.cypher` - Neo4j schema initialization
+- `docker-compose.yml` - PostgreSQL + Apache AGE container setup
+- `schema/init.sql` - Apache AGE schema initialization
 
-### Core Code
-- `ingest/ai_providers.py` - Modular AI provider abstraction
-- `ingest/llm_extractor.py` - LLM concept extraction
-- `ingest/neo4j_client.py` - Graph database operations
-- `ingest/ingest.py` - Main ingestion pipeline
-- `mcp-server/src/index.ts` - MCP server with tools
-- `cli.py` - Direct CLI access to graph
+### Core Code (API Server)
+- `src/api/main.py` - FastAPI application entry point
+- `src/api/lib/ai_providers.py` - Modular AI provider abstraction
+- `src/api/lib/llm_extractor.py` - LLM concept extraction
+- `src/api/lib/age_client.py` - Apache AGE database operations
+- `src/api/lib/ingestion.py` - Ingestion pipeline
+- `src/api/routes/` - REST API endpoints (queries, jobs, ontology, admin)
+
+### Core Code (TypeScript Client)
+- `client/src/index.ts` - Unified CLI entry point
+- `client/src/cli/` - CLI command implementations
+- `client/src/api/client.ts` - REST API client
+- `client/install.sh` - Installs `kg` command globally
 
 ### Management Scripts
-- `scripts/setup.sh` - Complete system initialization
+- `scripts/start-api.sh` - Start FastAPI server
+- `scripts/stop-api.sh` - Stop API server
 - `scripts/configure-ai.sh` - AI provider configuration
-- `scripts/ingest.sh` - Document ingestion wrapper
-- `scripts/status.sh` - System health check
-- `scripts/reset.sh` - Database reset
-- `scripts/backup.sh` / `restore.sh` - Data backup/restore
+- `client/install.sh` - Install kg CLI globally
 
 ### Documentation
 - `docs/ARCHITECTURE.md` - System design
@@ -62,57 +68,83 @@ Documents → LLM Extraction → Neo4j Graph → Query Interfaces (MCP + CLI)
 # Clone and initialize
 git clone <repo>
 cd knowledge-graph-system
-./scripts/setup.sh
+
+# Start PostgreSQL + AGE
+docker-compose up -d
+
+# Create Python venv and install API dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
 # Configure AI provider
 ./scripts/configure-ai.sh
 
-# Check status
-./scripts/status.sh
+# Start API server
+./scripts/start-api.sh
+
+# Install kg CLI globally
+cd client && ./install.sh && cd ..
 ```
 
 ### Daily Development
 
 ```bash
-# Start services (if not running)
+# Start database (if not running)
 docker-compose up -d
 
-# Activate Python environment
-source venv/bin/activate
+# Start API server (if not running)
+./scripts/start-api.sh
 
-# Run tests/development
-python cli.py database stats
+# Use kg CLI for operations
+kg database stats
+kg search query "recursive depth"
+kg ingest file -o "My Ontology" document.txt
 
 # Check logs
-docker logs knowledge-graph-neo4j
-tail -f logs/ingest_*.log
+docker logs knowledge-graph-postgres
+tail -f logs/api_*.log
 ```
 
 ### Making Changes
 
 **When modifying AI extraction:**
-1. Edit `ingest/ai_providers.py` or `ingest/llm_extractor.py`
-2. Test with: `./scripts/configure-ai.sh` (option 1)
-3. Test ingestion: `./scripts/ingest.sh <test-file>`
+1. Edit `src/api/lib/ai_providers.py` or `src/api/lib/llm_extractor.py`
+2. Restart API: `./scripts/stop-api.sh && ./scripts/start-api.sh`
+3. Test with: `./scripts/configure-ai.sh` (option 1)
+4. Test ingestion: `kg ingest file -o "Test" -y <test-file>`
 
 **When modifying database schema:**
-1. Edit `schema/init.cypher`
-2. Reset database: `./scripts/reset.sh`
-3. Re-ingest test data
+1. Edit `schema/init.sql`
+2. Rebuild Docker container: `docker-compose down && docker-compose up -d`
+3. Restart API and re-ingest test data
+
+**When modifying API endpoints:**
+1. Edit files in `src/api/routes/`
+2. Restart API: `./scripts/stop-api.sh && ./scripts/start-api.sh`
+3. Test with kg CLI commands
+
+**When modifying kg CLI:**
+1. Edit files in `client/src/cli/`
+2. Rebuild: `cd client && npm run build`
+3. Test: `kg <command>`
 
 **When modifying MCP server:**
-1. Edit `mcp-server/src/*.ts`
-2. Rebuild: `cd mcp-server && npm run build`
+1. Edit `client/src/mcp/` (if separate from CLI)
+2. Rebuild: `cd client && npm run build`
 3. Restart Claude Desktop
 
 ## Key Concepts
 
 ### Concept Extraction Flow
 
-1. **Parse** document into paragraphs
-2. **Extract** concepts using LLM (GPT-4 or Claude)
-3. **Match** against existing concepts via vector similarity
-4. **Upsert** to Neo4j with relationships
+1. **Submit** document via kg CLI → POST `/ingest` endpoint
+2. **Job created** with cost estimate → Requires approval (ADR-014)
+3. **Chunk** document into semantic chunks (~1000 words)
+4. **Extract** concepts using LLM (GPT-4 or Claude) per chunk
+5. **Match** against existing concepts via vector similarity
+6. **Upsert** to Apache AGE with relationships
+7. **Stream** progress updates via job status endpoint
 
 ### Graph Data Model
 
@@ -157,42 +189,68 @@ ANTHROPIC_API_KEY=sk-ant-...  # if using Anthropic
 3. Update `get_provider()` factory function
 4. Add to documentation
 
-### Add a New MCP Tool
+### Add a New API Endpoint
 
-1. Add tool definition in `mcp-server/src/index.ts`
-2. Implement handler function
-3. Add corresponding database query in `mcp-server/src/neo4j.ts`
-4. Rebuild: `npm run build`
-5. Restart Claude Desktop
+1. Create route handler in `src/api/routes/` (e.g., `queries.py`)
+2. Add request/response models in route file
+3. Implement AGEClient method in `src/api/lib/age_client.py`
+4. Add endpoint to router in `src/api/main.py`
+5. Restart API and test with curl or kg CLI
+
+### Add a New kg CLI Command
+
+1. Create command file in `client/src/cli/` (e.g., `search.ts`)
+2. Add client method in `client/src/api/client.ts`
+3. Register command in `client/src/index.ts`
+4. Rebuild: `cd client && npm run build`
+5. Test: `kg <new-command>`
 
 ### Modify Extraction Logic
 
-1. Edit prompt in `ingest/llm_extractor.py` (EXTRACTION_PROMPT)
+1. Edit prompt in `src/api/lib/llm_extractor.py` (EXTRACTION_PROMPT)
 2. Adjust JSON schema if needed
-3. Update concept matching in `neo4j_client.py`
-4. Test with: `./scripts/ingest.sh <test-doc>`
+3. Update concept matching in `src/api/lib/ingestion.py`
+4. Restart API and test with: `kg ingest file -o "Test" -y <test-doc>`
 
 ### Add New Relationship Types
 
-1. Add to enum in `schema/init.cypher`
-2. Update MCP tool descriptions
+1. Add to Cypher queries in `src/api/lib/age_client.py`
+2. Update API response models
 3. Modify LLM extraction prompt to recognize new type
-4. Reset database and re-ingest
+4. Test with sample ingestion
 
 ## Troubleshooting
 
-### Neo4j Connection Issues
+### Database Connection Issues
 ```bash
-docker ps  # Check container running
-docker logs knowledge-graph-neo4j  # Check logs
-./scripts/reset.sh  # Nuclear option
+docker ps  # Check PostgreSQL container running
+docker logs knowledge-graph-postgres  # Check logs
+docker-compose restart  # Restart database
 ```
 
-### Import Errors
+### API Server Issues
 ```bash
-# Check package imports use prefix
-from ingest.module import func  # ✓ Correct
-from module import func          # ✗ Wrong (circular import)
+# Check if API is running
+curl http://localhost:8000/health
+
+# View API logs
+tail -f logs/api_*.log
+
+# Restart API
+./scripts/stop-api.sh && ./scripts/start-api.sh
+```
+
+### kg CLI Issues
+```bash
+# Check installation
+which kg
+kg --version
+
+# Check API connection
+kg health
+
+# Reinstall
+cd client && ./uninstall.sh && ./install.sh
 ```
 
 ### LLM Extraction Failures
@@ -203,109 +261,127 @@ from module import func          # ✗ Wrong (circular import)
 # Check .env
 cat .env | grep API_KEY
 
-# View extraction logs
-tail -f logs/ingest_*.log
+# View API logs for extraction errors
+tail -f logs/api_*.log | grep -i error
 ```
 
 ### MCP Server Not Working
 ```bash
 # Check build
-ls -la mcp-server/build/
+ls -la client/dist/
 
 # Rebuild
-cd mcp-server && npm run build
+cd client && npm run build
 
-# Check Claude config path is absolute
+# Check Claude config points to correct path
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```
 
 ## Code Style Guidelines
 
-### Python
-- Use type hints
+### Python (API Server)
+- Use type hints for all functions
 - Modular functions (<50 lines)
-- Package imports: `from ingest.module import func`
-- Environment via `python-dotenv`
+- Package imports: `from src.api.lib.module import func`
+- FastAPI route handlers in `src/api/routes/`
+- Environment via `python-dotenv` (.env file)
 
-### TypeScript
-- Async/await for database calls
-- Type interfaces for data structures
-- Error handling with try/catch
-- Return structured JSON for MCP tools
+### TypeScript (kg CLI + MCP)
+- Async/await for HTTP API calls
+- Type interfaces for API request/response models
+- Commander.js for CLI argument parsing
+- Error handling with try/catch and colored output
+- Axios client for REST API communication
 
 ### Shell Scripts
 - Use `set -e` for error handling
-- Color codes for output clarity
+- Color codes for output clarity (see scripts/start-api.sh)
 - Validate prerequisites before running
-- Interactive confirmations for destructive ops
+- Background process management for API server
 
 ## Testing Strategy
 
 ### Manual Testing
 ```bash
+# Test API health
+curl http://localhost:8000/health
+kg health
+
 # Test provider
 ./scripts/configure-ai.sh
 
 # Test ingestion
-./scripts/ingest.sh ingest_source/watts_lecture_1.txt
+kg ingest file -o "Test Ontology" -y ingest_source/watts_lecture_1.txt
 
 # Test queries
-python cli.py search "linear thinking"
-python cli.py database stats
+kg search query "linear thinking"
+kg database stats
+kg search details <concept-id>
 ```
 
 ### Integration Testing
 ```bash
 # Full pipeline test
-./scripts/reset.sh
-./scripts/ingest.sh <test-file>
-python cli.py database stats  # Verify counts
+docker-compose restart
+./scripts/stop-api.sh && ./scripts/start-api.sh
+kg ontology delete "Test Ontology"
+kg ingest file -o "Test Ontology" -y <test-file>
+kg database stats  # Verify counts
 ```
 
 ### MCP Testing
-- Configure in Claude Desktop
-- Test each tool through conversation
-- Verify graph structure in Neo4j Browser
+- Build client: `cd client && npm run build`
+- Configure in Claude Desktop (point to client/dist/index.js)
+- Test each tool through Claude conversation
+- Verify graph structure via kg CLI or direct AGE queries
 
 ## Performance Considerations
 
 ### Ingestion Speed
-- LLM calls are slowest part (~2-5s per paragraph)
-- Vector search is fast with proper indexing
-- Batch processing: adjust `--batch-size`
+- LLM calls are slowest part (~2-5s per chunk)
+- Job approval workflow (ADR-014) provides cost estimates
+- Smart chunking optimizes chunk boundaries (~1000 words)
+- Background job processing via FastAPI scheduler
 
 ### Query Performance
-- Vector search: O(n log n) with IVF index
-- Graph traversal: Limit depth to avoid explosion
-- Caching: Consider Redis for frequent queries
+- Vector search: Python numpy cosine similarity (full scan)
+- Graph traversal: AGE Cypher queries, limit depth to avoid explosion
+- REST API adds ~10-50ms overhead vs direct DB queries
+- Consider pgvector extension for faster vector search at scale
 
 ## Security Notes
 
 - **API Keys**: Never commit `.env` (in .gitignore)
-- **Database**: Neo4j requires auth (default: neo4j/password)
-- **MCP Server**: Runs locally, no external exposure
+- **Database**: PostgreSQL requires auth (env: POSTGRES_USER/POSTGRES_PASSWORD)
+- **API Server**: No authentication by default - add if exposing publicly
+- **kg CLI**: Communicates with localhost:8000 by default
+- **MCP Server**: Runs locally via Claude Desktop, no external exposure
 - **Docker**: Containers on isolated network
 
 ## Future Enhancements
 
-- [ ] Async ingestion with queues
+- [ ] Phrase-based path finding (kg search connect "phrase 1" "phrase 2")
+- [ ] Async job queue with Redis/Celery
 - [ ] Multi-document batch processing
 - [ ] Advanced graph algorithms (PageRank, community detection)
-- [ ] 3D graph visualization (React + force-graph-3d)
-- [ ] Export to other formats (GraphML, JSON)
+- [ ] 3D graph visualization web UI
+- [ ] Export to other formats (GraphML, JSON, CSV)
 - [ ] Incremental updates (avoid re-processing)
+- [ ] API authentication and rate limiting
 
 ## Resources
 
-- Neo4j Cypher: https://neo4j.com/docs/cypher-manual/
+- Apache AGE: https://age.apache.org/
+- AGE Cypher Guide: https://age.apache.org/age-manual/master/intro/overview.html
+- FastAPI: https://fastapi.tiangolo.com/
 - MCP Protocol: https://spec.modelcontextprotocol.io/
 - OpenAI API: https://platform.openai.com/docs
 - Anthropic API: https://docs.anthropic.com/
 
 ## Getting Help
 
-1. Check `./scripts/status.sh` for system health
+1. Check API health: `kg health` or `curl http://localhost:8000/health`
 2. Review `docs/` for detailed documentation
-3. Check Docker logs: `docker logs knowledge-graph-neo4j`
-4. Review ingestion logs in `logs/` directory
+3. Check Docker logs: `docker logs knowledge-graph-postgres`
+4. Review API logs: `tail -f logs/api_*.log`
 5. Test providers: `./scripts/configure-ai.sh`
