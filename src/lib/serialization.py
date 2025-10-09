@@ -404,8 +404,8 @@ class DataImporter:
             current = i + 1
             Console.progress(current, total_concepts, "Concepts")
 
-            # Call progress callback every 10 items (or last item)
-            if progress_callback and (current % 10 == 0 or current == total_concepts):
+            # Call progress callback every 10 items
+            if progress_callback and current % 10 == 0:
                 percent = (current / total_concepts) * 100
                 progress_callback("concepts", current, total_concepts, percent)
 
@@ -436,6 +436,10 @@ class DataImporter:
             client._execute_cypher(merge_query, params=concept)
             stats["concepts_created"] += 1
 
+        # Final callback for concepts stage
+        if progress_callback and total_concepts > 0:
+            progress_callback("concepts", total_concepts, total_concepts, 100.0)
+
         # Import sources
         Console.info("Importing sources...")
         total_sources = len(data["sources"])
@@ -460,6 +464,10 @@ class DataImporter:
             client._execute_cypher(merge_query, params=source)
             stats["sources_created"] += 1
 
+        # Final callback for sources stage
+        if progress_callback and total_sources > 0:
+            progress_callback("sources", total_sources, total_sources, 100.0)
+
         # Import instances
         Console.info("Importing instances...")
         total_instances = len(data["instances"])
@@ -467,8 +475,8 @@ class DataImporter:
             current = i + 1
             Console.progress(current, total_instances, "Instances")
 
-            # Call progress callback every 10 items (or last item)
-            if progress_callback and (current % 10 == 0 or current == total_instances):
+            # Call progress callback every 10 items
+            if progress_callback and current % 10 == 0:
                 percent = (current / total_instances) * 100
                 progress_callback("instances", current, total_instances, percent)
 
@@ -497,6 +505,10 @@ class DataImporter:
             client._execute_cypher(rel_query, params=instance)
             stats["instances_created"] += 1
 
+        # Final callback for instances stage
+        if progress_callback and total_instances > 0:
+            progress_callback("instances", total_instances, total_instances, 100.0)
+
         # Import concept-concept relationships
         Console.info("Importing relationships...")
         total_relationships = len(data["relationships"])
@@ -504,8 +516,8 @@ class DataImporter:
             current = i + 1
             Console.progress(current, total_relationships, "Relationships")
 
-            # Call progress callback every 10 items (or last item)
-            if progress_callback and (current % 10 == 0 or current == total_relationships):
+            # Call progress callback every 10 items
+            if progress_callback and current % 10 == 0:
                 percent = (current / total_relationships) * 100
                 progress_callback("relationships", current, total_relationships, percent)
 
@@ -529,5 +541,9 @@ class DataImporter:
 
             if result and int(str(result.get("created", 0))) > 0:
                 stats["relationships_created"] += 1
+
+        # Final callback for relationships stage
+        if progress_callback and total_relationships > 0:
+            progress_callback("relationships", total_relationships, total_relationships, 100.0)
 
         return stats
