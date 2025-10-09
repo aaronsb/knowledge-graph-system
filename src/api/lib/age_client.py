@@ -7,10 +7,13 @@ and vector similarity search using PostgreSQL + Apache AGE extension.
 
 import os
 import json
+import logging
 from typing import List, Dict, Optional, Any
 import psycopg2
 from psycopg2 import pool, extras
 from psycopg2.extensions import AsIs
+
+logger = logging.getLogger(__name__)
 
 
 class AGEClient:
@@ -102,6 +105,10 @@ class AGEClient:
         try:
             self._setup_age(conn)
 
+            # Extract column names from RETURN clause BEFORE parameter substitution
+            # (otherwise document content can interfere with regex parsing)
+            column_spec = self._extract_column_spec(query)
+
             # Replace parameters in query (AGE doesn't support parameterized Cypher)
             if params:
                 for key, value in params.items():
@@ -121,9 +128,6 @@ class AGEClient:
                     else:
                         query = query.replace(f"${key}", str(value))
 
-            # Extract column names from RETURN clause to preserve them in AGE results
-            column_spec = self._extract_column_spec(query)
-
             # Wrap Cypher in AGE SELECT statement with dynamic column specification
             age_query = f"""
                 SELECT * FROM cypher('{self.graph_name}', $$
@@ -132,7 +136,24 @@ class AGEClient:
             """
 
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                cur.execute(age_query)
+                try:
+                    cur.execute(age_query)
+                except Exception as e:
+                    # Log detailed error information
+                    logger.error("=" * 80)
+                    logger.error("Query execution failed")
+                    logger.error(f"Error: {e}")
+                    logger.error(f"Column spec: {column_spec}")
+                    logger.error(f"Original query length: {len(query)} chars")
+                    logger.error(f"First 500 chars: {query[:500]}")
+                    logger.error(f"Last 500 chars: {query[-500:]}")
+                    if params:
+                        logger.error(f"Parameters:")
+                        for k, v in params.items():
+                            val_preview = str(v)[:200] if isinstance(v, str) else str(v)
+                            logger.error(f"  {k}: {val_preview}")
+                    logger.error("=" * 80)
+                    raise
 
                 if fetch_one:
                     result = cur.fetchone()
