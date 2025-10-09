@@ -29,10 +29,13 @@ describe('kg health', () => {
   }, 10000);
 
   it('should exit with code 0 on success', async () => {
-    const { exitCode } = await execAsync(`${KG_CLI} health`).catch((err) => ({
-      exitCode: err.code,
-    }));
-
-    expect(exitCode).toBeUndefined(); // undefined means exit code 0
+    try {
+      await execAsync(`${KG_CLI} health`);
+      // If no error thrown, exit code was 0
+      expect(true).toBe(true);
+    } catch (error: any) {
+      // Should not throw on success
+      fail(`Command failed with exit code ${error.code}: ${error.message}`);
+    }
   });
 });
