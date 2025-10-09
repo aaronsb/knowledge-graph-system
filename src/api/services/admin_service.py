@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
+from ..lib.age_client import AGEClient
+
 from ..models.admin import (
     SystemStatusResponse,
     DockerStatus,
@@ -306,40 +308,54 @@ class AdminService:
         return connected, error
 
     async def _get_database_stats(self) -> DatabaseStats:
-        """Get database statistics using Apache AGE"""
-        postgres_user = os.getenv("POSTGRES_USER", "admin")
-        postgres_db = os.getenv("POSTGRES_DB", "knowledge_graph")
-        graph_name = "knowledge_graph"
+        """Get database statistics using Apache AGE via AGEClient"""
+        try:
+            # Use AGEClient which handles all AGE connection logic
+            client = AGEClient()
 
-        async def query_count(cypher_query: str) -> int:
-            # Wrap Cypher query in AGE SQL syntax
-            sql_query = f"SELECT * FROM cypher('{graph_name}', $$ {cypher_query} $$) as (count agtype);"
-            proc = await asyncio.create_subprocess_exec(
-                "docker", "exec", "knowledge-graph-postgres",
-                "psql", "-U", postgres_user, "-d", postgres_db,
-                "-t", "-c", sql_query,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+            # Execute count queries using AGEClient
+            def query_count(cypher_query: str) -> int:
+                try:
+                    results = client._execute_cypher(cypher_query, fetch_one=True)
+                    if results:
+                        # Get the count value (column name depends on the RETURN clause)
+                        count_value = list(results.values())[0] if results else 0
+                        return int(count_value)
+                    return 0
+                except Exception:
+                    return 0
+
+            # Run queries in thread pool to avoid blocking async
+            loop = asyncio.get_event_loop()
+            concepts = await loop.run_in_executor(
+                None, query_count, "MATCH (c:Concept) RETURN count(c)"
             )
-            stdout, _ = await proc.communicate()
-            output = stdout.decode().strip()
-            # Parse AGE integer output (comes as string)
-            try:
-                return int(output)
-            except (ValueError, TypeError):
-                return 0
+            sources = await loop.run_in_executor(
+                None, query_count, "MATCH (s:Source) RETURN count(s)"
+            )
+            instances = await loop.run_in_executor(
+                None, query_count, "MATCH (i:Instance) RETURN count(i)"
+            )
+            relationships = await loop.run_in_executor(
+                None, query_count, "MATCH ()-[r]->() RETURN count(r)"
+            )
 
-        concepts = await query_count("MATCH (c:Concept) RETURN count(c)")
-        sources = await query_count("MATCH (s:Source) RETURN count(s)")
-        instances = await query_count("MATCH (i:Instance) RETURN count(i)")
-        relationships = await query_count("MATCH ()-[r]->() RETURN count(r)")
+            client.close()
 
-        return DatabaseStats(
-            concepts=concepts,
-            sources=sources,
-            instances=instances,
-            relationships=relationships,
-        )
+            return DatabaseStats(
+                concepts=concepts,
+                sources=sources,
+                instances=instances,
+                relationships=relationships,
+            )
+        except Exception as e:
+            # If AGEClient fails, return zeros
+            return DatabaseStats(
+                concepts=0,
+                sources=0,
+                instances=0,
+                relationships=0,
+            )
 
     async def _get_python_version(self) -> Optional[str]:
         """Get Python version from venv"""
