@@ -76,7 +76,7 @@ const statusCommand = new Command('status')
       // Docker
       console.log('\n' + colors.ui.header('Docker'));
       if (status.docker.running) {
-        console.log(`  ${colors.status.success('✓')} Neo4j container running`);
+        console.log(`  ${colors.status.success('✓')} PostgreSQL container running`);
         if (status.docker.container_name) {
           console.log(`    ${colors.ui.key('Container:')} ${colors.ui.value(status.docker.container_name)}`);
         }
@@ -84,17 +84,17 @@ const statusCommand = new Command('status')
           console.log(`    ${colors.ui.key('Status:')} ${colors.ui.value(status.docker.status)}`);
         }
       } else {
-        console.log(`  ${colors.status.error('✗')} Neo4j not running`);
+        console.log(`  ${colors.status.error('✗')} PostgreSQL not running`);
         console.log(`    ${colors.status.dim('Run: docker-compose up -d')}`);
       }
 
       // Database Connection
       console.log('\n' + colors.ui.header('Database Connection'));
       if (status.database_connection.connected) {
-        console.log(`  ${colors.status.success('✓')} Connected to Neo4j`);
+        console.log(`  ${colors.status.success('✓')} Connected to PostgreSQL + AGE`);
         console.log(`    ${colors.ui.key('URI:')} ${colors.ui.value(status.database_connection.uri)}`);
       } else {
-        console.log(`  ${colors.status.error('✗')} Cannot connect to Neo4j`);
+        console.log(`  ${colors.status.error('✗')} Cannot connect to PostgreSQL`);
         if (status.database_connection.error) {
           console.log(`    ${colors.status.error(status.database_connection.error)}`);
         }
@@ -141,15 +141,10 @@ const statusCommand = new Command('status')
       }
 
       // Access Points
-      if (status.neo4j_browser_url || status.bolt_url) {
+      if (status.neo4j_browser_url) {
         console.log('\n' + colors.ui.header('Access Points'));
-        if (status.neo4j_browser_url) {
-          console.log(`  ${colors.ui.key('Neo4j Browser:')} ${colors.ui.value(status.neo4j_browser_url)}`);
-        }
-        if (status.bolt_url) {
-          console.log(`  ${colors.ui.key('Bolt Protocol:')} ${colors.ui.value(status.bolt_url)}`);
-        }
-        console.log(`  ${colors.ui.key('Credentials:')} ${colors.status.dim('neo4j/password')}`);
+        console.log(`  ${colors.ui.key('PostgreSQL:')} ${colors.ui.value(status.neo4j_browser_url)}`);
+        console.log(`  ${colors.ui.key('Credentials:')} ${colors.status.dim(process.env.POSTGRES_USER || 'admin')}/${colors.status.dim('password')}`);
       }
 
       console.log('\n' + separator() + '\n');
@@ -474,10 +469,10 @@ const resetCommand = new Command('reset')
       console.log(colors.status.error('\n⚠️  WARNING: This will DELETE ALL graph data!'));
       console.log(colors.status.dim('This operation will:'));
       console.log(colors.status.dim('  - Stop all containers'));
-      console.log(colors.status.dim('  - Delete the Neo4j database'));
+      console.log(colors.status.dim('  - Delete the PostgreSQL database'));
       console.log(colors.status.dim('  - Remove all data volumes'));
       console.log(colors.status.dim('  - Restart with a clean database'));
-      console.log(colors.status.dim('  - Re-initialize schema'));
+      console.log(colors.status.dim('  - Re-initialize AGE schema'));
 
       const confirm = await prompt('\nType "yes" to confirm: ');
 

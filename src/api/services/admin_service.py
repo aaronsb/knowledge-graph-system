@@ -64,7 +64,7 @@ class AdminService:
             ),
             database_connection=DatabaseConnection(
                 connected=db_connected,
-                uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+                uri=f"postgresql://{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'knowledge_graph')}",
                 error=db_error,
             ),
             database_stats=db_stats,
@@ -77,8 +77,8 @@ class AdminService:
                 anthropic_key_configured=anthropic_configured,
                 openai_key_configured=openai_configured,
             ),
-            neo4j_browser_url="http://localhost:7474" if docker_running else None,
-            bolt_url="bolt://localhost:7687" if docker_running else None,
+            neo4j_browser_url=f"postgresql://{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'knowledge_graph')}" if docker_running else None,
+            bolt_url=None,  # PostgreSQL doesn't use Bolt protocol
         )
 
     async def list_backups(self) -> ListBackupsResponse:
@@ -265,20 +265,20 @@ class AdminService:
     # ========== Helper Methods ==========
 
     async def _check_docker_running(self) -> bool:
-        """Check if Neo4j Docker container is running"""
+        """Check if PostgreSQL Docker container is running"""
         proc = await asyncio.create_subprocess_exec(
             "docker", "ps", "--format", "{{.Names}}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await proc.communicate()
-        return "knowledge-graph-neo4j" in stdout.decode()
+        return "knowledge-graph-postgres" in stdout.decode()
 
     async def _get_docker_info(self) -> Dict[str, str]:
         """Get Docker container info"""
         proc = await asyncio.create_subprocess_exec(
             "docker", "ps",
-            "--filter", "name=knowledge-graph-neo4j",
+            "--filter", "name=knowledge-graph-postgres",
             "--format", "{{.Names}}\t{{.Status}}\t{{.Ports}}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -291,10 +291,12 @@ class AdminService:
 
     async def _check_database_connection(self) -> tuple[bool, Optional[str]]:
         """Check if database is connectable"""
+        postgres_user = os.getenv("POSTGRES_USER", "admin")
+        postgres_db = os.getenv("POSTGRES_DB", "knowledge_graph")
         proc = await asyncio.create_subprocess_exec(
-            "docker", "exec", "knowledge-graph-neo4j",
-            "cypher-shell", "-u", "neo4j", "-p", "password",
-            "RETURN 1",
+            "docker", "exec", "knowledge-graph-postgres",
+            "psql", "-U", postgres_user, "-d", postgres_db,
+            "-c", "SELECT 1",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -304,18 +306,28 @@ class AdminService:
         return connected, error
 
     async def _get_database_stats(self) -> DatabaseStats:
-        """Get database statistics"""
-        async def query_count(cypher: str) -> int:
+        """Get database statistics using Apache AGE"""
+        postgres_user = os.getenv("POSTGRES_USER", "admin")
+        postgres_db = os.getenv("POSTGRES_DB", "knowledge_graph")
+        graph_name = "knowledge_graph"
+
+        async def query_count(cypher_query: str) -> int:
+            # Wrap Cypher query in AGE SQL syntax
+            sql_query = f"SELECT * FROM cypher('{graph_name}', $$ {cypher_query} $$) as (count agtype);"
             proc = await asyncio.create_subprocess_exec(
-                "docker", "exec", "knowledge-graph-neo4j",
-                "cypher-shell", "-u", "neo4j", "-p", "password",
-                cypher, "--format", "plain",
+                "docker", "exec", "knowledge-graph-postgres",
+                "psql", "-U", postgres_user, "-d", postgres_db,
+                "-t", "-c", sql_query,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, _ = await proc.communicate()
-            lines = stdout.decode().strip().split("\n")
-            return int(lines[-1]) if lines else 0
+            output = stdout.decode().strip()
+            # Parse AGE integer output (comes as string)
+            try:
+                return int(output)
+            except (ValueError, TypeError):
+                return 0
 
         concepts = await query_count("MATCH (c:Concept) RETURN count(c)")
         sources = await query_count("MATCH (s:Source) RETURN count(s)")
