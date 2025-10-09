@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.lib.console import Console, Colors
 from src.lib.config import Config
-from src.lib.neo4j_ops import Neo4jConnection, Neo4jQueries
+from src.lib.age_ops import AGEConnection, AGEQueries
 from src.lib.serialization import DataImporter, BackupFormat
 from src.lib.integrity import BackupAssessment, DatabaseIntegrity
 from src.lib.restitching import ConceptMatcher
@@ -33,7 +33,7 @@ class RestoreCLI:
 
     def __init__(self, backup_dir: str = "backups"):
         self.backup_dir = Path(backup_dir)
-        self.conn = Neo4jConnection()
+        self.conn = AGEConnection()
 
     def run_interactive(self):
         """Run interactive restore menu"""
@@ -41,12 +41,12 @@ class RestoreCLI:
 
         # Test connection
         if not self.conn.test_connection():
-            Console.error("✗ Cannot connect to Neo4j database")
-            Console.warning(f"  Check connection: {Config.neo4j_uri()}")
+            Console.error("✗ Cannot connect to Apache AGE database")
+            Console.warning(f"  Check connection: {Config.postgres_host()}:{Config.postgres_port()}")
             Console.warning("  Start database with: docker-compose up -d")
             sys.exit(1)
 
-        Console.success("✓ Connected to Neo4j")
+        Console.success("✓ Connected to Apache AGE")
 
         # Find backup files
         if not self.backup_dir.exists():
@@ -121,8 +121,9 @@ class RestoreCLI:
             ext_count = len(assessment["external_dependencies"]["concepts"])
 
             # Check if target database is empty (nothing to stitch to)
-            with self.conn.session() as session:
-                existing_concepts = session.run("MATCH (c:Concept) RETURN count(c) as count").single()["count"]
+            client = self.conn.get_client()
+            result = client._execute_cypher("MATCH (c:Concept) RETURN count(c) as count", fetch_one=True)
+            existing_concepts = int(str(result.get("count", 0))) if result else 0
 
             if existing_concepts == 0:
                 # Clean database - stitching is impossible, auto-prune
@@ -161,8 +162,8 @@ class RestoreCLI:
         # Check for conflicts
         if backup_data.get('ontology'):
             ontology_name = backup_data['ontology']
-            with self.conn.session() as session:
-                existing = Neo4jQueries.get_ontology_info(session, ontology_name)
+            client = self.conn.get_client()
+            existing = AGEQueries.get_ontology_info(client, ontology_name)
 
             if existing:
                 Console.warning(f"\n⚠ Ontology '{ontology_name}' already exists in database")
@@ -197,12 +198,12 @@ class RestoreCLI:
         # Restore
         Console.info("\nRestoring data...")
         try:
-            with self.conn.session() as session:
-                import_stats = DataImporter.import_backup(
-                    session,
-                    backup_data,
-                    overwrite_existing=overwrite
-                )
+            client = self.conn.get_client()
+            import_stats = DataImporter.import_backup(
+                client,
+                backup_data,
+                overwrite_existing=overwrite
+            )
 
             # Summary
             Console.section("Restore Complete")
@@ -217,12 +218,12 @@ class RestoreCLI:
                 Console.section("Pruning Dangling Relationships")
                 Console.info("Removing relationships to external concepts...")
 
-                with self.conn.session() as session:
-                    prune_result = DatabaseIntegrity.prune_dangling_relationships(
-                        session,
-                        ontology=backup_data.get('ontology'),
-                        dry_run=False
-                    )
+                client = self.conn.get_client()
+                prune_result = DatabaseIntegrity.prune_dangling_relationships(
+                    client,
+                    ontology=backup_data.get('ontology'),
+                    dry_run=False
+                )
 
                 if prune_result["total_pruned"] > 0:
                     Console.success(f"✓ Pruned {prune_result['total_pruned']} dangling relationships")
@@ -236,11 +237,11 @@ class RestoreCLI:
 
             # Validate integrity after restore
             Console.info("\nValidating database integrity...")
-            with self.conn.session() as session:
-                integrity = DatabaseIntegrity.check_integrity(
-                    session,
-                    ontology=backup_data.get('ontology')
-                )
+            client = self.conn.get_client()
+            integrity = DatabaseIntegrity.check_integrity(
+                client,
+                ontology=backup_data.get('ontology')
+            )
 
             if integrity["issues"] or integrity["warnings"]:
                 DatabaseIntegrity.print_integrity_report(integrity)
@@ -250,20 +251,18 @@ class RestoreCLI:
                     Console.warning("\n⚠ Integrity issues detected after restore")
                     if Console.confirm("Attempt automatic repair?"):
                         Console.info("Repairing orphaned concepts...")
-                        with self.conn.session() as session:
-                            repairs = DatabaseIntegrity.repair_orphaned_concepts(
-                                session,
-                                ontology=backup_data.get('ontology')
-                            )
+                        repairs = DatabaseIntegrity.repair_orphaned_concepts(
+                            client,
+                            ontology=backup_data.get('ontology')
+                        )
                         Console.success(f"✓ Repaired {repairs} orphaned concepts")
 
                         # Re-check
                         Console.info("Re-validating...")
-                        with self.conn.session() as session:
-                            integrity = DatabaseIntegrity.check_integrity(
-                                session,
-                                ontology=backup_data.get('ontology')
-                            )
+                        integrity = DatabaseIntegrity.check_integrity(
+                            client,
+                            ontology=backup_data.get('ontology')
+                        )
                         if not integrity["issues"]:
                             Console.success("✓ All issues resolved")
                         else:
@@ -311,7 +310,7 @@ class RestoreCLI:
     def restore_non_interactive(self, backup_file: str, overwrite: bool = False):
         """Non-interactive restore for automation"""
         if not self.conn.test_connection():
-            Console.error("✗ Cannot connect to Neo4j database")
+            Console.error("✗ Cannot connect to Apache AGE database")
             sys.exit(1)
 
         backup_path = Path(backup_file)
@@ -328,12 +327,12 @@ class RestoreCLI:
         DataImporter.validate_backup(backup_data)
 
         # Restore
-        with self.conn.session() as session:
-            import_stats = DataImporter.import_backup(
-                session,
-                backup_data,
-                overwrite_existing=overwrite
-            )
+        client = self.conn.get_client()
+        import_stats = DataImporter.import_backup(
+            client,
+            backup_data,
+            overwrite_existing=overwrite
+        )
 
         Console.success("✓ Restore complete")
         Console.info(f"  Concepts: {import_stats['concepts_created']}")
