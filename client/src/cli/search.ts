@@ -125,24 +125,51 @@ const relatedCommand = new Command('related')
       });
 
 const connectCommand = new Command('connect')
-      .description('Find shortest path between two concepts')
-      .argument('<from-id>', 'Starting concept ID')
-      .argument('<to-id>', 'Target concept ID')
+      .description('Find shortest path between two concepts (accepts concept IDs or natural language queries)')
+      .argument('<from>', 'Starting concept (ID or search phrase)')
+      .argument('<to>', 'Target concept (ID or search phrase)')
       .option('--max-hops <number>', 'Maximum path length', '5')
-      .action(async (fromId, toId, options) => {
+      .action(async (from, to, options) => {
         try {
           const client = createClientFromEnv();
-          const result = await client.findConnection({
-            from_id: fromId,
-            to_id: toId,
-            max_hops: parseInt(options.maxHops)
-          });
+
+          // Auto-detect if using concept IDs (contain hyphens/underscores) or natural language
+          const isFromId = from.includes('-') || from.includes('_');
+          const isToId = to.includes('-') || to.includes('_');
+
+          let result;
+          let fromLabel = from;
+          let toLabel = to;
+
+          if (isFromId && isToId) {
+            // Both are concept IDs - use ID-based search
+            result = await client.findConnection({
+              from_id: from,
+              to_id: to,
+              max_hops: parseInt(options.maxHops)
+            });
+          } else {
+            // At least one is a natural language query - use search-based
+            result = await client.findConnectionBySearch({
+              from_query: from,
+              to_query: to,
+              max_hops: parseInt(options.maxHops)
+            });
+
+            // Update labels with matched concepts
+            if (result.from_concept) {
+              fromLabel = `${result.from_concept.label} (matched: "${from}")`;
+            }
+            if (result.to_concept) {
+              toLabel = `${result.to_concept.label} (matched: "${to}")`;
+            }
+          }
 
           console.log('\n' + separator());
           console.log(colors.ui.title('🌉 Finding Connection'));
           console.log(separator());
-          console.log(`  ${colors.ui.key('From:')} ${colors.concept.label(fromId)}`);
-          console.log(`  ${colors.ui.key('To:')} ${colors.concept.label(toId)}`);
+          console.log(`  ${colors.ui.key('From:')} ${colors.concept.label(fromLabel)}`);
+          console.log(`  ${colors.ui.key('To:')} ${colors.concept.label(toLabel)}`);
           console.log(`  ${colors.ui.key('Max hops:')} ${colors.path.hop(String(result.max_hops))}\n`);
 
           if (result.count === 0) {
