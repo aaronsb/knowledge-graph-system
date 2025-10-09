@@ -86,27 +86,37 @@ async function trackJobWithSSE(
         spinner = updateSpinnerForProgress(spinner, progress);
       },
       onCompleted: async (result) => {
-        // Complete the final stage with consistent stopAndPersist
-        const state: ProgressState = (spinner as any).__progressState;
-        if (state && state.currentStage) {
-          const finalStats = state.stageStats.get(state.currentStage);
-          if (finalStats) {
-            const progressBar = createProgressBar(finalStats.total, finalStats.total);
-            state.spinner.stopAndPersist({
-              symbol: colors.status.success('✓'),
-              text: getStageName(state.currentStage) + ` ${progressBar} ${finalStats.total}/${finalStats.total}`
-            });
-          } else {
-            state.spinner.stopAndPersist({
-              symbol: colors.status.success('✓'),
-              text: getStageName(state.currentStage)
-            });
-          }
-        } else {
-          spinner.stopAndPersist({
-            symbol: colors.status.success('✓'),
-            text: 'Restore complete!'
+        // Finalize the multi-progress display
+        const logUpdate = require('log-update');
+        const state: MultiProgressState = (spinner as any).__multiProgress;
+
+        if (state) {
+          // Mark all stages as completed and render final state
+          state.orderedStages.forEach(stageName => {
+            const stageData = state.stages.get(stageName)!;
+            if (stageData.status === 'active') {
+              stageData.status = 'completed';
+              if (stageData.total === 0 && stageData.current > 0) {
+                stageData.total = stageData.current;
+              }
+            }
           });
+
+          // Render final state
+          const lines: string[] = [];
+          state.orderedStages.forEach(stageName => {
+            const stageData = state.stages.get(stageName)!;
+            if (stageData.total > 0) {
+              const progressBar = createProgressBar(stageData.total, stageData.total);
+              lines.push(colors.status.success('✓') + ` ${stageData.name} ${progressBar} ${stageData.total}/${stageData.total}`);
+            } else if (stageData.status === 'completed') {
+              lines.push(colors.status.success('✓') + ` ${stageData.name}`);
+            }
+          });
+
+          // Finalize and persist the output
+          logUpdate(lines.join('\n'));
+          logUpdate.done();
         }
 
         // Fetch final job status for complete information
@@ -159,123 +169,105 @@ async function trackJobWithSSE(
 }
 
 /**
- * State tracker for multi-line progress display
+ * Multi-line progress display using log-update
+ * Pre-allocates all stage lines and updates them in place
  */
-interface ProgressState {
-  currentStage: string | null;
-  spinner: any;
-  stageStats: Map<string, { items: number; total: number }>;
+interface MultiProgressState {
+  stages: Map<string, StageProgress>;
+  orderedStages: string[];
+}
+
+interface StageProgress {
+  name: string;
+  status: 'waiting' | 'active' | 'completed';
+  current: number;
+  total: number;
 }
 
 /**
- * Update spinner text based on job progress (shared logic for SSE and polling)
- *
- * Shows each stage on a new line for better visibility of progress history.
+ * Update multi-line progress display (pre-allocated lines)
  */
 function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
-  const ora = require('ora');
+  const logUpdate = require('log-update');
 
-  // Initialize progress state if not exists
-  if (!(spinner as any).__progressState) {
-    (spinner as any).__progressState = {
-      currentStage: null,
-      spinner: spinner,
-      stageStats: new Map()
-    } as ProgressState;
+  // Initialize multi-progress state
+  if (!(spinner as any).__multiProgress) {
+    const stages = new Map<string, StageProgress>();
+    const orderedStages = [
+      'creating_checkpoint',
+      'loading_backup',
+      'restoring_concepts',
+      'restoring_sources',
+      'restoring_instances',
+      'restoring_relationships'
+    ];
+
+    // Pre-allocate all stages
+    orderedStages.forEach(stage => {
+      stages.set(stage, {
+        name: getStageName(stage),
+        status: 'waiting',
+        current: 0,
+        total: 0
+      });
+    });
+
+    (spinner as any).__multiProgress = {
+      stages,
+      orderedStages
+    } as MultiProgressState;
   }
 
-  const state: ProgressState = (spinner as any).__progressState;
+  const state: MultiProgressState = (spinner as any).__multiProgress;
 
-  // Update current stage stats FIRST (before detecting stage change)
-  if (progress.message) {
-    // Extract items from message: "Restoring concepts: 10/114 (8%)"
-    const match = progress.message.match(/(\d+)\/(\d+)/);
-    if (match) {
-      state.stageStats.set(progress.stage, {
-        items: parseInt(match[1]),
-        total: parseInt(match[2])
-      });
-    }
-  }
+  // Update the specific stage with progress
+  if (state.stages.has(progress.stage)) {
+    const stageData = state.stages.get(progress.stage)!;
 
-  // Detect stage change
-  const stageChanged = state.currentStage && state.currentStage !== progress.stage;
-
-  if (stageChanged) {
-    // Complete previous stage with final stats and progress bar
-    const prevStats = state.stageStats.get(state.currentStage!);
-    if (prevStats) {
-      const progressBar = createProgressBar(prevStats.total, prevStats.total);
-      state.spinner.stopAndPersist({
-        symbol: colors.status.success('✓'),
-        text: getStageName(state.currentStage!) + ` ${progressBar} ${prevStats.total}/${prevStats.total}`
-      });
+    // Extract current/total from message
+    if (progress.message) {
+      const match = progress.message.match(/(\d+)\/(\d+)/);
+      if (match) {
+        stageData.current = parseInt(match[1]);
+        stageData.total = parseInt(match[2]);
+        stageData.status = stageData.current === stageData.total ? 'completed' : 'active';
+      } else {
+        stageData.status = 'active';
+      }
+    } else if (progress.items_total && progress.items_processed !== undefined) {
+      stageData.current = progress.items_processed;
+      stageData.total = progress.items_total;
+      stageData.status = stageData.current === stageData.total ? 'completed' : 'active';
     } else {
-      state.spinner.stopAndPersist({
-        symbol: colors.status.success('✓'),
-        text: getStageName(state.currentStage!)
-      });
+      stageData.status = 'active';
     }
-
-    // Small delay to ensure line is written
-    // Start new spinner for new stage
-    state.spinner = ora(getStageName(progress.stage)).start();
-    state.currentStage = progress.stage;
-  } else if (!state.currentStage) {
-    // First stage
-    state.currentStage = progress.stage;
-    state.spinner.start();
   }
 
-  // Update spinner text based on stage
-  switch (progress.stage) {
-    case 'creating_checkpoint':
-      state.spinner.text = `Creating checkpoint backup... ${progress.percent || 0}%`;
-      break;
-    case 'loading_backup':
-      state.spinner.text = `Loading backup file... ${progress.percent || 0}%`;
-      break;
-    case 'restoring_concepts':
-    case 'restoring_sources':
-    case 'restoring_instances':
-    case 'restoring_relationships':
-      if (progress.message) {
-        // Extract current/total from message: "Restoring concepts: 10/114 (8%)"
-        const match = progress.message.match(/(\d+)\/(\d+)/);
-        if (match) {
-          const current = parseInt(match[1]);
-          const total = parseInt(match[2]);
-          const progressBar = createProgressBar(current, total);
-          const stageName = getStageName(progress.stage);
-          state.spinner.text = `${stageName} ${progressBar} ${current}/${total}`;
-        } else {
-          state.spinner.text = progress.message;
-        }
-      } else if (progress.items_total && progress.items_processed !== undefined) {
-        const stageName = getStageName(progress.stage);
-        const progressBar = createProgressBar(progress.items_processed, progress.items_total);
-        state.spinner.text = `${stageName} ${progressBar} ${progress.items_processed}/${progress.items_total}`;
-      } else {
-        state.spinner.text = `${getStageName(progress.stage)} ${progress.percent || 0}%`;
-      }
-      break;
-    case 'rollback':
-      state.spinner.fail('Restore failed - rolling back to checkpoint');
-      state.spinner = ora(progress.message || 'Rolling back...').start();
-      state.currentStage = progress.stage;
-      break;
-    case 'completed':
-      state.spinner.text = `Restore complete! ${progress.percent || 100}%`;
-      break;
-    default:
-      if (progress.message) {
-        state.spinner.text = progress.message;
-      } else {
-        state.spinner.text = `Restoring... ${progress.percent || 0}%`;
-      }
-  }
+  // Render all stages
+  const lines: string[] = [];
+  state.orderedStages.forEach(stageName => {
+    const stageData = state.stages.get(stageName)!;
 
-  return state.spinner;
+    if (stageData.status === 'completed') {
+      const progressBar = createProgressBar(stageData.total, stageData.total);
+      lines.push(colors.status.success('✓') + ` ${stageData.name} ${progressBar} ${stageData.total}/${stageData.total}`);
+    } else if (stageData.status === 'active') {
+      if (stageData.total > 0) {
+        const progressBar = createProgressBar(stageData.current, stageData.total);
+        lines.push(colors.status.info('⠋') + ` ${stageData.name} ${progressBar} ${stageData.current}/${stageData.total}`);
+      } else {
+        lines.push(colors.status.info('⠋') + ` ${stageData.name}...`);
+      }
+    } else {
+      // waiting
+      lines.push(colors.status.dim('○') + ` ${stageData.name}`);
+    }
+  });
+
+  // Update all lines at once
+  logUpdate(lines.join('\n'));
+
+  return spinner;
 }
 
 /**
