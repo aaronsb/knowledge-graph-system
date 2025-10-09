@@ -304,12 +304,18 @@ AGEClient → PostgreSQL + AGE
 - ✅ Worker imports AGEClient (verified line 17)
 - ✅ Ingestion library imports AGEClient (verified line 14)
 - ✅ No Neo4j imports in src/api/ (verified)
-- ⏳ End-to-end test pending (will test via kg CLI)
+- ✅ End-to-end test passed - ingested watts_lecture_1.txt successfully
 
 **Notes:**
-- Ingestion already working via API endpoint pattern
+- Ingestion working via API endpoint pattern
 - Job approval workflow (ADR-014) provides cost estimates
-- Ready to test with: `kg ingest <file> --ontology "Test"`
+- Fixed multiple AGE compatibility bugs:
+  - fetch_one column name preservation (create_source_node, create_concept_node, etc.)
+  - vector_search parameter rename (limit → top_k) in both AGEClient and ingestion.py
+  - Duplicate column names in _extract_column_spec (added deduplication)
+  - WHERE NOT pattern replaced with OPTIONAL MATCH for ontology deletion
+- Successfully tested end-to-end ingestion with variety-fulcrum-transformed.md (108KB)
+- Created docs/CYPHER_PATTERNS.md with advanced fuzzy matching and path-finding patterns
 
 ---
 
