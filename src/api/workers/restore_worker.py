@@ -227,122 +227,37 @@ def _execute_restore(
     if total_items == 0:
         return {"concepts": 0, "sources": 0, "instances": 0, "relationships": 0}
 
-    # Use DataImporter to restore
-    importer = DataImporter(client)
-
-    # Restore concepts
+    # Use DataImporter.import_backup() static method
+    # Note: This provides simpler progress tracking - we'll update stages manually
     job_queue.update_job(job_id, {
         "progress": {
             "stage": "restoring_concepts",
             "percent": 20,
-            "items_total": len(concepts),
+            "items_total": total_items,
             "items_processed": 0,
-            "message": f"Restoring {len(concepts)} concepts"
+            "message": f"Restoring {len(concepts)} concepts..."
         }
     })
 
-    concepts_restored = 0
-    for i, concept in enumerate(concepts, 1):
-        importer.import_concept(concept)
-        concepts_restored += 1
+    # Import all data using DataImporter static method
+    stats = DataImporter.import_backup(client, backup_data, overwrite_existing=overwrite)
 
-        if i % 10 == 0:  # Update every 10 concepts
-            percent = 20 + int((i / len(concepts)) * 20)
-            job_queue.update_job(job_id, {
-                "progress": {
-                    "stage": "restoring_concepts",
-                    "percent": percent,
-                    "items_total": len(concepts),
-                    "items_processed": i
-                }
-            })
-
-    # Restore sources
-    job_queue.update_job(job_id, {
-        "progress": {
-            "stage": "restoring_sources",
-            "percent": 40,
-            "items_total": len(sources),
-            "items_processed": 0,
-            "message": f"Restoring {len(sources)} sources"
-        }
-    })
-
-    sources_restored = 0
-    for i, source in enumerate(sources, 1):
-        importer.import_source(source)
-        sources_restored += 1
-
-        if i % 10 == 0:
-            percent = 40 + int((i / len(sources)) * 20)
-            job_queue.update_job(job_id, {
-                "progress": {
-                    "stage": "restoring_sources",
-                    "percent": percent,
-                    "items_total": len(sources),
-                    "items_processed": i
-                }
-            })
-
-    # Restore instances
-    job_queue.update_job(job_id, {
-        "progress": {
-            "stage": "restoring_instances",
-            "percent": 60,
-            "items_total": len(instances),
-            "items_processed": 0,
-            "message": f"Restoring {len(instances)} instances"
-        }
-    })
-
-    instances_restored = 0
-    for i, instance in enumerate(instances, 1):
-        importer.import_instance(instance)
-        instances_restored += 1
-
-        if i % 10 == 0:
-            percent = 60 + int((i / len(instances)) * 20)
-            job_queue.update_job(job_id, {
-                "progress": {
-                    "stage": "restoring_instances",
-                    "percent": percent,
-                    "items_total": len(instances),
-                    "items_processed": i
-                }
-            })
-
-    # Restore relationships
+    # Update progress through stages
     job_queue.update_job(job_id, {
         "progress": {
             "stage": "restoring_relationships",
-            "percent": 80,
-            "items_total": len(relationships),
-            "items_processed": 0,
-            "message": f"Restoring {len(relationships)} relationships"
+            "percent": 90,
+            "items_total": total_items,
+            "items_processed": total_items,
+            "message": "Import complete"
         }
     })
 
-    relationships_restored = 0
-    for i, rel in enumerate(relationships, 1):
-        importer.import_relationship(rel)
-        relationships_restored += 1
-
-        if i % 10 == 0:
-            percent = 80 + int((i / len(relationships)) * 15)
-            job_queue.update_job(job_id, {
-                "progress": {
-                    "stage": "restoring_relationships",
-                    "percent": percent,
-                    "items_total": len(relationships),
-                    "items_processed": i
-                }
-            })
-
     return {
-        "concepts": concepts_restored,
-        "sources": sources_restored,
-        "instances": instances_restored,
-        "relationships": relationships_restored
+        "concepts": stats.get("concepts_created", 0),
+        "sources": stats.get("sources_created", 0),
+        "instances": stats.get("instances_created", 0),
+        "relationships": stats.get("relationships_created", 0)
     }
 
 
@@ -358,26 +273,10 @@ def _restore_from_checkpoint(client: AGEClient, checkpoint_path: Path, job_id: s
     with open(checkpoint_path, 'r', encoding='utf-8') as f:
         checkpoint_data = json.load(f)
 
-    # Clear current database
-    logger.info(f"[{job_id}] Clearing database before checkpoint restore")
-    client.clear_graph()
-
-    # Restore from checkpoint (no progress tracking - this is emergency rollback)
-    importer = DataImporter(client)
-
-    data_section = checkpoint_data.get("data", {})
-
-    for concept in data_section.get("concepts", []):
-        importer.import_concept(concept)
-
-    for source in data_section.get("sources", []):
-        importer.import_source(source)
-
-    for instance in data_section.get("instances", []):
-        importer.import_instance(instance)
-
-    for rel in data_section.get("relationships", []):
-        importer.import_relationship(rel)
+    # Restore from checkpoint using DataImporter.import_backup()
+    # No need to clear database - import_backup() uses MERGE which handles overwrites
+    logger.info(f"[{job_id}] Restoring checkpoint data")
+    DataImporter.import_backup(client, checkpoint_data, overwrite_existing=True)
 
     logger.info(f"[{job_id}] Checkpoint rollback complete")
 
