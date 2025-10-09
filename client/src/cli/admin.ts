@@ -83,9 +83,23 @@ async function trackJobWithSSE(
     // Try SSE first
     const stream = await trackJobProgress(baseUrl, jobId, {
       onProgress: (progress: JobProgress) => {
-        updateSpinnerForProgress(spinner, progress);
+        spinner = updateSpinnerForProgress(spinner, progress);
       },
       onCompleted: async (result) => {
+        // Complete the final stage
+        const state: ProgressState = (spinner as any).__progressState;
+        if (state && state.currentStage) {
+          const finalStats = state.stageStats.get(state.currentStage);
+          if (finalStats) {
+            const progressBar = createProgressBar(finalStats.total, finalStats.total);
+            state.spinner.succeed(getStageName(state.currentStage) + ` ${progressBar} ${finalStats.total}/${finalStats.total}`);
+          } else {
+            state.spinner.succeed(getStageName(state.currentStage));
+          }
+        } else {
+          spinner.succeed('Restore complete!');
+        }
+
         // Fetch final job status for complete information
         try {
           const finalJob = await client.getJobStatus(jobId);
@@ -95,9 +109,11 @@ async function trackJobWithSSE(
         }
       },
       onFailed: (error) => {
+        spinner.fail('Restore failed');
         reject(new Error(error));
       },
       onCancelled: (message) => {
+        spinner.fail('Restore cancelled');
         reject(new Error(message));
       },
       onError: async (error) => {
@@ -106,7 +122,7 @@ async function trackJobWithSSE(
         try {
           const finalJob = await client.pollJob(jobId, (job) => {
             if (job.progress) {
-              updateSpinnerForProgress(spinner, job.progress);
+              spinner = updateSpinnerForProgress(spinner, job.progress);
             }
           });
           resolve(finalJob);
@@ -122,7 +138,7 @@ async function trackJobWithSSE(
       try {
         const finalJob = await client.pollJob(jobId, (job) => {
           if (job.progress) {
-            updateSpinnerForProgress(spinner, job.progress);
+            spinner = updateSpinnerForProgress(spinner, job.progress);
           }
         });
         resolve(finalJob);
@@ -165,10 +181,11 @@ function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
   const stageChanged = state.currentStage && state.currentStage !== progress.stage;
 
   if (stageChanged) {
-    // Complete previous stage with final stats
+    // Complete previous stage with final stats and progress bar
     const prevStats = state.stageStats.get(state.currentStage!);
     if (prevStats) {
-      state.spinner.succeed(getStageName(state.currentStage!) + ` ${prevStats.items}/${prevStats.total} (100%)`);
+      const progressBar = createProgressBar(prevStats.total, prevStats.total);
+      state.spinner.succeed(getStageName(state.currentStage!) + ` ${progressBar} ${prevStats.total}/${prevStats.total}`);
     } else {
       state.spinner.succeed(getStageName(state.currentStage!));
     }
@@ -179,6 +196,7 @@ function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
   } else if (!state.currentStage) {
     // First stage
     state.currentStage = progress.stage;
+    state.spinner.start();
   }
 
   // Update current stage stats
@@ -206,17 +224,21 @@ function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
     case 'restoring_instances':
     case 'restoring_relationships':
       if (progress.message) {
-        // Use message which has the format: "Restoring concepts: 10/114 (8%)"
-        const stageName = getStageName(progress.stage);
-        const detailMatch = progress.message.match(/:\s*(.+)/);
-        if (detailMatch) {
-          state.spinner.text = `${stageName} ${detailMatch[1]}`;
+        // Extract current/total from message: "Restoring concepts: 10/114 (8%)"
+        const match = progress.message.match(/(\d+)\/(\d+)/);
+        if (match) {
+          const current = parseInt(match[1]);
+          const total = parseInt(match[2]);
+          const progressBar = createProgressBar(current, total);
+          const stageName = getStageName(progress.stage);
+          state.spinner.text = `${stageName} ${progressBar} ${current}/${total}`;
         } else {
           state.spinner.text = progress.message;
         }
       } else if (progress.items_total && progress.items_processed !== undefined) {
         const stageName = getStageName(progress.stage);
-        state.spinner.text = `${stageName} ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+        const progressBar = createProgressBar(progress.items_processed, progress.items_total);
+        state.spinner.text = `${stageName} ${progressBar} ${progress.items_processed}/${progress.items_total}`;
       } else {
         state.spinner.text = `${getStageName(progress.stage)} ${progress.percent || 0}%`;
       }
@@ -256,6 +278,25 @@ function getStageName(stage: string): string {
   };
 
   return stageNames[stage] || stage;
+}
+
+/**
+ * Create a visual progress bar using Unicode characters
+ *
+ * @param current - Current progress value
+ * @param total - Total value
+ * @param width - Width of the progress bar (default: 20)
+ * @returns Progress bar string
+ */
+function createProgressBar(current: number, total: number, width: number = 20): string {
+  if (total === 0) return '░'.repeat(width);
+
+  const percent = Math.min(current / total, 1);
+  const filled = Math.floor(percent * width);
+  const empty = width - filled;
+
+  // Unicode block characters for smooth progress
+  return '█'.repeat(filled) + '░'.repeat(empty);
 }
 
 // ========== Status Command ==========
