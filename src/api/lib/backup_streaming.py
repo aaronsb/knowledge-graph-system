@@ -3,14 +3,21 @@ Backup Streaming Service
 
 Implements ADR-015 Phase 2: Streaming backup download with chunked transfer encoding.
 Converts backup dictionaries into JSON streams without loading entire backup into memory.
+
+Defense in Depth: Validates backup data before streaming to catch DataExporter bugs
+or database inconsistencies early.
 """
 
 import json
+import logging
 from typing import Dict, Any, AsyncGenerator
 from datetime import datetime
 
 from ...lib.serialization import DataExporter
 from .age_client import AGEClient
+from .backup_integrity import check_backup_data
+
+logger = logging.getLogger(__name__)
 
 
 async def stream_backup_json(backup_data: Dict[str, Any], chunk_size: int = 8192) -> AsyncGenerator[bytes, None]:
@@ -69,6 +76,32 @@ async def create_backup_stream(
         # Sanitize ontology name for filename
         safe_name = ontology_name.lower().replace(" ", "_").replace("/", "_")
         filename = f"{safe_name}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+    # Validate backup before streaming (defense in depth)
+    # Catches DataExporter bugs or database inconsistencies early
+    integrity = check_backup_data(backup_data)
+
+    if not integrity.valid:
+        # Collect all error messages
+        error_msgs = [f"{e.category}: {e.message}" for e in integrity.errors]
+        error_summary = "; ".join(error_msgs)
+        logger.error(f"Backup generation failed validation: {error_summary}")
+        raise ValueError(f"Backup generation failed validation: {error_summary}")
+
+    # Log validation success with statistics
+    stats = integrity.statistics or {}
+    logger.info(
+        f"Backup validated successfully - "
+        f"Concepts: {stats.get('concepts', 0)}, "
+        f"Sources: {stats.get('sources', 0)}, "
+        f"Instances: {stats.get('instances', 0)}, "
+        f"Relationships: {stats.get('relationships', 0)}"
+    )
+
+    # Log warnings if present (non-critical issues)
+    if integrity.warnings:
+        for warning in integrity.warnings:
+            logger.warning(f"Backup validation warning - {warning.category}: {warning.message}")
 
     # Create stream
     stream = stream_backup_json(backup_data)
