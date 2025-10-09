@@ -31,7 +31,7 @@
     "commander": "^12.0.0",
     "eventsource": "^4.0.0",
     "form-data": "^4.0.0",
-    "log-update": "^7.0.1",
+    "log-update": "^6.1.0",
     "ora": "^5.4.1",
     "table": "^6.8.1"
   },
