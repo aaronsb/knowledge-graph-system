@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.lib.console import Console, Colors
 from src.lib.config import Config
-from src.lib.neo4j_ops import Neo4jConnection, Neo4jQueries
+from src.lib.age_ops import AGEConnection, AGEQueries
 from src.lib.serialization import DataExporter
 from src.lib.integrity import BackupAssessment
 
@@ -34,7 +34,7 @@ class BackupCLI:
     def __init__(self, backup_dir: str = "backups"):
         self.backup_dir = Path(backup_dir)
         self.backup_dir.mkdir(exist_ok=True)
-        self.conn = Neo4jConnection()
+        self.conn = AGEConnection()
 
     def run_interactive(self):
         """Run interactive backup menu"""
@@ -42,16 +42,16 @@ class BackupCLI:
 
         # Test connection
         if not self.conn.test_connection():
-            Console.error("✗ Cannot connect to Neo4j database")
-            Console.warning(f"  Check connection: {Config.neo4j_uri()}")
+            Console.error("✗ Cannot connect to Apache AGE database")
+            Console.warning(f"  Check connection: {Config.postgres_host()}:{Config.postgres_port()}")
             Console.warning("  Start database with: docker-compose up -d")
             sys.exit(1)
 
-        Console.success("✓ Connected to Neo4j")
+        Console.success("✓ Connected to Apache AGE")
 
         # Get ontology list
-        with self.conn.session() as session:
-            ontologies = Neo4jQueries.get_ontology_list(session)
+        client = self.conn.get_client()
+        ontologies = AGEQueries.get_ontology_list(client)
 
         if not ontologies:
             Console.error("✗ No ontologies found in database")
@@ -92,8 +92,8 @@ class BackupCLI:
             print(f"  • {ont['ontology']} ({ont['file_count']} files, {ont['concept_count']} concepts)")
 
         # Show statistics
-        with self.conn.session() as session:
-            stats = Neo4jQueries.get_database_stats(session)
+        client = self.conn.get_client()
+        stats = AGEQueries.get_database_stats(client)
 
         Console.warning("\nDatabase totals:")
         Console.key_value("  Concepts", str(stats['nodes'].get('concepts', 0)), Colors.BOLD, Colors.OKGREEN)
@@ -110,8 +110,8 @@ class BackupCLI:
 
         # Export
         Console.info("\nExporting database...")
-        with self.conn.session() as session:
-            backup_data = DataExporter.export_full_backup(session)
+        client = self.conn.get_client()
+        backup_data = DataExporter.export_full_backup(client)
 
         # Write to file
         Console.info(f"Writing to {backup_file}...")
@@ -166,8 +166,8 @@ class BackupCLI:
 
             Console.info(f"\n[{i}/{len(ontologies)}] Backing up: {ontology}")
 
-            with self.conn.session() as session:
-                backup_data = DataExporter.export_ontology_backup(session, ontology)
+            client = self.conn.get_client()
+            backup_data = DataExporter.export_ontology_backup(client, ontology)
 
             with open(backup_file, 'w') as f:
                 json.dump(backup_data, f, indent=2)
@@ -211,8 +211,8 @@ class BackupCLI:
             Console.info(f"  Destination: {backup_file}")
 
             # Export
-            with self.conn.session() as session:
-                backup_data = DataExporter.export_ontology_backup(session, ontology)
+            client = self.conn.get_client()
+            backup_data = DataExporter.export_ontology_backup(client, ontology)
 
             # Assess backup integrity
             assessment = BackupAssessment.analyze_backup(backup_data)
@@ -270,10 +270,11 @@ class BackupCLI:
     def backup_non_interactive(self, ontology: Optional[str] = None, output: Optional[str] = None):
         """Non-interactive backup for automation"""
         if not self.conn.test_connection():
-            Console.error("✗ Cannot connect to Neo4j database")
+            Console.error("✗ Cannot connect to Apache AGE database")
             sys.exit(1)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        client = self.conn.get_client()
 
         if ontology:
             # Ontology backup
@@ -284,8 +285,7 @@ class BackupCLI:
                 backup_file = self.backup_dir / f"ontology_{safe_name}_{timestamp}.json"
 
             Console.info(f"Backing up ontology: {ontology}")
-            with self.conn.session() as session:
-                backup_data = DataExporter.export_ontology_backup(session, ontology)
+            backup_data = DataExporter.export_ontology_backup(client, ontology)
 
         else:
             # Full backup
@@ -295,8 +295,7 @@ class BackupCLI:
                 backup_file = self.backup_dir / f"full_backup_{timestamp}.json"
 
             Console.info("Backing up full database")
-            with self.conn.session() as session:
-                backup_data = DataExporter.export_full_backup(session)
+            backup_data = DataExporter.export_full_backup(client)
 
         # Write
         with open(backup_file, 'w') as f:

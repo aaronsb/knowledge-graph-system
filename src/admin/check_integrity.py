@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.lib.console import Console
 from src.lib.config import Config
-from src.lib.neo4j_ops import Neo4jConnection
+from src.lib.age_ops import AGEConnection
 from src.lib.integrity import DatabaseIntegrity
 
 
@@ -60,14 +60,14 @@ Examples:
     Console.section("Database Integrity Check")
 
     # Connect
-    conn = Neo4jConnection()
+    conn = AGEConnection()
     if not conn.test_connection():
-        Console.error("✗ Cannot connect to Neo4j database")
-        Console.warning(f"  Check connection: {Config.neo4j_uri()}")
+        Console.error("✗ Cannot connect to Apache AGE database")
+        Console.warning(f"  Check connection: {Config.postgres_host()}:{Config.postgres_port()}")
         Console.warning("  Start database with: docker-compose up -d")
         sys.exit(1)
 
-    Console.success("✓ Connected to Neo4j")
+    Console.success("✓ Connected to Apache AGE")
 
     if args.ontology:
         Console.info(f"Checking ontology: {args.ontology}\n")
@@ -75,8 +75,8 @@ Examples:
         Console.info("Checking entire database\n")
 
     # Check integrity
-    with conn.session() as session:
-        integrity = DatabaseIntegrity.check_integrity(session, args.ontology)
+    client = conn.get_client()
+    integrity = DatabaseIntegrity.check_integrity(client, args.ontology)
 
     # Print report
     DatabaseIntegrity.print_integrity_report(integrity)
@@ -85,16 +85,14 @@ Examples:
     if args.repair and integrity["issues"]:
         Console.warning("\n🔧 Attempting automatic repair...")
 
-        with conn.session() as session:
-            repairs = DatabaseIntegrity.repair_orphaned_concepts(session, args.ontology)
+        repairs = DatabaseIntegrity.repair_orphaned_concepts(client, args.ontology)
 
         if repairs > 0:
             Console.success(f"✓ Repaired {repairs} orphaned concepts")
 
             # Re-check
             Console.info("\nRe-validating integrity...")
-            with conn.session() as session:
-                integrity = DatabaseIntegrity.check_integrity(session, args.ontology)
+            integrity = DatabaseIntegrity.check_integrity(client, args.ontology)
 
             if not integrity["issues"]:
                 Console.success("✓ All issues resolved!")

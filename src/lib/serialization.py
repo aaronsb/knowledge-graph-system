@@ -1,14 +1,19 @@
 """
 Data serialization - Export and import operations for backup/restore
 
-Handles conversion between Neo4j graph data and portable JSON format,
+Handles conversion between Apache AGE graph data and portable JSON format,
 preserving embeddings (1536-dim vectors), full text, and relationships.
 """
 
 import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from neo4j import Session
+import sys
+from pathlib import Path
+
+# Add parent directory to path for AGEClient import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from api.lib.age_client import AGEClient
 
 from .console import Console, Colors
 
@@ -36,12 +41,12 @@ class DataExporter:
     """Export graph data to JSON format"""
 
     @staticmethod
-    def export_concepts(session: Session, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+    def export_concepts(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Export concepts with embeddings
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Optional ontology filter (None = all concepts)
 
         Returns:
@@ -57,7 +62,7 @@ class DataExporter:
                        c.embedding as embedding
                 ORDER BY c.concept_id
             """
-            result = session.run(query, ontology=ontology)
+            result = client._execute_cypher(query, params={"ontology": ontology})
         else:
             query = """
                 MATCH (c:Concept)
@@ -67,26 +72,44 @@ class DataExporter:
                        c.embedding as embedding
                 ORDER BY c.concept_id
             """
-            result = session.run(query)
+            result = client._execute_cypher(query)
 
         concepts = []
         for record in result:
+            # Parse agtype values - strip quotes and parse JSON for arrays
+            concept_id = str(record.get("concept_id", "")).strip('"')
+            label = str(record.get("label", "")).strip('"')
+
+            # Parse search_terms (array)
+            search_terms_raw = str(record.get("search_terms", "[]"))
+            try:
+                search_terms = json.loads(search_terms_raw)
+            except json.JSONDecodeError:
+                search_terms = []
+
+            # Parse embedding (array of floats)
+            embedding_raw = str(record.get("embedding", "[]"))
+            try:
+                embedding = json.loads(embedding_raw)
+            except json.JSONDecodeError:
+                embedding = []
+
             concepts.append({
-                "concept_id": record["concept_id"],
-                "label": record["label"],
-                "search_terms": record["search_terms"],
-                "embedding": record["embedding"]  # Full 1536-dim array
+                "concept_id": concept_id,
+                "label": label,
+                "search_terms": search_terms,
+                "embedding": embedding  # Full 1536-dim array
             })
 
         return concepts
 
     @staticmethod
-    def export_sources(session: Session, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+    def export_sources(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Export source nodes with full text
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Optional ontology filter
 
         Returns:
@@ -102,7 +125,7 @@ class DataExporter:
                        s.full_text as full_text
                 ORDER BY s.paragraph
             """
-            result = session.run(query, ontology=ontology)
+            result = client._execute_cypher(query, params={"ontology": ontology})
         else:
             query = """
                 MATCH (s:Source)
@@ -113,27 +136,28 @@ class DataExporter:
                        s.full_text as full_text
                 ORDER BY s.document, s.paragraph
             """
-            result = session.run(query)
+            result = client._execute_cypher(query)
 
         sources = []
         for record in result:
+            # Parse agtype values
             sources.append({
-                "source_id": record["source_id"],
-                "document": record["document"],
-                "file_path": record["file_path"],
-                "paragraph": record["paragraph"],
-                "full_text": record["full_text"]
+                "source_id": str(record.get("source_id", "")).strip('"'),
+                "document": str(record.get("document", "")).strip('"'),
+                "file_path": str(record.get("file_path", "")).strip('"'),
+                "paragraph": int(str(record.get("paragraph", 0))),
+                "full_text": str(record.get("full_text", "")).strip('"')
             })
 
         return sources
 
     @staticmethod
-    def export_instances(session: Session, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+    def export_instances(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Export instance nodes (evidence quotes)
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Optional ontology filter
 
         Returns:
@@ -149,7 +173,7 @@ class DataExporter:
                        s.source_id as source_id
                 ORDER BY i.instance_id
             """
-            result = session.run(query, ontology=ontology)
+            result = client._execute_cypher(query, params={"ontology": ontology})
         else:
             query = """
                 MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source)
@@ -160,26 +184,26 @@ class DataExporter:
                        s.source_id as source_id
                 ORDER BY i.instance_id
             """
-            result = session.run(query)
+            result = client._execute_cypher(query)
 
         instances = []
         for record in result:
             instances.append({
-                "instance_id": record["instance_id"],
-                "quote": record["quote"],
-                "concept_id": record["concept_id"],
-                "source_id": record["source_id"]
+                "instance_id": str(record.get("instance_id", "")).strip('"'),
+                "quote": str(record.get("quote", "")).strip('"'),
+                "concept_id": str(record.get("concept_id", "")).strip('"'),
+                "source_id": str(record.get("source_id", "")).strip('"')
             })
 
         return instances
 
     @staticmethod
-    def export_relationships(session: Session, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+    def export_relationships(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Export concept relationships
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Optional ontology filter
 
         Returns:
@@ -196,7 +220,7 @@ class DataExporter:
                        properties(r) as properties
                 ORDER BY c1.concept_id, c2.concept_id
             """
-            result = session.run(query, ontology=ontology)
+            result = client._execute_cypher(query, params={"ontology": ontology})
         else:
             query = """
                 MATCH (c1:Concept)-[r]->(c2:Concept)
@@ -206,41 +230,48 @@ class DataExporter:
                        properties(r) as properties
                 ORDER BY c1.concept_id, c2.concept_id
             """
-            result = session.run(query)
+            result = client._execute_cypher(query)
 
         relationships = []
         for record in result:
+            # Parse properties (JSON object)
+            properties_raw = record.get("properties", "{}")
+            try:
+                properties = json.loads(str(properties_raw)) if properties_raw else {}
+            except json.JSONDecodeError:
+                properties = {}
+
             relationships.append({
-                "from": record["from_concept"],
-                "to": record["to_concept"],
-                "type": record["relationship_type"],
-                "properties": dict(record["properties"]) if record["properties"] else {}
+                "from": str(record.get("from_concept", "")).strip('"'),
+                "to": str(record.get("to_concept", "")).strip('"'),
+                "type": str(record.get("relationship_type", "")).strip('"'),
+                "properties": properties
             })
 
         return relationships
 
     @staticmethod
-    def export_full_backup(session: Session) -> Dict[str, Any]:
+    def export_full_backup(client: AGEClient) -> Dict[str, Any]:
         """
         Export entire database
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
 
         Returns:
             Full backup dictionary
         """
         Console.info("Exporting concepts...")
-        concepts = DataExporter.export_concepts(session)
+        concepts = DataExporter.export_concepts(client)
 
         Console.info("Exporting sources...")
-        sources = DataExporter.export_sources(session)
+        sources = DataExporter.export_sources(client)
 
         Console.info("Exporting instances...")
-        instances = DataExporter.export_instances(session)
+        instances = DataExporter.export_instances(client)
 
         Console.info("Exporting relationships...")
-        relationships = DataExporter.export_relationships(session)
+        relationships = DataExporter.export_relationships(client)
 
         return {
             **BackupFormat.create_metadata(BackupFormat.FULL_BACKUP),
@@ -259,12 +290,12 @@ class DataExporter:
         }
 
     @staticmethod
-    def export_ontology_backup(session: Session, ontology: str) -> Dict[str, Any]:
+    def export_ontology_backup(client: AGEClient, ontology: str) -> Dict[str, Any]:
         """
         Export specific ontology
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             ontology: Ontology name
 
         Returns:
@@ -273,16 +304,16 @@ class DataExporter:
         Console.info(f"Exporting ontology: {ontology}")
 
         Console.info("  - Concepts...")
-        concepts = DataExporter.export_concepts(session, ontology)
+        concepts = DataExporter.export_concepts(client, ontology)
 
         Console.info("  - Sources...")
-        sources = DataExporter.export_sources(session, ontology)
+        sources = DataExporter.export_sources(client, ontology)
 
         Console.info("  - Instances...")
-        instances = DataExporter.export_instances(session, ontology)
+        instances = DataExporter.export_instances(client, ontology)
 
         Console.info("  - Relationships...")
-        relationships = DataExporter.export_relationships(session, ontology)
+        relationships = DataExporter.export_relationships(client, ontology)
 
         return {
             **BackupFormat.create_metadata(BackupFormat.ONTOLOGY_BACKUP, ontology),
@@ -341,13 +372,13 @@ class DataImporter:
         return True
 
     @staticmethod
-    def import_backup(session: Session, backup_data: Dict[str, Any],
+    def import_backup(client: AGEClient, backup_data: Dict[str, Any],
                      overwrite_existing: bool = False) -> Dict[str, int]:
         """
         Import backup data into database
 
         Args:
-            session: Neo4j session
+            client: AGEClient instance
             backup_data: Parsed backup JSON
             overwrite_existing: If True, update existing nodes; if False, skip duplicates
 
@@ -369,20 +400,31 @@ class DataImporter:
         for i, concept in enumerate(data["concepts"]):
             Console.progress(i + 1, len(data["concepts"]), "Concepts")
 
-            merge_query = """
-                MERGE (c:Concept {concept_id: $concept_id})
-                ON CREATE SET c.label = $label,
-                             c.search_terms = $search_terms,
-                             c.embedding = $embedding
-            """
             if overwrite_existing:
-                merge_query += """
-                    ON MATCH SET c.label = $label,
-                                c.search_terms = $search_terms,
-                                c.embedding = $embedding
+                # Always set properties (create or update)
+                merge_query = """
+                    MERGE (c:Concept {concept_id: $concept_id})
+                    SET c.label = $label,
+                        c.search_terms = $search_terms,
+                        c.embedding = $embedding
+                """
+            else:
+                # Only set if node doesn't exist (skip if exists)
+                merge_query = """
+                    MERGE (c:Concept {concept_id: $concept_id})
+                    ON CREATE SET c.label = $label, c.search_terms = $search_terms, c.embedding = $embedding
+                """
+                # AGE workaround: Use conditional CASE in SET
+                merge_query = """
+                    OPTIONAL MATCH (existing:Concept {concept_id: $concept_id})
+                    WITH existing
+                    MERGE (c:Concept {concept_id: $concept_id})
+                    SET c.label = CASE WHEN existing IS NULL THEN $label ELSE c.label END,
+                        c.search_terms = CASE WHEN existing IS NULL THEN $search_terms ELSE c.search_terms END,
+                        c.embedding = CASE WHEN existing IS NULL THEN $embedding ELSE c.embedding END
                 """
 
-            session.run(merge_query, **concept)
+            client._execute_cypher(merge_query, params=concept)
             stats["concepts_created"] += 1
 
         # Import sources
@@ -390,22 +432,16 @@ class DataImporter:
         for i, source in enumerate(data["sources"]):
             Console.progress(i + 1, len(data["sources"]), "Sources")
 
+            # AGE: MERGE + SET (works for both create and update)
             merge_query = """
                 MERGE (s:Source {source_id: $source_id})
-                ON CREATE SET s.document = $document,
-                             s.file_path = $file_path,
-                             s.paragraph = $paragraph,
-                             s.full_text = $full_text
+                SET s.document = $document,
+                    s.file_path = $file_path,
+                    s.paragraph = $paragraph,
+                    s.full_text = $full_text
             """
-            if overwrite_existing:
-                merge_query += """
-                    ON MATCH SET s.document = $document,
-                                s.file_path = $file_path,
-                                s.paragraph = $paragraph,
-                                s.full_text = $full_text
-                """
 
-            session.run(merge_query, **source)
+            client._execute_cypher(merge_query, params=source)
             stats["sources_created"] += 1
 
         # Import instances
@@ -413,23 +449,29 @@ class DataImporter:
         for i, instance in enumerate(data["instances"]):
             Console.progress(i + 1, len(data["instances"]), "Instances")
 
-            merge_query = """
-                MERGE (i:Instance {instance_id: $instance_id})
-                ON CREATE SET i.quote = $quote
-            """
-            if overwrite_existing:
-                merge_query += " ON MATCH SET i.quote = $quote"
+            # AGE limitation: Can't use SET with WITH/MATCH joins
+            # Split into two queries: 1) create instance, 2) create relationships
 
-            merge_query += """
-                WITH i
+            # Query 1: Create/update instance node
+            instance_query = """
+                MERGE (i:Instance {instance_id: $instance_id})
+                SET i.quote = $quote
+            """
+            client._execute_cypher(instance_query, params={
+                "instance_id": instance["instance_id"],
+                "quote": instance["quote"]
+            })
+
+            # Query 2: Create relationships
+            rel_query = """
+                MATCH (i:Instance {instance_id: $instance_id})
                 MATCH (c:Concept {concept_id: $concept_id})
                 MATCH (s:Source {source_id: $source_id})
                 MERGE (c)-[:EVIDENCED_BY]->(i)
                 MERGE (i)-[:FROM_SOURCE]->(s)
                 MERGE (c)-[:APPEARS_IN]->(s)
             """
-
-            session.run(merge_query, **instance)
+            client._execute_cypher(rel_query, params=instance)
             stats["instances_created"] += 1
 
         # Import concept-concept relationships
@@ -449,9 +491,13 @@ class DataImporter:
                 RETURN count(r) as created
             """
 
-            result = session.run(query, from_id=rel["from"], to_id=rel["to"], properties=rel["properties"])
-            record = result.single()
-            if record and record["created"] > 0:
+            result = client._execute_cypher(query, params={
+                "from_id": rel["from"],
+                "to_id": rel["to"],
+                "properties": rel["properties"]
+            }, fetch_one=True)
+
+            if result and int(str(result.get("created", 0))) > 0:
                 stats["relationships_created"] += 1
 
         return stats

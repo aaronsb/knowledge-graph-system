@@ -159,7 +159,67 @@ Complete migration from Neo4j Community Edition to Apache AGE (PostgreSQL graph 
 
 ---
 
-## Task 05: MCP Server Rewrite
+## Task 05: Admin Tools Migration
+
+**Status:** ✅ Complete
+**Complexity:** High
+**Dependencies:** Task 04 complete
+**Branch:** `refactor/admin-tools-age-migration`
+
+### Summary:
+
+Migrated all admin tools (backup, restore, integrity checking, pruning, semantic stitching) from Neo4j to Apache AGE with full feature parity.
+
+### Sub-tasks:
+
+#### Core Libraries
+- [✔] Create src/lib/age_ops.py - AGE wrapper matching neo4j_ops API
+- [✔] Migrate src/lib/serialization.py (DataExporter, DataImporter)
+- [✔] Migrate src/lib/integrity.py (DatabaseIntegrity, BackupAssessment)
+- [✔] Migrate src/lib/restitching.py (ConceptMatcher)
+
+#### Admin CLIs
+- [✔] Migrate src/admin/backup.py to use AGEConnection
+- [✔] Migrate src/admin/restore.py to use AGEConnection
+- [✔] Migrate src/admin/check_integrity.py to use AGEConnection
+- [✔] Migrate src/admin/prune.py to use AGEConnection
+- [✔] Migrate src/admin/stitch.py to use AGEConnection
+
+#### AGE Compatibility Fixes
+- [✔] Remove Neo4j `ON CREATE SET` / `ON MATCH SET` syntax
+- [✔] Split instance queries (AGE doesn't allow SET with WITH/MATCH)
+- [✔] Replace Neo4j vector index with Python numpy cosine similarity
+- [✔] Implement consistent agtype parsing (strings, arrays, objects)
+- [✔] Fix import paths for AGEClient
+
+#### Testing
+- [✔] End-to-end backup test (114 concepts, 5.62 MB)
+- [✔] Database clear and restore test
+- [✔] Integrity validation (no issues found)
+- [✔] Verify all admin tools functional
+
+**Acceptance Criteria:**
+- ✅ Full backup/restore cycle works (tested 114 concepts, 19 sources, 142 instances, 91 relationships)
+- ✅ Integrity checking shows no issues
+- ✅ All admin CLIs maintain identical interfaces
+- ✅ No Neo4j dependencies in admin tools
+- ✅ AGE Cypher compatibility issues resolved
+
+**Technical Achievements:**
+- Transaction-like safety via checkpoint backup pattern (documented in ADR-015)
+- Consistent agtype parsing across all tools
+- Full feature parity with pre-Neo4j admin tools
+- Direct database operations (Phase 1 of ADR-015)
+
+**Notes:**
+- This is Phase 1: Direct database backup/restore
+- Phase 2 will add API-based streaming (see Task 15)
+- Checkpoint backup pattern discovered and documented
+- Ready for PR to main
+
+---
+
+## Task 06: MCP Server Rewrite
 
 **Status:** Pending
 **Complexity:** High

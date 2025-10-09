@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.lib.console import Console
 from src.lib.config import Config
-from src.lib.neo4j_ops import Neo4jConnection
+from src.lib.age_ops import AGEConnection
 from src.lib.integrity import DatabaseIntegrity
 
 
@@ -76,13 +76,13 @@ Note:
     Console.section("Relationship Pruning")
 
     # Connect to database
-    conn = Neo4jConnection()
+    conn = AGEConnection()
     if not conn.test_connection():
-        Console.error("✗ Cannot connect to Neo4j database")
-        Console.warning(f"  Check connection: {Config.neo4j_uri()}")
+        Console.error("✗ Cannot connect to Apache AGE database")
+        Console.warning(f"  Check connection: {Config.postgres_host()}:{Config.postgres_port()}")
         sys.exit(1)
 
-    Console.success("✓ Connected to Neo4j")
+    Console.success("✓ Connected to Apache AGE")
 
     if args.ontology:
         Console.info(f"Scope: Ontology '{args.ontology}'")
@@ -94,12 +94,12 @@ Note:
 
     # Find and prune dangling relationships
     Console.info("Searching for dangling relationships...")
-    with conn.session() as session:
-        result = DatabaseIntegrity.prune_dangling_relationships(
-            session,
-            ontology=args.ontology,
-            dry_run=args.dry_run
-        )
+    client = conn.get_client()
+    result = DatabaseIntegrity.prune_dangling_relationships(
+        client,
+        ontology=args.ontology,
+        dry_run=args.dry_run
+    )
 
     # Print results
     DatabaseIntegrity.print_pruning_report(result, dry_run=args.dry_run)
