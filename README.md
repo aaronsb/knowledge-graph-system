@@ -163,6 +163,8 @@ Document → Smart Chunking → LLM Extraction → Graph Construction → Semant
 - **Full-Text + Vector Search**: Combined semantic and exact-match capabilities
 - **Evidence Preservation**: Every concept links to source quotes with paragraph references
 - **Learned Knowledge Synthesis**: Manually create connections between concepts with provenance tracking and similarity validation
+- **Backup Integrity Validation**: Comprehensive validation before restore with schema governance through data contract pattern - validates format, references, statistics, and external dependencies
+- **Client-Side Backup Storage**: Streaming backup download/upload with progress tracking - backups stored locally in `~/.local/share/kg/backups` for user control and portability
 
 ## Learned Knowledge Synthesis
 

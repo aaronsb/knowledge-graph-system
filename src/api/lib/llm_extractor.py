@@ -7,10 +7,11 @@ Supports OpenAI and Anthropic with model configuration.
 import os
 from typing import Dict, List, Any, Optional
 from src.api.lib.ai_providers import get_provider
+from src.api.constants import RELATIONSHIP_TYPES_LIST
 
 
 # System prompt for concept extraction
-EXTRACTION_PROMPT = """You are a knowledge graph extraction agent. Your task is to analyze text and extract:
+EXTRACTION_PROMPT = f"""You are a knowledge graph extraction agent. Your task is to analyze text and extract:
 
 1. **Concepts**: Key ideas, entities, or topics mentioned in the text
 2. **Instances**: Specific quotes that evidence each concept
@@ -28,7 +29,7 @@ For each instance, provide:
 For relationships between concepts, provide:
 - from_concept_id: Source concept (use actual ID from existing concepts if referencing them)
 - to_concept_id: Target concept (use actual ID from existing concepts if referencing them)
-- relationship_type: One of [IMPLIES, CONTRADICTS, SUPPORTS, PART_OF]
+- relationship_type: One of [{RELATIONSHIP_TYPES_LIST}]
 - confidence: A score from 0.0 to 1.0 indicating confidence in the relationship
 
 IMPORTANT: When creating relationships to existing concepts, use their actual concept_id from the list below.
