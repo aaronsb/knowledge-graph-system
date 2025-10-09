@@ -93,10 +93,10 @@ async def search_concepts(request: SearchRequest):
                 documents = [r['doc'] for r in (docs_query or [])]
 
                 evidence_query = client._execute_cypher(
-                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as count",
+                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as evidence_count",
                     fetch_one=True
                 )
-                evidence_count = evidence_query['count'] if evidence_query else 0
+                evidence_count = evidence_query['evidence_count'] if evidence_query else 0
 
                 results.append(ConceptSearchResult(
                     concept_id=concept_id,
