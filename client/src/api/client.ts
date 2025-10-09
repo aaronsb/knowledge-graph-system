@@ -20,6 +20,8 @@ import {
   RelatedConceptsResponse,
   FindConnectionRequest,
   FindConnectionResponse,
+  FindConnectionBySearchRequest,
+  FindConnectionBySearchResponse,
   DatabaseStatsResponse,
   DatabaseInfoResponse,
   DatabaseHealthResponse,
@@ -256,6 +258,14 @@ export class KnowledgeGraphClient {
    */
   async findConnection(request: FindConnectionRequest): Promise<FindConnectionResponse> {
     const response = await this.client.post('/query/connect', request);
+    return response.data;
+  }
+
+  /**
+   * Find shortest paths between concepts using natural language queries
+   */
+  async findConnectionBySearch(request: FindConnectionBySearchRequest): Promise<FindConnectionBySearchResponse> {
+    const response = await this.client.post('/query/connect-by-search', request);
     return response.data;
   }
 

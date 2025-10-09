@@ -192,6 +192,22 @@ export interface FindConnectionResponse {
   paths: ConnectionPath[];
 }
 
+export interface FindConnectionBySearchRequest {
+  from_query: string;
+  to_query: string;
+  max_hops?: number;
+}
+
+export interface FindConnectionBySearchResponse {
+  from_query: string;
+  to_query: string;
+  from_concept?: PathNode;
+  to_concept?: PathNode;
+  max_hops: number;
+  count: number;
+  paths: ConnectionPath[];
+}
+
 // Database types
 export interface DatabaseStatsResponse {
   nodes: {
