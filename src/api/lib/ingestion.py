@@ -11,7 +11,7 @@ import uuid
 from typing import List, Dict, Any
 
 from src.api.lib.chunker import Chunk
-from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.age_client import AGEClient
 from src.api.lib.llm_extractor import extract_concepts, generate_embedding
 
 
@@ -153,7 +153,7 @@ def process_chunk(
     ontology_name: str,
     filename: str,
     file_path: str,
-    neo4j_client: Neo4jClient,
+    neo4j_client: AGEClient,
     stats: ChunkedIngestionStats,
     existing_concepts: List[Dict[str, Any]],
     recent_concept_ids: List[str],
@@ -167,7 +167,7 @@ def process_chunk(
         ontology_name: Name of the ontology/collection (shared across documents)
         filename: Unique filename for source tracking
         file_path: Full path to the source file
-        neo4j_client: Neo4j client instance
+        neo4j_client: AGE client instance
         stats: Statistics tracker
         existing_concepts: List of existing concepts for LLM context
         recent_concept_ids: List to track recent concept IDs
@@ -257,7 +257,7 @@ def process_chunk(
             matches = neo4j_client.vector_search(
                 embedding=embedding,
                 threshold=0.85,
-                limit=5
+                top_k=5
             )
 
             if matches:

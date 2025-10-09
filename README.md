@@ -8,7 +8,6 @@
 
 A knowledge graph system using LLM extraction, Neo4j storage, and vector search. Built on Model Context Protocol (MCP) for multi-agent access.
 
-📊 **[Technical Assessment](docs/ASSESSMENT.md)** - Architecture comparison, research context, implementation details *(Oct 5, 2025)*
 
 **Core Pattern:**
 Iterative graph traversal during ingestion. Each chunk:
@@ -135,9 +134,9 @@ cd ..
 - ⏳ Graph query commands (planned for TypeScript client)
 - ⏳ MCP server mode (Phase 2)
 
-See [ADR-012](docs/ADR-012-api-server-architecture.md), [ADR-013](docs/ADR-013-unified-typescript-client.md), and [ADR-014](docs/ADR-014-job-approval-workflow.md) for architecture details.
+See [ADR-012](docs/architecture/ADR-012-api-server-architecture.md), [ADR-013](docs/architecture/ADR-013-unified-typescript-client.md), and [ADR-014](docs/architecture/ADR-014-job-approval-workflow.md) for architecture details.
 
-**For Claude Desktop/Code integration:** See [MCP Setup Guide](docs/MCP_SETUP.md)
+**For Claude Desktop/Code integration:** See [MCP Setup Guide](docs/guides/MCP_SETUP.md)
 
 ## How It Works
 
@@ -204,7 +203,7 @@ python cli.py learn list --min-similarity 0.8  # High-confidence only
 - Create synthesis concepts that unify multiple ideas
 - Track hypothesis connections for validation
 
-See [Learned Knowledge MCP Plan](docs/LEARNED_KNOWLEDGE_MCP.md) for future AI-assisted synthesis features.
+See [Learned Knowledge MCP Plan](docs/development/LEARNED_KNOWLEDGE_MCP.md) for future AI-assisted synthesis features.
 
 ## Use Cases
 
@@ -235,14 +234,15 @@ This is **not** a new embedding model or vector database. It's a synthesis:
 
 ## Learn More
 
-- 📖 [Concept Deep Dive](docs/CONCEPT.md) - Why knowledge graphs vs RAG
-- 🏗️ [Architecture](docs/ARCHITECTURE.md) - How the system works
-- 🚀 [Quick Start Guide](docs/QUICKSTART.md) - Get running in 5 minutes
-- 🔌 [MCP Setup Guide](docs/MCP_SETUP.md) - Configure Claude Desktop/Code integration
-- 💡 [Examples & Demos](docs/EXAMPLES.md) - Real queries with actual results
-- ⚙️ [AI Provider Configuration](docs/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
-- 📚 [Concepts & Terminology](docs/CONCEPTS_AND_TERMINOLOGY.md) - Understanding ontologies, stitching, pruning, and graph integrity
-- 💾 [Backup & Restore Guide](docs/BACKUP_RESTORE.md) - Protecting your LLM token investment
+- 📖 [Documentation Index](docs/README.md) - Navigate all documentation by category
+- 📖 [Concept Deep Dive](docs/reference/CONCEPT.md) - Why knowledge graphs vs RAG
+- 🏗️ [Architecture](docs/architecture/ARCHITECTURE.md) - How the system works
+- 🚀 [Quick Start Guide](docs/guides/QUICKSTART.md) - Get running in 5 minutes
+- 🔌 [MCP Setup Guide](docs/guides/MCP_SETUP.md) - Configure Claude Desktop/Code integration
+- 💡 [Examples & Demos](docs/guides/EXAMPLES.md) - Real queries with actual results
+- ⚙️ [AI Provider Configuration](docs/guides/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
+- 📚 [Concepts & Terminology](docs/reference/CONCEPTS_AND_TERMINOLOGY.md) - Understanding ontologies, stitching, pruning, and graph integrity
+- 💾 [Backup & Restore Guide](docs/guides/BACKUP_RESTORE.md) - Protecting your LLM token investment
 
 ## Project Structure
 
@@ -285,10 +285,13 @@ knowledge-graph-system/
 │   └── init.cypher       # Neo4j schema and indexes
 │
 ├── docs/                 # Documentation
-│   ├── ADR-012-api-server-architecture.md
-│   ├── ADR-013-unified-typescript-client.md
-│   ├── ARCHITECTURE.md   # System design
-│   └── ...               # Other docs
+│   ├── README.md         # Documentation index
+│   ├── architecture/     # ADRs and design docs
+│   ├── guides/          # User and setup guides
+│   ├── api/             # API and Cypher query references
+│   ├── testing/         # Test coverage specs
+│   ├── reference/       # Concept definitions
+│   └── development/     # Dev journals and notes
 │
 └── logs/                 # Application logs
     └── api_*.log         # API server logs

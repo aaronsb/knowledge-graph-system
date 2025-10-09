@@ -1,41 +1,53 @@
-version: '3.8'
+# ============================================================================
+# Knowledge Graph System - Docker Compose Configuration
+# ============================================================================
+# PostgreSQL with Apache AGE graph extension for unified data storage
+# ============================================================================
 
 services:
-  neo4j:
-    image: neo4j:5.15-community
-    container_name: knowledge-graph-neo4j
+  postgres:
+    # Apache AGE official image (includes PostgreSQL + AGE extension)
+    image: apache/age
+    container_name: knowledge-graph-postgres
     ports:
-      - "7474:7474"  # HTTP browser interface
-      - "7687:7687"  # Bolt protocol
+      - "5432:5432"  # PostgreSQL connection port
     environment:
-      # Auth credentials from .env file
-      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-password}
-      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
-      # Enable APOC procedures if needed
-      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
-      # Configure memory (adjust based on your system)
-      - NEO4J_dbms_memory_heap_initial__size=512m
-      - NEO4J_dbms_memory_heap_max__size=2G
-      - NEO4J_dbms_memory_pagecache_size=512m
+      # Database credentials from .env file
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_graph}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+
+      # PostgreSQL memory configuration (adjust based on your system)
+      # Increase shared_buffers for better graph query performance
+      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-512MB}
+      POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-64MB}
+      POSTGRES_MAINTENANCE_WORK_MEM: ${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
+
+      # Enable parallel query execution for better performance
+      POSTGRES_MAX_PARALLEL_WORKERS_PER_GATHER: ${POSTGRES_MAX_PARALLEL_WORKERS:-4}
+
     volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-      - neo4j_import:/var/lib/neo4j/import
-      - neo4j_plugins:/plugins
+      # Data persistence
+      - postgres_data:/var/lib/postgresql/data
+
+      # Initialization scripts (run on first startup)
+      - ./schema/init_age.sql:/docker-entrypoint-initdb.d/01_init_age.sql
+
+      # Optional: Import directory for bulk data loads
+      - postgres_import:/import
+
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u ${NEO4J_USER:-neo4j} -p ${NEO4J_PASSWORD:-password} 'RETURN 1' || exit 1"]
+      # Check if PostgreSQL is ready and AGE extension is loaded
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+
     restart: unless-stopped
 
 volumes:
-  neo4j_data:
+  postgres_data:
     driver: local
-  neo4j_logs:
-    driver: local
-  neo4j_import:
-    driver: local
-  neo4j_plugins:
+  postgres_import:
     driver: local

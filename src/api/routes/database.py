@@ -16,15 +16,15 @@ from ..models.database import (
     DatabaseInfoResponse,
     DatabaseHealthResponse
 )
-from src.api.lib.neo4j_client import Neo4jClient
+from src.api.lib.age_client import AGEClient
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/database", tags=["database"])
 
 
-def get_neo4j_client() -> Neo4jClient:
-    """Get Neo4j client instance"""
-    return Neo4jClient()
+def get_neo4j_client() -> AGEClient:
+    """Get AGE client instance"""
+    return AGEClient()
 
 
 @router.get("/stats", response_model=DatabaseStatsResponse)
@@ -40,40 +40,45 @@ async def get_database_stats():
     """
     client = get_neo4j_client()
     try:
-        with client.driver.session() as session:
-            # Node counts by label
-            stats = {}
-            for label in ['Concept', 'Source', 'Instance']:
-                result = session.run(f"MATCH (n:{label}) RETURN count(n) as count")
-                stats[label] = result.single()['count']
-
-            # Total relationship count
-            rel_result = session.run("MATCH ()-[r]->() RETURN count(r) as count")
-            total_relationships = rel_result.single()['count']
-
-            # Concept relationship breakdown by type
-            rel_types = session.run("""
-                MATCH (c1:Concept)-[r]->(c2:Concept)
-                RETURN type(r) as rel_type, count(*) as count
-                ORDER BY count DESC
-            """)
-
-            rel_type_list = [
-                {"rel_type": record['rel_type'], "count": record['count']}
-                for record in rel_types
-            ]
-
-            return DatabaseStatsResponse(
-                nodes={
-                    "concepts": stats['Concept'],
-                    "sources": stats['Source'],
-                    "instances": stats['Instance']
-                },
-                relationships={
-                    "total": total_relationships,
-                    "by_type": rel_type_list
-                }
+        # Node counts by label
+        stats = {}
+        for label in ['Concept', 'Source', 'Instance']:
+            result = client._execute_cypher(
+                f"MATCH (n:{label}) RETURN count(n) as node_count",
+                fetch_one=True
             )
+            stats[label] = result['node_count'] if result else 0
+
+        # Total relationship count
+        rel_result = client._execute_cypher(
+            "MATCH ()-[r]->() RETURN count(r) as rel_count",
+            fetch_one=True
+        )
+        total_relationships = rel_result['rel_count'] if rel_result else 0
+
+        # Concept relationship breakdown by type
+        rel_types = client._execute_cypher("""
+            MATCH (c1:Concept)-[r]->(c2:Concept)
+            RETURN type(r) as rel_type, count(*) as type_count
+            ORDER BY count(*) DESC
+        """)
+
+        rel_type_list = [
+            {"rel_type": record['rel_type'], "count": record['type_count']}
+            for record in (rel_types or [])
+        ]
+
+        return DatabaseStatsResponse(
+            nodes={
+                "concepts": stats['Concept'],
+                "sources": stats['Source'],
+                "instances": stats['Instance']
+            },
+            relationships={
+                "total": total_relationships,
+                "by_type": rel_type_list
+            }
+        )
 
     except Exception as e:
         logger.error(f"Failed to get database stats: {e}", exc_info=True)
@@ -93,28 +98,37 @@ async def get_database_info():
     Example:
         GET /database/info
     """
-    neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-    neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+    postgres_host = os.getenv("POSTGRES_HOST", "localhost")
+    postgres_port = os.getenv("POSTGRES_PORT", "5432")
+    postgres_db = os.getenv("POSTGRES_DB", "knowledge_graph")
+    postgres_user = os.getenv("POSTGRES_USER", "admin")
+
+    uri = f"postgresql://{postgres_host}:{postgres_port}/{postgres_db}"
 
     info = {
-        "uri": neo4j_uri,
-        "user": neo4j_user,
+        "uri": uri,
+        "user": postgres_user,
         "connected": False,
         "version": None,
-        "edition": None,
+        "edition": "PostgreSQL + Apache AGE",
         "error": None
     }
 
     try:
         client = get_neo4j_client()
         try:
-            with client.driver.session() as session:
-                result = session.run("CALL dbms.components() YIELD name, versions, edition")
-                component = result.single()
-                if component:
-                    info["connected"] = True
-                    info["version"] = component["versions"][0] if component["versions"] else None
-                    info["edition"] = component["edition"]
+            # Get PostgreSQL version using direct SQL query
+            import psycopg2
+            conn = client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT version();")
+                    version_result = cur.fetchone()
+                    if version_result:
+                        info["connected"] = True
+                        info["version"] = version_result[0]
+            finally:
+                client.pool.putconn(conn)
         finally:
             client.close()
     except Exception as e:
@@ -131,8 +145,8 @@ async def check_database_health():
 
     Performs multiple checks:
     - Basic connectivity (ping test)
-    - Index availability
-    - Constraint availability
+    - AGE extension availability
+    - Graph schema existence
 
     Returns:
         DatabaseHealthResponse with overall status and check results
@@ -150,36 +164,52 @@ async def check_database_health():
     try:
         client = get_neo4j_client()
         try:
-            with client.driver.session() as session:
-                # Check basic connectivity
-                result = session.run("RETURN 1 as ping")
-                if result.single()["ping"] == 1:
-                    health["responsive"] = True
-                    health["checks"]["connectivity"] = "ok"
+            # Check basic connectivity
+            result = client._execute_cypher("RETURN 1 as ping", fetch_one=True)
+            if result and result["ping"] == 1:
+                health["responsive"] = True
+                health["checks"]["connectivity"] = "ok"
 
-                # Check indexes
-                indexes = session.run("SHOW INDEXES")
-                index_count = len(list(indexes))
-                health["checks"]["indexes"] = {
-                    "count": index_count,
-                    "status": "ok" if index_count > 0 else "warning"
+            # Check AGE extension
+            try:
+                age_check = client._execute_cypher(
+                    "SELECT extname FROM pg_extension WHERE extname = 'age'",
+                    fetch_one=True
+                )
+                health["checks"]["age_extension"] = {
+                    "installed": bool(age_check),
+                    "status": "ok" if age_check else "error"
+                }
+            except:
+                health["checks"]["age_extension"] = {
+                    "installed": False,
+                    "status": "error"
                 }
 
-                # Check constraints
-                constraints = session.run("SHOW CONSTRAINTS")
-                constraint_count = len(list(constraints))
-                health["checks"]["constraints"] = {
-                    "count": constraint_count,
-                    "status": "ok" if constraint_count > 0 else "warning"
+            # Check graph existence
+            try:
+                graph_check = client._execute_cypher(
+                    "MATCH (n) RETURN count(n) as node_count LIMIT 1",
+                    fetch_one=True
+                )
+                health["checks"]["graph"] = {
+                    "accessible": True,
+                    "status": "ok"
+                }
+            except:
+                health["checks"]["graph"] = {
+                    "accessible": False,
+                    "status": "warning"
                 }
 
-                # Overall status
-                if health["responsive"] and index_count > 0:
-                    health["status"] = "healthy"
-                elif health["responsive"]:
-                    health["status"] = "degraded"
-                else:
-                    health["status"] = "unhealthy"
+            # Overall status
+            if (health["responsive"] and
+                health["checks"].get("age_extension", {}).get("status") == "ok"):
+                health["status"] = "healthy"
+            elif health["responsive"]:
+                health["status"] = "degraded"
+            else:
+                health["status"] = "unhealthy"
 
         finally:
             client.close()

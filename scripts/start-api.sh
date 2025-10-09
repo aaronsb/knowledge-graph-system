@@ -17,12 +17,12 @@ if [ ! -d "venv" ]; then
     exit 1
 fi
 
-# Check Neo4j
-if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-neo4j; then
-    echo -e "${YELLOW}⚠ Neo4j is not running${NC}"
-    echo -e "${YELLOW}  Starting Neo4j...${NC}"
+# Check PostgreSQL
+if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
+    echo -e "${YELLOW}⚠ PostgreSQL is not running${NC}"
+    echo -e "${YELLOW}  Starting PostgreSQL...${NC}"
     docker-compose up -d
-    sleep 3
+    sleep 5
 fi
 
 source venv/bin/activate

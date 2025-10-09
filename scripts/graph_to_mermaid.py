@@ -20,7 +20,7 @@ import sys
 import json
 import argparse
 from typing import Dict, List, Any, Set, Tuple
-from src.ingest.neo4j_client import Neo4jClient
+from src.api.lib.age_client import AGEClient
 
 
 def sanitize_id(text: str) -> str:
@@ -38,7 +38,7 @@ def sanitize_label(text: str, max_length: int = 40) -> str:
     return text
 
 
-def get_concept_graph(neo4j_client: Neo4jClient, concept_id: str, depth: int = 2) -> Dict[str, Any]:
+def get_concept_graph(neo4j_client: AGEClient, concept_id: str, depth: int = 2) -> Dict[str, Any]:
     """
     Fetch a concept and its related concepts from Neo4j.
 
@@ -103,7 +103,7 @@ def get_concept_graph(neo4j_client: Neo4jClient, concept_id: str, depth: int = 2
     }
 
 
-def get_search_results_graph(neo4j_client: Neo4jClient, concept_ids: List[str]) -> Dict[str, Any]:
+def get_search_results_graph(neo4j_client: AGEClient, concept_ids: List[str]) -> Dict[str, Any]:
     """
     Fetch multiple concepts and their interconnections.
 
@@ -282,7 +282,7 @@ def main():
             if "concepts" in data:
                 # Search results format
                 concept_ids = [c["concept_id"] for c in data["concepts"]]
-                neo4j_client = Neo4jClient()
+                neo4j_client = AGEClient()
                 with neo4j_client:
                     graph_data = get_search_results_graph(neo4j_client, concept_ids)
             else:
@@ -298,7 +298,7 @@ def main():
             print("Error: --concept or --concepts required for neo4j input", file=sys.stderr)
             sys.exit(1)
 
-        neo4j_client = Neo4jClient()
+        neo4j_client = AGEClient()
 
         try:
             with neo4j_client:

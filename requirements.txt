@@ -1,8 +1,8 @@
-neo4j>=5.15.0
+psycopg2-binary>=2.9.9  # PostgreSQL adapter
 openai>=1.10.0
 python-dotenv>=1.0.0
 anthropic>=0.18.0  # Optional: only needed if using AI_PROVIDER=anthropic
-numpy>=1.24.0  # Required for learned knowledge similarity calculations
+numpy>=1.24.0  # Required for learned knowledge similarity calculations & vector search
 
 # API Server (Phase 1)
 fastapi>=0.109.0
