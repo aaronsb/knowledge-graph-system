@@ -107,3 +107,22 @@ class FindConnectionResponse(BaseModel):
     max_hops: int
     count: int
     paths: List[ConnectionPath]
+
+
+# Find Connection by Search Models
+class FindConnectionBySearchRequest(BaseModel):
+    """Request to find path between concepts using natural language queries"""
+    from_query: str = Field(..., description="Natural language query for starting concept", min_length=1)
+    to_query: str = Field(..., description="Natural language query for target concept", min_length=1)
+    max_hops: int = Field(5, description="Maximum path length", ge=1, le=10)
+
+
+class FindConnectionBySearchResponse(BaseModel):
+    """Connection paths response with search queries"""
+    from_query: str
+    to_query: str
+    from_concept: Optional[PathNode] = Field(None, description="Top matching concept for from_query")
+    to_concept: Optional[PathNode] = Field(None, description="Top matching concept for to_query")
+    max_hops: int
+    count: int
+    paths: List[ConnectionPath]

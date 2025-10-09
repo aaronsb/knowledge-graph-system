@@ -24,6 +24,8 @@ from ..models.queries import (
     RelatedConcept,
     FindConnectionRequest,
     FindConnectionResponse,
+    FindConnectionBySearchRequest,
+    FindConnectionBySearchResponse,
     ConnectionPath,
     PathNode
 )
@@ -330,5 +332,98 @@ async def find_connection(request: FindConnectionRequest):
     except Exception as e:
         logger.error(f"Failed to find connection: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to find connection: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.post("/connect-by-search", response_model=FindConnectionBySearchResponse)
+async def find_connection_by_search(request: FindConnectionBySearchRequest):
+    """
+    Find shortest paths between two concepts using natural language queries.
+
+    Searches for concepts matching each query string, then finds paths between
+    the top matches.
+
+    Args:
+        request: Connection parameters (from_query, to_query, max_hops)
+
+    Returns:
+        FindConnectionBySearchResponse with discovered paths
+
+    Example:
+        POST /query/connect-by-search
+        {
+          "from_query": "Variety Fulcrum",
+          "to_query": "Recursive Depth",
+          "max_hops": 5
+        }
+    """
+    client = get_neo4j_client()
+    provider = get_provider()
+
+    try:
+        # Search for concepts matching both queries
+        from_embedding_result = provider.generate_embedding(request.from_query)
+        from_embedding = from_embedding_result['embedding'] if isinstance(from_embedding_result, dict) else from_embedding_result
+
+        to_embedding_result = provider.generate_embedding(request.to_query)
+        to_embedding = to_embedding_result['embedding'] if isinstance(to_embedding_result, dict) else to_embedding_result
+
+        # Find top matching concepts for each query
+        from_matches = client.vector_search(from_embedding, top_k=1, threshold=0.5)
+        to_matches = client.vector_search(to_embedding, top_k=1, threshold=0.5)
+
+        if not from_matches:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No concepts found matching '{request.from_query}'"
+            )
+
+        if not to_matches:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No concepts found matching '{request.to_query}'"
+            )
+
+        # Use the top match for each
+        from_concept_id = from_matches[0]['concept_id']
+        from_label = from_matches[0]['label']
+        to_concept_id = to_matches[0]['concept_id']
+        to_label = to_matches[0]['label']
+
+        logger.info(f"Found concept matches: '{from_label}' ({from_concept_id}) -> '{to_label}' ({to_concept_id})")
+
+        # Build and execute shortest path query
+        query = QueryService.build_shortest_path_query(request.max_hops)
+
+        records = client._execute_cypher(
+            query.replace("$from_id", f"'{from_concept_id}'")
+                 .replace("$to_id", f"'{to_concept_id}'")
+        )
+
+        paths = [
+            ConnectionPath(
+                nodes=[PathNode(id=n['id'], label=n['label']) for n in record['path_nodes']],
+                relationships=record['rel_types'],
+                hops=record['hops']
+            )
+            for record in (records or [])
+        ]
+
+        return FindConnectionBySearchResponse(
+            from_query=request.from_query,
+            to_query=request.to_query,
+            from_concept=PathNode(id=from_concept_id, label=from_label),
+            to_concept=PathNode(id=to_concept_id, label=to_label),
+            max_hops=request.max_hops,
+            count=len(paths),
+            paths=paths
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to find connection by search: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to find connection by search: {str(e)}")
     finally:
         client.close()
