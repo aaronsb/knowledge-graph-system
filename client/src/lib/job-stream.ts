@@ -7,9 +7,9 @@
 
 import type { JobProgress, JobResult } from '../types';
 
-// Dynamic import of eventsource for Node.js
-// Use require() to get the default export correctly
-const EventSource = require('eventsource');
+// Import EventSource from eventsource package (Node.js)
+// The package exports { EventSource, ErrorEvent }
+const { EventSource } = require('eventsource');
 
 export interface JobProgressCallbacks {
   onProgress?: (progress: JobProgress) => void;
