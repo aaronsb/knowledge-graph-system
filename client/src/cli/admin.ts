@@ -87,7 +87,7 @@ async function trackJobWithSSE(
       },
       onCompleted: async (result) => {
         // Finalize the multi-progress display
-        const logUpdate = require('log-update');
+        const logUpdate = require('log-update').default || require('log-update');
         const state: MultiProgressState = (spinner as any).__multiProgress;
 
         if (state) {
@@ -188,7 +188,7 @@ interface StageProgress {
  * Update multi-line progress display (pre-allocated lines)
  */
 function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
-  const logUpdate = require('log-update');
+  const logUpdate = require('log-update').default || require('log-update');
 
   // Initialize multi-progress state
   if (!(spinner as any).__multiProgress) {
