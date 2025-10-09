@@ -13,6 +13,8 @@ import { getConfig } from '../lib/config';
 import * as colors from './colors';
 import { separator } from './colors';
 import { configureColoredHelp } from './help-formatter';
+import { JobProgressStream, trackJobProgress } from '../lib/job-stream';
+import type { JobStatus, JobProgress } from '../types';
 
 /**
  * Prompt for input from user
@@ -57,6 +59,252 @@ function promptPassword(question: string): Promise<string> {
       resolve(password);
     });
   });
+}
+
+/**
+ * Track job progress with SSE streaming (ADR-018 Phase 1)
+ *
+ * Tries Server-Sent Events first for real-time updates (<500ms latency).
+ * Falls back to polling if SSE fails or is unavailable.
+ *
+ * @param client - API client
+ * @param jobId - Job ID to track
+ * @param spinner - Ora spinner for status updates
+ * @returns Promise that resolves with final job status
+ */
+async function trackJobWithSSE(
+  client: ReturnType<typeof createClientFromEnv>,
+  jobId: string,
+  spinner: any
+): Promise<JobStatus> {
+  return new Promise(async (resolve, reject) => {
+    const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+
+    // Try SSE first
+    const stream = await trackJobProgress(baseUrl, jobId, {
+      onProgress: (progress: JobProgress) => {
+        spinner = updateSpinnerForProgress(spinner, progress);
+      },
+      onCompleted: async (result) => {
+        // Finalize the multi-progress display
+        const logUpdate = require('log-update').default || require('log-update');
+        const state: MultiProgressState = (spinner as any).__multiProgress;
+
+        if (state) {
+          // Mark all stages as completed and render final state
+          state.orderedStages.forEach(stageName => {
+            const stageData = state.stages.get(stageName)!;
+            if (stageData.status === 'active') {
+              stageData.status = 'completed';
+              if (stageData.total === 0 && stageData.current > 0) {
+                stageData.total = stageData.current;
+              }
+            }
+          });
+
+          // Render final state
+          const lines: string[] = [];
+          state.orderedStages.forEach(stageName => {
+            const stageData = state.stages.get(stageName)!;
+            if (stageData.total > 0) {
+              const progressBar = createProgressBar(stageData.total, stageData.total);
+              lines.push(colors.status.success('✓') + ` ${stageData.name} ${progressBar} ${stageData.total}/${stageData.total}`);
+            } else if (stageData.status === 'completed') {
+              lines.push(colors.status.success('✓') + ` ${stageData.name}`);
+            }
+          });
+
+          // Finalize and persist the output
+          logUpdate(lines.join('\n'));
+          logUpdate.done();
+        }
+
+        // Fetch final job status for complete information
+        try {
+          const finalJob = await client.getJobStatus(jobId);
+          resolve(finalJob);
+        } catch (error) {
+          reject(error);
+        }
+      },
+      onFailed: (error) => {
+        spinner.fail('Restore failed');
+        reject(new Error(error));
+      },
+      onCancelled: (message) => {
+        spinner.fail('Restore cancelled');
+        reject(new Error(message));
+      },
+      onError: async (error) => {
+        // SSE failed - fall back to polling
+        console.log(colors.status.dim('\nSSE unavailable, using polling...'));
+        try {
+          const finalJob = await client.pollJob(jobId, (job) => {
+            if (job.progress) {
+              spinner = updateSpinnerForProgress(spinner, job.progress);
+            }
+          });
+          resolve(finalJob);
+        } catch (pollError) {
+          reject(pollError);
+        }
+      }
+    }, true); // useSSE = true
+
+    // If stream is null, SSE was explicitly disabled - use polling fallback
+    if (!stream) {
+      console.log(colors.status.dim('Using polling for progress updates...'));
+      try {
+        const finalJob = await client.pollJob(jobId, (job) => {
+          if (job.progress) {
+            spinner = updateSpinnerForProgress(spinner, job.progress);
+          }
+        });
+        resolve(finalJob);
+      } catch (pollError) {
+        reject(pollError);
+      }
+    }
+  });
+}
+
+/**
+ * Multi-line progress display using log-update
+ * Pre-allocates all stage lines and updates them in place
+ */
+interface MultiProgressState {
+  stages: Map<string, StageProgress>;
+  orderedStages: string[];
+}
+
+interface StageProgress {
+  name: string;
+  status: 'waiting' | 'active' | 'completed';
+  current: number;
+  total: number;
+}
+
+/**
+ * Update multi-line progress display (pre-allocated lines)
+ */
+function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
+  const logUpdate = require('log-update').default || require('log-update');
+
+  // Initialize multi-progress state
+  if (!(spinner as any).__multiProgress) {
+    const stages = new Map<string, StageProgress>();
+    const orderedStages = [
+      'creating_checkpoint',
+      'loading_backup',
+      'restoring_concepts',
+      'restoring_sources',
+      'restoring_instances',
+      'restoring_relationships'
+    ];
+
+    // Pre-allocate all stages
+    orderedStages.forEach(stage => {
+      stages.set(stage, {
+        name: getStageName(stage),
+        status: 'waiting',
+        current: 0,
+        total: 0
+      });
+    });
+
+    (spinner as any).__multiProgress = {
+      stages,
+      orderedStages
+    } as MultiProgressState;
+  }
+
+  const state: MultiProgressState = (spinner as any).__multiProgress;
+
+  // Update the specific stage with progress
+  if (state.stages.has(progress.stage)) {
+    const stageData = state.stages.get(progress.stage)!;
+
+    // Extract current/total from message
+    if (progress.message) {
+      const match = progress.message.match(/(\d+)\/(\d+)/);
+      if (match) {
+        stageData.current = parseInt(match[1]);
+        stageData.total = parseInt(match[2]);
+        stageData.status = stageData.current === stageData.total ? 'completed' : 'active';
+      } else {
+        stageData.status = 'active';
+      }
+    } else if (progress.items_total && progress.items_processed !== undefined) {
+      stageData.current = progress.items_processed;
+      stageData.total = progress.items_total;
+      stageData.status = stageData.current === stageData.total ? 'completed' : 'active';
+    } else {
+      stageData.status = 'active';
+    }
+  }
+
+  // Render all stages
+  const lines: string[] = [];
+  state.orderedStages.forEach(stageName => {
+    const stageData = state.stages.get(stageName)!;
+
+    if (stageData.status === 'completed') {
+      const progressBar = createProgressBar(stageData.total, stageData.total);
+      lines.push(colors.status.success('✓') + ` ${stageData.name} ${progressBar} ${stageData.total}/${stageData.total}`);
+    } else if (stageData.status === 'active') {
+      if (stageData.total > 0) {
+        const progressBar = createProgressBar(stageData.current, stageData.total);
+        lines.push(colors.status.info('⠋') + ` ${stageData.name} ${progressBar} ${stageData.current}/${stageData.total}`);
+      } else {
+        lines.push(colors.status.info('⠋') + ` ${stageData.name}...`);
+      }
+    } else {
+      // waiting
+      lines.push(colors.status.dim('○') + ` ${stageData.name}`);
+    }
+  });
+
+  // Update all lines at once
+  logUpdate(lines.join('\n'));
+
+  return spinner;
+}
+
+/**
+ * Get user-friendly stage name
+ */
+function getStageName(stage: string): string {
+  const stageNames: Record<string, string> = {
+    'creating_checkpoint': 'Creating checkpoint backup',
+    'loading_backup': 'Loading backup file',
+    'restoring_concepts': 'Restoring concepts',
+    'restoring_sources': 'Restoring sources',
+    'restoring_instances': 'Restoring instances',
+    'restoring_relationships': 'Restoring relationships',
+    'completed': 'Restore complete',
+    'rollback': 'Rolling back'
+  };
+
+  return stageNames[stage] || stage;
+}
+
+/**
+ * Create a visual progress bar using Unicode characters
+ *
+ * @param current - Current progress value
+ * @param total - Total value
+ * @param width - Width of the progress bar (default: 20)
+ * @returns Progress bar string
+ */
+function createProgressBar(current: number, total: number, width: number = 20): string {
+  if (total === 0) return '░'.repeat(width);
+
+  const percent = Math.min(current / total, 1);
+  const filled = Math.floor(percent * width);
+  const empty = width - filled;
+
+  // Unicode block characters for smooth progress
+  return '█'.repeat(filled) + '░'.repeat(empty);
 }
 
 // ========== Status Command ==========
@@ -413,12 +661,23 @@ const restoreCommand = new Command('restore')
       console.log(colors.status.dim(`Size: ${(fileStats.size / (1024 * 1024)).toFixed(2)} MB`));
 
       // Get authentication
+      // NOTE: Placeholder auth for testing (see ADR-016 for future auth system)
+      // Currently validates: username exists in config, password length >= 4
+      // Future: Will validate against proper auth system with hashed passwords
       console.log('\n' + colors.status.warning('Authentication required:'));
-      const username = await prompt('Username: ');
+
+      // Get username from config
+      const username = config.get('username') || config.getClientId();
+      if (!username) {
+        console.error(colors.status.error('✗ Username not configured. Run: kg config set username <your-username>'));
+        process.exit(1);
+      }
+
+      console.log(colors.status.dim(`Using username: ${username}`));
       const password = await promptPassword('Password: ');
 
-      if (!username || !password) {
-        console.error(colors.status.error('✗ Username and password required'));
+      if (!password) {
+        console.error(colors.status.error('✗ Password required'));
         process.exit(1);
       }
 
@@ -451,66 +710,12 @@ const restoreCommand = new Command('restore')
           console.log(colors.status.warning(`⚠️  Backup has ${uploadResult.integrity_warnings} validation warnings`));
         }
 
-        // Poll restore job for progress
+        // Track restore job progress with SSE streaming (ADR-018 Phase 1)
+        // Falls back to polling if SSE fails
         spinner = ora('Preparing restore...').start();
         const jobId = uploadResult.job_id;
 
-        const finalJob = await client.pollJob(jobId, (job) => {
-          const progress = job.progress;
-
-          if (progress) {
-            // Update spinner based on stage
-            switch (progress.stage) {
-              case 'creating_checkpoint':
-                spinner.text = `Creating checkpoint backup... ${progress.percent || 0}%`;
-                break;
-              case 'loading_backup':
-                spinner.text = `Loading backup file... ${progress.percent || 0}%`;
-                break;
-              case 'restoring_concepts':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring concepts... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring concepts... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'restoring_sources':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring sources... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring sources... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'restoring_instances':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring instances... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring instances... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'restoring_relationships':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring relationships... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring relationships... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'rollback':
-                spinner.fail('Restore failed - rolling back to checkpoint');
-                spinner = ora(progress.message || 'Rolling back...').start();
-                break;
-              case 'completed':
-                spinner.text = `Restore complete! ${progress.percent || 100}%`;
-                break;
-              default:
-                if (progress.message) {
-                  spinner.text = progress.message;
-                } else {
-                  spinner.text = `Restoring... ${progress.percent || 0}%`;
-                }
-            }
-          }
-        });
+        const finalJob = await trackJobWithSSE(client, jobId, spinner);
 
         if (finalJob.status === 'completed') {
           spinner.succeed('Restore completed successfully!');
@@ -598,12 +803,24 @@ const resetCommand = new Command('reset')
       }
 
       // Get authentication
+      // NOTE: Placeholder auth for testing (see ADR-016 for future auth system)
+      // Currently validates: username exists in config, password length >= 4
+      // Future: Will validate against proper auth system with hashed passwords
       console.log('\n' + colors.status.warning('Authentication required:'));
-      const username = await prompt('Username: ');
+
+      const config = getConfig();
+      // Get username from config
+      const username = config.get('username') || config.getClientId();
+      if (!username) {
+        console.error(colors.status.error('✗ Username not configured. Run: kg config set username <your-username>'));
+        process.exit(1);
+      }
+
+      console.log(colors.status.dim(`Using username: ${username}`));
       const password = await promptPassword('Password: ');
 
-      if (!username || !password) {
-        console.error(colors.status.error('✗ Username and password required'));
+      if (!password) {
+        console.error(colors.status.error('✗ Password required'));
         process.exit(1);
       }
 

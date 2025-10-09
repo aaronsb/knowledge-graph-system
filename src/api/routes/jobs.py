@@ -1,6 +1,9 @@
 """Job status and management routes"""
 
+import asyncio
+import json
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from typing import Optional, List
 from datetime import datetime, timedelta
 
@@ -203,3 +206,117 @@ async def approve_job(
         "status": "approved",
         "message": "Job approved and queued for processing"
     }
+
+
+@router.get(
+    "/{job_id}/stream",
+    summary="Stream job progress (Server-Sent Events)"
+)
+async def stream_job_progress(
+    job_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Stream real-time job progress updates via Server-Sent Events (ADR-018).
+
+    **Events sent:**
+    - `progress`: Job progress updates (stage, percent, items)
+    - `completed`: Job completed successfully
+    - `failed`: Job failed with error
+    - `error`: Job not found or access denied
+    - `keepalive`: Connection keepalive (every 30s)
+
+    **SSE Format:**
+    ```
+    event: progress
+    data: {"stage": "restoring_concepts", "percent": 45, "items_processed": 512}
+
+    event: completed
+    data: {"restore_stats": {...}}
+    ```
+
+    **Auto-closes stream** when job reaches terminal state (completed/failed/cancelled).
+
+    **Polling Fallback**: If SSE fails, client should fall back to `GET /jobs/{job_id}`
+
+    **Connection:** Uses HTTP/1.1 chunked transfer encoding. Works through most proxies.
+    """
+    queue = get_job_queue()
+
+    # Check job exists and verify ownership upfront
+    job = queue.get_job(job_id)
+    if not job:
+        # Send error event and close
+        async def error_generator():
+            yield f"event: error\ndata: {json.dumps({'error': 'Job not found'})}\n\n"
+
+        return StreamingResponse(
+            error_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+
+    # Verify ownership (Phase 1: no-op, Phase 2: enforced)
+    await verify_job_ownership(job_id, job, current_user)
+
+    async def event_generator():
+        """
+        Generator that streams job progress events.
+
+        Implements ADR-018 Phase 1: Core SSE Infrastructure
+        - Polls job queue every 500ms
+        - Sends progress events when state changes
+        - Sends terminal events (completed/failed)
+        - Auto-closes on terminal state
+        """
+        last_progress = None
+        last_keepalive = datetime.now()
+
+        while True:
+            job = queue.get_job(job_id)
+
+            if not job:
+                yield f"event: error\ndata: {json.dumps({'error': 'Job disappeared'})}\n\n"
+                break
+
+            # Send progress if changed
+            current_progress = job.get('progress')
+            if current_progress and current_progress != last_progress:
+                yield f"event: progress\ndata: {json.dumps(current_progress)}\n\n"
+                last_progress = current_progress
+
+            # Send terminal events
+            if job['status'] == 'completed':
+                result = job.get('result', {})
+                yield f"event: completed\ndata: {json.dumps(result)}\n\n"
+                break
+            elif job['status'] == 'failed':
+                error = job.get('error', 'Unknown error')
+                yield f"event: failed\ndata: {json.dumps({'error': error})}\n\n"
+                break
+            elif job['status'] == 'cancelled':
+                yield f"event: cancelled\ndata: {json.dumps({'message': 'Job was cancelled'})}\n\n"
+                break
+
+            # Send keepalive every 30 seconds to prevent timeout
+            now = datetime.now()
+            if (now - last_keepalive).total_seconds() >= 30:
+                yield f"event: keepalive\ndata: {json.dumps({'timestamp': now.isoformat()})}\n\n"
+                last_keepalive = now
+
+            # Poll interval: 500ms for sub-second updates
+            await asyncio.sleep(0.5)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable nginx buffering
+        }
+    )

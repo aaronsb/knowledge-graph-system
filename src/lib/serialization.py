@@ -373,7 +373,8 @@ class DataImporter:
 
     @staticmethod
     def import_backup(client: AGEClient, backup_data: Dict[str, Any],
-                     overwrite_existing: bool = False) -> Dict[str, int]:
+                     overwrite_existing: bool = False,
+                     progress_callback: Optional[callable] = None) -> Dict[str, int]:
         """
         Import backup data into database
 
@@ -381,6 +382,7 @@ class DataImporter:
             client: AGEClient instance
             backup_data: Parsed backup JSON
             overwrite_existing: If True, update existing nodes; if False, skip duplicates
+            progress_callback: Optional callback(stage, current, total, percent) for progress updates
 
         Returns:
             Dictionary with import statistics
@@ -397,8 +399,15 @@ class DataImporter:
 
         # Import concepts
         Console.info("Importing concepts...")
+        total_concepts = len(data["concepts"])
         for i, concept in enumerate(data["concepts"]):
-            Console.progress(i + 1, len(data["concepts"]), "Concepts")
+            current = i + 1
+            Console.progress(current, total_concepts, "Concepts")
+
+            # Call progress callback every 10 items
+            if progress_callback and current % 10 == 0:
+                percent = (current / total_concepts) * 100
+                progress_callback("concepts", current, total_concepts, percent)
 
             if overwrite_existing:
                 # Always set properties (create or update)
@@ -427,10 +436,21 @@ class DataImporter:
             client._execute_cypher(merge_query, params=concept)
             stats["concepts_created"] += 1
 
+        # Final callback for concepts stage
+        if progress_callback and total_concepts > 0:
+            progress_callback("concepts", total_concepts, total_concepts, 100.0)
+
         # Import sources
         Console.info("Importing sources...")
+        total_sources = len(data["sources"])
         for i, source in enumerate(data["sources"]):
-            Console.progress(i + 1, len(data["sources"]), "Sources")
+            current = i + 1
+            Console.progress(current, total_sources, "Sources")
+
+            # Call progress callback every item (sources are fewer)
+            if progress_callback:
+                percent = (current / total_sources) * 100
+                progress_callback("sources", current, total_sources, percent)
 
             # AGE: MERGE + SET (works for both create and update)
             merge_query = """
@@ -444,10 +464,21 @@ class DataImporter:
             client._execute_cypher(merge_query, params=source)
             stats["sources_created"] += 1
 
+        # Final callback for sources stage
+        if progress_callback and total_sources > 0:
+            progress_callback("sources", total_sources, total_sources, 100.0)
+
         # Import instances
         Console.info("Importing instances...")
+        total_instances = len(data["instances"])
         for i, instance in enumerate(data["instances"]):
-            Console.progress(i + 1, len(data["instances"]), "Instances")
+            current = i + 1
+            Console.progress(current, total_instances, "Instances")
+
+            # Call progress callback every 10 items
+            if progress_callback and current % 10 == 0:
+                percent = (current / total_instances) * 100
+                progress_callback("instances", current, total_instances, percent)
 
             # AGE limitation: Can't use SET with WITH/MATCH joins
             # Split into two queries: 1) create instance, 2) create relationships
@@ -474,10 +505,21 @@ class DataImporter:
             client._execute_cypher(rel_query, params=instance)
             stats["instances_created"] += 1
 
+        # Final callback for instances stage
+        if progress_callback and total_instances > 0:
+            progress_callback("instances", total_instances, total_instances, 100.0)
+
         # Import concept-concept relationships
         Console.info("Importing relationships...")
+        total_relationships = len(data["relationships"])
         for i, rel in enumerate(data["relationships"]):
-            Console.progress(i + 1, len(data["relationships"]), "Relationships")
+            current = i + 1
+            Console.progress(current, total_relationships, "Relationships")
+
+            # Call progress callback every 10 items
+            if progress_callback and current % 10 == 0:
+                percent = (current / total_relationships) * 100
+                progress_callback("relationships", current, total_relationships, percent)
 
             # Dynamic relationship type (IMPLIES, SUPPORTS, etc.)
             # Use OPTIONAL MATCH to handle missing nodes gracefully
@@ -499,5 +541,9 @@ class DataImporter:
 
             if result and int(str(result.get("created", 0))) > 0:
                 stats["relationships_created"] += 1
+
+        # Final callback for relationships stage
+        if progress_callback and total_relationships > 0:
+            progress_callback("relationships", total_relationships, total_relationships, 100.0)
 
         return stats

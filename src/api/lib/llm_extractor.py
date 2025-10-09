@@ -10,8 +10,9 @@ from src.api.lib.ai_providers import get_provider
 from src.api.constants import RELATIONSHIP_TYPES_LIST
 
 
-# System prompt for concept extraction
-EXTRACTION_PROMPT = f"""You are a knowledge graph extraction agent. Your task is to analyze text and extract:
+# System prompt template for concept extraction
+# Note: {existing_concepts_list} will be filled in dynamically per request
+EXTRACTION_PROMPT_TEMPLATE = """You are a knowledge graph extraction agent. Your task is to analyze text and extract:
 
 1. **Concepts**: Key ideas, entities, or topics mentioned in the text
 2. **Instances**: Specific quotes that evidence each concept
@@ -29,14 +30,14 @@ For each instance, provide:
 For relationships between concepts, provide:
 - from_concept_id: Source concept (use actual ID from existing concepts if referencing them)
 - to_concept_id: Target concept (use actual ID from existing concepts if referencing them)
-- relationship_type: One of [{RELATIONSHIP_TYPES_LIST}]
+- relationship_type: One of [{relationship_types}]
 - confidence: A score from 0.0 to 1.0 indicating confidence in the relationship
 
 IMPORTANT: When creating relationships to existing concepts, use their actual concept_id from the list below.
 When creating relationships between newly extracted concepts, use the concept_001, concept_002 style IDs.
 
 Existing concepts to consider (to avoid duplication and for relationships):
-{existing_concepts}
+{existing_concepts_list}
 
 Return your response as a JSON object with this structure:
 {{
@@ -98,10 +99,27 @@ def extract_concepts(
         # Get configured provider
         provider = get_provider(provider_name)
 
+        # Format existing concepts list for prompt
+        if existing_concepts and len(existing_concepts) > 0:
+            concepts_lines = []
+            for concept in existing_concepts:
+                concept_id = concept.get('concept_id', '')
+                label = concept.get('label', '')
+                concepts_lines.append(f"- {concept_id}: {label}")
+            existing_concepts_str = "\n".join(concepts_lines)
+        else:
+            existing_concepts_str = "None"
+
+        # Format the prompt template with relationship types and existing concepts
+        formatted_prompt = EXTRACTION_PROMPT_TEMPLATE.format(
+            relationship_types=", ".join(RELATIONSHIP_TYPES_LIST),
+            existing_concepts_list=existing_concepts_str
+        )
+
         # Extract concepts using provider (returns dict with 'result' and 'tokens')
         response = provider.extract_concepts(
             text=text,
-            system_prompt=EXTRACTION_PROMPT,
+            system_prompt=formatted_prompt,
             existing_concepts=existing_concepts
         )
 
