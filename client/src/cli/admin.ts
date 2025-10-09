@@ -203,44 +203,54 @@ const backupCommand = new Command('backup')
         process.exit(1);
       }
 
-      console.log(colors.status.info('\nCreating backup...'));
+      // Get backup directory and ensure it exists
+      const config = getConfig();
+      const backupDir = config.ensureBackupDir();
 
-      // TODO: Implement ADR-015 streaming architecture
-      // See: docs/ADR-015-backup-restore-streaming.md
-      //
-      // Current limitation: API creates backup on server-side
-      // Target: API should stream backup data to client
-      //   1. API creates backup in memory/temp
-      //   2. Stream backup JSON to client with progress bar
-      //   3. Client saves to configured directory (~/.local/share/kg/backups)
-      //   4. API deletes temp file immediately
-      const result = await client.createBackup({
-        backup_type: backupType,
-        ontology_name: ontologyName,
-        output_filename: options.output
-      });
-
-      console.log('\n' + separator());
-      console.log(colors.status.success('✓ Backup Complete'));
-      console.log(colors.status.warning('⚠ Backup created on server-side (./backups)'));
-      console.log(colors.status.dim('   TODO: Download to configured directory'));
-      console.log(separator());
-      console.log(`\n  ${colors.ui.key('File:')} ${colors.ui.value(result.backup_file)}`);
-      console.log(`  ${colors.ui.key('Size:')} ${colors.ui.value(result.file_size_mb.toFixed(2) + ' MB')}`);
-
-      if (result.statistics) {
-        console.log(`\n  ${colors.ui.header('Statistics:')}`);
-        Object.entries(result.statistics).forEach(([key, value]) => {
-          console.log(`    ${colors.ui.key(key + ':')} ${colors.coloredCount(value)}`);
-        });
+      // Determine output path
+      let savePath: string;
+      if (options.output) {
+        // Custom filename specified
+        savePath = path.join(backupDir, options.output.endsWith('.json') ? options.output : `${options.output}.json`);
+      } else {
+        // Use timestamped filename (will be overwritten with server-provided name)
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        savePath = path.join(backupDir, `temp_${timestamp}.json`);
       }
 
-      if (result.integrity_assessment?.has_external_deps) {
-        console.log(`\n  ${colors.status.warning('⚠ This backup has external dependencies')}`);
-        console.log(`    ${colors.status.dim('External references:')} ${result.integrity_assessment.external_dependencies_count}`);
-      }
+      // Download backup with progress tracking using ora
+      const ora = require('ora');
+      const spinner = ora('Preparing backup...').start();
 
-      console.log('\n' + separator() + '\n');
+      try {
+        const result = await client.createBackup(
+          {
+            backup_type: backupType,
+            ontology_name: ontologyName
+          },
+          savePath,
+          (downloaded: number, total: number, percent: number) => {
+            const downloadedMB = (downloaded / (1024 * 1024)).toFixed(2);
+            const totalMB = (total / (1024 * 1024)).toFixed(2);
+            spinner.text = `Downloading backup... ${percent}% (${downloadedMB}/${totalMB} MB)`;
+          }
+        );
+
+        spinner.succeed('Backup download complete!');
+
+        console.log('\n' + separator());
+        console.log(colors.status.success('✓ Backup Complete'));
+        console.log(separator());
+        console.log(`\n  ${colors.ui.key('File:')} ${colors.ui.value(result.filename)}`);
+        console.log(`  ${colors.ui.key('Path:')} ${colors.ui.value(result.path)}`);
+        console.log(`  ${colors.ui.key('Size:')} ${colors.ui.value((result.size / (1024 * 1024)).toFixed(2) + ' MB')}`);
+        console.log(`\n  ${colors.status.dim('Backup saved to: ' + backupDir)}`);
+        console.log('\n' + separator() + '\n');
+
+      } catch (downloadError) {
+        spinner.fail('Backup download failed');
+        throw downloadError;
+      }
 
     } catch (error: any) {
       console.error(colors.status.error('✗ Backup failed'));
