@@ -90,6 +90,161 @@ Client                          API Server
    - Match POC quality (detailed feedback)
    - Poll-based status updates
 
+## Checkpoint Backup Safety Pattern
+
+**Status:** Implemented (Phase 1)
+**Date Added:** 2025-10-08
+
+### Problem
+
+Risky graph operations (partial restores, stitching, pruning) can leave the database in an inconsistent state if they fail partway through. Apache AGE doesn't provide native transaction rollback for complex multi-query operations.
+
+### Solution: Automatic Checkpoint Backups
+
+Before executing any potentially destructive operation, create an automatic checkpoint backup:
+
+```python
+# Checkpoint safety workflow
+1. Create checkpoint: backups/.checkpoint_<timestamp>.json
+2. Execute risky operation (stitch/prune/partial restore)
+3. Run integrity check
+4. On success → delete checkpoint
+5. On failure → auto-restore from checkpoint
+```
+
+### Implementation Examples
+
+**Stitching with checkpoint protection:**
+```bash
+# User runs with --checkpoint flag
+python -m src.admin.stitch --backup partial.json --checkpoint
+
+# System automatically:
+# 1. Creates .checkpoint_20251008_123045.json (current state)
+# 2. Runs stitch operation
+# 3. Checks integrity
+# 4. If broken → restores checkpoint + shows error
+# 5. If clean → deletes checkpoint + confirms success
+```
+
+**Restore with automatic rollback:**
+```python
+# Before partial restore
+checkpoint_file = create_checkpoint_backup()  # Fast, automated
+
+try:
+    restore_partial_ontology(backup_data)
+    integrity = check_integrity()
+
+    if not integrity.valid:
+        # Auto-rollback
+        restore_from_backup(checkpoint_file)
+        raise RestoreError("Integrity check failed - rolled back to checkpoint")
+    else:
+        # Success - cleanup checkpoint
+        delete_checkpoint(checkpoint_file)
+
+except Exception as e:
+    # Any failure → restore checkpoint
+    restore_from_backup(checkpoint_file)
+    raise
+```
+
+### Benefits
+
+1. **Transaction-Like Behavior**
+   - Risky operations are either fully applied or fully rolled back
+   - No partial failures leaving graph in inconsistent state
+   - User confidence in trying complex operations
+
+2. **Automatic Protection**
+   - No manual backup required before risky operations
+   - Checkpoint created/cleaned automatically
+   - Invisible to user on success, protective on failure
+
+3. **Fast Operation**
+   - Full database backup takes seconds (~5 MB typical)
+   - Restore is equally fast
+   - Minimal overhead for safety guarantee
+
+4. **User-Friendly**
+   - Optional `--checkpoint` flag for user control
+   - Clear messaging about rollback if needed
+   - Validates before permanent changes
+
+### Design Decisions
+
+**Checkpoint Storage:**
+- Location: Same as regular backups (`~/.local/share/kg/backups`)
+- Naming: `.checkpoint_<timestamp>.json` (hidden file prefix)
+- Cleanup: Auto-delete on success, preserve on failure for inspection
+- Retention: Single active checkpoint (overwrite previous)
+
+**When to Use:**
+- ✅ Partial ontology restores (external dependencies)
+- ✅ Semantic stitching operations (relationship reconnection)
+- ✅ Pruning dangling relationships (destructive)
+- ✅ Manual graph surgery via admin tools
+- ❌ Full backups (already safe, just export)
+- ❌ Read-only operations (integrity check, list, search)
+
+**Integrity Check Integration:**
+```python
+def safe_operation_with_checkpoint(operation_func, *args, **kwargs):
+    """
+    Execute operation with automatic checkpoint protection.
+
+    Returns:
+        Result of operation if successful
+
+    Raises:
+        OperationError: If operation fails integrity check (after rollback)
+    """
+    checkpoint = create_checkpoint()
+
+    try:
+        result = operation_func(*args, **kwargs)
+
+        # Validate result
+        integrity = check_database_integrity()
+
+        if not integrity.valid:
+            restore_from_backup(checkpoint)
+            raise IntegrityError(
+                f"Operation failed integrity check. "
+                f"Database restored to pre-operation state. "
+                f"Issues: {integrity.issues}"
+            )
+
+        # Success - cleanup
+        delete_checkpoint(checkpoint)
+        return result
+
+    except Exception as e:
+        # Any error - restore checkpoint
+        if checkpoint and os.path.exists(checkpoint):
+            restore_from_backup(checkpoint)
+        raise
+```
+
+### Phase 1 Status (Current)
+
+**✅ Completed:**
+- Full backup/restore working (tested 114 concepts, 5.62 MB)
+- Integrity checking functional
+- Direct database operations via admin tools
+
+**📋 Remaining:**
+- Add `--checkpoint` flag to stitch, prune, restore tools
+- Implement automatic checkpoint creation/cleanup
+- Add rollback error messaging
+- Document checkpoint workflow in user guides
+
+**Future (Phase 2):**
+- API-based checkpoint management
+- Multi-user coordination (prevent concurrent risky ops)
+- Checkpoint retention policies (keep last N failures for debugging)
+
 ## Implementation
 
 ### Phase 1: Backup Download (Priority: High)
