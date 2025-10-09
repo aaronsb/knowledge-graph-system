@@ -413,6 +413,9 @@ const restoreCommand = new Command('restore')
       console.log(colors.status.dim(`Size: ${(fileStats.size / (1024 * 1024)).toFixed(2)} MB`));
 
       // Get authentication
+      // NOTE: Placeholder auth for testing (see ADR-016 for future auth system)
+      // Currently validates: username exists in config, password length >= 4
+      // Future: Will validate against proper auth system with hashed passwords
       console.log('\n' + colors.status.warning('Authentication required:'));
 
       // Get username from config
@@ -606,6 +609,9 @@ const resetCommand = new Command('reset')
       }
 
       // Get authentication
+      // NOTE: Placeholder auth for testing (see ADR-016 for future auth system)
+      // Currently validates: username exists in config, password length >= 4
+      // Future: Will validate against proper auth system with hashed passwords
       console.log('\n' + colors.status.warning('Authentication required:'));
 
       const config = getConfig();
