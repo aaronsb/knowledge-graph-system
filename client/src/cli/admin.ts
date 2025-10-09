@@ -414,11 +414,19 @@ const restoreCommand = new Command('restore')
 
       // Get authentication
       console.log('\n' + colors.status.warning('Authentication required:'));
-      const username = await prompt('Username: ');
+
+      // Get username from config
+      const username = config.get('username') || config.getClientId();
+      if (!username) {
+        console.error(colors.status.error('✗ Username not configured. Run: kg config set username <your-username>'));
+        process.exit(1);
+      }
+
+      console.log(colors.status.dim(`Using username: ${username}`));
       const password = await promptPassword('Password: ');
 
-      if (!username || !password) {
-        console.error(colors.status.error('✗ Username and password required'));
+      if (!password) {
+        console.error(colors.status.error('✗ Password required'));
         process.exit(1);
       }
 
@@ -599,11 +607,20 @@ const resetCommand = new Command('reset')
 
       // Get authentication
       console.log('\n' + colors.status.warning('Authentication required:'));
-      const username = await prompt('Username: ');
+
+      const config = getConfig();
+      // Get username from config
+      const username = config.get('username') || config.getClientId();
+      if (!username) {
+        console.error(colors.status.error('✗ Username not configured. Run: kg config set username <your-username>'));
+        process.exit(1);
+      }
+
+      console.log(colors.status.dim(`Using username: ${username}`));
       const password = await promptPassword('Password: ');
 
-      if (!username || !password) {
-        console.error(colors.status.error('✗ Username and password required'));
+      if (!password) {
+        console.error(colors.status.error('✗ Password required'));
         process.exit(1);
       }
 

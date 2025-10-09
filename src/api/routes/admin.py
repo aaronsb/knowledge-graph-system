@@ -15,7 +15,7 @@ import tempfile
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from typing import Optional
 
@@ -150,6 +150,7 @@ async def create_backup(request: BackupRequest):
 
 @router.post("/restore")
 async def restore_backup(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="Backup JSON file to restore"),
     username: str = Form(..., description="Username for authentication"),
     password: str = Form(..., description="Password for authentication"),
@@ -263,7 +264,7 @@ async def restore_backup(
             )
 
         # Create restore job
-        job_id = job_queue.create_job(
+        job_id = job_queue.enqueue(
             job_type="restore",
             job_data={
                 "temp_file": str(temp_path),
@@ -276,6 +277,9 @@ async def restore_backup(
         )
 
         logger.info(f"Created restore job {job_id} for temp file {temp_path}")
+
+        # Execute restore job immediately (authenticated operations don't need approval)
+        background_tasks.add_task(job_queue.execute_job, job_id)
 
         return {
             "job_id": job_id,
