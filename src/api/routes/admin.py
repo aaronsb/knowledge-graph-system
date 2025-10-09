@@ -10,6 +10,7 @@ API endpoints for system administration:
 """
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import StreamingResponse
 from typing import Optional
 
 from ..models.admin import (
@@ -24,6 +25,8 @@ from ..models.admin import (
 )
 from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
+from ..lib.backup_streaming import create_backup_stream
+from ..lib.age_client import AGEClient
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -67,20 +70,25 @@ async def list_backups():
         )
 
 
-@router.post("/backup", response_model=BackupResponse)
+@router.post("/backup")
 async def create_backup(request: BackupRequest):
     """
-    Create a database backup
+    Create a database backup (ADR-015 Phase 2: Streaming Download)
+
+    **Streams backup directly to client** - no server-side storage.
+    Client saves to configured backup directory (~/.local/share/kg/backups).
 
     Supports two modes:
     - **full**: Backup entire database (all ontologies)
     - **ontology**: Backup specific ontology (requires ontology_name)
 
-    Backups are saved to the backups/ directory and include:
+    Backup includes:
     - All concepts, sources, and instances
     - Full embeddings (1536-dim vectors)
     - All relationships
-    - Integrity assessment
+    - Metadata and statistics
+
+    Returns streaming JSON response with Content-Disposition header.
 
     Example:
     ```json
@@ -97,13 +105,28 @@ async def create_backup(request: BackupRequest):
     }
     ```
     """
-    service = AdminService()
     try:
-        return await service.create_backup(
+        # Get AGE client
+        client = AGEClient()
+
+        # Create streaming backup
+        stream, filename = await create_backup_stream(
+            client=client,
             backup_type=request.backup_type,
-            ontology_name=request.ontology_name,
-            output_filename=request.output_filename
+            ontology_name=request.ontology_name
         )
+
+        # Return streaming response
+        return StreamingResponse(
+            stream,
+            media_type="application/json",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "X-Backup-Type": request.backup_type,
+                "X-Ontology-Name": request.ontology_name or "all"
+            }
+        )
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
