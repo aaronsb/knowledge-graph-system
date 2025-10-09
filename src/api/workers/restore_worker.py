@@ -227,31 +227,49 @@ def _execute_restore(
     if total_items == 0:
         return {"concepts": 0, "sources": 0, "instances": 0, "relationships": 0}
 
-    # Use DataImporter.import_backup() static method
-    # Note: This provides simpler progress tracking - we'll update stages manually
-    job_queue.update_job(job_id, {
-        "progress": {
-            "stage": "restoring_concepts",
-            "percent": 20,
-            "items_total": total_items,
-            "items_processed": 0,
-            "message": f"Restoring {len(concepts)} concepts..."
-        }
-    })
+    # Track cumulative progress across all stages
+    items_processed_cumulative = 0
 
-    # Import all data using DataImporter static method
-    stats = DataImporter.import_backup(client, backup_data, overwrite_existing=overwrite)
+    def progress_callback(stage: str, current: int, total: int, percent: float):
+        """
+        Progress callback for DataImporter (ADR-018 Phase 2)
 
-    # Update progress through stages
-    job_queue.update_job(job_id, {
-        "progress": {
-            "stage": "restoring_relationships",
-            "percent": 90,
-            "items_total": total_items,
-            "items_processed": total_items,
-            "message": "Import complete"
-        }
-    })
+        Called every N items during import to update job progress.
+        Calculates overall progress across all stages.
+        """
+        nonlocal items_processed_cumulative
+
+        # Calculate cumulative items based on stage
+        if stage == "concepts":
+            items_processed_cumulative = current
+        elif stage == "sources":
+            items_processed_cumulative = len(concepts) + current
+        elif stage == "instances":
+            items_processed_cumulative = len(concepts) + len(sources) + current
+        elif stage == "relationships":
+            items_processed_cumulative = len(concepts) + len(sources) + len(instances) + current
+
+        # Calculate overall percent (0-100)
+        overall_percent = int((items_processed_cumulative / total_items) * 100) if total_items > 0 else 0
+
+        # Update job progress
+        job_queue.update_job(job_id, {
+            "progress": {
+                "stage": f"restoring_{stage}",
+                "percent": overall_percent,
+                "items_total": total_items,
+                "items_processed": items_processed_cumulative,
+                "message": f"Restoring {stage}: {current}/{total} ({int(percent)}%)"
+            }
+        })
+
+    # Import all data using DataImporter with progress callback
+    stats = DataImporter.import_backup(
+        client,
+        backup_data,
+        overwrite_existing=overwrite,
+        progress_callback=progress_callback
+    )
 
     return {
         "concepts": stats.get("concepts_created", 0),
