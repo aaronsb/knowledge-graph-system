@@ -4,12 +4,18 @@ Admin Routes
 API endpoints for system administration:
 - System status
 - Database backup
-- Database restore
+- Database restore (ADR-015 Phase 2: Multipart Upload)
 - Database reset
 - Job scheduler management (ADR-014)
 """
 
-from fastapi import APIRouter, HTTPException, status
+import uuid
+import shutil
+import tempfile
+import logging
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from typing import Optional
 
@@ -25,10 +31,13 @@ from ..models.admin import (
 )
 from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
+from ..services.job_queue import get_job_queue
 from ..lib.backup_streaming import create_backup_stream
+from ..lib.backup_integrity import check_backup_integrity
 from ..lib.age_client import AGEClient
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/status", response_model=SystemStatusResponse)
@@ -139,14 +148,23 @@ async def create_backup(request: BackupRequest):
         )
 
 
-@router.post("/restore", response_model=RestoreResponse)
-async def restore_backup(request: RestoreRequest):
+@router.post("/restore")
+async def restore_backup(
+    file: UploadFile = File(..., description="Backup JSON file to restore"),
+    username: str = Form(..., description="Username for authentication"),
+    password: str = Form(..., description="Password for authentication"),
+    overwrite: bool = Form(False, description="Overwrite existing data"),
+    handle_external_deps: str = Form("prune", description="How to handle external dependencies: 'prune', 'stitch', or 'defer'")
+):
     """
-    Restore a database backup (REQUIRES AUTHENTICATION)
+    Restore a database backup (ADR-015 Phase 2: Multipart Upload)
 
     ⚠️ **Potentially destructive operation** - requires username and password.
 
-    Restores data from a backup file. Options:
+    **Multipart Upload**: Client streams backup file to server.
+    Server validates, then queues restore job for background processing.
+
+    Restore options:
     - **overwrite**: Whether to overwrite existing data (default: false)
     - **handle_external_deps**: How to handle external dependencies
       - `prune`: Remove dangling relationships (default)
@@ -154,57 +172,131 @@ async def restore_backup(request: RestoreRequest):
       - `defer`: Leave broken (requires manual fix)
 
     The restore process includes:
-    - Validation of backup file
-    - Integrity assessment
-    - Conflict resolution
-    - External dependency handling
+    1. Save uploaded file to temp location
+    2. Run integrity checks (format, references, statistics)
+    3. Queue restore worker with job ID
+    4. Return job ID for progress tracking
 
     **Authentication required**: Must provide username and password.
-    (Currently placeholder - will be validated in Phase 2)
+    (Currently placeholder - will be validated in production)
 
-    Example:
-    ```json
-    {
-        "username": "admin",
-        "password": "your_password",
-        "backup_file": "backups/full_backup_20251007.json",
-        "overwrite": false,
-        "handle_external_deps": "prune"
-    }
+    Returns job_id for polling restore progress via /jobs/{job_id}
+
+    Example (multipart/form-data):
+    ```
+    file: <backup_file.json>
+    username: admin
+    password: your_password
+    overwrite: false
+    handle_external_deps: prune
     ```
     """
-    # TODO: Phase 2 - Validate username/password against auth system
-    # For now, just check they're provided
-    if not request.username or not request.password:
+    # Validate authentication
+    if not username or not password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Username and password required for restore operation"
         )
 
-    # Placeholder auth check
-    # In Phase 2, this will validate against real auth system
-    if len(request.password) < 4:  # Minimal validation
+    # Placeholder auth check (will be replaced with real auth in production)
+    if len(password) < 4:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
         )
 
-    service = AdminService()
-    try:
-        return await service.restore_backup(
-            backup_file=request.backup_file,
-            overwrite=request.overwrite,
-            handle_external_deps=request.handle_external_deps
-        )
-    except FileNotFoundError as e:
+    # Validate file type
+    if not file.filename.endswith('.json'):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Backup file must be JSON format (.json extension)"
         )
+
+    # Generate temp file path
+    temp_file_id = uuid.uuid4()
+    temp_path = Path(tempfile.gettempdir()) / f"restore_{temp_file_id}.json"
+
+    try:
+        # Save uploaded file to temp location
+        logger.info(f"Saving uploaded backup to {temp_path}")
+        with open(temp_path, "wb") as temp_file:
+            shutil.copyfileobj(file.file, temp_file)
+
+        # Run integrity checks
+        logger.info(f"Running integrity checks on {temp_path}")
+        integrity = check_backup_integrity(str(temp_path))
+
+        if not integrity.valid:
+            # Cleanup temp file
+            temp_path.unlink()
+
+            # Collect error details
+            error_details = [f"{e.category}: {e.message}" for e in integrity.errors]
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Backup integrity check failed: {'; '.join(error_details)}"
+            )
+
+        # Log warnings if present
+        if integrity.warnings:
+            for warning in integrity.warnings:
+                logger.warning(f"Backup validation warning - {warning.category}: {warning.message}")
+
+        # Log successful validation
+        stats = integrity.statistics or {}
+        logger.info(
+            f"Backup validated successfully - "
+            f"Concepts: {stats.get('concepts', 0)}, "
+            f"Sources: {stats.get('sources', 0)}, "
+            f"Instances: {stats.get('instances', 0)}, "
+            f"Relationships: {stats.get('relationships', 0)}"
+        )
+
+        # Queue restore job
+        job_queue = get_job_queue()
+        if job_queue is None:
+            # Cleanup temp file
+            temp_path.unlink()
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Job queue not available"
+            )
+
+        # Create restore job
+        job_id = job_queue.create_job(
+            job_type="restore",
+            job_data={
+                "temp_file": str(temp_path),
+                "temp_file_id": str(temp_file_id),
+                "overwrite": overwrite,
+                "handle_external_deps": handle_external_deps,
+                "backup_stats": stats,
+                "integrity_warnings": len(integrity.warnings)
+            }
+        )
+
+        logger.info(f"Created restore job {job_id} for temp file {temp_path}")
+
+        return {
+            "job_id": job_id,
+            "status": "queued",
+            "message": "Restore job queued for processing",
+            "backup_stats": stats,
+            "integrity_warnings": len(integrity.warnings)
+        }
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
+        # Cleanup temp file on error
+        if temp_path.exists():
+            temp_path.unlink()
+
+        logger.error(f"Restore upload failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Restore failed: {str(e)}"
+            detail=f"Restore upload failed: {str(e)}"
         )
 
 
