@@ -5,12 +5,11 @@
  * Gracefully falls back to polling if SSE fails.
  */
 
-// @ts-ignore - eventsource types for Node.js are incomplete
-import * as EventSourceLib from 'eventsource';
 import type { JobProgress, JobResult } from '../types';
 
-// Node.js EventSource constructor
-const EventSource = EventSourceLib as any;
+// Dynamic import of eventsource for Node.js
+// Use require() to get the default export correctly
+const EventSource = require('eventsource');
 
 export interface JobProgressCallbacks {
   onProgress?: (progress: JobProgress) => void;
