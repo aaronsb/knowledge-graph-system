@@ -11,7 +11,10 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "knowledge-graph",
@@ -31,7 +34,10 @@
     "table": "^6.8.1"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.0",
     "@types/node": "^20.10.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
     "typescript": "^5.3.0"
   },
   "engines": {
