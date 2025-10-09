@@ -140,14 +140,17 @@ class QueryService:
     @staticmethod
     def build_shortest_path_query(max_hops: int) -> str:
         """
-        Build shortest path query between two concepts.
+        Build shortest path query between two concepts (AGE-compatible).
 
         Query flow:
-        1. Use Neo4j shortestPath algorithm
-        2. Find undirected paths up to max_hops length
-        3. Extract node IDs/labels and relationship types
-        4. Return path metadata
+        1. Find all variable-length paths up to max_hops
+        2. Extract node IDs/labels and relationship types
+        3. Calculate path length
+        4. Sort by length (shortest first)
         5. Limit to 5 paths for performance
+
+        Note: AGE doesn't support Neo4j's shortestPath() function,
+        so we use variable-length patterns with sorting.
 
         Args:
             max_hops: Maximum path length (1-10)
@@ -156,14 +159,13 @@ class QueryService:
             Cypher query string
         """
         return f"""
-            MATCH path = shortestPath(
-                (from:Concept {{concept_id: $from_id}})-[*..{max_hops}]-(to:Concept {{concept_id: $to_id}})
-            )
-            WITH path, [rel in relationships(path) | type(rel)] as rel_types
-            RETURN
-                [node in nodes(path) | {{id: node.concept_id, label: node.label}}] as path_nodes,
-                rel_types,
-                length(path) as hops
+            MATCH path = (from:Concept {{concept_id: $from_id}})-[*1..{max_hops}]-(to:Concept {{concept_id: $to_id}})
+            WITH path,
+                 [node in nodes(path) | {{id: node.concept_id, label: node.label}}] as path_nodes,
+                 [rel in relationships(path) | type(rel)] as rel_types,
+                 length(path) as hops
+            RETURN path_nodes, rel_types, hops
+            ORDER BY hops ASC
             LIMIT 5
         """
 
