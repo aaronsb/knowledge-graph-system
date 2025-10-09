@@ -13,6 +13,8 @@ import { getConfig } from '../lib/config';
 import * as colors from './colors';
 import { separator } from './colors';
 import { configureColoredHelp } from './help-formatter';
+import { JobProgressStream, trackJobProgress } from '../lib/job-stream';
+import type { JobStatus, JobProgress } from '../types';
 
 /**
  * Prompt for input from user
@@ -57,6 +59,133 @@ function promptPassword(question: string): Promise<string> {
       resolve(password);
     });
   });
+}
+
+/**
+ * Track job progress with SSE streaming (ADR-018 Phase 1)
+ *
+ * Tries Server-Sent Events first for real-time updates (<500ms latency).
+ * Falls back to polling if SSE fails or is unavailable.
+ *
+ * @param client - API client
+ * @param jobId - Job ID to track
+ * @param spinner - Ora spinner for status updates
+ * @returns Promise that resolves with final job status
+ */
+async function trackJobWithSSE(
+  client: ReturnType<typeof createClientFromEnv>,
+  jobId: string,
+  spinner: any
+): Promise<JobStatus> {
+  return new Promise(async (resolve, reject) => {
+    const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+
+    // Try SSE first
+    const stream = await trackJobProgress(baseUrl, jobId, {
+      onProgress: (progress: JobProgress) => {
+        updateSpinnerForProgress(spinner, progress);
+      },
+      onCompleted: async (result) => {
+        // Fetch final job status for complete information
+        try {
+          const finalJob = await client.getJobStatus(jobId);
+          resolve(finalJob);
+        } catch (error) {
+          reject(error);
+        }
+      },
+      onFailed: (error) => {
+        reject(new Error(error));
+      },
+      onCancelled: (message) => {
+        reject(new Error(message));
+      },
+      onError: async (error) => {
+        // SSE failed - fall back to polling
+        console.log(colors.status.dim('\nSSE unavailable, using polling...'));
+        try {
+          const finalJob = await client.pollJob(jobId, (job) => {
+            if (job.progress) {
+              updateSpinnerForProgress(spinner, job.progress);
+            }
+          });
+          resolve(finalJob);
+        } catch (pollError) {
+          reject(pollError);
+        }
+      }
+    }, true); // useSSE = true
+
+    // If stream is null, SSE was explicitly disabled - use polling fallback
+    if (!stream) {
+      console.log(colors.status.dim('Using polling for progress updates...'));
+      try {
+        const finalJob = await client.pollJob(jobId, (job) => {
+          if (job.progress) {
+            updateSpinnerForProgress(spinner, job.progress);
+          }
+        });
+        resolve(finalJob);
+      } catch (pollError) {
+        reject(pollError);
+      }
+    }
+  });
+}
+
+/**
+ * Update spinner text based on job progress (shared logic for SSE and polling)
+ */
+function updateSpinnerForProgress(spinner: any, progress: JobProgress) {
+  switch (progress.stage) {
+    case 'creating_checkpoint':
+      spinner.text = `Creating checkpoint backup... ${progress.percent || 0}%`;
+      break;
+    case 'loading_backup':
+      spinner.text = `Loading backup file... ${progress.percent || 0}%`;
+      break;
+    case 'restoring_concepts':
+      if (progress.items_total && progress.items_processed !== undefined) {
+        spinner.text = `Restoring concepts... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+      } else {
+        spinner.text = `Restoring concepts... ${progress.percent || 0}%`;
+      }
+      break;
+    case 'restoring_sources':
+      if (progress.items_total && progress.items_processed !== undefined) {
+        spinner.text = `Restoring sources... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+      } else {
+        spinner.text = `Restoring sources... ${progress.percent || 0}%`;
+      }
+      break;
+    case 'restoring_instances':
+      if (progress.items_total && progress.items_processed !== undefined) {
+        spinner.text = `Restoring instances... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+      } else {
+        spinner.text = `Restoring instances... ${progress.percent || 0}%`;
+      }
+      break;
+    case 'restoring_relationships':
+      if (progress.items_total && progress.items_processed !== undefined) {
+        spinner.text = `Restoring relationships... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
+      } else {
+        spinner.text = `Restoring relationships... ${progress.percent || 0}%`;
+      }
+      break;
+    case 'rollback':
+      spinner.fail('Restore failed - rolling back to checkpoint');
+      spinner = require('ora')(progress.message || 'Rolling back...').start();
+      break;
+    case 'completed':
+      spinner.text = `Restore complete! ${progress.percent || 100}%`;
+      break;
+    default:
+      if (progress.message) {
+        spinner.text = progress.message;
+      } else {
+        spinner.text = `Restoring... ${progress.percent || 0}%`;
+      }
+  }
 }
 
 // ========== Status Command ==========
@@ -462,66 +591,12 @@ const restoreCommand = new Command('restore')
           console.log(colors.status.warning(`⚠️  Backup has ${uploadResult.integrity_warnings} validation warnings`));
         }
 
-        // Poll restore job for progress
+        // Track restore job progress with SSE streaming (ADR-018 Phase 1)
+        // Falls back to polling if SSE fails
         spinner = ora('Preparing restore...').start();
         const jobId = uploadResult.job_id;
 
-        const finalJob = await client.pollJob(jobId, (job) => {
-          const progress = job.progress;
-
-          if (progress) {
-            // Update spinner based on stage
-            switch (progress.stage) {
-              case 'creating_checkpoint':
-                spinner.text = `Creating checkpoint backup... ${progress.percent || 0}%`;
-                break;
-              case 'loading_backup':
-                spinner.text = `Loading backup file... ${progress.percent || 0}%`;
-                break;
-              case 'restoring_concepts':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring concepts... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring concepts... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'restoring_sources':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring sources... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring sources... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'restoring_instances':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring instances... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring instances... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'restoring_relationships':
-                if (progress.items_total && progress.items_processed !== undefined) {
-                  spinner.text = `Restoring relationships... ${progress.items_processed}/${progress.items_total} (${progress.percent || 0}%)`;
-                } else {
-                  spinner.text = `Restoring relationships... ${progress.percent || 0}%`;
-                }
-                break;
-              case 'rollback':
-                spinner.fail('Restore failed - rolling back to checkpoint');
-                spinner = ora(progress.message || 'Rolling back...').start();
-                break;
-              case 'completed':
-                spinner.text = `Restore complete! ${progress.percent || 100}%`;
-                break;
-              default:
-                if (progress.message) {
-                  spinner.text = progress.message;
-                } else {
-                  spinner.text = `Restoring... ${progress.percent || 0}%`;
-                }
-            }
-          }
-        });
+        const finalJob = await trackJobWithSSE(client, jobId, spinner);
 
         if (finalJob.status === 'completed') {
           spinner.succeed('Restore completed successfully!');
