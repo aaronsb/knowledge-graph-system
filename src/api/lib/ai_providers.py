@@ -334,14 +334,14 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     Factory function to get the configured AI provider.
 
     Args:
-        provider_name: Name of provider ("openai" or "anthropic")
+        provider_name: Name of provider ("openai", "anthropic", or "mock")
                       If None, reads from AI_PROVIDER env var (default: "openai")
 
     Returns:
         Configured AIProvider instance
 
     Environment Variables:
-        AI_PROVIDER: "openai" or "anthropic" (default: "openai")
+        AI_PROVIDER: "openai", "anthropic", or "mock" (default: "openai")
 
         For OpenAI:
             OPENAI_API_KEY: Required
@@ -353,6 +353,10 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
             ANTHROPIC_EXTRACTION_MODEL: Optional (default: "claude-sonnet-4-20250514")
             OPENAI_API_KEY: Required for embeddings
             OPENAI_EMBEDDING_MODEL: Optional (default: "text-embedding-3-small")
+
+        For Mock (testing):
+            No API keys required
+            MOCK_MODE: Optional ("default", "simple", "complex", "empty")
     """
     provider_name = provider_name or os.getenv("AI_PROVIDER", "openai").lower()
 
@@ -360,8 +364,12 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
         return OpenAIProvider()
     elif provider_name == "anthropic":
         return AnthropicProvider()
+    elif provider_name == "mock":
+        from .mock_ai_provider import MockAIProvider
+        mock_mode = os.getenv("MOCK_MODE", "default")
+        return MockAIProvider(mode=mock_mode)
     else:
-        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai' or 'anthropic'")
+        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai', 'anthropic', or 'mock'")
 
 
 # Model configurations for reference

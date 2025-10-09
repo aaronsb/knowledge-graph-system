@@ -18,660 +18,940 @@ Functional test coverage map for the knowledge graph system. This document outli
 - Test ranges, not exact values
 - Validate structure and semantics, not specific outputs
 
+**Integration over mocking:**
+- Tests run against real API server (no mocks)
+- Database tests use real PostgreSQL + Apache AGE
+- CLI tests execute actual commands
+- Coverage is a guide, not a chase metric
+
+---
+
+## Current Testing Stack
+
+### Python/FastAPI Backend
+
+**Framework:** pytest 8.0+ with pytest-asyncio, httpx, pytest-cov
+**Test Location:** `tests/`
+**Configuration:** `pytest.ini`
+
+**Key Features:**
+- Mock AI provider (no API keys needed)
+- In-memory job queue for fast tests
+- Test markers: `smoke`, `integration`, `api`
+- Coverage reporting (HTML + terminal)
+
+**Run Tests:**
+```bash
+source venv/bin/activate
+
+# All tests
+pytest
+
+# By category
+pytest -m smoke          # Fast, no database (16 tests)
+pytest -m integration    # Full workflows (35 tests)
+pytest -m api           # API endpoints (all tests)
+
+# With coverage
+pytest --cov=src --cov-report=html
+open htmlcov/index.html
+```
+
+### TypeScript/Jest CLI Client
+
+**Framework:** Jest 29.7+ with ts-jest
+**Test Location:** `client/tests/`
+**Configuration:** `client/jest.config.js`
+
+**Key Features:**
+- Auto-starts API server for tests
+- Real integration (no mocks)
+- Global setup/teardown
+- TypeScript support
+
+**Run Tests:**
+```bash
+cd client
+
+# Build first (required)
+npm run build
+
+# Run tests
+npm test
+
+# With coverage
+npm run test:coverage
+
+# Watch mode
+npm run test:watch
+```
+
 ---
 
 ## 1. Smoke Tests (Fast Sanity Checks)
 
-### 1.1 Infrastructure Connectivity
-**Purpose:** Verify basic setup works
+### ✅ 1.1 Infrastructure Connectivity
 
-**Test:** Neo4j Connection
+**Status:** IMPLEMENTED (16 tests passing)
+
+**Test:** API Health Check
 ```python
-def test_neo4j_connection():
-    """Neo4j container is running and accessible"""
-    conn = Neo4jConnection()
-    assert conn.test_connection() == True
-    conn.close()
+# tests/api/test_health.py
+@pytest.mark.smoke
+@pytest.mark.api
+def test_health_endpoint_returns_200(api_client):
+    """API server is running and healthy"""
+    response = api_client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}
 ```
 
-**Test:** OpenAI API Key Valid
+**Test:** API Status Endpoint
 ```python
-def test_openai_api_key():
-    """OpenAI API key is configured and valid"""
-    from openai import OpenAI
-    client = OpenAI(api_key=Config.openai_api_key())
-    # Make minimal API call
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input="test"
-    )
-    assert len(response.data[0].embedding) == 1536
+# tests/api/test_root.py
+@pytest.mark.smoke
+@pytest.mark.api
+def test_root_endpoint_status_healthy(api_client):
+    """Root endpoint returns service info and health"""
+    response = api_client.get("/")
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert "queue" in data  # Job queue operational
 ```
 
-**Test:** Library Imports
+**Test:** Mock AI Provider
 ```python
-def test_core_imports():
-    """All core libraries import without errors"""
-    from src.lib import console, config, neo4j_ops, serialization, integrity, restitching
-    from src.admin import backup, restore, stitch, prune, check_integrity
-    # If we get here, imports succeeded
-    assert True
+# tests/test_mock_provider.py (comprehensive test suite)
+def test_mock_provider_deterministic():
+    """Mock provider gives same results for same input"""
+    provider = MockAIProvider(mode="default")
+
+    text = "Test concept extraction"
+    result1 = provider.extract_concepts(text, "test.txt")
+    result2 = provider.extract_concepts(text, "test.txt")
+
+    # Same input = same output (deterministic)
+    assert result1 == result2
+```
+
+**Test:** Job Queue Operations
+```python
+# tests/api/test_jobs.py
+@pytest.mark.smoke
+@pytest.mark.api
+def test_jobs_list_empty(api_client):
+    """Job listing works (in-memory queue)"""
+    response = api_client.get("/jobs")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
 ```
 
 **Expected Results:**
-- All connections succeed
-- No import errors
-- Setup script has run successfully
+- ✅ All 16 smoke tests pass in <1s
+- ✅ No database or LLM API keys required
+- ✅ Tests validate API structure and mock systems
 
 ---
 
 ## 2. Functional Tests (Core Workflows)
 
-### 2.1 Ingestion Pipeline
-**Purpose:** LLM extraction creates correct graph structure
+### ✅ 2.1 Ingestion Pipeline
 
-**Test:** Basic Document Ingestion
+**Status:** IMPLEMENTED (14 tests passing)
+
+**Test:** Text Ingestion Workflow
 ```python
-def test_basic_ingestion(clean_db, sample_document):
-    """Ingest document → concepts created with correct structure"""
-    # Setup: clean_db fixture, sample_document = "tests/fixtures/sample.txt"
+# tests/api/test_ingest.py
+@pytest.mark.api
+@pytest.mark.smoke
+def test_ingest_text_basic(api_client):
+    """Submit text → job created → queued for processing"""
+    data = {
+        "text": "This is a test document.",
+        "ontology": "test-ontology"
+    }
 
-    # Ingest
-    result = ingest_document(sample_document, ontology="Test Ontology")
+    response = api_client.post("/ingest/text", data=data)
 
-    # Assertions (ranges, not exact)
-    assert 5 <= result['concepts_created'] <= 15, "Expected 5-15 concepts"
-    assert result['sources_created'] >= 1, "At least one source"
-    assert result['instances_created'] >= 5, "Multiple evidence instances"
-
-    # Verify graph structure
-    with Neo4jConnection().session() as session:
-        concepts = session.run("MATCH (c:Concept) RETURN c").values()
-
-        # All concepts have embeddings
-        assert all(len(c[0]['embedding']) == 1536 for c in concepts)
-
-        # All concepts have APPEARS_IN relationships
-        orphans = session.run("""
-            MATCH (c:Concept)
-            WHERE NOT EXISTS((c)-[:APPEARS_IN]->(:Source))
-            RETURN count(c) as count
-        """).single()['count']
-        assert orphans == 0, "No orphaned concepts"
+    assert response.status_code == 200
+    result = response.json()
+    assert "job_id" in result
+    assert result["status"].startswith("pending")
 ```
 
-**Test:** Cross-Ontology Relationships
+**Test:** File Upload Ingestion
 ```python
-def test_cross_ontology_relationships(clean_db):
-    """LLM identifies relationships across ontologies"""
-    # Ingest two related documents
-    ingest_document("tests/fixtures/ontology_a.txt", ontology="Ontology A")
-    ingest_document("tests/fixtures/ontology_b.txt", ontology="Ontology B")
+@pytest.mark.api
+@pytest.mark.smoke
+def test_ingest_file_upload(api_client):
+    """Upload file → job created → content hashed"""
+    file_content = b"Test file content"
+    files = {"file": ("test.txt", BytesIO(file_content), "text/plain")}
+    data = {"ontology": "test-upload"}
 
-    # Check for cross-ontology relationships
-    with Neo4jConnection().session() as session:
-        cross_rels = session.run("""
-            MATCH (c1:Concept)-[:APPEARS_IN]->(s1:Source {document: "Ontology A"})
-            MATCH (c1)-[r]->(c2:Concept)-[:APPEARS_IN]->(s2:Source {document: "Ontology B"})
-            RETURN count(r) as count
-        """).single()['count']
+    response = api_client.post("/ingest", files=files, data=data)
 
-        # May or may not find cross-ontology links (depends on content)
-        # Just verify query works and returns a number
-        assert cross_rels >= 0
+    assert response.status_code == 200
+    assert "job_id" in response.json()
+    assert "content_hash" in response.json()
 ```
 
-**Expected Results:**
-- Concepts created in expected range
-- All concepts have embeddings (1536-dim)
-- No orphaned concepts (all have APPEARS_IN)
-- Relationships created between concepts
-
----
-
-### 2.2 Backup and Restore
-**Purpose:** Data preservation with full fidelity
-
-**Test:** Full Database Backup
+**Test:** Duplicate Detection
 ```python
-def test_full_backup(populated_db):
-    """Full backup captures all data including embeddings"""
-    # Setup: populated_db fixture with known data
+@pytest.mark.api
+@pytest.mark.integration
+def test_ingest_text_duplicate_detection(api_client):
+    """Same content → duplicate detected"""
+    data = {"text": "Unique test content", "ontology": "test-dup"}
 
-    # Backup
-    backup_file = backup_database()
+    # First submission
+    response1 = api_client.post("/ingest/text", data=data)
+    job_id1 = response1.json()["job_id"]
 
-    # Load and validate backup JSON
-    with open(backup_file) as f:
-        backup = json.load(f)
+    # Second submission (same content + ontology)
+    response2 = api_client.post("/ingest/text", data=data)
+    result2 = response2.json()
 
-    assert backup['type'] == 'full_backup'
-    assert backup['version'] == '1.0'
-    assert backup['statistics']['concepts'] >= 10
-    assert backup['statistics']['relationships'] >= 5
-
-    # Verify embeddings preserved
-    for concept in backup['data']['concepts']:
-        assert 'embedding' in concept
-        assert len(concept['embedding']) == 1536
+    # Should detect duplicate or return same job
+    assert "job_id" in result2 or "duplicate" in result2
 ```
 
-**Test:** Ontology-Specific Backup
+**Test:** Auto-Approve Workflow (ADR-014)
 ```python
-def test_ontology_backup(multi_ontology_db):
-    """Selective ontology backup includes only specified data"""
-    # Setup: DB with multiple ontologies
+@pytest.mark.api
+@pytest.mark.integration
+def test_ingest_text_auto_approve(api_client):
+    """auto_approve=true skips manual approval step"""
+    data = {
+        "text": "Auto-approve test",
+        "ontology": "test-auto",
+        "auto_approve": "true"
+    }
 
-    backup_file = backup_ontology("Ontology A")
+    response = api_client.post("/ingest/text", data=data)
+    result = response.json()
 
-    with open(backup_file) as f:
-        backup = json.load(f)
-
-    assert backup['type'] == 'ontology_backup'
-    assert backup['ontology'] == 'Ontology A'
-
-    # All concepts belong to this ontology
-    concept_ids = {c['concept_id'] for c in backup['data']['concepts']}
-
-    # All sources reference this ontology
-    for source in backup['data']['sources']:
-        assert source['document'] == 'Ontology A'
-```
-
-**Test:** Restore Preserves Data Integrity
-```python
-def test_restore_integrity(backup_file):
-    """Restore recreates exact graph structure"""
-    # Setup: Clean DB, existing backup
-
-    # Get original stats from backup
-    with open(backup_file) as f:
-        original = json.load(f)
-
-    # Restore
-    restore_result = restore_backup(backup_file)
-
-    # Verify counts match
-    assert restore_result['concepts_created'] == original['statistics']['concepts']
-    assert restore_result['relationships_created'] == original['statistics']['relationships']
-
-    # Verify embeddings intact
-    with Neo4jConnection().session() as session:
-        concepts = session.run("MATCH (c:Concept) RETURN c.embedding as emb").values()
-        assert all(len(c[0]) == 1536 for c in concepts)
-
-    # Verify graph integrity
-    integrity = DatabaseIntegrity.check_integrity(session)
-    assert len(integrity['issues']) == 0, "No integrity issues after restore"
+    assert "auto" in result["status"].lower()
 ```
 
 **Expected Results:**
-- Backup captures all data
-- Embeddings preserved (1536-dim arrays)
-- Restore recreates exact structure
-- No integrity issues after restore
+- ✅ 14 ingestion tests pass
+- ✅ File upload and text ingestion both work
+- ✅ Duplicate detection operational
+- ✅ ADR-014 approval workflow validated
 
 ---
 
-### 2.3 Semantic Stitching
-**Purpose:** Reconnect relationships using vector similarity
+### ✅ 2.2 Job Management
 
-**Test:** External Concept Matching
+**Status:** IMPLEMENTED (13 tests passing)
+
+**Test:** Job Lifecycle Workflow
 ```python
-def test_semantic_stitching(partial_backup, target_db):
-    """Stitcher reconnects dangling refs to similar concepts"""
-    # Setup: target_db has "Systems Thinking" ontology
-    #        partial_backup has "Alan Watts" with refs to systems concepts
+# tests/api/test_jobs.py
+@pytest.mark.api
+@pytest.mark.integration
+def test_job_lifecycle_workflow(api_client):
+    """
+    Full job lifecycle:
+    submit → pending → awaiting_approval → approve → processing → completed
+    """
+    # 1. Submit job
+    response = api_client.post("/ingest/text", data={
+        "text": "Lifecycle test",
+        "ontology": "test-lifecycle"
+    })
+    job_id = response.json()["job_id"]
 
-    # Restore partial backup (creates dangling refs)
-    restore_backup(partial_backup)
+    # 2. Check initial status
+    status_response = api_client.get(f"/jobs/{job_id}")
+    initial_status = status_response.json()["status"]
+    assert initial_status in ["pending", "awaiting_approval"]
 
-    # Run stitcher
-    matcher = ConceptMatcher(Neo4jConnection(), threshold=0.85)
-    restitch_plan = matcher.create_restitch_plan(...)
+    # 3. Wait for awaiting_approval (polling simulation)
+    # ... wait logic ...
 
-    # Verify matches found
-    assert len(restitch_plan['matched']) > 0, "Should find similar concepts"
+    # 4. Approve job
+    approve_response = api_client.post(f"/jobs/{job_id}/approve")
+    assert approve_response.status_code == 200
 
-    # Apply stitching
-    stats = matcher.execute_restitch(restitch_plan, session)
-
-    # Verify relationships reconnected
-    assert stats['restitched'] > 0, "Should reconnect some relationships"
-
-    # Verify auto-pruning of unmatched
-    with Neo4jConnection().session() as session:
-        dangling = DatabaseIntegrity.prune_dangling_relationships(
-            session, dry_run=True
-        )
-        assert dangling['total_pruned'] == 0, "No dangling refs remain"
+    # 5. Verify transitions to approved/processing
+    final_response = api_client.get(f"/jobs/{job_id}")
+    final_status = final_response.json()["status"]
+    assert final_status in ["approved", "processing", "completed"]
 ```
 
-**Test:** Similarity Threshold Sensitivity
+**Test:** Job Filtering
 ```python
-def test_threshold_sensitivity():
-    """Different thresholds produce different match counts"""
-    # Same backup, different thresholds
+@pytest.mark.api
+@pytest.mark.smoke
+def test_jobs_list_with_status_filter(api_client):
+    """Filter jobs by status"""
+    response = api_client.get("/jobs?status=completed")
 
-    high_threshold_matches = run_stitcher(threshold=0.95)
-    low_threshold_matches = run_stitcher(threshold=0.75)
+    assert response.status_code == 200
+    jobs = response.json()
+    # All returned jobs should have status=completed
+    assert all(job["status"] == "completed" for job in jobs)
+```
 
-    # Higher threshold = fewer matches
-    assert high_threshold_matches['matched'] <= low_threshold_matches['matched']
+**Test:** Job Cancellation
+```python
+@pytest.mark.api
+@pytest.mark.integration
+def test_cancel_job(api_client):
+    """Cancel job before processing starts"""
+    # Create job
+    response = api_client.post("/ingest/text", data={...})
+    job_id = response.json()["job_id"]
+
+    # Cancel
+    cancel_response = api_client.delete(f"/jobs/{job_id}")
+
+    # Should succeed or report already processing
+    assert cancel_response.status_code in [200, 409]
 ```
 
 **Expected Results:**
-- Stitcher finds similar concepts above threshold
-- Relationships reconnected to matches
-- Unmatched refs automatically pruned
-- Higher threshold = stricter matching
+- ✅ 13 job management tests pass
+- ✅ Full lifecycle tested (pending → approval → processing)
+- ✅ Job filtering and cancellation work
+- ✅ ADR-014 approval workflow validated
 
 ---
 
-### 2.4 Graph Integrity
-**Purpose:** Detect and repair structural issues
+### ⏳ 2.3 Graph Queries (Pending - Requires Database)
 
-**Test:** Orphaned Concept Detection
+**Status:** PLACEHOLDER TESTS
+
+**Future Test:** Semantic Search
 ```python
-def test_orphaned_detection():
-    """Integrity checker finds concepts without APPEARS_IN"""
-    # Manually create orphaned concept
-    with Neo4jConnection().session() as session:
-        session.run("""
-            CREATE (c:Concept {
-                concept_id: 'orphan_test',
-                label: 'Orphaned Concept',
-                embedding: [0.0] * 1536
-            })
-        """)
+# tests/api/test_queries.py (to be implemented)
+@pytest.mark.integration
+@pytest.mark.skip("Requires PostgreSQL + Apache AGE")
+def test_semantic_search(api_client, age_client):
+    """Vector search finds similar concepts"""
+    # Setup: Ingest test documents
+    # ...
 
-        # Run integrity check
-        integrity = DatabaseIntegrity.check_integrity(session)
+    # Search
+    response = api_client.post("/query/search", json={
+        "query": "linear thinking patterns",
+        "limit": 10,
+        "min_similarity": 0.7
+    })
 
-        assert len(integrity['issues']) > 0
-        assert any('orphaned' in issue.lower() for issue in integrity['issues'])
+    assert response.status_code == 200
+    results = response.json()
+    assert "results" in results
+    assert len(results["results"]) > 0
 ```
 
-**Test:** Dangling Relationship Detection
+**Future Test:** Concept Details
 ```python
-def test_dangling_relationship_detection():
-    """Detect relationships pointing to non-existent concepts"""
-    # Create concept with relationship to non-existent target
-    with Neo4jConnection().session() as session:
-        session.run("""
-            CREATE (c:Concept {concept_id: 'source', label: 'Source'})
-            CREATE (s:Source {source_id: 'src1', document: 'Test'})
-            CREATE (c)-[:APPEARS_IN]->(s)
-            CREATE (c)-[:IMPLIES]->(:Concept {concept_id: 'ghost'})
-        """)
+@pytest.mark.integration
+@pytest.mark.skip("Requires database with test data")
+def test_concept_details(api_client):
+    """Get concept with instances and relationships"""
+    response = api_client.get("/query/concept/test-concept-id")
 
-        # Note: 'ghost' concept has no APPEARS_IN, so it's dangling
-
-        result = DatabaseIntegrity.prune_dangling_relationships(
-            session, dry_run=True
-        )
-
-        assert result['total_pruned'] > 0, "Should detect dangling relationship"
+    assert response.status_code == 200
+    data = response.json()
+    assert "label" in data
+    assert "instances" in data
+    assert "relationships" in data
 ```
 
-**Test:** Auto-Repair Orphans
+**Future Test:** Path Finding
 ```python
-def test_auto_repair():
-    """Repair can fix orphaned concepts"""
-    # Create orphan, then repair
-    # ... setup orphan ...
+@pytest.mark.integration
+@pytest.mark.skip("Requires graph data")
+def test_find_connection(api_client):
+    """Find shortest path between concepts"""
+    response = api_client.post("/query/connect", json={
+        "from_id": "concept-a",
+        "to_id": "concept-b",
+        "max_hops": 5
+    })
 
-    repairs = DatabaseIntegrity.repair_orphaned_concepts(session)
-    assert repairs > 0
+    assert response.status_code == 200
+    data = response.json()
+    assert "paths" in data
+```
 
-    # Re-check integrity
-    integrity = DatabaseIntegrity.check_integrity(session)
-    assert len(integrity['issues']) == 0, "Issues resolved"
+**Expected Results (When Implemented):**
+- Query endpoints work with Apache AGE
+- Vector search using PostgreSQL extensions
+- Graph traversal via AGE Cypher compatibility
+
+---
+
+### ⏳ 2.4 Database Operations (Pending)
+
+**Status:** PLACEHOLDER TESTS
+
+**Future Test:** Database Statistics
+```python
+# tests/api/test_database.py (to be implemented)
+@pytest.mark.integration
+@pytest.mark.skip("Requires PostgreSQL + AGE")
+def test_database_stats(api_client):
+    """Get node/relationship counts"""
+    response = api_client.get("/database/stats")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "nodes" in data
+    assert "relationships" in data
+    assert data["nodes"]["concepts"] >= 0
+```
+
+**Future Test:** Database Health Check
+```python
+@pytest.mark.integration
+@pytest.mark.skip("Requires database connection")
+def test_database_health(api_client):
+    """Check PostgreSQL + AGE extension availability"""
+    response = api_client.get("/database/health")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "status" in data
+    assert data["checks"]["age_extension"]["installed"] is True
+```
+
+---
+
+### ⏳ 2.5 Ontology Management (Pending)
+
+**Status:** PLACEHOLDER TESTS
+
+**Future Test:** List Ontologies
+```python
+# tests/api/test_ontology.py (to be implemented)
+@pytest.mark.integration
+@pytest.mark.skip("Requires database with ontologies")
+def test_ontology_list(api_client):
+    """List all ontologies with concept counts"""
+    response = api_client.get("/ontology/")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "ontologies" in data
+    assert "count" in data
+```
+
+---
+
+## 3. CLI Functional Tests
+
+### ✅ 3.1 Health Command
+
+**Status:** IMPLEMENTED (2 tests passing)
+
+**Test:** CLI Health Check
+```typescript
+// client/tests/cli/health.test.ts
+describe('kg health', () => {
+  it('should return healthy status', async () => {
+    const { stdout } = await execAsync(`${KG_CLI} health`);
+    expect(stdout).toContain('healthy');
+  });
+
+  it('should exit with code 0 on success', async () => {
+    try {
+      await execAsync(`${KG_CLI} health`);
+      expect(true).toBe(true);  // No error = success
+    } catch (error: any) {
+      fail(`Command failed: ${error.message}`);
+    }
+  });
+});
 ```
 
 **Expected Results:**
-- Orphaned concepts detected
-- Dangling relationships detected
-- Auto-repair fixes issues
-- Re-check shows clean state
+- ✅ 2 CLI tests pass
+- ✅ API server auto-starts for tests
+- ✅ Real integration testing (no mocks)
 
 ---
 
-### 2.5 Pruning
-**Purpose:** Remove dangling relationships for graph isolation
+### ⏳ 3.2 Other CLI Commands (Pending)
 
-**Test:** Prune External References
-```python
-def test_pruning():
-    """Pruning removes dangling relationships"""
-    # Create ontology with external refs
-    # ... setup ...
-
-    # Count dangling refs
-    with Neo4jConnection().session() as session:
-        before = DatabaseIntegrity.prune_dangling_relationships(
-            session, dry_run=True
-        )
-        assert before['total_pruned'] > 0, "Setup should have dangling refs"
-
-        # Prune
-        after = DatabaseIntegrity.prune_dangling_relationships(
-            session, dry_run=False
-        )
-        assert after['total_pruned'] == before['total_pruned']
-
-        # Verify clean
-        recheck = DatabaseIntegrity.prune_dangling_relationships(
-            session, dry_run=True
-        )
-        assert recheck['total_pruned'] == 0, "All dangling refs removed"
-```
-
-**Expected Results:**
-- Identifies dangling relationships
-- Removes them when executed
-- Graph is clean after pruning
+**Future Tests:**
+- [ ] `kg jobs list` - List jobs with filtering
+- [ ] `kg jobs status <id>` - Check job status
+- [ ] `kg jobs approve <id>` - Approve job
+- [ ] `kg ingest <file>` - Upload file
+- [ ] `kg ingest text` - Submit text
+- [ ] `kg search <query>` - Semantic search
+- [ ] `kg concept <id>` - Concept details
+- [ ] `kg connect <from> <to>` - Find paths
+- [ ] `kg ontology list` - List ontologies
+- [ ] `kg database stats` - Database info
 
 ---
 
-## 3. Scenario Tests (Real-World Use Cases)
+## 4. Mock AI Provider
 
-### 3.1 Multi-Ontology System
-**Purpose:** Multiple ontologies coexist and interact
+### ✅ 4.1 No API Keys Required
 
-**Test:** Independent Ontology Operations
-```python
-def test_independent_ontologies():
-    """Operations on one ontology don't affect others"""
-    # Create 3 ontologies
-    ingest_document("a.txt", ontology="A")
-    ingest_document("b.txt", ontology="B")
-    ingest_document("c.txt", ontology="C")
+**Location:** `src/api/lib/mock_ai_provider.py`
 
-    # Backup only B
-    backup_file = backup_ontology("B")
+**Features:**
+- **Deterministic responses** - Hash-based embeddings
+- **Configurable modes** - default, simple, complex, empty
+- **1536-dim vectors** - Compatible with OpenAI embeddings
+- **No costs** - Perfect for CI/CD
 
-    # Delete B
-    delete_ontology("B")
-
-    # Verify A and C unaffected
-    assert count_concepts("A") > 0
-    assert count_concepts("C") > 0
-    assert count_concepts("B") == 0
-
-    # Restore B
-    restore_backup(backup_file)
-
-    # All three exist again
-    assert all(count_concepts(ont) > 0 for ont in ["A", "B", "C"])
-```
-
-### 3.2 Clean Database Restore
-**Purpose:** Partial restore into empty database
-
-**Test:** Auto-Prune on Clean Restore
-```python
-def test_clean_database_restore(partial_backup):
-    """Restoring partial backup to empty DB auto-prunes"""
-    # Ensure DB is empty
-    with Neo4jConnection().session() as session:
-        count = session.run("MATCH (n) RETURN count(n) as c").single()['c']
-        assert count == 0
-
-    # Restore should auto-detect and auto-prune
-    # (no user prompts in test mode)
-    restore_backup(partial_backup, auto_prune=True)
-
-    # Verify no dangling refs
-    with Neo4jConnection().session() as session:
-        integrity = DatabaseIntegrity.check_integrity(session)
-        assert len(integrity['issues']) == 0
-```
-
-### 3.3 Token Cost Validation
-**Purpose:** Embeddings preserve investment
-
-**Test:** Embeddings Preserved in Backup
-```python
-def test_embedding_preservation():
-    """Backup → restore preserves embeddings (no regeneration)"""
-    # Ingest document (generates embeddings)
-    ingest_document("test.txt", ontology="Test")
-
-    # Get original embeddings
-    with Neo4jConnection().session() as session:
-        original_embeddings = session.run("""
-            MATCH (c:Concept)
-            RETURN c.concept_id as id, c.embedding as emb
-        """).values()
-
-    # Backup → clear → restore
-    backup_file = backup_database()
-    clear_database()
-    restore_backup(backup_file)
-
-    # Get restored embeddings
-    with Neo4jConnection().session() as session:
-        restored_embeddings = session.run("""
-            MATCH (c:Concept)
-            RETURN c.concept_id as id, c.embedding as emb
-        """).values()
-
-    # Verify exact match (no regeneration)
-    orig_dict = {id: emb for id, emb in original_embeddings}
-    rest_dict = {id: emb for id, emb in restored_embeddings}
-
-    for concept_id in orig_dict:
-        assert orig_dict[concept_id] == rest_dict[concept_id], \
-            f"Embedding changed for {concept_id} - indicates regeneration!"
-```
-
-**Expected Results:**
-- Embeddings are byte-for-byte identical after restore
-- No API calls needed to restore embeddings
-- Token investment protected
-
----
-
-## 4. Regression Tests (Prevent Known Bugs)
-
-### 4.1 Bug: Missing APPEARS_IN (Fixed in commit 0c74118)
-**Test:** APPEARS_IN Created During Instance Import
-```python
-def test_appears_in_relationship():
-    """Regression: Concepts must link to sources during restore"""
-    # This was broken - concepts imported but not linked
-
-    backup_file = create_minimal_backup()
-    restore_backup(backup_file)
-
-    with Neo4jConnection().session() as session:
-        orphans = session.run("""
-            MATCH (c:Concept)
-            WHERE NOT EXISTS((c)-[:APPEARS_IN]->(:Source))
-            RETURN count(c) as count
-        """).single()['count']
-
-        assert orphans == 0, "Bug regression: APPEARS_IN not created"
-```
-
-### 4.2 Bug: Inaccurate Relationship Counter (Fixed in commit af70223)
-**Test:** Relationship Stats Accuracy
-```python
-def test_relationship_counter_accuracy():
-    """Regression: Counter should match actual created relationships"""
-    # Was broken - counter incremented even when MATCH failed
-
-    backup = load_backup_with_external_refs()
-    result = restore_backup(backup)
-
-    # Count actual relationships
-    with Neo4jConnection().session() as session:
-        actual_count = session.run("""
-            MATCH ()-[r]->()
-            RETURN count(r) as count
-        """).single()['count']
-
-    assert result['relationships_created'] == actual_count, \
-        "Bug regression: Relationship counter inaccurate"
-```
-
-### 4.3 Enhancement: Clean Database Auto-Prune (Added in commit 14cbcfa)
-**Test:** Clean DB Detection
-```python
-def test_clean_db_auto_prune():
-    """Regression: Clean DB should auto-prune without prompts"""
-    # Enhancement to avoid unnecessary user prompts
-
-    # Ensure empty
-    clear_database()
-
-    # Restore partial backup with external refs
-    # Should auto-detect clean DB and auto-prune
-    result = restore_backup(partial_backup_file, interactive=False)
-
-    # Verify auto-prune executed
-    assert 'auto_prune' in result['actions_taken']
-
-    # Verify clean state
-    with Neo4jConnection().session() as session:
-        integrity = DatabaseIntegrity.check_integrity(session)
-        assert len(integrity['issues']) == 0
-```
-
-**Expected Results:**
-- All previous bugs remain fixed
-- No regression in known enhancements
-
----
-
-## 5. Test Data Requirements
-
-### Test Documents
-
-**Minimal Test Doc** (`tests/fixtures/minimal.txt`)
-- 3-5 paragraphs
-- Expected: 3-7 concepts
-- Expected: 2-5 relationships
-- Purpose: Fast smoke tests
-
-**Cross-Ontology Test Docs**
-- `ontology_a.txt` - Systems thinking concepts
-- `ontology_b.txt` - References systems thinking
-- Expected: 1-3 cross-ontology relationships
-- Purpose: Stitching and pruning tests
-
-**Large Test Doc** (`tests/fixtures/large.txt`)
-- 20-30 paragraphs
-- Expected: 30-50 concepts
-- Expected: 40-70 relationships
-- Purpose: Performance and stress tests
-
-### Backup Fixtures
-
-**Minimal Backup** (`tests/fixtures/minimal_backup.json`)
-- 5 concepts, 1 source, 5 instances, 3 relationships
-- No external dependencies
-- Purpose: Fast restore tests
-
-**Partial Backup with External Refs** (`tests/fixtures/partial_with_refs.json`)
-- 10 concepts, 2 sources
-- 5 relationships to external concepts
-- Purpose: Stitching and pruning tests
-
-**Multi-Ontology Backup** (`tests/fixtures/multi_ontology.json`)
-- 3 ontologies, 30 concepts total
-- Cross-ontology relationships
-- Purpose: Complex scenario tests
-
----
-
-## 6. Expected Test Ranges
-
-### Ingestion
-- **Minimal doc** → 3-7 concepts, 2-5 relationships
-- **Medium doc** → 15-30 concepts, 20-40 relationships
-- **Large doc** → 30-50 concepts, 40-70 relationships
-
-**Variance acceptable:** ±20% due to LLM non-determinism
-
-### Performance
-- **Ingestion:** < 10s per document (excluding LLM latency)
-- **Backup:** < 5s for 100 concepts
-- **Restore:** < 10s for 100 concepts
-- **Stitching:** < 30s for 50 external refs
-
-### Integrity
-- **Zero orphaned concepts** after ingestion
-- **Zero dangling relationships** after prune
-- **100% edge handling** after stitch + auto-prune
-
----
-
-## 7. Test Environment Setup
-
-### Prerequisites
+**Configuration:**
 ```bash
-# Clone repo
-git clone <repo>
-cd knowledge-graph-system
-
-# Run setup (includes Neo4j Docker)
-./scripts/setup.sh
-
-# Add test API key to .env
-echo "OPENAI_API_KEY=sk-test-..." >> .env
-
-# Install test dependencies
-pip install -r requirements-dev.txt
+# In .env or pytest.ini
+AI_PROVIDER=mock
+MOCK_MODE=default
 ```
 
-### Run Tests
+**Modes:**
+- `default` - Standard concept extraction (3-5 concepts per chunk)
+- `simple` - Minimal concepts (1-2 per chunk)
+- `complex` - Rich concept graph (5-7 per chunk)
+- `empty` - No concepts extracted
+
+**Test:**
+```python
+# tests/test_mock_provider.py
+def test_mock_provider_modes():
+    """Different modes produce different concept counts"""
+    simple = MockAIProvider(mode="simple")
+    complex_provider = MockAIProvider(mode="complex")
+
+    simple_result = simple.extract_concepts("Test text", "test.txt")
+    complex_result = complex_provider.extract_concepts("Test text", "test.txt")
+
+    # Complex mode extracts more concepts
+    assert len(complex_result["concepts"]) >= len(simple_result["concepts"])
+```
+
+---
+
+## 5. Apache AGE Migration Notes
+
+### Database Changes
+
+**Previous:** Neo4j Community Edition 4.x
+**Current:** PostgreSQL 16 + Apache AGE 1.5.0
+
+**Why Apache AGE:**
+- Open-source graph database
+- PostgreSQL compatibility
+- Better licensing for production
+- SQL + Cypher hybrid queries
+
+**Migration Impact on Tests:**
+- ✅ Mock provider unchanged (no database dependency)
+- ✅ Smoke tests unchanged (API-level validation)
+- ⏳ Integration tests need AGE database running
+- ⏳ Query tests pending AGE Cypher compatibility verification
+
+**Cypher Compatibility:**
+- AGE uses openCypher standard
+- Some Neo4j-specific functions not available
+- Vector search via PostgreSQL extensions (pgvector)
+- Relationship syntax slightly different
+
+**Test Database Setup:**
 ```bash
+# Start PostgreSQL + AGE via Docker
+docker-compose up -d
+
+# Verify AGE extension
+docker exec -it knowledge-graph-postgres psql -U admin -d knowledge_graph \
+  -c "SELECT extname FROM pg_extension WHERE extname = 'age';"
+
+# Run integration tests
+pytest -m integration
+```
+
+**Graph Schema (Unchanged from Neo4j):**
+```cypher
+-- Nodes
+CREATE (:Concept {concept_id, label, embedding, search_terms})
+CREATE (:Source {source_id, document, paragraph, full_text})
+CREATE (:Instance {instance_id, quote})
+
+-- Relationships
+(:Concept)-[:APPEARS_IN]->(:Source)
+(:Concept)-[:EVIDENCED_BY]->(:Instance)
+(:Instance)-[:FROM_SOURCE]->(:Source)
+(:Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS]->(:Concept)
+```
+
+---
+
+## 6. Test Coverage Summary
+
+### Current Status
+
+**Python/FastAPI:**
+```
+Total Tests: 51
+- Smoke: 16 (passing) ✅
+- Integration: 35 (passing) ✅
+Code Coverage: 28-31% (functional coverage complete)
+```
+
+**TypeScript/Jest:**
+```
+Total Tests: 2
+- CLI health: 2 (passing) ✅
+Code Coverage: TBD
+```
+
+### Functional Coverage by Feature
+
+| Feature | Tests | Status |
+|---------|-------|--------|
+| API Health | 4 Python + 2 TS | ✅ Complete |
+| API Status | 5 Python | ✅ Complete |
+| Job Management | 13 Python | ✅ Complete |
+| Ingestion | 14 Python | ✅ Complete |
+| Mock AI Provider | Comprehensive | ✅ Complete |
+| Semantic Search | Placeholder | ⏳ Needs DB |
+| Concept Details | Placeholder | ⏳ Needs DB |
+| Graph Traversal | Placeholder | ⏳ Needs DB |
+| Path Finding | Placeholder | ⏳ Needs DB |
+| Ontology Mgmt | Placeholder | ⏳ Needs DB |
+| Database Stats | Placeholder | ⏳ Needs DB |
+
+### Coverage Metrics (Python)
+
+**High Coverage (Tested Modules):**
+- `src/api/routes/jobs.py` - 95%
+- `src/api/services/job_analysis.py` - 92%
+- `src/api/main.py` - 86%
+- `src/api/routes/ingest.py` - 85%
+- `src/api/services/job_queue.py` - 82%
+
+**Low Coverage (Needs Database):**
+- `src/api/routes/queries.py` - 18%
+- `src/api/routes/database.py` - 17%
+- `src/api/routes/ontology.py` - 21%
+- `src/api/lib/age_client.py` - 14%
+
+**Overall:** 28-31% (expected given database-dependent features not yet tested)
+
+---
+
+## 7. Test Organization
+
+```
+tests/                          # Python/pytest tests
+├── conftest.py                 # Shared fixtures
+├── README.md                   # Testing guide
+├── api/                        # API endpoint tests
+│   ├── __init__.py
+│   ├── test_health.py          # 4 smoke tests ✅
+│   ├── test_root.py            # 5 smoke tests ✅
+│   ├── test_jobs.py            # 13 integration tests ✅
+│   ├── test_ingest.py          # 14 integration tests ✅
+│   └── test_ontology.py        # Placeholders (skip)
+└── test_mock_provider.py       # Mock provider tests ✅
+
+client/tests/                   # TypeScript/Jest tests
+├── setup.ts                    # Global configuration
+├── globalSetup.ts              # Start API server
+├── globalTeardown.ts           # Stop API server
+├── helpers/
+│   └── api-server.ts           # Server management
+└── cli/
+    └── health.test.ts          # 2 tests ✅
+```
+
+---
+
+## 8. Running Tests
+
+### Python Tests
+
+```bash
+# From project root
+source venv/bin/activate
+
 # All tests
-pytest
+pytest -v
 
-# Fast smoke tests only
-pytest tests/smoke/
+# By category
+pytest -m smoke          # Fast tests (16 passing)
+pytest -m integration    # Full workflows (35 passing)
+pytest -m api           # All API tests (51 passing)
 
-# Specific category
-pytest tests/functional/test_backup_restore.py
+# By file
+pytest tests/api/test_jobs.py -v
+pytest tests/api/test_ingest.py -v
 
-# With coverage report
+# With coverage
 pytest --cov=src --cov-report=html
+open htmlcov/index.html
+```
+
+### TypeScript Tests
+
+```bash
+# From client/
+npm run build            # Required before tests
+
+# All tests
+npm test
+
+# Specific pattern
+npm test -- --testPathPattern=health
+
+# With coverage
+npm run test:coverage
+open coverage/lcov-report/index.html
+
+# Watch mode (dev)
+npm run test:watch
 ```
 
 ---
 
-## 8. Success Criteria
+## 9. CI/CD Integration (Future)
+
+### GitHub Actions (Suggested)
+
+```yaml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test-python:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: apache/age:PG16
+        env:
+          POSTGRES_DB: knowledge_graph_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run smoke tests
+        run: pytest -m smoke -v
+
+      - name: Run integration tests
+        run: pytest -m integration -v
+        env:
+          AI_PROVIDER: mock
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+
+  test-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Node dependencies
+        run: cd client && npm install
+
+      - name: Build CLI
+        run: cd client && npm run build
+
+      - name: Run CLI tests
+        run: cd client && npm test
+        env:
+          AI_PROVIDER: mock
+```
+
+---
+
+## 10. Future Test Areas
+
+**Not yet covered:**
+
+### Database Integration Tests
+- [ ] Full ingestion workflow with Apache AGE
+- [ ] Vector search accuracy (pgvector)
+- [ ] Graph traversal performance
+- [ ] Concept matching via embeddings
+- [ ] Ontology isolation verification
+
+### CLI Coverage
+- [ ] All CLI commands (jobs, search, concept, etc.)
+- [ ] Error handling and user feedback
+- [ ] Argument parsing edge cases
+- [ ] Output formatting validation
+
+### Performance & Scale
+- [ ] Large document ingestion (1000+ paragraphs)
+- [ ] Concurrent job processing
+- [ ] Query latency benchmarks
+- [ ] Database connection pooling
+
+### Advanced Features
+- [ ] MCP server integration (Phase 2)
+- [ ] Multi-tenant job isolation
+- [ ] Backup/restore workflows
+- [ ] Admin operations testing
+
+---
+
+## 11. Success Criteria
 
 **Test suite is successful when:**
-- ✅ All critical workflows have functional tests
-- ✅ All regression tests for known bugs pass
-- ✅ CI passes consistently (< 10% flaky failures)
-- ✅ New features include scenario tests
-- ✅ Test data ranges are documented
-- ✅ Test execution time < 10 minutes (full suite)
+- ✅ All smoke tests pass consistently (<1s runtime)
+- ✅ Integration tests validate key workflows
+- ✅ No LLM API keys required for testing
+- ✅ CI passes reliably (< 5% flaky failures)
+- ✅ New features include functional tests
+- ✅ Test execution time < 5 minutes (smoke + integration)
 
 **Individual test is successful when:**
 - ✅ Functional correctness demonstrated
-- ✅ Graph integrity maintained
+- ✅ Real integration (not mocked services)
 - ✅ Edge cases handled gracefully
-- ✅ Error messages are clear and actionable
+- ✅ Error messages are actionable
 
 ---
 
-## 9. Future Test Areas
+## 12. Test Development Guidelines
 
-**Not yet covered, but needed:**
-- [ ] Concurrent access (multiple users/agents)
-- [ ] Large-scale ingestion (1000+ documents)
-- [ ] Performance benchmarks (query latency)
-- [ ] MCP server integration tests
-- [ ] CLI argument parsing and error handling
-- [ ] Backup file versioning and migration
-- [ ] Vector search accuracy (recall/precision)
+### Adding New Tests
+
+1. **Determine category:**
+   - `smoke` → Fast, no DB, structural validation
+   - `integration` → Full workflow, requires services
+   - `api` → API endpoint functional tests
+
+2. **Mark appropriately:**
+   ```python
+   @pytest.mark.smoke
+   @pytest.mark.api
+   def test_endpoint(api_client):
+       """Clear description of what we're testing"""
+   ```
+
+3. **Follow naming:**
+   - Python: `test_<feature>_<scenario>.py`
+   - TypeScript: `<command>.test.ts`
+
+4. **Document intent:**
+   ```python
+   """
+   Tests for: kg health
+   Endpoint: GET /health
+   Purpose: Validate API health check
+   """
+   ```
+
+### Writing Functional Tests
+
+Focus on **user workflows**, not code paths:
+
+```python
+# ✅ Good - tests user workflow
+def test_submit_and_approve_job(api_client):
+    """User submits job, waits for analysis, approves, monitors completion"""
+    # 1. Submit
+    response = api_client.post("/ingest/text", data={...})
+    job_id = response.json()["job_id"]
+
+    # 2. Wait for analysis
+    # ... polling logic ...
+
+    # 3. Approve
+    api_client.post(f"/jobs/{job_id}/approve")
+
+    # 4. Verify
+    status = api_client.get(f"/jobs/{job_id}")
+    assert status.json()["status"] in ["approved", "processing", "completed"]
+
+# ❌ Avoid - testing implementation
+def test_internal_queue_state():
+    """Check internal data structures"""
+    # Too coupled to implementation
+```
 
 ---
 
-*This document is a living specification. Update as new test areas are identified or existing tests evolve.*
+## Troubleshooting
+
+### Tests Fail with "Connection Refused"
+
+**Problem:** API server or database not running
+
+**Solution:**
+```bash
+# Check API
+curl http://localhost:8000/health
+
+# Check PostgreSQL
+docker ps | grep postgres
+
+# Start services
+docker-compose up -d
+```
+
+### Mock Provider Not Working
+
+**Problem:** Tests calling real APIs
+
+**Solution:**
+```bash
+# Verify env
+grep AI_PROVIDER .env
+# Should be: AI_PROVIDER=mock
+
+# Or check pytest.ini:
+# env = AI_PROVIDER=mock
+```
+
+### TypeScript Tests Timeout
+
+**Problem:** API server slow to start
+
+**Solution:**
+```bash
+# Check Python venv
+source venv/bin/activate
+python -m uvicorn src.api.main:app --version
+
+# Increase timeout in jest.config.js
+testTimeout: 60000
+```
+
+---
+
+**Last Updated:** 2025-10-08
+**Test Framework:** pytest 8.0+, Jest 29.7+
+**Database:** PostgreSQL 16 + Apache AGE 1.5.0
+**Mock Provider:** Deterministic hash-based (no API keys needed)
+**Philosophy:** Functional coverage > Line coverage

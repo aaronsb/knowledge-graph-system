@@ -242,7 +242,7 @@ async def ingest_text(
     use_filename = filename or "text_input"
 
     job_data = {
-        "content": content,
+        "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
         "content_hash": content_hash,
         "ontology": ontology,
         "filename": use_filename,
