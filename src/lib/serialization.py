@@ -400,17 +400,28 @@ class DataImporter:
         for i, concept in enumerate(data["concepts"]):
             Console.progress(i + 1, len(data["concepts"]), "Concepts")
 
-            merge_query = """
-                MERGE (c:Concept {concept_id: $concept_id})
-                ON CREATE SET c.label = $label,
-                             c.search_terms = $search_terms,
-                             c.embedding = $embedding
-            """
             if overwrite_existing:
-                merge_query += """
-                    ON MATCH SET c.label = $label,
-                                c.search_terms = $search_terms,
-                                c.embedding = $embedding
+                # Always set properties (create or update)
+                merge_query = """
+                    MERGE (c:Concept {concept_id: $concept_id})
+                    SET c.label = $label,
+                        c.search_terms = $search_terms,
+                        c.embedding = $embedding
+                """
+            else:
+                # Only set if node doesn't exist (skip if exists)
+                merge_query = """
+                    MERGE (c:Concept {concept_id: $concept_id})
+                    ON CREATE SET c.label = $label, c.search_terms = $search_terms, c.embedding = $embedding
+                """
+                # AGE workaround: Use conditional CASE in SET
+                merge_query = """
+                    OPTIONAL MATCH (existing:Concept {concept_id: $concept_id})
+                    WITH existing
+                    MERGE (c:Concept {concept_id: $concept_id})
+                    SET c.label = CASE WHEN existing IS NULL THEN $label ELSE c.label END,
+                        c.search_terms = CASE WHEN existing IS NULL THEN $search_terms ELSE c.search_terms END,
+                        c.embedding = CASE WHEN existing IS NULL THEN $embedding ELSE c.embedding END
                 """
 
             client._execute_cypher(merge_query, params=concept)
@@ -421,20 +432,14 @@ class DataImporter:
         for i, source in enumerate(data["sources"]):
             Console.progress(i + 1, len(data["sources"]), "Sources")
 
+            # AGE: MERGE + SET (works for both create and update)
             merge_query = """
                 MERGE (s:Source {source_id: $source_id})
-                ON CREATE SET s.document = $document,
-                             s.file_path = $file_path,
-                             s.paragraph = $paragraph,
-                             s.full_text = $full_text
+                SET s.document = $document,
+                    s.file_path = $file_path,
+                    s.paragraph = $paragraph,
+                    s.full_text = $full_text
             """
-            if overwrite_existing:
-                merge_query += """
-                    ON MATCH SET s.document = $document,
-                                s.file_path = $file_path,
-                                s.paragraph = $paragraph,
-                                s.full_text = $full_text
-                """
 
             client._execute_cypher(merge_query, params=source)
             stats["sources_created"] += 1
@@ -444,23 +449,29 @@ class DataImporter:
         for i, instance in enumerate(data["instances"]):
             Console.progress(i + 1, len(data["instances"]), "Instances")
 
-            merge_query = """
-                MERGE (i:Instance {instance_id: $instance_id})
-                ON CREATE SET i.quote = $quote
-            """
-            if overwrite_existing:
-                merge_query += " ON MATCH SET i.quote = $quote"
+            # AGE limitation: Can't use SET with WITH/MATCH joins
+            # Split into two queries: 1) create instance, 2) create relationships
 
-            merge_query += """
-                WITH i
+            # Query 1: Create/update instance node
+            instance_query = """
+                MERGE (i:Instance {instance_id: $instance_id})
+                SET i.quote = $quote
+            """
+            client._execute_cypher(instance_query, params={
+                "instance_id": instance["instance_id"],
+                "quote": instance["quote"]
+            })
+
+            # Query 2: Create relationships
+            rel_query = """
+                MATCH (i:Instance {instance_id: $instance_id})
                 MATCH (c:Concept {concept_id: $concept_id})
                 MATCH (s:Source {source_id: $source_id})
                 MERGE (c)-[:EVIDENCED_BY]->(i)
                 MERGE (i)-[:FROM_SOURCE]->(s)
                 MERGE (c)-[:APPEARS_IN]->(s)
             """
-
-            client._execute_cypher(merge_query, params=instance)
+            client._execute_cypher(rel_query, params=instance)
             stats["instances_created"] += 1
 
         # Import concept-concept relationships

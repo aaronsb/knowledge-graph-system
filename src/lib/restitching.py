@@ -17,7 +17,7 @@ import numpy as np
 
 from .console import Console, Colors
 from .age_ops import AGEConnection
-from .age_client import AGEClient
+from ..api.lib.age_client import AGEClient
 
 
 class ConceptMatcher:
