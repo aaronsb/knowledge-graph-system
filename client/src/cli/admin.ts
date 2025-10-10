@@ -62,6 +62,99 @@ function promptPassword(question: string): Promise<string> {
 }
 
 /**
+ * Prompt user to hold Enter key for specified duration
+ * "Human CAPTCHA" - requires physical key press, resistant to automation
+ *
+ * @param message - Message to display
+ * @param durationMs - Duration to hold in milliseconds (default: 3000ms / 3s)
+ * @returns Promise that resolves true if held long enough, false if cancelled
+ */
+function promptHoldEnter(message: string, durationMs: number = 3000): Promise<boolean> {
+  return new Promise((resolve) => {
+    let keyDownTime: number | null = null;
+    let interval: NodeJS.Timeout | null = null;
+    let elapsed = 0;
+
+    // Show instruction
+    process.stdout.write(`\n${message}\n`);
+    process.stdout.write(colors.status.warning(`Hold ${colors.ui.value('[Enter]')} for ${durationMs / 1000} seconds to confirm...\n`));
+    process.stdout.write(colors.status.dim('(Physical confirmation required - prevents accidental AI/automation execution)\n'));
+    process.stdout.write(colors.status.dim('(Press Ctrl+C to cancel)\n\n'));
+
+    // Enter raw mode to capture key events
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+    }
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+
+    const updateProgress = () => {
+      const barWidth = 30;
+      const progress = Math.min(elapsed / durationMs, 1);
+      const filled = Math.floor(progress * barWidth);
+      const empty = barWidth - filled;
+      const bar = '█'.repeat(filled) + '░'.repeat(empty);
+      const percent = Math.floor(progress * 100);
+
+      // Clear line and write progress
+      process.stdout.write('\r' + colors.status.info(`${bar} ${percent}%`));
+    };
+
+    const cleanup = () => {
+      if (interval) clearInterval(interval);
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(false);
+      }
+      process.stdin.pause();
+      process.stdin.removeAllListeners('data');
+      process.stdout.write('\n\n');
+    };
+
+    const onKeyPress = (key: string) => {
+      // Ctrl+C
+      if (key === '\u0003') {
+        cleanup();
+        process.stdout.write(colors.status.dim('Cancelled\n\n'));
+        resolve(false);
+        return;
+      }
+
+      // Enter key pressed (both \r and \n)
+      if (key === '\r' || key === '\n') {
+        if (keyDownTime === null) {
+          // Key pressed down - start timer
+          keyDownTime = Date.now();
+          elapsed = 0;
+
+          interval = setInterval(() => {
+            elapsed = Date.now() - keyDownTime!;
+            updateProgress();
+
+            // Success - held long enough
+            if (elapsed >= durationMs) {
+              cleanup();
+              process.stdout.write(colors.status.success('\n✓ Confirmed!\n'));
+              resolve(true);
+            }
+          }, 50); // Update every 50ms for smooth progress
+
+          updateProgress();
+        }
+      } else {
+        // Any other key - reset
+        if (keyDownTime !== null) {
+          cleanup();
+          process.stdout.write(colors.status.warning('\n✗ Released too early\n\n'));
+          resolve(false);
+        }
+      }
+    };
+
+    process.stdin.on('data', onKeyPress);
+  });
+}
+
+/**
  * Track job progress with SSE streaming (ADR-018 Phase 1)
  *
  * Tries Server-Sent Events first for real-time updates (<500ms latency).
@@ -795,10 +888,14 @@ const resetCommand = new Command('reset')
       console.log(colors.status.dim('  - Restart with a clean database'));
       console.log(colors.status.dim('  - Re-initialize AGE schema'));
 
-      const confirm = await prompt('\nType "yes" to confirm: ');
+      // "Human CAPTCHA" - physical confirmation required
+      // This deliberate friction reduces risk of accidental execution by AI agents or automation
+      const confirmed = await promptHoldEnter(
+        colors.status.error('🚨 This action cannot be undone!')
+      );
 
-      if (confirm.toLowerCase() !== 'yes') {
-        console.log(colors.status.dim('\nCancelled\n'));
+      if (!confirmed) {
+        console.log(colors.status.dim('Cancelled\n'));
         process.exit(0);
       }
 
