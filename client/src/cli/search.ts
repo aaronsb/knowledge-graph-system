@@ -36,6 +36,13 @@ const queryCommand = new Command('query')
             console.log(`   ${colors.ui.key('Evidence:')} ${colors.evidence.count(String(concept.evidence_count))} instances`);
             console.log();
           });
+
+          // Show hint if additional results available below threshold
+          if (result.below_threshold_count && result.below_threshold_count > 0 && result.suggested_threshold) {
+            const thresholdPercent = (result.suggested_threshold * 100).toFixed(0);
+            console.log(colors.status.warning(`💡 ${result.below_threshold_count} additional concept${result.below_threshold_count > 1 ? 's' : ''} available at ${thresholdPercent}% threshold`));
+            console.log(colors.status.dim(`   Try: kg search query "${query}" --min-similarity ${result.suggested_threshold}\n`));
+          }
         } catch (error: any) {
           console.error(colors.status.error('✗ Search failed'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));

@@ -207,6 +207,36 @@ class JobScheduler:
 
         return stats
 
+    def get_stats(self) -> Dict[str, any]:
+        """
+        Get current scheduler statistics.
+
+        Returns:
+            Dictionary with job counts by status and cleanup info:
+            {
+                "jobs_by_status": {"pending": 2, "completed": 100, ...},
+                "last_cleanup": None,  # Could track this with instance variable
+                "next_cleanup": None   # Could calculate from cleanup_interval
+            }
+        """
+        from .job_queue import get_job_queue
+
+        queue = get_job_queue()
+
+        # Get job counts by status
+        jobs_by_status = {}
+        for status in ["pending", "awaiting_approval", "approved", "queued", "processing", "completed", "failed", "cancelled"]:
+            jobs = queue.list_jobs(status=status, limit=10000)
+            count = len(jobs)
+            if count > 0:
+                jobs_by_status[status] = count
+
+        return {
+            "jobs_by_status": jobs_by_status,
+            "last_cleanup": None,  # Future: track last cleanup timestamp
+            "next_cleanup": None   # Future: calculate from cleanup_interval and last_cleanup
+        }
+
 
 # Singleton instance
 _scheduler_instance: Optional[JobScheduler] = None

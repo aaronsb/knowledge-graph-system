@@ -90,111 +90,81 @@ Relationships By Type:
 
 ## Issues & Investigations
 
-### Issue #1: AGE Extension Health Check Warning
-**Severity:** ⚠️ Medium (Informational)
+### Issue #1: AGE Extension Health Check Warning ✅ RESOLVED
+**Severity:** ⚠️ Medium (Informational) → ✅ Fixed
 **Command:** `kg database health`
-**Status:** Database functional but reports degraded
+**Status:** Database functional but reports degraded → Now reports HEALTHY
 
-**Output:**
-```
-Status: ⚠ DEGRADED
+**Root Cause:**
+- Health check was using `_execute_cypher()` to execute a SQL query
+- Line 175-177 in `database.py` attempted to run `SELECT extname FROM pg_extension...` as Cypher
+- `_execute_cypher()` is for Cypher queries, not SQL
+- This caused the AGE extension check to fail incorrectly
 
-Health Checks:
-  connectivity: ok
-  age_extension: ⚠ error  ← This
-  graph: ✓ ok
-```
+**Resolution:**
+- Changed to use direct psycopg2 connection (like `get_database_info()` does)
+- Now properly executes SQL query against PostgreSQL to check extension
+- Database health now correctly shows "HEALTHY" with all checks passing
 
-**Impact:**
-- Database is working normally
-- Ingestion successful
-- Graph queries functional
-- Likely a false positive in health check logic
-
-**Investigation Needed:**
-1. Check what health check is being performed for `age_extension`
-2. Review `src/api/routes/database.py` health endpoint
-3. Verify AGE extension is actually loaded:
-   ```sql
-   SELECT * FROM pg_extension WHERE extname = 'age';
-   ```
-4. Check if this is a reserved word issue (like our earlier bugs)
-
-**Files to Review:**
-- `src/api/routes/database.py` (health endpoint)
-- `src/api/lib/age_client.py` (health check logic)
+**Files Modified:**
+- `src/api/routes/database.py` - Fixed AGE extension check (line 173-191)
 
 ---
 
-### Issue #2: Scheduler Status API 500 Error
-**Severity:** 🔴 High (Broken Feature)
+### Issue #2: Scheduler Status API 500 Error ✅ RESOLVED
+**Severity:** 🔴 High (Broken Feature) → ✅ Fixed
 **Command:** `kg admin scheduler status`
 **Error:** Request failed with status code 500
 
-**Impact:**
-- Cannot view scheduler configuration
-- Cannot verify cleanup settings
-- Scheduler functionality unknown (but ingestion works)
+**Root Cause:**
+- `admin.py` line 422 called `scheduler.get_stats()` method
+- Method didn't exist in `JobScheduler` class
 
-**Investigation Needed:**
-1. Check API server logs for traceback:
-   ```bash
-   tail -f logs/api_*.log | grep -A 20 "scheduler"
-   ```
-2. Review endpoint implementation:
-   - `src/api/routes/admin.py` - scheduler status endpoint
-   - `src/api/services/job_queue.py` - scheduler implementation
-3. Test endpoint directly:
-   ```bash
-   curl http://localhost:8000/admin/scheduler/status
-   ```
-4. Check for reserved word conflicts in status query
+**Resolution:**
+- Implemented `get_stats()` method in `src/api/services/job_scheduler.py` (line 210)
+- Returns job counts by status from job queue
+- Includes placeholders for last_cleanup and next_cleanup timestamps
+- Tested successfully - endpoint now returns proper status and statistics
 
-**Hypothesis:**
-- Likely a database query syntax error (like our earlier `count`/`exists` bugs)
-- Or missing scheduler implementation in API
-
-**Files to Review:**
-- `src/api/routes/admin.py`
-- `src/api/services/job_queue.py`
-- API server logs
+**Files Modified:**
+- `src/api/services/job_scheduler.py` - Added `get_stats()` method
 
 ---
 
-### Finding #3: Search Returns Zero Results
-**Severity:** 🟡 Informational
+### Finding #3: Search Returns Zero Results ✅ RESOLVED (Expected Behavior)
+**Severity:** 🟡 Informational → ✅ Working as designed
 **Command:** `kg search query "human intelligence"`
-**Result:** 0 concepts found
+**Result:** 0 concepts found with default threshold
 
-**Context:**
-- Database has 7 concepts from Watts lecture on "human intelligence"
-- Text includes multiple mentions of "human intelligence limitation"
+**Investigation Results:**
+1. **Actual concept label**: "Limitation of Human Intelligence" (specific/narrow)
+2. **Search term**: "human intelligence" (general/broad)
+3. **Similarity score**: 58.4%
+4. **CLI default threshold**: 70% (0.7)
 
-**Possible Causes:**
-1. **Embedding mismatch** - Search term embedding doesn't match stored embeddings
-2. **Similarity threshold too high** - Default threshold may be > 0.85
-3. **Concept labels different** - LLM may have extracted as "intelligence limitations" instead
-4. **Vector search disabled** - Needs verification
+**Root Cause:**
+- Threshold was too high for semantic similarity between narrow concept label and broad search term
+- Additionally found bug: search endpoint wasn't passing threshold parameter to vector_search()
+  - Was using hardcoded 0.85 instead of request.min_similarity
 
-**Investigation Needed:**
-1. List all concept labels to see what was extracted:
-   ```cypher
-   MATCH (c:Concept) RETURN c.label, c.concept_id
-   ```
-2. Test with a known exact concept label
-3. Try lower similarity threshold:
-   ```bash
-   kg search query "linear" --min-similarity 0.5
-   ```
-4. Check if embeddings were generated:
-   ```cypher
-   MATCH (c:Concept) RETURN c.concept_id, size(c.embedding)
-   ```
+**Resolution:**
+1. Fixed threshold parameter passing in `queries.py` (line 82-86)
+2. Verified search works with lower threshold: `--min-similarity 0.5` returns 1 result
+3. This is expected behavior - LLM extracted specific concept "Limitation of Human Intelligence"
+   which has lower semantic similarity to generic "human intelligence"
 
-**Files to Review:**
-- `client/src/cli/search.ts` (search implementation)
-- `src/api/routes/queries.py` (search endpoint)
-- `src/api/lib/age_client.py` (vector_search method)
+**Enhancement Added - Threshold Hints:**
+Implemented intelligent threshold suggestions when few results found:
+- API calculates exact threshold needed to reveal additional concepts
+- CLI displays helpful hint: "💡 1 additional concept available at 56% threshold"
+- Provides ready-to-run command: `kg search query "..." --min-similarity 0.56`
+- Creates progressive discovery UX through the similarity gradient
+
+**Files Modified:**
+- `src/api/routes/queries.py` - Fixed threshold parameter + added threshold hint logic
+- `src/api/models/queries.py` - Added `below_threshold_count` and `suggested_threshold` fields
+- `client/src/types/index.ts` - Updated SearchResponse interface
+- `client/src/cli/search.ts` - Added threshold hint display
 
 ---
 
