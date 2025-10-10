@@ -90,6 +90,7 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
     let inactivityTimeout: NodeJS.Timeout | null = null;
     let enterPressed = false; // Track if Enter is currently pressed
     let started = false;
+    let decompressionMode = false; // "Drain" mode - wait for Space after success
 
     // Show instruction
     process.stdout.write(`\n${message}\n`);
@@ -142,11 +143,27 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
     }, timeoutMs);
 
     const onKeyPress = (key: string) => {
-      // Ctrl+C
+      // Ctrl+C always cancels
       if (key === '\u0003') {
         cleanup();
         process.stdout.write(colors.status.dim('Cancelled\n\n'));
         resolve(false);
+        return;
+      }
+
+      // Decompression mode: drain Enter events, wait for Space
+      if (decompressionMode) {
+        if (key === '\r' || key === '\n') {
+          // Ignore Enter keypresses - just drain them
+          return;
+        } else if (key === ' ') {
+          // Space pressed - user ready to continue
+          cleanup();
+          process.stdout.write(colors.status.success('✓ Ready!\n'));
+          resolve(true);
+          return;
+        }
+        // Ignore all other keys in decompression mode
         return;
       }
 
@@ -171,9 +188,17 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
 
               // Success - accumulated enough time
               if (accumulated >= durationMs) {
-                cleanup();
-                process.stdout.write(colors.status.success('\n✓ Confirmed!\n'));
-                resolve(true);
+                // Clear the interval, but DON'T cleanup yet
+                if (interval) clearInterval(interval);
+                interval = null;
+
+                // Show success and wait for user to release Enter and press Space
+                process.stdout.write(colors.status.success('\n✓ Confirmed! You\'re probably human! 🎉\n'));
+                process.stdout.write(colors.status.info('Release Enter and press [Space] to continue...\n'));
+
+                // Switch to "decompression mode" - drain Enter events, wait for Space
+                // This prevents Enter keypresses from bleeding into the next prompt
+                decompressionMode = true;
               }
             } else {
               // Enter not pressed during this poll - released too early
@@ -190,7 +215,7 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
         }
       } else {
         // Any other key - cancel
-        if (started) {
+        if (started && !decompressionMode) {
           cleanup();
           process.stdout.write(colors.status.warning('\n✗ Cancelled\n\n'));
           resolve(false);
