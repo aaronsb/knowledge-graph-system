@@ -13,6 +13,7 @@ from typing import Dict, Any
 from datetime import datetime
 
 from src.api.lib.chunker import SmartChunker, ChunkingConfig
+from src.api.lib.markdown_preprocessor import MarkdownPreprocessor
 from src.api.lib.checkpoint import IngestionCheckpoint
 from src.api.lib.age_client import AGEClient
 from src.api.lib.ingestion import ChunkedIngestionStats, process_chunk
@@ -79,17 +80,30 @@ def run_ingestion_worker(
         with open(tmp_path, 'r', encoding='utf-8') as f:
             full_text = f.read()
 
-        # Configure chunking
-        config = ChunkingConfig(
-            target_words=target_words,
-            min_words=min_words,
-            max_words=max_words,
-            overlap_words=overlap_words
-        )
+        # Route to appropriate chunker based on file type
+        is_markdown = filename.lower().endswith('.md')
 
-        # Create chunks
-        chunker = SmartChunker(config)
-        chunks = chunker.chunk_text(full_text, start_position=0)
+        if is_markdown:
+            # Markdown: Use semantic AST-based chunking with code block translation
+            print(f"📝 Using markdown preprocessor (semantic AST chunking)")
+            preprocessor = MarkdownPreprocessor(max_workers=3)
+            chunks = preprocessor.preprocess_to_chunks(
+                full_text,
+                target_words=target_words,
+                min_words=min_words,
+                max_words=max_words
+            )
+        else:
+            # Plain text: Use legacy word-based chunker
+            print(f"📄 Using legacy chunker (word-based boundaries)")
+            config = ChunkingConfig(
+                target_words=target_words,
+                min_words=min_words,
+                max_words=max_words,
+                overlap_words=overlap_words
+            )
+            chunker = SmartChunker(config)
+            chunks = chunker.chunk_text(full_text, start_position=0)
 
         if not chunks:
             return {
