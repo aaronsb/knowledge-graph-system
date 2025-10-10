@@ -218,6 +218,11 @@ def process_chunk(
               f"{len(extraction['relationships'])} relationships")
         sys.stdout.flush()  # Show extraction results immediately
     except Exception as e:
+        # Print full error for debugging
+        print(f"  ✗ Extraction failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        sys.stdout.flush()
         raise Exception(f"Failed to extract concepts: {e}")
 
     # Step 3: Process each concept
