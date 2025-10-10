@@ -4,9 +4,10 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { table } from 'table';
 import { createClientFromEnv } from '../api/client';
 import { JobStatus } from '../types';
+import * as colors from './colors';
+import { Table } from '../lib/table';
 
 export const jobsCommand = new Command('jobs')
   .description('Manage and monitor ingestion jobs');
@@ -62,38 +63,83 @@ jobsCommand
     }
   });
 
-// Helper function to display jobs table
-async function displayJobsList(status?: string, clientId?: string, limit: number = 20) {
+// Helper function to display jobs list using Table utility
+async function displayJobsList(status?: string, clientId?: string, limit: number = 20, fullId: boolean = false) {
   const client = createClientFromEnv();
-
   const jobs = await client.listJobs(status, clientId, limit);
 
   if (jobs.length === 0) {
-    console.log(chalk.gray('No jobs found'));
+    console.log(colors.status.dim('\nNo jobs found\n'));
     return;
   }
 
-  // Build table
-  const data = [
-    ['Job ID', 'Client', 'Status', 'Ontology', 'Created', 'Progress'],
-  ];
+  // Create table with dynamic configuration
+  const table = new Table<JobStatus>({
+    columns: [
+      {
+        header: 'Job ID',
+        field: 'job_id',
+        type: 'job_id',
+        width: 'flex',
+        priority: 2,
+        maxWidth: fullId ? 40 : 30,
+        minWidth: fullId ? 38 : 20
+      },
+      {
+        header: 'Client',
+        field: 'client_id',
+        type: 'user',
+        width: 12,
+        customFormat: (id) => id || 'anonymous',
+        truncate: true
+      },
+      {
+        header: 'Status',
+        field: 'status',
+        type: 'status',
+        width: 18
+      },
+      {
+        header: 'Ontology',
+        field: 'ontology',
+        type: 'heading',
+        width: 'flex',
+        priority: 1,
+        customFormat: (name) => name || '-',
+        truncate: true
+      },
+      {
+        header: 'Created',
+        field: 'created_at',
+        type: 'timestamp',
+        width: 18
+      },
+      {
+        header: 'Progress',
+        field: (job) => job.progress?.percent,
+        type: 'progress',
+        width: 10,
+        customFormat: (percent, job) => {
+          // Special case: show icons for terminal states
+          if (job.status === 'completed') return '✓';
+          if (job.status === 'failed') return '✗';
+          if (job.status === 'cancelled') return '⊗';
+          return percent !== undefined ? String(percent) : '-';
+        }
+      }
+    ],
+    spacing: 2,
+    showHeader: true,
+    showSeparator: true
+  });
 
-  for (const job of jobs) {
-    const progress = getProgressString(job);
-    const created = new Date(job.created_at).toLocaleString();
+  // Render table
+  table.print(jobs);
 
-    data.push([
-      job.job_id.substring(0, 12) + '...',
-      (job.client_id || 'anonymous').substring(0, 10),
-      colorizeStatus(job.status),
-      job.ontology || '-',
-      created,
-      progress,
-    ]);
+  // Helpful tip
+  if (!fullId && jobs.length > 0) {
+    console.log(colors.status.dim('Tip: Use --full-id to show complete job IDs\n'));
   }
-
-  console.log(table(data));
-  console.log(chalk.gray(`\nShowing ${jobs.length} job(s)`));
 }
 
 // List command with subcommands
@@ -102,9 +148,10 @@ const listCommand = new Command('list')
   .option('-s, --status <status>', 'Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)')
   .option('-c, --client <client-id>', 'Filter by client ID (view specific user\'s jobs)')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
+  .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
     try {
-      await displayJobsList(options.status, options.client, parseInt(options.limit));
+      await displayJobsList(options.status, options.client, parseInt(options.limit), options.fullId);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
@@ -118,10 +165,11 @@ listCommand
   .description('List jobs awaiting approval')
   .option('-c, --client <client-id>', 'Filter by client ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
+  .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
     try {
       console.log(chalk.blue('Jobs awaiting approval:\n'));
-      await displayJobsList('awaiting_approval', options.client, parseInt(options.limit));
+      await displayJobsList('awaiting_approval', options.client, parseInt(options.limit), options.fullId);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
@@ -134,10 +182,11 @@ listCommand
   .description('List approved jobs (queued or processing)')
   .option('-c, --client <client-id>', 'Filter by client ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
+  .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
     try {
       console.log(chalk.blue('Approved jobs:\n'));
-      await displayJobsList('approved', options.client, parseInt(options.limit));
+      await displayJobsList('approved', options.client, parseInt(options.limit), options.fullId);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
@@ -150,10 +199,11 @@ listCommand
   .description('List completed jobs')
   .option('-c, --client <client-id>', 'Filter by client ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
+  .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
     try {
       console.log(chalk.green('Completed jobs:\n'));
-      await displayJobsList('completed', options.client, parseInt(options.limit));
+      await displayJobsList('completed', options.client, parseInt(options.limit), options.fullId);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
@@ -166,10 +216,11 @@ listCommand
   .description('List failed jobs')
   .option('-c, --client <client-id>', 'Filter by client ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
+  .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
     try {
       console.log(chalk.red('Failed jobs:\n'));
-      await displayJobsList('failed', options.client, parseInt(options.limit));
+      await displayJobsList('failed', options.client, parseInt(options.limit), options.fullId);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
@@ -182,10 +233,11 @@ listCommand
   .description('List cancelled jobs')
   .option('-c, --client <client-id>', 'Filter by client ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
+  .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
     try {
       console.log(chalk.yellow('Cancelled jobs:\n'));
-      await displayJobsList('cancelled', options.client, parseInt(options.limit));
+      await displayJobsList('cancelled', options.client, parseInt(options.limit), options.fullId);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
@@ -323,7 +375,37 @@ function printJobStatus(job: JobStatus) {
   console.log(chalk.blue('\nJob Status:'));
   console.log(chalk.gray(`  ID: ${job.job_id}`));
   console.log(chalk.gray(`  Type: ${job.job_type}`));
-  console.log(`  Status: ${colorizeStatus(job.status)}`);
+  // Format job status with icons
+  let statusDisplay: string = job.status;
+  switch (job.status) {
+    case 'completed':
+      statusDisplay = colors.status.success('✓ completed');
+      break;
+    case 'failed':
+      statusDisplay = colors.status.error('✗ failed');
+      break;
+    case 'processing':
+      statusDisplay = colors.status.info('⚙ processing');
+      break;
+    case 'approved':
+      statusDisplay = colors.status.success('✓ approved');
+      break;
+    case 'awaiting_approval':
+      statusDisplay = colors.status.warning('⏸ awaiting approval');
+      break;
+    case 'pending':
+      statusDisplay = colors.status.dim('○ pending');
+      break;
+    case 'queued':
+      statusDisplay = colors.status.info('⋯ queued');
+      break;
+    case 'cancelled':
+      statusDisplay = colors.status.dim('⊗ cancelled');
+      break;
+    default:
+      statusDisplay = colors.status.dim(job.status);
+  }
+  console.log(`  Status: ${statusDisplay}`);
 
   if (job.ontology) {
     console.log(chalk.gray(`  Ontology: ${job.ontology}`));
@@ -432,51 +514,3 @@ function printJobStatus(job: JobStatus) {
   }
 }
 
-/**
- * Get progress string for table display
- */
-function getProgressString(job: JobStatus): string {
-  if (job.status === 'completed') {
-    return chalk.green('✓');
-  }
-
-  if (job.status === 'failed') {
-    return chalk.red('✗');
-  }
-
-  if (job.status === 'cancelled') {
-    return chalk.yellow('⚠');
-  }
-
-  if (job.progress?.percent !== undefined) {
-    return `${job.progress.percent}%`;
-  }
-
-  return '-';
-}
-
-/**
- * Colorize status
- */
-function colorizeStatus(status: string): string {
-  switch (status) {
-    case 'completed':
-      return chalk.green(status);
-    case 'failed':
-      return chalk.red(status);
-    case 'processing':
-      return chalk.blue(status);
-    case 'approved':
-      return chalk.cyan(status);
-    case 'awaiting_approval':
-      return chalk.yellow(status);
-    case 'pending':
-      return chalk.gray(status);
-    case 'queued':
-      return chalk.yellow(status);
-    case 'cancelled':
-      return chalk.gray(status);
-    default:
-      return status;
-  }
-}

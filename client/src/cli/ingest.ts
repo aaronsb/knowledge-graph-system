@@ -19,11 +19,11 @@ ingestCommand
   .description('Ingest a document file')
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
-  .option('-y, --yes', 'Auto-approve job (skip approval step)', false)
+  .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
   .option('--filename <name>', 'Override filename for tracking')
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('--overlap-words <n>', 'Overlap between chunks', '200')
-  .option('--no-wait', 'Submit and exit (don\'t wait for completion)')
+  .option('-w, --wait', 'Wait for job completion (default: submit and exit)', false)
   .action(async (path: string, options) => {
     try {
       // Validate file exists
@@ -35,8 +35,9 @@ ingestCommand
       const client = createClientFromEnv();
       const config = getConfig();
 
-      // ADR-014: Use --yes flag if provided, otherwise check global config
-      const autoApprove = options.yes !== undefined ? options.yes : config.getAutoApprove();
+      // Default to auto-approve (options.approve is true by default due to --no-approve pattern)
+      // Only require approval if user explicitly passes --no-approve flag
+      const autoApprove = options.approve !== false;
 
       const request: IngestRequest = {
         ontology: options.ontology,
@@ -79,10 +80,12 @@ ingestCommand
       const submitResult = result as JobSubmitResponse;
       console.log(chalk.green(`\n✓ Job submitted: ${submitResult.job_id}`));
 
+      // If --wait flag provided, poll for completion
       if (options.wait) {
         await pollJobWithProgress(client, submitResult.job_id);
       } else {
-        console.log(chalk.gray(`\nPoll status with: kg jobs status ${submitResult.job_id}`));
+        // Default: submit and exit (like walking away from the counter)
+        console.log(chalk.gray(`\nMonitor progress: ${chalk.cyan(`kg jobs status ${submitResult.job_id} --watch`)}`));
       }
     } catch (error: any) {
       console.error(chalk.red('\n✗ Ingestion failed'));
@@ -97,17 +100,18 @@ ingestCommand
   .description('Ingest raw text')
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
-  .option('-y, --yes', 'Auto-approve job (skip approval step)', false)
+  .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
   .option('--filename <name>', 'Filename for tracking', 'text_input')
   .option('--target-words <n>', 'Target words per chunk', '1000')
-  .option('--no-wait', 'Submit and exit (don\'t wait for completion)')
+  .option('-w, --wait', 'Wait for job completion (default: submit and exit)', false)
   .action(async (text: string, options) => {
     try {
       const client = createClientFromEnv();
       const config = getConfig();
 
-      // ADR-014: Use --yes flag if provided, otherwise check global config
-      const autoApprove = options.yes !== undefined ? options.yes : config.getAutoApprove();
+      // Default to auto-approve (options.approve is true by default due to --no-approve pattern)
+      // Only require approval if user explicitly passes --no-approve flag
+      const autoApprove = options.approve !== false;
 
       const request: IngestRequest = {
         ontology: options.ontology,
@@ -137,10 +141,12 @@ ingestCommand
       const submitResult = result as JobSubmitResponse;
       console.log(chalk.green(`\n✓ Job submitted: ${submitResult.job_id}`));
 
+      // If --wait flag provided, poll for completion
       if (options.wait) {
         await pollJobWithProgress(client, submitResult.job_id);
       } else {
-        console.log(chalk.gray(`\nPoll status with: kg jobs status ${submitResult.job_id}`));
+        // Default: submit and exit (like walking away from the counter)
+        console.log(chalk.gray(`\nMonitor progress: ${chalk.cyan(`kg jobs status ${submitResult.job_id} --watch`)}`));
       }
     } catch (error: any) {
       console.error(chalk.red('\n✗ Ingestion failed'));
@@ -179,6 +185,13 @@ async function pollJobWithProgress(client: any, jobId: string) {
       process.exit(1);
     } else if (finalJob.status === 'cancelled') {
       spinner.warn('Ingestion cancelled');
+    } else if (finalJob.status === 'awaiting_approval') {
+      spinner.info('Job awaiting approval');
+      console.log(chalk.blue('\n📋 Job requires approval before processing'));
+      console.log(chalk.gray(`  Job ID: ${jobId}`));
+      console.log(chalk.gray(`\n  To approve: ${chalk.cyan(`kg jobs approve ${jobId}`)}`));
+      console.log(chalk.gray(`  To cancel:  ${chalk.cyan(`kg jobs cancel ${jobId}`)}`));
+      console.log(chalk.gray(`  To monitor: ${chalk.cyan(`kg jobs status ${jobId} --watch`)}`));
     }
   } catch (error: any) {
     spinner.fail('Polling failed');
