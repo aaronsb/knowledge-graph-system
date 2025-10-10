@@ -193,7 +193,7 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
                 interval = null;
 
                 // Show success and wait for user to release Enter and press Space
-                process.stdout.write(colors.status.success('\n✓ Confirmed! You\'re probably human! 🎉\n'));
+                process.stdout.write(colors.status.success('\n✓ Confirmed! You\'re probably human! 👩‍💻\n'));
                 process.stdout.write(colors.status.info('Release Enter and press [Space] to continue...\n'));
 
                 // Switch to "decompression mode" - drain Enter events, wait for Space
