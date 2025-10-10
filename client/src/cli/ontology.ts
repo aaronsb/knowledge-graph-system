@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { coloredCount, separator } from './colors';
+import { Table } from '../lib/table';
 
 export const ontologyCommand = new Command('ontology')
   .description('Manage ontologies (knowledge domains)')
@@ -22,19 +23,43 @@ export const ontologyCommand = new Command('ontology')
             return;
           }
 
-          console.log('\n' + separator());
-          console.log(colors.ui.title('📚 Ontologies in Knowledge Graph'));
-          console.log(separator());
-          console.log(colors.status.success(`\n✓ Found ${result.count} ontologies:\n`));
+          console.log('\n' + colors.ui.title('📚 Ontologies in Knowledge Graph'));
 
-          result.ontologies.forEach(ont => {
-            console.log(colors.concept.label(ont.ontology));
-            console.log(`  ${colors.ui.key('Files:')} ${coloredCount(ont.file_count)}`);
-            console.log(`  ${colors.ui.key('Chunks:')} ${coloredCount(ont.source_count)}`);
-            console.log(`  ${colors.ui.key('Concepts:')} ${coloredCount(ont.concept_count)}`);
-            console.log();
+          // Use Table system for consistent formatting
+          const table = new Table({
+            columns: [
+              {
+                header: 'Ontology',
+                field: 'ontology',
+                type: 'heading',
+                width: 'flex',
+                priority: 3
+              },
+              {
+                header: 'Files',
+                field: 'file_count',
+                type: 'count',
+                width: 10,
+                align: 'right'
+              },
+              {
+                header: 'Chunks',
+                field: 'source_count',
+                type: 'count',
+                width: 10,
+                align: 'right'
+              },
+              {
+                header: 'Concepts',
+                field: 'concept_count',
+                type: 'count',
+                width: 12,
+                align: 'right'
+              }
+            ]
           });
-          console.log(separator());
+
+          table.print(result.ontologies);
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to list ontologies'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
