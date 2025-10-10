@@ -45,16 +45,30 @@ def get_neo4j_client() -> AGEClient:
 @router.post("/search", response_model=SearchResponse)
 async def search_concepts(request: SearchRequest):
     """
-    Search for concepts using semantic similarity.
+    Search for concepts using semantic similarity with vector embeddings.
 
-    Generates an embedding for the query text and performs vector similarity
-    search against the concept-embeddings index.
+    Generates a vector embedding for the query text using the configured AI provider
+    and performs cosine similarity search against all concept embeddings in the graph.
+    Results include smart threshold hints when few matches are found.
+
+    **How It Works:**
+    - Query text → vector embedding (1536 dimensions via OpenAI/Anthropic)
+    - Cosine similarity comparison against all concept embeddings
+    - Results ranked by similarity score (0.0-1.0, higher is better)
+    - Includes evidence counts and source document references
+
+    **Best Practices:**
+    - Use 2-3 word descriptive phrases for best results (e.g., "linear thinking patterns")
+    - Default threshold of 70% (0.7) works well for most searches
+    - Lower threshold to 50-60% (0.5-0.6) to find broader or weaker matches
+    - Response includes threshold hints when additional concepts exist below threshold
 
     Args:
         request: Search parameters (query, limit, min_similarity)
 
     Returns:
-        SearchResponse with matching concepts sorted by similarity
+        SearchResponse with matching concepts sorted by similarity score, plus
+        smart hints about additional concepts available at lower thresholds
 
     Example:
         POST /query/search
@@ -154,21 +168,34 @@ async def search_concepts(request: SearchRequest):
 @router.get("/concept/{concept_id}", response_model=ConceptDetailsResponse)
 async def get_concept_details(concept_id: str):
     """
-    Get detailed information about a specific concept.
+    Get detailed information about a specific concept including all evidence and relationships.
 
-    Includes:
-    - Concept metadata (label, search terms, documents)
-    - Evidence instances (quotes with source references)
-    - Outgoing relationships to other concepts
+    Retrieves complete concept data from the graph including:
+    - Concept metadata (unique ID, human-readable label, alternative search terms)
+    - Evidence instances (quoted text snippets from source documents)
+    - Source document references with paragraph numbers
+    - Outgoing relationships to other concepts (with relationship types and optional confidence scores)
+
+    **Use Cases:**
+    - Inspect evidence supporting a concept extracted from documents
+    - Explore semantic relationships connecting this concept to others
+    - Verify extraction quality by reviewing source quotes
+    - Navigate the knowledge graph by following relationships
+
+    **Response Details:**
+    - `instances`: Ordered by document and paragraph number for context
+    - `relationships`: All outgoing edges from this concept
+    - `search_terms`: Alternative phrases that can match this concept in searches
 
     Args:
-        concept_id: The concept ID to retrieve
+        concept_id: The unique concept identifier (from search results or graph traversal)
 
     Returns:
-        ConceptDetailsResponse with full concept information
+        ConceptDetailsResponse with complete concept information including evidence,
+        source documents, and semantic relationships
 
     Raises:
-        404: If concept not found
+        404: If concept_id does not exist in the graph
 
     Example:
         GET /query/concept/linear-scanning-system
@@ -258,16 +285,34 @@ async def get_concept_details(concept_id: str):
 @router.post("/related", response_model=RelatedConceptsResponse)
 async def find_related_concepts(request: RelatedConceptsRequest):
     """
-    Find concepts related through graph traversal.
+    Find concepts related through graph traversal using breadth-first search.
 
-    Performs breadth-first traversal from a starting concept to find
-    connected concepts within a maximum depth.
+    Performs breadth-first graph traversal from a starting concept to discover
+    all connected concepts within a specified maximum distance (hops). Optionally
+    filters by specific relationship types.
+
+    **How It Works:**
+    - Starts from the specified concept_id
+    - Explores outgoing relationships level by level (breadth-first)
+    - Returns all reachable concepts within max_depth hops
+    - Groups results by distance from starting concept
+
+    **Relationship Types:**
+    - IMPLIES, SUPPORTS, CONTRADICTS, RESULTS_FROM, ENABLES, etc.
+    - Filter to specific types or omit to traverse all relationship types
+    - Path includes the sequence of relationship types traversed
+
+    **Performance Note:**
+    - Depth 1-2: Fast, typically <100 concepts
+    - Depth 3-4: Moderate, can return 100s of concepts
+    - Depth 5: Slow, may return 1000s of concepts depending on graph density
 
     Args:
         request: Related concepts parameters (concept_id, max_depth, relationship_types)
 
     Returns:
-        RelatedConceptsResponse with related concepts grouped by distance
+        RelatedConceptsResponse with related concepts grouped by distance,
+        ordered from closest (distance 1) to farthest (distance max_depth)
 
     Example:
         POST /query/related
@@ -316,16 +361,28 @@ async def find_related_concepts(request: RelatedConceptsRequest):
 @router.post("/connect", response_model=FindConnectionResponse)
 async def find_connection(request: FindConnectionRequest):
     """
-    Find shortest paths between two concepts.
+    Find shortest paths between two concepts using exact concept IDs.
 
-    Uses Neo4j's shortestPath algorithm to find up to 5 shortest paths
-    connecting two concepts in the graph.
+    Uses Apache AGE graph traversal to find up to 5 shortest paths connecting
+    two concepts. Requires exact concept IDs (not semantic phrase matching).
+
+    **When to Use:**
+    - You already have exact concept IDs from search results or details views
+    - You want guaranteed exact matches without similarity thresholds
+    - You're connecting concepts programmatically with known IDs
+
+    **For Semantic Phrase Matching:**
+    - Use `/query/connect-by-search` instead to match phrases like "licensing issues"
+    - That endpoint handles phrase-to-ID matching automatically
 
     Args:
         request: Connection parameters (from_id, to_id, max_hops)
 
     Returns:
-        FindConnectionResponse with discovered paths
+        FindConnectionResponse with discovered paths between the exact concepts
+
+    Raises:
+        404: If either concept ID does not exist in the graph
 
     Example:
         POST /query/connect
@@ -391,23 +448,31 @@ async def find_connection(request: FindConnectionRequest):
 @router.post("/connect-by-search", response_model=FindConnectionBySearchResponse)
 async def find_connection_by_search(request: FindConnectionBySearchRequest):
     """
-    Find shortest paths between two concepts using natural language queries.
+    Find shortest paths between two concepts using semantic phrase matching.
 
-    Searches for concepts matching each query string, then finds paths between
-    the top matches.
+    Uses vector embeddings to match query phrases to existing concepts based on
+    semantic similarity, then finds shortest paths connecting them.
+
+    **Best Practices:**
+    - Use specific 2-3 word phrases (e.g., "licensing issues" not "licensing")
+    - Generic single words may not match well due to lack of semantic context
+    - Lower threshold (0.3-0.4) to find concepts with weaker similarity
+    - Error messages include threshold hints when near-miss concepts exist
 
     Args:
-        request: Connection parameters (from_query, to_query, max_hops)
+        request: Connection parameters (from_query, to_query, max_hops, threshold)
 
     Returns:
-        FindConnectionBySearchResponse with discovered paths and helpful hints if no matches
+        FindConnectionBySearchResponse with discovered paths, match quality scores,
+        and helpful threshold hints if matches were weak or missing
 
     Example:
         POST /query/connect-by-search
         {
-          "from_query": "Variety Fulcrum",
-          "to_query": "Recursive Depth",
-          "max_hops": 5
+          "from_query": "licensing issues",
+          "to_query": "AGE benefits",
+          "max_hops": 5,
+          "threshold": 0.5
         }
     """
     client = get_neo4j_client()
