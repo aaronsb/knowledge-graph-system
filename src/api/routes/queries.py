@@ -234,10 +234,13 @@ async def get_concept_details(concept_id: str):
             for record in (relationships_result or [])
         ]
 
+        # Extract properties from AGE vertex structure: {id, label, properties: {...}}
+        props = concept.get('properties', {})
+
         return ConceptDetailsResponse(
-            concept_id=concept['concept_id'],
-            label=concept['label'],
-            search_terms=concept.get('search_terms', []),
+            concept_id=props.get('concept_id', ''),
+            label=props.get('label', ''),
+            search_terms=props.get('search_terms', []),
             documents=documents,
             instances=instances,
             relationships=relationships
