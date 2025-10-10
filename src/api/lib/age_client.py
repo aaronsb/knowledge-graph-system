@@ -114,12 +114,14 @@ class AGEClient:
                 for key, value in params.items():
                     # Convert Python types to Cypher literals
                     if isinstance(value, str):
-                        # Escape single quotes in strings
-                        value_str = value.replace("'", "\\'")
+                        # Escape backslashes FIRST (critical for docs with code examples)
+                        value_str = value.replace("\\", "\\\\")
+                        # Then escape single quotes
+                        value_str = value_str.replace("'", "\\'")
                         query = query.replace(f"${key}", f"'{value_str}'")
                     elif isinstance(value, (list, dict)):
                         # Convert lists/dicts to JSON strings
-                        value_str = json.dumps(value).replace("'", "\\'")
+                        value_str = json.dumps(value).replace("\\", "\\\\").replace("'", "\\'")
                         query = query.replace(f"${key}", value_str)
                     elif isinstance(value, (int, float)):
                         query = query.replace(f"${key}", str(value))
@@ -254,9 +256,12 @@ class AGEClient:
 
         # AGE returns vertices as: {"id": ..., "label": ..., "properties": {...}}::vertex
         # AGE returns edges as: {"id": ..., "label": ..., "start_id": ..., "end_id": ..., "properties": {...}}::edge
-        # Strip the ::vertex or ::edge suffix
+        # AGE returns lists with type annotations: [{...}::vertex, {...}::vertex]
+        # Strip ALL ::vertex and ::edge suffixes (not just the first one)
         if '::vertex' in value_str or '::edge' in value_str:
-            value_str = value_str.split('::')[0]
+            import re
+            # Remove all ::vertex and ::edge type annotations
+            value_str = re.sub(r'::(vertex|edge|path)', '', value_str)
 
         try:
             return json.loads(value_str)

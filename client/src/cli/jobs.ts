@@ -431,6 +431,35 @@ jobsCommand
     }
   });
 
+// Clear all jobs
+jobsCommand
+  .command('clear')
+  .description('Clear ALL jobs from database (requires confirmation)')
+  .option('--confirm', 'Confirm deletion (required)', false)
+  .showHelpAfterError()
+  .action(async (options) => {
+    try {
+      if (!options.confirm) {
+        console.error(chalk.red('✗ Confirmation required'));
+        console.error(chalk.yellow('\n⚠️  This will DELETE ALL jobs from the database!'));
+        console.error(chalk.gray('\nTo confirm, run: ') + chalk.cyan('kg jobs clear --confirm'));
+        process.exit(1);
+      }
+
+      const client = createClientFromEnv();
+
+      console.log(chalk.yellow('\n⚠️  Clearing ALL jobs from database...'));
+      const result = await client.clearAllJobs(true);
+
+      console.log(chalk.green(`\n✓ ${result.message}`));
+      console.log(chalk.gray(`  Jobs deleted: ${result.jobs_deleted}\n`));
+    } catch (error: any) {
+      console.error(chalk.red('✗ Failed to clear jobs'));
+      console.error(chalk.red(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
 /**
  * Print detailed job status
  */

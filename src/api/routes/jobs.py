@@ -198,13 +198,60 @@ async def approve_job(
         "approved_by": current_user.get("user_id", "anonymous")  # Phase 2: real user ID
     })
 
-    # Add to processing queue
-    background_tasks.add_task(queue.execute_job, job_id)
+    # Handle serial vs parallel processing
+    processing_mode = job.get("processing_mode", "serial")
+    if processing_mode == "serial":
+        # Queue for serial execution (will run when no other serial job is active)
+        background_tasks.add_task(queue.queue_serial_job, job_id)
+    else:
+        # Execute in parallel (immediate background task)
+        background_tasks.add_task(queue.execute_job, job_id)
 
     return {
         "job_id": job_id,
         "status": "approved",
-        "message": "Job approved and queued for processing"
+        "message": f"Job approved and queued for {processing_mode} processing"
+    }
+
+
+@router.delete(
+    "",
+    summary="Clear all jobs (admin only)"
+)
+async def clear_all_jobs(
+    confirm: bool = Query(False, description="Must set to true to confirm deletion"),
+    current_user: dict = Depends(get_current_user)  # Auth placeholder
+):
+    """
+    Clear ALL jobs from the database (nuclear option).
+
+    **Use with caution!** This deletes all job history.
+
+    **Common use cases:**
+    - After database reset to sync jobs with empty graph
+    - Cleaning up after testing/development
+    - Fresh start when migrating systems
+
+    **Requires:**
+    - `confirm=true` query parameter to prevent accidents
+    - Admin authentication (Phase 2)
+
+    **Returns:**
+    - Number of jobs deleted
+    """
+    if not confirm:
+        raise HTTPException(
+            status_code=400,
+            detail="Must set confirm=true to clear all jobs"
+        )
+
+    queue = get_job_queue()
+    jobs_deleted = queue.clear_all_jobs()
+
+    return {
+        "success": True,
+        "jobs_deleted": jobs_deleted,
+        "message": f"Cleared {jobs_deleted} job(s) from database"
     }
 
 

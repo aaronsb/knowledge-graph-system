@@ -232,6 +232,7 @@ class AdminService:
 
         # Import reset module
         from ...admin.reset import ResetManager
+        from ..services.job_queue import get_job_queue
 
         # Execute reset in thread pool (reset module uses subprocess)
         loop = asyncio.get_event_loop()
@@ -247,6 +248,14 @@ class AdminService:
 
         if not result["success"]:
             raise RuntimeError(result["error"])
+
+        # Clear jobs database to keep in sync with graph
+        try:
+            job_queue = get_job_queue()
+            jobs_deleted = job_queue.clear_all_jobs()
+            print(f"✓ Cleared {jobs_deleted} jobs from job database")
+        except Exception as e:
+            print(f"⚠ Warning: Failed to clear jobs database: {e}")
 
         # Convert validation results to API response model
         validation = result["validation"]
