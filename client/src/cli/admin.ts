@@ -69,6 +69,11 @@ function promptPassword(question: string): Promise<string> {
  * - 10-second inactivity timeout: Detects AI agents (provides helpful guidance)
  * - 3-second hold requirement: Confirms deliberate human action
  *
+ * Uses polling approach: Every 500ms, checks if Enter is pressed
+ * - If Enter detected: Add 500ms to progress
+ * - If Enter not detected: Fail with "Released too early"
+ * - When progress >= 3000ms: Success
+ *
  * Timeline for humans: Read (2-3s) + Hold (3s) = ~5-6s total → Success
  * Timeline for AI: Read (instant) + Wait → 10s timeout → Helpful message
  *
@@ -79,10 +84,12 @@ function promptPassword(question: string): Promise<string> {
  */
 function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: number = 10000): Promise<boolean> {
   return new Promise((resolve) => {
-    let keyDownTime: number | null = null;
+    const pollInterval = 500; // Poll every 500ms
+    let accumulated = 0; // Accumulated time in ms
     let interval: NodeJS.Timeout | null = null;
-    let elapsed = 0;
     let inactivityTimeout: NodeJS.Timeout | null = null;
+    let enterPressed = false; // Track if Enter is currently pressed
+    let started = false;
 
     // Show instruction
     process.stdout.write(`\n${message}\n`);
@@ -99,13 +106,12 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
 
     const updateProgress = () => {
       const barWidth = 30;
-      const progress = Math.min(elapsed / durationMs, 1);
+      const progress = Math.min(accumulated / durationMs, 1);
       const filled = Math.floor(progress * barWidth);
       const empty = barWidth - filled;
       const bar = '█'.repeat(filled) + '░'.repeat(empty);
       const percent = Math.floor(progress * 100);
 
-      // Clear line and write progress
       process.stdout.write('\r' + colors.status.info(`${bar} ${percent}%`));
     };
 
@@ -121,7 +127,6 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
     };
 
     // AI detection: 10-second inactivity timeout
-    // Humans will read and act in ~5-6s, AIs will wait indefinitely
     inactivityTimeout = setTimeout(() => {
       cleanup();
       process.stdout.write('\n' + separator());
@@ -147,35 +152,47 @@ function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: 
 
       // Enter key pressed (both \r and \n)
       if (key === '\r' || key === '\n') {
-        if (keyDownTime === null) {
-          // Key pressed down - cancel inactivity timeout, start hold timer
+        enterPressed = true;
+
+        if (!started) {
+          // First Enter press - cancel inactivity timeout, start polling
+          started = true;
           if (inactivityTimeout) {
             clearTimeout(inactivityTimeout);
             inactivityTimeout = null;
           }
 
-          keyDownTime = Date.now();
-          elapsed = 0;
-
+          // Start polling every 500ms
           interval = setInterval(() => {
-            elapsed = Date.now() - keyDownTime!;
-            updateProgress();
+            if (enterPressed) {
+              // Enter still pressed - add 500ms to accumulated time
+              accumulated += pollInterval;
+              updateProgress();
 
-            // Success - held long enough
-            if (elapsed >= durationMs) {
+              // Success - accumulated enough time
+              if (accumulated >= durationMs) {
+                cleanup();
+                process.stdout.write(colors.status.success('\n✓ Confirmed!\n'));
+                resolve(true);
+              }
+            } else {
+              // Enter not pressed during this poll - released too early
               cleanup();
-              process.stdout.write(colors.status.success('\n✓ Confirmed!\n'));
-              resolve(true);
+              process.stdout.write(colors.status.warning('\n✗ Released too early\n\n'));
+              resolve(false);
             }
-          }, 50); // Update every 50ms for smooth progress
+
+            // Reset flag for next poll
+            enterPressed = false;
+          }, pollInterval);
 
           updateProgress();
         }
       } else {
-        // Any other key - reset
-        if (keyDownTime !== null) {
+        // Any other key - cancel
+        if (started) {
           cleanup();
-          process.stdout.write(colors.status.warning('\n✗ Released too early\n\n'));
+          process.stdout.write(colors.status.warning('\n✗ Cancelled\n\n'));
           resolve(false);
         }
       }
