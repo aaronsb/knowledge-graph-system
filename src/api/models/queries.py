@@ -14,6 +14,7 @@ class SearchRequest(BaseModel):
     query: str = Field(..., description="Search query text (2-3 word phrases work best)", min_length=1)
     limit: int = Field(10, description="Maximum number of results to return", ge=1, le=100)
     min_similarity: float = Field(0.7, description="Minimum similarity score (0.0-1.0, default 70%)", ge=0.0, le=1.0)
+    offset: int = Field(0, description="Number of results to skip for pagination (default: 0)", ge=0)
 
 
 class ConceptSearchResult(BaseModel):
@@ -37,6 +38,7 @@ class SearchResponse(BaseModel):
     below_threshold_count: Optional[int] = Field(None, description="Number of additional concepts below threshold")
     suggested_threshold: Optional[float] = Field(None, description="Suggested threshold to reveal below-threshold results")
     threshold_used: Optional[float] = Field(None, description="Similarity threshold used for filtering")
+    offset: Optional[int] = Field(None, description="Offset used for pagination")
 
 
 # Concept Details Models
@@ -44,11 +46,13 @@ class ConceptInstance(BaseModel):
     """Evidence instance showing where concept appears in source text.
 
     Each instance is a quoted text snippet from a specific document and paragraph.
+    Includes the full chunk text for grounding and context.
     """
     quote: str = Field(..., description="Quoted text from source")
     document: str = Field(..., description="Source document name")
     paragraph: int = Field(..., description="Paragraph number in document")
     source_id: str = Field(..., description="Unique source identifier")
+    full_text: Optional[str] = Field(None, description="Full chunk text that was processed (for grounding)")
 
 
 class ConceptRelationship(BaseModel):

@@ -1,23 +1,15 @@
 #!/usr/bin/env node
 /**
- * Knowledge Graph Client - Entry Point
+ * Knowledge Graph CLI - Entry Point
  *
- * Unified client that can run as:
- * 1. CLI tool (default)
- * 2. MCP server (when MCP_SERVER_MODE=true)
+ * Main CLI tool for interacting with the knowledge graph API.
+ * For MCP server mode, use the separate kg-mcp-server executable.
  */
 
 import { program } from 'commander';
+import { registerCommands } from './cli/commands.js';
 
-// Detect mode
-if (process.env.MCP_SERVER_MODE === 'true') {
-  // MCP server mode (Phase 2)
-  console.error('MCP server mode not implemented yet (Phase 2)');
-  process.exit(1);
-} else {
-  // CLI mode
-  import('./cli/commands').then(async ({ registerCommands }) => {
-    await registerCommands(program);
-    program.parse();
-  });
-}
+// Run CLI
+registerCommands(program).then(() => {
+  program.parse();
+});
