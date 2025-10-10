@@ -170,16 +170,20 @@ async def check_database_health():
                 health["responsive"] = True
                 health["checks"]["connectivity"] = "ok"
 
-            # Check AGE extension
+            # Check AGE extension (using direct SQL, not Cypher)
             try:
-                age_check = client._execute_cypher(
-                    "SELECT extname FROM pg_extension WHERE extname = 'age'",
-                    fetch_one=True
-                )
-                health["checks"]["age_extension"] = {
-                    "installed": bool(age_check),
-                    "status": "ok" if age_check else "error"
-                }
+                import psycopg2
+                conn = client.pool.getconn()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT extname FROM pg_extension WHERE extname = 'age'")
+                        age_check = cur.fetchone()
+                    health["checks"]["age_extension"] = {
+                        "installed": bool(age_check),
+                        "status": "ok" if age_check else "error"
+                    }
+                finally:
+                    client.pool.putconn(conn)
             except:
                 health["checks"]["age_extension"] = {
                     "installed": False,
