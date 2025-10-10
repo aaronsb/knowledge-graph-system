@@ -224,8 +224,9 @@ export class KnowledgeGraphClient {
         onProgress(job);
       }
 
-      // Check if job is terminal
-      if (['completed', 'failed', 'cancelled'].includes(job.status)) {
+      // Check if job is terminal or awaiting approval
+      // Stop polling if job needs user action (approval) or is complete
+      if (['completed', 'failed', 'cancelled', 'awaiting_approval'].includes(job.status)) {
         return job;
       }
 
