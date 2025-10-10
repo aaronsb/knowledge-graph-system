@@ -249,32 +249,88 @@ listCommand
 jobsCommand.addCommand(listCommand);
 
 // Approve job(s) (ADR-014)
-jobsCommand
-  .command('approve <job-id-or-filter>')
-  .description('Approve a job or all jobs matching filter (pending, approved, etc.)')
-  .option('-c, --client <client-id>', 'Filter by client ID (for batch operations)')
-  .action(async (jobIdOrFilter: string, options) => {
+const approveCommand = new Command('approve')
+  .description('Approve jobs for processing');
+
+// Approve single job
+approveCommand
+  .command('job <job-id>')
+  .description('Approve a specific job by ID')
+  .action(async (jobId: string) => {
+    try {
+      const client = createClientFromEnv();
+      console.log(chalk.blue(`Approving job ${jobId}...`));
+      const result = await client.approveJob(jobId);
+
+      console.log(chalk.green('✓ Job approved'));
+      console.log(chalk.gray(`  Status: ${result.status}`));
+      console.log(chalk.gray(`\nMonitor: ${chalk.cyan(`kg jobs status ${jobId} --watch`)}`));
+    } catch (error: any) {
+      console.error(chalk.red('✗ Failed to approve job'));
+      console.error(chalk.red(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
+// Approve all pending jobs
+approveCommand
+  .command('pending')
+  .description('Approve all jobs awaiting approval')
+  .option('-c, --client <client-id>', 'Filter by client ID')
+  .option('-l, --limit <n>', 'Maximum jobs to approve', '100')
+  .action(async (options) => {
     try {
       const client = createClientFromEnv();
 
-      // Check if it's a job ID or a status filter
-      if (jobIdOrFilter.startsWith('job_')) {
-        // Single job approval
-        console.log(chalk.blue(`Approving job ${jobIdOrFilter}...`));
-        const result = await client.approveJob(jobIdOrFilter);
+      console.log(chalk.blue('Finding jobs awaiting approval...\n'));
+      const jobs = await client.listJobs('awaiting_approval', options.client, parseInt(options.limit));
 
-        console.log(chalk.green('✓ Job approved'));
-        console.log(chalk.gray(`  Status: ${result.status}`));
-        console.log(chalk.gray('\nUse `kg jobs status --watch` to monitor progress'));
-      } else {
-        // Batch approval by status filter
+      if (jobs.length === 0) {
+        console.log(chalk.gray('No pending jobs found'));
+        return;
+      }
+
+      console.log(chalk.blue(`Found ${jobs.length} pending job(s):\n`));
+
+      let approved = 0;
+      let failed = 0;
+
+      for (const job of jobs) {
+        try {
+          await client.approveJob(job.job_id);
+          console.log(chalk.green(`✓ Approved: ${job.job_id.substring(0, 12)}... (${job.ontology || 'unknown'})`));
+          approved++;
+        } catch (error: any) {
+          console.log(chalk.red(`✗ Failed: ${job.job_id.substring(0, 12)}... - ${error.message}`));
+          failed++;
+        }
+      }
+
+      console.log(chalk.blue(`\nSummary: ${approved} approved, ${failed} failed`));
+      console.log(chalk.gray(`\nMonitor jobs: ${chalk.cyan('kg jobs list')}`));
+    } catch (error: any) {
+      console.error(chalk.red('✗ Failed to approve pending jobs'));
+      console.error(chalk.red(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
+// Legacy: approve with ID or filter
+approveCommand
+  .command('filter <status>')
+  .description('Approve all jobs matching status filter')
+  .option('-c, --client <client-id>', 'Filter by client ID')
+  .action(async (statusFilter: string, options) => {
+      try {
+        const client = createClientFromEnv();
+
         const statusMap: Record<string, string> = {
           'pending': 'awaiting_approval',
           'awaiting': 'awaiting_approval',
         };
-        const status = statusMap[jobIdOrFilter] || jobIdOrFilter;
+        const status = statusMap[statusFilter] || statusFilter;
 
-        console.log(chalk.blue(`Finding jobs with status: ${status}...`));
+        console.log(chalk.blue(`Finding jobs with status: ${status}...\n`));
         const jobs = await client.listJobs(status, options.client, 100);
 
         if (jobs.length === 0) {
@@ -290,7 +346,7 @@ jobsCommand
         for (const job of jobs) {
           try {
             await client.approveJob(job.job_id);
-            console.log(chalk.green(`✓ Approved: ${job.job_id.substring(0, 12)}... (${job.ontology})`));
+            console.log(chalk.green(`✓ Approved: ${job.job_id.substring(0, 12)}... (${job.ontology || 'unknown'})`));
             approved++;
           } catch (error: any) {
             console.log(chalk.red(`✗ Failed: ${job.job_id.substring(0, 12)}... - ${error.message}`));
@@ -299,13 +355,14 @@ jobsCommand
         }
 
         console.log(chalk.blue(`\nSummary: ${approved} approved, ${failed} failed`));
+      } catch (error: any) {
+        console.error(chalk.red('✗ Failed to approve jobs'));
+        console.error(chalk.red(error.response?.data?.detail || error.message));
+        process.exit(1);
       }
-    } catch (error: any) {
-      console.error(chalk.red('✗ Failed to approve job(s)'));
-      console.error(chalk.red(error.response?.data?.detail || error.message));
-      process.exit(1);
-    }
-  });
+    });
+
+jobsCommand.addCommand(approveCommand);
 
 // Cancel job(s)
 jobsCommand
