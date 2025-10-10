@@ -310,7 +310,7 @@ class ResetManager:
         try:
             conn = AGEConnection()
             client = conn.get_client()
-            results = client._execute_cypher("MATCH (n) RETURN count(n) as count", fetch_one=True)
+            results = client._execute_cypher("MATCH (n) RETURN count(n) as node_count", fetch_one=True)
             node_count = int(list(results.values())[0]) if results else 0
             conn.close()
         except Exception:
