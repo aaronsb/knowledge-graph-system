@@ -93,15 +93,20 @@ async def search_concepts(request: SearchRequest):
         client = get_neo4j_client()
         try:
             # Use AGEClient's vector_search method with threshold from request
+            # Fetch limit + offset to handle pagination
+            fetch_count = request.limit + request.offset
             matches = client.vector_search(
                 embedding,
                 threshold=request.min_similarity,
-                top_k=request.limit
+                top_k=fetch_count
             )
+
+            # Apply offset (skip first N results) and limit
+            paginated_matches = matches[request.offset:request.offset + request.limit]
 
             # Filter by minimum similarity and gather document/evidence info
             results = []
-            for match in matches:
+            for match in paginated_matches:
                 if match['similarity'] < request.min_similarity:
                     continue
 
@@ -155,7 +160,8 @@ async def search_concepts(request: SearchRequest):
                 results=results,
                 below_threshold_count=below_threshold_count if below_threshold_count else None,
                 suggested_threshold=suggested_threshold,
-                threshold_used=request.min_similarity
+                threshold_used=request.min_similarity,
+                offset=request.offset
             )
         finally:
             client.close()
@@ -227,7 +233,8 @@ async def get_concept_details(concept_id: str):
                 i.quote as quote,
                 s.document as document,
                 s.paragraph as paragraph,
-                s.source_id as source_id
+                s.source_id as source_id,
+                s.full_text as full_text
             ORDER BY s.document, s.paragraph
         """)
 
@@ -236,7 +243,8 @@ async def get_concept_details(concept_id: str):
                 quote=record['quote'],
                 document=record['document'],
                 paragraph=record['paragraph'],
-                source_id=record['source_id']
+                source_id=record['source_id'],
+                full_text=record.get('full_text')
             )
             for record in (instances_result or [])
         ]
