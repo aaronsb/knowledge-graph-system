@@ -509,15 +509,38 @@ Example: "This code creates a new concept node in the graph database and logs th
         # Remove inline code (`...`)
         text = re.sub(r'`[^`]+`', '', text)
 
-        # Remove lines that look like SQL/Cypher queries (heuristic: contain multiple SQL keywords)
-        sql_keywords = r'\b(SELECT|CREATE|MATCH|WHERE|RETURN|INSERT|UPDATE|DELETE|FROM|INTO|SET)\b'
+        # Remove lines that LOOK like code (multiple heuristics)
         lines = text.split('\n')
         cleaned_lines = []
+
         for line in lines:
-            # If line has 2+ SQL keywords, it's probably code - remove it
-            keyword_count = len(re.findall(sql_keywords, line, re.IGNORECASE))
-            if keyword_count < 2:
+            stripped = line.strip()
+
+            # Skip empty lines
+            if not stripped:
                 cleaned_lines.append(line)
+                continue
+
+            # Heuristic 1: Line starts with SQL/Cypher keyword
+            if re.match(r'^\s*(SELECT|CREATE|MATCH|WHERE|RETURN|INSERT|UPDATE|DELETE|MERGE|WITH|BEGIN|COMMIT)\b', line, re.IGNORECASE):
+                continue  # Skip this line
+
+            # Heuristic 2: Line looks like code (has operators/brackets but few words)
+            word_count = len(re.findall(r'\b\w+\b', stripped))
+            special_chars = len(re.findall(r'[(){}\[\];:$]', stripped))
+            if word_count < 5 and special_chars > 2:
+                continue  # Likely code, skip
+
+            # Heuristic 3: Line contains dollar-quoted strings (PostgreSQL/AGE specific)
+            if '$$' in stripped:
+                continue  # Skip
+
+            # Heuristic 4: Line has assignment operators or ends with semicolon
+            if re.search(r'\s*=\s*[^\s]|;\s*$', stripped):
+                continue  # Likely code
+
+            # Keep this line (seems like prose)
+            cleaned_lines.append(line)
 
         text = '\n'.join(cleaned_lines)
 
