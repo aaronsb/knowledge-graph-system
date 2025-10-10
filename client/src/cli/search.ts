@@ -135,12 +135,24 @@ const relatedCommand = new Command('related')
       });
 
 const connectCommand = new Command('connect')
-      .description('Find shortest path between two concepts (accepts concept IDs or natural language queries)')
+      .description('Find shortest path between two concepts using IDs or semantic phrase matching')
       .showHelpAfterError()
-      .argument('<from>', 'Starting concept (ID or search phrase)')
-      .argument('<to>', 'Target concept (ID or search phrase)')
+      .argument('<from>', 'Starting concept (exact ID or descriptive phrase - e.g., "licensing issues" not "licensing")')
+      .argument('<to>', 'Target concept (exact ID or descriptive phrase - use 2-3 word phrases for best results)')
       .option('--max-hops <number>', 'Maximum path length', '5')
-      .option('--min-similarity <number>', 'Minimum similarity threshold for concept matching (0.0-1.0)', '0.5')
+      .option('--min-similarity <number>', 'Semantic similarity threshold for phrase matching (default 50% - lower for broader matches)', '0.5')
+      .addHelpText('after', `
+Examples:
+  $ kg search connect concept-id-123 concept-id-456
+  $ kg search connect "licensing issues" "AGE benefits"
+  $ kg search connect "Apache AGE" "graph database" --min-similarity 0.3
+
+Notes:
+  - Generic single words ("features", "issues") may not match well
+  - Use specific 2-3 word phrases for better semantic matching
+  - Lower --min-similarity (e.g., 0.3) to find weaker concept matches
+  - Error messages suggest threshold adjustments when near-misses exist
+      `)
       .action(async (from, to, options) => {
         try {
           const client = createClientFromEnv();
