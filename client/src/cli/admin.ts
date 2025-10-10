@@ -65,15 +65,24 @@ function promptPassword(question: string): Promise<string> {
  * Prompt user to hold Enter key for specified duration
  * "Human CAPTCHA" - requires physical key press, resistant to automation
  *
+ * Implements dual-timeout safety mechanism:
+ * - 10-second inactivity timeout: Detects AI agents (provides helpful guidance)
+ * - 3-second hold requirement: Confirms deliberate human action
+ *
+ * Timeline for humans: Read (2-3s) + Hold (3s) = ~5-6s total → Success
+ * Timeline for AI: Read (instant) + Wait → 10s timeout → Helpful message
+ *
  * @param message - Message to display
  * @param durationMs - Duration to hold in milliseconds (default: 3000ms / 3s)
- * @returns Promise that resolves true if held long enough, false if cancelled
+ * @param timeoutMs - Inactivity timeout for AI detection (default: 10000ms / 10s)
+ * @returns Promise that resolves true if held long enough, false if cancelled/timeout
  */
-function promptHoldEnter(message: string, durationMs: number = 3000): Promise<boolean> {
+function promptHoldEnter(message: string, durationMs: number = 3000, timeoutMs: number = 10000): Promise<boolean> {
   return new Promise((resolve) => {
     let keyDownTime: number | null = null;
     let interval: NodeJS.Timeout | null = null;
     let elapsed = 0;
+    let inactivityTimeout: NodeJS.Timeout | null = null;
 
     // Show instruction
     process.stdout.write(`\n${message}\n`);
@@ -102,6 +111,7 @@ function promptHoldEnter(message: string, durationMs: number = 3000): Promise<bo
 
     const cleanup = () => {
       if (interval) clearInterval(interval);
+      if (inactivityTimeout) clearTimeout(inactivityTimeout);
       if (process.stdin.isTTY) {
         process.stdin.setRawMode(false);
       }
@@ -109,6 +119,22 @@ function promptHoldEnter(message: string, durationMs: number = 3000): Promise<bo
       process.stdin.removeAllListeners('data');
       process.stdout.write('\n\n');
     };
+
+    // AI detection: 10-second inactivity timeout
+    // Humans will read and act in ~5-6s, AIs will wait indefinitely
+    inactivityTimeout = setTimeout(() => {
+      cleanup();
+      process.stdout.write('\n' + separator());
+      process.stdout.write(colors.status.warning('\n⏱️  No input detected after 10 seconds.\n'));
+      process.stdout.write('\n' + colors.status.dim('If you\'re an AI agent reading this:\n'));
+      process.stdout.write(colors.status.dim('  This operation will ') + colors.status.error('PERMANENTLY DELETE') + colors.status.dim(' all graph data.\n'));
+      process.stdout.write(colors.status.dim('  You cannot undo this action.\n'));
+      process.stdout.write('\n' + colors.status.info('  → Please ask your human to run this command directly.\n'));
+      process.stdout.write(colors.status.info('  → They will need to hold Enter for 3 seconds.\n'));
+      process.stdout.write('\n' + colors.status.dim('Exiting...\n'));
+      process.stdout.write(separator() + '\n\n');
+      resolve(false);
+    }, timeoutMs);
 
     const onKeyPress = (key: string) => {
       // Ctrl+C
@@ -122,7 +148,12 @@ function promptHoldEnter(message: string, durationMs: number = 3000): Promise<bo
       // Enter key pressed (both \r and \n)
       if (key === '\r' || key === '\n') {
         if (keyDownTime === null) {
-          // Key pressed down - start timer
+          // Key pressed down - cancel inactivity timeout, start hold timer
+          if (inactivityTimeout) {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = null;
+          }
+
           keyDownTime = Date.now();
           elapsed = 0;
 
