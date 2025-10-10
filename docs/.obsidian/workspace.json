@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
+                "file": "architecture/ADR-023-markdown-structured-content-preprocessing.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "RECURSIVE_UPSERT_ARCHITECTURE"
+              "title": "ADR-023-markdown-structured-content-preprocessing"
             }
           }
         ]
@@ -172,18 +172,21 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
+    "architecture/ADR-023-markdown-structured-content-preprocessing.md.tmp.1691647.1760102786667",
+    "architecture/ADR-023-markdown-structured-content-preprocessing.md.tmp.1691647.1760102757340",
+    "architecture/ADR-023-markdown-structured-content-preprocessing.md.tmp.1691647.1760102342925",
+    "architecture/ADR-023-markdown-structured-content-preprocessing.md.tmp.1691647.1760102220774",
+    "architecture/ADR-023-markdown-structured-content-preprocessing.md",
+    "architecture/ADR-023-markdown-structured-content-preprocessing.md.tmp.1691647.1760102135478",
+    "api/OPENCYPHER_QUERIES.md",
+    "api/NEO4J_QUERIES.md",
+    "Untitled.md",
     "guides/INGESTION.md.tmp.1334802.1760070074955",
     "testing/TEST_COVERAGE.md.tmp.1334802.1760069921168",
     "testing/TEST_COVERAGE.md.tmp.1334802.1760069920975",
     "guides/INGESTION.md.tmp.1334802.1760069894270",
     "guides/INGESTION.md.tmp.1334802.1760069894078",
-    "README.md.tmp.1334802.1760069864327",
-    "README.md.tmp.1334802.1760069864145",
-    "README.md.tmp.1334802.1760069863847",
-    "guides/QUICKSTART.md.tmp.1334802.1760069839252",
-    "guides/QUICKSTART.md.tmp.1334802.1760069839010",
-    "guides/QUICKSTART.md.tmp.1334802.1760069838787",
-    "api/OPENCYPHER_QUERIES.md",
     "api/AGE_QUERIES.md",
     "architecture/FUZZY_MATCHING_ANALYSIS.md",
     "architecture/ARCHITECTURE_OVERVIEW.md",
@@ -196,9 +199,7 @@
     "architecture/MCP Server.md",
     "architecture/ADR-022-semantic-relationship-taxonomy.md",
     "architecture/ADR-017-sensitive-auth-verification.md",
-    "Untitled.md",
     "testing/CLI_TEST_FINDINGS_2025-10-09.md",
-    "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
     "architecture/ADR-021-live-man-switch-ai-safety.md",
     "architecture/ADR-020-admin-module-architecture.md",
     "guides/CLI_STATE_TREE.md",
@@ -206,8 +207,6 @@
     "guides/BACKUP_RESTORE.md",
     "guides/AI_PROVIDERS.md",
     "development/LEARNED_KNOWLEDGE_MCP.md",
-    "development/DEV_JOURNAL_chunked_ingestion.md",
-    "architecture/ADR-001-multi-tier-agent-access.md",
-    "api/NEO4J_QUERIES.md"
+    "development/DEV_JOURNAL_chunked_ingestion.md"
   ]
 }

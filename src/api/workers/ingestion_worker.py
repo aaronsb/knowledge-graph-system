@@ -57,12 +57,14 @@ def run_ingestion_worker(
     max_words = options.get("max_words", int(target_words * 1.5))
     overlap_words = options.get("overlap_words", 200)
 
-    # Get AI provider for cost calculation
+    # Get AI provider for cost calculation and translation
     try:
         provider = get_provider()
         extraction_model = provider.get_extraction_model()
         embedding_model = provider.get_embedding_model()
-    except Exception:
+    except Exception as e:
+        print(f"⚠️  Failed to get AI provider: {e}")
+        provider = None
         extraction_model = None
         embedding_model = None
 
@@ -86,7 +88,7 @@ def run_ingestion_worker(
         if is_markdown:
             # Markdown: Use semantic AST-based chunking with code block translation
             print(f"📝 Using markdown preprocessor (semantic AST chunking)")
-            preprocessor = MarkdownPreprocessor(max_workers=3)
+            preprocessor = MarkdownPreprocessor(max_workers=3, ai_provider=provider)
             chunks = preprocessor.preprocess_to_chunks(
                 full_text,
                 target_words=target_words,

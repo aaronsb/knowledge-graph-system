@@ -428,7 +428,10 @@ Use simple paragraphs. Focus on WHAT it represents and WHY.
 Diagram:
 {code}
 
-Provide only the prose explanation, no code or diagram syntax."""
+CRITICAL: Do NOT include ANY diagram syntax or code in your response.
+Provide ONLY natural language prose description.
+Example: "The diagram shows data flowing from the user interface through an API layer to the database."
+"""
 
         elif node.node_type in [BlockType.JSON, BlockType.YAML]:
             prompt = f"""Describe this {language} configuration in plain English prose.
@@ -438,7 +441,10 @@ Use simple paragraphs. Focus on WHAT it configures and WHY.
 Configuration:
 {code}
 
-Provide only the prose description, no code syntax."""
+CRITICAL: Do NOT include ANY configuration syntax, JSON, YAML, or code in your response.
+Provide ONLY natural language prose description.
+Example: "This configuration sets up a PostgreSQL database container with specific credentials and port mappings."
+"""
 
         else:
             prompt = f"""Explain this {language} code in plain English prose.
@@ -448,7 +454,11 @@ Use simple paragraphs and lists. Focus on WHAT it does and WHY.
 Code:
 {code}
 
-Provide only the prose explanation, no code syntax."""
+CRITICAL: Do NOT include ANY code syntax, SQL statements, Cypher queries, or code examples in your response.
+Do NOT write CREATE, MATCH, SELECT, or any other code keywords.
+Provide ONLY natural language prose description.
+Example: "This code creates a new concept node in the graph database and logs the action to an audit table within a transaction."
+"""
 
         # Call AI provider (using cheap, fast model: gpt-4o-mini or claude-haiku)
         try:
