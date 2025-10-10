@@ -342,14 +342,33 @@ async def find_connection(request: FindConnectionRequest):
                  .replace("$to_id", f"'{request.to_id}'")
         )
 
-        paths = [
-            ConnectionPath(
-                nodes=[PathNode(id=n['id'], label=n['label']) for n in record['path_nodes']],
-                relationships=record['rel_types'],
+        # Extract properties from AGE vertex and edge objects
+        paths = []
+        for record in (records or []):
+            # path_nodes is a list of AGE vertex dicts: {id, label, properties: {...}}
+            # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
+
+            nodes = []
+            for node in record['path_nodes']:
+                if isinstance(node, dict):
+                    props = node.get('properties', {})
+                    nodes.append(PathNode(
+                        id=props.get('concept_id', ''),
+                        label=props.get('label', '')
+                    ))
+
+            # Relationship type is in the 'label' field of AGE edge object
+            rel_types = []
+            for rel in record['path_rels']:
+                if isinstance(rel, dict):
+                    rel_types.append(rel.get('label', ''))
+
+            paths.append(ConnectionPath(
+                nodes=nodes,
+                relationships=rel_types,
                 hops=record['hops']
-            )
-            for record in (records or [])
-        ]
+            ))
+
 
         return FindConnectionResponse(
             from_id=request.from_id,
@@ -378,7 +397,7 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
         request: Connection parameters (from_query, to_query, max_hops)
 
     Returns:
-        FindConnectionBySearchResponse with discovered paths
+        FindConnectionBySearchResponse with discovered paths and helpful hints if no matches
 
     Example:
         POST /query/connect-by-search
@@ -399,29 +418,72 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
         to_embedding_result = provider.generate_embedding(request.to_query)
         to_embedding = to_embedding_result['embedding'] if isinstance(to_embedding_result, dict) else to_embedding_result
 
-        # Find top matching concepts for each query
-        from_matches = client.vector_search(from_embedding, top_k=1, threshold=0.5)
-        to_matches = client.vector_search(to_embedding, top_k=1, threshold=0.5)
+        # Find top matching concepts for each query (start with threshold 0.5)
+        threshold = 0.5
+        from_matches = client.vector_search(from_embedding, top_k=1, threshold=threshold)
+        to_matches = client.vector_search(to_embedding, top_k=1, threshold=threshold)
 
+        # Helper function to find near-misses and suggest threshold
+        def check_near_misses(embedding, query_name):
+            """Check for near-miss concepts and suggest threshold"""
+            # Search with lower threshold to find near-misses
+            lower_threshold = 0.3
+            lower_matches = client.vector_search(embedding, top_k=5, threshold=lower_threshold)
+
+            # Find matches between lower_threshold and threshold
+            near_misses = [m for m in lower_matches if lower_threshold <= m['similarity'] < threshold]
+
+            if near_misses:
+                # Calculate suggested threshold (slightly below best match)
+                best_similarity = max(m['similarity'] for m in near_misses)
+                suggested = round(best_similarity - 0.02, 2)
+                return len(near_misses), suggested
+            return None, None
+
+        # Initialize hint fields
+        from_suggested_threshold = None
+        to_suggested_threshold = None
+        from_near_misses = None
+        to_near_misses = None
+
+        # Check for no matches and provide hints
         if not from_matches:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No concepts found matching '{request.from_query}'"
-            )
+            from_near_misses, from_suggested_threshold = check_near_misses(from_embedding, "from_query")
+            if from_suggested_threshold:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No concepts found matching '{request.from_query}' at {int(threshold*100)}% similarity. "
+                           f"Try lowering threshold to {int(from_suggested_threshold*100)}% ({from_near_misses} near-miss concept{'s' if from_near_misses > 1 else ''} available)"
+                )
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No concepts found matching '{request.from_query}'"
+                )
 
         if not to_matches:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No concepts found matching '{request.to_query}'"
-            )
+            to_near_misses, to_suggested_threshold = check_near_misses(to_embedding, "to_query")
+            if to_suggested_threshold:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No concepts found matching '{request.to_query}' at {int(threshold*100)}% similarity. "
+                           f"Try lowering threshold to {int(to_suggested_threshold*100)}% ({to_near_misses} near-miss concept{'s' if to_near_misses > 1 else ''} available)"
+                )
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No concepts found matching '{request.to_query}'"
+                )
 
         # Use the top match for each
         from_concept_id = from_matches[0]['concept_id']
         from_label = from_matches[0]['label']
+        from_similarity = from_matches[0]['similarity']
         to_concept_id = to_matches[0]['concept_id']
         to_label = to_matches[0]['label']
+        to_similarity = to_matches[0]['similarity']
 
-        logger.info(f"Found concept matches: '{from_label}' ({from_concept_id}) -> '{to_label}' ({to_concept_id})")
+        logger.info(f"Found concept matches: '{from_label}' ({from_concept_id}, {from_similarity:.1%}) -> '{to_label}' ({to_concept_id}, {to_similarity:.1%})")
 
         # Build and execute shortest path query
         query = QueryService.build_shortest_path_query(request.max_hops)
@@ -431,20 +493,45 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                  .replace("$to_id", f"'{to_concept_id}'")
         )
 
-        paths = [
-            ConnectionPath(
-                nodes=[PathNode(id=n['id'], label=n['label']) for n in record['path_nodes']],
-                relationships=record['rel_types'],
+        # Extract properties from AGE vertex and edge objects
+        paths = []
+        for record in (records or []):
+            # path_nodes is a list of AGE vertex dicts: {id, label, properties: {...}}
+            # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
+
+            nodes = []
+            for node in record['path_nodes']:
+                if isinstance(node, dict):
+                    props = node.get('properties', {})
+                    nodes.append(PathNode(
+                        id=props.get('concept_id', ''),
+                        label=props.get('label', '')
+                    ))
+
+            # Relationship type is in the 'label' field of AGE edge object
+            rel_types = []
+            for rel in record['path_rels']:
+                if isinstance(rel, dict):
+                    rel_types.append(rel.get('label', ''))
+
+            paths.append(ConnectionPath(
+                nodes=nodes,
+                relationships=rel_types,
                 hops=record['hops']
-            )
-            for record in (records or [])
-        ]
+            ))
+
 
         return FindConnectionBySearchResponse(
             from_query=request.from_query,
             to_query=request.to_query,
             from_concept=PathNode(id=from_concept_id, label=from_label),
             to_concept=PathNode(id=to_concept_id, label=to_label),
+            from_similarity=from_similarity,
+            to_similarity=to_similarity,
+            from_suggested_threshold=from_suggested_threshold,
+            to_suggested_threshold=to_suggested_threshold,
+            from_near_misses=from_near_misses,
+            to_near_misses=to_near_misses,
             max_hops=request.max_hops,
             count=len(paths),
             paths=paths

@@ -126,6 +126,12 @@ class FindConnectionBySearchResponse(BaseModel):
     to_query: str
     from_concept: Optional[PathNode] = Field(None, description="Top matching concept for from_query")
     to_concept: Optional[PathNode] = Field(None, description="Top matching concept for to_query")
+    from_similarity: Optional[float] = Field(None, description="Similarity score of from match")
+    to_similarity: Optional[float] = Field(None, description="Similarity score of to match")
+    from_suggested_threshold: Optional[float] = Field(None, description="Suggested threshold if from query had no matches")
+    to_suggested_threshold: Optional[float] = Field(None, description="Suggested threshold if to query had no matches")
+    from_near_misses: Optional[int] = Field(None, description="Count of near-miss concepts for from query")
+    to_near_misses: Optional[int] = Field(None, description="Count of near-miss concepts for to query")
     max_hops: int
     count: int
     paths: List[ConnectionPath]

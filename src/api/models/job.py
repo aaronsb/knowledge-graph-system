@@ -61,6 +61,7 @@ class JobStatus(BaseModel):
     completed_at: Optional[str] = Field(None, description="Job completion timestamp")
     content_hash: Optional[str] = Field(None, description="Content hash for deduplication")
     ontology: Optional[str] = Field(None, description="Target ontology")
+    processing_mode: Optional[str] = Field("serial", description="Processing mode: serial|parallel (default: serial)")
     # ADR-014: Approval workflow fields
     analysis: Optional[Dict[str, Any]] = Field(None, description="Pre-ingestion analysis (file stats, cost estimates)")
     approved_at: Optional[str] = Field(None, description="Approval timestamp")

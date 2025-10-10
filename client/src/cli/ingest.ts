@@ -23,6 +23,7 @@ ingestCommand
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
   .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
+  .option('--parallel', 'Process in parallel (default: serial for clean concept matching)', false)
   .option('--filename <name>', 'Override filename for tracking')
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('--overlap-words <n>', 'Overlap between chunks', '200')
@@ -48,6 +49,7 @@ ingestCommand
         filename: options.filename,
         force: options.force,
         auto_approve: autoApprove,  // ADR-014: Auto-approve flag
+        processing_mode: options.parallel ? 'parallel' : 'serial',
         options: {
           target_words: parseInt(options.targetWords),
           overlap_words: parseInt(options.overlapWords),
@@ -108,6 +110,7 @@ ingestCommand
   .option('-d, --depth <n>', 'Maximum recursion depth (number or "all")', '0')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
   .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
+  .option('--parallel', 'Process in parallel (default: serial for clean concept matching)', false)
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('--overlap-words <n>', 'Overlap between chunks', '200')
   .showHelpAfterError()
@@ -158,6 +161,7 @@ ingestCommand
           filename: path.basename(filePath),
           force: options.force,
           auto_approve: autoApprove,
+          processing_mode: options.parallel ? 'parallel' : 'serial',
           options: {
             target_words: parseInt(options.targetWords),
             overlap_words: parseInt(options.overlapWords),
@@ -210,6 +214,7 @@ ingestCommand
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
   .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
+  .option('--parallel', 'Process in parallel (default: serial for clean concept matching)', false)
   .option('--filename <name>', 'Filename for tracking', 'text_input')
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('-w, --wait', 'Wait for job completion (default: submit and exit)', false)
@@ -228,6 +233,7 @@ ingestCommand
         filename: options.filename,
         force: options.force,
         auto_approve: autoApprove,  // ADR-014: Auto-approve flag
+        processing_mode: options.parallel ? 'parallel' : 'serial',
         options: {
           target_words: parseInt(options.targetWords),
         },
