@@ -84,23 +84,15 @@ class OpenAIProvider(AIProvider):
         """Extract concepts using OpenAI GPT models
 
         Returns dict with 'result' (extracted data) and 'tokens' (usage info)
+
+        Note: system_prompt is already formatted by llm_extractor.py
         """
-
-        # Format existing concepts for context
-        existing_str = "None"
-        if existing_concepts:
-            existing_str = "\n".join([
-                f"- {c.get('concept_id', 'unknown')}: {c.get('label', 'unknown')}"
-                for c in existing_concepts
-            ])
-
-        formatted_prompt = system_prompt.format(existing_concepts=existing_str)
 
         try:
             response = self.client.chat.completions.create(
                 model=self.extraction_model,
                 messages=[
-                    {"role": "system", "content": formatted_prompt},
+                    {"role": "system", "content": system_prompt},  # Already formatted
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"}
                 ],
                 max_tokens=4096,
@@ -109,7 +101,16 @@ class OpenAIProvider(AIProvider):
             )
 
             response_text = response.choices[0].message.content
-            result = json.loads(response_text)
+
+            # Parse JSON with better error handling
+            try:
+                result = self._extract_json(response_text)
+            except json.JSONDecodeError as json_err:
+                raise Exception(
+                    f"Failed to parse JSON from OpenAI response.\n"
+                    f"Error: {json_err}\n"
+                    f"Response text (first 500 chars): {response_text[:500]}"
+                )
 
             # Validate structure
             result.setdefault("concepts", [])
@@ -128,6 +129,29 @@ class OpenAIProvider(AIProvider):
 
         except Exception as e:
             raise Exception(f"OpenAI concept extraction failed: {e}")
+
+    def _extract_json(self, text: str) -> Dict[str, Any]:
+        """Extract JSON from response text (handles markdown code blocks and whitespace)"""
+        # Remove markdown code blocks if present (some models add them despite json_object format)
+        cleaned = text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+
+        cleaned = cleaned.strip()
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            # Provide detailed error for debugging
+            raise json.JSONDecodeError(
+                f"JSON parsing failed: {e.msg}. Response snippet: {cleaned[:100]}...",
+                e.doc,
+                e.pos
+            )
 
     def generate_embedding(self, text: str) -> Dict[str, Any]:
         """Generate embedding using OpenAI embedding models
@@ -233,24 +257,16 @@ class AnthropicProvider(AIProvider):
         """Extract concepts using Anthropic Claude models
 
         Returns dict with 'result' (extracted data) and 'tokens' (usage info)
+
+        Note: system_prompt is already formatted by llm_extractor.py
         """
-
-        # Format existing concepts for context
-        existing_str = "None"
-        if existing_concepts:
-            existing_str = "\n".join([
-                f"- {c.get('concept_id', 'unknown')}: {c.get('label', 'unknown')}"
-                for c in existing_concepts
-            ])
-
-        formatted_prompt = system_prompt.format(existing_concepts=existing_str)
 
         try:
             message = self.client.messages.create(
                 model=self.extraction_model,
                 max_tokens=4096,
                 temperature=0.3,  # Lower for consistency
-                system=formatted_prompt,
+                system=system_prompt,  # Already formatted
                 messages=[
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"}
                 ]
