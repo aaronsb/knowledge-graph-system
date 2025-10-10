@@ -153,6 +153,8 @@ RELATIONSHIP_TYPE_TO_CATEGORY: Dict[str, str] = {
 | Hybrid (prefix+contains+fuzzy 0.85) | 66.7% | Fixes prefix bugs but misses verb tense |
 | **Porter Stemmer Hybrid (0.8)** | **100%** | ✅ **Winner - combines all strengths** |
 
+![Porter Stemmer Enhanced Hybrid Matcher - Like Voltron, combining multiple algorithms into one powerful matcher](media/voltron-porter-stemmer.jpg)
+
 **Final Implementation:** Multi-stage Porter Stemmer Enhanced Hybrid Matcher
 
 ```python
