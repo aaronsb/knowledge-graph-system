@@ -337,6 +337,10 @@ MERMAID_HANDLING=translate  # Options: strip, translate, keep
 INLINE_CODE_MAX_LENGTH=50  # Translate if longer
 ```
 
+#### 5. No outlier text
+
+**Strategy:**
+- **No flagged objects in AST** If there are no flagged objects for LLM interpretation to concept, then we spend nearly zero time pre-processing - we don't have to explicitly create case handlers that detect and react on this state.
 ### Cost Analysis
 
 **Documentation fuzzing test results:**
