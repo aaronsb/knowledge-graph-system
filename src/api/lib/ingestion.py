@@ -8,9 +8,10 @@ Extracted from POC code for API-first architecture.
 import os
 import sys
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 from src.api.lib.chunker import Chunk
+from src.api.lib.markdown_preprocessor import SemanticChunk
 from src.api.lib.age_client import AGEClient
 from src.api.lib.llm_extractor import extract_concepts, generate_embedding
 from src.api.lib.relationship_mapper import normalize_relationship_type
@@ -150,7 +151,7 @@ class ChunkedIngestionStats:
 
 
 def process_chunk(
-    chunk: Chunk,
+    chunk: Union[Chunk, SemanticChunk],
     ontology_name: str,
     filename: str,
     file_path: str,
@@ -163,8 +164,11 @@ def process_chunk(
     """
     Process a single chunk: create source, extract concepts, create graph nodes.
 
+    Accepts both legacy Chunk (word-based) and SemanticChunk (AST-based) types.
+    Both provide the same interface: text, chunk_number, word_count, boundary_type.
+
     Args:
-        chunk: Chunk object to process
+        chunk: Chunk or SemanticChunk object to process
         ontology_name: Name of the ontology/collection (shared across documents)
         filename: Unique filename for source tracking
         file_path: Full path to the source file
