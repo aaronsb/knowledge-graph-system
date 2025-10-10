@@ -124,6 +124,7 @@ export interface SearchRequest {
   query: string;
   limit?: number;
   min_similarity?: number;
+  offset?: number; // Pagination offset
 }
 
 export interface ConceptSearchResult {
@@ -141,6 +142,7 @@ export interface SearchResponse {
   below_threshold_count?: number;
   suggested_threshold?: number;
   threshold_used?: number;
+  offset?: number; // Pagination offset used
 }
 
 export interface ConceptInstance {
@@ -148,6 +150,7 @@ export interface ConceptInstance {
   document: string;
   paragraph: number;
   source_id: string;
+  full_text?: string; // Full chunk text for grounding
 }
 
 export interface ConceptRelationship {
