@@ -53,6 +53,23 @@ class AIProvider(ABC):
         """List available models for this provider"""
         pass
 
+    @abstractmethod
+    def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
+        """
+        Translate code/diagram to plain prose for concept extraction.
+
+        Used by markdown preprocessor to convert code blocks, mermaid diagrams,
+        and other structured content into descriptive prose.
+
+        Args:
+            prompt: Translation prompt (specific to content type)
+            code: Code/diagram content to translate
+
+        Returns:
+            Dict with 'text' (prose translation) and 'tokens' (usage info)
+        """
+        pass
+
 
 class OpenAIProvider(AIProvider):
     """OpenAI provider for GPT models and embeddings"""
@@ -178,6 +195,41 @@ class OpenAIProvider(AIProvider):
 
         except Exception as e:
             raise Exception(f"OpenAI embedding generation failed: {e}")
+
+    def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
+        """
+        Translate code/diagram to prose using gpt-4o-mini (cheap and fast).
+
+        Returns dict with 'text' (prose) and 'tokens' (usage info)
+        """
+        try:
+            # Use mini model for cost-effective translation
+            translation_model = "gpt-4o-mini"
+
+            response = self.client.chat.completions.create(
+                model=translation_model,
+                messages=[
+                    {"role": "system", "content": "You are a technical writer who explains code and diagrams in clear, simple prose."},
+                    {"role": "user", "content": f"{prompt}\n\n{code}"}
+                ],
+                max_tokens=1000,  # Prose translations are typically shorter than code
+                temperature=0.5   # Balanced: clear but not robotic
+            )
+
+            prose = response.choices[0].message.content.strip()
+
+            # Extract token usage
+            tokens = 0
+            if hasattr(response, 'usage') and response.usage:
+                tokens = response.usage.total_tokens
+
+            return {
+                "text": prose,
+                "tokens": tokens
+            }
+
+        except Exception as e:
+            raise Exception(f"OpenAI code translation failed: {e}")
 
     def get_provider_name(self) -> str:
         return "OpenAI"
@@ -316,6 +368,41 @@ class AnthropicProvider(AIProvider):
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding using the configured embedding provider"""
         return self.embedding_provider.generate_embedding(text)
+
+    def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
+        """
+        Translate code/diagram to prose using Claude Haiku (fast and cheap).
+
+        Returns dict with 'text' (prose) and 'tokens' (usage info)
+        """
+        try:
+            # Use Haiku for cost-effective translation
+            translation_model = "claude-3-haiku-20240307"
+
+            message = self.client.messages.create(
+                model=translation_model,
+                max_tokens=1000,
+                temperature=0.5,  # Balanced: clear but not robotic
+                system="You are a technical writer who explains code and diagrams in clear, simple prose.",
+                messages=[
+                    {"role": "user", "content": f"{prompt}\n\n{code}"}
+                ]
+            )
+
+            prose = message.content[0].text.strip()
+
+            # Extract token usage
+            tokens = 0
+            if hasattr(message, 'usage') and message.usage:
+                tokens = message.usage.input_tokens + message.usage.output_tokens
+
+            return {
+                "text": prose,
+                "tokens": tokens
+            }
+
+        except Exception as e:
+            raise Exception(f"Anthropic code translation failed: {e}")
 
     def get_provider_name(self) -> str:
         return "Anthropic"
