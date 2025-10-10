@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import * as fs from 'fs';
+import * as path from 'path';
 import { createClientFromEnv } from '../api/client';
 import { IngestRequest, JobStatus, DuplicateJobResponse, JobSubmitResponse } from '../types';
 import { getConfig } from '../lib/config';
@@ -94,6 +95,110 @@ ingestCommand
     }
   });
 
+// Ingest directory command
+ingestCommand
+  .command('directory <dir>')
+  .description('Ingest all matching files from a directory')
+  .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
+  .option('-p, --pattern <patterns...>', 'File patterns to match (e.g., *.md *.txt)', ['*.md', '*.txt'])
+  .option('-r, --recurse', 'Recursively scan subdirectories', false)
+  .option('-d, --depth <n>', 'Maximum recursion depth (number or "all")', '0')
+  .option('-f, --force', 'Force re-ingestion even if duplicate', false)
+  .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
+  .option('--target-words <n>', 'Target words per chunk', '1000')
+  .option('--overlap-words <n>', 'Overlap between chunks', '200')
+  .action(async (dir: string, options) => {
+    try {
+      // Validate directory exists
+      if (!fs.existsSync(dir)) {
+        console.error(chalk.red(`✗ Directory not found: ${dir}`));
+        process.exit(1);
+      }
+
+      if (!fs.statSync(dir).isDirectory()) {
+        console.error(chalk.red(`✗ Not a directory: ${dir}`));
+        process.exit(1);
+      }
+
+      const client = createClientFromEnv();
+
+      // Determine depth
+      const maxDepth = options.depth === 'all' ? Infinity : parseInt(options.depth);
+      const recurse = options.recurse || maxDepth > 0;
+
+      // Collect matching files
+      const files = collectFiles(dir, options.pattern, recurse, maxDepth);
+
+      if (files.length === 0) {
+        console.log(chalk.yellow(`\n⚠ No files found matching patterns: ${options.pattern.join(', ')}`));
+        return;
+      }
+
+      console.log(chalk.blue(`\n📂 Found ${files.length} file(s) to ingest:`));
+      files.forEach(f => console.log(chalk.gray(`  • ${path.relative(dir, f)}`)));
+
+      // Default to auto-approve
+      const autoApprove = options.approve !== false;
+
+      console.log(chalk.blue(`\nSubmitting ${files.length} ingestion jobs...`));
+      console.log(chalk.gray(`  Ontology: ${options.ontology}`));
+      console.log(chalk.gray(`  Auto-approve: ${autoApprove ? 'yes' : 'no'}\n`));
+
+      const jobIds: string[] = [];
+      let submitted = 0;
+      let skipped = 0;
+
+      for (const filePath of files) {
+        const request: IngestRequest = {
+          ontology: options.ontology,
+          filename: path.basename(filePath),
+          force: options.force,
+          auto_approve: autoApprove,
+          options: {
+            target_words: parseInt(options.targetWords),
+            overlap_words: parseInt(options.overlapWords),
+          },
+        };
+
+        try {
+          const result = await client.ingestFile(filePath, request);
+
+          if ('duplicate' in result && result.duplicate) {
+            console.log(chalk.yellow(`⚠ Skipped (duplicate): ${path.relative(dir, filePath)}`));
+            skipped++;
+          } else {
+            const submitResult = result as JobSubmitResponse;
+            jobIds.push(submitResult.job_id);
+            console.log(chalk.green(`✓ Queued: ${path.relative(dir, filePath)} → ${submitResult.job_id.substring(0, 12)}...`));
+            submitted++;
+          }
+        } catch (error: any) {
+          console.log(chalk.red(`✗ Failed: ${path.relative(dir, filePath)} - ${error.message}`));
+          skipped++;
+        }
+      }
+
+      console.log(chalk.blue(`\n📊 Summary:`));
+      console.log(chalk.gray(`  Submitted: ${submitted}`));
+      console.log(chalk.gray(`  Skipped: ${skipped}`));
+
+      if (jobIds.length > 0) {
+        console.log(chalk.blue('\n📌 Next steps:'));
+        if (autoApprove) {
+          console.log(chalk.gray(`  Monitor all: ${chalk.cyan(`kg jobs list`)}`));
+          console.log(chalk.gray(`  View details: ${chalk.cyan(`kg jobs status <job-id>`)}`));
+        } else {
+          console.log(chalk.gray(`  Approve all pending: ${chalk.cyan(`kg jobs approve pending`)}`));
+          console.log(chalk.gray(`  View pending: ${chalk.cyan(`kg jobs list pending`)}`));
+        }
+      }
+    } catch (error: any) {
+      console.error(chalk.red('\n✗ Directory ingestion failed'));
+      console.error(chalk.red(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
 // Ingest text command
 ingestCommand
   .command('text <text>')
@@ -154,6 +259,46 @@ ingestCommand
       process.exit(1);
     }
   });
+
+/**
+ * Collect files matching patterns from directory
+ */
+function collectFiles(dir: string, patterns: string[], recurse: boolean, maxDepth: number, currentDepth: number = 0): string[] {
+  const files: string[] = [];
+
+  // Don't recurse beyond max depth
+  if (currentDepth > maxDepth) {
+    return files;
+  }
+
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory() && recurse && currentDepth < maxDepth) {
+      // Recurse into subdirectory
+      files.push(...collectFiles(fullPath, patterns, recurse, maxDepth, currentDepth + 1));
+    } else if (entry.isFile()) {
+      // Check if file matches any pattern
+      const matches = patterns.some(pattern => {
+        // Convert glob pattern to regex
+        const regexPattern = pattern
+          .replace(/\./g, '\\.')
+          .replace(/\*/g, '.*')
+          .replace(/\?/g, '.');
+        const regex = new RegExp(`^${regexPattern}$`, 'i');
+        return regex.test(entry.name);
+      });
+
+      if (matches) {
+        files.push(fullPath);
+      }
+    }
+  }
+
+  return files;
+}
 
 /**
  * Poll job with progress spinner
