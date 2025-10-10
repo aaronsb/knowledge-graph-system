@@ -428,8 +428,14 @@ Use simple paragraphs. Focus on WHAT it represents and WHY.
 Diagram:
 {code}
 
-CRITICAL: Do NOT include ANY diagram syntax or code in your response.
-Provide ONLY natural language prose description.
+⚠️  NEVER UNDER ANY CIRCUMSTANCES INCLUDE CODE SYNTAX IN YOUR RESPONSE ⚠️
+YOU WILL BREAK THE ENTIRE SYSTEM IF YOU INCLUDE ANY:
+- Mermaid syntax (graph TD, -->, etc.)
+- Code blocks, backticks, or fenced syntax
+- Technical symbols or operators
+- ANY non-prose content
+
+ONLY provide natural language prose. Write as if explaining to someone verbally.
 Example: "The diagram shows data flowing from the user interface through an API layer to the database."
 """
 
@@ -441,8 +447,14 @@ Use simple paragraphs. Focus on WHAT it configures and WHY.
 Configuration:
 {code}
 
-CRITICAL: Do NOT include ANY configuration syntax, JSON, YAML, or code in your response.
-Provide ONLY natural language prose description.
+⚠️  NEVER UNDER ANY CIRCUMSTANCES INCLUDE CODE SYNTAX IN YOUR RESPONSE ⚠️
+YOU WILL BREAK THE ENTIRE SYSTEM IF YOU INCLUDE ANY:
+- JSON, YAML, or configuration syntax
+- Curly braces, brackets, colons, or quotes
+- Code blocks or backticks
+- ANY non-prose content
+
+ONLY provide natural language prose. Write as if explaining to someone verbally.
 Example: "This configuration sets up a PostgreSQL database container with specific credentials and port mappings."
 """
 
@@ -454,18 +466,65 @@ Use simple paragraphs and lists. Focus on WHAT it does and WHY.
 Code:
 {code}
 
-CRITICAL: Do NOT include ANY code syntax, SQL statements, Cypher queries, or code examples in your response.
-Do NOT write CREATE, MATCH, SELECT, or any other code keywords.
-Provide ONLY natural language prose description.
+⚠️  NEVER UNDER ANY CIRCUMSTANCES INCLUDE CODE SYNTAX IN YOUR RESPONSE ⚠️
+YOU WILL BREAK THE ENTIRE SYSTEM IF YOU INCLUDE ANY:
+- SQL statements (CREATE, SELECT, INSERT, MATCH, WHERE, RETURN)
+- Cypher queries (MATCH, CREATE, MERGE, etc.)
+- Programming syntax (brackets, semicolons, operators)
+- Code blocks, backticks, or fenced syntax
+- ANY non-prose content whatsoever
+
+ONLY provide natural language prose. Write as if explaining to someone verbally.
+Do NOT show examples of the code. Describe what it does in plain English only.
 Example: "This code creates a new concept node in the graph database and logs the action to an audit table within a transaction."
 """
 
         # Call AI provider (using cheap, fast model: gpt-4o-mini or claude-haiku)
         try:
             response = self.ai_provider.translate_to_prose(prompt, code)
-            return response  # Returns {"text": ..., "tokens": ...}
+
+            # Post-process: Strip any remaining code syntax that AI might have included
+            translated_text = response["text"]
+            translated_text = self._strip_code_from_prose(translated_text)
+
+            return {
+                "text": translated_text,
+                "tokens": response.get("tokens", 0)
+            }
         except Exception as e:
             raise Exception(f"AI translation failed: {str(e)}")
+
+    def _strip_code_from_prose(self, text: str) -> str:
+        """
+        Post-processing: Strip any code syntax that AI might have included despite warnings.
+
+        This is a safety net for when AI doesn't follow instructions perfectly.
+        Removes common code patterns while preserving natural language.
+        """
+        import re
+
+        # Remove fenced code blocks (```...```)
+        text = re.sub(r'```[\s\S]*?```', '[code example removed]', text)
+
+        # Remove inline code (`...`)
+        text = re.sub(r'`[^`]+`', '', text)
+
+        # Remove lines that look like SQL/Cypher queries (heuristic: contain multiple SQL keywords)
+        sql_keywords = r'\b(SELECT|CREATE|MATCH|WHERE|RETURN|INSERT|UPDATE|DELETE|FROM|INTO|SET)\b'
+        lines = text.split('\n')
+        cleaned_lines = []
+        for line in lines:
+            # If line has 2+ SQL keywords, it's probably code - remove it
+            keyword_count = len(re.findall(sql_keywords, line, re.IGNORECASE))
+            if keyword_count < 2:
+                cleaned_lines.append(line)
+
+        text = '\n'.join(cleaned_lines)
+
+        # Clean up excessive whitespace
+        text = re.sub(r'\n\n\n+', '\n\n', text)
+
+        return text.strip()
 
     def _serialize_ast(self, ast: List[DocumentNode]) -> str:
         """
