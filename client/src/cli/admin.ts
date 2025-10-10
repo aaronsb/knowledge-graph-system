@@ -1130,6 +1130,8 @@ const schedulerCommand = new Command('scheduler')
 
 export const adminCommand = new Command('admin')
   .description('System administration (status, backup, restore, reset, scheduler)')
+  .showHelpAfterError('(add --help for additional information)')
+  .showSuggestionAfterError()
   .addCommand(statusCommand)
   .addCommand(backupCommand)
   .addCommand(listBackupsCommand)

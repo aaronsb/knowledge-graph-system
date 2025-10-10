@@ -184,7 +184,7 @@ Both ontologies contribute evidence to the same "Risk Management" concept, but m
 **Isolating ontologies:**
 
 If you want ontologies to remain conceptually separate (no cross-matching):
-- Ingest into different Neo4j databases
+- Ingest into different Apache AGE graph instances (separate PostgreSQL databases/Docker containers)
 - Use backup/restore to move between environments
 - Future enhancement: scope vector search by ontology (see [Issue #12](https://github.com/aaronsb/knowledge-graph-system/issues/12))
 
@@ -483,7 +483,7 @@ Adjust chunking for different document types:
 
 ## Related Documentation
 
-- [Neo4j Query Examples](NEO4J_QUERIES.md) - Query patterns for ontologies
+- [openCypher Query Examples](../api/OPENCYPHER_QUERIES.md) - Query patterns for ontologies
 - [Quick Start Guide](QUICKSTART.md) - Basic setup and first ingestion
 - [Technical Assessment](ASSESSMENT.md) - Iterative graph traversal analysis
 - [GitHub Issue #8](https://github.com/aaronsb/knowledge-graph-system/issues/8) - Batch processing roadmap
