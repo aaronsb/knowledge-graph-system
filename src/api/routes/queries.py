@@ -78,8 +78,12 @@ async def search_concepts(request: SearchRequest):
         # Vector similarity search using AGE client
         client = get_neo4j_client()
         try:
-            # Use AGEClient's vector_search method
-            matches = client.vector_search(embedding, top_k=request.limit)
+            # Use AGEClient's vector_search method with threshold from request
+            matches = client.vector_search(
+                embedding,
+                threshold=request.min_similarity,
+                top_k=request.limit
+            )
 
             # Filter by minimum similarity and gather document/evidence info
             results = []
@@ -108,10 +112,36 @@ async def search_concepts(request: SearchRequest):
                     evidence_count=evidence_count
                 ))
 
+            # If few results found, check for additional concepts below threshold
+            below_threshold_count = None
+            suggested_threshold = None
+            if len(results) < 3 and request.min_similarity > 0.5:
+                # Search with lower threshold to find near-misses
+                lower_threshold = max(0.4, request.min_similarity - 0.2)
+                lower_matches = client.vector_search(
+                    embedding,
+                    threshold=lower_threshold,
+                    top_k=request.limit * 2  # Check more results
+                )
+                # Find matches between lower_threshold and request.min_similarity
+                below_threshold_matches = [
+                    m for m in lower_matches
+                    if lower_threshold <= m['similarity'] < request.min_similarity
+                ]
+
+                if below_threshold_matches:
+                    below_threshold_count = len(below_threshold_matches)
+                    # Calculate exact threshold needed: round down the lowest score to nearest 0.05
+                    min_score = min(m['similarity'] for m in below_threshold_matches)
+                    suggested_threshold = round(min_score - 0.02, 2)  # Slightly below lowest to include it
+
             return SearchResponse(
                 query=request.query,
                 count=len(results),
-                results=results
+                results=results,
+                below_threshold_count=below_threshold_count if below_threshold_count else None,
+                suggested_threshold=suggested_threshold,
+                threshold_used=request.min_similarity
             )
         finally:
             client.close()

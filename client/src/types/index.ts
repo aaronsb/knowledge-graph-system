@@ -136,6 +136,9 @@ export interface SearchResponse {
   query: string;
   count: number;
   results: ConceptSearchResult[];
+  below_threshold_count?: number;
+  suggested_threshold?: number;
+  threshold_used?: number;
 }
 
 export interface ConceptInstance {
