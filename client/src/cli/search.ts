@@ -180,7 +180,13 @@ const connectCommand = new Command('connect')
           console.log(colors.ui.title('🌉 Finding Connection'));
           console.log(separator());
           console.log(`  ${colors.ui.key('From:')} ${colors.concept.label(fromLabel)}`);
+          if ('from_similarity' in result && result.from_similarity) {
+            console.log(`        ${colors.ui.key('Match:')} ${coloredPercentage(result.from_similarity)}`);
+          }
           console.log(`  ${colors.ui.key('To:')} ${colors.concept.label(toLabel)}`);
+          if ('to_similarity' in result && result.to_similarity) {
+            console.log(`        ${colors.ui.key('Match:')} ${coloredPercentage(result.to_similarity)}`);
+          }
           console.log(`  ${colors.ui.key('Max hops:')} ${colors.path.hop(String(result.max_hops))}\n`);
 
           if (result.count === 0) {

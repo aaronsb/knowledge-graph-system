@@ -83,6 +83,8 @@ class InMemoryJobQueue(JobQueue):
         self.db_path = db_path
         self.lock = threading.Lock()
         self.worker_registry: Dict[str, Callable] = {}
+        self.serial_queue: list = []  # Queue for serial jobs
+        self.serial_running: bool = False  # Track if a serial job is running
 
         # Ensure data directory exists
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
@@ -139,6 +141,8 @@ class InMemoryJobQueue(JobQueue):
             self.db.execute("ALTER TABLE jobs ADD COLUMN approved_by TEXT")
         if "expires_at" not in existing_columns:
             self.db.execute("ALTER TABLE jobs ADD COLUMN expires_at TEXT")
+        if "processing_mode" not in existing_columns:
+            self.db.execute("ALTER TABLE jobs ADD COLUMN processing_mode TEXT DEFAULT 'serial'")
 
         self.db.commit()
 
@@ -176,6 +180,7 @@ class InMemoryJobQueue(JobQueue):
             "started_at": row["started_at"],
             "completed_at": row["completed_at"],
             "job_data": json.loads(row["job_data"]),
+            "processing_mode": safe_get(row, "processing_mode", "serial"),
             # ADR-014: Approval workflow fields
             "analysis": json.loads(safe_get(row, "analysis")) if safe_get(row, "analysis") else None,
             "approved_at": safe_get(row, "approved_at"),
@@ -186,7 +191,7 @@ class InMemoryJobQueue(JobQueue):
     def _save_to_db(self, job: Dict):
         """Persist job to SQLite"""
         self.db.execute("""
-            INSERT OR REPLACE INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO jobs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             job["job_id"],
             job["job_type"],
@@ -205,7 +210,8 @@ class InMemoryJobQueue(JobQueue):
             json.dumps(job.get("analysis")) if job.get("analysis") else None,
             job.get("approved_at"),
             job.get("approved_by"),
-            job.get("expires_at")
+            job.get("expires_at"),
+            job.get("processing_mode", "serial")
         ))
         self.db.commit()
 
@@ -232,6 +238,7 @@ class InMemoryJobQueue(JobQueue):
                 "started_at": None,
                 "completed_at": None,
                 "job_data": job_data,
+                "processing_mode": job_data.get("processing_mode", "serial"),
                 # ADR-014: Approval workflow fields
                 "analysis": None,  # Will be populated by JobAnalyzer
                 "approved_at": None,
@@ -340,6 +347,30 @@ class InMemoryJobQueue(JobQueue):
 
             return True
 
+    def clear_all_jobs(self) -> int:
+        """
+        Clear ALL jobs from the database and memory.
+        Used during database reset to keep jobs in sync with graph.
+
+        Returns:
+            Number of jobs deleted
+        """
+        with self.lock:
+            # Count jobs before clearing
+            cursor = self.db.execute("SELECT COUNT(*) FROM jobs")
+            count = cursor.fetchone()[0]
+
+            # Clear memory
+            self.jobs.clear()
+            self.serial_queue.clear()
+            self.serial_running = False
+
+            # Clear database
+            self.db.execute("DELETE FROM jobs")
+            self.db.commit()
+
+            return count
+
     def execute_job(self, job_id: str):
         """
         Execute a job (called by BackgroundTasks).
@@ -377,6 +408,37 @@ class InMemoryJobQueue(JobQueue):
                 "status": "failed",
                 "error": str(e)
             })
+        finally:
+            # If this was a serial job, mark serial_running as False and process next
+            if job.get("processing_mode") == "serial":
+                with self.lock:
+                    self.serial_running = False
+                    self._process_next_serial_job()
+
+    def queue_serial_job(self, job_id: str):
+        """
+        Queue a serial job for execution.
+        If no serial job is running, start it immediately.
+        Otherwise, add to queue.
+        """
+        with self.lock:
+            if not self.serial_running:
+                # No serial job running, start this one
+                self.serial_running = True
+                self.execute_job(job_id)
+            else:
+                # Serial job already running, add to queue
+                self.serial_queue.append(job_id)
+                self.update_job(job_id, {"status": "queued"})
+
+    def _process_next_serial_job(self):
+        """Process the next serial job in the queue (called with lock held)"""
+        if self.serial_queue:
+            next_job_id = self.serial_queue.pop(0)
+            self.serial_running = True
+            # Execute in background
+            import threading
+            threading.Thread(target=self.execute_job, args=(next_job_id,)).start()
 
 
 # Singleton instance (will be initialized in main.py)

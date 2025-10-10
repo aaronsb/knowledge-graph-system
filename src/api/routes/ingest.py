@@ -98,6 +98,7 @@ async def ingest_document(
     filename: Optional[str] = Form(None, description="Override filename"),
     force: bool = Form(False, description="Force re-ingestion even if duplicate"),
     auto_approve: bool = Form(False, description="Auto-approve job (skip approval step)"),
+    processing_mode: str = Form("serial", description="Processing mode: serial or parallel (default: serial for clean concept matching)"),
     target_words: int = Form(1000, description="Target words per chunk"),
     min_words: Optional[int] = Form(None, description="Minimum words per chunk"),
     max_words: Optional[int] = Form(None, description="Maximum words per chunk"),
@@ -162,6 +163,7 @@ async def ingest_document(
         "ontology": ontology,
         "filename": use_filename,
         "client_id": current_user["client_id"],  # Track job owner
+        "processing_mode": processing_mode,
         "options": {
             "target_words": options.target_words,
             "min_words": options.get_min_words(),
@@ -199,6 +201,7 @@ async def ingest_text(
     filename: Optional[str] = Form(None, description="Filename for source tracking"),
     force: bool = Form(False, description="Force re-ingestion even if duplicate"),
     auto_approve: bool = Form(False, description="Auto-approve job (skip approval step)"),
+    processing_mode: str = Form("serial", description="Processing mode: serial or parallel (default: serial for clean concept matching)"),
     target_words: int = Form(1000, description="Target words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
     current_user: dict = Depends(get_current_user)  # Auth placeholder
@@ -247,6 +250,7 @@ async def ingest_text(
         "ontology": ontology,
         "filename": use_filename,
         "client_id": current_user["client_id"],  # Track job owner
+        "processing_mode": processing_mode,
         "options": {
             "target_words": target_words,
             "min_words": int(target_words * 0.8),

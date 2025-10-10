@@ -93,6 +93,10 @@ export class KnowledgeGraphClient {
       form.append('auto_approve', 'true');
     }
 
+    if (request.processing_mode) {
+      form.append('processing_mode', request.processing_mode);
+    }
+
     if (request.options) {
       if (request.options.target_words !== undefined) {
         form.append('target_words', String(request.options.target_words));
@@ -136,6 +140,10 @@ export class KnowledgeGraphClient {
 
     if (request.auto_approve) {
       form.append('auto_approve', 'true');
+    }
+
+    if (request.processing_mode) {
+      form.append('processing_mode', request.processing_mode);
     }
 
     if (request.options?.target_words !== undefined) {
@@ -193,6 +201,16 @@ export class KnowledgeGraphClient {
    */
   async cancelJob(jobId: string): Promise<{ job_id: string; cancelled: boolean; message: string }> {
     const response = await this.client.delete(`/jobs/${jobId}`);
+    return response.data;
+  }
+
+  /**
+   * Clear all jobs (nuclear option - requires confirmation)
+   */
+  async clearAllJobs(confirm: boolean = false): Promise<{ success: boolean; jobs_deleted: number; message: string }> {
+    const response = await this.client.delete('/jobs', {
+      params: { confirm }
+    });
     return response.data;
   }
 

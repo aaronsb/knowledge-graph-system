@@ -71,6 +71,7 @@ export interface JobStatus {
   content_hash?: string;
   ontology?: string;
   client_id?: string;
+  processing_mode?: string;  // Serial or parallel processing
   analysis?: any;  // Pre-ingestion analysis (ADR-014)
   approved_at?: string;
   approved_by?: string;
@@ -108,6 +109,7 @@ export interface IngestRequest {
   filename?: string;
   force?: boolean;
   auto_approve?: boolean;  // ADR-014: Skip approval step
+  processing_mode?: string;  // Serial or parallel processing
   options?: IngestionOptions;
 }
 
@@ -220,6 +222,12 @@ export interface FindConnectionBySearchResponse {
   to_query: string;
   from_concept?: PathNode;
   to_concept?: PathNode;
+  from_similarity?: number;
+  to_similarity?: number;
+  from_suggested_threshold?: number;
+  to_suggested_threshold?: number;
+  from_near_misses?: number;
+  to_near_misses?: number;
   max_hops: number;
   count: number;
   paths: ConnectionPath[];

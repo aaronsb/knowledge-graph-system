@@ -144,13 +144,13 @@ class QueryService:
 
         Query flow:
         1. Find all variable-length paths up to max_hops
-        2. Extract node IDs/labels and relationship types
-        3. Calculate path length
-        4. Sort by length (shortest first)
-        5. Limit to 5 paths for performance
+        2. Return the path itself (nodes and relationships as AGE vertex/edge objects)
+        3. Sort by length (shortest first)
+        4. Limit to 5 paths for performance
 
-        Note: AGE doesn't support Neo4j's shortestPath() function,
-        so we use variable-length patterns with sorting.
+        Note: AGE doesn't support Neo4j's shortestPath() function, map projection,
+        or property access in list comprehensions. We return the path and extract
+        properties in Python.
 
         Args:
             max_hops: Maximum path length (1-10)
@@ -160,11 +160,8 @@ class QueryService:
         """
         return f"""
             MATCH path = (from:Concept {{concept_id: $from_id}})-[*1..{max_hops}]-(to:Concept {{concept_id: $to_id}})
-            WITH path,
-                 [node in nodes(path) | {{id: node.concept_id, label: node.label}}] as path_nodes,
-                 [rel in relationships(path) | type(rel)] as rel_types,
-                 length(path) as hops
-            RETURN path_nodes, rel_types, hops
+            WITH path, length(path) as hops
+            RETURN nodes(path) as path_nodes, relationships(path) as path_rels, hops
             ORDER BY hops ASC
             LIMIT 5
         """
