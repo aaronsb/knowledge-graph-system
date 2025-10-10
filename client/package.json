@@ -4,7 +4,8 @@
   "description": "Knowledge Graph TypeScript client (CLI + MCP server)",
   "main": "dist/index.js",
   "bin": {
-    "kg": "dist/index.js"
+    "kg": "dist/index.js",
+    "kg-mcp-server": "dist/mcp-server.js"
   },
   "scripts": {
     "build": "node scripts/generate-version.js && tsc",
@@ -24,6 +25,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
     "ansis": "^4.2.0",
     "axios": "^1.6.0",
     "cfonts": "^3.3.1",
