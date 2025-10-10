@@ -1,6 +1,6 @@
-# Neo4j Query Examples
+# openCypher Query Examples
 
-Practical Cypher queries for exploring and analyzing the knowledge graph.
+Practical openCypher queries for exploring and analyzing the knowledge graph. These queries work with Apache AGE (PostgreSQL graph extension) and other openCypher-compliant graph databases.
 
 ## Query Types
 
@@ -290,7 +290,7 @@ CALL db.schema.visualization()
 
 # 🕸️ Graph-Driven Results
 
-Queries that return visual network graphs. Best viewed in Neo4j Browser graph mode.
+Queries that return visual network graphs. Best viewed in PostgreSQL clients with graph visualization support or exported for visualization.
 
 ## Concept Networks
 
@@ -661,14 +661,13 @@ LIMIT 10
 - Create parameters: `:param ontology => "WattsTest"`
 - Use `PROFILE` to analyze performance: `PROFILE MATCH ...`
 
-### Neo4j Browser Graph View Tips
+### Graph Visualization Tips
 
-1. After running a graph query, click the **graph icon** (top right)
-2. **Drag nodes** to arrange the layout
-3. **Double-click** a node to expand its connections
-4. **Click relationships** to see their types and properties
-5. **Right-click** nodes for more options
-6. Use **Settings** (bottom right) to change colors and sizes
+For Apache AGE graph visualization:
+1. Use the **kg CLI** for querying and results display
+2. Export results to **GraphML** or **JSON** for visualization in tools like Gephi or Cytoscape
+3. Use **PostgreSQL clients** (pgAdmin, DBeaver) for tabular query results
+4. Graph visualization support is limited compared to Neo4j Browser - consider exporting for complex visualizations
 
 ### Formatting Results
 
@@ -716,32 +715,40 @@ RETURN c
 
 ## Running Queries
 
-### Neo4j Browser
-1. Open: http://localhost:7474
-2. Login: neo4j / password
-3. Paste query into editor
-4. Click Run or press Ctrl+Enter
-
-### Python CLI (Legacy)
+### kg CLI (Recommended)
 ```bash
-python scripts/cli.py query "MATCH (c:Concept) RETURN count(c)"
+# Use the kg CLI for most queries
+kg search query "your search term"
+kg database stats
 ```
 
-### Cypher Shell (Terminal)
+### PostgreSQL psql (Direct Database Access)
 ```bash
-docker exec -it knowledge-graph-neo4j cypher-shell -u neo4j -p password
+# Access PostgreSQL container directly
+docker exec -it knowledge-graph-postgres psql -U postgres -d knowledge_graph
+
+# Then run AGE queries wrapped in SELECT
+SELECT * FROM cypher('knowledge_graph', $$
+  MATCH (c:Concept) RETURN c.label
+$$) as (label agtype);
 ```
 
-### Neo4j Browser Visualization
-- **Best for:** Graph-driven queries
-- **Graph view:** Shows visual network
-- **Table view:** Shows tabular data
-- **Switch views:** Use icons in top right corner
+### Via API (TypeScript Client)
+```bash
+# API server provides REST endpoints for graph operations
+curl http://localhost:8000/queries/stats
+```
+
+### Query Format Notes
+- Apache AGE requires wrapping openCypher in `SELECT * FROM cypher('graph_name', $$ ... $$)`
+- Results are returned as `agtype` which needs type casting for PostgreSQL operations
+- Use the kg CLI or API server for simplified query execution
 
 ---
 
 ## Further Resources
 
-- [Neo4j Cypher Manual](https://neo4j.com/docs/cypher-manual/)
-- [Graph Data Science Library](https://neo4j.com/docs/graph-data-science/)
-- [APOC Procedures](https://neo4j.com/docs/apoc/)
+- [Apache AGE Documentation](https://age.apache.org/age-manual/master/intro/overview.html)
+- [openCypher Language Reference](https://s3.amazonaws.com/artifacts.opencypher.org/openCypher9.pdf)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [AGE GitHub Repository](https://github.com/apache/age)

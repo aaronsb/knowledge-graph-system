@@ -18,10 +18,10 @@ cd knowledge-graph-system
 ```
 
 This will:
-- Start Neo4j database
+- Start PostgreSQL database with Apache AGE extension
 - Create Python virtual environment
 - Install dependencies
-- Build MCP server
+- Build TypeScript client (CLI + MCP)
 - Print Claude Desktop configuration
 
 ### 2. Configure AI Provider
@@ -61,12 +61,14 @@ python cli.py details linear-scanning-system
 python cli.py stats
 ```
 
-**Via Neo4j Browser:**
-```
-Open: http://localhost:7474
-Login: neo4j / password
+**Via PostgreSQL (psql):**
+```bash
+docker exec -it knowledge-graph-postgres psql -U postgres -d knowledge_graph
 
-MATCH (c:Concept) RETURN c LIMIT 25
+# Run openCypher queries via AGE
+SELECT * FROM cypher('knowledge_graph', $$
+  MATCH (c:Concept) RETURN c.label
+$$) as (label agtype) LIMIT 25;
 ```
 
 ## Claude Desktop Integration
@@ -80,9 +82,11 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
       "command": "node",
       "args": ["/absolute/path/to/knowledge-graph-system/mcp-server/build/index.js"],
       "env": {
-        "NEO4J_URI": "bolt://localhost:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "password",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_DB": "knowledge_graph",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "password",
         "OPENAI_API_KEY": "your-key-here"
       }
     }
@@ -172,10 +176,10 @@ python cli.py --json database stats
 
 ## Troubleshooting
 
-### Neo4j won't start
+### PostgreSQL won't start
 ```bash
 # Check logs
-docker logs knowledge-graph-neo4j
+docker logs knowledge-graph-postgres
 
 # Restart
 docker-compose restart
@@ -215,11 +219,11 @@ pip install -r requirements.txt
    ```
 
 3. **Explore the graph:**
-   - Neo4j Browser: http://localhost:7474
-   - CLI: `python cli.py search "your query"`
+   - kg CLI: `kg search query "your query"`
+   - PostgreSQL: `docker exec -it knowledge-graph-postgres psql -U postgres -d knowledge_graph`
    - Claude Desktop: Ask questions naturally
 
 4. **Customize:**
-   - Modify extraction prompt in `ingest/llm_extractor.py`
-   - Add relationship types in `schema/init.cypher`
-   - Create custom MCP tools in `mcp-server/src/`
+   - Modify extraction prompt in `src/api/lib/llm_extractor.py`
+   - Add relationship types in `schema/init.sql`
+   - Create custom API endpoints in `src/api/routes/`

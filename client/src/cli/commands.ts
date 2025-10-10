@@ -69,7 +69,9 @@ export async function registerCommands(program: Command) {
   program
     .name('kg')
     .description('Knowledge Graph CLI - interact with the knowledge graph API')
-    .version('0.1.0');
+    .version('0.1.0')
+    .showHelpAfterError('(add --help for additional information)')
+    .showSuggestionAfterError();
 
   // Configure colored help for main command
   configureColoredHelp(program);

@@ -13,7 +13,7 @@ Architecture decisions, design documents, and ADRs (Architectural Decision Recor
 - **ADR-013-unified-typescript-client.md** - TypeScript client consolidation
 - **ADR-014-job-approval-workflow.md** - Job approval and queue management
 - **ADR-015-backup-restore-streaming.md** - Database backup/restore strategy
-- **ADR-016-apache-age-migration.md** - Neo4j to Apache AGE migration
+- **ADR-016-apache-age-migration.md** - Apache AGE migration (Neo4j → PostgreSQL + AGE)
 
 ### 🧪 `testing/`
 Test coverage specifications and testing documentation.
@@ -24,7 +24,7 @@ Test coverage specifications and testing documentation.
 API documentation and query pattern references.
 
 - **CYPHER_PATTERNS.md** - AGE Cypher query patterns and compatibility notes
-- **NEO4J_QUERIES.md** - Legacy Neo4j query reference (being deprecated)
+- **OPENCYPHER_QUERIES.md** - openCypher query examples and patterns for Apache AGE
 
 ### 📚 `guides/`
 User and developer guides for getting started and working with the system.
@@ -79,7 +79,8 @@ This documentation was reorganized on 2025-10-08 to improve organization and mai
 - File paths have changed (e.g., `docs/ARCHITECTURE.md` → `docs/architecture/ARCHITECTURE.md`)
 
 **Migration TODO:**
+- [x] Rename NEO4J_QUERIES.md to OPENCYPHER_QUERIES.md
+- [x] Update Neo4j references to Apache AGE + PostgreSQL
 - [ ] Update main README.md links
 - [ ] Update CLAUDE.md references
 - [ ] Update any hardcoded documentation paths in code
-- [ ] Rename NEO4J_QUERIES.md to AGE_QUERIES.md (pending Apache AGE migration completion)

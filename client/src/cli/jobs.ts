@@ -10,12 +10,15 @@ import * as colors from './colors';
 import { Table } from '../lib/table';
 
 export const jobsCommand = new Command('jobs')
-  .description('Manage and monitor ingestion jobs');
+  .description('Manage and monitor ingestion jobs')
+  .showHelpAfterError('(add --help for additional information)')
+  .showSuggestionAfterError();
 
 // Get job status
 jobsCommand
   .command('status <job-id>')
   .description('Get job status')
+  .showHelpAfterError()
   .option('-w, --watch', 'Watch job until completion', false)
   .action(async (jobId: string, options) => {
     try {
@@ -149,6 +152,7 @@ const listCommand = new Command('list')
   .option('-c, --client <client-id>', 'Filter by client ID (view specific user\'s jobs)')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
   .option('--full-id', 'Show full job IDs (no truncation)', false)
+  .showHelpAfterError()
   .action(async (options) => {
     try {
       await displayJobsList(options.status, options.client, parseInt(options.limit), options.fullId);
@@ -250,7 +254,8 @@ jobsCommand.addCommand(listCommand);
 
 // Approve job(s) (ADR-014)
 const approveCommand = new Command('approve')
-  .description('Approve jobs for processing');
+  .description('Approve jobs for processing')
+  .showHelpAfterError();
 
 // Approve single job
 approveCommand
@@ -368,6 +373,7 @@ jobsCommand.addCommand(approveCommand);
 jobsCommand
   .command('cancel <job-id-or-filter>')
   .description('Cancel a job or all jobs matching filter (pending, queued, etc.)')
+  .showHelpAfterError()
   .option('-c, --client <client-id>', 'Filter by client ID (for batch operations)')
   .action(async (jobIdOrFilter: string, options) => {
     try {
