@@ -219,6 +219,27 @@ But that's a fundamentally different threat model (adversarial AI) than what we'
 
 **Design harmony:** Keeps the human "along with the technical level" - they're still involved in the process, just providing physical confirmation of intent.
 
+### Human-in-the-Loop (HITL) Design Principles
+
+This is fundamentally a **Human-in-the-Loop control system**. Well-architected HITL doesn't slow down AI progress at solving tasks - it adds oversight only at critical decision points.
+
+**HITL Design Goals:**
+1. **Selective Friction** - Only apply barriers to destructive/irreversible operations
+2. **Maintain AI Velocity** - Let AI work at full speed for non-critical tasks
+3. **Minimal Human Overhead** - Make confirmations quick and intuitive (5-6 seconds)
+4. **Clear Handoff Points** - AI knows when to request human confirmation
+5. **Cooperative Model** - AI can explain what's needed, human provides confirmation
+
+**Example Flow:**
+```
+AI: Analyzes data, generates insights, suggests actions (FULL SPEED)
+AI: Reaches destructive operation → "I need human confirmation"
+Human: 5-second confirmation (BRIEF PAUSE)
+AI: Continues execution (FULL SPEED)
+```
+
+**The key:** Human confirmation is a deliberate checkpoint, not a bottleneck. AI productivity is maintained while critical operations get human oversight.
+
 ### Properties of Effective AI Friction
 
 1. **Exploits Complexity Asymmetry** - Physical actions take seconds for humans, minutes/hours for AI to automate
@@ -229,6 +250,7 @@ But that's a fundamentally different threat model (adversarial AI) than what we'
 6. **Visible Intent** - Progress bars show deliberate action in progress
 7. **Composable** - Can layer with traditional auth (we still require password after)
 8. **Detection Time** - Automation attempts take long enough for humans to notice and intervene
+9. **Strategic Placement** - Only gates critical operations, doesn't impede normal AI workflow
 
 ## Implementation
 
