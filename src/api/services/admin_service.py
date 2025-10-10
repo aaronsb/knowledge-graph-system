@@ -228,34 +228,33 @@ class AdminService:
         clear_logs: bool = True,
         clear_checkpoints: bool = True
     ) -> ResetResponse:
-        """Reset database (nuclear option)"""
-        # Build command
-        cmd = [str(self.project_root / "scripts" / "reset.sh")]
+        """Reset database (nuclear option) - Delegates to reset module"""
 
-        # Execute reset
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            cwd=self.project_root,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            stdin=asyncio.subprocess.PIPE,
+        # Import reset module
+        from ...admin.reset import ResetManager
+
+        # Execute reset in thread pool (reset module uses subprocess)
+        loop = asyncio.get_event_loop()
+        manager = ResetManager(project_root=self.project_root)
+
+        result = await loop.run_in_executor(
+            None,
+            manager.reset,
+            clear_logs,
+            clear_checkpoints,
+            False  # verbose=False for API calls
         )
 
-        # Auto-confirm
-        stdout, stderr = await proc.communicate(input=b"y\n")
+        if not result["success"]:
+            raise RuntimeError(result["error"])
 
-        if proc.returncode != 0:
-            raise RuntimeError(f"Reset failed: {stderr.decode()}")
-
-        # Parse output for validation results
-        output = stdout.decode()
-
-        # TODO: Parse schema validation from output
+        # Convert validation results to API response model
+        validation = result["validation"]
         schema_validation = SchemaValidation(
-            constraints_count=3,
-            vector_index_exists=True,
-            node_count=0,
-            schema_test_passed=True,
+            constraints_count=validation["table_count"],
+            vector_index_exists=validation["graph_exists"],
+            node_count=validation["node_count"],
+            schema_test_passed=validation["schema_test_passed"],
         )
 
         return ResetResponse(
