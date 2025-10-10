@@ -18,6 +18,7 @@ from typing import List, Dict, Any, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from enum import Enum
+import re
 
 
 class BlockType(Enum):
@@ -44,6 +45,44 @@ class DocumentNode:
     def __repr__(self):
         preview = self.content[:50].replace('\n', '\\n') if self.content else ""
         return f"<{self.node_type.value}[{self.position}]: {preview}...>"
+
+    def get_text(self) -> str:
+        """Get text content (translated if available, otherwise original)"""
+        return self.translated if self.translated else self.content
+
+
+@dataclass
+class SemanticChunk:
+    """
+    Semantic chunk derived from AST nodes.
+
+    Represents a conceptually coherent section of the document,
+    grouped from one or more AST nodes while respecting word count limits.
+
+    CRITICAL: Chunks MUST be processed in serial order because each
+    concept upsert queries the graph for vector similarity matches.
+    Later chunks can link to concepts created by earlier chunks.
+    """
+    nodes: List[DocumentNode]
+    """AST nodes that comprise this chunk"""
+
+    text: str
+    """Combined text from all nodes (translated content used if available)"""
+
+    word_count: int
+    """Total word count"""
+
+    chunk_number: int
+    """Sequential chunk number (1-indexed, maintains document order)"""
+
+    boundary_type: str
+    """Boundary type: semantic (natural section), hard_cut (fallback), end_of_document"""
+
+    start_position: int
+    """Position of first node in AST"""
+
+    end_position: int
+    """Position of last node in AST"""
 
 
 class MarkdownPreprocessor:
@@ -465,6 +504,228 @@ Provide only the prose explanation, no code syntax."""
     def get_stats(self) -> Dict[str, int]:
         """Return preprocessing statistics"""
         return self.stats.copy()
+
+    def group_ast_to_semantic_chunks(
+        self,
+        ast: List[DocumentNode],
+        target_words: int = 1000,
+        min_words: int = 800,
+        max_words: int = 1500
+    ) -> List[SemanticChunk]:
+        """
+        Group AST nodes into semantic chunks for concept extraction.
+
+        Respects natural document boundaries (headings, sections) while
+        maintaining target word counts. Critical for serial processing:
+        chunks MUST be processed in order for recursive concept upsert.
+
+        Args:
+            ast: List of DocumentNode objects (position-ordered)
+            target_words: Target words per chunk (default: 1000)
+            min_words: Minimum words per chunk (default: 800)
+            max_words: Maximum words per chunk (default: 1500)
+
+        Returns:
+            List of SemanticChunk objects in document order
+        """
+        chunks = []
+        current_nodes = []
+        current_words = 0
+        chunk_num = 1
+
+        def finalize_chunk(boundary_type: str):
+            """Finalize current chunk and add to list"""
+            nonlocal current_nodes, current_words, chunk_num
+
+            if not current_nodes:
+                return
+
+            # Combine text from all nodes (using translated if available)
+            text_parts = []
+            for node in current_nodes:
+                node_text = node.get_text()
+                if node_text.strip():
+                    text_parts.append(node_text)
+
+            combined_text = '\n\n'.join(text_parts)
+
+            chunks.append(SemanticChunk(
+                nodes=current_nodes.copy(),
+                text=combined_text,
+                word_count=current_words,
+                chunk_number=chunk_num,
+                boundary_type=boundary_type,
+                start_position=current_nodes[0].position,
+                end_position=current_nodes[-1].position
+            ))
+
+            current_nodes = []
+            current_words = 0
+            chunk_num += 1
+
+        for node in ast:
+            # Skip empty or very small nodes (blank lines, etc.)
+            node_text = node.get_text()
+            node_words = len(node_text.split())
+
+            if node_words < 5:
+                continue
+
+            # FALLBACK: Giant single node (unstructured text like transcripts)
+            # This is the LEGITIMATE fallback case - thousands of words without breaks
+            if node_words > max_words:
+                # Finalize any pending chunk first
+                if current_nodes:
+                    finalize_chunk("semantic")
+
+                # Hard cut the giant node into chunks
+                hard_cut_chunks = self._hard_cut_large_node(
+                    node,
+                    target_words,
+                    max_words,
+                    chunk_num
+                )
+                chunks.extend(hard_cut_chunks)
+                chunk_num += len(hard_cut_chunks)
+                continue
+
+            # Natural boundary: heading at or past target
+            is_heading = node.node_type == BlockType.HEADING
+            at_target = current_words >= target_words
+
+            if is_heading and at_target and current_nodes:
+                # Finalize chunk at natural section boundary
+                finalize_chunk("semantic")
+
+            # Would adding this node exceed max?
+            would_exceed = (current_words + node_words) > max_words
+
+            if would_exceed and current_nodes:
+                # Must finalize chunk even mid-section
+                finalize_chunk("semantic")
+
+            # Add node to current chunk
+            current_nodes.append(node)
+            current_words += node_words
+
+        # Finalize last chunk
+        if current_nodes:
+            finalize_chunk("end_of_document")
+
+        return chunks
+
+    def _hard_cut_large_node(
+        self,
+        node: DocumentNode,
+        target_words: int,
+        max_words: int,
+        start_chunk_num: int
+    ) -> List[SemanticChunk]:
+        """
+        FALLBACK: Hard cut a giant node into chunks.
+
+        This handles the edge case of unstructured text (audio transcripts,
+        single giant paragraphs) that exceed max_words without natural breaks.
+
+        Uses same strategy as current chunker: try to break on sentences,
+        fallback to word count if no sentence boundaries found.
+        """
+        chunks = []
+        text = node.get_text()
+        words = text.split()
+        chunk_num = start_chunk_num
+
+        # Sentence boundary pattern
+        sentence_pattern = re.compile(r'[.!?]\s+')
+
+        position = 0
+        while position < len(words):
+            # Extract target chunk of words
+            chunk_words = words[position:position + max_words]
+            chunk_text = ' '.join(chunk_words)
+
+            # Try to find sentence boundary near target
+            if len(chunk_words) >= target_words:
+                # Search in the last 20% of chunk for sentence break
+                search_start = int(len(chunk_text) * 0.8)
+                search_text = chunk_text[search_start:]
+
+                sentence_matches = list(sentence_pattern.finditer(search_text))
+                if sentence_matches:
+                    # Cut at last sentence in chunk
+                    last_match = sentence_matches[-1]
+                    cut_pos = search_start + last_match.end()
+                    chunk_text = chunk_text[:cut_pos].strip()
+
+                    # Recalculate word count after cut
+                    actual_words = len(chunk_text.split())
+                    position += actual_words
+                else:
+                    # No sentence boundary - hard cut at max_words
+                    position += len(chunk_words)
+            else:
+                # Last chunk - take everything remaining
+                position += len(chunk_words)
+
+            # Create chunk (note: single node)
+            chunks.append(SemanticChunk(
+                nodes=[node],
+                text=chunk_text,
+                word_count=len(chunk_text.split()),
+                chunk_number=chunk_num,
+                boundary_type="hard_cut",
+                start_position=node.position,
+                end_position=node.position
+            ))
+
+            chunk_num += 1
+
+        return chunks
+
+    def preprocess_to_chunks(
+        self,
+        markdown_content: str,
+        target_words: int = 1000,
+        min_words: int = 800,
+        max_words: int = 1500
+    ) -> List[SemanticChunk]:
+        """
+        Complete preprocessing pipeline: markdown → AST → semantic chunks.
+
+        This is the primary interface for ingestion. Returns chunks ready
+        for serial concept extraction.
+
+        Pipeline stages:
+        1. SERIAL: Parse markdown → AST
+        2. BOUNDED PARALLEL: Translate code blocks (2-3 workers)
+        3. SYNC: Wait for all translations
+        4. SERIAL: Group AST → semantic chunks
+        5. Return chunks for serial ingestion (CRITICAL: maintains order)
+
+        Args:
+            markdown_content: Raw markdown string
+            target_words: Target words per chunk
+            min_words: Minimum words per chunk
+            max_words: Maximum words per chunk
+
+        Returns:
+            List of SemanticChunk objects in document order
+        """
+        # Stage 1: Parse to AST
+        ast = self._parse_to_ast(markdown_content)
+
+        # Stage 2-3: Translate code blocks (bounded parallel + sync)
+        ast = self._translate_blocks_parallel(ast)
+
+        # Stage 4: Group into semantic chunks
+        chunks = self.group_ast_to_semantic_chunks(
+            ast,
+            target_words=target_words,
+            min_words=min_words,
+            max_words=max_words
+        )
+
+        return chunks
 
 
 # Standalone test function
