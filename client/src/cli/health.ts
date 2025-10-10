@@ -8,6 +8,7 @@ import { createClientFromEnv } from '../api/client';
 
 export const healthCommand = new Command('health')
   .description('Check API server health')
+  .showHelpAfterError()
   .action(async () => {
     try {
       const client = createClientFromEnv();

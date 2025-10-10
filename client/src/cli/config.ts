@@ -57,6 +57,8 @@ function promptPassword(question: string): Promise<string> {
 
 export const configCommand = new Command('config')
   .description('Manage kg CLI configuration')
+  .showHelpAfterError('(add --help for additional information)')
+  .showSuggestionAfterError()
   .addCommand(
     new Command('get')
       .description('Get configuration value(s)')

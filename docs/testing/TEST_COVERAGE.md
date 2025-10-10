@@ -545,7 +545,7 @@ def test_mock_provider_modes():
 - Open-source graph database
 - PostgreSQL compatibility
 - Better licensing for production
-- SQL + Cypher hybrid queries
+- SQL + openCypher hybrid queries
 
 **Migration Impact on Tests:**
 - ✅ Mock provider unchanged (no database dependency)
@@ -553,9 +553,9 @@ def test_mock_provider_modes():
 - ⏳ Integration tests need AGE database running
 - ⏳ Query tests pending AGE Cypher compatibility verification
 
-**Cypher Compatibility:**
-- AGE uses openCypher standard
-- Some Neo4j-specific functions not available
+**openCypher Compatibility:**
+- AGE implements the openCypher standard (open-source graph query language)
+- Some Neo4j proprietary Cypher extensions not available
 - Vector search via PostgreSQL extensions (pgvector)
 - Relationship syntax slightly different
 

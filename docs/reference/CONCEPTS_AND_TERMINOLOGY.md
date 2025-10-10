@@ -10,7 +10,7 @@ A comprehensive guide to understanding the knowledge graph system's terminology,
 - [Ontology in This System](#ontology-in-this-system)
 - [Graph Integrity](#graph-integrity)
 - [Stitching and Pruning](#stitching-and-pruning)
-- [Neo4j Graph Database](#neo4j-graph-database)
+- [Apache AGE Graph Database](#apache-age-graph-database)
 - [Token Investment Protection](#token-investment-protection)
 - [Workflow Scenarios](#workflow-scenarios)
 
@@ -102,7 +102,7 @@ Graph integrity means:
 
 ### The Integrity Problem
 
-Neo4j relationships are like pointers - they reference nodes by their properties. A **dangling relationship** occurs when:
+Graph database relationships are like pointers - they reference nodes by their properties. A **dangling relationship** occurs when:
 
 1. A relationship exists: `(ConceptA)-[:IMPLIES]->(ConceptB)`
 2. But `ConceptB` doesn't exist in the database
@@ -230,16 +230,18 @@ This guarantees graph integrity - no dangling edges remain.
 
 ---
 
-## Neo4j Graph Database
+## Apache AGE Graph Database
 
-### Why Neo4j?
+### Why Apache AGE?
 
-Neo4j is a native graph database optimized for connected data:
+Apache AGE (A Graph Extension) is a PostgreSQL extension that provides graph database capabilities:
 
 1. **Nodes**: Represent entities (Concepts, Sources, Instances)
 2. **Relationships**: First-class citizens with properties
-3. **Traversal**: Fast path queries across connected data
-4. **Cypher**: Declarative query language for graph patterns
+3. **Traversal**: Fast path queries across connected data using openCypher
+4. **openCypher**: Open-source declarative query language for graph patterns
+5. **PostgreSQL Integration**: Combines graph and relational data in a single database
+6. **Cost-Effective**: Open-source alternative to proprietary graph databases
 
 ### Data Model
 
@@ -532,7 +534,8 @@ python -m src.admin.check_integrity --ontology "Alan Watts" --repair
 
 - [Architecture Decisions](ARCHITECTURE_DECISIONS.md) - ADR-011 on backup/restore design
 - [Backup & Restore Guide](BACKUP_RESTORE.md) - Detailed operational guide
-- [Neo4j Cypher Manual](https://neo4j.com/docs/cypher-manual/) - Query language reference
+- [openCypher Language Reference](https://s3.amazonaws.com/artifacts.opencypher.org/openCypher9.pdf) - Query language reference
+- [Apache AGE Documentation](https://age.apache.org/age-manual/master/intro/overview.html) - AGE implementation details
 - [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings) - Vector representation details
 
 ---

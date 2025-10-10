@@ -10,6 +10,7 @@ import { configureColoredHelp } from './help-formatter';
 
 const queryCommand = new Command('query')
       .description('Search for concepts using natural language')
+      .showHelpAfterError()
       .argument('<query>', 'Search query text')
       .option('-l, --limit <number>', 'Maximum results', '10')
       .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0)', '0.7')
@@ -52,6 +53,7 @@ const queryCommand = new Command('query')
 
 const detailsCommand = new Command('details')
       .description('Get detailed information about a concept')
+      .showHelpAfterError()
       .argument('<concept-id>', 'Concept ID to retrieve')
       .action(async (conceptId) => {
         try {
@@ -93,6 +95,7 @@ const detailsCommand = new Command('details')
 
 const relatedCommand = new Command('related')
       .description('Find concepts related through graph traversal')
+      .showHelpAfterError()
       .argument('<concept-id>', 'Starting concept ID')
       .option('-d, --depth <number>', 'Maximum traversal depth (1-5)', '2')
       .option('-t, --types <types...>', 'Filter by relationship types')
@@ -133,6 +136,7 @@ const relatedCommand = new Command('related')
 
 const connectCommand = new Command('connect')
       .description('Find shortest path between two concepts (accepts concept IDs or natural language queries)')
+      .showHelpAfterError()
       .argument('<from>', 'Starting concept (ID or search phrase)')
       .argument('<to>', 'Target concept (ID or search phrase)')
       .option('--max-hops <number>', 'Maximum path length', '5')
@@ -210,6 +214,8 @@ const connectCommand = new Command('connect')
 
 export const searchCommand = new Command('search')
   .description('Search for concepts and explore the graph')
+  .showHelpAfterError('(add --help for additional information)')
+  .showSuggestionAfterError()
   .addCommand(queryCommand)
   .addCommand(detailsCommand)
   .addCommand(relatedCommand)
