@@ -12,7 +12,9 @@ import { IngestRequest, JobStatus, DuplicateJobResponse, JobSubmitResponse } fro
 import { getConfig } from '../lib/config';
 
 export const ingestCommand = new Command('ingest')
-  .description('Ingest documents into the knowledge graph');
+  .description('Ingest documents into the knowledge graph')
+  .showHelpAfterError('(add --help for additional information)')
+  .showSuggestionAfterError();
 
 // Ingest file command
 ingestCommand
@@ -25,6 +27,7 @@ ingestCommand
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('--overlap-words <n>', 'Overlap between chunks', '200')
   .option('-w, --wait', 'Wait for job completion (default: submit and exit)', false)
+  .showHelpAfterError()
   .action(async (path: string, options) => {
     try {
       // Validate file exists
@@ -107,6 +110,7 @@ ingestCommand
   .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('--overlap-words <n>', 'Overlap between chunks', '200')
+  .showHelpAfterError()
   .action(async (dir: string, options) => {
     try {
       // Validate directory exists
@@ -209,6 +213,7 @@ ingestCommand
   .option('--filename <name>', 'Filename for tracking', 'text_input')
   .option('--target-words <n>', 'Target words per chunk', '1000')
   .option('-w, --wait', 'Wait for job completion (default: submit and exit)', false)
+  .showHelpAfterError()
   .action(async (text: string, options) => {
     try {
       const client = createClientFromEnv();

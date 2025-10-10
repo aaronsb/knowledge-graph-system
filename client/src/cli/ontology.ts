@@ -10,6 +10,8 @@ import { Table } from '../lib/table';
 
 export const ontologyCommand = new Command('ontology')
   .description('Manage ontologies (knowledge domains)')
+  .showHelpAfterError('(add --help for additional information)')
+  .showSuggestionAfterError()
   .addCommand(
     new Command('list')
       .description('List all ontologies')
@@ -70,6 +72,7 @@ export const ontologyCommand = new Command('ontology')
   .addCommand(
     new Command('info')
       .description('Get detailed information about an ontology')
+      .showHelpAfterError()
       .argument('<name>', 'Ontology name')
       .action(async (name) => {
         try {
@@ -105,6 +108,7 @@ export const ontologyCommand = new Command('ontology')
   .addCommand(
     new Command('files')
       .description('List files in an ontology')
+      .showHelpAfterError()
       .argument('<name>', 'Ontology name')
       .action(async (name) => {
         try {
@@ -133,6 +137,7 @@ export const ontologyCommand = new Command('ontology')
   .addCommand(
     new Command('delete')
       .description('Delete an ontology and all its data')
+      .showHelpAfterError()
       .argument('<name>', 'Ontology name')
       .option('-f, --force', 'Skip confirmation and force deletion')
       .action(async (name, options) => {
