@@ -122,8 +122,12 @@ const typeFormatters: Record<ColumnType, (value: string, rawValue?: any) => stri
       default: return colors.status.dim(v);
     }
   },
-  timestamp: (v) => {
-    const d = new Date(v);
+  timestamp: (v, raw) => {
+    // Use rawValue (not truncated string) for date parsing
+    const d = new Date(raw || v);
+    if (isNaN(d.getTime())) {
+      return colors.status.dim('Invalid Date');
+    }
     return colors.status.dim(d.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
