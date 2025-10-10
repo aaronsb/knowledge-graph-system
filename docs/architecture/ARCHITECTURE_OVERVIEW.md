@@ -155,13 +155,27 @@ See [ADR-013](ADR-013-unified-typescript-client.md) for detailed design.
 ```
 
 **Relationships:**
+
+*Structural Relationships* (link concepts to evidence):
 - `APPEARS_IN` - Concept → Source
 - `EVIDENCED_BY` - Concept → Instance
 - `FROM_SOURCE` - Instance → Source
-- `IMPLIES` - Concept → Concept (logical implication)
-- `CONTRADICTS` - Concept → Concept
-- `SUPPORTS` - Concept → Concept
-- `PART_OF` - Concept → Concept
+
+*Concept Relationships* (30 semantically sparse types, see ADR-022):
+
+**Categories:**
+- **Logical & Truth** (4 types): IMPLIES, CONTRADICTS, PRESUPPOSES, EQUIVALENT_TO
+- **Causal** (5 types): CAUSES, ENABLES, PREVENTS, INFLUENCES, RESULTS_FROM
+- **Structural** (5 types): PART_OF, CONTAINS, COMPOSED_OF, SUBSET_OF, INSTANCE_OF
+- **Evidential** (4 types): SUPPORTS, REFUTES, EXEMPLIFIES, MEASURED_BY
+- **Similarity** (4 types): SIMILAR_TO, ANALOGOUS_TO, CONTRASTS_WITH, OPPOSITE_OF
+- **Temporal** (3 types): PRECEDES, CONCURRENT_WITH, EVOLVES_INTO
+- **Functional** (4 types): USED_FOR, REQUIRES, PRODUCES, REGULATES
+- **Meta** (2 types): DEFINED_AS, CATEGORIZED_AS
+
+*Edge Properties:*
+- `confidence` (float): LLM confidence score (0.0-1.0)
+- `category` (string): Semantic category for query filtering
 
 ### 6. Legacy Query Interfaces
 

@@ -13,6 +13,7 @@ from typing import List, Dict, Any
 from src.api.lib.chunker import Chunk
 from src.api.lib.age_client import AGEClient
 from src.api.lib.llm_extractor import extract_concepts, generate_embedding
+from src.api.lib.relationship_mapper import normalize_relationship_type
 
 
 class ChunkedIngestionStats:
@@ -336,8 +337,19 @@ def process_chunk(
     for rel in extraction["relationships"]:
         llm_from_id = rel["from_concept_id"]
         llm_to_id = rel["to_concept_id"]
-        rel_type = rel["relationship_type"]
+        llm_rel_type = rel["relationship_type"]
         confidence = rel["confidence"]
+
+        # Normalize relationship type using Porter Stemmer Enhanced Hybrid Matcher
+        canonical_type, category, similarity = normalize_relationship_type(llm_rel_type)
+
+        if not canonical_type:
+            print(f"  ⚠ Skipping relationship: invalid type '{llm_rel_type}' (no match)")
+            continue
+
+        # Log normalization if it was fuzzy matched
+        if similarity < 1.0:
+            print(f"  🔧 Normalized '{llm_rel_type}' → '{canonical_type}' ({category}, {similarity:.2f})")
 
         # Map LLM concept IDs to actual concept IDs
         actual_from_id = concept_id_map.get(llm_from_id)
@@ -351,7 +363,8 @@ def process_chunk(
             neo4j_client.create_concept_relationship(
                 from_id=actual_from_id,
                 to_id=actual_to_id,
-                rel_type=rel_type,
+                rel_type=canonical_type,
+                category=category,
                 confidence=confidence
             )
             stats.relationships_created += 1

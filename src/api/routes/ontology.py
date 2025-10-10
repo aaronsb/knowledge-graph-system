@@ -109,12 +109,12 @@ async def get_ontology_info(ontology_name: str):
     client = get_neo4j_client()
     try:
         # Check if ontology exists
-        exists = client._execute_cypher(
-            f"MATCH (s:Source {{document: '{ontology_name}'}}) RETURN count(s) > 0 as exists",
+        exists_check = client._execute_cypher(
+            f"MATCH (s:Source {{document: '{ontology_name}'}}) RETURN count(s) > 0 as ontology_exists",
             fetch_one=True
         )
 
-        if not exists or not exists['exists']:
+        if not exists_check or not exists_check['ontology_exists']:
             raise HTTPException(status_code=404, detail=f"Ontology '{ontology_name}' not found")
 
         # Get statistics
@@ -127,9 +127,8 @@ async def get_ontology_info(ontology_name: str):
             WITH source_count, file_count, files, count(DISTINCT c) as concept_count
             OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {{document: '{ontology_name}'}})
             WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
-            OPTIONAL MATCH (c1:Concept)-[r]->(c2:Concept)
-            WHERE (c1)-[:APPEARS_IN]->(:Source {{document: '{ontology_name}'}})
-               OR (c2)-[:APPEARS_IN]->(:Source {{document: '{ontology_name}'}})
+            OPTIONAL MATCH (ontology_concept:Concept)-[:APPEARS_IN]->(:Source {{document: '{ontology_name}'}})
+            OPTIONAL MATCH (ontology_concept)-[r]->(other:Concept)
             RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
         """, fetch_one=True)
 
