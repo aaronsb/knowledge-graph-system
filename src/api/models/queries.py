@@ -26,6 +26,9 @@ class SearchResponse(BaseModel):
     query: str
     count: int
     results: List[ConceptSearchResult]
+    below_threshold_count: Optional[int] = Field(None, description="Number of additional concepts below threshold")
+    suggested_threshold: Optional[float] = Field(None, description="Suggested threshold to reveal below-threshold results")
+    threshold_used: Optional[float] = Field(None, description="Similarity threshold used for filtering")
 
 
 # Concept Details Models
