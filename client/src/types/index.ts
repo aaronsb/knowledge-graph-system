@@ -215,6 +215,7 @@ export interface FindConnectionBySearchRequest {
   from_query: string;
   to_query: string;
   max_hops?: number;
+  threshold?: number;
 }
 
 export interface FindConnectionBySearchResponse {

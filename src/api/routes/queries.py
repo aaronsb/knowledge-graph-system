@@ -421,8 +421,8 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
         to_embedding_result = provider.generate_embedding(request.to_query)
         to_embedding = to_embedding_result['embedding'] if isinstance(to_embedding_result, dict) else to_embedding_result
 
-        # Find top matching concepts for each query (start with threshold 0.5)
-        threshold = 0.5
+        # Find top matching concepts for each query using request threshold
+        threshold = request.threshold
         from_matches = client.vector_search(from_embedding, top_k=1, threshold=threshold)
         to_matches = client.vector_search(to_embedding, top_k=1, threshold=threshold)
 
@@ -456,7 +456,7 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                 raise HTTPException(
                     status_code=404,
                     detail=f"No concepts found matching '{request.from_query}' at {int(threshold*100)}% similarity. "
-                           f"Try lowering threshold to {int(from_suggested_threshold*100)}% ({from_near_misses} near-miss concept{'s' if from_near_misses > 1 else ''} available)"
+                           f"Try: --min-similarity {from_suggested_threshold} ({from_near_misses} near-miss concept{'s' if from_near_misses > 1 else ''} available)"
                 )
             else:
                 raise HTTPException(
@@ -470,7 +470,7 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                 raise HTTPException(
                     status_code=404,
                     detail=f"No concepts found matching '{request.to_query}' at {int(threshold*100)}% similarity. "
-                           f"Try lowering threshold to {int(to_suggested_threshold*100)}% ({to_near_misses} near-miss concept{'s' if to_near_misses > 1 else ''} available)"
+                           f"Try: --min-similarity {to_suggested_threshold} ({to_near_misses} near-miss concept{'s' if to_near_misses > 1 else ''} available)"
                 )
             else:
                 raise HTTPException(
