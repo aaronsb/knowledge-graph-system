@@ -126,6 +126,7 @@ class MarkdownPreprocessor:
             'blocks_translated': 0,
             'blocks_stripped': 0,
             'blocks_kept': 0,
+            'translation_tokens': 0,  # Track token usage for cost estimation
         }
 
     def preprocess(self, markdown_content: str) -> str:
@@ -373,9 +374,10 @@ class MarkdownPreprocessor:
             for future in as_completed(future_to_node):
                 node = future_to_node[future]
                 try:
-                    translated = future.result()
-                    node.translated = translated
+                    result = future.result()  # Returns {"text": ..., "tokens": ...}
+                    node.translated = result["text"]
                     self.stats['blocks_translated'] += 1
+                    self.stats['translation_tokens'] += result.get("tokens", 0)
                 except Exception as e:
                     # Fallback: strip on error
                     node.translated = f"[Translation failed: {str(e)}]"
@@ -405,12 +407,14 @@ class MarkdownPreprocessor:
 
         return True
 
-    def _translate_single_block(self, node: DocumentNode) -> str:
+    def _translate_single_block(self, node: DocumentNode) -> Dict[str, Any]:
         """
         Translate a single code block to prose (isolation).
 
         Worker receives only the code and language, no context
         from other blocks.
+
+        Returns dict with 'text' and 'tokens' for tracking
         """
         language = node.metadata.get('language', 'unknown')
         code = node.content
@@ -446,12 +450,10 @@ Code:
 
 Provide only the prose explanation, no code syntax."""
 
-        # Call AI provider (using cheap, fast model)
+        # Call AI provider (using cheap, fast model: gpt-4o-mini or claude-haiku)
         try:
-            # Use the AI provider's generate method
-            # For testing, we can mock this
-            response = self.ai_provider.translate_code_to_prose(prompt)
-            return response
+            response = self.ai_provider.translate_to_prose(prompt, code)
+            return response  # Returns {"text": ..., "tokens": ...}
         except Exception as e:
             raise Exception(f"AI translation failed: {str(e)}")
 
