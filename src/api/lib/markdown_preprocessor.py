@@ -171,22 +171,91 @@ class MarkdownPreprocessor:
 
     def _tokens_to_nodes(self, tokens: List[Dict], start_position: int = 0) -> List[DocumentNode]:
         """
-        Convert mistune AST tokens to DocumentNode objects.
+        Convert mistune AST tokens to DocumentNode objects AS SECTIONS.
 
-        Recursively processes tokens and maintains position order.
+        CRITICAL FIX: Group content by heading sections, not individual lines.
+        - A ## heading + all content until next ## = ONE section node
+        - A ``` code fence stays WITHIN the section (translated in place later)
+
+        This prevents code blocks from being split across chunks.
         """
         nodes = []
         position = start_position
 
+        # Group tokens into sections by headings
+        current_section_heading = None
+        current_section_content = []
+        current_section_position = position
+        section_has_code = False
+
+        def finalize_section():
+            """Create a section node from accumulated heading + content"""
+            nonlocal current_section_heading, current_section_content, current_section_position, position, section_has_code
+
+            if current_section_heading is None and not current_section_content:
+                return  # Nothing to finalize
+
+            # Build section text: heading + content (with code blocks as markdown)
+            section_parts = []
+            section_metadata = {'has_code': section_has_code}
+
+            if current_section_heading:
+                # Add heading line
+                heading_level = current_section_heading.get('level', 1)
+                heading_text = current_section_heading.get('text', '')
+                section_parts.append(f"{'#' * heading_level} {heading_text}")
+                section_metadata['level'] = heading_level
+                section_metadata['heading'] = heading_text
+
+            # Add all content tokens in this section (INCLUDING code blocks as markdown)
+            for content_token in current_section_content:
+                token_text = self._token_to_markdown(content_token)
+                if token_text.strip():
+                    section_parts.append(token_text)
+
+            # Create ONE section node
+            section_text = '\n\n'.join(section_parts)
+
+            nodes.append(DocumentNode(
+                node_type=BlockType.HEADING if current_section_heading else BlockType.TEXT,
+                content=section_text,
+                position=current_section_position,
+                metadata=section_metadata
+            ))
+
+            position += 1
+
+            # Reset section accumulator
+            current_section_heading = None
+            current_section_content = []
+            current_section_position = position
+            section_has_code = False
+
         for token in tokens:
             token_type = token.get('type', 'unknown')
 
-            if token_type == 'block_code':
-                # Fenced code block - get language from attrs.info
+            if token_type == 'heading':
+                # BOUNDARY: Start new section - finalize previous
+                finalize_section()
+
+                # Extract heading info
+                attrs = token.get('attrs', {})
+                level = attrs.get('level', 1) if attrs else 1
+                text = self._extract_text_from_children(token.get('children', []))
+
+                current_section_heading = {'level': level, 'text': text}
+                current_section_content = []
+                current_section_position = position
+                section_has_code = False
+
+            elif token_type == 'block_code':
+                # BOUNDARY: Code block acts as section boundary
+                # Finalize section BEFORE code block
+                finalize_section()
+
+                # Create separate code node for translation
                 attrs = token.get('attrs', {})
                 lang = attrs.get('info', '').strip() if attrs else 'text'
-                if not lang:
-                    lang = 'text'
                 code = token.get('raw', '')
 
                 node_type = self._classify_code_block(lang)
@@ -197,66 +266,48 @@ class MarkdownPreprocessor:
                     metadata={'language': lang}
                 ))
                 self.stats['blocks_detected'] += 1
+                position += 1
 
-            elif token_type == 'heading':
-                # Heading - level is in attrs
-                attrs = token.get('attrs', {})
-                level = attrs.get('level', 1) if attrs else 1
-                # Extract text from children
-                text = self._extract_text_from_children(token.get('children', []))
-                nodes.append(DocumentNode(
-                    node_type=BlockType.HEADING,
-                    content=text,
-                    position=position,
-                    metadata={'level': level}
-                ))
-
-            elif token_type == 'paragraph':
-                # Paragraph - extract text from children
-                text = self._extract_text_from_children(token.get('children', []))
-                nodes.append(DocumentNode(
-                    node_type=BlockType.TEXT,
-                    content=text,
-                    position=position,
-                    metadata={}
-                ))
-
-            elif token_type == 'list':
-                # List - serialize children as markdown
-                # ordered flag is in attrs in mistune 3.x
-                attrs = token.get('attrs', {})
-                ordered = attrs.get('ordered', False) if attrs else False
-                list_content = self._serialize_list(token)
-                nodes.append(DocumentNode(
-                    node_type=BlockType.LIST,
-                    content=list_content,
-                    position=position,
-                    metadata={'ordered': ordered}
-                ))
-
-            elif token_type in ['block_quote', 'thematic_break', 'blank_line']:
-                # Other block-level elements
-                raw = token.get('raw', '')
-                nodes.append(DocumentNode(
-                    node_type=BlockType.OTHER,
-                    content=raw,
-                    position=position,
-                    metadata={'original_type': token_type}
-                ))
+                # Code block finalized, next content starts fresh section
+                current_section_heading = None
+                current_section_content = []
+                current_section_position = position
 
             else:
-                # Unknown token - preserve as-is
-                raw = str(token)
-                nodes.append(DocumentNode(
-                    node_type=BlockType.OTHER,
-                    content=raw,
-                    position=position,
-                    metadata={'original_type': token_type}
-                ))
+                # All other content belongs to current section
+                current_section_content.append(token)
 
-            position += 1
+        # Finalize last section
+        finalize_section()
 
         return nodes
+
+    def _token_to_markdown(self, token: Dict) -> str:
+        """Convert a single token to markdown text"""
+        token_type = token.get('type', 'unknown')
+
+        if token_type == 'paragraph':
+            return self._extract_text_from_children(token.get('children', []))
+
+        elif token_type == 'list':
+            return self._serialize_list(token)
+
+        elif token_type == 'block_code':
+            # Preserve code block as markdown (with fences)
+            attrs = token.get('attrs', {})
+            lang = attrs.get('info', '').strip() if attrs else ''
+            code = token.get('raw', '')
+            return f"```{lang}\n{code}\n```"
+
+        elif token_type in ['block_quote', 'thematic_break']:
+            return token.get('raw', '')
+
+        elif token_type == 'blank_line':
+            return ''  # Skip blank lines in section accumulation
+
+        else:
+            # Fallback
+            return token.get('raw', str(token))
 
     def _extract_text_from_children(self, children: List[Dict]) -> str:
         """Extract plain text from token children (inline elements)"""
@@ -419,64 +470,53 @@ class MarkdownPreprocessor:
         language = node.metadata.get('language', 'unknown')
         code = node.content
 
-        # Build prompt based on block type
+        # Build prompt based on block type - focus on CONCEPTS and LABELS, not explanation
         if node.node_type == BlockType.MERMAID:
-            prompt = f"""Explain this Mermaid diagram in plain English prose.
-Describe what the diagram shows, the flow or relationships, and the key components.
-Use simple paragraphs. Focus on WHAT it represents and WHY.
+            prompt = f"""What concepts and ideas does this Mermaid diagram represent?
 
 Diagram:
 {code}
 
-⚠️  NEVER UNDER ANY CIRCUMSTANCES INCLUDE CODE SYNTAX IN YOUR RESPONSE ⚠️
-YOU WILL BREAK THE ENTIRE SYSTEM IF YOU INCLUDE ANY:
-- Mermaid syntax (graph TD, -->, etc.)
-- Code blocks, backticks, or fenced syntax
-- Technical symbols or operators
-- ANY non-prose content
+Provide:
+1. A 1-2 sentence description of what this diagram represents (NOT how it works)
+2. 3-5 conceptual labels or keywords that capture the main ideas
 
-ONLY provide natural language prose. Write as if explaining to someone verbally.
-Example: "The diagram shows data flowing from the user interface through an API layer to the database."
+Example output format:
+"This diagram represents a data processing pipeline with multiple transformation stages. Key concepts include: data ingestion, validation, transformation, storage, error handling."
+
+CRITICAL: Output ONLY plain text sentences and comma-separated labels. NO code, NO syntax, NO special characters.
 """
 
         elif node.node_type in [BlockType.JSON, BlockType.YAML]:
-            prompt = f"""Describe this {language} configuration in plain English prose.
-Explain what this configuration defines, key settings, and their purpose.
-Use simple paragraphs. Focus on WHAT it configures and WHY.
+            prompt = f"""What concepts does this {language} configuration represent?
 
 Configuration:
 {code}
 
-⚠️  NEVER UNDER ANY CIRCUMSTANCES INCLUDE CODE SYNTAX IN YOUR RESPONSE ⚠️
-YOU WILL BREAK THE ENTIRE SYSTEM IF YOU INCLUDE ANY:
-- JSON, YAML, or configuration syntax
-- Curly braces, brackets, colons, or quotes
-- Code blocks or backticks
-- ANY non-prose content
+Provide:
+1. A 1-2 sentence description of what this configuration defines (NOT the specific values)
+2. 3-5 conceptual labels or keywords
 
-ONLY provide natural language prose. Write as if explaining to someone verbally.
-Example: "This configuration sets up a PostgreSQL database container with specific credentials and port mappings."
+Example output format:
+"This configuration defines database connection settings and resource limits. Key concepts include: connection pooling, authentication, timeout management, performance tuning."
+
+CRITICAL: Output ONLY plain text sentences and comma-separated labels. NO code, NO syntax, NO special characters.
 """
 
         else:
-            prompt = f"""Explain this {language} code in plain English prose.
-Describe what the code does, how it works, and its purpose.
-Use simple paragraphs and lists. Focus on WHAT it does and WHY.
+            prompt = f"""What concepts and ideas does this {language} code represent?
 
 Code:
 {code}
 
-⚠️  NEVER UNDER ANY CIRCUMSTANCES INCLUDE CODE SYNTAX IN YOUR RESPONSE ⚠️
-YOU WILL BREAK THE ENTIRE SYSTEM IF YOU INCLUDE ANY:
-- SQL statements (CREATE, SELECT, INSERT, MATCH, WHERE, RETURN)
-- Cypher queries (MATCH, CREATE, MERGE, etc.)
-- Programming syntax (brackets, semicolons, operators)
-- Code blocks, backticks, or fenced syntax
-- ANY non-prose content whatsoever
+Provide:
+1. A 1-2 sentence description of what this code represents (NOT a line-by-line explanation)
+2. 3-5 conceptual labels or keywords that capture the main ideas
 
-ONLY provide natural language prose. Write as if explaining to someone verbally.
-Do NOT show examples of the code. Describe what it does in plain English only.
-Example: "This code creates a new concept node in the graph database and logs the action to an audit table within a transaction."
+Example output format:
+"This code represents graph database schema initialization and extension setup. Key concepts include: schema definition, database extensions, vector similarity, temporal data management, graph structure."
+
+CRITICAL: Output ONLY plain text sentences and comma-separated labels. NO code, NO syntax, NO examples, NO special characters.
 """
 
         # Call AI provider (using cheap, fast model: gpt-4o-mini or claude-haiku)
@@ -496,51 +536,77 @@ Example: "This code creates a new concept node in the graph database and logs th
 
     def _strip_code_from_prose(self, text: str) -> str:
         """
-        Post-processing: Strip any code syntax that AI might have included despite warnings.
+        AGGRESSIVE post-processing: Strip ANY code syntax from AI output.
 
-        This is a safety net for when AI doesn't follow instructions perfectly.
-        Removes common code patterns while preserving natural language.
+        AI models consistently include code examples despite warnings.
+        This uses a whitelist approach: ONLY keep lines that are clearly prose.
         """
         import re
 
         # Remove fenced code blocks (```...```)
-        text = re.sub(r'```[\s\S]*?```', '[code example removed]', text)
+        text = re.sub(r'```[\s\S]*?```', '', text)
 
         # Remove inline code (`...`)
         text = re.sub(r'`[^`]+`', '', text)
 
-        # Remove lines that LOOK like code (multiple heuristics)
+        # AGGRESSIVE line-by-line filtering (whitelist approach)
         lines = text.split('\n')
         cleaned_lines = []
 
         for line in lines:
             stripped = line.strip()
 
-            # Skip empty lines
+            # Keep empty lines
             if not stripped:
                 cleaned_lines.append(line)
                 continue
 
-            # Heuristic 1: Line starts with SQL/Cypher keyword
-            if re.match(r'^\s*(SELECT|CREATE|MATCH|WHERE|RETURN|INSERT|UPDATE|DELETE|MERGE|WITH|BEGIN|COMMIT)\b', line, re.IGNORECASE):
-                continue  # Skip this line
+            # BLACKLIST: Skip lines with code characteristics
+            skip_line = False
 
-            # Heuristic 2: Line looks like code (has operators/brackets but few words)
-            word_count = len(re.findall(r'\b\w+\b', stripped))
-            special_chars = len(re.findall(r'[(){}\[\];:$]', stripped))
-            if word_count < 5 and special_chars > 2:
-                continue  # Likely code, skip
+            # 1. Contains SQL/Cypher/code keywords followed by parenthesis
+            if re.search(r'\b(SELECT|CREATE|MATCH|WHERE|RETURN|INSERT|UPDATE|DELETE|MERGE|WITH|BEGIN|COMMIT|MATCH|SET|REMOVE)\s*\(', stripped, re.IGNORECASE):
+                skip_line = True
 
-            # Heuristic 3: Line contains dollar-quoted strings (PostgreSQL/AGE specific)
+            # 2. Contains SQL/Cypher keywords followed by other keywords (CREATE TABLE, MATCH (...)
+            if re.search(r'\b(CREATE|ALTER|DROP|MATCH|MERGE|SET|REMOVE)\s+(TABLE|INDEX|NODE|EDGE|EXTENSION|GRAPH|SCHEMA|\()', stripped, re.IGNORECASE):
+                skip_line = True
+
+            # 3. Has parentheses with colons (property syntax: {label: 'value'})
+            if re.search(r'\([^)]*:\s*[\'"]', stripped):
+                skip_line = True
+            if re.search(r'\{[^}]*:\s*[\'"]', stripped):
+                skip_line = True
+
+            # 4. Contains escaped quotes (AI quoting code: \'value\')
+            if "\\" in stripped and ("\\'" in stripped or '\\"' in stripped):
+                skip_line = True
+
+            # 5. Line has many special chars vs words (code-like density)
+            word_count = len(re.findall(r'\b[a-zA-Z]{3,}\b', stripped))  # Words with 3+ letters
+            special_chars = len(re.findall(r'[(){}\[\];:$=]', stripped))
+            if word_count < 4 and special_chars > 2:
+                skip_line = True
+
+            # 6. Contains dollar-quoted strings (PostgreSQL specific)
             if '$$' in stripped:
-                continue  # Skip
+                skip_line = True
 
-            # Heuristic 4: Line has assignment operators or ends with semicolon
-            if re.search(r'\s*=\s*[^\s]|;\s*$', stripped):
-                continue  # Likely code
+            # 7. Ends with semicolon (code statement)
+            if stripped.endswith(';'):
+                skip_line = True
 
-            # Keep this line (seems like prose)
-            cleaned_lines.append(line)
+            # 8. Starts with special chars (indented code)
+            if re.match(r'^\s*[(){}\[\];]', line):
+                skip_line = True
+
+            # 9. Contains -> or => (function/relationship syntax)
+            if '->' in stripped or '=>' in stripped:
+                skip_line = True
+
+            # KEEP line if it passed all blacklist checks
+            if not skip_line:
+                cleaned_lines.append(line)
 
         text = '\n'.join(cleaned_lines)
 
@@ -653,10 +719,14 @@ Example: "This code creates a new concept node in the graph database and logs th
 
             combined_text = '\n\n'.join(text_parts)
 
+            # CRITICAL: Apply aggressive code stripping to ENTIRE chunk text
+            # This catches code blocks nested in lists, inline examples, etc.
+            combined_text = self._strip_code_from_prose(combined_text)
+
             chunks.append(SemanticChunk(
                 nodes=current_nodes.copy(),
                 text=combined_text,
-                word_count=current_words,
+                word_count=len(combined_text.split()),  # Recalculate after stripping
                 chunk_number=chunk_num,
                 boundary_type=boundary_type,
                 start_position=current_nodes[0].position,
