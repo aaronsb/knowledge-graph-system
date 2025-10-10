@@ -62,26 +62,36 @@ class SemanticChunk:
     CRITICAL: Chunks MUST be processed in serial order because each
     concept upsert queries the graph for vector similarity matches.
     Later chunks can link to concepts created by earlier chunks.
-    """
-    nodes: List[DocumentNode]
-    """AST nodes that comprise this chunk"""
 
+    Interface compatible with legacy Chunk for ingestion pipeline.
+    """
     text: str
     """Combined text from all nodes (translated content used if available)"""
-
-    word_count: int
-    """Total word count"""
 
     chunk_number: int
     """Sequential chunk number (1-indexed, maintains document order)"""
 
+    word_count: int
+    """Total word count"""
+
     boundary_type: str
     """Boundary type: semantic (natural section), hard_cut (fallback), end_of_document"""
 
-    start_position: int
+    # Interface compatibility with legacy Chunk (not used by process_chunk)
+    start_char: int = 0
+    """Character position in original document (placeholder for compatibility)"""
+
+    end_char: int = 0
+    """Character position in original document (placeholder for compatibility)"""
+
+    # AST-specific metadata
+    nodes: List[DocumentNode] = None
+    """AST nodes that comprise this chunk"""
+
+    start_position: int = 0
     """Position of first node in AST"""
 
-    end_position: int
+    end_position: int = 0
     """Position of last node in AST"""
 
 
