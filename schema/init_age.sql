@@ -45,7 +45,25 @@ SELECT create_graph('knowledge_graph');
 --   - APPEARS_IN: Concept appears in Source
 --   - EVIDENCED_BY: Concept evidenced by Instance
 --   - FROM_SOURCE: Instance from Source
---   - RELATES_TO, IMPLIES, SUPPORTS, CONTRADICTS, CAUSED_BY: Concept relationships
+--   - Concept Relationships: 30 semantically sparse types organized in 8 categories
+--     (see ADR-022: Semantic Relationship Taxonomy)
+--
+--     Categories: logical_truth, causal, structural, evidential,
+--                 similarity, temporal, functional, meta
+--
+--     Edge Properties:
+--       * confidence: FLOAT (0.0-1.0) - LLM confidence score
+--       * category: STRING - Semantic category for grouping
+--
+--     Example types:
+--       - IMPLIES, CONTRADICTS, PRESUPPOSES (logical_truth)
+--       - CAUSES, ENABLES, PREVENTS, INFLUENCES (causal)
+--       - PART_OF, CONTAINS, COMPOSED_OF (structural)
+--       - SUPPORTS, REFUTES, EXEMPLIFIES (evidential)
+--       - SIMILAR_TO, ANALOGOUS_TO, CONTRASTS_WITH (similarity)
+--       - PRECEDES, CONCURRENT_WITH, EVOLVES_INTO (temporal)
+--       - USED_FOR, REQUIRES, PRODUCES, REGULATES (functional)
+--       - DEFINED_AS, CATEGORIZED_AS (meta)
 
 -- ----------------------------------------------------------------------------
 -- STEP 5: Property Indexes (Graph)

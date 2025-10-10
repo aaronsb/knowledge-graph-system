@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
+                "file": "architecture/ADR-022-semantic-relationship-taxonomy.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "RECURSIVE_UPSERT_ARCHITECTURE"
+              "title": "ADR-022-semantic-relationship-taxonomy"
             }
           }
         ],
@@ -187,26 +187,27 @@
   },
   "active": "9a882212b6b27e8c",
   "lastOpenFiles": [
-    "architecture/ADR-022-semantic-relationship-taxonomy.md.tmp.1154792.1760064649922",
+    "architecture/ARCHITECTURE_OVERVIEW.md.tmp.1154792.1760065570324",
+    "architecture/DATA_CONTRACT.md.tmp.1154792.1760065545574",
+    "architecture/DATA_CONTRACT.md.tmp.1154792.1760065545020",
+    "architecture/DATA_CONTRACT.md.tmp.1154792.1760065544472",
+    "architecture/DATA_CONTRACT.md.tmp.1154792.1760065543919",
+    "architecture/DATA_CONTRACT.md.tmp.1154792.1760065543380",
     "architecture/FUZZY_MATCHING_ANALYSIS.md",
+    "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
+    "architecture/ADR-022-semantic-relationship-taxonomy.md.tmp.1154792.1760064865528",
+    "architecture/media/voltron-porter-stemmer.jpg",
+    "architecture/media",
+    "architecture/ADR-022-semantic-relationship-taxonomy.md.tmp.1154792.1760064649922",
     "architecture/FUZZY_MATCHING_ANALYSIS.md.tmp.1154792.1760064464374",
     "architecture/ADR-022-semantic-relationship-taxonomy.md",
     "architecture/ADR-022-semantic-relationship-taxonomy.md.tmp.1154792.1760063562460",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061963285",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061890631",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061877184",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061864457",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061852223",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061839831",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061832581",
-    "architecture/ADR-021-live-man-switch-ai-safety.md.tmp.1154792.1760061611205",
     "architecture/ADR-021-live-man-switch-ai-safety.md",
     "architecture/ADR-020-admin-module-architecture.md",
     "architecture/MCP Server.md",
     "architecture/visualization.md",
     "architecture/ADR-014-job-approval-workflow.md",
     "architecture/ARCHITECTURE_OVERVIEW.md",
-    "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
     "architecture/ADR-017-sensitive-auth-verification.md",
     "Untitled.md",
     "architecture/DATA_CONTRACT.md",
