@@ -118,6 +118,7 @@ class FindConnectionBySearchRequest(BaseModel):
     from_query: str = Field(..., description="Natural language query for starting concept", min_length=1)
     to_query: str = Field(..., description="Natural language query for target concept", min_length=1)
     max_hops: int = Field(5, description="Maximum path length", ge=1, le=10)
+    threshold: float = Field(0.5, description="Minimum similarity threshold for concept matching", ge=0.0, le=1.0)
 
 
 class FindConnectionBySearchResponse(BaseModel):

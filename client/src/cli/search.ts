@@ -140,6 +140,7 @@ const connectCommand = new Command('connect')
       .argument('<from>', 'Starting concept (ID or search phrase)')
       .argument('<to>', 'Target concept (ID or search phrase)')
       .option('--max-hops <number>', 'Maximum path length', '5')
+      .option('--min-similarity <number>', 'Minimum similarity threshold for concept matching (0.0-1.0)', '0.5')
       .action(async (from, to, options) => {
         try {
           const client = createClientFromEnv();
@@ -164,7 +165,8 @@ const connectCommand = new Command('connect')
             result = await client.findConnectionBySearch({
               from_query: from,
               to_query: to,
-              max_hops: parseInt(options.maxHops)
+              max_hops: parseInt(options.maxHops),
+              threshold: parseFloat(options.minSimilarity)
             });
 
             // Update labels with matched concepts
