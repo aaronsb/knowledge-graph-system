@@ -106,22 +106,48 @@ async def ingest_document(
     current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
-    Submit a document for async ingestion into the knowledge graph (ADR-014).
+    Submit a document for async ingestion into the knowledge graph with approval workflow.
 
-    **Approval Workflow:**
-    1. Job queued with status `pending` (analysis runs automatically)
-    2. Analysis complete → status `awaiting_approval` (check cost estimates)
-    3. Manual approval required (POST /jobs/{job_id}/approve)
-    4. OR use `auto_approve=true` to skip approval step
+    Implements ADR-014 job approval workflow with cost estimation before processing.
+    Documents are chunked, analyzed by LLM for concept extraction, and upserted to
+    the graph with semantic relationships.
 
-    **Deduplication:**
-    - Documents are hashed to detect duplicates
-    - If same content already ingested into same ontology, returns existing job
-    - Use `force=true` to override duplicate detection
+    **Workflow (ADR-014):**
+    1. Submit document → Job created with status `pending`
+    2. Analysis runs automatically (fast, estimates costs without LLM calls)
+    3. Job status → `awaiting_approval` with cost/time estimates
+    4. Manual approval required via POST /jobs/{job_id}/approve
+    5. OR use `auto_approve=true` to skip approval and process immediately
+    6. Processing begins → Watch progress via GET /jobs/{job_id}/stream
+
+    **Content Deduplication:**
+    - SHA-256 content hash detects duplicate ingestions
+    - If same content already exists in same ontology, returns existing job_id
+    - Use `force=true` to override and re-process anyway
+    - Useful for re-ingestion after system updates or to different ontologies
+
+    **Processing Modes:**
+    - `serial`: Process chunks one-by-one for clean concept matching (recommended, default)
+    - `parallel`: Process chunks concurrently for speed (may create duplicate concepts)
+
+    **Chunking Parameters:**
+    - `target_words`: Ideal chunk size (default 1000, range 500-2000)
+    - `overlap_words`: Word overlap between chunks for context (default 200)
+    - Auto-calculated: min_words = target_words * 0.8, max_words = target_words * 1.5
 
     **Returns:**
-    - If new: job_id and "pending" status
-    - If duplicate: existing job info with suggestion to use force flag
+    - New job: `job_id`, status "pending (analyzing)", poll endpoint
+    - Duplicate: Existing `job_id` with suggestion to use `force=true` if desired
+
+    **Example Response:**
+    ```json
+    {
+      "job_id": "abc123",
+      "status": "pending (analyzing)",
+      "content_hash": "sha256:...",
+      "message": "Job queued. Analysis running. Poll /jobs/abc123 for status."
+    }
+    ```
     """
     queue = get_job_queue()
     hasher = ContentHasher(queue)
@@ -207,17 +233,41 @@ async def ingest_text(
     current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
-    Submit raw text for ingestion (ADR-014 approval workflow).
+    Submit raw text content for async ingestion into the knowledge graph.
 
-    **Approval Workflow:**
-    1. Job queued with status `pending` (analysis runs automatically)
-    2. Analysis complete → status `awaiting_approval` (check cost estimates)
-    3. Manual approval required OR use `auto_approve=true`
+    Alternative to file upload for direct text submission. Implements the same
+    ADR-014 approval workflow and deduplication as the file-based endpoint.
 
-    **Useful for:**
-    - Pasting text directly
-    - Sending text from other systems
-    - Testing with small documents
+    **When to Use:**
+    - Pasting text directly from clipboard or editor
+    - Programmatic ingestion from other systems (APIs, scraping, etc.)
+    - Quick testing with small text snippets
+    - Ingesting generated or synthetic content
+
+    **Workflow:**
+    1. Submit text → Job created with status `pending`
+    2. Analysis runs (estimates costs and processing time)
+    3. Job status → `awaiting_approval` with estimates
+    4. Manual approval required OR use `auto_approve=true`
+    5. Processing begins → Stream progress via GET /jobs/{job_id}/stream
+
+    **Same Features as File Upload:**
+    - Content deduplication via SHA-256 hashing
+    - Cost estimation before processing
+    - Serial/parallel processing modes
+    - Configurable chunking parameters
+    - 24-hour approval expiration
+
+    **Parameters:**
+    - `text`: Raw text content (UTF-8 encoded)
+    - `filename`: Optional source name for tracking (defaults to "text_input")
+    - `ontology`: Collection name for organizing concepts
+    - `force`: Override duplicate detection
+    - `auto_approve`: Skip approval step for immediate processing
+
+    **Returns:**
+    - New job: `job_id` and status "pending (analyzing)"
+    - Duplicate: Existing `job_id` with `force=true` suggestion
     """
     queue = get_job_queue()
     hasher = ContentHasher(queue)
