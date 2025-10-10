@@ -145,13 +145,14 @@ RELATIONSHIP_TYPE_TO_CATEGORY: Dict[str, str] = {
 - ❌ Missed verb tense variations (`CAUSING` should match `CAUSES`)
 
 **Algorithm Comparison (15 critical test cases):**
-| Algorithm | Accuracy | Notes |
-|-----------|----------|-------|
-| `difflib.SequenceMatcher` (0.7) | 16.7% | Original approach - prone to false positives |
-| `difflib.get_close_matches` (0.7) | 16.7% | Same as SequenceMatcher (uses it internally) |
-| NLTK Edit Distance (≤3) | 66.7% | Handles verb tense but fails prefix matching |
-| Hybrid (prefix+contains+fuzzy 0.85) | 66.7% | Fixes prefix bugs but misses verb tense |
-| **Porter Stemmer Hybrid (0.8)** | **100%** | ✅ **Winner - combines all strengths** |
+
+| Algorithm                           | Accuracy | Notes                                        |
+| ----------------------------------- | -------- | -------------------------------------------- |
+| `difflib.SequenceMatcher` (0.7)     | 16.7%    | Original approach - prone to false positives |
+| `difflib.get_close_matches` (0.7)   | 16.7%    | Same as SequenceMatcher (uses it internally) |
+| NLTK Edit Distance (≤3)             | 66.7%    | Handles verb tense but fails prefix matching |
+| Hybrid (prefix+contains+fuzzy 0.85) | 66.7%    | Fixes prefix bugs but misses verb tense      |
+| **Porter Stemmer Hybrid (0.8)**     | **100%** | ✅ **Winner - combines all strengths**        |
 
 ![Porter Stemmer Enhanced Hybrid Matcher - Like Voltron, combining multiple algorithms into one powerful matcher](media/voltron-porter-stemmer.jpg)
 

@@ -112,7 +112,7 @@ def extract_concepts(
 
         # Format the prompt template with relationship types and existing concepts
         formatted_prompt = EXTRACTION_PROMPT_TEMPLATE.format(
-            relationship_types=", ".join(RELATIONSHIP_TYPES_LIST),
+            relationship_types=RELATIONSHIP_TYPES_LIST,  # Already a comma-separated string
             existing_concepts_list=existing_concepts_str
         )
 

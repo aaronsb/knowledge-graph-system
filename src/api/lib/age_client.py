@@ -517,30 +517,30 @@ class AGEClient:
         from_id: str,
         to_id: str,
         rel_type: str,
+        category: str,
         confidence: float
     ) -> bool:
         """
-        Create a relationship between two concepts.
+        Create a relationship between two concepts with category metadata.
 
         Args:
             from_id: Source concept ID
             to_id: Target concept ID
-            rel_type: Relationship type (IMPLIES, CONTRADICTS, SUPPORTS, PART_OF)
+            rel_type: Canonical relationship type (normalized via Porter Stemmer matcher)
+            category: Relationship category (logical_truth, causal, structural, etc.)
             confidence: Confidence score (0.0-1.0)
 
         Returns:
             True if relationship created successfully
 
         Raises:
-            ValueError: If rel_type is invalid or confidence out of range
+            ValueError: If confidence out of range
             Exception: If relationship creation fails
-        """
-        valid_types = ["IMPLIES", "CONTRADICTS", "SUPPORTS", "PART_OF", "RELATES_TO"]
-        if rel_type not in valid_types:
-            raise ValueError(
-                f"Invalid relationship type: {rel_type}. Must be one of {valid_types}"
-            )
 
+        Note:
+            Relationship type validation happens in ingestion layer via normalize_relationship_type().
+            This method trusts that rel_type has been normalized to one of the 30 canonical types.
+        """
         if not 0.0 <= confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {confidence}")
 
@@ -549,7 +549,10 @@ class AGEClient:
         query = f"""
         MATCH (c1:Concept {{concept_id: $from_id}})
         MATCH (c2:Concept {{concept_id: $to_id}})
-        MERGE (c1)-[r:{rel_type} {{confidence: $confidence}}]->(c2)
+        MERGE (c1)-[r:{rel_type} {{
+            confidence: $confidence,
+            category: $category
+        }}]->(c2)
         RETURN c1, r, c2
         """
 
@@ -559,7 +562,8 @@ class AGEClient:
                 params={
                     "from_id": from_id,
                     "to_id": to_id,
-                    "confidence": confidence
+                    "confidence": confidence,
+                    "category": category
                 },
                 fetch_one=True
             )

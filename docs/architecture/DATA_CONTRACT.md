@@ -40,18 +40,36 @@ All schema definitions now live in `src/api/constants.py`:
 
 ```python
 # src/api/constants.py
-from typing import Set
+from typing import Set, Dict, List
 
-# Valid relationship types for the knowledge graph
-RELATIONSHIP_TYPES: Set[str] = {
-    "IMPLIES",       # Concept A implies or leads to Concept B
-    "SUPPORTS",      # Concept A provides evidence/support for Concept B
-    "CONTRADICTS",   # Concept A contradicts or conflicts with Concept B
-    "RELATES_TO",    # General relationship between concepts
-    "PART_OF",       # Concept A is a component/part of Concept B
+# 30-type semantically sparse relationship taxonomy
+# Organized in 8 categories (see ADR-022)
+RELATIONSHIP_CATEGORIES: Dict[str, List[str]] = {
+    "logical_truth": ["IMPLIES", "CONTRADICTS", "PRESUPPOSES", "EQUIVALENT_TO"],
+    "causal": ["CAUSES", "ENABLES", "PREVENTS", "INFLUENCES", "RESULTS_FROM"],
+    "structural": ["PART_OF", "CONTAINS", "COMPOSED_OF", "SUBSET_OF", "INSTANCE_OF"],
+    "evidential": ["SUPPORTS", "REFUTES", "EXEMPLIFIES", "MEASURED_BY"],
+    "similarity": ["SIMILAR_TO", "ANALOGOUS_TO", "CONTRASTS_WITH", "OPPOSITE_OF"],
+    "temporal": ["PRECEDES", "CONCURRENT_WITH", "EVOLVES_INTO"],
+    "functional": ["USED_FOR", "REQUIRES", "PRODUCES", "REGULATES"],
+    "meta": ["DEFINED_AS", "CATEGORIZED_AS"],
 }
 
-# For use in LLM prompts (comma-separated list)
+# Flat set of all 30 types
+RELATIONSHIP_TYPES: Set[str] = {
+    rel_type
+    for category_types in RELATIONSHIP_CATEGORIES.values()
+    for rel_type in category_types
+}
+
+# Reverse mapping: type -> category
+RELATIONSHIP_TYPE_TO_CATEGORY: Dict[str, str] = {
+    rel_type: category
+    for category, types in RELATIONSHIP_CATEGORIES.items()
+    for rel_type in types
+}
+
+# For use in LLM prompts (comma-separated dense list)
 RELATIONSHIP_TYPES_LIST = ", ".join(sorted(RELATIONSHIP_TYPES))
 ```
 
@@ -95,7 +113,17 @@ The data contract supports schema evolution naturally:
 
 **Current Schema:**
 ```python
-RELATIONSHIP_TYPES = {"IMPLIES", "SUPPORTS", "CONTRADICTS", "RELATES_TO", "PART_OF"}
+# 30 types across 8 categories (see ADR-022)
+RELATIONSHIP_TYPES = {
+    "IMPLIES", "CONTRADICTS", "PRESUPPOSES", "EQUIVALENT_TO",  # logical_truth
+    "CAUSES", "ENABLES", "PREVENTS", "INFLUENCES", "RESULTS_FROM",  # causal
+    "PART_OF", "CONTAINS", "COMPOSED_OF", "SUBSET_OF", "INSTANCE_OF",  # structural
+    "SUPPORTS", "REFUTES", "EXEMPLIFIES", "MEASURED_BY",  # evidential
+    "SIMILAR_TO", "ANALOGOUS_TO", "CONTRASTS_WITH", "OPPOSITE_OF",  # similarity
+    "PRECEDES", "CONCURRENT_WITH", "EVOLVES_INTO",  # temporal
+    "USED_FOR", "REQUIRES", "PRODUCES", "REGULATES",  # functional
+    "DEFINED_AS", "CATEGORIZED_AS",  # meta
+}
 ```
 
 **Future Backup (Superset):**
@@ -115,13 +143,14 @@ RELATIONSHIP_TYPES = {"IMPLIES", "SUPPORTS", "CONTRADICTS", "RELATES_TO", "PART_
 1. **Update contract:**
    ```python
    # src/api/constants.py
-   RELATIONSHIP_TYPES: Set[str] = {
-       "IMPLIES",
-       "SUPPORTS",
-       "CONTRADICTS",
-       "RELATES_TO",
-       "PART_OF",
-       "DERIVES_FROM",  # New type
+   RELATIONSHIP_CATEGORIES: Dict[str, List[str]] = {
+       "logical_truth": ["IMPLIES", "CONTRADICTS", "PRESUPPOSES", "EQUIVALENT_TO"],
+       "causal": ["CAUSES", "ENABLES", "PREVENTS", "INFLUENCES", "RESULTS_FROM"],
+       "structural": [
+           "PART_OF", "CONTAINS", "COMPOSED_OF", "SUBSET_OF",
+           "INSTANCE_OF", "DERIVES_FROM"  # New type added to category
+       ],
+       # ... other categories
    }
    ```
 
@@ -166,13 +195,25 @@ Tests validate against the contract, not hardcoded assumptions. Schema changes a
 ### Graph Schema
 
 ```python
-# Relationship types for concept graph
+# 30 semantically sparse relationship types (see ADR-022)
+# Categories provide internal organization for humans
+# LLM sees flat list to avoid category bias
+RELATIONSHIP_CATEGORIES: Dict[str, List[str]] = {
+    "logical_truth": ["IMPLIES", "CONTRADICTS", "PRESUPPOSES", "EQUIVALENT_TO"],
+    "causal": ["CAUSES", "ENABLES", "PREVENTS", "INFLUENCES", "RESULTS_FROM"],
+    "structural": ["PART_OF", "CONTAINS", "COMPOSED_OF", "SUBSET_OF", "INSTANCE_OF"],
+    "evidential": ["SUPPORTS", "REFUTES", "EXEMPLIFIES", "MEASURED_BY"],
+    "similarity": ["SIMILAR_TO", "ANALOGOUS_TO", "CONTRASTS_WITH", "OPPOSITE_OF"],
+    "temporal": ["PRECEDES", "CONCURRENT_WITH", "EVOLVES_INTO"],
+    "functional": ["USED_FOR", "REQUIRES", "PRODUCES", "REGULATES"],
+    "meta": ["DEFINED_AS", "CATEGORIZED_AS"],
+}
+
+# Flat set of all types (30 total)
 RELATIONSHIP_TYPES: Set[str] = {
-    "IMPLIES",       # Causation/implication
-    "SUPPORTS",      # Evidence/support
-    "CONTRADICTS",   # Conflict/opposition
-    "RELATES_TO",    # General association
-    "PART_OF",       # Composition/hierarchy
+    rel_type
+    for category_types in RELATIONSHIP_CATEGORIES.values()
+    for rel_type in category_types
 }
 
 # Node labels
@@ -181,6 +222,10 @@ NODE_LABELS: Set[str] = {
     "Source",    # Source document/paragraph node
     "Instance",  # Evidence instance linking concept to source
 }
+
+# Edge properties for concept relationships
+# - confidence: float (0.0-1.0) - LLM confidence score
+# - category: str - Semantic category from RELATIONSHIP_CATEGORIES
 ```
 
 ### Backup Schema
@@ -337,7 +382,9 @@ Breaking changes require explicit migration:
 ## Related Documentation
 
 - **ADR-015:** Backup/Restore Streaming Architecture
+- **ADR-022:** Semantically Sparse 30-Type Relationship Taxonomy
 - **File:** `src/api/constants.py` (implementation)
+- **File:** `src/api/lib/relationship_mapper.py` (Porter Stemmer fuzzy matching)
 - **File:** `src/api/lib/backup_integrity.py` (consumer)
 - **File:** `src/api/lib/llm_extractor.py` (consumer)
 - **File:** `tests/api/test_backup_integrity.py` (validation tests)
