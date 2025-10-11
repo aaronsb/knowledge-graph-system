@@ -534,50 +534,78 @@ def get_custom_types_ordered_by_value():
     """
     Order custom types by value score for pruning decisions.
 
-    Value Score = (edge_count * traversal_weight * connectivity_bonus)
+    Value Score = (edge_count * traversal_weight * bridge_bonus)
     - edge_count: How many edges exist in the graph with this type
     - traversal_weight: How frequently these edges are traversed in queries
-    - connectivity_bonus: Graph-theoretic importance (betweenness, etc.)
+    - bridge_bonus: Prevents catastrophic forgetting of critical bridge nodes
 
     Time/age is IRRELEVANT - a graph's value is structural, not temporal.
+
+    CRITICAL INSIGHT: Low-activation nodes can have high structural value!
+    A rarely-accessed node might be a BRIDGE to high-activation subgraphs.
+    We must remember these bridges even if they're not popular endpoints.
     """
     return db.execute("""
+        WITH bridge_scores AS (
+            -- Calculate bridge value: low-activation nodes connecting to high-activation nodes
+            SELECT
+                e.relationship_type,
+                COUNT(*) as bridge_count,
+                AVG(c_to.access_count) as avg_destination_activation
+            FROM kg_api.edge_usage_stats e
+            JOIN kg_api.concept_access_stats c_from ON e.from_concept_id = c_from.concept_id
+            JOIN kg_api.concept_access_stats c_to ON e.to_concept_id = c_to.concept_id
+            WHERE c_from.access_count < 10  -- Low activation source
+              AND c_to.access_count > 100    -- High activation destination
+            GROUP BY e.relationship_type
+        )
         SELECT
             v.relationship_type,
             v.usage_count as edge_count,
             COALESCE(e.avg_traversal, 0) as avg_traversal,
-            COALESCE(e.max_traversal, 0) as max_traversal,
-            -- Value score: edge count × traversal frequency
-            v.usage_count * (1.0 + COALESCE(e.avg_traversal, 0) / 100.0) as value_score
+            COALESCE(b.bridge_count, 0) as bridge_count,
+            COALESCE(b.avg_destination_activation, 0) as bridge_value,
+            -- Value score: edge count × traversal × (1 + bridge bonus)
+            v.usage_count *
+            (1.0 + COALESCE(e.avg_traversal, 0) / 100.0) *
+            (1.0 + COALESCE(b.bridge_count, 0) / 10.0) as value_score
         FROM kg_api.relationship_vocabulary v
         LEFT JOIN (
-            SELECT
-                relationship_type,
-                AVG(traversal_count) as avg_traversal,
-                MAX(traversal_count) as max_traversal,
-                COUNT(*) as unique_edge_count
+            SELECT relationship_type, AVG(traversal_count) as avg_traversal
             FROM kg_api.edge_usage_stats
             GROUP BY relationship_type
         ) e ON v.relationship_type = e.relationship_type
+        LEFT JOIN bridge_scores b ON v.relationship_type = b.relationship_type
         WHERE v.is_builtin = FALSE AND v.is_active = TRUE
         ORDER BY value_score DESC
     """)
 
-# Alternative: Graph-theoretic value (future enhancement)
-def calculate_relationship_centrality(rel_type):
+def calculate_bridge_importance(concept_id):
     """
-    Calculate betweenness centrality: how often this relationship type
-    appears in shortest paths between concept pairs.
+    Prevents catastrophic forgetting by identifying bridge nodes.
 
-    High betweenness = structural importance to graph connectivity.
+    A concept might have LOW activation (rarely accessed) but HIGH value
+    because it bridges to important subgraphs.
+
+    Example:
+    - Concept "distributed consensus" has 5 accesses (LOW)
+    - But it connects to "raft algorithm" (500 accesses, HIGH)
+    - And "paxos protocol" (300 accesses, HIGH)
+    - → Don't prune! It's a critical bridge.
     """
-    # Count paths that use this relationship type
-    path_count = execute_cypher(f"""
-        MATCH path = shortestPath((a:Concept)-[*1..5]-(b:Concept))
-        WHERE ANY(r IN relationships(path) WHERE type(r) = '{rel_type}')
-        RETURN count(path) as paths_using_type
+    return db.execute(f"""
+        SELECT
+            c.concept_id,
+            c.access_count as own_activation,
+            COUNT(neighbor.concept_id) as high_value_neighbors,
+            AVG(neighbor.access_count) as avg_neighbor_activation
+        FROM kg_api.concept_access_stats c
+        JOIN kg_api.edge_usage_stats e ON c.concept_id = e.from_concept_id
+        JOIN kg_api.concept_access_stats neighbor ON e.to_concept_id = neighbor.concept_id
+        WHERE c.concept_id = '{concept_id}'
+          AND neighbor.access_count > 100  -- High activation threshold
+        GROUP BY c.concept_id, c.access_count
     """)
-    return path_count
 ```
 
 **Pruning Strategy:**
