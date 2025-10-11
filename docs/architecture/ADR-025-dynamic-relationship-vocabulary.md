@@ -415,6 +415,75 @@ def find_related_concepts(concept_id, max_depth=2):
 
 **Solution: Automatic Deprecation Process**
 
+### Natural Freshness via Upsert Mechanism
+
+**Critical Insight: Every ingestion refreshes activation naturally!**
+
+Unlike neural networks where weights decay without explicit training:
+- **New document ingestion** → Concept matching via embeddings
+- **Concept reuse** → Creates new edges to existing concept
+- **Edge creation** → Increments `usage_count` and `traversal_count`
+- **Automatic refresh** → Semantically relevant concepts stay active
+
+```python
+async def upsert_concept(label, embedding):
+    """
+    Every concept match refreshes activation - no time-based decay needed!
+    """
+    # Find existing concept via semantic similarity
+    existing = vector_search(embedding, threshold=0.8)
+
+    if existing:
+        # REUSE triggers activation refresh
+        await track_concept_access(existing.concept_id, 'upsert')
+        return existing.concept_id
+    else:
+        # Create new concept
+        return create_concept(label, embedding)
+
+async def create_relationship(from_id, to_id, rel_type):
+    """
+    Edge creation refreshes both nodes AND relationship type.
+    """
+    # Create graph edge
+    cypher_create_edge(from_id, to_id, rel_type)
+
+    # Refresh activation for BOTH concepts
+    await track_concept_access(from_id, 'relationship_source')
+    await track_concept_access(to_id, 'relationship_target')
+
+    # Increment relationship type usage
+    await increment_vocabulary_usage(rel_type)
+```
+
+**Self-Regulating System:**
+
+1. **Foundational concepts stay active**
+   - Core ideas appear across many documents
+   - Constant matching → constant refresh
+   - Example: "machine learning" → always relevant
+
+2. **Obsolete concepts naturally fade**
+   - Old/outdated ideas stop appearing in new documents
+   - No matches → no refreshes → activation decays organically
+   - Example: "floppy disk drivers" → rarely mentioned
+
+3. **Bridge concepts get refreshed**
+   - Low-activation bridge to high-activation concept
+   - High-activation concept gets new edges
+   - Bridge traversal → bridge concept refreshed too
+
+4. **Seasonal concepts cycle naturally**
+   - Domain-specific ideas wax and wane with document flow
+   - "tax optimization" → high in Q1, low rest of year
+   - No artificial time windows needed!
+
+**No Time-Based Decay Required:**
+- ❌ Don't prune based on "last_used" timestamp
+- ✅ Prune based on structural value (edges × traversals × bridges)
+- ✅ Let ingestion patterns determine relevance
+- ✅ Trust the graph to self-regulate
+
 ### Pruning Strategy
 
 ```sql
