@@ -121,15 +121,19 @@ class QueryService:
             rel_filter = f":{rel_types}"
 
         # Explicit string composition for clarity
+        # Note: Apache AGE doesn't support list comprehensions like [x in y | f(x)]
+        # So we use UNWIND + COLLECT instead to build path_types array
         query = f"""
             MATCH path = (start:Concept {{concept_id: $concept_id}})-[r{rel_filter}*1..{max_depth}]-(related:Concept)
             WHERE start <> related
-            WITH related,
-                 min(length(path)) as min_distance,
-                 [rel in relationships(path) | type(rel)] as path_types
+            WITH related, min(length(path)) as min_distance, collect(path) as paths
+            WITH related, min_distance, paths[0] as shortest_path
+            WITH related, min_distance, relationships(shortest_path) as path_rels
+            UNWIND path_rels as rel
+            WITH related.concept_id as concept_id, related.label as label, min_distance, collect(type(rel)) as path_types
             RETURN DISTINCT
-                related.concept_id as concept_id,
-                related.label as label,
+                concept_id,
+                label,
                 min_distance as distance,
                 path_types
             ORDER BY min_distance, label
