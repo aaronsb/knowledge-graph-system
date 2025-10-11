@@ -1,6 +1,6 @@
 # Knowledge Graph TypeScript Client
 
-Unified TypeScript client that runs as both a CLI tool and MCP server (future).
+Unified TypeScript client with both CLI tool (`kg`) and MCP server (`kg-mcp-server`) executables.
 
 ## Installation
 
@@ -15,7 +15,7 @@ cd client
 
 This will:
 1. Build the TypeScript code
-2. Install `kg` command to `~/.local/bin/`
+2. Install `kg` and `kg-mcp-server` commands to `~/.local/bin/`
 3. Check if `~/.local/bin` is in your PATH
 
 **Add to PATH** (if needed):
@@ -152,33 +152,33 @@ kg --api-url http://localhost:8000 search query "test"
 
 ## Architecture
 
-- **Entry Point**: `src/index.ts` - Mode detection (CLI vs MCP)
-- **API Client**: `src/api/client.ts` - HTTP client wrapper
+- **CLI Entry**: `src/index.ts` - CLI tool entry point (kg command)
+- **MCP Entry**: `src/mcp-server.ts` - MCP server entry point (kg-mcp-server command)
+- **API Client**: `src/api/client.ts` - HTTP client wrapper (shared by both)
 - **CLI Commands**: `src/cli/` - Commander.js command definitions
 - **Types**: `src/types/` - TypeScript interfaces matching FastAPI models
 
-Both CLI and future MCP server share the same `KnowledgeGraphClient` class.
+Both CLI and MCP server share the same `KnowledgeGraphClient` class and REST API.
 
-## Future: MCP Server Mode
+## MCP Server
 
-To run as MCP server (Phase 2):
+The MCP server is automatically installed with the client. See `docs/guides/MCP_SETUP.md` for configuration.
 
+**Quick setup for Claude Code:**
 ```bash
-MCP_SERVER_MODE=true node dist/index.js
+claude mcp add knowledge-graph
+# Command: kg-mcp-server
 ```
 
-Configure in Claude Desktop:
+**Quick setup for Claude Desktop:**
 ```json
 {
   "mcpServers": {
     "knowledge-graph": {
-      "command": "node",
-      "args": ["/absolute/path/to/client/dist/index.js"],
-      "env": {
-        "MCP_SERVER_MODE": "true",
-        "KG_API_URL": "http://localhost:8000"
-      }
+      "command": "kg-mcp-server"
     }
   }
 }
 ```
+
+The MCP server provides 18 tools for querying and managing the knowledge graph.

@@ -5,9 +5,9 @@ The Knowledge Graph MCP (Model Context Protocol) server enables Claude to query 
 ## Prerequisites
 
 - Node.js 18+ installed
-- Neo4j database running (see `docs/QUICKSTART.md`)
-- MCP server built: `cd mcp-server && npm run build`
-- Environment variables configured in `.env`
+- PostgreSQL + Apache AGE database running (see `docs/guides/QUICKSTART.md`)
+- FastAPI server running (`./scripts/start-api.sh`)
+- kg CLI installed globally (`cd client && ./install.sh`)
 
 ## Setup for Claude Code (CLI)
 
@@ -28,19 +28,11 @@ claude mcp add knowledge-graph
 
 # When prompted, provide:
 # - Server name: knowledge-graph
-# - Command: node
-# - Args: /absolute/path/to/knowledge-graph-system/mcp-server/build/index.js
-# - Environment variables: (see below)
+# - Command: kg-mcp-server
+# - No additional arguments or environment variables needed
 ```
 
-**Environment variables to configure:**
-
-```bash
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=password
-OPENAI_API_KEY=sk-...
-```
+**Note:** The MCP server connects to the FastAPI server at `http://localhost:8000`. Ensure the API server is running before using the MCP server.
 
 ### 3. Verify Installation
 
@@ -49,7 +41,7 @@ OPENAI_API_KEY=sk-...
 claude mcp list
 
 # Should show:
-# knowledge-graph: /path/to/mcp-server/build/index.js
+# knowledge-graph: kg-mcp-server  - ✓ Connected
 ```
 
 ### 4. Test Connection
@@ -86,25 +78,16 @@ Open the file and add the MCP server configuration:
 {
   "mcpServers": {
     "knowledge-graph": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/knowledge-graph-system/mcp-server/build/index.js"
-      ],
-      "env": {
-        "NEO4J_URI": "bolt://localhost:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "password",
-        "OPENAI_API_KEY": "sk-..."
-      }
+      "command": "kg-mcp-server"
     }
   }
 }
 ```
 
 **Important:**
-- Use **absolute paths** - relative paths don't work
-- Replace `/absolute/path/to/` with your actual project path
-- Use your actual OpenAI API key and Neo4j credentials
+- The `kg-mcp-server` command must be globally installed: `cd client && ./install.sh`
+- The MCP server connects to the FastAPI server at `http://localhost:8000`
+- Ensure the API server is running before using the MCP server
 
 ### 3. Restart Claude Desktop
 
@@ -122,65 +105,106 @@ You should see Claude query the database and list your ontologies.
 
 ## Available MCP Tools
 
-Once configured, Claude can use these tools:
+Once configured, Claude can use these 18 tools:
 
+### Query Tools
 | Tool | Description | Example Usage |
 |------|-------------|---------------|
 | `search_concepts` | Semantic search for concepts (supports pagination via offset parameter) | "Search for concepts about governance" |
-| `get_concept_details` | Detailed info about a concept | "Get details for concept ID xyz" |
+| `get_concept_details` | Detailed info about a concept with full text grounding | "Get details for concept ID xyz" |
 | `find_related_concepts` | Graph traversal from a concept | "Find concepts related to VUCA" |
-| `find_shortest_path` | Find shortest path(s) between two concepts (searches up to 100 hops, auto-segments paths > 5 hops) | "Find path from concept X to concept Y" |
-| `find_path_by_search` | Find path between concepts using natural language queries (searches for matches first, then finds paths) | "Find path from 'Sensible Transparency' to 'Role-Based Intelligence'" |
+| `find_connection` | Find shortest path(s) between two concepts (auto-segments paths > 5 hops) | "Find path from concept X to concept Y" |
+| `find_connection_by_search` | Find path between concepts using natural language queries | "Find path from 'Sensible Transparency' to 'Role-Based Intelligence'" |
+
+### Database Tools
+| Tool | Description | Example Usage |
+|------|-------------|---------------|
+| `get_database_stats` | Overall database statistics | "What's in the database?" |
+| `get_database_info` | Database connection information | "Show database info" |
+| `get_database_health` | Database health check | "Is the database healthy?" |
+
+### Ontology Tools
+| Tool | Description | Example Usage |
+|------|-------------|---------------|
 | `list_ontologies` | List all ontologies | "What ontologies exist?" |
 | `get_ontology_info` | Stats for an ontology | "Show stats for Governed Agility" |
-| `get_database_stats` | Overall database statistics | "What's in the database?" |
+| `get_ontology_files` | List files in an ontology | "What files are in this ontology?" |
+| `delete_ontology` | Delete an ontology (requires force=true) | "Delete the Test ontology" |
+
+### Job Management Tools
+| Tool | Description | Example Usage |
+|------|-------------|---------------|
+| `get_job_status` | Check job status and progress | "Check status of job xyz" |
+| `list_jobs` | List recent jobs with filtering | "Show all running jobs" |
+| `approve_job` | Approve a job for processing | "Approve job xyz" |
+| `cancel_job` | Cancel a pending/running job | "Cancel job xyz" |
+
+### Ingestion Tools
+| Tool | Description | Example Usage |
+|------|-------------|---------------|
+| `ingest_text` | Ingest text content into knowledge graph | "Ingest this text into 'My Ontology'" |
+
+### System Tools
+| Tool | Description | Example Usage |
+|------|-------------|---------------|
+| `get_api_health` | API server health check | "Is the API healthy?" |
+| `get_system_status` | Comprehensive system status | "Show system status" |
 
 ## Troubleshooting
 
 ### MCP Server Not Connecting
 
-**Check server build:**
+**Check kg CLI is installed:**
 ```bash
-cd mcp-server
-npm run build
-ls -la build/index.js  # Should exist
+which kg-mcp-server
+# Should show: /usr/local/bin/kg-mcp-server (or similar)
 ```
 
-**Check Neo4j is running:**
+**Reinstall if needed:**
 ```bash
-docker ps | grep neo4j
-# Should show knowledge-graph-neo4j container
+cd client
+./uninstall.sh
+./install.sh
 ```
 
-**Test Neo4j connection:**
+**Check API server is running:**
 ```bash
-source venv/bin/activate
-python cli.py database health
+curl http://localhost:8000/health
+# Should return: {"status":"healthy"}
+```
+
+**Start API server if needed:**
+```bash
+./scripts/start-api.sh
+```
+
+**Check PostgreSQL is running:**
+```bash
+docker ps | grep postgres
+# Should show knowledge-graph-postgres container
 ```
 
 ### Environment Variable Issues
 
-**Claude Code:** Environment variables are passed through the CLI configuration.
+**No environment variables needed for MCP server!**
 
-**Claude Desktop:** Must be in `claude_desktop_config.json` - `.env` file is NOT read by MCP server when launched from Claude Desktop.
+The MCP server connects to the FastAPI server at `http://localhost:8000`, which handles all database connections and API keys.
+
+**If you need to change the API URL:**
+- Set `KG_API_URL` environment variable in MCP server config
+- Default: `http://localhost:8000`
 
 ### Permission Errors
-
-**Ensure MCP server is executable:**
-```bash
-chmod +x mcp-server/build/index.js
-```
 
 **Check Node.js version:**
 ```bash
 node --version  # Should be 18+
 ```
 
-### API Key Errors
-
-**MCP server requires OpenAI API key for embeddings:**
-- Vector search uses `text-embedding-3-small` model
-- Ensure `OPENAI_API_KEY` is set in MCP server environment
+**Ensure kg-mcp-server is executable:**
+```bash
+ls -la $(which kg-mcp-server)
+```
 
 ### Claude Can't See Tools
 
@@ -219,8 +243,9 @@ MCP server stderr is captured in Claude Code session logs.
 ### Rebuilding After Code Changes
 
 ```bash
-cd mcp-server
+cd client
 npm run build
+./install.sh  # Reinstall globally
 
 # For Claude Code: Restart conversation
 # For Claude Desktop: Restart application
@@ -228,25 +253,24 @@ npm run build
 
 ### Testing Without Claude
 
-Test MCP server queries directly:
+Test MCP server functionality using kg CLI:
 
 ```bash
-source venv/bin/activate
-python cli.py ontology list
-python cli.py database stats
+kg search query "linear thinking"
+kg ontology list
+kg database stats
 ```
 
-These CLI commands mirror MCP server functionality for debugging.
+The kg CLI uses the same REST API as the MCP server.
 
 ### Adding New Tools
 
-1. Add query function to `mcp-server/src/neo4j.ts`
-2. Export function from neo4j.ts
-3. Import in `mcp-server/src/index.ts`
-4. Add tool definition to `ListToolsRequestSchema` handler
-5. Add case handler to `CallToolRequestSchema` handler
-6. Rebuild: `npm run build`
-7. Restart Claude
+1. Add API endpoint to `src/api/routes/` (if needed)
+2. Add client method to `client/src/api/client.ts`
+3. Add tool definition to `client/src/mcp-server.ts` (ListToolsRequestSchema handler)
+4. Add case handler to CallToolRequestSchema handler
+5. Rebuild: `cd client && npm run build && ./install.sh`
+6. Restart Claude
 
 ## Configuration Examples
 
@@ -257,13 +281,9 @@ These CLI commands mirror MCP server functionality for debugging.
 {
   "mcpServers": {
     "knowledge-graph-dev": {
-      "command": "node",
-      "args": ["/path/to/dev/mcp-server/build/index.js"],
+      "command": "kg-mcp-server",
       "env": {
-        "NEO4J_URI": "bolt://localhost:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "password",
-        "OPENAI_API_KEY": "sk-..."
+        "KG_API_URL": "http://localhost:8000"
       }
     }
   }
@@ -275,54 +295,46 @@ These CLI commands mirror MCP server functionality for debugging.
 {
   "mcpServers": {
     "knowledge-graph-prod": {
-      "command": "node",
-      "args": ["/path/to/prod/mcp-server/build/index.js"],
+      "command": "kg-mcp-server",
       "env": {
-        "NEO4J_URI": "bolt://production-host:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "secure-password",
-        "OPENAI_API_KEY": "sk-..."
+        "KG_API_URL": "https://api.production-host.com"
       }
     }
   }
 }
 ```
 
-### Using .env File (Development Only)
-
-**For local development with Node.js directly:**
-
-```bash
-# Start MCP server with .env loaded
-cd mcp-server
-node --require dotenv/config build/index.js
-```
-
-**Note:** This only works when running MCP server manually, not through Claude Code/Desktop.
+**Note:** The KG_API_URL environment variable is optional. If not set, it defaults to `http://localhost:8000`.
 
 ## Security Considerations
 
 ### API Key Protection
 
-- **Never commit** `claude_desktop_config.json` with real API keys
-- Use environment-specific keys (dev vs. prod)
-- Rotate keys periodically
+- **Never commit** `claude_desktop_config.json`
+- API keys are managed by the FastAPI server (in `.env` file)
+- The MCP server only communicates with the API server
 
-### Neo4j Authentication
+### API Server Authentication
+
+- The FastAPI server requires authentication (see `docs/guides/AUTHENTICATION.md`)
+- MCP server connects to API server via `http://localhost:8000`
+- For production, use HTTPS and proper authentication
+
+### PostgreSQL Security
 
 - Use strong passwords in production
-- Consider Neo4j Auth plugins for enterprise
-- Restrict network access to Neo4j port (7687)
+- Restrict network access to PostgreSQL port (5432)
+- Configure PostgreSQL authentication (pg_hba.conf)
 
-### MCP Server Permissions
+### MCP Server Capabilities
 
-MCP server has **read-only** access to the graph:
-- Cannot ingest documents
-- Cannot modify concepts
-- Cannot delete ontologies
-- Can only query and traverse
+The MCP server has **full access** to the API:
+- Can query and traverse the graph
+- Can ingest text content
+- Can manage jobs (approve, cancel)
+- Can delete ontologies (with force=true)
 
-For write operations, use the CLI or ingestion scripts.
+**Use with caution** - the MCP server has write access!
 
 ## Next Steps
 
