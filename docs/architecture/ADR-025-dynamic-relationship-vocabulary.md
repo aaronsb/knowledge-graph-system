@@ -785,6 +785,219 @@ CREATE TABLE kg_api.vocabulary_audit (
 );
 ```
 
+### Semantic Drift and Ambiguity Prevention
+
+**Risk:** As the vocabulary grows, there is a risk that the meaning of relationship types could become ambiguous or drift over time, especially if multiple curators are involved.
+
+**Mitigation:** The `relationship_vocabulary` table defined in this ADR must be treated as a **formal semantic registry**. This is critical for maintaining semantic consistency without significant token overhead during ingestion.
+
+**Requirements:**
+
+1. **Clear, Unambiguous Descriptions**
+   - Every relationship type MUST include a precise description of its meaning
+   - Description should specify the semantic relationship between concepts
+   - Include usage examples to prevent misinterpretation
+   - Example:
+     ```sql
+     INSERT INTO kg_api.relationship_vocabulary
+     (relationship_type, description, category)
+     VALUES (
+         'ENHANCES',
+         'One concept improves or strengthens another concept. The source concept adds value, capability, or effectiveness to the target concept without fundamentally changing it.',
+         'augmentation'
+     );
+     ```
+
+2. **Single Source of Truth**
+   - The `relationship_vocabulary` table is the authoritative definition
+   - All curators, developers, and LLM extraction prompts reference this registry
+   - No informal or undocumented relationship interpretations
+   - Version control all changes via `vocabulary_audit` table
+
+3. **Accessibility**
+   - Vocabulary accessible via API: `GET /vocabulary/{relationship_type}`
+   - CLI command: `kg vocabulary show ENHANCES`
+   - Included in curator training and documentation
+   - Displayed during approval workflow for context
+
+4. **Curation Guidelines**
+   - Before approving new type, check for semantic overlap with existing types
+   - Consider synonym mapping if meaning is substantially similar
+   - Document decision rationale in `vocabulary_audit.details`
+   - Require curator to confirm they've read existing descriptions
+
+**Token Efficiency:**
+- Descriptions stored in database, NOT in prompts
+- LLM extraction uses relationship type names only (minimal tokens)
+- Full semantic context queried only during curation
+- Result: Rich semantic registry without prompt bloat
+
+**Example Curator Workflow:**
+```bash
+# Review candidate with semantic context
+kg vocabulary review --show-similar ENHANCES
+
+# Output shows existing types with similar semantics:
+# SUPPORTS: "One concept provides evidence for another"
+# STRENGTHENS: "One concept reinforces another" (SYNONYM of SUPPORTS)
+#
+# Curator decision: ENHANCES is semantically distinct
+# - SUPPORTS = evidential relationship
+# - ENHANCES = augmentation relationship
+# → Approve as new type
+
+kg vocabulary add ENHANCES \
+  --category augmentation \
+  --description "One concept improves or strengthens another without fundamentally changing it" \
+  --example "Advanced Analytics ENHANCES Decision Making"
+```
+
+### Complexity of Backfilling
+
+**Risk:** When a new relationship type is approved, the process of backfilling it—finding all previously skipped instances and creating the corresponding edges in the graph—can be a complex and computationally expensive operation, especially on a large graph.
+
+**Mitigation:** Backfilling should be implemented as a dedicated, asynchronous background job that can be scheduled during off-peak hours. The system should also allow for selective backfilling, prioritizing the most frequent or important relationships first.
+
+**Implementation Approach:**
+
+```python
+async def backfill_relationship_type(rel_type: str, options: dict):
+    """
+    Asynchronous background job for backfilling approved relationship types.
+
+    Args:
+        rel_type: The approved relationship type to backfill
+        options: Configuration for backfill strategy
+            - mode: 'full' | 'selective' | 'dry-run'
+            - priority: 'frequency' | 'ontology' | 'manual'
+            - batch_size: Number of edges to create per transaction
+            - throttle_ms: Delay between batches to reduce load
+    """
+    # Get all skipped instances for this type
+    skipped = await db.execute(f"""
+        SELECT relationship_type, from_concept_label, to_concept_label,
+               occurrence_count, job_id, ontology
+        FROM kg_api.skipped_relationships
+        WHERE relationship_type = '{rel_type}'
+        ORDER BY occurrence_count DESC  -- High frequency first
+    """)
+
+    total = len(skipped)
+    created = 0
+    failed = 0
+
+    # Process in batches to avoid transaction timeouts
+    batch_size = options.get('batch_size', 100)
+    throttle = options.get('throttle_ms', 50)
+
+    for i in range(0, total, batch_size):
+        batch = skipped[i:i+batch_size]
+
+        for skip in batch:
+            try:
+                # Find concepts by label (fuzzy match with embedding similarity)
+                from_id = await find_concept_by_label(skip.from_concept_label)
+                to_id = await find_concept_by_label(skip.to_concept_label)
+
+                if from_id and to_id:
+                    if options.get('mode') == 'dry-run':
+                        logger.info(f"[DRY-RUN] Would create: {from_id} -{rel_type}-> {to_id}")
+                    else:
+                        await create_graph_edge(from_id, to_id, rel_type, confidence=0.8)
+                        created += 1
+                else:
+                    failed += 1
+                    logger.warning(f"Could not resolve concepts for backfill: {skip}")
+
+            except Exception as e:
+                failed += 1
+                logger.error(f"Backfill error: {e}")
+
+        # Throttle between batches to reduce database load
+        await asyncio.sleep(throttle / 1000.0)
+
+        # Update progress
+        progress = ((i + len(batch)) / total) * 100
+        await update_job_progress(f"backfill_{rel_type}", progress)
+
+    # Log completion
+    await log_backfill_completion(rel_type, created, failed, total)
+```
+
+**Selective Backfilling Strategies:**
+
+1. **By Frequency** (default)
+   - Backfill most common relationships first
+   - ORDER BY occurrence_count DESC
+   - Creates high-value edges before low-value edges
+
+2. **By Ontology**
+   - Curator selects specific ontology/domain to backfill
+   - WHERE ontology = 'Production ML Models'
+   - Useful for focused graph enrichment
+
+3. **By Job ID**
+   - Backfill only specific ingestion jobs
+   - WHERE job_id IN (...)
+   - Allows targeted corrections
+
+4. **Dry-Run Mode**
+   - Preview backfill impact before execution
+   - Shows: "Would create 1,247 edges of type ENHANCES"
+   - Curator can approve after review
+
+**CLI Commands:**
+
+```bash
+# Preview backfill impact
+kg vocabulary backfill ENHANCES --dry-run
+
+# Full backfill (scheduled as background job)
+kg vocabulary backfill ENHANCES --schedule off-peak
+
+# Selective backfill by ontology
+kg vocabulary backfill ENHANCES --ontology "ML Concepts" --batch-size 50
+
+# Prioritize by frequency
+kg vocabulary backfill ENHANCES --mode frequency --top 1000
+```
+
+**Performance Considerations:**
+
+- **Batch Processing:** Process in configurable batches (default 100 edges)
+- **Throttling:** Delay between batches prevents database saturation
+- **Off-Peak Scheduling:** Run during low-traffic periods (3-6 AM)
+- **Transaction Management:** Commit per-batch to avoid long-running transactions
+- **Progress Tracking:** Real-time progress updates via job status API
+- **Rollback Support:** Can revert backfill if issues detected
+
+**Resource Impact Mitigation:**
+
+```python
+# Check graph size before backfill
+def estimate_backfill_cost(rel_type: str):
+    """
+    Estimate resource cost before running backfill.
+    """
+    stats = db.execute(f"""
+        SELECT
+            COUNT(*) as edge_count,
+            COUNT(DISTINCT ontology) as ontology_count,
+            SUM(occurrence_count) as total_occurrences
+        FROM kg_api.skipped_relationships
+        WHERE relationship_type = '{rel_type}'
+    """)
+
+    estimated_time = (stats.edge_count * 50) / 1000  # ~50ms per edge
+
+    return {
+        'edges_to_create': stats.edge_count,
+        'estimated_duration_minutes': estimated_time,
+        'ontologies_affected': stats.ontology_count,
+        'recommendation': 'scheduled' if stats.edge_count > 1000 else 'immediate'
+    }
+```
+
 ## Documentation Impact
 
 ### New Documentation Needed
