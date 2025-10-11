@@ -484,6 +484,60 @@ async def create_relationship(from_id, to_id, rel_type):
 - ✅ Let ingestion patterns determine relevance
 - ✅ Trust the graph to self-regulate
 
+### Natural Activation Refresh Loop
+
+```
+New Document Ingestion
+         ↓
+    Extract Concepts
+         ↓
+Vector Similarity Match ←─────┐
+         ↓                     │
+    Existing Match?            │
+         ↓                     │
+    YES → Reuse Concept        │
+         ↓                     │
+    Create New Edges           │
+         ↓                     │
+    Increment usage_count ─────┘  [REFRESH LOOP]
+         ↓
+Both Endpoints Activated
+         ↓
+    Relationship Type +1
+         ↓
+Bridge Detection Updated
+```
+
+### Key Architectural Properties
+
+**1. Semantic-Based Freshness**
+- Relevance = "Does new content reference this concept?"
+- Not "When was it last accessed?"
+- The corpus drives activation naturally
+
+**2. Zero Configuration**
+- No decay parameters to tune
+- No time windows to configure
+- No manual pruning schedules
+- Graph self-regulates through ingestion patterns
+
+**3. Emergent Patterns**
+- Foundational concepts → persistent high activation
+- Obsolete concepts → gradual natural decay
+- Seasonal concepts → organic cyclical patterns
+- Bridge concepts → transitive activation via neighbors
+
+**4. Catastrophic Forgetting Prevention**
+- Bridge bonus preserves low-activation connectors
+- Structural value (topology) > activation alone
+- Graph topology "remembers" important paths
+
+**5. Living Knowledge Representation**
+- Ideas stay "active" when they appear in new contexts
+- Naturally fade when they stop being relevant
+- Mirrors how human collective consciousness works
+- Self-organizing semantic relevance
+
 ### Pruning Strategy
 
 ```sql
