@@ -125,6 +125,54 @@ kg_api.worker_status (
     current_job_id VARCHAR,
     status VARCHAR
 )
+
+-- Relationship Vocabulary Management (ADR-025)
+kg_api.relationship_vocabulary (
+    relationship_type VARCHAR(100) PRIMARY KEY,
+    description TEXT,
+    category VARCHAR(50),
+    added_by VARCHAR(100),
+    added_at TIMESTAMPTZ DEFAULT NOW(),
+    usage_count INTEGER DEFAULT 0,  -- Count of edges using this type
+    is_active BOOLEAN DEFAULT TRUE,
+    is_builtin BOOLEAN DEFAULT FALSE,
+    synonyms VARCHAR(100)[],
+    deprecation_reason TEXT
+)
+
+kg_api.skipped_relationships (
+    id SERIAL PRIMARY KEY,
+    relationship_type VARCHAR(100) NOT NULL,
+    from_concept_label VARCHAR(500),
+    to_concept_label VARCHAR(500),
+    job_id VARCHAR(50),
+    ontology VARCHAR(200),
+    first_seen TIMESTAMPTZ DEFAULT NOW(),
+    last_seen TIMESTAMPTZ DEFAULT NOW(),
+    occurrence_count INTEGER DEFAULT 1,
+    sample_context JSONB,
+    UNIQUE(relationship_type, from_concept_label, to_concept_label)
+)
+
+kg_api.vocabulary_audit (
+    id SERIAL PRIMARY KEY,
+    relationship_type VARCHAR(100),
+    action VARCHAR(50),
+    performed_by VARCHAR(100),
+    performed_at TIMESTAMPTZ DEFAULT NOW(),
+    details JSONB
+)
+
+-- Edge Usage Stats & Performance Optimization (ADR-025)
+kg_api.edge_usage_stats (
+    from_concept_id VARCHAR(100),
+    to_concept_id VARCHAR(100),
+    relationship_type VARCHAR(100),
+    traversal_count INTEGER DEFAULT 0,
+    last_traversed TIMESTAMPTZ,
+    avg_query_time_ms NUMERIC(10,2),
+    PRIMARY KEY (from_concept_id, to_concept_id, relationship_type)
+)
 ```
 
 **Characteristics:**
