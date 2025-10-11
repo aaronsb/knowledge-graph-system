@@ -156,14 +156,17 @@ class ResetManager:
                     "error": f"Failed to start PostgreSQL container: {result.stderr}"
                 }
 
-            # Step 4: Wait for PostgreSQL to be ready
+            # Step 4: Wait for PostgreSQL initialization to complete
+            # Note: docker-entrypoint-initdb.d automatically runs schema files
+            # (01_init_age.sql and 02_multi_schema.sql) on fresh volumes
             if verbose:
-                Console.info("⏳ Waiting for PostgreSQL to be ready...")
+                Console.info("⏳ Waiting for PostgreSQL initialization to complete...")
 
-            max_attempts = 30
+            max_attempts = 45  # Increased from 30 to allow time for schema initialization
             for attempt in range(max_attempts):
                 time.sleep(2)
 
+                # Check if PostgreSQL is accepting connections
                 result = subprocess.run(
                     [
                         "docker", "exec", self.container_name,
@@ -175,9 +178,21 @@ class ResetManager:
                 )
 
                 if result.returncode == 0:
-                    if verbose:
-                        Console.success(f"✓ PostgreSQL ready (took {(attempt + 1) * 2}s)")
-                    break
+                    # PostgreSQL is up, now check if AGE graph is initialized
+                    graph_check = subprocess.run(
+                        [
+                            "docker", "exec", self.container_name,
+                            "psql", "-U", self.postgres_user, "-d", self.postgres_db,
+                            "-t", "-c", "SELECT name FROM ag_catalog.ag_graph WHERE name = 'knowledge_graph'"
+                        ],
+                        capture_output=True,
+                        text=True
+                    )
+
+                    if "knowledge_graph" in graph_check.stdout:
+                        if verbose:
+                            Console.success(f"✓ PostgreSQL initialization complete (took {(attempt + 1) * 2}s)")
+                        break
 
                 if verbose and attempt % 5 == 0:
                     print(".", end="", flush=True)
@@ -185,44 +200,10 @@ class ResetManager:
                 if attempt == max_attempts - 1:
                     return {
                         "success": False,
-                        "error": "PostgreSQL failed to start within timeout"
+                        "error": "PostgreSQL initialization failed to complete within timeout"
                     }
 
-            # Step 5: Initialize schema from init_age.sql
-            if verbose:
-                Console.info("📋 Initializing schema from init_age.sql...")
-
-            schema_file = self.project_root / "schema" / "init_age.sql"
-
-            if not schema_file.exists():
-                return {
-                    "success": False,
-                    "error": f"Schema file not found: {schema_file}"
-                }
-
-            with open(schema_file, 'r') as f:
-                schema_sql = f.read()
-
-            result = subprocess.run(
-                [
-                    "docker", "exec", "-i", self.container_name,
-                    "psql", "-U", self.postgres_user, "-d", self.postgres_db
-                ],
-                input=schema_sql,
-                capture_output=True,
-                text=True
-            )
-
-            if result.returncode != 0:
-                return {
-                    "success": False,
-                    "error": f"Schema initialization failed: {result.stderr}"
-                }
-
-            if verbose:
-                Console.success("✓ Schema initialized")
-
-            # Step 6: Clear log files
+            # Step 5: Clear log files
             if clear_logs:
                 if verbose:
                     Console.info("🧹 Clearing log files...")
@@ -240,7 +221,7 @@ class ResetManager:
                     if verbose and log_count > 0:
                         Console.success(f"✓ Cleared {log_count} log file(s)")
 
-            # Step 7: Clear checkpoint files
+            # Step 6: Clear checkpoint files
             if clear_checkpoints:
                 if verbose:
                     Console.info("🧹 Clearing checkpoint files...")
@@ -258,7 +239,7 @@ class ResetManager:
                     if verbose and checkpoint_count > 0:
                         Console.success(f"✓ Cleared {checkpoint_count} checkpoint file(s)")
 
-            # Step 8: Verify schema
+            # Step 7: Verify schema
             if verbose:
                 Console.info("✅ Verifying schema...")
 

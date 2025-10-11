@@ -32,6 +32,7 @@ services:
 
       # Initialization scripts (run on first startup)
       - ./schema/init_age.sql:/docker-entrypoint-initdb.d/01_init_age.sql
+      - ./schema/multi_schema.sql:/docker-entrypoint-initdb.d/02_multi_schema.sql
 
       # Optional: Import directory for bulk data loads
       - postgres_import:/import
