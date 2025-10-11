@@ -17,7 +17,7 @@ import os
 import logging
 import time
 
-from .services.job_queue import init_job_queue, get_job_queue
+from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueue
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .workers.ingestion_worker import run_ingestion_worker
 from .workers.restore_worker import run_restore_worker
@@ -124,12 +124,17 @@ async def startup_event():
     # ADR-015: Cleanup abandoned restore temp files on startup
     _cleanup_abandoned_temp_files()
 
-    # Initialize job queue
-    queue_type = os.getenv("QUEUE_TYPE", "inmemory")
-    db_path = os.getenv("JOB_DB_PATH", "data/jobs.db")
+    # Initialize job queue (ADR-024: PostgreSQL by default)
+    queue_type = os.getenv("QUEUE_TYPE", "postgresql")
 
-    queue = init_job_queue(queue_type=queue_type, db_path=db_path)
-    logger.info(f"✅ Job queue initialized: {queue_type} (db: {db_path})")
+    if queue_type == "postgresql":
+        queue = init_job_queue(queue_type="postgresql")
+        logger.info(f"✅ Job queue initialized: postgresql (kg_api.ingestion_jobs)")
+    else:
+        # Fallback to SQLite (for development/testing only)
+        db_path = os.getenv("JOB_DB_PATH", "data/jobs.db")
+        queue = init_job_queue(queue_type=queue_type, db_path=db_path)
+        logger.info(f"✅ Job queue initialized: {queue_type} (db: {db_path})")
 
     # Register worker functions
     queue.register_worker("ingestion", run_ingestion_worker)
@@ -186,16 +191,19 @@ async def root():
         queued = queue.list_jobs(status="queued", limit=1000)
         processing = queue.list_jobs(status="processing", limit=1000)
 
+        # Determine queue type from instance
+        queue_type_name = "postgresql" if isinstance(queue, PostgreSQLJobQueue) else "inmemory"
+
         return {
             "service": "Knowledge Graph API",
-            "version": "0.1.0 (ADR-014: Approval Workflow)",
+            "version": "0.1.0 (ADR-024: PostgreSQL Job Queue)",
             "status": "healthy",
             "queue": {
-                "type": "inmemory",  # Phase 1
+                "type": queue_type_name,
                 "pending": len(pending),
                 "awaiting_approval": len(awaiting_approval),
                 "approved": len(approved),
-                "queued": len(queued),  # Legacy
+                "queued": len(queued),
                 "processing": len(processing)
             },
             "docs": "/docs",
