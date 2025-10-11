@@ -173,6 +173,16 @@ kg_api.edge_usage_stats (
     avg_query_time_ms NUMERIC(10,2),
     PRIMARY KEY (from_concept_id, to_concept_id, relationship_type)
 )
+
+-- Concept Access Stats (node-level tracking for pre-routing)
+kg_api.concept_access_stats (
+    concept_id VARCHAR(100) PRIMARY KEY,
+    access_count INTEGER DEFAULT 0,
+    last_accessed TIMESTAMPTZ,
+    avg_query_time_ms NUMERIC(10,2),
+    queries_as_start INTEGER DEFAULT 0,
+    queries_as_result INTEGER DEFAULT 0
+)
 ```
 
 **Characteristics:**

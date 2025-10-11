@@ -296,11 +296,67 @@ LIMIT 1000;
 CREATE INDEX idx_hot_edges_lookup ON kg_api.hot_edges(from_concept_id, to_concept_id);
 ```
 
+**Concept Access Tracking:**
+```sql
+-- Track node-level access patterns for pre-routing and caching
+CREATE TABLE kg_api.concept_access_stats (
+    concept_id VARCHAR(100) PRIMARY KEY,
+    access_count INTEGER DEFAULT 0,
+    last_accessed TIMESTAMPTZ,
+    avg_query_time_ms NUMERIC(10,2),
+    queries_as_start INTEGER DEFAULT 0,  -- How often used as query starting point
+    queries_as_result INTEGER DEFAULT 0  -- How often appears in query results
+);
+
+CREATE INDEX idx_concept_access_count ON kg_api.concept_access_stats(access_count DESC);
+
+-- Hot concepts cache (top 100 most-accessed concepts)
+CREATE MATERIALIZED VIEW kg_api.hot_concepts AS
+SELECT concept_id, access_count, queries_as_start
+FROM kg_api.concept_access_stats
+WHERE access_count > 50
+ORDER BY access_count DESC
+LIMIT 100;
+```
+
 **Use Cases:**
-- Pre-load hot edges into application memory cache
-- Identify frequently queried paths for denormalization
-- Optimize graph traversal by prioritizing cached paths
-- Detect query patterns for index optimization
+- **Pre-load hot concepts** into application memory cache
+- **Pre-route queries** starting from popular concepts (fast path)
+- **Identify trending concepts** for async insight processing
+- **Optimize query planning** by prioritizing frequently accessed nodes
+- **Detect query patterns** for index optimization
+- **Smart caching** based on actual usage, not time
+
+**Low-Overhead Collection:**
+```python
+async def track_concept_access(concept_id: str, query_type: str):
+    """
+    Non-blocking access tracking - fire and forget.
+    Every query collects stats without performance impact.
+    """
+    # Async upsert (doesn't block query execution)
+    asyncio.create_task(
+        db.execute(f"""
+            INSERT INTO kg_api.concept_access_stats (concept_id, access_count, queries_as_{query_type})
+            VALUES ('{concept_id}', 1, 1)
+            ON CONFLICT (concept_id) DO UPDATE SET
+                access_count = concept_access_stats.access_count + 1,
+                last_accessed = NOW(),
+                queries_as_{query_type} = concept_access_stats.queries_as_{query_type} + 1
+        """)
+    )
+
+# Usage in queries:
+async def search_concepts(query):
+    results = await execute_search(query)
+    for result in results:
+        track_concept_access(result.concept_id, 'result')  # Fire and forget
+    return results
+
+async def find_related(concept_id):
+    track_concept_access(concept_id, 'start')  # Track starting point
+    return await execute_traversal(concept_id)
+```
 
 **Example Query Optimization:**
 ```python
