@@ -13,6 +13,10 @@ import json
 import sqlite3
 import threading
 from pathlib import Path
+import psycopg2
+from psycopg2 import pool
+from psycopg2.extras import RealDictCursor
+import os
 
 
 class JobQueue(ABC):
@@ -441,6 +445,358 @@ class InMemoryJobQueue(JobQueue):
             threading.Thread(target=self.execute_job, args=(next_job_id,)).start()
 
 
+class PostgreSQLJobQueue(JobQueue):
+    """
+    PostgreSQL-backed job queue (ADR-024).
+
+    Benefits over SQLite:
+    - MVCC: No write-lock contention
+    - Connection pooling: Handle concurrent operations
+    - JSONB: Native JSON support (not serialized strings)
+    - Atomic transactions across graph + jobs
+    - Better query performance with proper indexes
+    """
+
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 5432,
+        database: str = "knowledge_graph",
+        user: str = "admin",
+        password: str = "password",
+        min_connections: int = 1,
+        max_connections: int = 10
+    ):
+        """
+        Initialize PostgreSQL job queue with connection pooling.
+
+        Args:
+            host: PostgreSQL host
+            port: PostgreSQL port
+            database: Database name
+            user: Database user
+            password: Database password
+            min_connections: Minimum pool size
+            max_connections: Maximum pool size
+        """
+        self.lock = threading.Lock()
+        self.worker_registry: Dict[str, Callable] = {}
+        self.serial_queue: list = []
+        self.serial_running: bool = False
+
+        # Create connection pool
+        self.pool = psycopg2.pool.ThreadedConnectionPool(
+            min_connections,
+            max_connections,
+            host=host,
+            port=port,
+            database=database,
+            user=user,
+            password=password
+        )
+
+    def _get_connection(self):
+        """Get connection from pool"""
+        return self.pool.getconn()
+
+    def _return_connection(self, conn):
+        """Return connection to pool"""
+        self.pool.putconn(conn)
+
+    def register_worker(self, job_type: str, worker_func: Callable):
+        """Register a worker function for a job type"""
+        self.worker_registry[job_type] = worker_func
+
+    def enqueue(self, job_type: str, job_data: Dict) -> str:
+        """Add job to PostgreSQL queue"""
+        job_id = f"job_{uuid.uuid4().hex[:12]}"
+
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO kg_api.ingestion_jobs (
+                        job_id, job_type, status, ontology, client_id,
+                        content_hash, job_data, progress, result, analysis,
+                        processing_mode, created_at
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, NOW()
+                    )
+                """, (
+                    job_id,
+                    job_type,
+                    "pending",  # ADR-014: Start as pending for analysis
+                    job_data.get("ontology"),
+                    job_data.get("client_id", "anonymous"),
+                    job_data.get("content_hash"),
+                    json.dumps(job_data),
+                    None,  # progress
+                    None,  # result
+                    None,  # analysis
+                    job_data.get("processing_mode", "serial")
+                ))
+            conn.commit()
+            return job_id
+        finally:
+            self._return_connection(conn)
+
+    def get_job(self, job_id: str) -> Optional[Dict]:
+        """Get job status from PostgreSQL"""
+        conn = self._get_connection()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT
+                        job_id, job_type, status, ontology, client_id,
+                        content_hash, job_data, progress, result, analysis,
+                        processing_mode, error_message,
+                        created_at, started_at, completed_at,
+                        approved_at, approved_by, expires_at
+                    FROM kg_api.ingestion_jobs
+                    WHERE job_id = %s
+                """, (job_id,))
+
+                row = cur.fetchone()
+                if not row:
+                    return None
+
+                # Convert to dict and handle timestamps
+                job = dict(row)
+
+                # Convert timestamp objects to ISO strings
+                for field in ['created_at', 'started_at', 'completed_at', 'approved_at', 'expires_at']:
+                    if job.get(field):
+                        job[field] = job[field].isoformat()
+
+                # Rename error_message to error for consistency
+                job['error'] = job.pop('error_message', None)
+
+                return job
+        finally:
+            self._return_connection(conn)
+
+    def update_job(self, job_id: str, updates: Dict) -> bool:
+        """Update job status/progress in PostgreSQL"""
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Build dynamic UPDATE based on what fields are provided
+                set_clauses = []
+                params = []
+
+                for key, value in updates.items():
+                    if key == 'error':
+                        # Map 'error' to 'error_message' column
+                        set_clauses.append("error_message = %s")
+                        params.append(value)
+                    elif key in ['progress', 'result', 'analysis']:
+                        # JSONB fields
+                        set_clauses.append(f"{key} = %s::jsonb")
+                        params.append(json.dumps(value) if value else None)
+                    elif key in ['status', 'processing_mode', 'approved_by']:
+                        # String fields
+                        set_clauses.append(f"{key} = %s")
+                        params.append(value)
+
+                # Auto-update timestamps based on status changes
+                if updates.get("status") == "running":
+                    set_clauses.append("started_at = NOW()")
+
+                if updates.get("status") in ["completed", "failed", "cancelled"]:
+                    set_clauses.append("completed_at = NOW()")
+
+                if not set_clauses:
+                    return True  # No updates needed
+
+                params.append(job_id)
+                query = f"""
+                    UPDATE kg_api.ingestion_jobs
+                    SET {', '.join(set_clauses)}
+                    WHERE job_id = %s
+                """
+
+                cur.execute(query, params)
+                conn.commit()
+                return cur.rowcount > 0
+        finally:
+            self._return_connection(conn)
+
+    def cancel_job(self, job_id: str) -> bool:
+        """Cancel a job (if not already running)"""
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Can only cancel if in cancellable state
+                cur.execute("""
+                    UPDATE kg_api.ingestion_jobs
+                    SET status = 'cancelled', completed_at = NOW()
+                    WHERE job_id = %s
+                      AND status IN ('pending', 'awaiting_approval', 'approved', 'queued')
+                    RETURNING job_id
+                """, (job_id,))
+
+                conn.commit()
+                return cur.rowcount > 0
+        finally:
+            self._return_connection(conn)
+
+    def list_jobs(
+        self,
+        status: Optional[str] = None,
+        client_id: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict]:
+        """List jobs from PostgreSQL, optionally filtered"""
+        conn = self._get_connection()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                conditions = []
+                params = []
+
+                if status:
+                    conditions.append("status = %s")
+                    params.append(status)
+
+                if client_id:
+                    conditions.append("client_id = %s")
+                    params.append(client_id)
+
+                where_clause = " AND ".join(conditions) if conditions else "1=1"
+                params.append(limit)
+
+                cur.execute(f"""
+                    SELECT
+                        job_id, job_type, status, ontology, client_id,
+                        content_hash, job_data, progress, result, analysis,
+                        processing_mode, error_message,
+                        created_at, started_at, completed_at,
+                        approved_at, approved_by, expires_at
+                    FROM kg_api.ingestion_jobs
+                    WHERE {where_clause}
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                """, params)
+
+                jobs = []
+                for row in cur.fetchall():
+                    job = dict(row)
+
+                    # Convert timestamps to ISO strings
+                    for field in ['created_at', 'started_at', 'completed_at', 'approved_at', 'expires_at']:
+                        if job.get(field):
+                            job[field] = job[field].isoformat()
+
+                    # Rename error_message to error
+                    job['error'] = job.pop('error_message', None)
+
+                    jobs.append(job)
+
+                return jobs
+        finally:
+            self._return_connection(conn)
+
+    def delete_job(self, job_id: str) -> bool:
+        """Permanently delete a job from PostgreSQL"""
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DELETE FROM kg_api.ingestion_jobs
+                    WHERE job_id = %s
+                """, (job_id,))
+                conn.commit()
+                return cur.rowcount > 0
+        finally:
+            self._return_connection(conn)
+
+    def clear_all_jobs(self) -> int:
+        """Clear ALL jobs from PostgreSQL (use with caution!)"""
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM kg_api.ingestion_jobs")
+                count = cur.fetchone()[0]
+
+                cur.execute("DELETE FROM kg_api.ingestion_jobs")
+                conn.commit()
+
+                # Clear in-memory queue state
+                with self.lock:
+                    self.serial_queue.clear()
+                    self.serial_running = False
+
+                return count
+        finally:
+            self._return_connection(conn)
+
+    def execute_job(self, job_id: str):
+        """
+        Execute a job (called by BackgroundTasks).
+        Bridge between FastAPI and worker functions.
+        """
+        job = self.get_job(job_id)
+        if not job:
+            return
+
+        # Get worker function
+        worker_func = self.worker_registry.get(job["job_type"])
+        if not worker_func:
+            self.update_job(job_id, {
+                "status": "failed",
+                "error": f"No worker registered for job type: {job['job_type']}"
+            })
+            return
+
+        # Update to running
+        self.update_job(job_id, {"status": "running"})
+
+        try:
+            # Execute worker (pass queue ref for progress updates)
+            result = worker_func(job["job_data"], job_id, self)
+
+            # Mark completed
+            self.update_job(job_id, {
+                "status": "completed",
+                "result": result
+            })
+
+        except Exception as e:
+            # Mark failed
+            self.update_job(job_id, {
+                "status": "failed",
+                "error": str(e)
+            })
+        finally:
+            # If this was a serial job, process next in queue
+            if job.get("processing_mode") == "serial":
+                with self.lock:
+                    self.serial_running = False
+                    self._process_next_serial_job()
+
+    def queue_serial_job(self, job_id: str):
+        """
+        Queue a serial job for execution.
+        If no serial job is running, start immediately.
+        """
+        with self.lock:
+            if not self.serial_running:
+                # No serial job running, start this one
+                self.serial_running = True
+                self.execute_job(job_id)
+            else:
+                # Serial job already running, add to queue
+                self.serial_queue.append(job_id)
+                self.update_job(job_id, {"status": "queued"})
+
+    def _process_next_serial_job(self):
+        """Process the next serial job in queue (called with lock held)"""
+        if self.serial_queue:
+            next_job_id = self.serial_queue.pop(0)
+            self.serial_running = True
+            # Execute in background
+            threading.Thread(target=self.execute_job, args=(next_job_id,)).start()
+
+
 # Singleton instance (will be initialized in main.py)
 _job_queue_instance: Optional[JobQueue] = None
 
@@ -450,7 +806,7 @@ def init_job_queue(queue_type: str = "inmemory", **kwargs) -> JobQueue:
     Factory function to initialize job queue.
 
     Args:
-        queue_type: "inmemory" (Phase 1) or "redis" (Phase 2)
+        queue_type: "inmemory" (Phase 1), "postgresql" (ADR-024), or "redis" (Phase 2)
         **kwargs: Implementation-specific config
     """
     global _job_queue_instance
@@ -458,6 +814,17 @@ def init_job_queue(queue_type: str = "inmemory", **kwargs) -> JobQueue:
     if queue_type == "inmemory":
         _job_queue_instance = InMemoryJobQueue(
             db_path=kwargs.get("db_path", "data/jobs.db")
+        )
+    elif queue_type == "postgresql":
+        # ADR-024: PostgreSQL job queue with connection pooling
+        _job_queue_instance = PostgreSQLJobQueue(
+            host=kwargs.get("host", os.getenv("POSTGRES_HOST", "localhost")),
+            port=kwargs.get("port", int(os.getenv("POSTGRES_PORT", "5432"))),
+            database=kwargs.get("database", os.getenv("POSTGRES_DB", "knowledge_graph")),
+            user=kwargs.get("user", os.getenv("POSTGRES_USER", "admin")),
+            password=kwargs.get("password", os.getenv("POSTGRES_PASSWORD", "password")),
+            min_connections=kwargs.get("min_connections", 1),
+            max_connections=kwargs.get("max_connections", 10)
         )
     elif queue_type == "redis":
         # Phase 2: Will add RedisJobQueue here
