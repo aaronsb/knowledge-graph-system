@@ -402,57 +402,6 @@ CREATE TABLE concept_search_terms (
 CREATE INDEX idx_search_term_lookup ON concept_search_terms(search_term);
 ```
 
-### 6.2 Neo4j Schema (Phase 2, Optional)
-
-```cypher
-// CONCEPT NODE
-CREATE CONSTRAINT concept_id_unique IF NOT EXISTS
-FOR (c:Concept) REQUIRE c.concept_id IS UNIQUE;
-
-CREATE INDEX concept_label IF NOT EXISTS
-FOR (c:Concept) ON (c.label);
-
-// NODE SCHEMA
-(:Concept {
-  concept_id: STRING,
-  label: STRING,
-  search_terms: [STRING],
-  created_at: DATETIME,
-  updated_at: DATETIME
-})
-
-(:Source {
-  source_id: STRING,
-  document: STRING,
-  paragraph: INTEGER,
-  section: STRING,
-  full_text: STRING
-})
-
-(:Instance {
-  instance_id: STRING,
-  quote: STRING,
-  created_at: DATETIME
-})
-
-// RELATIONSHIPS
-(:Concept)-[:APPEARS_IN {first_seen: DATETIME}]->(:Source)
-(:Concept)-[:EVIDENCED_BY]->(:Instance)
-(:Instance)-[:FROM_SOURCE]->(:Source)
-(:Concept)-[:IMPLIES {confidence: FLOAT}]->(:Concept)
-(:Concept)-[:CONTRADICTS {confidence: FLOAT}]->(:Concept)
-(:Concept)-[:SUPPORTS {confidence: FLOAT}]->(:Concept)
-(:Concept)-[:PART_OF]->(:Concept)
-(:Concept)-[:REQUIRES {confidence: FLOAT}]->(:Concept)
-
-// Vector index (Neo4j 5.11+)
-CREATE VECTOR INDEX concept_embeddings IF NOT EXISTS
-FOR (c:Concept) ON (c.embedding)
-OPTIONS {indexConfig: {
-  `vector.dimensions`: 1536,
-  `vector.similarity_function`: 'cosine'
-}};
-```
 
 ### 6.3 LLM Output Schema
 
