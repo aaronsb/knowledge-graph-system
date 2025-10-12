@@ -301,6 +301,14 @@ function getOutputFormat(options: any): 'table' | 'json' {
    - Primary commands remain unchanged
    - Easy to add/remove verb shortcuts
 
+6. **CLI as API Abstraction** (JSON Mode)
+   - **Safety layer**: Client-side validation, confirmation prompts
+   - **Type safety**: TypeScript ensures correct data structures
+   - **Protocol versioning**: Handle API changes transparently
+   - **Automation-friendly**: No HTTP client needed in scripts
+   - **Offline operations**: Local config, batch processing (future)
+   - **Composability**: Pipe between commands or integrate with Unix tools
+
 ## Consequences
 
 ### Positive
