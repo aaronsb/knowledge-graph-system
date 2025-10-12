@@ -1,8 +1,17 @@
-# kg CLI State Tree & Command Map
+# kg CLI Usage Guide
 
-> **Purpose:** Comprehensive mapping of all CLI commands, states, options, and flows for systematic functional testing.
+> **Purpose:** Comprehensive guide to all CLI commands, usage patterns, and command-line interface design.
 
 ## Command Structure Overview
+
+The `kg` CLI provides two complementary command styles (ADR-029):
+
+1. **Domain-Noun Commands** (Primary): `kg <noun> <verb>` - e.g., `kg job list`, `kg ontology delete "Name"`
+2. **Unix-Verb Shortcuts** (Secondary): `kg <verb> <noun>` - e.g., `kg ls job`, `kg rm ontology "Name"`
+
+Both styles delegate to the same underlying commands and produce identical results.
+
+### Command Syntax
 
 ```
 kg [global-options] <command> [subcommand] [options] [arguments]
@@ -12,6 +21,78 @@ kg [global-options] <command> [subcommand] [options] [arguments]
 - `--api-url <url>` - Override API base URL (default: http://localhost:8000)
 - `--client-id <id>` - Client ID for multi-tenancy (env: KG_CLIENT_ID)
 - `--api-key <key>` - API key for authentication (env: KG_API_KEY)
+
+### Command Naming Convention
+
+Commands use **singular** names with optional **aliases** for convenience:
+
+- `kg job` (alias: `jobs`) - Manage ingestion jobs
+- `kg ontology` (alias: `onto`) - Manage ontologies
+- `kg database` (alias: `db`) - Database operations
+- `kg config` (alias: `cfg`) - Configuration management
+
+**Examples:**
+```bash
+kg job list          # Singular (primary)
+kg jobs list         # Plural alias (backward compatible)
+kg onto list         # Short alias
+```
+
+### User-Configurable Aliases (ADR-029)
+
+Users can define custom command aliases in their config:
+
+```bash
+kg config set aliases.cat '["bat"]'
+```
+
+This allows `kg bat config` to work alongside `kg cat config` for users with shell conflicts.
+
+---
+
+## Unix Verb Router (ADR-029)
+
+Unix-style shortcuts for common operations:
+
+### `kg ls <resource>`
+List resources using Unix-familiar syntax.
+
+**Examples:**
+```bash
+kg ls job              # → kg job list
+kg ls ontology         # → kg ontology list
+kg ls backup           # → kg admin list-backups
+```
+
+### `kg cat <resource> [id]`
+Display resource details (like Unix `cat`).
+
+**Examples:**
+```bash
+kg cat config          # → kg config list (show all config)
+kg cat config api_url  # → kg config get api_url
+kg cat job             # → kg job list (show all jobs)
+kg cat job job_xyz     # → kg job status job_xyz
+kg cat concept abc-123 # → kg search details abc-123
+```
+
+### `kg rm <resource> <id>`
+Remove or delete resources.
+
+**Examples:**
+```bash
+kg rm job job_abc          # → kg job cancel job_abc
+kg rm ontology "My Docs"   # → kg ontology delete "My Docs"
+```
+
+### `kg stat <resource> [id]`
+Show status or statistics.
+
+**Examples:**
+```bash
+kg stat database       # → kg database stats
+kg stat job job_abc    # → kg job status job_abc
+```
 
 ---
 
@@ -37,7 +118,13 @@ kg health
 
 ## 2. Config Commands
 
-**Command:** `kg config <subcommand>`
+**Command:** `kg config <subcommand>` (alias: `cfg`)
+
+**Unix Shortcuts:**
+```bash
+kg cat config          # List all config (→ kg config list)
+kg cat config api_url  # Show specific key (→ kg config get api_url)
+```
 
 ### 2.1 `kg config get [key]`
 
@@ -68,19 +155,33 @@ kg config get username
 **Purpose:** Set configuration value
 
 **Options:**
-- `--json` - Parse value as JSON
+- `--json` - Force parse value as JSON
+- `--string` - Force treat value as string (no JSON parsing)
+
+**Auto-Detection:**
+- Values starting with `[` or `{` are automatically parsed as JSON
+- Values `true`/`false` are parsed as booleans
+- Numeric values are parsed as numbers
+- Other values are stored as strings
 
 **States:**
 - Valid key/value → Set and confirm
-- Invalid JSON (with --json flag) → Error, exit(1)
+- Invalid JSON (with --json flag or auto-detected) → Error, exit(1)
 
 **Flow:**
 ```
 kg config set username alice
   → Load config
+  → Auto-detect: string value
   → Set username = "alice"
   → Save config
   → Confirm
+
+kg config set aliases.cat '["bat"]'
+  → Auto-detect: JSON array (starts with [)
+  → Parse as JSON
+  → Set aliases.cat = ["bat"]
+  → Save config
 ```
 
 ### 2.3 `kg config delete <key>`
@@ -198,9 +299,8 @@ kg config set username alice
    - New job → Submit job
 
 3. Wait behavior
-   - **BUG:** `--no-wait` should return immediately with job ID, but currently still waits
    - With --wait (default) → Poll job with progress
-   - Without --wait → **Should** return immediately
+   - With --no-wait → Return immediately with job ID
 
 **Flow:**
 ```
@@ -214,8 +314,7 @@ kg ingest file doc.txt -o "My Ontology"
       → Poll job with progress spinner
       → Display final result
   → If --no-wait:
-      → ⚠️ BUG: Currently still polls
-      → SHOULD: Display job ID and exit
+      → Display job ID and exit immediately
 ```
 
 ### 3.2 `kg ingest text <text>`
@@ -232,15 +331,23 @@ kg ingest file doc.txt -o "My Ontology"
 
 **States:**
 - Same as `kg ingest file` above
-- **Same --no-wait bug**
 
 ---
 
-## 4. Jobs Commands
+## 4. Job Commands
 
-**Command:** `kg jobs <subcommand>`
+**Command:** `kg job <subcommand>` (alias: `jobs`)
 
-### 4.1 `kg jobs status <job-id>`
+**Unix Shortcuts:**
+```bash
+kg cat job             # List all jobs (→ kg job list)
+kg cat job <id>        # Show job status (→ kg job status <id>)
+kg ls job              # List all jobs (→ kg job list)
+kg stat job <id>       # Show job status (→ kg job status <id>)
+kg rm job <id>         # Cancel job (→ kg job cancel <id>)
+```
+
+### 4.1 `kg job status <job-id>`
 
 **Purpose:** Get job status
 
@@ -254,14 +361,14 @@ kg ingest file doc.txt -o "My Ontology"
 
 **Flow:**
 ```
-kg jobs status job_123 --watch
+kg job status job_123 --watch
   → GET /jobs/{job_id}
   → Poll every 2s until status ∈ {completed, failed, cancelled}
   → Display progress in real-time
   → Display final result
 ```
 
-### 4.2 `kg jobs list`
+### 4.2 `kg job list`
 
 **Purpose:** List recent jobs
 
@@ -273,19 +380,17 @@ kg jobs status job_123 --watch
 **States:**
 - No jobs → "No jobs found"
 - Has jobs → Display table
-  - **BUG:** Table truncates job IDs (shows first 12 chars + "...")
 
 **Flow:**
 ```
-kg jobs list
+kg job list
   → GET /jobs?limit=20
   → Build table with columns:
       [Job ID, Client, Status, Ontology, Created, Progress]
-  → ⚠️ BUG: Job ID column truncates to 12 chars
   → Display table
 ```
 
-### 4.3 `kg jobs list pending`
+### 4.3 `kg job list pending`
 
 **Purpose:** List jobs awaiting approval
 
@@ -293,23 +398,23 @@ kg jobs list
 - `-c, --client <client-id>`
 - `-l, --limit <n>` (default: 20)
 
-### 4.4 `kg jobs list approved`
+### 4.4 `kg job list approved`
 
 **Purpose:** List approved jobs (queued or processing)
 
-### 4.5 `kg jobs list done`
+### 4.5 `kg job list done`
 
 **Purpose:** List completed jobs
 
-### 4.6 `kg jobs list failed`
+### 4.6 `kg job list failed`
 
 **Purpose:** List failed jobs
 
-### 4.7 `kg jobs list cancelled`
+### 4.7 `kg job list cancelled`
 
 **Purpose:** List cancelled jobs
 
-### 4.8 `kg jobs approve <job-id-or-filter>`
+### 4.8 `kg job approve <job-id-or-filter>`
 
 **Purpose:** Approve a job or all jobs matching filter
 
@@ -325,7 +430,7 @@ kg jobs list
   - Approve each job
   - Display summary (approved count, failed count)
 
-### 4.9 `kg jobs cancel <job-id-or-filter>`
+### 4.9 `kg job cancel <job-id-or-filter>`
 
 **Purpose:** Cancel a job or all jobs matching filter
 
@@ -502,7 +607,7 @@ kg database stats
 
 ## 7. Ontology Commands
 
-**Command:** `kg ontology <subcommand>`
+**Command:** `kg ontology <subcommand>` (alias: `onto`)
 
 ### 7.1 `kg ontology list`
 
@@ -713,8 +818,6 @@ kg admin restore --file backup_2024-10-09.json
    - Validate inputs
 
 3. Reset operation:
-   - ⚠️ **BUG:** API returns 500 error on first try
-   - After API restart, works but...
    - Displays schema validation results
    - Displays warnings if any
 
@@ -723,12 +826,10 @@ kg admin restore --file backup_2024-10-09.json
 kg admin reset
   → Display warnings
   → Prompt: Type "yes" to confirm
-  → ⚠️ BUG: API throws 500 error
-  → After API restart:
-      → POST /admin/reset
-          { username, password, confirm: true, clear_logs, clear_checkpoints }
-      → Display schema validation
-      → Display warnings
+  → POST /admin/reset
+      { username, password, confirm: true, clear_logs, clear_checkpoints }
+  → Display schema validation
+  → Display warnings
 ```
 
 ### 8.6 `kg admin scheduler status`
@@ -768,187 +869,43 @@ kg admin scheduler cleanup
 
 ---
 
-## Identified Bugs
+## 9. Authentication Commands
 
-### 🐛 Bug 1: `kg admin reset` - 500 Internal Server Error
+> **Note:** Detailed authentication documentation is in [AUTHENTICATION.md](./AUTHENTICATION.md) (ADR-027)
 
-**Status:** CRITICAL
+### 9.1 `kg login`
 
-**Symptoms:**
-- Running `kg admin reset` causes API server to crash with 500 error
-- After restarting API, database is reset successfully ("failed successfully")
-- Schema validation passes, data is clean
+**Command:** `kg login [options]`
 
-**Expected:**
-- Should complete without crashing API server
+**Purpose:** Authenticate with username and password
 
-**Location:**
-- `client/src/cli/admin.ts:829` (reset command)
-- API endpoint: `POST /admin/reset`
+**Options:**
+- `-u, --username <username>` - Username for authentication
 
----
-
-### 🐛 Bug 2: `--no-wait` Flag Behavior
-
-**Status:** MEDIUM
-
-**Symptoms:**
-- `kg ingest file doc.txt -o "Ontology" --no-wait` still waits/polls
-- Should return immediately with job ID
-
-**Expected:**
-- With `--wait` (default): Poll job progress
-- With `--no-wait`: Display job ID and exit immediately
-
-**Location:**
-- `client/src/cli/ingest.ts:82-86` (file command)
-- `client/src/cli/ingest.ts:140-144` (text command)
-
-**Issue:**
-```typescript
-if (options.wait) {  // ← BUG: Logic is inverted!
-  await pollJobWithProgress(client, submitResult.job_id);
-} else {
-  console.log(chalk.gray(`\nPoll status with: kg jobs status ${submitResult.job_id}`));
-}
+**Flow:**
+```
+kg login
+  → Prompt for username (if not provided)
+  → Prompt for password (hidden input)
+  → POST /auth/login
+  → Save auth token to config
+  → Display success message
 ```
 
-The flag is `--no-wait` which sets `wait: false` by default. The logic checks `if (options.wait)` which is only true when flag is NOT present!
+### 9.2 `kg logout`
 
----
+**Command:** `kg logout [options]`
 
-### 🐛 Bug 3: `kg jobs list` - Truncated Job IDs
+**Purpose:** End authentication session
 
-**Status:** LOW (UX issue)
+**Options:**
+- `-a, --all` - Clear all tokens (not just current)
 
-**Symptoms:**
-- Job IDs are truncated to 12 characters + "..." in table display
-- User cannot copy full job ID from terminal
-- Need to use `kg jobs status <truncated-id>` which fails
-
-**Expected:**
-- Display full job ID or provide option to show full IDs
-- Alternatively: Make truncated IDs clickable/copyable
-
-**Location:**
-- `client/src/cli/jobs.ts:86` (table building)
-
-**Issue:**
-```typescript
-data.push([
-  job.job_id.substring(0, 12) + '...',  // ← Truncates job ID
-  (job.client_id || 'anonymous').substring(0, 10),
-  colorizeStatus(job.status),
-  job.ontology || '-',
-  created,
-  progress,
-]);
+**Flow:**
+```
+kg logout
+  → Remove auth token from config
+  → Display success message
 ```
 
 ---
-
-### 🐛 Bug 4: Job Approval Polling Inconsistency
-
-**Status:** MEDIUM
-
-**Symptoms:**
-- When using `--no-wait`, job goes to "awaiting_approval" state
-- CLI should return immediately, but unclear what happens
-- User mentioned it "sat there polling" which suggests unexpected behavior
-
-**Expected:**
-- If job needs approval: Display job ID and message to approve
-- Don't poll unless explicitly requested
-
-**Related to:** Bug 2 (`--no-wait` flag)
-
----
-
-## Testing Checklist
-
-### Core Functionality Tests
-
-- [ ] **Health & Config**
-  - [ ] `kg health` - API up
-  - [ ] `kg health` - API down
-  - [ ] `kg config get` - all config
-  - [ ] `kg config get username` - specific key
-  - [ ] `kg config set username alice`
-  - [ ] `kg config delete username`
-  - [ ] `kg config auto-approve true/false`
-
-- [ ] **Ingestion**
-  - [ ] `kg ingest file doc.txt -o "Test"`
-  - [ ] `kg ingest file doc.txt -o "Test"` (duplicate detection)
-  - [ ] `kg ingest file doc.txt -o "Test" --force` (force re-ingest)
-  - [ ] `kg ingest file doc.txt -o "Test" --yes` (auto-approve)
-  - [ ] `kg ingest file doc.txt -o "Test" --no-wait` (Bug 2 - fix and test)
-  - [ ] `kg ingest text "Some text" -o "Test"`
-
-- [ ] **Jobs**
-  - [ ] `kg jobs list`
-  - [ ] `kg jobs list` (Bug 3 - fix truncation and test)
-  - [ ] `kg jobs list pending`
-  - [ ] `kg jobs status <job-id>`
-  - [ ] `kg jobs status <job-id> --watch`
-  - [ ] `kg jobs approve <job-id>`
-  - [ ] `kg jobs approve pending` (batch)
-  - [ ] `kg jobs cancel <job-id>`
-
-- [ ] **Search**
-  - [ ] `kg search query "test"`
-  - [ ] `kg search details <concept-id>`
-  - [ ] `kg search related <concept-id>`
-  - [ ] `kg search connect <from> <to>` (IDs)
-  - [ ] `kg search connect "phrase 1" "phrase 2"` (queries)
-
-- [ ] **Database**
-  - [ ] `kg database stats`
-  - [ ] `kg database info`
-  - [ ] `kg database health`
-
-- [ ] **Ontology**
-  - [ ] `kg ontology list`
-  - [ ] `kg ontology info <name>`
-  - [ ] `kg ontology files <name>`
-  - [ ] `kg ontology delete <name>` (without --force, should warn)
-  - [ ] `kg ontology delete <name> --force`
-
-- [ ] **Admin**
-  - [ ] `kg admin status`
-  - [ ] `kg admin backup --type full`
-  - [ ] `kg admin backup --type ontology --ontology "Test"`
-  - [ ] `kg admin list-backups`
-  - [ ] `kg admin restore --file <backup>` (requires auth)
-  - [ ] `kg admin reset` (Bug 1 - fix 500 error and test)
-  - [ ] `kg admin scheduler status`
-  - [ ] `kg admin scheduler cleanup`
-
----
-
-## Notes on Job Workflow States (ADR-014)
-
-**Job Lifecycle:**
-```
-PENDING
-  → (analysis complete)
-AWAITING_APPROVAL
-  → (user approves or --yes flag)
-APPROVED
-  → (scheduler picks up)
-QUEUED
-  → (worker starts)
-PROCESSING
-  → (completes or fails)
-COMPLETED / FAILED / CANCELLED
-```
-
-**Auto-Approve Behavior:**
-- Global config: `kg config auto-approve true`
-- Per-command flag: `--yes` or `-y`
-- Priority: Flag overrides global config
-
-**Important:**
-- Jobs without `--yes` or global auto-approve → `AWAITING_APPROVAL` state
-- User must run `kg jobs approve <job-id>` to proceed
-- Or `kg jobs cancel <job-id>` to cancel

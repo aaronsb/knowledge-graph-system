@@ -34,6 +34,7 @@ export interface KgConfig {
   auto_approve?: boolean;  // ADR-014: Auto-approve all jobs by default
   auth?: AuthTokenConfig;   // ADR-027: JWT token storage
   mcp?: McpConfig;
+  aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
 }
 
 export class ConfigManager {
@@ -99,6 +100,11 @@ export class ConfigManager {
           list_ontologies: { enabled: true, description: 'List all ontologies' },
           get_database_stats: { enabled: true, description: 'Get database statistics' }
         }
+      },
+      // ADR-029: Command aliases for shell compatibility
+      // Example: zsh users with 'alias cat=bat' can use this to prevent expansion conflicts
+      aliases: {
+        cat: ['bat']  // Allow 'kg bat' as alias for 'kg cat' (handles zsh cat→bat expansion)
       }
     };
   }
@@ -389,6 +395,72 @@ export class ConfigManager {
     const BUFFER_SECONDS = 5 * 60;  // 5-minute buffer
 
     return tokenInfo.expires_at > now + BUFFER_SECONDS;
+  }
+
+  // ========== Alias Methods (ADR-029) ==========
+
+  /**
+   * Get command aliases from config
+   *
+   * @returns Record mapping command names to their aliases
+   */
+  getAliases(): Record<string, string[]> {
+    return this.config.aliases ?? {};
+  }
+
+  /**
+   * Get aliases for a specific command
+   *
+   * @param commandName Name of the command
+   * @returns Array of aliases for this command
+   */
+  getCommandAliases(commandName: string): string[] {
+    return this.config.aliases?.[commandName] ?? [];
+  }
+
+  /**
+   * Add an alias for a command
+   *
+   * @param commandName Name of the command
+   * @param alias Alias to add
+   */
+  addAlias(commandName: string, alias: string): void {
+    if (!this.config.aliases) {
+      this.config.aliases = {};
+    }
+
+    if (!this.config.aliases[commandName]) {
+      this.config.aliases[commandName] = [];
+    }
+
+    if (!this.config.aliases[commandName].includes(alias)) {
+      this.config.aliases[commandName].push(alias);
+      this.save();
+    }
+  }
+
+  /**
+   * Remove an alias for a command
+   *
+   * @param commandName Name of the command
+   * @param alias Alias to remove
+   */
+  removeAlias(commandName: string, alias: string): void {
+    if (!this.config.aliases?.[commandName]) {
+      return;
+    }
+
+    const index = this.config.aliases[commandName].indexOf(alias);
+    if (index !== -1) {
+      this.config.aliases[commandName].splice(index, 1);
+
+      // Clean up empty arrays
+      if (this.config.aliases[commandName].length === 0) {
+        delete this.config.aliases[commandName];
+      }
+
+      this.save();
+    }
   }
 }
 
