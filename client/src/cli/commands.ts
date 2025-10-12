@@ -14,6 +14,8 @@ import { databaseCommand } from './database';
 import { ontologyCommand } from './ontology';
 import { configCommand } from './config';
 import { adminCommand } from './admin';
+import { registerLoginCommand } from './login';
+import { registerLogoutCommand } from './logout';
 import { createClientFromEnv } from '../api/client';
 import { VERSION_INFO } from '../version';
 import { getConfig } from '../lib/config';
@@ -92,6 +94,10 @@ export async function registerCommands(program: Command) {
     configureColoredHelp(cmd);
     program.addCommand(cmd);
   });
+
+  // ADR-027: Register authentication commands (login, logout)
+  registerLoginCommand(program);
+  registerLogoutCommand(program);
 
   // Global options
   program.option(
