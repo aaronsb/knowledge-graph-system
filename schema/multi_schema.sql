@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS kg_api.ingestion_jobs (
     status VARCHAR(50) NOT NULL CHECK (status IN (
         'pending',
         'awaiting_approval',
+        'approved',
+        'queued',
         'running',
         'completed',
         'failed',
@@ -36,7 +38,7 @@ CREATE TABLE IF NOT EXISTS kg_api.ingestion_jobs (
     )),
     ontology VARCHAR(200) NOT NULL,
     client_id VARCHAR(100),
-    content_hash VARCHAR(64),  -- Deduplication
+    content_hash VARCHAR(80),  -- Deduplication (sha256: prefix + 64 hex = 71 chars)
     job_data JSONB NOT NULL,   -- Request payload
     progress JSONB,            -- Live updates
     result JSONB,              -- Final stats

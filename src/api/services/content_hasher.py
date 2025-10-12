@@ -49,22 +49,9 @@ class ContentHasher:
             None: Not seen before, safe to proceed
             Dict: Existing job info with status/result
         """
-        # Query job queue for matching hash + ontology
-        # Note: This queries the SQLite DB directly for efficiency
-        cursor = self.job_queue.db.execute("""
-            SELECT * FROM jobs
-            WHERE content_hash = ?
-              AND ontology = ?
-              AND status IN ('completed', 'processing', 'queued')
-            ORDER BY created_at DESC
-            LIMIT 1
-        """, (content_hash, ontology))
-
-        row = cursor.fetchone()
-        if not row:
-            return None
-
-        return self.job_queue._row_to_dict(row)
+        # Delegate to job queue's check_duplicate method
+        # (works for both InMemory and PostgreSQL queues)
+        return self.job_queue.check_duplicate(content_hash, ontology)
 
     def should_allow_reingestion(
         self,
