@@ -181,7 +181,7 @@ async function getUserCommand(userId: string) {
 /**
  * Create user command
  */
-async function createUserCommand(username: string, options: { role: string }) {
+async function createUserCommand(username: string, options: { role: string; password?: string }) {
   const { token, authClient } = requireAuth();
 
   // Validate role
@@ -197,9 +197,9 @@ async function createUserCommand(username: string, options: { role: string }) {
   console.log(`Role: ${options.role}`);
   console.log('');
 
-  // Prompt for password
+  // Get password (from option or prompt)
   try {
-    const password = await promptPassword(true);
+    const password = options.password || await promptPassword(true);
 
     const request: UserCreateRequest = {
       username,
@@ -426,8 +426,9 @@ export function registerAuthAdminCommand(program: Command): void {
   // kg admin user create
   userCommand
     .command('create <username>')
-    .description('Create new user (prompts for password)')
+    .description('Create new user')
     .requiredOption('--role <role>', 'User role (read_only, contributor, curator, admin)')
+    .option('-p, --password <password>', 'Password (prompts if not provided)')
     .action(createUserCommand);
 
   // kg admin user update
