@@ -372,8 +372,8 @@ async def delete_resource(
 
 @router.get("/roles", response_model=List[RoleRead])
 async def list_roles(
-    include_inactive: bool = False,
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))]
+    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))],
+    include_inactive: bool = False
 ):
     """
     List all roles.
@@ -625,9 +625,9 @@ async def delete_role(
 
 @router.get("/permissions", response_model=List[PermissionRead])
 async def list_permissions(
+    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))],
     role_name: Optional[str] = None,
-    resource_type: Optional[str] = None,
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))]
+    resource_type: Optional[str] = None
 ):
     """
     List role permissions with optional filtering.
