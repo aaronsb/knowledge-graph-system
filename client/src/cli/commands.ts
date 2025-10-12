@@ -16,6 +16,7 @@ import { configCommand } from './config';
 import { adminCommand } from './admin';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
+import { createRbacCommands } from './rbac';
 import { createClientFromEnv } from '../api/client';
 import { VERSION_INFO } from '../version';
 import { getConfig } from '../lib/config';
@@ -78,6 +79,9 @@ export async function registerCommands(program: Command) {
   // Configure colored help for main command
   configureColoredHelp(program);
 
+  // Create client for command that need it
+  const client = createClientFromEnv();
+
   // Register subcommands with colored help
   const subcommands = [
     healthCommand,
@@ -87,7 +91,8 @@ export async function registerCommands(program: Command) {
     searchCommand,
     databaseCommand,
     ontologyCommand,
-    adminCommand
+    adminCommand,
+    createRbacCommands(client)  // ADR-028: RBAC commands
   ];
 
   subcommands.forEach(cmd => {
