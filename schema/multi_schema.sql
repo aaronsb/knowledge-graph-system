@@ -436,15 +436,28 @@ FROM kg_api.relationship_vocabulary rv
 WHERE is_builtin = TRUE
 ON CONFLICT (version_number) DO NOTHING;
 
--- Seed default admin user
--- Password: 'admin' (CHANGE THIS IN PRODUCTION!)
-INSERT INTO kg_auth.users (username, password_hash, role)
-VALUES (
-    'admin',
-    -- bcrypt hash of 'admin' (CHANGE THIS IN PRODUCTION!)
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzpLHJ4tNi',
-    'admin'
-) ON CONFLICT (username) DO NOTHING;
+-- =============================================================================
+-- ADMIN USER INITIALIZATION (ADR-027)
+-- =============================================================================
+--
+-- SECURITY: No default admin user is created in the schema.
+--
+-- To create the admin user, run the initialization script:
+--   ./scripts/initialize-auth.sh
+--
+-- This will:
+--   1. Prompt for a secure admin password (with strength validation)
+--   2. Generate a cryptographically secure JWT_SECRET_KEY
+--   3. Create the admin user with bcrypt-hashed password
+--   4. Save JWT_SECRET_KEY to .env file
+--
+-- For automated/CI environments, you can also create the admin user manually:
+--   docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
+--     "INSERT INTO kg_auth.users (username, password_hash, role, created_at)
+--      VALUES ('admin', crypt('YOUR_PASSWORD', gen_salt('bf', 12)), 'admin', NOW())"
+--
+-- DO NOT commit default passwords to the schema - this is a security risk!
+-- =============================================================================
 
 -- Seed default role permissions
 INSERT INTO kg_auth.role_permissions (role, resource, action, granted)
