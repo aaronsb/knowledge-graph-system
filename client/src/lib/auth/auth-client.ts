@@ -246,7 +246,7 @@ export class AuthClient {
       params.role = role;
     }
 
-    const response = await this.client.get<UserListResponse>('/auth/admin/users', {
+    const response = await this.client.get<UserListResponse>('/users', {
       params,
       headers: {
         Authorization: `Bearer ${token}`
@@ -265,7 +265,7 @@ export class AuthClient {
    * @throws 401 if token invalid/expired, 403 if not admin, 404 if user not found
    */
   async getUser(token: string, userId: number): Promise<UserResponse> {
-    const response = await this.client.get<UserResponse>(`/auth/admin/users/${userId}`, {
+    const response = await this.client.get<UserResponse>(`/users/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -277,13 +277,16 @@ export class AuthClient {
   /**
    * Create user (admin only)
    *
+   * Note: Uses /auth/register endpoint since there's no dedicated admin create endpoint.
+   * Admins can create users with any role.
+   *
    * @param token JWT access token (must be admin role)
    * @param request User creation details
    * @returns Created user details
    * @throws 401 if token invalid/expired, 403 if not admin, 400 if validation fails
    */
   async createUser(token: string, request: UserCreateRequest): Promise<UserResponse> {
-    const response = await this.client.post<UserResponse>('/auth/admin/users', request, {
+    const response = await this.client.post<UserResponse>('/auth/register', request, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -307,7 +310,7 @@ export class AuthClient {
     request: UserUpdateRequest
   ): Promise<UserResponse> {
     const response = await this.client.put<UserResponse>(
-      `/auth/admin/users/${userId}`,
+      `/users/${userId}`,
       request,
       {
         headers: {
@@ -328,7 +331,7 @@ export class AuthClient {
    * @throws 400 if trying to delete self
    */
   async deleteUser(token: string, userId: number): Promise<void> {
-    await this.client.delete(`/auth/admin/users/${userId}`, {
+    await this.client.delete(`/users/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
