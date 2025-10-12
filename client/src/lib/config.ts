@@ -18,12 +18,21 @@ export interface McpConfig {
   tools: Record<string, McpToolConfig>;
 }
 
+export interface AuthTokenConfig {
+  token?: string;           // JWT access token
+  token_type?: string;      // Token type (usually "bearer")
+  expires_at?: number;      // Unix timestamp (seconds)
+  username?: string;        // Cached username from token
+  role?: string;            // Cached role from token
+}
+
 export interface KgConfig {
   username?: string;
   secret?: string;  // API key (never store password!)
   api_url?: string;
   backup_dir?: string;
   auto_approve?: boolean;  // ADR-014: Auto-approve all jobs by default
+  auth?: AuthTokenConfig;   // ADR-027: JWT token storage
   mcp?: McpConfig;
 }
 
@@ -306,6 +315,80 @@ export class ConfigManager {
   setAutoApprove(value: boolean): void {
     this.config.auto_approve = value;
     this.save();
+  }
+
+  // ========== Authentication Methods (ADR-027) ==========
+
+  /**
+   * Store authentication token
+   *
+   * @param tokenInfo Token information including access token, expiration, user details
+   */
+  storeAuthToken(tokenInfo: {
+    access_token: string;
+    token_type: string;
+    expires_at: number;
+    username: string;
+    role: string;
+  }): void {
+    this.set('auth.token', tokenInfo.access_token);
+    this.set('auth.token_type', tokenInfo.token_type);
+    this.set('auth.expires_at', tokenInfo.expires_at);
+    this.set('auth.username', tokenInfo.username);
+    this.set('auth.role', tokenInfo.role);
+
+    // Also update top-level username for backwards compatibility
+    this.set('username', tokenInfo.username);
+  }
+
+  /**
+   * Retrieve authentication token
+   *
+   * @returns Token information or null if not authenticated
+   */
+  getAuthToken(): {
+    access_token: string;
+    token_type: string;
+    expires_at: number;
+    username: string;
+    role: string;
+  } | null {
+    const token = this.get('auth.token');
+    if (!token) {
+      return null;
+    }
+
+    return {
+      access_token: token,
+      token_type: this.get('auth.token_type') || 'bearer',
+      expires_at: this.get('auth.expires_at') || 0,
+      username: this.get('auth.username') || '',
+      role: this.get('auth.role') || ''
+    };
+  }
+
+  /**
+   * Clear authentication token
+   */
+  clearAuthToken(): void {
+    this.delete('auth');
+  }
+
+  /**
+   * Check if user is authenticated (has valid, non-expired token)
+   *
+   * @returns true if user has a valid token
+   */
+  isAuthenticated(): boolean {
+    const tokenInfo = this.getAuthToken();
+    if (!tokenInfo) {
+      return false;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const BUFFER_SECONDS = 5 * 60;  // 5-minute buffer
+
+    return tokenInfo.expires_at > now + BUFFER_SECONDS;
   }
 }
 

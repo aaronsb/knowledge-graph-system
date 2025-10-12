@@ -152,14 +152,62 @@ echo -e "${BOLD}Database Setup${NC}"
 if [ "$RESET_MODE" = true ]; then
     echo -e "${BLUE}→${NC} Resetting admin password..."
 
-    # Hash password using Python
-    PASSWORD_HASH=$(python3 << EOF
+    # Hash password using Python - capture both stdout and stderr
+    HASH_OUTPUT=$(python3 << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
+
+# Get version info and check compatibility
+try:
+    import passlib
+    import bcrypt
+    passlib_version = passlib.__version__
+    try:
+        bcrypt_version = bcrypt.__version__
+    except AttributeError:
+        # bcrypt 5.x changed the version attribute location
+        try:
+            bcrypt_version = bcrypt.__about__.__version__
+        except:
+            bcrypt_version = "unknown (5.x+ detected)"
+
+    # Check if we'll hit the compatibility issue
+    has_compat_issue = not hasattr(bcrypt, '__about__')
+
+    if has_compat_issue:
+        print(f"BCRYPT_COMPAT_INFO:passlib={passlib_version},bcrypt={bcrypt_version}")
+except Exception as e:
+    print(f"VERSION_CHECK_ERROR:{e}")
+
 from src.api.lib.auth import get_password_hash
 print(get_password_hash("$ADMIN_PASSWORD"))
 EOF
 )
+
+    # Check if there were any errors (anything other than just the hash)
+    if echo "$HASH_OUTPUT" | grep -q "VERSION_CHECK_ERROR"; then
+        echo -e "${RED}✗ Failed to check crypto library versions${NC}"
+        echo "$HASH_OUTPUT" | grep "VERSION_CHECK_ERROR"
+    fi
+
+    if echo "$HASH_OUTPUT" | grep -q "Traceback.*Error" | grep -v "bcrypt.*version"; then
+        echo -e "${RED}✗ Failed to hash password${NC}"
+        echo "$HASH_OUTPUT"
+        exit 1
+    fi
+
+    # Extract just the hash (last line of output)
+    PASSWORD_HASH=$(echo "$HASH_OUTPUT" | tail -n 1)
+
+    # Show informational message if bcrypt compatibility notice appeared
+    if echo "$HASH_OUTPUT" | grep -q "BCRYPT_COMPAT_INFO"; then
+        COMPAT_INFO=$(echo "$HASH_OUTPUT" | grep "BCRYPT_COMPAT_INFO" | cut -d: -f2)
+        PASSLIB_VER=$(echo "$COMPAT_INFO" | cut -d, -f1 | cut -d= -f2)
+        BCRYPT_VER=$(echo "$COMPAT_INFO" | cut -d, -f2 | cut -d= -f2)
+
+        echo -e "${YELLOW}ℹ${NC}  Crypto libraries: passlib ${PASSLIB_VER}, bcrypt ${BCRYPT_VER}"
+        echo -e "${YELLOW}ℹ${NC}  Note: passlib 1.7.4 expects bcrypt <5.0 (caught compatibility notice, working correctly)"
+    fi
 
     # Update admin password
     docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
@@ -169,14 +217,62 @@ EOF
 else
     echo -e "${BLUE}→${NC} Creating admin user..."
 
-    # Hash password using Python
-    PASSWORD_HASH=$(python3 << EOF
+    # Hash password using Python - capture both stdout and stderr
+    HASH_OUTPUT=$(python3 << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
+
+# Get version info and check compatibility
+try:
+    import passlib
+    import bcrypt
+    passlib_version = passlib.__version__
+    try:
+        bcrypt_version = bcrypt.__version__
+    except AttributeError:
+        # bcrypt 5.x changed the version attribute location
+        try:
+            bcrypt_version = bcrypt.__about__.__version__
+        except:
+            bcrypt_version = "unknown (5.x+ detected)"
+
+    # Check if we'll hit the compatibility issue
+    has_compat_issue = not hasattr(bcrypt, '__about__')
+
+    if has_compat_issue:
+        print(f"BCRYPT_COMPAT_INFO:passlib={passlib_version},bcrypt={bcrypt_version}")
+except Exception as e:
+    print(f"VERSION_CHECK_ERROR:{e}")
+
 from src.api.lib.auth import get_password_hash
 print(get_password_hash("$ADMIN_PASSWORD"))
 EOF
 )
+
+    # Check if there were any errors (anything other than just the hash)
+    if echo "$HASH_OUTPUT" | grep -q "VERSION_CHECK_ERROR"; then
+        echo -e "${RED}✗ Failed to check crypto library versions${NC}"
+        echo "$HASH_OUTPUT" | grep "VERSION_CHECK_ERROR"
+    fi
+
+    if echo "$HASH_OUTPUT" | grep -q "Traceback.*Error" | grep -v "bcrypt.*version"; then
+        echo -e "${RED}✗ Failed to hash password${NC}"
+        echo "$HASH_OUTPUT"
+        exit 1
+    fi
+
+    # Extract just the hash (last line of output)
+    PASSWORD_HASH=$(echo "$HASH_OUTPUT" | tail -n 1)
+
+    # Show informational message if bcrypt compatibility notice appeared
+    if echo "$HASH_OUTPUT" | grep -q "BCRYPT_COMPAT_INFO"; then
+        COMPAT_INFO=$(echo "$HASH_OUTPUT" | grep "BCRYPT_COMPAT_INFO" | cut -d: -f2)
+        PASSLIB_VER=$(echo "$COMPAT_INFO" | cut -d, -f1 | cut -d= -f2)
+        BCRYPT_VER=$(echo "$COMPAT_INFO" | cut -d, -f2 | cut -d= -f2)
+
+        echo -e "${YELLOW}ℹ${NC}  Crypto libraries: passlib ${PASSLIB_VER}, bcrypt ${BCRYPT_VER}"
+        echo -e "${YELLOW}ℹ${NC}  Note: passlib 1.7.4 expects bcrypt <5.0 (caught compatibility notice, working correctly)"
+    fi
 
     # Create admin user
     docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
