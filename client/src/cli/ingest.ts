@@ -104,10 +104,11 @@ ingestCommand
 ingestCommand
   .command('directory <dir>')
   .description('Ingest all matching files from a directory')
-  .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
+  .option('-o, --ontology <name>', 'Ontology/collection name (required unless --directories-as-ontologies)')
   .option('-p, --pattern <patterns...>', 'File patterns to match (e.g., *.md *.txt)', ['*.md', '*.txt'])
   .option('-r, --recurse', 'Recursively scan subdirectories', false)
   .option('-d, --depth <n>', 'Maximum recursion depth (number or "all")', '0')
+  .option('--directories-as-ontologies', 'Use directory names as ontology names', false)
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
   .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
   .option('--parallel', 'Process in parallel (default: serial for clean concept matching)', false)
@@ -127,37 +128,78 @@ ingestCommand
         process.exit(1);
       }
 
+      // Validate options: either --ontology or --directories-as-ontologies required
+      if (!options.ontology && !options.directoriesAsOntologies) {
+        console.error(chalk.red('✗ Either --ontology or --directories-as-ontologies is required'));
+        console.error(chalk.gray('  Use --ontology to specify a single ontology'));
+        console.error(chalk.gray('  Use --directories-as-ontologies to auto-create ontologies from directory structure'));
+        process.exit(1);
+      }
+
+      if (options.ontology && options.directoriesAsOntologies) {
+        console.error(chalk.red('✗ Cannot use both --ontology and --directories-as-ontologies'));
+        console.error(chalk.gray('  Choose one: specify ontology or use directory names'));
+        process.exit(1);
+      }
+
       const client = createClientFromEnv();
 
       // Determine depth
       const maxDepth = options.depth === 'all' ? Infinity : parseInt(options.depth);
       const recurse = options.recurse || maxDepth > 0;
 
-      // Collect matching files
-      const files = collectFiles(dir, options.pattern, recurse, maxDepth);
+      // Collect matching files (with directory info if using directories as ontologies)
+      const filesWithDirs = options.directoriesAsOntologies
+        ? collectFilesWithDirectories(dir, options.pattern, recurse, maxDepth)
+        : collectFiles(dir, options.pattern, recurse, maxDepth).map(f => ({ file: f, ontologyDir: dir }));
 
-      if (files.length === 0) {
+      if (filesWithDirs.length === 0) {
         console.log(chalk.yellow(`\n⚠ No files found matching patterns: ${options.pattern.join(', ')}`));
         return;
       }
 
-      console.log(chalk.blue(`\n📂 Found ${files.length} file(s) to ingest:`));
-      files.forEach(f => console.log(chalk.gray(`  • ${path.relative(dir, f)}`)));
+      // Group files by ontology if using directory names
+      const filesByOntology = new Map<string, string[]>();
+      for (const { file, ontologyDir } of filesWithDirs) {
+        const ontologyName = options.directoriesAsOntologies
+          ? path.basename(ontologyDir)
+          : options.ontology;
+
+        if (!filesByOntology.has(ontologyName)) {
+          filesByOntology.set(ontologyName, []);
+        }
+        filesByOntology.get(ontologyName)!.push(file);
+      }
+
+      console.log(chalk.blue(`\n📂 Found ${filesWithDirs.length} file(s) to ingest:`));
+      if (options.directoriesAsOntologies) {
+        console.log(chalk.gray(`  Ontologies: ${filesByOntology.size}`));
+        for (const [ontology, files] of filesByOntology) {
+          console.log(chalk.gray(`  • ${ontology}: ${files.length} file(s)`));
+        }
+      } else {
+        filesWithDirs.forEach(({ file }) => console.log(chalk.gray(`  • ${path.relative(dir, file)}`)));
+      }
 
       // Default to auto-approve
       const autoApprove = options.approve !== false;
 
-      console.log(chalk.blue(`\nSubmitting ${files.length} ingestion jobs...`));
-      console.log(chalk.gray(`  Ontology: ${options.ontology}`));
+      console.log(chalk.blue(`\nSubmitting ${filesWithDirs.length} ingestion jobs...`));
+      if (!options.directoriesAsOntologies) {
+        console.log(chalk.gray(`  Ontology: ${options.ontology}`));
+      }
       console.log(chalk.gray(`  Auto-approve: ${autoApprove ? 'yes' : 'no'}\n`));
 
       const jobIds: string[] = [];
       let submitted = 0;
       let skipped = 0;
 
-      for (const filePath of files) {
+      for (const { file: filePath, ontologyDir } of filesWithDirs) {
+        const ontologyName = options.directoriesAsOntologies
+          ? path.basename(ontologyDir)
+          : options.ontology;
         const request: IngestRequest = {
-          ontology: options.ontology,
+          ontology: ontologyName,
           filename: path.basename(filePath),
           force: options.force,
           auto_approve: autoApprove,
@@ -172,16 +214,25 @@ ingestCommand
           const result = await client.ingestFile(filePath, request);
 
           if ('duplicate' in result && result.duplicate) {
-            console.log(chalk.yellow(`⚠ Skipped (duplicate): ${path.relative(dir, filePath)}`));
+            const displayPath = options.directoriesAsOntologies
+              ? `[${ontologyName}] ${path.basename(filePath)}`
+              : path.relative(dir, filePath);
+            console.log(chalk.yellow(`⚠ Skipped (duplicate): ${displayPath}`));
             skipped++;
           } else {
             const submitResult = result as JobSubmitResponse;
             jobIds.push(submitResult.job_id);
-            console.log(chalk.green(`✓ Queued: ${path.relative(dir, filePath)} → ${submitResult.job_id.substring(0, 12)}...`));
+            const displayPath = options.directoriesAsOntologies
+              ? `[${ontologyName}] ${path.basename(filePath)}`
+              : path.relative(dir, filePath);
+            console.log(chalk.green(`✓ Queued: ${displayPath} → ${submitResult.job_id.substring(0, 12)}...`));
             submitted++;
           }
         } catch (error: any) {
-          console.log(chalk.red(`✗ Failed: ${path.relative(dir, filePath)} - ${error.message}`));
+          const displayPath = options.directoriesAsOntologies
+            ? `[${ontologyName}] ${path.basename(filePath)}`
+            : path.relative(dir, filePath);
+          console.log(chalk.red(`✗ Failed: ${displayPath} - ${error.message}`));
           skipped++;
         }
       }
@@ -309,6 +360,57 @@ function collectFiles(dir: string, patterns: string[], recurse: boolean, maxDept
   }
 
   return files;
+}
+
+/**
+ * Collect files with their parent directory info for ontology mapping
+ */
+function collectFilesWithDirectories(
+  baseDir: string,
+  patterns: string[],
+  recurse: boolean,
+  maxDepth: number,
+  currentDepth: number = 0
+): Array<{ file: string; ontologyDir: string }> {
+  const results: Array<{ file: string; ontologyDir: string }> = [];
+
+  // Don't recurse beyond max depth
+  if (currentDepth > maxDepth) {
+    return results;
+  }
+
+  const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(baseDir, entry.name);
+
+    if (entry.isDirectory() && recurse && currentDepth < maxDepth) {
+      // Recurse into subdirectory - subdirectory becomes the ontology
+      const subResults = collectFilesWithDirectories(fullPath, patterns, recurse, maxDepth, currentDepth + 1);
+      results.push(...subResults);
+    } else if (entry.isFile()) {
+      // Check if file matches any pattern
+      const matches = patterns.some(pattern => {
+        // Convert glob pattern to regex
+        const regexPattern = pattern
+          .replace(/\./g, '\\.')
+          .replace(/\*/g, '.*')
+          .replace(/\?/g, '.');
+        const regex = new RegExp(`^${regexPattern}$`, 'i');
+        return regex.test(entry.name);
+      });
+
+      if (matches) {
+        // Use immediate parent directory as ontology
+        results.push({
+          file: fullPath,
+          ontologyDir: baseDir
+        });
+      }
+    }
+  }
+
+  return results;
 }
 
 /**
