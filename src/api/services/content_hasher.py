@@ -7,7 +7,7 @@ and checking against previously processed jobs.
 
 import hashlib
 from typing import Optional, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class ContentHasher:
@@ -94,7 +94,8 @@ class ContentHasher:
         if status == "completed":
             # Check age - allow re-ingestion if > 30 days old
             completed_at = datetime.fromisoformat(existing_job["completed_at"])
-            age = datetime.now() - completed_at
+            # Use timezone-aware datetime for comparison (PostgreSQL returns timezone-aware timestamps)
+            age = datetime.now(timezone.utc) - completed_at
 
             if age > timedelta(days=30):
                 return (
