@@ -11,6 +11,7 @@ The current authentication system (ADR-027) has hardcoded roles (`read_only`, `c
 - AI-generated ontologies
 - Structured collaboration graphs
 - Tool list graphs
+- Memory systems (conversational memory, agent memory, persistent context)
 - Multi-tenant workspaces
 - Custom resource types
 
@@ -43,17 +44,18 @@ CREATE TABLE kg_auth.resources (
 
 **Example Resources:**
 ```
-resource_type         | parent_type | available_actions                    | supports_scoping
-----------------------|-------------|--------------------------------------|------------------
-concepts              | NULL        | ['read', 'write', 'delete']         | FALSE
-vocabulary            | NULL        | ['read', 'write', 'approve', 'delete'] | FALSE
-jobs                  | NULL        | ['read', 'write', 'approve', 'delete'] | FALSE
-users                 | NULL        | ['read', 'write', 'delete']         | FALSE
-ontologies            | NULL        | ['read', 'write', 'delete', 'manage'] | TRUE
-ontologies.ai_generated | ontologies | ['read', 'write', 'approve']       | TRUE
-collaboration_graphs  | NULL        | ['read', 'write', 'invite', 'moderate'] | TRUE
-tool_lists            | NULL        | ['read', 'write', 'execute', 'share'] | TRUE
-workspaces            | NULL        | ['read', 'write', 'admin']          | TRUE
+resource_type         | parent_type | available_actions                         | supports_scoping
+----------------------|-------------|-------------------------------------------|------------------
+concepts              | NULL        | ['read', 'write', 'delete']              | FALSE
+vocabulary            | NULL        | ['read', 'write', 'approve', 'delete']   | FALSE
+jobs                  | NULL        | ['read', 'write', 'approve', 'delete']   | FALSE
+users                 | NULL        | ['read', 'write', 'delete']              | FALSE
+ontologies            | NULL        | ['read', 'write', 'delete', 'manage']    | TRUE
+ontologies.ai_generated | ontologies | ['read', 'write', 'approve']            | TRUE
+collaboration_graphs  | NULL        | ['read', 'write', 'invite', 'moderate']  | TRUE
+tool_lists            | NULL        | ['read', 'write', 'execute', 'share']    | TRUE
+memory_systems        | NULL        | ['read', 'write', 'delete', 'search', 'export'] | TRUE
+workspaces            | NULL        | ['read', 'write', 'admin']               | TRUE
 ```
 
 ### 2. Dynamic Roles
@@ -445,6 +447,59 @@ kg admin role grant tool_executor tool_lists execute \
 
 kg admin user assign charlie tool_executor
 ```
+
+### Use Case 4: Memory System (Conversational Context)
+
+```bash
+# Register memory system resource
+kg admin resource create memory_systems \
+    --actions read,write,delete,search,export \
+    --scoped
+
+# Create memory manager role
+kg admin role create memory_manager \
+    --description "Manages agent memory and persistent context"
+
+# Users can read/write their own memories
+kg admin role grant contributor memory_systems read \
+    --scope filter --filter '{"owner_id": "$user_id"}'
+kg admin role grant contributor memory_systems write \
+    --scope filter --filter '{"owner_id": "$user_id"}'
+
+# Memory managers can search across all memories (for support/debugging)
+kg admin role grant memory_manager memory_systems search --scope global
+
+# Admin can export memories (backup/compliance)
+kg admin role grant admin memory_systems export --scope global
+
+# Assign scoped memory access
+kg admin user assign diana memory_manager \
+    --scope instance --id agent_workspace_123
+```
+
+## Cold Start Initialization
+
+The migration script includes automatic initialization with **minimum viable permissions** for a fresh installation:
+
+**Builtin Roles Created:**
+- `read_only` - Can view concepts, vocabulary, jobs
+- `contributor` - + Can create/edit concepts and jobs
+- `curator` - + Can approve vocabulary and jobs
+- `admin` - Full system access including user/role management
+
+**Resources Registered:**
+- `concepts`, `vocabulary`, `jobs`, `users`, `roles`, `resources`
+
+**Permissions Seeded:**
+- All existing permissions from ADR-027 migrated automatically
+- Admin given full access to role/resource management
+- Curator given read access to roles/resources (visibility, no modification)
+
+**User Migration:**
+- All existing users automatically get their `primary_role` as a `user_roles` assignment
+- Backwards compatible: `users.primary_role` column preserved
+
+The system is **immediately functional** after migration - no manual setup required!
 
 ## Security Considerations
 
