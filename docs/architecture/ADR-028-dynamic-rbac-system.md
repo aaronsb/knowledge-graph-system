@@ -54,9 +54,11 @@ ontologies            | NULL        | ['read', 'write', 'delete', 'manage']    |
 ontologies.ai_generated | ontologies | ['read', 'write', 'approve']            | TRUE
 collaboration_graphs  | NULL        | ['read', 'write', 'invite', 'moderate']  | TRUE
 tool_lists            | NULL        | ['read', 'write', 'execute', 'share']    | TRUE
-memory_systems        | NULL        | ['read', 'write', 'delete', 'search', 'export'] | TRUE
 workspaces            | NULL        | ['read', 'write', 'admin']               | TRUE
 ```
+
+**Note on Memory Systems:** Memories are **graph-native** - they're concepts and edges in specialized ontologies (e.g., `memory:user_123`), not a separate resource type. See Use Case 4 for details.
+
 
 ### 2. Dynamic Roles
 
@@ -448,33 +450,55 @@ kg admin role grant tool_executor tool_lists execute \
 kg admin user assign charlie tool_executor
 ```
 
-### Use Case 4: Memory System (Conversational Context)
+### Use Case 4: Memory System (Graph-Native Conversational Context)
+
+**Architecture**: Memories are **nodes and edges** in the knowledge graph, not a separate system. They live in specialized ontologies (e.g., `memory:user_123`, `agent_context_v1`) and can link to concepts in other ontologies.
 
 ```bash
-# Register memory system resource
-kg admin resource create memory_systems \
-    --actions read,write,delete,search,export \
-    --scoped
+# Memories use existing 'concepts' and 'ontologies' resources
+# No new resource type needed - they're graph-native!
 
 # Create memory manager role
 kg admin role create memory_manager \
-    --description "Manages agent memory and persistent context"
+    --description "Manages agent memory and persistent context" \
+    --inherits contributor
 
-# Users can read/write their own memories
-kg admin role grant contributor memory_systems read \
-    --scope filter --filter '{"owner_id": "$user_id"}'
-kg admin role grant contributor memory_systems write \
-    --scope filter --filter '{"owner_id": "$user_id"}'
+# Users can read/write concepts in their own memory ontology
+kg admin role grant contributor concepts write \
+    --scope filter --filter '{"ontology": "memory:$user_id"}'
 
-# Memory managers can search across all memories (for support/debugging)
-kg admin role grant memory_manager memory_systems search --scope global
+# Memory managers can read across all memory ontologies (support/debugging)
+kg admin role grant memory_manager concepts read \
+    --scope filter --filter '{"ontology": "memory:*"}'
 
-# Admin can export memories (backup/compliance)
-kg admin role grant admin memory_systems export --scope global
+# Allow cross-ontology links (memories → other concepts)
+# This enables "I remember discussing recursion" → recursion concept
+kg admin role grant contributor concepts write \
+    --scope filter --filter '{"source_ontology": "memory:*", "edge_type": "RELATED_TO"}'
 
-# Assign scoped memory access
+# Curators can manage memory ontologies (cleanup, archival)
+kg admin role grant curator ontologies manage \
+    --scope filter --filter '{"ontology_prefix": "memory:"}'
+
+# Example: Assign scoped memory access for specific agent workspace
 kg admin user assign diana memory_manager \
-    --scope instance --id agent_workspace_123
+    --scope instance --id memory:agent_workspace_123
+```
+
+**Key Benefits of Graph-Native Memory:**
+- **Memories are concepts** - same node/edge structure as all knowledge
+- **Relationships are edges** - uses existing vocabulary (RELATED_TO, IMPLIES, etc.)
+- **Cross-ontology links** - memories can reference concepts in other ontologies
+- **Unified querying** - traverse from memories to concepts seamlessly
+- **Standard permissions** - leverage existing `concepts` and `ontologies` resources
+
+**Example Memory Graph Structure:**
+```
+(:Concept {label: "Discussion about recursion", ontology: "memory:user_123"})
+  -[:OCCURRED_AT {timestamp: "2025-10-11T15:30:00"}]->
+  (:Concept {label: "User mentioned Watts lecture", ontology: "memory:user_123"})
+  -[:RELATED_TO]->
+  (:Concept {label: "Recursive depth", ontology: "watts_lecture_ontology"})
 ```
 
 ## Cold Start Initialization
