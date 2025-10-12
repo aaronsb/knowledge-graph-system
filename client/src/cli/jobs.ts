@@ -9,13 +9,14 @@ import { JobStatus } from '../types';
 import * as colors from './colors';
 import { Table } from '../lib/table';
 
-export const jobsCommand = new Command('jobs')
+export const jobCommand = new Command('job')
+  .alias('jobs')  // Plural alias for backwards compatibility
   .description('Manage and monitor ingestion jobs')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError();
 
 // Get job status
-jobsCommand
+jobCommand
   .command('status <job-id>')
   .description('Get job status')
   .showHelpAfterError()
@@ -250,7 +251,7 @@ listCommand
   });
 
 // Add list command to jobs
-jobsCommand.addCommand(listCommand);
+jobCommand.addCommand(listCommand);
 
 // Approve job(s) (ADR-014)
 const approveCommand = new Command('approve')
@@ -367,10 +368,10 @@ approveCommand
       }
     });
 
-jobsCommand.addCommand(approveCommand);
+jobCommand.addCommand(approveCommand);
 
 // Cancel job(s)
-jobsCommand
+jobCommand
   .command('cancel <job-id-or-filter>')
   .description('Cancel a job or all jobs matching filter (pending, queued, etc.)')
   .showHelpAfterError()
@@ -432,7 +433,7 @@ jobsCommand
   });
 
 // Clear all jobs
-jobsCommand
+jobCommand
   .command('clear')
   .description('Clear ALL jobs from database (requires confirmation)')
   .option('--confirm', 'Confirm deletion (required)', false)

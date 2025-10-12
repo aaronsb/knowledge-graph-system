@@ -9,6 +9,7 @@ import { coloredCount, separator } from './colors';
 import { Table } from '../lib/table';
 
 export const ontologyCommand = new Command('ontology')
+  .alias('onto')  // Short alias
   .description('Manage ontologies (knowledge domains)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()

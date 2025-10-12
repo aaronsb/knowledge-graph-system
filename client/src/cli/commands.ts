@@ -7,7 +7,7 @@ import cfonts from 'cfonts';
 import * as colors from './colors';
 import { configureColoredHelp } from './help-formatter';
 import { ingestCommand } from './ingest';
-import { jobsCommand } from './jobs';
+import { jobCommand } from './jobs';
 import { healthCommand } from './health';
 import { searchCommand } from './search';
 import { databaseCommand } from './database';
@@ -16,6 +16,7 @@ import { configCommand } from './config';
 import { adminCommand } from './admin';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
+import { createVerbRouter } from './verb-router';
 import { createClientFromEnv } from '../api/client';
 import { VERSION_INFO } from '../version';
 import { getConfig } from '../lib/config';
@@ -86,7 +87,7 @@ export async function registerCommands(program: Command) {
     healthCommand,
     configCommand,
     ingestCommand,
-    jobsCommand,
+    jobCommand,
     searchCommand,
     databaseCommand,
     ontologyCommand,
@@ -101,6 +102,13 @@ export async function registerCommands(program: Command) {
   // ADR-027: Register authentication commands (login, logout)
   registerLoginCommand(program);
   registerLogoutCommand(program);
+
+  // ADR-029: Register Unix-style verb shortcuts (ls, rm, stat, cat)
+  const verbCommands = createVerbRouter(program);
+  verbCommands.forEach(cmd => {
+    configureColoredHelp(cmd);
+    program.addCommand(cmd);
+  });
 
   // Global options
   program.option(
