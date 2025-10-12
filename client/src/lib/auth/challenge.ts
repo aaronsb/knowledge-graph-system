@@ -5,7 +5,7 @@
  * Requires user to re-enter password before proceeding.
  */
 
-import * as readline from 'readline';
+import prompts from 'prompts';
 import { AuthClient, LoginRequest } from './auth-client.js';
 import { TokenManager, TokenInfo } from './token-manager.js';
 
@@ -86,99 +86,56 @@ export class AuthChallenge {
    * Prompt for username
    */
   private async promptUsername(): Promise<string> {
-    return new Promise((resolve) => {
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-
-      rl.question('   Username: ', (answer) => {
-        rl.close();
-        resolve(answer.trim());
-      });
+    const response = await prompts({
+      type: 'text',
+      name: 'username',
+      message: 'Username',
     });
+
+    // Handle Ctrl+C
+    if (response.username === undefined) {
+      console.log('\nChallenge cancelled.');
+      process.exit(0);
+    }
+
+    return response.username;
   }
 
   /**
    * Prompt for password (hidden input)
    */
   private async promptPassword(): Promise<string> {
-    return new Promise((resolve) => {
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-
-      // Disable echo for password input
-      const stdin = process.stdin as any;
-      const wasRaw = stdin.isRaw;
-      if (stdin.setRawMode) {
-        stdin.setRawMode(true);
-      }
-
-      let password = '';
-
-      process.stdout.write('   Password: ');
-
-      stdin.on('data', (char: Buffer) => {
-        const c = char.toString('utf8');
-
-        switch (c) {
-          case '\n':
-          case '\r':
-          case '\u0004':  // Ctrl+D
-            // Enter pressed - submit password
-            process.stdout.write('\n');
-            stdin.removeAllListeners('data');
-            if (stdin.setRawMode) {
-              stdin.setRawMode(wasRaw);
-            }
-            rl.close();
-            resolve(password);
-            break;
-          case '\u0003':  // Ctrl+C
-            // Cancel
-            process.stdout.write('\n');
-            stdin.removeAllListeners('data');
-            if (stdin.setRawMode) {
-              stdin.setRawMode(wasRaw);
-            }
-            rl.close();
-            process.exit(0);
-            break;
-          case '\u007f':  // Backspace
-            if (password.length > 0) {
-              password = password.slice(0, -1);
-              process.stdout.write('\b \b');
-            }
-            break;
-          default:
-            // Normal character - add to password and show asterisk
-            if (c.charCodeAt(0) >= 32) {  // Printable characters only
-              password += c;
-              process.stdout.write('*');
-            }
-            break;
-        }
-      });
+    const response = await prompts({
+      type: 'password',
+      name: 'password',
+      message: 'Password',
     });
+
+    // Handle Ctrl+C
+    if (response.password === undefined) {
+      console.log('\nChallenge cancelled.');
+      process.exit(0);
+    }
+
+    return response.password;
   }
 
   /**
    * Prompt to retry after failed authentication
    */
   private async promptRetry(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-
-      rl.question('   Retry? (y/N): ', (answer) => {
-        rl.close();
-        const retry = answer.trim().toLowerCase() === 'y';
-        resolve(retry);
-      });
+    const response = await prompts({
+      type: 'confirm',
+      name: 'retry',
+      message: 'Retry?',
+      initial: false,
     });
+
+    // Handle Ctrl+C
+    if (response.retry === undefined) {
+      return false;
+    }
+
+    return response.retry;
   }
 }

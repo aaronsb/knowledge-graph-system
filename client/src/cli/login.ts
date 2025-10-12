@@ -6,126 +6,13 @@
  */
 
 import { Command } from 'commander';
-import * as readline from 'readline';
+import prompts from 'prompts';
 import { getConfig } from '../lib/config.js';
 import { AuthClient } from '../lib/auth/auth-client.js';
 import { TokenManager } from '../lib/auth/token-manager.js';
 
 interface LoginOptions {
   username?: string;
-}
-
-/**
- * Prompt for input (username)
- */
-async function promptInput(question: string, defaultValue?: string): Promise<string> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    const prompt = defaultValue ? `${question} [${defaultValue}]: ` : `${question}: `;
-
-    rl.question(prompt, (answer) => {
-      rl.close();
-      resolve(answer.trim() || defaultValue || '');
-    });
-  });
-}
-
-/**
- * Prompt for password (hidden input)
- */
-async function promptPassword(): Promise<string> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    // Mute output to prevent character echo
-    const mute = () => {
-      (rl as any).output.muted = true;
-    };
-
-    const unmute = () => {
-      (rl as any).output.muted = false;
-    };
-
-    // Override _writeToOutput to control what gets displayed
-    const originalWrite = (rl as any)._writeToOutput;
-    (rl as any)._writeToOutput = function(stringToWrite: string) {
-      if ((rl as any).output.muted) {
-        // When muted, only show asterisks for actual characters
-        // but don't show the characters themselves
-        (rl as any).output.write('*');
-      } else {
-        originalWrite.call(rl, stringToWrite);
-      }
-    };
-
-    let password = '';
-
-    rl.question('Password: ', () => {
-      unmute();
-      process.stdout.write('\n');
-      rl.close();
-      resolve(password);
-    });
-
-    mute();
-
-    // Capture raw keypresses for backspace handling
-    const stdin = process.stdin as any;
-    stdin.setRawMode(true);
-    stdin.resume();
-
-    const handleKey = (char: Buffer) => {
-      const c = char.toString('utf8');
-
-      switch (c) {
-        case '\n':
-        case '\r':
-        case '\u0004':  // Ctrl+D
-          // Enter pressed
-          stdin.removeListener('data', handleKey);
-          stdin.setRawMode(false);
-          stdin.pause();
-          unmute();
-          process.stdout.write('\n');
-          rl.close();
-          resolve(password);
-          break;
-        case '\u0003':  // Ctrl+C
-          // Cancel
-          stdin.removeListener('data', handleKey);
-          stdin.setRawMode(false);
-          stdin.pause();
-          unmute();
-          process.stdout.write('\n');
-          console.log('Login cancelled.');
-          process.exit(0);
-          break;
-        case '\u007f':  // Backspace
-        case '\b':
-          if (password.length > 0) {
-            password = password.slice(0, -1);
-            process.stdout.write('\b \b');
-          }
-          break;
-        default:
-          // Normal character - add to password
-          if (c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127) {
-            password += c;
-            process.stdout.write('*');
-          }
-          break;
-      }
-    };
-
-    stdin.on('data', handleKey);
-  });
 }
 
 /**
@@ -160,7 +47,19 @@ async function loginCommand(options: LoginOptions) {
   // Get username (from option, config, or prompt)
   let username = options.username || config.get('username');
   if (!username) {
-    username = await promptInput('Username');
+    const response = await prompts({
+      type: 'text',
+      name: 'username',
+      message: 'Username',
+    });
+
+    // Handle Ctrl+C
+    if (response.username === undefined) {
+      console.log('\nLogin cancelled.');
+      process.exit(0);
+    }
+
+    username = response.username;
   } else {
     console.log(`Username: ${username}`);
   }
@@ -171,7 +70,19 @@ async function loginCommand(options: LoginOptions) {
   }
 
   // Get password (always prompt, never pre-fill for security)
-  const password = await promptPassword();
+  const passwordResponse = await prompts({
+    type: 'password',
+    name: 'password',
+    message: 'Password',
+  });
+
+  // Handle Ctrl+C
+  if (passwordResponse.password === undefined) {
+    console.log('\nLogin cancelled.');
+    process.exit(0);
+  }
+
+  const password = passwordResponse.password;
 
   if (!password) {
     console.error('\x1b[31m❌ Password is required\x1b[0m\n');

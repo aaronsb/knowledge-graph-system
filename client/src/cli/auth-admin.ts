@@ -5,7 +5,7 @@
  */
 
 import { Command } from 'commander';
-import * as readline from 'readline';
+import prompts from 'prompts';
 import { getConfig } from '../lib/config.js';
 import { AuthClient, UserCreateRequest, UserUpdateRequest } from '../lib/auth/auth-client.js';
 import { TokenManager } from '../lib/auth/token-manager.js';
@@ -50,92 +50,41 @@ function requireAuth(): { token: string; tokenManager: TokenManager; authClient:
  * Prompt for password (hidden input)
  */
 async function promptPassword(confirmRequired: boolean = false): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    // Disable echo for password input
-    const stdin = process.stdin as any;
-    const wasRaw = stdin.isRaw;
-    if (stdin.setRawMode) {
-      stdin.setRawMode(true);
-    }
-
-    let password = '';
-    let confirming = false;
-    let passwordFirst = '';
-
-    const prompt = confirming ? 'Confirm password: ' : 'Password: ';
-    process.stdout.write(prompt);
-
-    stdin.on('data', (char: Buffer) => {
-      const c = char.toString('utf8');
-
-      switch (c) {
-        case '\n':
-        case '\r':
-        case '\u0004':  // Ctrl+D
-          // Enter pressed
-          process.stdout.write('\n');
-
-          if (confirmRequired && !confirming) {
-            // First password entered, now confirm
-            passwordFirst = password;
-            password = '';
-            confirming = true;
-            process.stdout.write('Confirm password: ');
-          } else if (confirmRequired && confirming) {
-            // Confirmation entered, check match
-            stdin.removeAllListeners('data');
-            if (stdin.setRawMode) {
-              stdin.setRawMode(wasRaw);
-            }
-            rl.close();
-
-            if (password === passwordFirst) {
-              resolve(password);
-            } else {
-              console.error('\x1b[31m❌ Passwords do not match\x1b[0m');
-              reject(new Error('Passwords do not match'));
-            }
-          } else {
-            // No confirmation required
-            stdin.removeAllListeners('data');
-            if (stdin.setRawMode) {
-              stdin.setRawMode(wasRaw);
-            }
-            rl.close();
-            resolve(password);
-          }
-          break;
-        case '\u0003':  // Ctrl+C
-          // Cancel
-          process.stdout.write('\n');
-          stdin.removeAllListeners('data');
-          if (stdin.setRawMode) {
-            stdin.setRawMode(wasRaw);
-          }
-          rl.close();
-          reject(new Error('Cancelled'));
-          break;
-        case '\u007f':  // Backspace
-          if (password.length > 0) {
-            password = password.slice(0, -1);
-            process.stdout.write('\b \b');
-          }
-          break;
-        default:
-          // Normal character - add to password and show asterisk
-          if (c.charCodeAt(0) >= 32) {  // Printable characters only
-            password += c;
-            process.stdout.write('*');
-          }
-          break;
-      }
-    });
+  const response = await prompts({
+    type: 'password',
+    name: 'password',
+    message: 'Password',
   });
+
+  // Handle Ctrl+C
+  if (response.password === undefined) {
+    throw new Error('Cancelled');
+  }
+
+  const password = response.password;
+
+  if (!confirmRequired) {
+    return password;
+  }
+
+  // Confirm password
+  const confirmResponse = await prompts({
+    type: 'password',
+    name: 'password',
+    message: 'Confirm password',
+  });
+
+  // Handle Ctrl+C
+  if (confirmResponse.password === undefined) {
+    throw new Error('Cancelled');
+  }
+
+  if (password !== confirmResponse.password) {
+    console.error('\x1b[31m❌ Passwords do not match\x1b[0m');
+    throw new Error('Passwords do not match');
+  }
+
+  return password;
 }
 
 /**
