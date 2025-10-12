@@ -280,7 +280,7 @@ class JobAnalyzer:
                 "analyzed_at": "ISO timestamp"
             }
         """
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         # Extract parameters
         file_path = job_data.get("file_path")
@@ -384,7 +384,7 @@ class JobAnalyzer:
                 "checkpoint_interval": job_data.get("checkpoint_interval", 5)
             },
             "warnings": warnings,
-            "analyzed_at": datetime.now().isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat()
         }
 
         return analysis

@@ -7,7 +7,7 @@ changing route handlers.
 
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, List, Callable
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import json
 import sqlite3
@@ -253,7 +253,7 @@ class InMemoryJobQueue(JobQueue):
                 "progress": None,
                 "result": None,
                 "error": None,
-                "created_at": datetime.now().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "started_at": None,
                 "completed_at": None,
                 "job_data": job_data,
@@ -297,10 +297,10 @@ class InMemoryJobQueue(JobQueue):
 
             # Update timestamps
             if updates.get("status") == "processing" and not self.jobs[job_id].get("started_at"):
-                self.jobs[job_id]["started_at"] = datetime.now().isoformat()
+                self.jobs[job_id]["started_at"] = datetime.now(timezone.utc).isoformat()
 
             if updates.get("status") in ["completed", "failed"]:
-                self.jobs[job_id]["completed_at"] = datetime.now().isoformat()
+                self.jobs[job_id]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
             # Persist to DB
             self._save_to_db(self.jobs[job_id])
@@ -320,7 +320,7 @@ class InMemoryJobQueue(JobQueue):
                 return False  # Can't cancel running jobs in Phase 1
 
             job["status"] = "cancelled"
-            job["completed_at"] = datetime.now().isoformat()
+            job["completed_at"] = datetime.now(timezone.utc).isoformat()
             self._save_to_db(job)
 
             return True
