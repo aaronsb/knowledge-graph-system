@@ -229,6 +229,49 @@ kg job list --json
 kg job list --json | jq '.[] | select(.status == "failed")' | kg job cancel --json
 ```
 
+**Architectural Insight: CLI as API Abstraction Layer**
+
+The JSON I/O mode transforms `kg` into a **typed API abstraction** that provides:
+
+1. **Safety Layer**
+   - Client-side validation before API calls
+   - Confirmation prompts for destructive operations (can be overridden with --force)
+   - Schema validation (TypeScript types ensure correct data structures)
+
+2. **Protocol Versioning**
+   - CLI handles API version differences transparently
+   - Backward compatibility for older scripts
+   - Deprecation warnings without breaking existing automation
+
+3. **Offline Capabilities** (future)
+   - Local config operations without API calls
+   - Batch operations with optimistic execution
+   - Queue commands when API is unreachable
+
+4. **Automation Interface**
+   - Scripts/tools that can't use REST API directly
+   - CI/CD pipelines (no HTTP client needed)
+   - Shell scripts (simpler than curl + jq)
+   - Other CLIs (compose with Unix tools)
+
+**Example: CI/CD Pipeline**
+```bash
+#!/bin/bash
+# Deploy ontology from CI/CD without REST client
+
+# Safer than raw API calls - CLI validates before sending
+kg ontology create ai_models --json < ontology.json
+
+# CLI handles retries, auth, error messages
+if kg job list --json | jq -e '.[] | select(.status == "failed")' > /dev/null; then
+  echo "Failed jobs detected"
+  exit 1
+fi
+
+# Confirmation prompts can be overridden for automation
+kg database reset --force --yes
+```
+
 **Configuration Integration:**
 ```typescript
 // client/src/lib/config.ts
