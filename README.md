@@ -1,361 +1,252 @@
 # Knowledge Graph System
 
-**Transform documents into queryable concept networks, not just retrievable text.**
+**Transform documents into queryable concept networks. Not retrieval - understanding.**
 
-![Knowledge Graph Visualization](docs/media/neo4j-ui.jpeg)
+## What This Does
 
-## What This Is
+This system extracts concepts and relationships from documents, building a persistent knowledge graph you can explore semantically. Instead of searching for similar text, you discover how ideas connect across your entire corpus.
 
-A knowledge graph system using LLM extraction, Neo4j storage, and vector search. Built on Model Context Protocol (MCP) for multi-agent access.
+Feed it research papers, meeting notes, code commits, or philosophical texts. The system identifies concepts, understands their relationships, and preserves evidence trails back to source material. Query by meaning, not keywords. Traverse connections between ideas, not just similarity scores.
 
+**The difference matters:** Traditional RAG retrieves text chunks that match your query. Knowledge graphs reveal how concepts *relate* - what enables what, what contradicts what, what emerges from what. The graph grows smarter with each document, automatically connecting new concepts to existing knowledge.
 
-**Core Pattern:**
-Iterative graph traversal during ingestion. Each chunk:
-1. Queries recent concepts from graph
-2. Feeds context to LLM
-3. Extracts new concepts and relationships
-4. Upserts to graph
-5. Next chunk uses enriched graph
+**Built on:** Apache AGE (PostgreSQL graph extension), FastAPI REST architecture, modular LLM providers (OpenAI/Anthropic), TypeScript client tooling, and Model Context Protocol integration.
 
-The graph serves as both output and active input. Inspired by how coding agents replay conversation context.
+## How It Works
 
-**Measured Results:**
-From ingestion logs (`logs/ingest_*.log`):
-- 17 chunks, 16,617 words processed
-- Chunk 1: 0% hit rate (graph empty)
-- Chunk 11: 60% hit rate
-- Chunk 15: 62.5% hit rate
-- 63 concepts created, 28 linked to existing, 84 relationships
+Documents flow through smart chunking that respects natural boundaries
+  ↓
+LLM extraction identifies concepts, relationships, and evidence quotes
+  ↓
+Graph construction in PostgreSQL with Apache AGE extension
+  ↓
+Vector embeddings enable semantic search across concepts
+  ↓
+Query interface reveals connections and provides provenance
 
-**Architecture:**
-- Neo4j graph database with vector indexes
-- MCP server for Claude Desktop integration
-- Python ingestion pipeline with checkpoint/resume
-- CLI for direct queries
-- Full-text + vector search
+**The iterative pattern:** Each chunk queries recent concepts before processing. The LLM sees what the graph already knows, enabling cross-chunk relationship detection. Early chunks populate the graph. Later chunks connect to existing concepts. Hit rates climb from 0% to 60%+ as the graph learns your domain.
 
-**Production Path:**
-- GitHub Actions integration for automated ingestion
-- Batch processing for large document sets
-- Scale testing and operational hardening
+**Multi-document synthesis:** Concepts automatically merge across files when semantically similar. A term mentioned in chapter 1 links to the same concept in chapter 10, even across different documents in the same ontology.
 
----
+## Why This Matters
 
-## What is This?
+You've invested time (and API tokens) extracting knowledge from documents. Traditional systems rebuild that understanding on every query. This system *remembers*.
 
-Most AI systems retrieve text chunks based on similarity. This system **extracts concepts, understands relationships, and builds a persistent knowledge graph** that can be explored, traversed, and queried semantically.
+**Persistent concept extraction** → Ideas become first-class entities with labels, search terms, and relationships
 
-Instead of asking "what text is similar to my query?", you ask:
-- "What concepts relate to uselessness in Taoist philosophy?"
-- "Show me evidence for the AI Sandwich model"
-- "How does variety connect to human-AI collaboration?"
+**Relationship modeling** → Concepts ENABLE, SUPPORT, CONTRADICT, IMPLY each other with confidence scores
 
-**The difference:**
-- 🔍 **RAG**: Find similar text → stuff into context → hope for the best
-- 🕸️ **Knowledge Graph**: Extract concepts → model relationships → traverse connections → provide evidence
+**Graph traversal** → Explore connections between ideas across document boundaries
 
-## Why Does This Matter?
+**Evidence provenance** → Every concept links to source quotes with paragraph references
 
-Traditional RAG systems:
-- Rebuild knowledge on every query (ephemeral)
-- Retrieve based on vector similarity alone
-- Treat documents as isolated text chunks
-- Provide no concept-level understanding
+**Cross-ontology enrichment** → Ingest related documents into different ontologies; shared concepts bridge them naturally
 
-This system:
-- ✅ **Persistent concept extraction** - ideas become first-class entities with labels and search terms
-- ✅ **Relationship modeling** - concepts IMPLY, SUPPORT, CONTRADICT each other
-- ✅ **Graph traversal** - explore connections between ideas, not just similarity scores
-- ✅ **Evidence provenance** - every concept links back to source quotes
-- ✅ **Cross-document synthesis** - concepts from different sources automatically connect
-- ✅ **Multi-modal access** - Query via MCP (for LLMs), CLI (for humans), or Neo4j Browser (visual)
-
-## Live Example
-
-After ingesting Alan Watts lectures and a technical paper on AI systems:
-
-```bash
-# Query: "uselessness"
-→ Found: "Value of Uselessness" (89.5% similarity)
-  Evidence: "The whole notion of something of life...being useful...
-             is to a Taoist absurd."
-  Related to: "Ideal Useless Man" → "Admiration of Nature"
-
-# Query: "variety requisite human capability"
-→ Found: "Requisite Variety" (Ashby's Law)
-  Relationships: SUPPORTS "AI Sandwich Systems Model"
-                IMPLIES "Variety Mismatch" failure patterns
-  Evidence: 3 source quotes with paragraph references
-```
-
-The system understood:
-- Taoist philosophy concepts across multiple lectures
-- Technical framework relationships in the AI paper
-- How "variety" functions as a mechanism, not just a keyword
+**Time as emergent property** → Causal relationships (CAUSES, RESULTS_FROM, ENABLES) create observable time arrows without explicit timestamps
 
 ## Quick Start
 
 **Prerequisites:** Docker, Python 3.11+, Node.js 18+
 
-### API Server + TypeScript Client
-
 ```bash
-# 1. Setup system (one-time)
+# 1. Setup infrastructure
 ./scripts/setup.sh
 
-# 2. Configure AI provider (OpenAI or Anthropic)
+# 2. Configure AI provider
 ./scripts/configure-ai.sh
 
-# 3. Start the API server
+# 3. Start API server
 source venv/bin/activate
 uvicorn src.api.main:app --reload --port 8000
 
-# 4. In another terminal: Build TypeScript client
-cd client
-npm install
-npm run build
-cd ..
+# 4. Install TypeScript client
+cd client && npm install && npm run build && ./install.sh && cd ..
 
-# 5. Ingest documents via API
-./scripts/kg-cli.sh ingest file document.txt --ontology "My Ontology"
+# 5. Ingest documents
+kg ingest file document.txt --ontology "My Research"
 
-# 6. Monitor job status
-./scripts/kg-cli.sh jobs list
-./scripts/kg-cli.sh jobs status <job-id>
+# 6. Query concepts
+kg search query "recursive patterns"
+kg ontology list
+kg database stats
 ```
-
-**Current Status:**
-- ✅ Async ingestion with job queue (ADR-014)
-- ✅ Content deduplication
-- ✅ Cost tracking and analysis
-- ✅ Background processing with progress tracking
-- ✅ Job approval workflow
-- ✅ TypeScript CLI client (`kg` command)
-- ⏳ Graph query commands (planned for TypeScript client)
-- ⏳ MCP server mode (Phase 2)
-
-See [ADR-012](docs/architecture/ADR-012-api-server-architecture.md), [ADR-013](docs/architecture/ADR-013-unified-typescript-client.md), and [ADR-014](docs/architecture/ADR-014-job-approval-workflow.md) for architecture details.
 
 **For Claude Desktop/Code integration:** See [MCP Setup Guide](docs/guides/MCP_SETUP.md)
 
-## How It Works
+## Live Example
 
-```
-Document → Smart Chunking → LLM Extraction → Graph Construction → Semantic Query
-            ↓                ↓                 ↓                   ↓
-         Boundaries      Concepts +        Neo4j with          Vector Search
-         Detected        Relationships     Evidence Links      + Traversal
+After ingesting project commit history and pull requests into separate ontologies:
+
+```bash
+# Search across both ontologies
+kg search query "Apache AGE migration"
+
+# Result: "Apache AGE Migration" concept
+#   - 6 evidence instances
+#   - Found in: "Knowledge Graph Project History" (commits)
+#   - Found in: "Knowledge Graph Project Pull Requests" (PRs)
+#   - Relationships:
+#       ENABLES → RBAC Capabilities
+#       PREVENTS → Dual Database Complexity
+#       RESULTS_FROM → Unified Architecture
 ```
 
-1. **Smart Chunking**: Breaks documents at natural boundaries (paragraphs, sentences) with context overlap
-2. **Concept Extraction**: LLM identifies concepts, evidence quotes, and relationships
-3. **Graph Construction**: Stores in Neo4j with vector embeddings for similarity search
-4. **Deduplication**: Automatically merges similar concepts across chunks/documents
-5. **Query & Traverse**: Semantic search + graph traversal with evidence retrieval
+The system understood commits and PRs describe the same architectural change from different perspectives. It merged evidence, enriched relationships, and revealed the strategic narrative without explicit linking.
+
+## When To Use This
+
+**Research exploration** → Navigate philosophical texts by concept relationships, not linear reading
+
+**Codebase understanding** → Trace architectural decisions across commits, PRs, and documentation
+
+**Meeting analysis** → Extract action items, decisions, and dependencies across discussion threads
+
+**Knowledge synthesis** → Discover connections between documents you didn't know were related
+
+**Historical reconstruction** → Build timelines from causal relationships (CAUSES, PRECEDES, EVOLVES_INTO)
+
+**Financial analysis** → Track entities and relationships across transaction records
+
+**Travel journals** → Map locations, experiences, and insights across trip logs
+
+The pattern generalizes: any structured record content can become a queryable knowledge graph.
 
 ## Architecture Highlights
 
-- **Multi-Document Ontologies**: Group related documents into named ontologies - concepts automatically connect across files
-- **Graph-Aware Chunking**: Queries recent concepts before processing new chunks, enabling cross-chunk relationship detection
-- **Vector Deduplication**: Uses cosine similarity to merge concepts across document boundaries
-- **Checkpoint & Resume**: Position tracking for large documents - resume if interrupted
-- **Modular AI Providers**: Swap between OpenAI, Anthropic, or add your own
-- **Full-Text + Vector Search**: Combined semantic and exact-match capabilities
-- **Evidence Preservation**: Every concept links to source quotes with paragraph references
-- **Learned Knowledge Synthesis**: Manually create connections between concepts with provenance tracking and similarity validation
-- **Backup Integrity Validation**: Comprehensive validation before restore with schema governance through data contract pattern - validates format, references, statistics, and external dependencies
-- **Client-Side Backup Storage**: Streaming backup download/upload with progress tracking - backups stored locally in `~/.local/share/kg/backups` for user control and portability
+- **Apache AGE (PostgreSQL extension)** - Graph database with openCypher query support and production RBAC
+- **Unified PostgreSQL architecture** - Graph data, job queue, and application state in one database
+- **Job approval workflow** - Pre-ingestion cost estimates, manual or auto-approval, lifecycle management
+- **Modular AI providers** - Swap between OpenAI, Anthropic, or implement custom extractors
+- **Content deduplication** - SHA-256 hashing prevents reprocessing identical documents
+- **Ontology management** - Group related documents; rename or delete with cascading job cleanup
+- **Vector search + graph traversal** - Semantic similarity finds concepts, relationships explain connections
+- **Evidence preservation** - Every concept links to source quotes with document and paragraph references
+- **TypeScript client** - Unified CLI and future MCP server mode for multi-agent access
+- **Dry-run capabilities** - Preview ingestion operations before committing API tokens
 
-## Learned Knowledge Synthesis
+## What Makes This Different
 
-Beyond document extraction, you can create **learned connections** between concepts to capture "aha!" moments and cross-ontology insights:
+Not a vector database. Not a new embedding model. A synthesis:
 
-```bash
-# Create a learned relationship with similarity validation
-python cli.py learn connect chapter_01_chunk2_c56c2ab3 signals_pillar1_signal1_62e52f23 \
-  --evidence "Both emphasize transparency through measurable signals" \
-  --creator your-name
+**LLM-powered extraction** → Understands concepts and relationships, not just word patterns
 
-# Output shows "smell test" results:
-# Similarity to concept 1: 87.23%
-# Similarity to concept 2: 84.56%
-# Cognitive leap: LOW ✓ (obvious connection)
-```
+**Graph storage** → Models how ideas connect, not just where they appear
 
-**Features:**
-- **Smell Test Validation**: Calculates similarity between evidence and both concepts
-- **Cognitive Leap Ratings**:
-  - LOW (>85%): Obvious connection - "why didn't we think of this earlier?"
-  - MEDIUM (70-85%): Reasonable connection
-  - HIGH (<70%): Unusual connection - warns but allows
-- **Provenance Tracking**: Every learned connection tracks creator, timestamp, and similarity score
-- **Safe Operations**: Only deletes learned knowledge (never document-extracted data)
+**Evidence-based retrieval** → Provides source quotes with provenance, not isolated chunks
 
-**Query learned knowledge:**
-```bash
-python cli.py learn list                      # All learned connections
-python cli.py learn list --creator aaron      # Filter by creator
-python cli.py learn list --cognitive-leap HIGH  # Find unusual connections
-python cli.py learn list --min-similarity 0.8  # High-confidence only
-```
+**Persistent knowledge** → Builds understanding over time, not ephemeral query-time synthesis
 
-**Use cases:**
-- Bridge concepts across ontologies (e.g., "Governed Agility" ↔ "Role-Based Intelligence")
-- Document expert insights that LLMs missed
-- Create synthesis concepts that unify multiple ideas
-- Track hypothesis connections for validation
+**Multi-dimensional querying** → Semantic search finds concepts, graph traversal explains relationships
 
-See [Learned Knowledge MCP Plan](docs/development/LEARNED_KNOWLEDGE_MCP.md) for future AI-assisted synthesis features.
+**Emergent temporal structure** → Causal relationships create observable time arrows without explicit ordering
 
-## Use Cases
+## Technology Stack
 
-**Research & Learning:**
-- Explore philosophical texts by concept relationships, not linear reading
-- Connect ideas across multiple papers or books
-- Find evidence for specific claims with source attribution
+- **PostgreSQL 16 + Apache AGE** - Graph database with openCypher support
+- **FastAPI** - Async REST API server with job queue
+- **Python 3.11+** - Ingestion pipeline, LLM extraction, graph operations
+- **TypeScript/Node.js 18+** - Unified client (CLI + future MCP mode)
+- **OpenAI / Anthropic** - Modular LLM provider abstraction
+- **Docker Compose** - Infrastructure orchestration
 
-**Documentation Understanding:**
-- Navigate large codebases by architectural concepts
-- Understand design decisions and their relationships
-- Trace dependencies between system components
+## Current Status
 
-**Knowledge Synthesis:**
-- Find connections between seemingly unrelated documents
-- Build concept maps from lecture series or technical documentation
-- Generate semantic overviews without reading everything linearly
+**Working (Phase 1):**
+- ✅ Apache AGE graph database with vector search
+- ✅ FastAPI REST API with async job queue
+- ✅ TypeScript CLI (`kg` command)
+- ✅ Background processing with progress tracking
+- ✅ Content-based deduplication (SHA-256)
+- ✅ Cost tracking and pre-ingestion estimates
+- ✅ Job approval workflow with auto-approve option
+- ✅ Ontology management (create, rename, delete with cascade)
+- ✅ Dry-run mode for directory ingestion
 
-## What Makes This Different?
+**Planned (Phase 2):**
+- [ ] MCP server mode in unified TypeScript client
+- [ ] Graph query endpoints in API
+- [ ] Real-time updates (WebSocket/SSE)
+- [ ] API authentication & authorization
+- [ ] Rate limiting & request validation
 
-This is **not** a new embedding model or vector database. It's a synthesis:
-
-1. **LLM-powered extraction** (not just embeddings) - understands concepts, not just words
-2. **Graph storage** (not vector-only) - models relationships between ideas
-3. **Evidence-based retrieval** (not just chunks) - provides source quotes for every concept
-4. **Persistent knowledge** (not ephemeral RAG) - builds understanding over time
-5. **Human + AI queryable** (not just AI) - CLI, MCP, and Neo4j Browser access
+**Future Explorations:**
+- [ ] Advanced graph algorithms (PageRank, community detection)
+- [ ] Web UI for visual graph exploration
+- [ ] Export to GraphML/JSON formats
+- [ ] Incremental updates (avoid reprocessing)
+- [ ] Phrase-based path finding between concepts
 
 ## Learn More
 
-- 📖 [Documentation Index](docs/README.md) - Navigate all documentation by category
-- 📖 [Concept Deep Dive](docs/reference/CONCEPT.md) - Why knowledge graphs vs RAG
-- 🏗️ [Architecture](docs/architecture/ARCHITECTURE.md) - How the system works
-- 🚀 [Quick Start Guide](docs/guides/QUICKSTART.md) - Get running in 5 minutes
-- 🔌 [MCP Setup Guide](docs/guides/MCP_SETUP.md) - Configure Claude Desktop/Code integration
-- 💡 [Examples & Demos](docs/guides/EXAMPLES.md) - Real queries with actual results
-- ⚙️ [AI Provider Configuration](docs/guides/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
-- 📚 [Concepts & Terminology](docs/reference/CONCEPTS_AND_TERMINOLOGY.md) - Understanding ontologies, stitching, pruning, and graph integrity
-- 💾 [Backup & Restore Guide](docs/guides/BACKUP_RESTORE.md) - Protecting your LLM token investment
+Navigate the documentation by purpose:
+
+**Getting Started:**
+- [Quick Start Guide](docs/guides/QUICKSTART.md) - Get running in 5 minutes
+- [MCP Setup Guide](docs/guides/MCP_SETUP.md) - Claude Desktop/Code integration
+- [AI Provider Configuration](docs/guides/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
+
+**Understanding the System:**
+- [Architecture Overview](docs/architecture/ARCHITECTURE.md) - How components fit together
+- [Concept Deep Dive](docs/reference/CONCEPT.md) - Why knowledge graphs vs RAG
+- [Enrichment Journey](docs/reference/ENRICHMENT_JOURNEY.md) - How the graph learns from multiple perspectives
+- [Concepts & Terminology](docs/reference/CONCEPTS_AND_TERMINOLOGY.md) - Ontologies, stitching, pruning, integrity
+
+**Using the System:**
+- [Examples & Demos](docs/guides/EXAMPLES.md) - Real queries with actual results
+- [Backup & Restore](docs/guides/BACKUP_RESTORE.md) - Protecting your token investment
+- [Documentation Index](docs/README.md) - Browse all documentation by category
+
+**Technical Details:**
+- [ADR-016: Apache AGE Migration](docs/architecture/ADR-016-apache-age-migration.md) - Why PostgreSQL + AGE
+- [ADR-014: Job Approval Workflow](docs/architecture/ADR-014-job-approval-workflow.md) - Ingestion lifecycle
+- [Development Guide](CLAUDE.md) - For contributors and developers
 
 ## Project Structure
 
 ```
 knowledge-graph-system/
-├── src/                    # Python source code
-│   └── api/               # FastAPI server
-│       ├── main.py        # API entry point
-│       ├── routes/        # REST endpoints
-│       ├── services/      # Job queue, scheduler, deduplication
-│       ├── workers/       # Background ingestion workers
-│       ├── models/        # Pydantic schemas
-│       └── lib/           # Shared ingestion library
-│           ├── chunker.py         # Smart text chunking
-│           ├── llm_extractor.py   # LLM concept extraction
-│           ├── neo4j_client.py    # Graph database operations
-│           ├── ingestion.py       # Chunk processing & stats
-│           ├── ai_providers.py    # Modular AI provider abstraction
-│           └── parser.py          # Document parsing
+├── src/api/              # FastAPI REST server
+│   ├── lib/              # Shared ingestion library
+│   │   ├── ai_providers.py    # Modular LLM abstraction
+│   │   ├── llm_extractor.py   # Concept extraction
+│   │   ├── age_client.py      # Apache AGE operations
+│   │   └── ingestion.py       # Chunk processing
+│   ├── routes/           # REST API endpoints
+│   ├── services/         # Job queue, scheduler, deduplication
+│   └── workers/          # Background ingestion workers
 │
-├── client/                # TypeScript unified client
-│   ├── src/
-│   │   ├── index.ts       # Entry point (CLI or MCP mode)
-│   │   ├── api/           # HTTP client for API server
-│   │   ├── cli/           # CLI commands (Phase 1)
-│   │   ├── mcp/           # MCP server mode (Phase 2)
-│   │   └── types/         # TypeScript interfaces
-│   └── README.md          # Client documentation
+├── client/               # TypeScript unified client
+│   └── src/
+│       ├── cli/          # CLI commands
+│       ├── api/          # HTTP client
+│       └── mcp/          # MCP server mode (future)
 │
-├── scripts/               # Management scripts
-│   ├── setup.sh          # Initial system setup
-│   ├── reset.sh          # Clear database and restart
-│   ├── kg-cli.sh         # Wrapper for TypeScript CLI
-│   └── configure-ai.sh   # Configure AI provider
-│
-├── mcp-server/           # Legacy MCP server (direct Neo4j)
-│   └── src/              # Will migrate to client/src/mcp
+├── scripts/              # Management utilities
+│   ├── setup.sh          # Infrastructure setup
+│   ├── start-api.sh      # Start API server
+│   └── configure-ai.sh   # AI provider config
 │
 ├── schema/
-│   └── init.cypher       # Neo4j schema and indexes
+│   └── init.sql          # Apache AGE schema
 │
-├── docs/                 # Documentation
-│   ├── README.md         # Documentation index
-│   ├── architecture/     # ADRs and design docs
-│   ├── guides/          # User and setup guides
-│   ├── api/             # API and Cypher query references
-│   ├── testing/         # Test coverage specs
-│   ├── reference/       # Concept definitions
-│   └── development/     # Dev journals and notes
-│
-└── logs/                 # Application logs
-    └── api_*.log         # API server logs
+└── docs/                 # Documentation
+    ├── architecture/     # ADRs and design
+    ├── guides/          # User guides
+    ├── reference/       # Concepts and terminology
+    └── development/     # Dev journals
 ```
-
-## Technology Stack
-
-- **Neo4j 5.15+** - Graph database with vector search
-- **FastAPI** - Python REST API server (Phase 1)
-- **Python 3.11+** - Ingestion pipeline & API server
-- **TypeScript/Node.js 18+** - Unified client (CLI + future MCP)
-- **OpenAI / Anthropic** - LLM concept extraction
-- **SQLite** - Job queue persistence (Phase 1, will migrate to Redis)
-- **Docker Compose** - Infrastructure
-
-## Current Status
-
-**Phase 1 (Current - Working but not production-ready):**
-- ✅ FastAPI server with async job queue
-- ✅ TypeScript CLI for ingestion & job management
-- ✅ Background processing with progress tracking
-- ✅ Content-based deduplication (SHA-256)
-- ✅ Cost tracking and reporting
-- ✅ Logging to files
-- ✅ LLM concept extraction (OpenAI & Anthropic)
-- ✅ Graph construction with relationships
-- ✅ Vector similarity search
-
-**Legacy (Still Functional):**
-- ✅ Python CLI for graph querying
-- ✅ Direct ingestion via scripts
-- ✅ MCP server for Claude Desktop
-- ✅ Checkpoint & resume for large documents
-
-**Phase 2 Roadmap:**
-- [ ] Redis-based distributed job queue
-- [ ] Full API authentication & authorization
-- [ ] MCP server mode in unified TypeScript client
-- [ ] Graph query endpoints in API
-- [ ] Real-time updates (WebSocket/SSE)
-- [ ] Rate limiting & request validation
-
-**Future:**
-- [ ] Advanced graph algorithms (PageRank, community detection)
-- [ ] Web UI for exploration
-- [ ] Export to GraphML/JSON
-- [ ] Incremental updates (avoid re-processing)
 
 ## Contributing
 
-This is an experimental project exploring the boundaries between RAG, knowledge graphs, and LLM-powered extraction. Feedback, issues, and contributions welcome.
-
-## License
-
-[Add your license here]
+This is an experimental exploration of knowledge graphs, LLM extraction, and semantic understanding. Feedback, issues, and contributions welcome.
 
 ## Acknowledgments
 
 Built with:
-- [Neo4j](https://neo4j.com/) - Graph database platform
+- [Apache AGE](https://age.apache.org/) - PostgreSQL graph extension
 - [Model Context Protocol](https://modelcontextprotocol.io/) - LLM integration standard
 - [OpenAI](https://openai.com/) / [Anthropic](https://anthropic.com/) - LLM providers
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern Python API framework
 
 ---
 
