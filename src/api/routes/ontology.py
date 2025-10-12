@@ -235,6 +235,7 @@ async def delete_ontology(
     - All Source nodes belonging to the ontology
     - All Instance nodes linked to those sources
     - Orphaned Concept nodes (concepts with no remaining sources)
+    - All job records for this ontology (enables clean re-ingestion)
 
     Args:
         ontology_name: Name of the ontology to delete
@@ -249,7 +250,10 @@ async def delete_ontology(
     Example:
         DELETE /ontology/Test%20Ontology?force=true
     """
+    from ..services.job_queue import get_job_queue
+
     client = get_neo4j_client()
+    queue = get_job_queue()
     try:
         # Check if ontology exists
         if not force:
@@ -293,6 +297,11 @@ async def delete_ontology(
         """, fetch_one=True)
 
         orphaned_count = orphaned_result['orphaned_count'] if orphaned_result else 0
+
+        # Delete job records for this ontology to allow clean re-ingestion
+        jobs_deleted = queue.delete_jobs_by_ontology(ontology_name)
+        if jobs_deleted > 0:
+            logger.info(f"Deleted {jobs_deleted} job records for ontology '{ontology_name}'")
 
         return OntologyDeleteResponse(
             ontology=ontology_name,

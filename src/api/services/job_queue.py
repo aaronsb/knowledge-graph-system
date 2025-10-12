@@ -86,6 +86,21 @@ class JobQueue(ABC):
         """
         pass
 
+    @abstractmethod
+    def delete_jobs_by_ontology(self, ontology: str) -> int:
+        """
+        Delete all jobs associated with an ontology.
+
+        Used when ontology is deleted to clean up job history.
+
+        Args:
+            ontology: Ontology name
+
+        Returns:
+            Number of jobs deleted
+        """
+        pass
+
 
 class InMemoryJobQueue(JobQueue):
     """
@@ -392,6 +407,37 @@ class InMemoryJobQueue(JobQueue):
             return None
 
         return self._row_to_dict(row)
+
+    def delete_jobs_by_ontology(self, ontology: str) -> int:
+        """Delete all jobs for a specific ontology"""
+        with self.lock:
+            # Count jobs before deleting
+            cursor = self.db.execute(
+                "SELECT COUNT(*) FROM jobs WHERE ontology = ?",
+                (ontology,)
+            )
+            count = cursor.fetchone()[0]
+
+            if count == 0:
+                return 0
+
+            # Get job IDs to remove from memory
+            cursor = self.db.execute(
+                "SELECT job_id FROM jobs WHERE ontology = ?",
+                (ontology,)
+            )
+            job_ids = [row[0] for row in cursor.fetchall()]
+
+            # Remove from memory
+            for job_id in job_ids:
+                if job_id in self.jobs:
+                    del self.jobs[job_id]
+
+            # Delete from database
+            self.db.execute("DELETE FROM jobs WHERE ontology = ?", (ontology,))
+            self.db.commit()
+
+            return count
 
     def clear_all_jobs(self) -> int:
         """
@@ -797,6 +843,29 @@ class PostgreSQLJobQueue(JobQueue):
                 job['error'] = job.pop('error_message', None)
 
                 return job
+        finally:
+            self._return_connection(conn)
+
+    def delete_jobs_by_ontology(self, ontology: str) -> int:
+        """Delete all jobs for a specific ontology from PostgreSQL"""
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Count jobs before deleting
+                cur.execute("""
+                    SELECT COUNT(*) FROM kg_api.ingestion_jobs
+                    WHERE ontology = %s
+                """, (ontology,))
+                count = cur.fetchone()[0]
+
+                # Delete jobs for this ontology
+                cur.execute("""
+                    DELETE FROM kg_api.ingestion_jobs
+                    WHERE ontology = %s
+                """, (ontology,))
+                conn.commit()
+
+                return count
         finally:
             self._return_connection(conn)
 
