@@ -1,18 +1,19 @@
 """
-Authentication Dependencies (ADR-027)
+Authentication Dependencies (ADR-027, ADR-028)
 
 FastAPI dependency injection for authentication and authorization.
 
 Provides:
 - get_current_user: Extract and validate JWT token
 - get_current_active_user: Ensure user is not disabled
-- require_role: Check user has required role
+- require_role: Check user has required role (legacy - use require_permission for dynamic RBAC)
+- require_permission: Dynamic permission checking with scoping support
 - get_api_key_user: Authenticate via API key
 """
 
 import os
-from typing import Optional, Annotated
-from fastapi import Depends, HTTPException, status
+from typing import Optional, Annotated, Dict, Any
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 import psycopg2
 
@@ -75,7 +76,7 @@ def get_user_by_username(username: str) -> Optional[UserInDB]:
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, username, password_hash, role, created_at, last_login, disabled
+                SELECT id, username, password_hash, primary_role, created_at, last_login, disabled
                 FROM kg_auth.users
                 WHERE username = %s
             """, (username,))
@@ -111,7 +112,7 @@ def get_user_by_id(user_id: int) -> Optional[UserInDB]:
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, username, password_hash, role, created_at, last_login, disabled
+                SELECT id, username, password_hash, primary_role, created_at, last_login, disabled
                 FROM kg_auth.users
                 WHERE id = %s
             """, (user_id,))
@@ -236,7 +237,7 @@ async def get_api_key_user(
             # Find API key in database
             cur.execute("""
                 SELECT k.id, k.key_hash, k.user_id, k.expires_at,
-                       u.id, u.username, u.password_hash, u.role,
+                       u.id, u.username, u.password_hash, u.primary_role,
                        u.created_at, u.last_login, u.disabled
                 FROM kg_auth.api_keys k
                 JOIN kg_auth.users u ON k.user_id = u.id
@@ -361,61 +362,113 @@ def require_role(*allowed_roles: str):
     return check_role
 
 
-def check_permission(user: UserInDB, resource: str, action: str) -> bool:
+def check_permission(
+    user: UserInDB,
+    resource_type: str,
+    action: str,
+    resource_id: Optional[str] = None,
+    resource_context: Optional[Dict[str, Any]] = None
+) -> bool:
     """
-    Check if user has permission for action on resource.
+    Check if user has permission for action on resource (ADR-028 dynamic RBAC).
 
-    Queries kg_auth.role_permissions table.
+    Uses PermissionChecker for scoped permission checking with support for:
+    - Global permissions
+    - Instance-scoped permissions
+    - Filter-scoped permissions
+    - Explicit denies
+    - Role inheritance
 
     Args:
         user: User to check permissions for
-        resource: Resource name (concepts, vocabulary, jobs, users)
-        action: Action (read, write, delete, approve)
+        resource_type: Resource type (concepts, vocabulary, jobs, users, roles, resources)
+        action: Action (read, write, delete, approve, execute)
+        resource_id: Optional specific resource instance ID
+        resource_context: Optional context for filter-scoped permissions
+                         (e.g., {"ontology": "memory:user_123", "status": "active"})
 
     Returns:
         True if permission granted, False otherwise
     """
+    from src.api.lib.permissions import PermissionChecker
+
     conn = get_db_connection()
     try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT granted
-                FROM kg_auth.role_permissions
-                WHERE role = %s AND resource = %s AND action = %s
-            """, (user.role, resource, action))
-
-            row = cur.fetchone()
-            return row[0] if row else False
+        checker = PermissionChecker(conn)
+        return checker.can_user(
+            user_id=user.id,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            resource_context=resource_context
+        )
     finally:
         conn.close()
 
 
-async def require_permission(resource: str, action: str):
+async def require_permission(
+    resource_type: str,
+    action: str,
+    resource_id_param: Optional[str] = None,
+    resource_context: Optional[Dict[str, Any]] = None
+):
     """
-    Dependency factory for permission-based access control.
+    Dependency factory for dynamic permission-based access control (ADR-028).
+
+    Supports scoped permissions:
+    - Global: Check permission on resource type (e.g., "read concepts")
+    - Instance: Check permission on specific resource (e.g., "delete concept_123")
+    - Filter: Check permission with context filters (e.g., "write concepts in ontology:memory:user_1")
 
     Usage:
-        @router.delete("/concepts/{id}")
+        # Global permission check
+        @router.get("/concepts")
+        async def list_concepts(
+            _: Annotated[UserInDB, Depends(require_permission("concepts", "read"))]
+        ):
+            ...
+
+        # Instance-scoped permission check
+        @router.delete("/concepts/{concept_id}")
         async def delete_concept(
-            id: str,
-            _: Annotated[UserInDB, Depends(require_permission("concepts", "delete"))]
+            concept_id: str,
+            _: Annotated[UserInDB, Depends(require_permission("concepts", "delete", "concept_id"))]
+        ):
+            ...
+
+        # Filter-scoped permission check
+        @router.post("/concepts")
+        async def create_concept(
+            concept: ConceptCreate,
+            _: Annotated[UserInDB, Depends(require_permission(
+                "concepts", "write",
+                resource_context={"ontology": concept.ontology}
+            ))]
         ):
             ...
 
     Args:
-        resource: Resource name
+        resource_type: Resource type name
         action: Action name
+        resource_id_param: Optional path parameter name containing resource ID
+        resource_context: Optional context dict for filter-scoped permissions
 
     Returns:
         Dependency function that checks permission
     """
     async def check_user_permission(
+        request: Request,
         current_user: Annotated[UserInDB, Depends(get_current_active_user)]
     ) -> UserInDB:
-        if not check_permission(current_user, resource, action):
+        # Extract resource_id from path params if specified
+        resource_id = None
+        if resource_id_param:
+            resource_id = request.path_params.get(resource_id_param)
+
+        if not check_permission(current_user, resource_type, action, resource_id, resource_context):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission denied: {action} on {resource}"
+                detail=f"Permission denied: {action} on {resource_type}"
             )
         return current_user
 

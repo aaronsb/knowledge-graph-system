@@ -21,7 +21,7 @@ from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueu
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .workers.ingestion_worker import run_ingestion_worker
 from .workers.restore_worker import run_restore_worker
-from .routes import ingest, jobs, queries, database, ontology, admin, auth
+from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac
 from .logging_config import setup_logging
 
 # Load environment variables
@@ -171,6 +171,7 @@ async def shutdown_event():
 # Include routers
 app.include_router(auth.router)  # ADR-027: Authentication endpoints
 app.include_router(auth.admin_router)  # ADR-027: Admin user management
+app.include_router(rbac.router)  # ADR-028: RBAC management endpoints
 app.include_router(ingest.router)
 app.include_router(jobs.router)
 app.include_router(queries.router)
