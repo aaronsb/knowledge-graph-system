@@ -311,6 +311,14 @@ export interface OntologyDeleteResponse {
   error?: string;
 }
 
+export interface OntologyRenameResponse {
+  old_name: string;
+  new_name: string;
+  sources_updated: number;
+  success: boolean;
+  error?: string;
+}
+
 // ========== Admin Types ==========
 
 export interface DockerStatus {

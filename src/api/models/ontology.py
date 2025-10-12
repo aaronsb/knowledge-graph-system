@@ -51,3 +51,17 @@ class OntologyDeleteResponse(BaseModel):
     sources_deleted: int
     orphaned_concepts_deleted: int
     error: Optional[str] = None
+
+
+class OntologyRenameRequest(BaseModel):
+    """Request to rename an ontology"""
+    new_name: str = Field(..., description="New ontology name", min_length=1)
+
+
+class OntologyRenameResponse(BaseModel):
+    """Rename ontology response"""
+    old_name: str
+    new_name: str
+    sources_updated: int
+    success: bool
+    error: Optional[str] = None

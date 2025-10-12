@@ -18,7 +18,9 @@ from ..models.ontology import (
     OntologyFilesResponse,
     OntologyFileInfo,
     OntologyDeleteRequest,
-    OntologyDeleteResponse
+    OntologyDeleteResponse,
+    OntologyRenameRequest,
+    OntologyRenameResponse
 )
 from src.api.lib.age_client import AGEClient
 
@@ -304,5 +306,65 @@ async def delete_ontology(
     except Exception as e:
         logger.error(f"Failed to delete ontology: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to delete ontology: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.post("/{ontology_name}/rename", response_model=OntologyRenameResponse)
+async def rename_ontology(
+    ontology_name: str,
+    request: OntologyRenameRequest
+):
+    """
+    Rename an ontology.
+
+    Updates all Source nodes' document property from old_name to new_name.
+    This operation is fast and safe - only affects Source nodes in the specified ontology.
+
+    Args:
+        ontology_name: Current ontology name
+        request: Rename request with new_name
+
+    Returns:
+        OntologyRenameResponse with operation statistics
+
+    Raises:
+        404: If old ontology not found
+        409: If new ontology name already exists
+
+    Example:
+        POST /ontology/Old%20Name/rename
+        {
+          "new_name": "New Name"
+        }
+    """
+    client = get_neo4j_client()
+    try:
+        # Perform rename via AGE client
+        try:
+            result = client.rename_ontology(ontology_name, request.new_name)
+
+            return OntologyRenameResponse(
+                old_name=ontology_name,
+                new_name=request.new_name,
+                sources_updated=result["sources_updated"],
+                success=True
+            )
+
+        except ValueError as ve:
+            # ValueError is raised for existence checks
+            error_msg = str(ve)
+            if "does not exist" in error_msg:
+                raise HTTPException(status_code=404, detail=error_msg)
+            elif "already exists" in error_msg:
+                raise HTTPException(status_code=409, detail=error_msg)
+            else:
+                raise HTTPException(status_code=400, detail=error_msg)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to rename ontology: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to rename ontology: {str(e)}")
     finally:
         client.close()
