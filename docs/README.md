@@ -45,6 +45,7 @@ Conceptual documentation and terminology reference.
 
 - **CONCEPT.md** - Core concept definitions
 - **CONCEPTS_AND_TERMINOLOGY.md** - System terminology and glossary
+- **ENRICHMENT_JOURNEY.md** - How the graph learns from multiple perspectives
 
 ### 🔨 `development/`
 Development journals, learnings, and internal notes.
@@ -60,7 +61,8 @@ Images, diagrams, and other media assets.
 ### New Users
 1. Start with [QUICKSTART.md](guides/QUICKSTART.md)
 2. Learn about [AI Providers](guides/AI_PROVIDERS.md)
-3. Review [Examples](guides/EXAMPLES.md)
+3. See [ENRICHMENT_JOURNEY.md](reference/ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
+4. Review [Examples](guides/EXAMPLES.md)
 
 ### Administrators
 1. Read [AUTHENTICATION.md](guides/AUTHENTICATION.md) for login and session management
