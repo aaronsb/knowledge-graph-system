@@ -19,7 +19,27 @@ async function logoutCommand(options: LogoutOptions) {
   const config = getConfig();
   const tokenManager = new TokenManager(config);
 
-  // Check if logged in
+  // If --forget flag is set and not logged in, just clear the username
+  if (!tokenManager.isLoggedIn() && options.forget) {
+    const savedUsername = config.get('username');
+    if (savedUsername) {
+      config.delete('username');
+      console.log('');
+      console.log('\x1b[32m✅ Forgot saved username\x1b[0m');
+      console.log(`   Cleared: ${savedUsername}`);
+      console.log('');
+      console.log('   To login, run:');
+      console.log('     \x1b[36mkg login\x1b[0m');
+      console.log('');
+    } else {
+      console.log('');
+      console.log('\x1b[33m⚠️  No saved username to forget\x1b[0m');
+      console.log('');
+    }
+    process.exit(0);
+  }
+
+  // Check if logged in (for normal logout)
   if (!tokenManager.isLoggedIn()) {
     console.log('');
     console.log('\x1b[33m⚠️  Not logged in\x1b[0m');
