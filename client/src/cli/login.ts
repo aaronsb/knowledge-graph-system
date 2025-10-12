@@ -44,59 +44,87 @@ async function promptPassword(): Promise<string> {
       output: process.stdout
     });
 
-    // Disable echo for password input
-    const stdin = process.stdin as any;
-    const wasRaw = stdin.isRaw;
-    if (stdin.setRawMode) {
-      stdin.setRawMode(true);
-    }
+    // Mute output to prevent character echo
+    const mute = () => {
+      (rl as any).output.muted = true;
+    };
+
+    const unmute = () => {
+      (rl as any).output.muted = false;
+    };
+
+    // Override _writeToOutput to control what gets displayed
+    const originalWrite = (rl as any)._writeToOutput;
+    (rl as any)._writeToOutput = function(stringToWrite: string) {
+      if ((rl as any).output.muted) {
+        // When muted, only show asterisks for actual characters
+        // but don't show the characters themselves
+        (rl as any).output.write('*');
+      } else {
+        originalWrite.call(rl, stringToWrite);
+      }
+    };
 
     let password = '';
 
-    process.stdout.write('Password: ');
+    rl.question('Password: ', () => {
+      unmute();
+      process.stdout.write('\n');
+      rl.close();
+      resolve(password);
+    });
 
-    stdin.on('data', (char: Buffer) => {
+    mute();
+
+    // Capture raw keypresses for backspace handling
+    const stdin = process.stdin as any;
+    stdin.setRawMode(true);
+    stdin.resume();
+
+    const handleKey = (char: Buffer) => {
       const c = char.toString('utf8');
 
       switch (c) {
         case '\n':
         case '\r':
         case '\u0004':  // Ctrl+D
-          // Enter pressed - submit password
+          // Enter pressed
+          stdin.removeListener('data', handleKey);
+          stdin.setRawMode(false);
+          stdin.pause();
+          unmute();
           process.stdout.write('\n');
-          stdin.removeAllListeners('data');
-          if (stdin.setRawMode) {
-            stdin.setRawMode(wasRaw);
-          }
           rl.close();
           resolve(password);
           break;
         case '\u0003':  // Ctrl+C
           // Cancel
+          stdin.removeListener('data', handleKey);
+          stdin.setRawMode(false);
+          stdin.pause();
+          unmute();
           process.stdout.write('\n');
-          stdin.removeAllListeners('data');
-          if (stdin.setRawMode) {
-            stdin.setRawMode(wasRaw);
-          }
-          rl.close();
-          console.log('\nLogin cancelled.');
+          console.log('Login cancelled.');
           process.exit(0);
           break;
         case '\u007f':  // Backspace
+        case '\b':
           if (password.length > 0) {
             password = password.slice(0, -1);
             process.stdout.write('\b \b');
           }
           break;
         default:
-          // Normal character - add to password and show asterisk
-          if (c.charCodeAt(0) >= 32) {  // Printable characters only
+          // Normal character - add to password
+          if (c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127) {
             password += c;
             process.stdout.write('*');
           }
           break;
       }
-    });
+    };
+
+    stdin.on('data', handleKey);
   });
 }
 
