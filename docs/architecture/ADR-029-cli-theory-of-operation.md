@@ -181,7 +181,82 @@ permission  → perm (4)
 resource    → res (3)
 ```
 
-### 5. Verb Vocabulary
+### 5. Universal JSON Mode
+
+**Machine-Readable Interface:** All commands support JSON input/output for automation.
+
+**Global Toggle:**
+```bash
+# Set JSON mode globally
+kg config set output_format json
+
+# Check current mode
+kg config get output_format
+```
+
+**Per-Command Override:**
+```bash
+# Override to JSON for single command
+kg job list --json
+
+# Override to table when in JSON mode
+kg job list --table
+```
+
+**Consistent Behavior:**
+- **ALL commands** respect output mode
+- **ALL output** is valid JSON (no mixed formats)
+- **ALL input** accepts JSON where applicable
+
+**Examples:**
+```bash
+# Table mode (default)
+kg job list
+# ─────────────────────────────
+# Job ID    Status    Progress
+# ─────────────────────────────
+# job-123   running   45%
+# job-456   completed 100%
+
+# JSON mode
+kg job list --json
+# [
+#   {"job_id": "job-123", "status": "running", "progress": 0.45},
+#   {"job_id": "job-456", "status": "completed", "progress": 1.0}
+# ]
+
+# Piping for automation
+kg job list --json | jq '.[] | select(.status == "failed")' | kg job cancel --json
+```
+
+**Configuration Integration:**
+```typescript
+// client/src/lib/config.ts
+export interface KgConfig {
+  // ... existing fields
+  output_format?: 'table' | 'json';  // Default: 'table'
+}
+
+// Usage in commands
+function getOutputFormat(options: any): 'table' | 'json' {
+  const config = getConfig();
+
+  // 1. Command-line flag takes precedence
+  if (options.json) return 'json';
+  if (options.table) return 'table';
+
+  // 2. Fall back to config
+  return config.get('output_format') || 'table';
+}
+```
+
+**Implementation:**
+- Add `--json` flag to ALL commands (Commander.js parent option)
+- Add `--table` flag to ALL commands (override JSON mode)
+- Refactor all output to check format before printing
+- Ensure error messages are also JSON in JSON mode
+
+### 6. Verb Vocabulary
 
 **Unix-Inspired Verbs:**
 - `ls` - List resources
@@ -234,6 +309,8 @@ resource    → res (3)
 - ✅ Reduces typing without sacrificing clarity
 - ✅ Scales to complex domain operations
 - ✅ Clean, maintainable architecture
+- ✅ Universal JSON mode enables complete automation
+- ✅ Consistent interface for scripting/piping
 
 ### Negative
 
@@ -243,6 +320,8 @@ resource    → res (3)
   - *Mitigation:* Router is simple delegation, no business logic
 - ⚠️ Breaking change for existing users
   - *Mitigation:* Phase migration (add singulars as aliases first, deprecate plurals later)
+- ⚠️ JSON mode requires refactoring ALL commands
+  - *Mitigation:* Implement incrementally, starting with high-value commands
 
 ### Neutral
 
@@ -313,6 +392,7 @@ kg search connect <from> <to>
 
 ## Implementation Checklist
 
+### Phase 1: Verb Router
 - [ ] Create `client/src/cli/verb-router.ts`
 - [ ] Implement `executeCommand()` helper
 - [ ] Add `ls` verb with resource delegation
@@ -320,12 +400,38 @@ kg search connect <from> <to>
 - [ ] Add `stat` verb with resource delegation
 - [ ] Add `cat` verb with resource delegation
 - [ ] Register verb router in main CLI
-- [ ] Update `job/jobs`, `role/roles` to singular
-- [ ] Add command aliases (`db`, `cfg`, etc.)
+
+### Phase 2: Singularization
+- [ ] Rename `jobs` → `job`
+- [ ] Rename `roles` → `role`
+- [ ] Rename `permissions` → `permission`
+- [ ] Rename `resources` → `resource`
+- [ ] Update all references in codebase
+
+### Phase 3: Aliases
+- [ ] Add `db` alias for `database`
+- [ ] Add `cfg` alias for `config`
+- [ ] Add `onto` alias for `ontology`
+- [ ] Add `perm` alias for `permission`
+- [ ] Add `res` alias for `resource`
+
+### Phase 4: Universal JSON Mode
+- [ ] Add `output_format` field to config schema
+- [ ] Add `--json` global flag (Commander.js parent option)
+- [ ] Add `--table` global flag (override JSON mode)
+- [ ] Create `getOutputFormat()` utility
+- [ ] Refactor ALL commands to check output format
+- [ ] Ensure Table utility supports JSON output
+- [ ] Ensure error messages are JSON in JSON mode
+- [ ] Test JSON mode with piping/automation
+
+### Phase 5: Documentation & Testing
 - [ ] Update help text to explain both interfaces
 - [ ] Add tab completion for verb shortcuts
-- [ ] Update documentation
+- [ ] Update user documentation
+- [ ] Update QUICKSTART guide
 - [ ] Write integration tests
+- [ ] Test backwards compatibility
 
 ## Future Enhancements
 
