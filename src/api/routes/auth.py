@@ -104,9 +104,9 @@ async def register_user(user: UserCreate):
 
             # Insert new user
             cur.execute("""
-                INSERT INTO kg_auth.users (username, password_hash, role, created_at)
+                INSERT INTO kg_auth.users (username, password_hash, primary_role, created_at)
                 VALUES (%s, %s, %s, NOW())
-                RETURNING id, username, role, created_at, last_login, disabled
+                RETURNING id, username, primary_role, created_at, last_login, disabled
             """, (user.username, password_hash, user.role))
 
             row = cur.fetchone()
@@ -138,7 +138,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         with conn.cursor() as cur:
             # Get user from database
             cur.execute("""
-                SELECT id, username, password_hash, role, created_at, last_login, disabled
+                SELECT id, username, password_hash, primary_role, created_at, last_login, disabled
                 FROM kg_auth.users
                 WHERE username = %s
             """, (form_data.username,))
@@ -270,7 +270,7 @@ async def update_current_user_profile(
 
             # Return updated user
             cur.execute("""
-                SELECT id, username, role, created_at, last_login, disabled
+                SELECT id, username, primary_role, created_at, last_login, disabled
                 FROM kg_auth.users
                 WHERE id = %s
             """, (current_user.id,))
@@ -423,11 +423,11 @@ async def list_users(
     try:
         with conn.cursor() as cur:
             # Build query with optional role filter
-            query = "SELECT id, username, role, created_at, last_login, disabled FROM kg_auth.users"
+            query = "SELECT id, username, primary_role, created_at, last_login, disabled FROM kg_auth.users"
             params = []
 
             if role:
-                query += " WHERE role = %s"
+                query += " WHERE primary_role = %s"
                 params.append(role)
 
             query += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
@@ -448,7 +448,7 @@ async def list_users(
             # Get total count
             count_query = "SELECT COUNT(*) FROM kg_auth.users"
             if role:
-                count_query += " WHERE role = %s"
+                count_query += " WHERE primary_role = %s"
                 cur.execute(count_query, [role] if role else [])
             else:
                 cur.execute(count_query)
@@ -476,7 +476,7 @@ async def get_user(
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, username, role, created_at, last_login, disabled
+                SELECT id, username, primary_role, created_at, last_login, disabled
                 FROM kg_auth.users
                 WHERE id = %s
             """, (user_id,))
@@ -537,7 +537,7 @@ async def update_user(
                 params.append(get_password_hash(update.password))
 
             if update.role:
-                updates.append("role = %s")
+                updates.append("primary_role = %s")
                 params.append(update.role)
 
             if update.disabled is not None:
@@ -559,7 +559,7 @@ async def update_user(
 
             # Return updated user
             cur.execute("""
-                SELECT id, username, role, created_at, last_login, disabled
+                SELECT id, username, primary_role, created_at, last_login, disabled
                 FROM kg_auth.users
                 WHERE id = %s
             """, (user_id,))

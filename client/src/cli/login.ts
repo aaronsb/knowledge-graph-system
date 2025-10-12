@@ -103,6 +103,21 @@ async function loginCommand(options: LoginOptions) {
     const tokenInfo = TokenManager.fromLoginResponse(loginResponse);
     tokenManager.storeToken(tokenInfo);
 
+    // Ask to remember username if it's not already saved
+    const savedUsername = config.get('username');
+    if (!savedUsername || savedUsername !== username) {
+      const rememberResponse = await prompts({
+        type: 'confirm',
+        name: 'remember',
+        message: `Remember username "${username}" for future logins?`,
+        initial: true
+      });
+
+      if (rememberResponse.remember) {
+        config.set('username', username);
+      }
+    }
+
     // Display success message
     console.log('');
     console.log('\x1b[32m✅ Logged in successfully!\x1b[0m');

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
+                "file": "guides/RBAC.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "RECURSIVE_UPSERT_ARCHITECTURE"
+              "title": "RBAC"
             }
           }
         ]
@@ -172,26 +172,35 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "README.md.tmp.3166123.1760248591855",
+    "README.md.tmp.3166123.1760248574390",
+    "README.md.tmp.3166123.1760248560123",
     "guides/AUTHENTICATION.md",
+    "guides/RBAC.md",
+    "operations/RBAC-OPERATIONS.md",
+    "operations/RBAC-OPERATIONS.md.tmp.3166123.1760248517453",
+    "guides/AI_PROVIDERS.md",
+    "guides/SCHEMA_REFERENCE.md",
+    "guides/QUICKSTART.md",
+    "guides/MCP_SETUP.md",
+    "guides/INGESTION.md",
+    "guides/EXAMPLES.md",
+    "guides/CLI_STATE_TREE.md",
+    "guides/BACKUP_RESTORE.md",
+    "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
     "architecture/ADR-027-user-management-api.md",
     "guides/AUTHENTICATION.md.tmp.3166123.1760213603948",
-    "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
     "architecture/ADR-027-user-management-api.md.tmp.2098444.1760201629132",
     "testing/SCHEMA_MIGRATION_TEST_REPORT.md",
-    "guides/SCHEMA_REFERENCE.md",
     "architecture/ADR-026-autonomous-vocabulary-curation.md",
     "TODO.md",
     "architecture/ARCHITECTURE_OVERVIEW.md",
     "TODO.md.tmp.2098444.1760156568763",
     "architecture/ADR-025-dynamic-relationship-vocabulary.md",
-    "guides/MCP_SETUP.md",
     "testing/SCHEMA_MIGRATION_TEST_REPORT.md.tmp.2098444.1760154301769",
     "guides/SCHEMA_REFERENCE.md.tmp.2098444.1760154015407",
     "architecture/ADR-026-autonomous-vocabulary-curation.md.tmp.2098444.1760153457848",
     "architecture/ADR-025-dynamic-relationship-vocabulary.md.tmp.2098444.1760153297117",
-    "architecture/ADR-025-dynamic-relationship-vocabulary.md.tmp.2098444.1760153112823",
-    "architecture/ADR-025-dynamic-relationship-vocabulary.md.tmp.2098444.1760151344641",
-    "architecture/ADR-025-dynamic-relationship-vocabulary.md.tmp.2098444.1760151263184",
     "architecture/ADR-016-apache-age-migration.md",
     "architecture/ADR-024-multi-schema-postgresql-architecture.md",
     "architecture/ADR-023-markdown-structured-content-preprocessing.md",
@@ -199,15 +208,6 @@
     "api/NEO4J_QUERIES.md",
     "Untitled.md",
     "api/AGE_QUERIES.md",
-    "architecture/FUZZY_MATCHING_ANALYSIS.md",
-    "architecture/ARCHITECTURE_DECISIONS.md",
-    "architecture/DATA_CONTRACT.md",
-    "architecture/ADR-015-backup-restore-streaming.md",
-    "architecture/ADR-014-job-approval-workflow.md",
-    "architecture/visualization.md",
-    "architecture/media/voltron-porter-stemmer.jpg",
-    "architecture/MCP Server.md",
-    "architecture/ADR-022-semantic-relationship-taxonomy.md",
-    "architecture/ADR-017-sensitive-auth-verification.md"
+    "architecture/media/voltron-porter-stemmer.jpg"
   ]
 }

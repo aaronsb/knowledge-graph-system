@@ -78,6 +78,9 @@ export async function registerCommands(program: Command) {
   // Configure colored help for main command
   configureColoredHelp(program);
 
+  // Create client for command that need it
+  const client = createClientFromEnv();
+
   // Register subcommands with colored help
   const subcommands = [
     healthCommand,
@@ -87,7 +90,7 @@ export async function registerCommands(program: Command) {
     searchCommand,
     databaseCommand,
     ontologyCommand,
-    adminCommand
+    adminCommand,
   ];
 
   subcommands.forEach(cmd => {

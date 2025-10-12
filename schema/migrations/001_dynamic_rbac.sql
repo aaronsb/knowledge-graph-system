@@ -89,10 +89,17 @@ CREATE TABLE kg_auth.role_permissions (
     inherited_from VARCHAR(50) REFERENCES kg_auth.roles(role_name), -- Track inheritance source
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_by INTEGER REFERENCES kg_auth.users(id),
-
-    UNIQUE(role_name, resource_type, action, scope_type, COALESCE(scope_id, ''))
+    created_by INTEGER REFERENCES kg_auth.users(id)
 );
+
+-- Create unique index that handles NULL scope_id properly
+CREATE UNIQUE INDEX idx_role_perms_unique_with_scope
+    ON kg_auth.role_permissions(role_name, resource_type, action, scope_type, scope_id)
+    WHERE scope_id IS NOT NULL;
+
+CREATE UNIQUE INDEX idx_role_perms_unique_without_scope
+    ON kg_auth.role_permissions(role_name, resource_type, action, scope_type)
+    WHERE scope_id IS NULL;
 
 CREATE INDEX idx_role_perms_role ON kg_auth.role_permissions(role_name);
 CREATE INDEX idx_role_perms_resource ON kg_auth.role_permissions(resource_type, action);
@@ -119,10 +126,6 @@ END $$;
 
 -- Remove CHECK constraint (roles are now dynamic)
 ALTER TABLE kg_auth.users DROP CONSTRAINT IF EXISTS users_role_check;
-
--- Add foreign key to roles table
-ALTER TABLE kg_auth.users ADD CONSTRAINT fk_users_primary_role
-    FOREIGN KEY (primary_role) REFERENCES kg_auth.roles(role_name);
 
 COMMENT ON COLUMN kg_auth.users.primary_role IS 'Primary role (backwards compatibility) - user can have additional roles in user_roles table';
 
@@ -152,6 +155,10 @@ VALUES
     ('admin', 'Administrator', 'Full system access', TRUE, TRUE)
 ON CONFLICT (role_name) DO NOTHING;
 
+-- Now that roles are seeded, add foreign key constraint
+ALTER TABLE kg_auth.users ADD CONSTRAINT fk_users_primary_role
+    FOREIGN KEY (primary_role) REFERENCES kg_auth.roles(role_name);
+
 -- =============================================================================
 -- STEP 6: Migrate Existing Permissions
 -- =============================================================================
@@ -164,8 +171,7 @@ SELECT
     action,
     'global' AS scope_type,
     granted
-FROM kg_auth.role_permissions_backup
-ON CONFLICT (role_name, resource_type, action, scope_type, scope_id) DO NOTHING;
+FROM kg_auth.role_permissions_backup;
 
 -- =============================================================================
 -- STEP 7: Assign Primary Roles to Users
@@ -194,15 +200,13 @@ VALUES
     ('admin', 'roles', 'delete', 'global', TRUE),
     ('admin', 'resources', 'read', 'global', TRUE),
     ('admin', 'resources', 'write', 'global', TRUE),
-    ('admin', 'resources', 'delete', 'global', TRUE)
-ON CONFLICT (role_name, resource_type, action, scope_type, scope_id) DO NOTHING;
+    ('admin', 'resources', 'delete', 'global', TRUE);
 
 -- Curator can view roles (but not modify)
 INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
 VALUES
     ('curator', 'roles', 'read', 'global', TRUE),
-    ('curator', 'resources', 'read', 'global', TRUE)
-ON CONFLICT (role_name, resource_type, action, scope_type, scope_id) DO NOTHING;
+    ('curator', 'resources', 'read', 'global', TRUE);
 
 -- =============================================================================
 -- STEP 9: Create Helper Functions

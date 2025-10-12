@@ -181,7 +181,7 @@ async function getUserCommand(userId: string) {
 /**
  * Create user command
  */
-async function createUserCommand(username: string, options: { role: string }) {
+async function createUserCommand(username: string, options: { role: string; password?: string }) {
   const { token, authClient } = requireAuth();
 
   // Validate role
@@ -197,9 +197,9 @@ async function createUserCommand(username: string, options: { role: string }) {
   console.log(`Role: ${options.role}`);
   console.log('');
 
-  // Prompt for password
+  // Get password (from option or prompt)
   try {
-    const password = await promptPassword(true);
+    const password = options.password || await promptPassword(true);
 
     const request: UserCreateRequest = {
       username,
@@ -242,7 +242,7 @@ async function createUserCommand(username: string, options: { role: string }) {
  */
 async function updateUserCommand(
   userId: string,
-  options: { role?: string; password?: boolean; disable?: boolean; enable?: boolean }
+  options: { role?: string; password?: string | boolean; disable?: boolean; enable?: boolean }
 ) {
   const { token, authClient, tokenManager } = requireAuth();
 
@@ -269,7 +269,10 @@ async function updateUserCommand(
     // Handle password change
     if (options.password) {
       try {
-        const newPassword = await promptPassword(true);
+        // If password is a string, use it directly; if true, prompt for it
+        const newPassword = typeof options.password === 'string'
+          ? options.password
+          : await promptPassword(true);
         request.password = newPassword;
       } catch (error: any) {
         if (error.message === 'Passwords do not match' || error.message === 'Cancelled') {
@@ -426,8 +429,9 @@ export function registerAuthAdminCommand(program: Command): void {
   // kg admin user create
   userCommand
     .command('create <username>')
-    .description('Create new user (prompts for password)')
+    .description('Create new user')
     .requiredOption('--role <role>', 'User role (read_only, contributor, curator, admin)')
+    .option('-p, --password <password>', 'Password (prompts if not provided)')
     .action(createUserCommand);
 
   // kg admin user update
@@ -435,7 +439,7 @@ export function registerAuthAdminCommand(program: Command): void {
     .command('update <user_id>')
     .description('Update user details')
     .option('--role <role>', 'Change user role')
-    .option('--password', 'Change password (prompts for new password)')
+    .option('-p, --password [password]', 'Change password (prompts if no value provided)')
     .option('--disable', 'Disable user account')
     .option('--enable', 'Enable user account')
     .action(updateUserCommand);
