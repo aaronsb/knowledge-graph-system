@@ -8,6 +8,7 @@ import * as colors from './colors';
 import { coloredCount, separator } from './colors';
 
 export const databaseCommand = new Command('database')
+  .alias('db')  // Short alias
   .description('Database operations and information')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()

@@ -12,10 +12,15 @@
  *
  * Architecture: Clean delegation with no business logic
  * See: ADR-029 - CLI Theory of Operation
+ *
+ * User-configurable aliases:
+ *   Commands can have user-defined aliases via config.aliases
+ *   Example: config.aliases.cat = ['bat'] allows 'kg bat' as alias for 'kg cat'
  */
 
 import { Command } from 'commander';
 import * as colors from './colors';
+import { getConfig } from '../lib/config';
 
 /**
  * Resource routing map
@@ -110,10 +115,33 @@ function getResourceRoute(resource: string): string[] | null {
 }
 
 /**
+ * Apply user-configured aliases to a command (ADR-029)
+ *
+ * Loads aliases from config and applies them to the command using .alias()
+ *
+ * @param cmd The command to apply aliases to
+ * @param commandName Name of the command (used to lookup aliases in config)
+ */
+function applyAliases(cmd: Command, commandName: string): void {
+  try {
+    const config = getConfig();
+    const aliases = config.getCommandAliases(commandName);
+
+    // Apply each alias
+    for (const alias of aliases) {
+      cmd.alias(alias);
+    }
+  } catch (error) {
+    // Silently fail if config can't be loaded - aliases are optional
+    // This prevents blocking CLI usage if config is corrupted
+  }
+}
+
+/**
  * Create the ls (list) verb command
  */
 function createLsCommand(rootCommand: Command): Command {
-  return new Command('ls')
+  const cmd = new Command('ls')
     .description('List resources (Unix-style shortcut)')
     .argument('<resource>', 'Resource type: job, ontology, backup, config, role, permission, resource, user')
     .option('--json', 'Output as JSON')
@@ -144,13 +172,18 @@ function createLsCommand(rootCommand: Command): Command {
         executeCommand(rootCommand, route, listArgs);
       }
     });
+
+  // Apply user-configured aliases (ADR-029)
+  applyAliases(cmd, 'ls');
+
+  return cmd;
 }
 
 /**
  * Create the stat (status/statistics) verb command
  */
 function createStatCommand(rootCommand: Command): Command {
-  return new Command('stat')
+  const cmd = new Command('stat')
     .description('Show status or statistics (Unix-style shortcut)')
     .argument('<resource>', 'Resource type: job, database')
     .argument('[id]', 'Resource identifier (for jobs)')
@@ -190,13 +223,18 @@ function createStatCommand(rootCommand: Command): Command {
 
       executeCommand(rootCommand, route, args);
     });
+
+  // Apply user-configured aliases (ADR-029)
+  applyAliases(cmd, 'stat');
+
+  return cmd;
 }
 
 /**
  * Create the rm (remove/cancel/delete) verb command
  */
 function createRmCommand(rootCommand: Command): Command {
-  return new Command('rm')
+  const cmd = new Command('rm')
     .description('Remove or delete resources (Unix-style shortcut)')
     .argument('<resource>', 'Resource type: job, ontology, role, permission, user')
     .argument('<id>', 'Resource identifier')
@@ -237,18 +275,25 @@ function createRmCommand(rootCommand: Command): Command {
 
       executeCommand(rootCommand, route, args);
     });
+
+  // Apply user-configured aliases (ADR-029)
+  applyAliases(cmd, 'rm');
+
+  return cmd;
 }
 
 /**
  * Create the cat (display/show details) verb command
+ *
+ * Aliases are loaded from user config (ADR-029)
  */
 function createCatCommand(rootCommand: Command): Command {
-  return new Command('cat')
+  const cmd = new Command('cat')
     .description('Display resource details (Unix-style shortcut)')
     .argument('<resource>', 'Resource type: concept, config, job, role, ontology')
-    .argument('<id>', 'Resource identifier or key')
+    .argument('[id]', 'Resource identifier or key (optional for config and job)')
     .option('--json', 'Output as JSON')
-    .action(async (resource: string, id: string, options) => {
+    .action(async (resource: string, id: string | undefined, options) => {
       const args: string[] = [];
 
       if (options.json) {
@@ -257,14 +302,41 @@ function createCatCommand(rootCommand: Command): Command {
 
       // Route based on resource type
       if (resource === 'concept' || resource === 'concepts') {
+        if (!id) {
+          console.error(colors.status.error('✗ Concept ID required'));
+          console.log(colors.status.dim('Example: kg cat concept abc-123'));
+          process.exit(1);
+        }
         executeCommand(rootCommand, ['search', 'details'], [id, ...args]);
       } else if (resource === 'config' || resource === 'cfg') {
-        executeCommand(rootCommand, ['config', 'get'], [id, ...args]);
+        if (id) {
+          // Show specific config key
+          executeCommand(rootCommand, ['config', 'get'], [id, ...args]);
+        } else {
+          // List all config
+          executeCommand(rootCommand, ['config', 'list'], args);
+        }
       } else if (resource === 'job' || resource === 'jobs') {
-        executeCommand(rootCommand, ['job', 'status'], [id, ...args]);
+        if (id) {
+          // Show specific job status
+          executeCommand(rootCommand, ['job', 'status'], [id, ...args]);
+        } else {
+          // List all jobs
+          executeCommand(rootCommand, ['job', 'list'], args);
+        }
       } else if (resource === 'role' || resource === 'roles') {
+        if (!id) {
+          console.error(colors.status.error('✗ Role name required'));
+          console.log(colors.status.dim('Example: kg cat role admin'));
+          process.exit(1);
+        }
         executeCommand(rootCommand, ['admin', 'rbac', 'role', 'get'], [id, ...args]);
       } else if (resource === 'ontology' || resource === 'ontologies' || resource === 'onto') {
+        if (!id) {
+          console.error(colors.status.error('✗ Ontology name required'));
+          console.log(colors.status.dim('Example: kg cat ontology "My Ontology"'));
+          process.exit(1);
+        }
         executeCommand(rootCommand, ['ontology', 'info'], [id, ...args]);
       } else {
         console.error(colors.status.error(`✗ Unknown resource: ${resource}`));
@@ -273,6 +345,11 @@ function createCatCommand(rootCommand: Command): Command {
         process.exit(1);
       }
     });
+
+  // Apply user-configured aliases (ADR-029)
+  applyAliases(cmd, 'cat');
+
+  return cmd;
 }
 
 /**
