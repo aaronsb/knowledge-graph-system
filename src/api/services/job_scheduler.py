@@ -10,7 +10,7 @@ Based on ADR-014: Job Approval Workflow
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict
 import logging
 import os
@@ -96,7 +96,7 @@ class JobScheduler:
         from .job_queue import get_job_queue
 
         queue = get_job_queue()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         # Task 1: Cancel expired unapproved jobs
         expired_count = 0
@@ -158,7 +158,7 @@ class JobScheduler:
         from .job_queue import get_job_queue
 
         queue = get_job_queue()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         stats = {
             "expired_cancelled": 0,
