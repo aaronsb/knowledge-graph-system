@@ -242,7 +242,7 @@ async function createUserCommand(username: string, options: { role: string; pass
  */
 async function updateUserCommand(
   userId: string,
-  options: { role?: string; password?: boolean; disable?: boolean; enable?: boolean }
+  options: { role?: string; password?: string | boolean; disable?: boolean; enable?: boolean }
 ) {
   const { token, authClient, tokenManager } = requireAuth();
 
@@ -269,7 +269,10 @@ async function updateUserCommand(
     // Handle password change
     if (options.password) {
       try {
-        const newPassword = await promptPassword(true);
+        // If password is a string, use it directly; if true, prompt for it
+        const newPassword = typeof options.password === 'string'
+          ? options.password
+          : await promptPassword(true);
         request.password = newPassword;
       } catch (error: any) {
         if (error.message === 'Passwords do not match' || error.message === 'Cancelled') {
@@ -436,7 +439,7 @@ export function registerAuthAdminCommand(program: Command): void {
     .command('update <user_id>')
     .description('Update user details')
     .option('--role <role>', 'Change user role')
-    .option('--password', 'Change password (prompts for new password)')
+    .option('-p, --password [password]', 'Change password (prompts if no value provided)')
     .option('--disable', 'Disable user account')
     .option('--enable', 'Enable user account')
     .action(updateUserCommand);
