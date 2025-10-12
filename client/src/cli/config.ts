@@ -57,6 +57,7 @@ function promptPassword(question: string): Promise<string> {
 }
 
 export const configCommand = new Command('config')
+  .alias('cfg')  // Short alias
   .description('Manage kg CLI configuration')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
@@ -108,21 +109,38 @@ export const configCommand = new Command('config')
     new Command('set')
       .description('Set configuration value')
       .argument('<key>', 'Configuration key (supports dot notation)')
-      .argument('<value>', 'Value to set')
-      .option('--json', 'Parse value as JSON')
+      .argument('<value>', 'Value to set (auto-detects JSON arrays/objects)')
+      .option('--json', 'Force parse value as JSON')
+      .option('--string', 'Force treat value as string (no JSON parsing)')
       .action(async (key, value, options) => {
         try {
           const config = getConfig();
 
-          // Parse value if --json flag
-          let parsedValue = value;
-          if (options.json) {
+          let parsedValue: any = value;
+
+          // If --string flag, treat as literal string
+          if (options.string) {
+            parsedValue = value;
+          }
+          // If --json flag or value looks like JSON, try to parse
+          else if (options.json || value.startsWith('[') || value.startsWith('{')) {
             try {
               parsedValue = JSON.parse(value);
             } catch (e) {
-              console.error(colors.status.error('✗ Invalid JSON value'));
-              process.exit(1);
+              if (options.json) {
+                // Only error if --json was explicitly requested
+                console.error(colors.status.error('✗ Invalid JSON value'));
+                process.exit(1);
+              }
+              // Otherwise treat as string
+              parsedValue = value;
             }
+          }
+          // Auto-detect boolean and number values
+          else if (value === 'true' || value === 'false') {
+            parsedValue = value === 'true';
+          } else if (!isNaN(Number(value)) && value.trim() !== '') {
+            parsedValue = Number(value);
           }
 
           config.set(key, parsedValue);

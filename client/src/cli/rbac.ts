@@ -29,10 +29,12 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
 
   // ========== Resource Commands ==========
 
-  const resources = new Command('resources')
+  const resource = new Command('resource')
+    .alias('resources')  // Plural alias
+    .alias('res')        // Short alias
     .description('Manage resource types');
 
-  resources
+  resource
     .command('list')
     .description('List all registered resource types')
     .action(async () => {
@@ -93,7 +95,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  resources
+  resource
     .command('create')
     .description('Register a new resource type')
     .requiredOption('-t, --type <type>', 'Resource type name')
@@ -131,14 +133,15 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  rbac.addCommand(resources);
+  rbac.addCommand(resource);
 
   // ========== Role Commands ==========
 
-  const roles = new Command('roles')
+  const role = new Command('role')
+    .alias('roles')  // Plural alias
     .description('Manage roles');
 
-  roles
+  role
     .command('list')
     .description('List all roles')
     .option('--all', 'Include inactive roles', false)
@@ -206,7 +209,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  roles
+  role
     .command('show <role>')
     .description('Show role details')
     .action(async (roleName: string) => {
@@ -251,7 +254,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  roles
+  role
     .command('create')
     .description('Create a new role')
     .requiredOption('-n, --name <name>', 'Role name (e.g., data_scientist)')
@@ -290,7 +293,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  roles
+  role
     .command('delete <role>')
     .description('Delete a role')
     .option('--force', 'Skip confirmation', false)
@@ -336,14 +339,16 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  rbac.addCommand(roles);
+  rbac.addCommand(role);
 
   // ========== Permission Commands ==========
 
-  const permissions = new Command('permissions')
+  const permission = new Command('permission')
+    .alias('permissions')  // Plural alias
+    .alias('perm')         // Short alias
     .description('Manage permissions');
 
-  permissions
+  permission
     .command('list')
     .description('List permissions')
     .option('-r, --role <role>', 'Filter by role name')
@@ -411,7 +416,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  permissions
+  permission
     .command('grant')
     .description('Grant a permission to a role')
     .requiredOption('-r, --role <role>', 'Role name')
@@ -453,7 +458,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  permissions
+  permission
     .command('revoke <permission-id>')
     .description('Revoke a permission (use permission ID from list)')
     .action(async (permissionId: string) => {
@@ -474,7 +479,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       }
     });
 
-  rbac.addCommand(permissions);
+  rbac.addCommand(permission);
 
   // ========== User Role Assignment Commands ==========
 
