@@ -30,8 +30,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
   // ========== Resource Commands ==========
 
   const resources = new Command('resources')
-    .description('Manage resource types')
-    .alias('resource');
+    .description('Manage resource types');
 
   resources
     .command('list')
@@ -137,8 +136,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
   // ========== Role Commands ==========
 
   const roles = new Command('roles')
-    .description('Manage roles')
-    .alias('role');
+    .description('Manage roles');
 
   roles
     .command('list')
@@ -343,8 +341,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
   // ========== Permission Commands ==========
 
   const permissions = new Command('permissions')
-    .description('Manage permissions')
-    .alias('perm');
+    .description('Manage permissions');
 
   permissions
     .command('list')

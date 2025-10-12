@@ -9,6 +9,7 @@ import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { separator } from './colors';
 import { configureColoredHelp } from './help-formatter';
+import { Table } from '../lib/table';
 
 /**
  * Prompt for input from user
@@ -160,59 +161,146 @@ export const configCommand = new Command('config')
 
           if (options.json) {
             console.log(JSON.stringify(allConfig, null, 2));
-          } else {
-            console.log('\n' + separator());
-            console.log(colors.ui.title('⚙️  Configuration'));
-            console.log(separator());
-
-            // Display config keys and values
-            console.log();
-
-            // Simple top-level keys
-            if (allConfig.username !== undefined) {
-              console.log(`${colors.ui.key('username:')} ${colors.ui.value(allConfig.username)}`);
-            }
-            if (allConfig.secret !== undefined) {
-              console.log(`${colors.ui.key('secret:')} ${colors.status.dim('***hidden***')}`);
-            }
-            if (allConfig.api_url !== undefined) {
-              console.log(`${colors.ui.key('api_url:')} ${colors.ui.value(allConfig.api_url)}`);
-            }
-            if (allConfig.backup_dir !== undefined) {
-              console.log(`${colors.ui.key('backup_dir:')} ${colors.ui.value(allConfig.backup_dir)}`);
-            }
-
-            // Auto-approve with boolean value
-            if (allConfig.auto_approve !== undefined) {
-              const value = allConfig.auto_approve ? colors.status.warning('true') : colors.status.dim('false');
-              console.log(`${colors.ui.key('auto_approve:')} ${value}`);
-            }
-
-            // MCP configuration (nested)
-            if (allConfig.mcp) {
-              console.log();
-              console.log(colors.ui.key('mcp:'));
-
-              if (allConfig.mcp.enabled !== undefined) {
-                const value = allConfig.mcp.enabled ? colors.status.success('true') : colors.status.dim('false');
-                console.log(`  ${colors.ui.key('enabled:')} ${value}`);
-              }
-
-              if (allConfig.mcp.tools && Object.keys(allConfig.mcp.tools).length > 0) {
-                console.log(`  ${colors.ui.key('tools:')}`);
-                Object.entries(allConfig.mcp.tools).forEach(([name, toolConfig]: [string, any]) => {
-                  const status = toolConfig.enabled ? colors.status.success('✓') : colors.status.dim('✗');
-                  console.log(`    ${status} ${colors.ui.value(name)}`);
-                });
-              }
-            }
-
-            // Config file location and usage hint
-            console.log();
-            console.log(colors.status.dim(`Config file: ${config.getConfigPath()}`));
-            console.log(colors.status.dim(`Usage: kg config set <key> <value>`));
-            console.log('\n' + separator());
+            return;
           }
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('⚙️  Configuration'));
+          console.log(separator());
+
+          // Build flat config rows for table display
+          const configRows: Array<{ key: string; value: string; category: string }> = [];
+
+          // Authentication section
+          if (allConfig.username !== undefined) {
+            configRows.push({
+              key: 'username',
+              value: allConfig.username,
+              category: 'auth'
+            });
+          }
+          if (allConfig.secret !== undefined) {
+            configRows.push({
+              key: 'secret',
+              value: '***hidden***',
+              category: 'auth'
+            });
+          }
+          if (allConfig.auth?.token !== undefined) {
+            const isValid = config.isAuthenticated();
+            configRows.push({
+              key: 'auth.token',
+              value: isValid ? '✓ valid' : '✗ expired',
+              category: 'auth'
+            });
+          }
+
+          // Connection section
+          if (allConfig.api_url !== undefined) {
+            configRows.push({
+              key: 'api_url',
+              value: allConfig.api_url,
+              category: 'connection'
+            });
+          }
+
+          // Behavior section
+          if (allConfig.backup_dir !== undefined) {
+            configRows.push({
+              key: 'backup_dir',
+              value: allConfig.backup_dir,
+              category: 'behavior'
+            });
+          }
+          if (allConfig.auto_approve !== undefined) {
+            configRows.push({
+              key: 'auto_approve',
+              value: allConfig.auto_approve ? 'true' : 'false',
+              category: 'behavior'
+            });
+          }
+
+          // MCP section
+          if (allConfig.mcp?.enabled !== undefined) {
+            configRows.push({
+              key: 'mcp.enabled',
+              value: allConfig.mcp.enabled ? 'true' : 'false',
+              category: 'mcp'
+            });
+          }
+          if (allConfig.mcp?.tools) {
+            const toolCount = Object.keys(allConfig.mcp.tools).length;
+            const enabledCount = Object.values(allConfig.mcp.tools).filter(t => t.enabled).length;
+            configRows.push({
+              key: 'mcp.tools',
+              value: `${enabledCount}/${toolCount} enabled`,
+              category: 'mcp'
+            });
+          }
+
+          if (configRows.length === 0) {
+            console.log(colors.status.dim('\nNo configuration found\n'));
+            console.log(colors.status.dim(`Run: kg config init\n`));
+            return;
+          }
+
+          // Create table
+          const table = new Table<{ key: string; value: string; category: string }>({
+            columns: [
+              {
+                header: 'Key',
+                field: 'key',
+                type: 'heading',
+                width: 'flex',
+                priority: 2
+              },
+              {
+                header: 'Value',
+                field: 'value',
+                type: 'value',
+                width: 'flex',
+                priority: 3,
+                customFormat: (val, row) => {
+                  // Special formatting based on key
+                  if (row.key === 'secret') return colors.status.dim(val);
+                  if (row.key === 'auto_approve' && val === 'true') return colors.status.warning(val);
+                  if (row.key === 'auto_approve' && val === 'false') return colors.status.dim(val);
+                  if (row.key.startsWith('mcp.') && val.includes('true')) return colors.status.success(val);
+                  if (row.key.startsWith('mcp.') && val.includes('false')) return colors.status.dim(val);
+                  if (row.key.startsWith('auth.token')) {
+                    if (val.includes('valid')) return colors.status.success(val);
+                    if (val.includes('expired')) return colors.status.warning(val);
+                  }
+                  return val;
+                }
+              },
+              {
+                header: 'Category',
+                field: 'category',
+                type: 'text',
+                width: 'auto',
+                customFormat: (type) => {
+                  switch (type) {
+                    case 'auth': return colors.ui.value('auth');
+                    case 'connection': return colors.ui.value('connection');
+                    case 'behavior': return colors.ui.value('behavior');
+                    case 'mcp': return colors.ui.value('mcp');
+                    default: return type;
+                  }
+                }
+              }
+            ],
+            spacing: 2,
+            showHeader: true,
+            showSeparator: true
+          });
+
+          table.print(configRows);
+
+          // Helpful footer
+          console.log(colors.status.dim(`Config file: ${config.getConfigPath()}`));
+          console.log(colors.status.dim(`Usage: kg config set <key> <value>`));
+          console.log(colors.status.dim(`MCP tools: kg config mcp list\n`));
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to list config'));
           console.error(colors.status.error(error.message));
@@ -348,25 +436,63 @@ export const configCommand = new Command('config')
               console.log('\n' + separator());
             }
           } else {
-            // Show all tools
+            // Show all tools as table
             const tools = config.listMcpTools();
 
             if (options.json) {
               console.log(JSON.stringify({ tools }, null, 2));
-            } else {
-              console.log('\n' + separator());
-              console.log(colors.ui.title('🔧 MCP Tools'));
-              console.log(separator());
-
-              Object.entries(tools).forEach(([name, toolConfig]) => {
-                const statusIcon = toolConfig.enabled ? colors.status.success('✓') : colors.status.dim('✗');
-                console.log(`\n${statusIcon} ${colors.ui.key(name)}`);
-                if (toolConfig.description) {
-                  console.log(`  ${colors.status.dim(toolConfig.description)}`);
-                }
-              });
-              console.log('\n' + separator());
+              return;
             }
+
+            console.log('\n' + separator());
+            console.log(colors.ui.title('🔧 MCP Tools'));
+            console.log(separator());
+
+            const toolRows = Object.entries(tools).map(([name, toolConfig]) => ({
+              name,
+              enabled: toolConfig.enabled,
+              description: toolConfig.description || '-'
+            }));
+
+            if (toolRows.length === 0) {
+              console.log(colors.status.dim('\nNo MCP tools configured\n'));
+              return;
+            }
+
+            const table = new Table<{ name: string; enabled: boolean; description: string }>({
+              columns: [
+                {
+                  header: 'Tool Name',
+                  field: 'name',
+                  type: 'heading',
+                  width: 'flex',
+                  priority: 2
+                },
+                {
+                  header: 'Enabled',
+                  field: 'enabled',
+                  type: 'text',
+                  width: 10,
+                  customFormat: (enabled) => enabled ? colors.status.success('✓') : colors.status.dim('✗')
+                },
+                {
+                  header: 'Description',
+                  field: 'description',
+                  type: 'text',
+                  width: 'flex',
+                  priority: 3,
+                  truncate: true
+                }
+              ],
+              spacing: 2,
+              showHeader: true,
+              showSeparator: true
+            });
+
+            table.print(toolRows);
+
+            console.log(colors.status.dim(`Enable tool: kg config enable-mcp <tool-name>`));
+            console.log(colors.status.dim(`Disable tool: kg config disable-mcp <tool-name>\n`));
           }
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to get MCP config'));
@@ -476,6 +602,100 @@ export const configCommand = new Command('config')
           process.exit(1);
         }
       })
+  )
+  .addCommand(
+    new Command('json')
+      .description('JSON-based configuration operations (machine-friendly)')
+      .addCommand(
+        new Command('get')
+          .description('Get entire configuration as JSON')
+          .action(() => {
+            const config = getConfig();
+            const allConfig = config.getAll();
+            console.log(JSON.stringify(allConfig, null, 2));
+          })
+      )
+      .addCommand(
+        new Command('set')
+          .description('Set configuration from JSON (full or partial)')
+          .argument('<json>', 'JSON string or path to JSON file')
+          .action(async (jsonInput) => {
+            try {
+              const config = getConfig();
+
+              let parsedConfig: any;
+
+              // Check if input is a file path
+              if (jsonInput.endsWith('.json')) {
+                const fs = require('fs');
+                if (fs.existsSync(jsonInput)) {
+                  const fileContent = fs.readFileSync(jsonInput, 'utf-8');
+                  parsedConfig = JSON.parse(fileContent);
+                } else {
+                  // Not a file, try to parse as JSON string
+                  parsedConfig = JSON.parse(jsonInput);
+                }
+              } else {
+                // Parse as JSON string
+                parsedConfig = JSON.parse(jsonInput);
+              }
+
+              // Apply each key-value pair
+              const keys = Object.keys(parsedConfig);
+              for (const key of keys) {
+                config.set(key, parsedConfig[key]);
+              }
+
+              console.log(colors.status.success(`✓ Set ${keys.length} configuration value(s)`));
+            } catch (error: any) {
+              console.error(colors.status.error('✗ Failed to set config from JSON'));
+              if (error instanceof SyntaxError) {
+                console.error(colors.status.error('Invalid JSON syntax'));
+              } else {
+                console.error(colors.status.error(error.message));
+              }
+              process.exit(1);
+            }
+          })
+      )
+      .addCommand(
+        new Command('dto')
+          .description('Output configuration template/schema')
+          .action(() => {
+            const template = {
+              username: "your-username",
+              secret: "your-api-key",
+              api_url: "http://localhost:8000",
+              backup_dir: "~/.local/share/kg/backups",
+              auto_approve: false,
+              mcp: {
+                enabled: true,
+                tools: {
+                  search_concepts: { enabled: true, description: "Search for concepts using natural language" },
+                  get_concept_details: { enabled: true, description: "Get detailed information about a concept" },
+                  find_related_concepts: { enabled: true, description: "Find concepts related through graph traversal" },
+                  find_connection: { enabled: true, description: "Find shortest path between concepts" },
+                  ingest_document: { enabled: true, description: "Ingest a document into the knowledge graph" },
+                  list_ontologies: { enabled: true, description: "List all ontologies" },
+                  get_database_stats: { enabled: true, description: "Get database statistics" }
+                }
+              },
+              auth: {
+                token: "your-jwt-token",
+                token_type: "bearer",
+                expires_at: 0,
+                username: "your-username",
+                role: "your-role"
+              }
+            };
+
+            console.log(colors.status.dim('# kg Configuration Template (DTO)\n'));
+            console.log(JSON.stringify(template, null, 2));
+            console.log(colors.status.dim('\n# Usage:'));
+            console.log(colors.status.dim('# kg config json set \'{"username": "alice", "auto_approve": true}\''));
+            console.log(colors.status.dim('# kg config json set config.json'));
+          })
+      )
   );
 
 // Configure colored help for all config subcommands

@@ -9,7 +9,6 @@ import { coloredCount, separator } from './colors';
 
 export const databaseCommand = new Command('database')
   .description('Database operations and information')
-  .alias('db')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(
