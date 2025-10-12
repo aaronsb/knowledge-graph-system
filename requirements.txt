@@ -10,6 +10,11 @@ fastapi>=0.109.0
 uvicorn[standard]>=0.27.0  # ASGI server with auto-reload
 python-multipart>=0.0.6  # For file uploads
 
+# Authentication (ADR-027)
+passlib>=1.7.4  # Password hashing
+bcrypt>=4.0.0,<5.0.0  # bcrypt backend (passlib compatibility)
+python-jose[cryptography]>=3.3.0  # JWT token generation and validation
+
 # Testing Dependencies
 pytest>=8.0.0  # Main testing framework
 pytest-asyncio>=0.23.0  # Async test support for FastAPI
