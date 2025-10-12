@@ -10,7 +10,7 @@ import { getConfig } from '../lib/config.js';
 import { AuthClient, UserCreateRequest, UserUpdateRequest } from '../lib/auth/auth-client.js';
 import { TokenManager } from '../lib/auth/token-manager.js';
 import { AuthChallenge } from '../lib/auth/challenge.js';
-import { formatTable } from '../lib/table.js';
+import { Table } from '../lib/table.js';
 
 /**
  * Ensure user is logged in and has admin role
@@ -156,28 +156,36 @@ async function listUsersCommand(options: { role?: string; skip?: number; limit?:
       return;
     }
 
-    // Format as table
-    const rows = response.users.map(user => [
-      user.id.toString(),
-      user.username,
-      user.role,
-      new Date(user.created_at).toLocaleString(),
-      user.last_login ? new Date(user.last_login).toLocaleString() : 'Never',
-      user.disabled ? '\x1b[31mDisabled\x1b[0m' : '\x1b[32mActive\x1b[0m'
-    ]);
+    // Format as table using Table utility
+    const table = new Table({
+      columns: [
+        { header: 'ID', field: 'id', width: 'auto', type: 'value' },
+        { header: 'Username', field: 'username', width: 'auto', type: 'text' },
+        { header: 'Role', field: 'role', width: 'auto', type: 'value' },
+        { header: 'Created', field: 'created_at', width: 'auto', type: 'timestamp' },
+        {
+          header: 'Last Login',
+          field: 'last_login',
+          width: 'auto',
+          type: 'timestamp',
+          customFormat: (val) => val || 'Never'
+        },
+        {
+          header: 'Status',
+          field: 'disabled',
+          width: 'auto',
+          type: 'text',
+          customFormat: (val) => val ? '\x1b[31mDisabled\x1b[0m' : '\x1b[32mActive\x1b[0m'
+        }
+      ]
+    });
 
-    console.log('');
-    console.log(formatTable(
-      ['ID', 'Username', 'Role', 'Created', 'Last Login', 'Status'],
-      rows
-    ));
-    console.log('');
-    console.log(`Total: ${response.total} users`);
+    table.print(response.users);
+
     if (response.total > skip + limit) {
       console.log(`Showing ${skip + 1}-${skip + response.users.length} of ${response.total}`);
-      console.log(`Use --skip and --limit for pagination`);
+      console.log(`Use --skip and --limit for pagination\n`);
     }
-    console.log('');
   } catch (error: any) {
     if (error.response?.status === 403) {
       console.error('\n\x1b[31m❌ Permission denied\x1b[0m');
