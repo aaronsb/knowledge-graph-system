@@ -52,6 +52,50 @@ export class KnowledgeGraphClient {
         ...(config.apiKey && { 'X-API-Key': config.apiKey }),
       },
     });
+
+    // ADR-027: Add request interceptor for JWT authentication
+    this.client.interceptors.request.use((requestConfig) => {
+      // Try to get JWT token from config (via ConfigManager)
+      try {
+        const { getConfig } = require('../lib/config');
+        const configManager = getConfig();
+        const tokenInfo = configManager.getAuthToken();
+
+        if (tokenInfo && configManager.isAuthenticated()) {
+          // Add JWT token to Authorization header (takes precedence over API key)
+          requestConfig.headers.Authorization = `Bearer ${tokenInfo.access_token}`;
+        }
+      } catch (error) {
+        // Config not available or token not found - that's ok, continue without auth
+      }
+
+      return requestConfig;
+    });
+
+    // ADR-027: Add response interceptor for 401 errors (expired token)
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Check if we have an expired token
+          try {
+            const { getConfig } = require('../lib/config');
+            const configManager = getConfig();
+
+            if (configManager.getAuthToken()) {
+              // User has a token but it's expired or invalid
+              console.error('\n\x1b[31m❌ Authentication expired or invalid\x1b[0m');
+              console.error('   Your session has expired. Please login again:');
+              console.error('     \x1b[36mkg login\x1b[0m\n');
+            }
+          } catch (e) {
+            // Ignore errors from config loading
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
   }
 
   /**
