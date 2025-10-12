@@ -12,7 +12,9 @@ import {
   PermissionCreate,
   UserRoleAssign,
 } from '../types';
-import { colors } from './colors';
+import * as colors from './colors';
+import { status } from './colors';
+import ansis from 'ansis';
 
 /**
  * Create RBAC management commands
@@ -35,12 +37,12 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
       try {
         const resources = await client.listResources();
 
-        console.log(`\n${colors.bold}Resource Types${colors.reset} (${resources.length}):\n`);
+        console.log(`\n${ansis.bold}Resource Types${ansis.reset} (${resources.length}):\n`);
 
         for (const resource of resources) {
-          console.log(`${colors.cyan}${resource.resource_type}${colors.reset}`);
+          console.log(`${status.info}${resource.resource_type}${ansis.reset}`);
           if (resource.description) {
-            console.log(`  ${colors.dim}${resource.description}${colors.reset}`);
+            console.log(`  ${status.dim}${resource.description}${ansis.reset}`);
           }
           console.log(`  Actions: ${resource.available_actions.join(', ')}`);
           console.log(`  Scoping: ${resource.supports_scoping ? 'Supported' : 'Not supported'}`);
@@ -50,9 +52,9 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
           console.log();
         }
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to list resources${colors.reset}`);
+        console.error(`${status.error}✗ Failed to list resources${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin or curator role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin or curator role${ansis.reset}`);
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}`);
         }
@@ -81,14 +83,14 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
 
         const created = await client.createResource(resource);
 
-        console.log(`\n${colors.green}✓ Resource type created${colors.reset}`);
-        console.log(`  Type: ${colors.cyan}${created.resource_type}${colors.reset}`);
+        console.log(`\n${status.success}✓ Resource type created${ansis.reset}`);
+        console.log(`  Type: ${status.info}${created.resource_type}${ansis.reset}`);
         console.log(`  Actions: ${created.available_actions.join(', ')}`);
         console.log(`  Registered by: ${created.registered_by || 'system'}`);
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to create resource type${colors.reset}`);
+        console.error(`${status.error}✗ Failed to create resource type${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin role${ansis.reset}`);
         } else if (error.response?.status === 409) {
           console.error(`  Resource type '${options.type}' already exists`);
         } else {
@@ -114,16 +116,16 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
       try {
         const roles = await client.listRoles(options.all);
 
-        console.log(`\n${colors.bold}Roles${colors.reset} (${roles.length}):\n`);
+        console.log(`\n${ansis.bold}Roles${ansis.reset} (${roles.length}):\n`);
 
         for (const role of roles) {
-          const status = role.is_active ? colors.green + '●' : colors.dim + '○';
-          const builtin = role.is_builtin ? ` ${colors.dim}(builtin)${colors.reset}` : '';
+          const roleStatus = role.is_active ? status.success + '●' : status.dim + '○';
+          const builtin = role.is_builtin ? ` ${status.dim}(builtin)${ansis.reset}` : '';
 
-          console.log(`${status} ${colors.cyan}${role.role_name}${colors.reset}${builtin}`);
+          console.log(`${roleStatus} ${status.info}${role.role_name}${ansis.reset}${builtin}`);
           console.log(`  ${role.display_name}`);
           if (role.description) {
-            console.log(`  ${colors.dim}${role.description}${colors.reset}`);
+            console.log(`  ${status.dim}${role.description}${ansis.reset}`);
           }
           if (role.parent_role) {
             console.log(`  Inherits from: ${role.parent_role}`);
@@ -131,9 +133,9 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
           console.log();
         }
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to list roles${colors.reset}`);
+        console.error(`${status.error}✗ Failed to list roles${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin or curator role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin or curator role${ansis.reset}`);
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}`);
         }
@@ -149,12 +151,12 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
         const role = await client.getRole(roleName);
         const permissions = await client.listPermissions(roleName);
 
-        console.log(`\n${colors.bold}Role: ${colors.cyan}${role.display_name}${colors.reset}`);
+        console.log(`\n${ansis.bold}Role: ${status.info}${role.display_name}${ansis.reset}`);
         console.log(`ID: ${role.role_name}`);
         if (role.description) {
           console.log(`Description: ${role.description}`);
         }
-        console.log(`Status: ${role.is_active ? colors.green + 'Active' : colors.dim + 'Inactive'}${colors.reset}`);
+        console.log(`Status: ${role.is_active ? status.success + 'Active' : status.dim + 'Inactive'}${ansis.reset}`);
         console.log(`Builtin: ${role.is_builtin ? 'Yes' : 'No'}`);
         if (role.parent_role) {
           console.log(`Inherits from: ${role.parent_role}`);
@@ -162,18 +164,18 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
         console.log(`Created: ${new Date(role.created_at).toLocaleString()}`);
 
         if (permissions.length > 0) {
-          console.log(`\n${colors.bold}Permissions${colors.reset} (${permissions.length}):`);
+          console.log(`\n${ansis.bold}Permissions${ansis.reset} (${permissions.length}):`);
           for (const perm of permissions) {
-            const grantIcon = perm.granted ? colors.green + '✓' : colors.red + '✗';
-            console.log(`${grantIcon} ${perm.action} on ${perm.resource_type} (${perm.scope_type})${colors.reset}`);
+            const grantIcon = perm.granted ? status.success + '✓' : status.error + '✗';
+            console.log(`${grantIcon} ${perm.action} on ${perm.resource_type} (${perm.scope_type})${ansis.reset}`);
           }
         }
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to get role details${colors.reset}`);
+        console.error(`${status.error}✗ Failed to get role details${ansis.reset}`);
         if (error.response?.status === 404) {
           console.error(`  Role '${roleName}' not found`);
         } else if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin or curator role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin or curator role${ansis.reset}`);
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}`);
         }
@@ -200,16 +202,16 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
 
         const created = await client.createRole(role);
 
-        console.log(`\n${colors.green}✓ Role created${colors.reset}`);
-        console.log(`  Name: ${colors.cyan}${created.role_name}${colors.reset}`);
+        console.log(`\n${status.success}✓ Role created${ansis.reset}`);
+        console.log(`  Name: ${status.info}${created.role_name}${ansis.reset}`);
         console.log(`  Display: ${created.display_name}`);
         if (created.parent_role) {
           console.log(`  Inherits from: ${created.parent_role}`);
         }
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to create role${colors.reset}`);
+        console.error(`${status.error}✗ Failed to create role${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin role${ansis.reset}`);
         } else if (error.response?.status === 409) {
           console.error(`  Role '${options.name}' already exists`);
         } else {
@@ -234,7 +236,7 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
 
           await new Promise<void>((resolve, reject) => {
             readline.question(
-              `${colors.yellow}⚠ Delete role '${roleName}'? This cannot be undone. [y/N]: ${colors.reset}`,
+              `${status.warning}⚠ Delete role '${roleName}'? This cannot be undone. [y/N]: ${ansis.reset}`,
               (answer: string) => {
                 readline.close();
                 if (answer.toLowerCase() !== 'y') {
@@ -249,9 +251,9 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
 
         await client.deleteRole(roleName);
 
-        console.log(`${colors.green}✓ Role '${roleName}' deleted${colors.reset}`);
+        console.log(`${status.success}✓ Role '${roleName}' deleted${ansis.reset}`);
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to delete role${colors.reset}`);
+        console.error(`${status.error}✗ Failed to delete role${ansis.reset}`);
         if (error.response?.status === 404) {
           console.error(`  Role '${roleName}' not found`);
         } else if (error.response?.status === 403) {
@@ -282,7 +284,7 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
       try {
         const perms = await client.listPermissions(options.role, options.resourceType);
 
-        console.log(`\n${colors.bold}Permissions${colors.reset} (${perms.length}):\n`);
+        console.log(`\n${ansis.bold}Permissions${ansis.reset} (${perms.length}):\n`);
 
         // Group by role
         const byRole = new Map<string, typeof perms>();
@@ -294,17 +296,17 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
         }
 
         for (const [roleName, rolePerms] of byRole) {
-          console.log(`${colors.cyan}${roleName}${colors.reset}:`);
+          console.log(`${status.info}${roleName}${ansis.reset}:`);
           for (const perm of rolePerms) {
-            const grantIcon = perm.granted ? colors.green + '  ✓' : colors.red + '  ✗';
-            console.log(`${grantIcon} ${perm.action} on ${perm.resource_type} (${perm.scope_type})${colors.reset}`);
+            const grantIcon = perm.granted ? status.success + '  ✓' : status.error + '  ✗';
+            console.log(`${grantIcon} ${perm.action} on ${perm.resource_type} (${perm.scope_type})${ansis.reset}`);
           }
           console.log();
         }
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to list permissions${colors.reset}`);
+        console.error(`${status.error}✗ Failed to list permissions${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin or curator role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin or curator role${ansis.reset}`);
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}`);
         }
@@ -335,14 +337,14 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
         const created = await client.createPermission(permission);
 
         const grantType = created.granted ? 'granted' : 'denied';
-        console.log(`\n${colors.green}✓ Permission ${grantType}${colors.reset}`);
+        console.log(`\n${status.success}✓ Permission ${grantType}${ansis.reset}`);
         console.log(`  Role: ${created.role_name}`);
         console.log(`  Action: ${created.action} on ${created.resource_type}`);
         console.log(`  Scope: ${created.scope_type}`);
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to grant permission${colors.reset}`);
+        console.error(`${status.error}✗ Failed to grant permission${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin role${ansis.reset}`);
         } else if (error.response?.status === 404) {
           console.error(`  Role or resource type not found`);
         } else if (error.response?.status === 409) {
@@ -361,13 +363,13 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
       try {
         await client.deletePermission(parseInt(permissionId));
 
-        console.log(`${colors.green}✓ Permission revoked${colors.reset}`);
+        console.log(`${status.success}✓ Permission revoked${ansis.reset}`);
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to revoke permission${colors.reset}`);
+        console.error(`${status.error}✗ Failed to revoke permission${ansis.reset}`);
         if (error.response?.status === 404) {
           console.error(`  Permission ${permissionId} not found`);
         } else if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin role${ansis.reset}`);
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}`);
         }
@@ -389,10 +391,10 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
       try {
         const assignments = await client.listUserRoles(parseInt(userId));
 
-        console.log(`\n${colors.bold}Role Assignments for User ${userId}${colors.reset} (${assignments.length}):\n`);
+        console.log(`\n${ansis.bold}Role Assignments for User ${userId}${ansis.reset} (${assignments.length}):\n`);
 
         for (const assignment of assignments) {
-          console.log(`${colors.cyan}${assignment.role_name}${colors.reset}`);
+          console.log(`${status.info}${assignment.role_name}${ansis.reset}`);
           console.log(`  Scope: ${assignment.scope_type || 'global'}${assignment.scope_id ? ' - ' + assignment.scope_id : ''}`);
           console.log(`  Assigned: ${new Date(assignment.assigned_at).toLocaleString()}`);
           if (assignment.expires_at) {
@@ -401,9 +403,9 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
           console.log();
         }
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to list user roles${colors.reset}`);
+        console.error(`${status.error}✗ Failed to list user roles${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin or curator role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin or curator role${ansis.reset}`);
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}`);
         }
@@ -429,14 +431,14 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
 
         const created = await client.assignUserRole(assignment);
 
-        console.log(`\n${colors.green}✓ Role assigned${colors.reset}`);
+        console.log(`\n${status.success}✓ Role assigned${ansis.reset}`);
         console.log(`  User: ${created.user_id}`);
         console.log(`  Role: ${created.role_name}`);
         console.log(`  Scope: ${created.scope_type || 'global'}`);
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to assign role${colors.reset}`);
+        console.error(`${status.error}✗ Failed to assign role${ansis.reset}`);
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin role${ansis.reset}`);
         } else if (error.response?.status === 404) {
           console.error(`  User or role not found`);
         } else if (error.response?.status === 409) {
@@ -455,13 +457,13 @@ export function createRbacCommands(client: KnowledgeGraphClient): Command {
       try {
         await client.revokeUserRole(parseInt(assignmentId));
 
-        console.log(`${colors.green}✓ Role assignment removed${colors.reset}`);
+        console.log(`${status.success}✓ Role assignment removed${ansis.reset}`);
       } catch (error: any) {
-        console.error(`${colors.red}✗ Failed to remove role assignment${colors.reset}`);
+        console.error(`${status.error}✗ Failed to remove role assignment${ansis.reset}`);
         if (error.response?.status === 404) {
           console.error(`  Assignment ${assignmentId} not found`);
         } else if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(`${colors.yellow}  Requires admin role${colors.reset}`);
+          console.error(`${status.warning}  Requires admin role${ansis.reset}`);
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}`);
         }
