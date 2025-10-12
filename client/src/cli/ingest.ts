@@ -110,6 +110,7 @@ ingestCommand
   .option('-d, --depth <n>', 'Maximum recursion depth (number or "all")', '0')
   .option('--directories-as-ontologies', 'Use directory names as ontology names', false)
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
+  .option('--dry-run', 'Show what would be ingested without submitting jobs', false)
   .option('--no-approve', 'Require manual approval before processing (default: auto-approve)')
   .option('--parallel', 'Process in parallel (default: serial for clean concept matching)', false)
   .option('--target-words <n>', 'Target words per chunk', '1000')
@@ -171,7 +172,7 @@ ingestCommand
         filesByOntology.get(ontologyName)!.push(file);
       }
 
-      console.log(chalk.blue(`\n📂 Found ${filesWithDirs.length} file(s) to ingest:`));
+      console.log(chalk.blue(`\n📂 Found ${filesWithDirs.length} file(s):`));
       if (options.directoriesAsOntologies) {
         console.log(chalk.gray(`  Ontologies: ${filesByOntology.size}`));
         for (const [ontology, files] of filesByOntology) {
@@ -181,6 +182,72 @@ ingestCommand
         filesWithDirs.forEach(({ file }) => console.log(chalk.gray(`  • ${path.relative(dir, file)}`)));
       }
 
+      // Dry-run mode: check duplicates without submitting
+      if (options.dryRun) {
+        console.log(chalk.blue(`\n🔍 Dry-run mode: Checking for duplicates...\n`));
+
+        let wouldSubmit = 0;
+        let wouldSkip = 0;
+        const skipDetails: string[] = [];
+        const submitDetails: string[] = [];
+
+        for (const { file: filePath, ontologyDir } of filesWithDirs) {
+          const ontologyName = options.directoriesAsOntologies
+            ? path.basename(ontologyDir)
+            : options.ontology;
+
+          const request: IngestRequest = {
+            ontology: ontologyName,
+            filename: path.basename(filePath),
+            force: options.force,
+            auto_approve: false,  // Don't matter for dry-run, but set conservative
+            processing_mode: 'serial',
+          };
+
+          try {
+            // This will check for duplicates without auto-approving
+            const result = await client.ingestFile(filePath, request);
+
+            const displayPath = options.directoriesAsOntologies
+              ? `[${ontologyName}] ${path.basename(filePath)}`
+              : path.relative(dir, filePath);
+
+            if ('duplicate' in result && result.duplicate) {
+              wouldSkip++;
+              skipDetails.push(`  ${chalk.yellow('○')} ${chalk.gray(displayPath)}`);
+            } else {
+              // It created a pending job - we need to cancel it
+              const submitResult = result as JobSubmitResponse;
+              await client.cancelJob(submitResult.job_id);
+              wouldSubmit++;
+              submitDetails.push(`  ${chalk.green('✓')} ${displayPath}`);
+            }
+          } catch (error: any) {
+            wouldSkip++;
+            skipDetails.push(`  ${chalk.red('✗')} ${chalk.gray(path.relative(dir, filePath))} ${chalk.dim(`(${error.message})`)}`);
+          }
+        }
+
+        console.log(chalk.blue(`\n📊 Dry-run Summary:`));
+        console.log(chalk.gray(`  Total files: ${filesWithDirs.length}`));
+        console.log(chalk.green(`  Would submit: ${wouldSubmit}`));
+        console.log(chalk.yellow(`  Would skip (duplicates): ${wouldSkip}`));
+
+        if (submitDetails.length > 0) {
+          console.log(chalk.green(`\n✓ Files that would be ingested:`));
+          submitDetails.forEach(line => console.log(line));
+        }
+
+        if (skipDetails.length > 0) {
+          console.log(chalk.yellow(`\n○ Files that would be skipped:`));
+          skipDetails.forEach(line => console.log(line));
+        }
+
+        console.log(chalk.blue(`\n💡 To proceed with ingestion, run without --dry-run flag\n`));
+        return;
+      }
+
+      // Normal mode: actually submit jobs
       // Default to auto-approve
       const autoApprove = options.approve !== false;
 
