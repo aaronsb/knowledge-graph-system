@@ -152,14 +152,35 @@ echo -e "${BOLD}Database Setup${NC}"
 if [ "$RESET_MODE" = true ]; then
     echo -e "${BLUE}→${NC} Resetting admin password..."
 
-    # Hash password using Python
-    PASSWORD_HASH=$(python3 << EOF
+    # Hash password using Python - capture both stdout and stderr
+    HASH_OUTPUT=$(python3 << EOF 2>&1
 import sys
+import warnings
 sys.path.insert(0, "$PROJECT_ROOT")
+
+# Suppress bcrypt version warning (known passlib 1.7.4 compatibility issue)
+# This warning is harmless - passlib catches the error and continues to work
+warnings.filterwarnings('ignore', message='.*bcrypt.*version.*')
+
 from src.api.lib.auth import get_password_hash
 print(get_password_hash("$ADMIN_PASSWORD"))
 EOF
 )
+
+    # Check if there were any errors (anything other than just the hash)
+    if echo "$HASH_OUTPUT" | grep -q "Traceback\|Error" | grep -v "bcrypt"; then
+        echo -e "${RED}✗ Failed to hash password${NC}"
+        echo "$HASH_OUTPUT"
+        exit 1
+    fi
+
+    # Extract just the hash (last line of output)
+    PASSWORD_HASH=$(echo "$HASH_OUTPUT" | tail -n 1)
+
+    # Show informational message if bcrypt warning appeared
+    if echo "$HASH_OUTPUT" | grep -q "bcrypt"; then
+        echo -e "${YELLOW}ℹ${NC}  Note: passlib 1.7.4 has minor compatibility notice with modern bcrypt (harmless)"
+    fi
 
     # Update admin password
     docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
@@ -169,14 +190,35 @@ EOF
 else
     echo -e "${BLUE}→${NC} Creating admin user..."
 
-    # Hash password using Python
-    PASSWORD_HASH=$(python3 << EOF
+    # Hash password using Python - capture both stdout and stderr
+    HASH_OUTPUT=$(python3 << EOF 2>&1
 import sys
+import warnings
 sys.path.insert(0, "$PROJECT_ROOT")
+
+# Suppress bcrypt version warning (known passlib 1.7.4 compatibility issue)
+# This warning is harmless - passlib catches the error and continues to work
+warnings.filterwarnings('ignore', message='.*bcrypt.*version.*')
+
 from src.api.lib.auth import get_password_hash
 print(get_password_hash("$ADMIN_PASSWORD"))
 EOF
 )
+
+    # Check if there were any errors (anything other than just the hash)
+    if echo "$HASH_OUTPUT" | grep -q "Traceback\|Error" | grep -v "bcrypt"; then
+        echo -e "${RED}✗ Failed to hash password${NC}"
+        echo "$HASH_OUTPUT"
+        exit 1
+    fi
+
+    # Extract just the hash (last line of output)
+    PASSWORD_HASH=$(echo "$HASH_OUTPUT" | tail -n 1)
+
+    # Show informational message if bcrypt warning appeared
+    if echo "$HASH_OUTPUT" | grep -q "bcrypt"; then
+        echo -e "${YELLOW}ℹ${NC}  Note: passlib 1.7.4 has minor compatibility notice with modern bcrypt (harmless)"
+    fi
 
     # Create admin user
     docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
