@@ -1023,3 +1023,90 @@ class AGEClient:
             }
         except Exception as e:
             raise Exception(f"Failed to delete learned knowledge: {e}")
+
+    def rename_ontology(
+        self,
+        old_name: str,
+        new_name: str
+    ) -> Dict[str, int]:
+        """
+        Rename an ontology by updating all Source nodes' document property.
+
+        Ontologies are logical groupings defined by the 'document' property on Source nodes.
+        This method updates all Source nodes from old_name to new_name.
+
+        Args:
+            old_name: Current ontology name
+            new_name: New ontology name
+
+        Returns:
+            Dictionary with count: {"sources_updated": N}
+
+        Raises:
+            ValueError: If old ontology doesn't exist or new ontology already exists
+            Exception: If rename operation fails
+        """
+        # Check if old ontology exists
+        check_old = """
+        MATCH (s:Source {document: $old_name})
+        RETURN count(s) as source_count
+        """
+
+        try:
+            old_result = self._execute_cypher(
+                check_old,
+                params={"old_name": old_name},
+                fetch_one=True
+            )
+            old_count = int(str(old_result.get("source_count", 0)))
+
+            if old_count == 0:
+                raise ValueError(f"Ontology '{old_name}' does not exist")
+        except ValueError:
+            raise
+        except Exception as e:
+            raise Exception(f"Failed to check old ontology existence: {e}")
+
+        # Check if new ontology already exists
+        check_new = """
+        MATCH (s:Source {document: $new_name})
+        RETURN count(s) as source_count
+        """
+
+        try:
+            new_result = self._execute_cypher(
+                check_new,
+                params={"new_name": new_name},
+                fetch_one=True
+            )
+            new_count = int(str(new_result.get("source_count", 0)))
+
+            if new_count > 0:
+                raise ValueError(f"Ontology '{new_name}' already exists")
+        except ValueError:
+            raise
+        except Exception as e:
+            raise Exception(f"Failed to check new ontology existence: {e}")
+
+        # Rename ontology by updating all Source nodes
+        rename_query = """
+        MATCH (s:Source {document: $old_name})
+        SET s.document = $new_name
+        RETURN count(s) as updated_count
+        """
+
+        try:
+            result = self._execute_cypher(
+                rename_query,
+                params={
+                    "old_name": old_name,
+                    "new_name": new_name
+                },
+                fetch_one=True
+            )
+
+            updated_count = int(str(result.get("updated_count", 0)))
+
+            return {"sources_updated": updated_count}
+        except Exception as e:
+            raise Exception(f"Failed to rename ontology: {e}")

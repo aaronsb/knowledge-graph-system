@@ -29,6 +29,7 @@ import {
   OntologyInfoResponse,
   OntologyFilesResponse,
   OntologyDeleteResponse,
+  OntologyRenameResponse,
   SystemStatusResponse,
   BackupRequest,
   BackupResponse,
@@ -412,6 +413,19 @@ export class KnowledgeGraphClient {
   ): Promise<OntologyDeleteResponse> {
     const response = await this.client.delete(`/ontology/${encodeURIComponent(ontologyName)}`, {
       params: { force }
+    });
+    return response.data;
+  }
+
+  /**
+   * Rename an ontology
+   */
+  async renameOntology(
+    oldName: string,
+    newName: string
+  ): Promise<OntologyRenameResponse> {
+    const response = await this.client.post(`/ontology/${encodeURIComponent(oldName)}/rename`, {
+      new_name: newName
     });
     return response.data;
   }

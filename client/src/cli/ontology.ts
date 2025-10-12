@@ -136,6 +136,49 @@ export const ontologyCommand = new Command('ontology')
       })
   )
   .addCommand(
+    new Command('rename')
+      .description('Rename an ontology')
+      .showHelpAfterError()
+      .argument('<old-name>', 'Current ontology name')
+      .argument('<new-name>', 'New ontology name')
+      .option('-y, --yes', 'Skip confirmation prompt')
+      .action(async (oldName, newName, options) => {
+        try {
+          if (!options.yes) {
+            console.log('\n' + separator());
+            console.log(colors.status.warning('⚠️  Rename Ontology'));
+            console.log(separator());
+            console.log(`\nRename: ${colors.concept.label(oldName)} → ${colors.concept.label(newName)}`);
+            console.log(`This will update all Source nodes in the ontology.`);
+            console.log('\nUse ' + colors.ui.key('-y') + ' or ' + colors.ui.key('--yes') + ' flag to proceed\n');
+            return;
+          }
+
+          const client = createClientFromEnv();
+          const result = await client.renameOntology(oldName, newName);
+
+          console.log('\n' + separator());
+          console.log(colors.status.success(`✓ Renamed ontology "${result.old_name}" → "${result.new_name}"`));
+          console.log(separator());
+          console.log(`  ${colors.ui.key('Sources updated:')} ${coloredCount(result.sources_updated)}`);
+          console.log('\n' + separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to rename ontology'));
+          const detail = error.response?.data?.detail || error.message;
+          console.error(colors.status.error(detail));
+
+          // Provide helpful hints based on error
+          if (detail.includes('does not exist')) {
+            console.error(colors.status.dim('\n  Hint: Use "kg ontology list" to see available ontologies'));
+          } else if (detail.includes('already exists')) {
+            console.error(colors.status.dim('\n  Hint: Choose a different name or delete the existing ontology first'));
+          }
+
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
     new Command('delete')
       .description('Delete an ontology and all its data')
       .showHelpAfterError()
