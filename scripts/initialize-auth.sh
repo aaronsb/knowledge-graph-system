@@ -276,7 +276,7 @@ EOF
 
     # Create admin user
     docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
-        "INSERT INTO kg_auth.users (username, password_hash, role, created_at)
+        "INSERT INTO kg_auth.users (username, password_hash, primary_role, created_at)
          VALUES ('admin', '$PASSWORD_HASH', 'admin', NOW())" > /dev/null
 
     echo -e "${GREEN}✓${NC} Admin user created"
