@@ -71,6 +71,21 @@ class JobQueue(ABC):
         """Permanently delete a job from the queue"""
         pass
 
+    @abstractmethod
+    def check_duplicate(self, content_hash: str, ontology: str) -> Optional[Dict]:
+        """
+        Check if content already ingested into this ontology.
+
+        Args:
+            content_hash: SHA-256 hash of content
+            ontology: Target ontology name
+
+        Returns:
+            None: Not seen before, safe to proceed
+            Dict: Existing job info with status/result
+        """
+        pass
+
 
 class InMemoryJobQueue(JobQueue):
     """
@@ -350,6 +365,33 @@ class InMemoryJobQueue(JobQueue):
             self.db.commit()
 
             return True
+
+    def check_duplicate(self, content_hash: str, ontology: str) -> Optional[Dict]:
+        """
+        Check if content already ingested into this ontology.
+
+        Args:
+            content_hash: SHA-256 hash of content
+            ontology: Target ontology name
+
+        Returns:
+            None: Not seen before, safe to proceed
+            Dict: Existing job info with status/result
+        """
+        cursor = self.db.execute("""
+            SELECT * FROM jobs
+            WHERE content_hash = ?
+              AND ontology = ?
+              AND status IN ('completed', 'processing', 'queued')
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (content_hash, ontology))
+
+        row = cursor.fetchone()
+        if not row:
+            return None
+
+        return self._row_to_dict(row)
 
     def clear_all_jobs(self) -> int:
         """
@@ -706,6 +748,55 @@ class PostgreSQLJobQueue(JobQueue):
                 """, (job_id,))
                 conn.commit()
                 return cur.rowcount > 0
+        finally:
+            self._return_connection(conn)
+
+    def check_duplicate(self, content_hash: str, ontology: str) -> Optional[Dict]:
+        """
+        Check if content already ingested into this ontology.
+
+        Args:
+            content_hash: SHA-256 hash of content
+            ontology: Target ontology name
+
+        Returns:
+            None: Not seen before, safe to proceed
+            Dict: Existing job info with status/result
+        """
+        conn = self._get_connection()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT
+                        job_id, job_type, status, ontology, client_id,
+                        content_hash, job_data, progress, result, analysis,
+                        processing_mode, error_message,
+                        created_at, started_at, completed_at,
+                        approved_at, approved_by, expires_at
+                    FROM kg_api.ingestion_jobs
+                    WHERE content_hash = %s
+                      AND ontology = %s
+                      AND status IN ('completed', 'running', 'queued')
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                """, (content_hash, ontology))
+
+                row = cur.fetchone()
+                if not row:
+                    return None
+
+                # Convert to dict and handle timestamps
+                job = dict(row)
+
+                # Convert timestamp objects to ISO strings
+                for field in ['created_at', 'started_at', 'completed_at', 'approved_at', 'expires_at']:
+                    if job.get(field):
+                        job[field] = job[field].isoformat()
+
+                # Rename error_message to error for consistency
+                job['error'] = job.pop('error_message', None)
+
+                return job
         finally:
             self._return_connection(conn)
 
