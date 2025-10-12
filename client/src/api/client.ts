@@ -36,7 +36,19 @@ import {
   RestoreRequest,
   RestoreResponse,
   ResetRequest,
-  ResetResponse
+  ResetResponse,
+  ResourceCreate,
+  ResourceRead,
+  ResourceUpdate,
+  RoleCreate,
+  RoleRead,
+  RoleUpdate,
+  PermissionCreate,
+  PermissionRead,
+  UserRoleAssign,
+  UserRoleRead,
+  PermissionCheckRequest,
+  PermissionCheckResponse
 } from '../types';
 
 export class KnowledgeGraphClient {
@@ -549,6 +561,146 @@ export class KnowledgeGraphClient {
    */
   async triggerSchedulerCleanup(): Promise<any> {
     const response = await this.client.post('/admin/scheduler/cleanup');
+    return response.data;
+  }
+
+  // ========== RBAC Methods (ADR-028) ==========
+
+  /**
+   * List all registered resource types
+   */
+  async listResources(): Promise<ResourceRead[]> {
+    const response = await this.client.get('/rbac/resources');
+    return response.data;
+  }
+
+  /**
+   * Get a specific resource type
+   */
+  async getResource(resourceType: string): Promise<ResourceRead> {
+    const response = await this.client.get(`/rbac/resources/${resourceType}`);
+    return response.data;
+  }
+
+  /**
+   * Register a new resource type
+   */
+  async createResource(resource: ResourceCreate): Promise<ResourceRead> {
+    const response = await this.client.post('/rbac/resources', resource);
+    return response.data;
+  }
+
+  /**
+   * Update a resource type
+   */
+  async updateResource(resourceType: string, update: ResourceUpdate): Promise<ResourceRead> {
+    const response = await this.client.put(`/rbac/resources/${resourceType}`, update);
+    return response.data;
+  }
+
+  /**
+   * Delete a resource type
+   */
+  async deleteResource(resourceType: string): Promise<void> {
+    await this.client.delete(`/rbac/resources/${resourceType}`);
+  }
+
+  /**
+   * List all roles
+   */
+  async listRoles(includeInactive: boolean = false): Promise<RoleRead[]> {
+    const response = await this.client.get('/rbac/roles', {
+      params: { include_inactive: includeInactive }
+    });
+    return response.data;
+  }
+
+  /**
+   * Get a specific role
+   */
+  async getRole(roleName: string): Promise<RoleRead> {
+    const response = await this.client.get(`/rbac/roles/${roleName}`);
+    return response.data;
+  }
+
+  /**
+   * Create a new role
+   */
+  async createRole(role: RoleCreate): Promise<RoleRead> {
+    const response = await this.client.post('/rbac/roles', role);
+    return response.data;
+  }
+
+  /**
+   * Update a role
+   */
+  async updateRole(roleName: string, update: RoleUpdate): Promise<RoleRead> {
+    const response = await this.client.put(`/rbac/roles/${roleName}`, update);
+    return response.data;
+  }
+
+  /**
+   * Delete a role
+   */
+  async deleteRole(roleName: string): Promise<void> {
+    await this.client.delete(`/rbac/roles/${roleName}`);
+  }
+
+  /**
+   * List permissions (optionally filtered)
+   */
+  async listPermissions(roleName?: string, resourceType?: string): Promise<PermissionRead[]> {
+    const params: any = {};
+    if (roleName) params.role_name = roleName;
+    if (resourceType) params.resource_type = resourceType;
+
+    const response = await this.client.get('/rbac/permissions', { params });
+    return response.data;
+  }
+
+  /**
+   * Grant a permission to a role
+   */
+  async createPermission(permission: PermissionCreate): Promise<PermissionRead> {
+    const response = await this.client.post('/rbac/permissions', permission);
+    return response.data;
+  }
+
+  /**
+   * Revoke a permission from a role
+   */
+  async deletePermission(permissionId: number): Promise<void> {
+    await this.client.delete(`/rbac/permissions/${permissionId}`);
+  }
+
+  /**
+   * List role assignments for a user
+   */
+  async listUserRoles(userId: number): Promise<UserRoleRead[]> {
+    const response = await this.client.get(`/rbac/user-roles/${userId}`);
+    return response.data;
+  }
+
+  /**
+   * Assign a role to a user
+   */
+  async assignUserRole(assignment: UserRoleAssign): Promise<UserRoleRead> {
+    const response = await this.client.post('/rbac/user-roles', assignment);
+    return response.data;
+  }
+
+  /**
+   * Revoke a role assignment from a user
+   */
+  async revokeUserRole(assignmentId: number): Promise<void> {
+    await this.client.delete(`/rbac/user-roles/${assignmentId}`);
+  }
+
+  /**
+   * Check if a user has a specific permission
+   */
+  async checkPermission(request: PermissionCheckRequest): Promise<PermissionCheckResponse> {
+    const response = await this.client.post('/rbac/check-permission', request);
     return response.data;
   }
 }

@@ -16,6 +16,7 @@ import { configureColoredHelp } from './help-formatter';
 import { JobProgressStream, trackJobProgress } from '../lib/job-stream';
 import type { JobStatus, JobProgress } from '../types';
 import { registerAuthAdminCommand } from './auth-admin';
+import { createRbacCommand } from './rbac';
 
 /**
  * Prompt for input from user
@@ -1130,7 +1131,7 @@ const schedulerCommand = new Command('scheduler')
 // ========== Main Admin Command ==========
 
 export const adminCommand = new Command('admin')
-  .description('System administration (status, backup, restore, reset, scheduler, user)')
+  .description('System administration (status, backup, restore, reset, scheduler, user, rbac)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(statusCommand)
@@ -1142,6 +1143,12 @@ export const adminCommand = new Command('admin')
 
 // ADR-027: Register user management commands
 registerAuthAdminCommand(adminCommand);
+
+// ADR-028: Register RBAC management commands
+const client = createClientFromEnv();
+const rbacCommand = createRbacCommand(client);
+configureColoredHelp(rbacCommand);
+adminCommand.addCommand(rbacCommand);
 
 // Configure colored help for all admin commands
 [statusCommand, backupCommand, listBackupsCommand, restoreCommand, resetCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand].forEach(configureColoredHelp);

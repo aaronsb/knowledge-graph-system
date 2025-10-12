@@ -14,6 +14,8 @@ Architecture decisions, design documents, and ADRs (Architectural Decision Recor
 - **ADR-014-job-approval-workflow.md** - Job approval and queue management
 - **ADR-015-backup-restore-streaming.md** - Database backup/restore strategy
 - **ADR-016-apache-age-migration.md** - Apache AGE migration (Neo4j → PostgreSQL + AGE)
+- **ADR-027-user-management-api.md** - User authentication and session management
+- **ADR-028-dynamic-rbac.md** - Dynamic Role-Based Access Control system
 
 ### 🧪 `testing/`
 Test coverage specifications and testing documentation.
@@ -31,6 +33,8 @@ User and developer guides for getting started and working with the system.
 
 - **QUICKSTART.md** - Quick start guide for new users
 - **AI_PROVIDERS.md** - AI provider configuration (OpenAI, Anthropic)
+- **AUTHENTICATION.md** - Login, logout, and session management
+- **RBAC.md** - Role-Based Access Control operations and user management
 - **MCP_SETUP.md** - MCP server setup for Claude Desktop integration
 - **BACKUP_RESTORE.md** - Backup and restore operations guide
 - **INGESTION.md** - Document ingestion workflow and configuration
@@ -57,6 +61,12 @@ Images, diagrams, and other media assets.
 1. Start with [QUICKSTART.md](guides/QUICKSTART.md)
 2. Learn about [AI Providers](guides/AI_PROVIDERS.md)
 3. Review [Examples](guides/EXAMPLES.md)
+
+### Administrators
+1. Read [AUTHENTICATION.md](guides/AUTHENTICATION.md) for login and session management
+2. Review [RBAC.md](guides/RBAC.md) for user and permission management
+3. Learn about [BACKUP_RESTORE.md](guides/BACKUP_RESTORE.md) for data protection
+4. Reference [MCP_SETUP.md](guides/MCP_SETUP.md) for service account configuration
 
 ### Developers
 1. Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md)

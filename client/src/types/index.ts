@@ -427,3 +427,121 @@ export interface ResetResponse {
   message: string;
   warnings: string[];
 }
+
+// ========== RBAC Types (ADR-028) ==========
+
+// Resource Types
+export interface ResourceCreate {
+  resource_type: string;
+  description?: string;
+  parent_type?: string;
+  available_actions: string[];
+  supports_scoping?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface ResourceRead {
+  resource_type: string;
+  description?: string;
+  parent_type?: string;
+  available_actions: string[];
+  supports_scoping: boolean;
+  metadata: Record<string, any>;
+  registered_at: string;
+  registered_by?: string;
+}
+
+export interface ResourceUpdate {
+  description?: string;
+  available_actions?: string[];
+  supports_scoping?: boolean;
+  metadata?: Record<string, any>;
+}
+
+// Role Types
+export interface RoleCreate {
+  role_name: string;
+  display_name: string;
+  description?: string;
+  parent_role?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface RoleRead {
+  role_name: string;
+  display_name: string;
+  description?: string;
+  is_builtin: boolean;
+  is_active: boolean;
+  parent_role?: string;
+  created_at: string;
+  created_by?: number;
+  metadata: Record<string, any>;
+}
+
+export interface RoleUpdate {
+  display_name?: string;
+  description?: string;
+  parent_role?: string;
+  is_active?: boolean;
+  metadata?: Record<string, any>;
+}
+
+// Permission Types
+export interface PermissionCreate {
+  role_name: string;
+  resource_type: string;
+  action: string;
+  scope_type?: string;
+  scope_id?: string;
+  scope_filter?: Record<string, any>;
+  granted?: boolean;
+}
+
+export interface PermissionRead {
+  id: number;
+  role_name: string;
+  resource_type: string;
+  action: string;
+  scope_type: string;
+  scope_id?: string;
+  scope_filter?: Record<string, any>;
+  granted: boolean;
+  inherited_from?: string;
+  created_at: string;
+  created_by?: number;
+}
+
+// User Role Assignment Types
+export interface UserRoleAssign {
+  user_id: number;
+  role_name: string;
+  scope_type?: string;
+  scope_id?: string;
+  expires_at?: string;
+}
+
+export interface UserRoleRead {
+  id: number;
+  user_id: number;
+  role_name: string;
+  scope_type?: string;
+  scope_id?: string;
+  assigned_at: string;
+  assigned_by?: number;
+  expires_at?: string;
+}
+
+// Permission Check Types
+export interface PermissionCheckRequest {
+  user_id: number;
+  resource_type: string;
+  action: string;
+  resource_id?: string;
+  resource_context?: Record<string, any>;
+}
+
+export interface PermissionCheckResponse {
+  allowed: boolean;
+  reason?: string;
+}
