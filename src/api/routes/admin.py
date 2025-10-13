@@ -577,16 +577,20 @@ async def set_api_key(
     # Store encrypted
     try:
         age_client = AGEClient()
-        key_store = EncryptedKeyStore(age_client.conn)
-        key_store.store_key(provider, api_key)
+        conn = age_client.pool.getconn()
+        try:
+            key_store = EncryptedKeyStore(conn)
+            key_store.store_key(provider, api_key)
 
-        logger.info(f"API key configured for provider: {provider}")
+            logger.info(f"API key configured for provider: {provider}")
 
-        return {
-            "status": "success",
-            "message": f"{provider} API key configured for this shard",
-            "provider": provider
-        }
+            return {
+                "status": "success",
+                "message": f"{provider} API key configured for this shard",
+                "provider": provider
+            }
+        finally:
+            age_client.pool.putconn(conn)
 
     except ValueError as e:
         raise HTTPException(
@@ -629,27 +633,37 @@ async def list_api_keys():
     """
     try:
         age_client = AGEClient()
-        key_store = EncryptedKeyStore(age_client.conn)
-        configured = key_store.list_providers()
+        conn = age_client.pool.getconn()
+        try:
+            # Try to initialize key store - if encryption key not configured, return unconfigured
+            try:
+                key_store = EncryptedKeyStore(conn)
+                configured = key_store.list_providers()
+            except ValueError as e:
+                # Encryption key not configured - all providers are unconfigured
+                logger.info(f"Encryption key not configured: {e}")
+                configured = []
 
-        # Return all possible providers, marking which are configured
-        all_providers = ["openai", "anthropic"]
-        configured_map = {p['provider']: p for p in configured}
+            # Return all possible providers, marking which are configured
+            all_providers = ["openai", "anthropic"]
+            configured_map = {p['provider']: p for p in configured}
 
-        return [
-            {
-                "provider": provider,
-                "configured": provider in configured_map,
-                "updated_at": configured_map[provider]['updated_at'] if provider in configured_map else None
-            }
-            for provider in all_providers
-        ]
+            return [
+                {
+                    "provider": provider,
+                    "configured": provider in configured_map,
+                    "updated_at": configured_map[provider]['updated_at'] if provider in configured_map else None
+                }
+                for provider in all_providers
+            ]
+        finally:
+            age_client.pool.putconn(conn)
 
     except Exception as e:
         logger.error(f"Error listing API keys: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error listing API keys"
+            detail=f"Internal server error listing API keys: {str(e)}"
         )
 
 
@@ -681,22 +695,35 @@ async def delete_api_key(provider: str):
 
     try:
         age_client = AGEClient()
-        key_store = EncryptedKeyStore(age_client.conn)
+        conn = age_client.pool.getconn()
+        try:
+            # Try to initialize key store - if encryption key not configured, no keys exist
+            try:
+                key_store = EncryptedKeyStore(conn)
+            except ValueError as e:
+                # Encryption key not configured - no keys can be stored
+                logger.info(f"Encryption key not configured: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No {provider} API key configured (encryption key not available)"
+                )
 
-        deleted = key_store.delete_key(provider)
-        if not deleted:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No {provider} API key configured"
-            )
+            deleted = key_store.delete_key(provider)
+            if not deleted:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No {provider} API key configured"
+                )
 
-        logger.info(f"API key deleted for provider: {provider}")
+            logger.info(f"API key deleted for provider: {provider}")
 
-        return {
-            "status": "success",
-            "message": f"{provider} API key removed",
-            "provider": provider
-        }
+            return {
+                "status": "success",
+                "message": f"{provider} API key removed",
+                "provider": provider
+            }
+        finally:
+            age_client.pool.putconn(conn)
 
     except HTTPException:
         raise

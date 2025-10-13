@@ -141,9 +141,21 @@ except ValueError:
 try:
     ENCRYPTION_KEY = get_encryption_key()
 except ValueError:
-    # Allow import to succeed - encrypted keys optional until configured
-    logger.info("ENCRYPTION_KEY not configured - encrypted key storage not available")
-    ENCRYPTION_KEY = None
+    # Development fallback: generate a temporary encryption key
+    # This allows testing without Docker secrets configured
+    import base64
+    import secrets as crypto_secrets
+
+    logger.warning(
+        "ENCRYPTION_KEY not configured - generating temporary key for development. "
+        "For production, configure Docker/Podman secrets or set ENCRYPTION_KEY env var."
+    )
+    # Generate a Fernet-compatible key (32 bytes, base64-encoded)
+    temp_key = base64.urlsafe_b64encode(crypto_secrets.token_bytes(32))
+    ENCRYPTION_KEY = temp_key.decode()
+    # Store in cache so get_encryption_key() returns this value
+    _secrets_cache['encryption_key'] = ENCRYPTION_KEY
+    logger.info(f"Generated temporary encryption key (will be different on restart)")
 
 try:
     POSTGRES_PASSWORD = get_postgres_password()
