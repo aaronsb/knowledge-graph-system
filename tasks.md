@@ -173,7 +173,8 @@ Migrated all admin tools (backup, restore, integrity checking, pruning, semantic
 ### Sub-tasks:
 
 #### Core Libraries
-- [✔] Create src/lib/age_ops.py - AGE wrapper matching neo4j_ops API
+- [✔] Create src/lib/age_ops.py - AGE wrapper for admin tools
+- [✔] Remove src/lib/neo4j_ops.py - replaced by age_ops.py
 - [✔] Migrate src/lib/serialization.py (DataExporter, DataImporter)
 - [✔] Migrate src/lib/integrity.py (DatabaseIntegrity, BackupAssessment)
 - [✔] Migrate src/lib/restitching.py (ConceptMatcher)

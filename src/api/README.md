@@ -203,15 +203,15 @@ POST /ingest
     ↓
 [Content Hasher]  →  Check duplicate
     ↓ (if not duplicate)
-[Job Queue]  →  Enqueue job_id
+[Job Queue]  →  Enqueue job_id (PostgreSQL)
     ↓
 [BackgroundTasks]  →  Execute async
     ↓
 [Ingestion Worker]  →  Process chunks
     ↓
-[Neo4j]  →  Store concepts
+[Apache AGE]  →  Store concepts (PostgreSQL graph)
     ↓
-[Job Queue]  →  Update progress
+[Job Queue]  →  Update progress (PostgreSQL)
 ```
 
 ### Directory Structure
@@ -232,40 +232,57 @@ src/api/
     └── ingest.py        # Request/response models
 ```
 
-### Data Files
+### Data Storage
 
-- `data/jobs.db` - SQLite job metadata
+**PostgreSQL Queue (default)**:
+- Jobs stored in `kg_api.ingestion_jobs` table
 - Persists across API restarts
 - Stores job status, progress, results
+- JSONB fields for efficient querying
+
+**Legacy SQLite Queue** (testing only):
+- `data/jobs.db` - SQLite job metadata
+- Only used when `QUEUE_TYPE=inmemory`
 
 ## Configuration
 
 Set environment variables in `.env`:
 
 ```bash
-# Queue configuration
-QUEUE_TYPE=inmemory  # Phase 1 only
-JOB_DB_PATH=data/jobs.db
+# Job Queue configuration (ADR-024: PostgreSQL by default)
+QUEUE_TYPE=postgresql  # "postgresql" (production) or "inmemory" (testing only)
 
 # AI provider (used by workers)
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-...
 OPENAI_EXTRACTION_MODEL=gpt-4o
 
-# Neo4j connection (required)
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=password
+# PostgreSQL + Apache AGE connection (required)
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=knowledge_graph
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=password
 ```
 
-## Phase 2 Migration Path
+## Queue Types
 
-Phase 1 uses abstract `JobQueue` interface. To migrate to Redis:
+The system uses an abstract `JobQueue` interface with two implementations:
 
-1. Add `RedisJobQueue` class in `services/job_queue.py`
-2. Set `QUEUE_TYPE=redis` in `.env`
-3. Start Redis container
-4. **Zero changes to routes or workers**
+### PostgreSQL Queue (Recommended - ADR-024)
+- **Production ready**: MVCC concurrency, no write locks
+- **Connection pooling**: Handle concurrent operations efficiently
+- **JSONB support**: Native JSON storage (not serialized strings)
+- **Atomic transactions**: Graph + job operations in single transaction
+- **Better performance**: Proper indexes, query optimization
+- **Configuration**: Set `QUEUE_TYPE=postgresql` in `.env` (default)
+
+### In-Memory Queue (Testing Only)
+- **SQLite-backed**: Simple file-based persistence
+- **Single-threaded**: Write locks can cause contention
+- **Use cases**: Unit tests (`:memory:`), local development without PostgreSQL
+- **Configuration**: Set `QUEUE_TYPE=inmemory` in `.env`
+- **Not recommended** for production use
 
 See `services/job_queue.py` for implementation details.
 
@@ -310,24 +327,28 @@ pytest tests/api/test_ingestion_worker.py
 ## Troubleshooting
 
 **API won't start:**
-- Check Neo4j is running: `docker ps | grep neo4j`
+- Check PostgreSQL is running: `docker ps | grep postgres`
+- Check Apache AGE extension loaded: Connect via psql and run `\dx`
 - Check port 8000 is free: `lsof -i :8000`
 - Check logs for errors
 
 **Jobs stay "queued" forever:**
 - Check worker registration in startup logs
 - Verify no exceptions in worker function
-- Check Neo4j connection
+- Check PostgreSQL connection
+- Verify job queue table exists: `SELECT * FROM kg_api.ingestion_jobs;`
 
 **Duplicate detection not working:**
 - Content hash is case-sensitive
 - Whitespace differences = different hash
-- Check `data/jobs.db` for existing entries
+- Check job queue for existing entries
+- PostgreSQL: `SELECT * FROM kg_api.ingestion_jobs WHERE content_hash = '...'`
+- SQLite: Check `data/jobs.db`
 
-**High memory usage:**
-- Phase 1 keeps active jobs in memory
-- Completed jobs moved to SQLite
-- Restart API to clear memory
+**Queue type confusion:**
+- Default is PostgreSQL (`QUEUE_TYPE=postgresql`)
+- For testing with SQLite, set `QUEUE_TYPE=inmemory`
+- Check startup logs to confirm which queue is active
 
 ## Next Steps
 

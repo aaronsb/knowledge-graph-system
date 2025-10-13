@@ -3,11 +3,12 @@
 **Status:** Accepted
 **Date:** 2025-10-08
 **Deciders:** Development Team
-**Related:** ADR-012 (API Server Architecture)
+**Related:** ADR-012 (API Server Architecture), ADR-016 (Apache AGE Migration)
+**Note:** This ADR predates the Apache AGE migration (ADR-016). References to Neo4j in this document are historical; the system now uses Apache AGE (PostgreSQL graph extension).
 
 ## Context
 
-The original implementation mixed query operations (search, concept details) and administrative operations (backup, restore, database setup) in a single `cli.py` file. Shell scripts duplicated logic from Python code. No shared library existed for common operations like console output, JSON formatting, or Neo4j queries. This made it difficult to add new interfaces (GUI, web) without duplicating functionality.
+The original implementation mixed query operations (search, concept details) and administrative operations (backup, restore, database setup) in a single `cli.py` file. Shell scripts duplicated logic from Python code. No shared library existed for common operations like console output, JSON formatting, or graph database queries. This made it difficult to add new interfaces (GUI, web) without duplicating functionality.
 
 Additionally, backup/restore operations didn't handle vector embeddings properly, risking expensive re-ingestion costs ($50-100 for large documents) if data was lost.
 
@@ -27,29 +28,29 @@ knowledge-graph-system/
 │   ├── lib/                      # Shared libraries
 │   │   ├── __init__.py
 │   │   ├── console.py            # Color output, formatting, progress bars
-│   │   ├── neo4j_ops.py          # Common Neo4j operations
+│   │   ├── age_ops.py            # Common Apache AGE operations (was neo4j_ops.py)
 │   │   ├── serialization.py      # Export/import with embeddings
 │   │   └── config.py             # Configuration management
 │   │
-│   ├── cli/                      # Query & exploration tools
+│   ├── cli/                      # Query & exploration tools (HTTP API client)
 │   │   ├── __init__.py
-│   │   ├── main.py               # CLI entry point (replaces cli.py)
+│   │   ├── main.py               # CLI entry point
 │   │   ├── search.py             # Search commands
 │   │   ├── concept.py            # Concept operations
 │   │   ├── ontology.py           # Ontology inspection
 │   │   └── database.py           # Database info/health (read-only)
 │   │
-│   ├── admin/                    # Administration tools
+│   ├── admin/                    # Administration tools (direct database)
 │   │   ├── __init__.py
 │   │   ├── backup.py             # Backup operations
 │   │   ├── restore.py            # Restore operations
 │   │   ├── reset.py              # Database reset
-│   │   └── migrate.py            # Data migration
+│   │   ├── prune.py              # Prune orphaned nodes
+│   │   └── stitch.py             # Semantic restitching
 │   │
-│   └── ingest/                   # Existing ingestion pipeline
-│       ├── __init__.py
-│       ├── ingest_chunked.py
-│       ├── neo4j_client.py       # Could move to lib/neo4j_ops.py
+│   └── api/                      # API server (replaces ingest/)
+│       ├── main.py               # FastAPI application
+│       ├── lib/age_client.py     # AGE database client
 │       └── ...
 │
 ├── scripts/                      # Thin shell wrappers
