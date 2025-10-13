@@ -235,20 +235,71 @@ class EncryptedKeyStore:
 
 
 # Helper function for convenience
-def get_system_api_key(db_connection: PgConnection, provider: str) -> Optional[str]:
+def get_system_api_key(
+    db_connection: PgConnection,
+    provider: str,
+    service_token: Optional[str] = None
+) -> Optional[str]:
     """
-    Convenience function to get decrypted system API key.
+    Get decrypted system API key with service token authorization (ADR-031).
+
+    This implements defense-in-depth by requiring authorized workers to present
+    a service token before accessing encrypted keys. The token is stored in
+    Docker/Podman secrets and validated on each request.
 
     Args:
         db_connection: PostgreSQL connection
         provider: Provider name ('openai' or 'anthropic')
+        service_token: Internal service authorization token (required)
 
     Returns:
         Decrypted API key, or None if not found or error
+
+    Raises:
+        SecurityError: If service_token is invalid or missing
+
+    Security:
+        - Token validation prevents unauthorized code from accessing keys
+        - Failed attempts logged as security events
+        - Multiple isolation boundaries required for attack (see ADR-031)
     """
+    # Import here to avoid circular dependency
+    from .secrets import get_internal_key_service_secret
+    import inspect
+
+    # Validate service token
+    if service_token is None:
+        caller_frame = inspect.stack()[1]
+        logger.error(
+            f"Key access denied: No service token provided for {provider}",
+            extra={
+                "caller_function": caller_frame.function,
+                "caller_file": caller_frame.filename,
+                "caller_line": caller_frame.lineno
+            }
+        )
+        raise ValueError("Service token required for key access (ADR-031)")
+
+    expected_token = get_internal_key_service_secret()
+    if service_token != expected_token:
+        caller_frame = inspect.stack()[1]
+        logger.warning(
+            f"SECURITY: Invalid service token for {provider} key access",
+            extra={
+                "caller_function": caller_frame.function,
+                "caller_file": caller_frame.filename,
+                "caller_line": caller_frame.lineno,
+                "provider": provider
+            }
+        )
+        raise ValueError("Invalid service token")
+
+    # Token valid - continue with key retrieval
     try:
         store = EncryptedKeyStore(db_connection)
-        return store.get_key(provider)
+        key = store.get_key(provider)
+        logger.debug(f"Authorized key access for {provider}")
+        return key
     except ValueError as e:
         logger.debug(f"Could not get API key for {provider}: {e}")
         return None

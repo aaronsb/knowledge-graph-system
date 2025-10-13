@@ -1,9 +1,10 @@
 # ADR-031: Encrypted API Key Storage with Container Secrets
 
-**Status:** Proposed
+**Status:** Implemented
 **Date:** 2025-10-12
+**Updated:** 2025-10-13 (Added service token authorization and concurrency fixes)
 **Deciders:** Development Team
-**Related:** ADR-027 (User Management), ADR-024 (PostgreSQL Architecture)
+**Related:** ADR-027 (User Management), ADR-024 (PostgreSQL Architecture), ADR-014 (Job Queue)
 
 ## Context
 
@@ -103,6 +104,155 @@ Implement **encrypted API key storage** using a two-layer security model:
    - Each shard manages its own keys independently
    - Different shards can use different providers/keys
    - No cross-shard key sharing or coordination
+
+### Internal Service Authorization (Defense in Depth)
+
+To prevent unauthorized key access within the application, we implement a **service token authorization layer**:
+
+```
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│ API Endpoint │ ──POST→ │  Job Queue   │ ──pull→ │ Worker Thread│
+│  (FastAPI)   │         │ (PostgreSQL) │         │ (Ingestion)  │
+└──────────────┘         └──────────────┘         └──────────────┘
+                                                           │
+                                                           ↓ (with service token)
+                                                    ┌──────────────┐
+                                                    │  Key Service │
+                                                    │  (Encrypted) │
+                                                    └──────────────┘
+```
+
+**Security Model:**
+
+1. **Configuration-based shared secret**: `INTERNAL_KEY_SERVICE_SECRET`
+   - Randomly generated at deployment
+   - Stored in Docker/Podman secrets (not in database)
+   - Required by workers to access encrypted keys
+
+2. **Authorization Flow:**
+   - Worker loads service token from secrets on startup
+   - Worker presents token when calling `get_system_api_key()`
+   - Key service validates token before decrypting keys
+   - Invalid token → denied access, logged as security event
+
+3. **Threat Model:**
+   - ✅ **Protects against**: Unauthorized code paths accessing keys
+   - ✅ **Limits blast radius**: Attacker must compromise authorized worker
+   - ✅ **Audit trail**: All key access logged with caller identity
+   - ✅ **Multiple hops required**: Must exploit API → Job Queue → Worker → Key Service
+
+4. **Why This Matters:**
+   - In single-process apps, code injection can bypass all checks
+   - With job queue architecture, attacker must hop multiple isolation boundaries:
+     1. Exploit API endpoint (HTTP layer)
+     2. Inject malicious job into queue (database layer)
+     3. Execute in worker thread (thread isolation)
+     4. Call key service with valid token (capability layer)
+   - Each hop is a defense layer that can detect/block attack
+
+**Implementation:**
+
+```python
+# src/api/lib/encrypted_keys.py
+def get_system_api_key(
+    db_connection,
+    provider: str,
+    service_token: str  # Required capability token
+) -> Optional[str]:
+    """
+    Get decrypted API key - requires service token.
+
+    Args:
+        db_connection: PostgreSQL connection
+        provider: 'openai' or 'anthropic'
+        service_token: Internal service authorization token
+
+    Raises:
+        SecurityError: If token invalid or access denied
+    """
+    # Validate service token
+    expected_token = SecretManager.load_secret(
+        "internal_key_service_secret",
+        "INTERNAL_KEY_SERVICE_SECRET"
+    )
+
+    if service_token != expected_token:
+        logger.warning(
+            f"Unauthorized key access attempt for {provider}",
+            extra={"caller": inspect.stack()[1]}
+        )
+        raise SecurityError("Invalid service token")
+
+    # Token valid - continue with key retrieval
+    store = EncryptedKeyStore(db_connection)
+    return store.get_key(provider)
+```
+
+### Worker Concurrency Fix
+
+**Problem Identified:** FastAPI workers were blocking the entire event loop during ingestion, preventing concurrent API requests.
+
+**Root Cause:**
+```python
+# Old approach - BLOCKS EVENT LOOP
+background_tasks.add_task(queue.execute_job, job_id)  # Still runs in event loop!
+```
+
+FastAPI's `BackgroundTasks` runs after the HTTP response but **in the same event loop thread**. Long-running LLM API calls block all concurrent requests.
+
+**Solution:** Execute workers in thread pool (true concurrency):
+
+```python
+# job_queue.py - New async execution
+import concurrent.futures
+from threading import Thread
+
+class PostgreSQLJobQueue(JobQueue):
+    def __init__(self, ...):
+        # Add thread pool for worker execution
+        self.executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=4,  # Concurrent ingestion jobs
+            thread_name_prefix="kg-worker-"
+        )
+
+    def execute_job_async(self, job_id: str):
+        """Execute job in thread pool (non-blocking)"""
+        self.executor.submit(self.execute_job, job_id)
+
+    def execute_job(self, job_id: str):
+        """Worker function (runs in thread pool)"""
+        job = self.get_job(job_id)
+        # ... load service token from secrets ...
+        service_token = SecretManager.load_secret(
+            "internal_key_service_secret",
+            "INTERNAL_KEY_SERVICE_SECRET"
+        )
+
+        # Pass service token to worker
+        worker_func = self.worker_registry.get(job["job_type"])
+        result = worker_func(job["job_data"], job_id, self, service_token)
+        # ...
+```
+
+**Updated API Routes:**
+
+```python
+# routes/jobs.py - Use async execution
+@router.post("/{job_id}/approve")
+async def approve_job(job_id: str, background_tasks: BackgroundTasks):
+    queue = get_job_queue()
+
+    # Execute in thread pool (non-blocking)
+    background_tasks.add_task(queue.execute_job_async, job_id)
+
+    return {"status": "queued", "job_id": job_id}
+```
+
+**Benefits:**
+- ✅ **True concurrency**: Multiple ingestion jobs run in parallel
+- ✅ **Non-blocking API**: Other requests processed while ingestion runs
+- ✅ **Bounded resources**: Thread pool limits concurrent jobs
+- ✅ **Graceful degradation**: Queue backs up when workers saturated
 
 ## Implementation
 

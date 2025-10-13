@@ -281,7 +281,8 @@ async def restore_backup(
         logger.info(f"Created restore job {job_id} for temp file {temp_path}")
 
         # Execute restore job immediately (authenticated operations don't need approval)
-        background_tasks.add_task(job_queue.execute_job, job_id)
+        # ADR-031: Use execute_job_async for non-blocking execution
+        background_tasks.add_task(job_queue.execute_job_async, job_id)
 
         return {
             "job_id": job_id,

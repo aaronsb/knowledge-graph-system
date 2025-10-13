@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "guides/INGESTION.md",
+                "file": "guides/AI_PROVIDERS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "INGESTION"
+              "title": "AI_PROVIDERS"
             }
           }
         ]
@@ -172,6 +172,9 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "guides/INGESTION.md",
+    "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760362832507",
+    "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760362774369",
     "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760357954168",
     "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760357935209",
     "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760357904077",
@@ -186,10 +189,7 @@
     "architecture/ADR-026-autonomous-vocabulary-curation.md",
     "architecture/ADR-030-concept-deduplication-validation.md",
     "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760326737909",
-    "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760326647515",
-    "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760326629589",
     "guides/RBAC.md",
-    "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760325191529",
     "development/DEV_JOURNAL_chunked_ingestion.md",
     "reference/ENRICHMENT_JOURNEY.md",
     "reference/CONCEPT.md",
@@ -205,7 +205,6 @@
     "guides/SCHEMA_REFERENCE.md",
     "guides/QUICKSTART.md",
     "guides/MCP_SETUP.md",
-    "guides/INGESTION.md",
     "guides/BACKUP_RESTORE.md",
     "architecture/RECURSIVE_UPSERT_ARCHITECTURE.md",
     "architecture/media/voltron-porter-stemmer.jpg"
