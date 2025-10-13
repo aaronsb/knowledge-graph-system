@@ -2,12 +2,70 @@
 AI Provider abstraction layer for concept extraction and embeddings.
 
 Supports multiple providers (OpenAI, Anthropic) with configurable models.
+
+API Key Loading (ADR-031):
+- First tries encrypted key store (system_api_keys table)
+- Falls back to environment variables (.env or direct)
+- Maintains backward compatibility
 """
 
 import os
+import logging
 from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
 import json
+
+logger = logging.getLogger(__name__)
+
+
+def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Optional[str] = None) -> Optional[str]:
+    """
+    Load API key with fallback chain (ADR-031).
+
+    Priority order:
+    1. Explicit key provided as parameter
+    2. Encrypted key from database (system_api_keys table)
+    3. Environment variable
+    4. None (will raise error in provider __init__)
+
+    Args:
+        provider: Provider name ('openai' or 'anthropic')
+        explicit_key: API key passed explicitly to constructor
+        env_var: Environment variable name (e.g., 'OPENAI_API_KEY')
+
+    Returns:
+        API key if found, None otherwise
+    """
+    # 1. Explicit key takes precedence
+    if explicit_key:
+        logger.debug(f"Using explicit API key for {provider}")
+        return explicit_key
+
+    # 2. Try encrypted key store
+    try:
+        from .encrypted_keys import get_system_api_key
+        from .age_client import AGEClient
+
+        try:
+            client = AGEClient()
+            key = get_system_api_key(client.conn, provider)
+            if key:
+                logger.info(f"Loaded encrypted API key for {provider} from database")
+                return key
+        except Exception as e:
+            logger.debug(f"Could not load encrypted key for {provider}: {e}")
+    except ImportError:
+        logger.debug("Encrypted key store not available")
+
+    # 3. Fall back to environment variable
+    if env_var:
+        key = os.getenv(env_var)
+        if key:
+            logger.debug(f"Loaded API key for {provider} from environment variable: {env_var}")
+            return key
+
+    logger.debug(f"No API key found for {provider}")
+    return None
 
 
 class AIProvider(ABC):
@@ -82,9 +140,15 @@ class OpenAIProvider(AIProvider):
     ):
         from openai import OpenAI
 
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        # Load API key with fallback chain (ADR-031)
+        self.api_key = _load_api_key("openai", api_key, "OPENAI_API_KEY")
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY not set")
+            raise ValueError(
+                "OpenAI API key not found. Either:\n"
+                "  1. Configure via admin API: POST /admin/keys/openai\n"
+                "  2. Set OPENAI_API_KEY environment variable\n"
+                "  3. Add to .env file (development only)"
+            )
 
         self.client = OpenAI(api_key=self.api_key)
 
@@ -280,9 +344,15 @@ class AnthropicProvider(AIProvider):
     ):
         from anthropic import Anthropic
 
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        # Load API key with fallback chain (ADR-031)
+        self.api_key = _load_api_key("anthropic", api_key, "ANTHROPIC_API_KEY")
         if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY not set")
+            raise ValueError(
+                "Anthropic API key not found. Either:\n"
+                "  1. Configure via admin API: POST /admin/keys/anthropic\n"
+                "  2. Set ANTHROPIC_API_KEY environment variable\n"
+                "  3. Add to .env file (development only)"
+            )
 
         self.client = Anthropic(api_key=self.api_key)
 
