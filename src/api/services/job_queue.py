@@ -104,12 +104,22 @@ class JobQueue(ABC):
 
 class InMemoryJobQueue(JobQueue):
     """
-    Phase 1: FastAPI BackgroundTasks + SQLite persistence.
+    SQLite-backed in-memory job queue (for testing/development).
 
+    Implementation:
     - Jobs stored in memory for fast access
     - SQLite for persistence across restarts
     - Thread-safe operations
     - Simple, no external dependencies
+
+    Use cases:
+    - Unit tests (with :memory: database)
+    - Local development without PostgreSQL
+    - Backward compatibility
+
+    For production: Use PostgreSQLJobQueue (ADR-024)
+    - Set QUEUE_TYPE=postgresql in .env
+    - Benefits: MVCC concurrency, connection pooling, JSONB support, atomic transactions
     """
 
     def __init__(self, db_path: str = "data/jobs.db"):
