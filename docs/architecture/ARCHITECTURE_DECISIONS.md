@@ -33,6 +33,21 @@ All ADRs follow a consistent format:
 | [ADR-014](ADR-014-job-approval-workflow.md) | Job Approval Workflow | Accepted | Pre-ingestion analysis with cost/time estimates requiring user approval before processing |
 | [ADR-015](ADR-015-smart-chunking-strategy.md) | Smart Chunking Strategy | Accepted | Semantic boundary detection for optimal chunk sizes, preserving context integrity |
 | [ADR-016](ADR-016-apache-age-migration.md) | Apache AGE Migration | Accepted | Migration from Neo4j to Apache AGE (PostgreSQL graph extension) for open-source licensing |
+| [ADR-017](ADR-017-sensitive-auth-verification.md) | Client-Initiated Token Revocation | Proposed | Time-bound elevated tokens with client-initiated revocation for destructive operations |
+| [ADR-018](ADR-018-server-sent-events-streaming.md) | Server-Sent Events Streaming | Proposed | Real-time progress streaming via SSE for job status and future real-time features |
+| [ADR-019](ADR-019-type-based-table-formatting.md) | Type-Based Table Formatting | Accepted | Semantic column types with centralized formatting for CLI table output |
+| [ADR-020](ADR-020-admin-module-architecture.md) | Admin Module Architecture | Accepted | Modular Python admin operations replacing shell scripts |
+| [ADR-021](ADR-021-live-man-switch-ai-safety.md) | Live Man Switch - AI Safety | Accepted | Physical confirmation (hold Enter) to prevent accidental AI execution of destructive operations |
+| [ADR-022](ADR-022-semantic-relationship-taxonomy.md) | 30-Type Relationship Taxonomy | Accepted | Semantically sparse 30-type vocabulary with Porter stemmer-enhanced fuzzy matching |
+| [ADR-023](ADR-023-markdown-structured-content-preprocessing.md) | Markdown Content Preprocessing | Proposed | AI translation of code blocks to prose before concept extraction |
+| [ADR-024](ADR-024-multi-schema-postgresql-architecture.md) | Multi-Schema PostgreSQL | Proposed | Four-schema organization (ag_catalog, kg_api, kg_auth, kg_logs) for separation of concerns |
+| [ADR-025](ADR-025-dynamic-relationship-vocabulary.md) | Dynamic Relationship Vocabulary | Proposed | Curator-driven vocabulary expansion with skipped relationships tracking |
+| [ADR-026](ADR-026-autonomous-vocabulary-curation.md) | Autonomous Vocabulary Curation | Proposed | LLM-assisted vocabulary management with ontology versioning and analytics |
+| [ADR-027](ADR-027-user-management-api.md) | User Management API | Accepted | Lightweight JWT authentication with bcrypt password hashing and API keys |
+| [ADR-028](ADR-028-dynamic-rbac-system.md) | Dynamic RBAC System | Proposed | Three-tier RBAC with dynamic resource registration and scoped permissions |
+| [ADR-029](ADR-029-cli-theory-of-operation.md) | CLI Theory of Operation | Proposed | Hybrid Unix/domain-specific design with verb shortcuts and universal JSON mode |
+| [ADR-030](ADR-030-concept-deduplication-validation.md) | Concept Deduplication Validation | Accepted | Quality test suite for embedding-based concept matching |
+| [ADR-031](ADR-031-encrypted-api-key-storage.md) | Encrypted API Key Storage | Accepted | Fernet encryption with container secrets and service token authorization |
 
 ## How to Use This Index
 
@@ -106,4 +121,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-10-08
+**Last Updated:** 2025-10-13
+
+**Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
