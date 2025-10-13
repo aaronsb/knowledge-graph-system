@@ -9,14 +9,29 @@
 
 The knowledge graph system requires inference API keys (OpenAI, Anthropic) to extract concepts from documents. Currently, these are stored in `.env` files, which presents several issues:
 
-1. **Single shared key**: All users share one API key, limiting cost tracking and accountability
-2. **Static storage**: Keys are plaintext in `.env` files, discoverable by anyone with filesystem access
-3. **Rotation friction**: Changing keys requires editing `.env` and restarting services
-4. **Risk of exposure**: Database dumps, backups, or accidental commits could expose keys
-5. **No user choice**: Users cannot bring their own keys (BYOK)
+1. **Static storage**: Keys are plaintext in `.env` files, discoverable by anyone with filesystem access
+2. **Rotation friction**: Changing keys requires editing `.env` and restarting services
+3. **Risk of exposure**: Database dumps, backups, or accidental commits could expose keys
+4. **No runtime management**: Cannot rotate keys via API without redeployment
+
+### Shard Architecture Context
+
+A **shard** is a single deployment of the knowledge graph system with its own:
+- PostgreSQL database and Apache AGE graph
+- Set of ontologies (concept collections)
+- LLM API keys for inference
+- Independent API server and configuration
+
+**Key architectural principles:**
+- One shard = one set of system-wide LLM API keys
+- Each shard manages its own keys independently via admin API
+- Multiple shards can exist, each with different keys/quotas
+- Keys are shard-scoped, not per-user (users share the shard's keys)
+
+This model reflects operational reality: A single shard has finite compute and storage capacity. Organizations deploying multiple shards do so to distribute load, separate ontology collections, or isolate environments (dev/staging/prod). Each shard is independently managed by its administrators.
 
 For self-hosted deployments (Docker/Podman), we need a solution that:
-- ✅ Allows user-provided API keys (bring your own key)
+- ✅ Allows admin-managed API keys (rotatable via API)
 - ✅ Encrypts keys at rest in the database
 - ✅ Protects against database breach scenarios
 - ✅ Works with Docker and Podman equally well
@@ -43,10 +58,11 @@ Implement **encrypted API key storage** using a two-layer security model:
 ┌─────────────────────────────────────────┐
 │ PostgreSQL Database (Layer 2)           │
 │ ┌─────────────────────────────────────┐ │
-│ │ Table: user_api_keys                │ │
+│ │ Table: system_api_keys              │ │
 │ │ ┌─────────────────────────────────┐ │ │
-│ │ │ user_id | provider | encrypted  │ │ │
-│ │ │ uuid    | string   | bytea      │ │ │
+│ │ │ provider | encrypted_key        │ │ │
+│ │ │ string   | bytea                │ │ │
+│ │ │ (PRIMARY KEY: provider)         │ │ │
 │ │ └─────────────────────────────────┘ │ │
 │ └─────────────────────────────────────┘ │
 └─────────────────────────────────────────┘
@@ -56,7 +72,7 @@ Implement **encrypted API key storage** using a two-layer security model:
 │ Application Runtime (Layer 3)           │
 │ - API keys exist in memory only         │
 │ - Decrypted on demand for API calls     │
-│ - Garbage collected after use           │
+│ - Cached briefly, then cleared          │
 └─────────────────────────────────────────┘
 ```
 
@@ -64,23 +80,29 @@ Implement **encrypted API key storage** using a two-layer security model:
 
 1. **Separation of Concerns**
    - `jwt_secret`: Signs/verifies authentication tokens (ADR-027)
-   - `encryption_master_key`: Encrypts/decrypts API keys (this ADR)
+   - `encryption_master_key`: Encrypts/decrypts LLM API keys (this ADR)
    - `postgres_password`: Database authentication
 
 2. **Encryption at Rest**
-   - User API keys encrypted with Fernet (AES-128-CBC + HMAC-SHA256)
+   - System API keys encrypted with Fernet (AES-128-CBC + HMAC-SHA256)
    - Master key stored in Docker/Podman secrets (not in database)
    - Keys decrypted only when needed, held in memory briefly
 
-3. **User-Provided Keys (BYOK)**
-   - Users upload their own OpenAI/Anthropic keys via API
-   - Per-user cost tracking and quota management
+3. **Shard-Scoped Management**
+   - One shard = one set of system-wide LLM API keys
+   - Administrators manage keys via admin API endpoints
    - Keys validated before storage
+   - Runtime rotation without redeployment
 
 4. **Threat Model**
    - ✅ **Protects against**: Database dumps, SQL injection, backup theft, DBA snooping
    - ❌ **Does NOT protect against**: Runtime memory access, container root compromise, host compromise
    - **Trade-off**: Acceptable for self-hosted private network deployment
+
+5. **Multi-Shard Independence**
+   - Each shard manages its own keys independently
+   - Different shards can use different providers/keys
+   - No cross-shard key sharing or coordination
 
 ## Implementation
 
@@ -326,17 +348,17 @@ POSTGRES_PASSWORD = SecretManager.load_secret("postgres_password")
 ```python
 # src/api/lib/encrypted_keys.py
 """
-User API key storage with encryption at rest.
+System API key storage with encryption at rest (shard-scoped).
 """
 
 from cryptography.fernet import Fernet
 import psycopg2
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 from .secrets import ENCRYPTION_KEY
 
 class EncryptedKeyStore:
-    """Manage user API keys with encryption at rest"""
+    """Manage system-wide API keys with encryption at rest"""
 
     def __init__(self, db_connection):
         self.db = db_connection
@@ -344,31 +366,22 @@ class EncryptedKeyStore:
         self._ensure_table()
 
     def _ensure_table(self):
-        """Create user_api_keys table if it doesn't exist"""
+        """Create system_api_keys table if it doesn't exist"""
         with self.db.cursor() as cur:
             cur.execute("""
-                CREATE TABLE IF NOT EXISTS user_api_keys (
-                    user_id UUID NOT NULL,
-                    provider VARCHAR(50) NOT NULL,
+                CREATE TABLE IF NOT EXISTS system_api_keys (
+                    provider VARCHAR(50) PRIMARY KEY,
                     encrypted_key BYTEA NOT NULL,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                    last_used TIMESTAMP WITH TIME ZONE,
-                    last_rotated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                    PRIMARY KEY (user_id, provider),
-                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
                 );
-
-                CREATE INDEX IF NOT EXISTS idx_user_api_keys_last_used
-                ON user_api_keys(last_used);
             """)
             self.db.commit()
 
-    def store_key(self, user_id: str, provider: str, plaintext_key: str) -> None:
+    def store_key(self, provider: str, plaintext_key: str) -> None:
         """
-        Encrypt and store user's API key.
+        Encrypt and store system API key.
 
         Args:
-            user_id: User UUID
             provider: 'openai' or 'anthropic'
             plaintext_key: The actual API key
         """
@@ -376,22 +389,20 @@ class EncryptedKeyStore:
 
         with self.db.cursor() as cur:
             cur.execute("""
-                INSERT INTO user_api_keys (user_id, provider, encrypted_key)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (user_id, provider)
+                INSERT INTO system_api_keys (provider, encrypted_key)
+                VALUES (%s, %s)
+                ON CONFLICT (provider)
                 DO UPDATE SET
                     encrypted_key = EXCLUDED.encrypted_key,
-                    last_rotated = NOW()
-            """, (user_id, provider, encrypted))
+                    updated_at = NOW()
+            """, (provider, encrypted))
             self.db.commit()
 
-    def get_key(self, user_id: str, provider: str) -> str:
+    def get_key(self, provider: str) -> str:
         """
-        Decrypt and return user's API key.
-        Updates last_used timestamp.
+        Decrypt and return system API key.
 
         Args:
-            user_id: User UUID
             provider: 'openai' or 'anthropic'
 
         Returns:
@@ -403,75 +414,58 @@ class EncryptedKeyStore:
         with self.db.cursor() as cur:
             cur.execute("""
                 SELECT encrypted_key
-                FROM user_api_keys
-                WHERE user_id = %s AND provider = %s
-            """, (user_id, provider))
+                FROM system_api_keys
+                WHERE provider = %s
+            """, (provider,))
 
             row = cur.fetchone()
             if not row:
-                raise ValueError(f"No {provider} API key found for user {user_id}")
+                raise ValueError(f"No {provider} API key configured for this shard")
 
             encrypted = bytes(row[0])
             plaintext = self.cipher.decrypt(encrypted).decode()
-
-            # Update last_used timestamp
-            cur.execute("""
-                UPDATE user_api_keys
-                SET last_used = NOW()
-                WHERE user_id = %s AND provider = %s
-            """, (user_id, provider))
-            self.db.commit()
-
             return plaintext
 
-    def delete_key(self, user_id: str, provider: str) -> bool:
+    def delete_key(self, provider: str) -> bool:
         """
-        Remove user's API key.
+        Remove system API key.
 
         Returns:
             True if key was deleted, False if not found
         """
         with self.db.cursor() as cur:
             cur.execute("""
-                DELETE FROM user_api_keys
-                WHERE user_id = %s AND provider = %s
-            """, (user_id, provider))
+                DELETE FROM system_api_keys
+                WHERE provider = %s
+            """, (provider,))
             self.db.commit()
             return cur.rowcount > 0
 
-    def check_rotation_needed(self, user_id: str, provider: str, days: int = 90) -> bool:
+    def list_providers(self) -> list[dict]:
         """
-        Check if key should be rotated based on age.
-
-        Args:
-            user_id: User UUID
-            provider: 'openai' or 'anthropic'
-            days: Rotation threshold in days (default: 90)
+        List configured providers.
 
         Returns:
-            True if rotation recommended
+            List of provider info dicts: [{'provider': 'openai', 'updated_at': '...'}]
         """
         with self.db.cursor() as cur:
             cur.execute("""
-                SELECT last_rotated
-                FROM user_api_keys
-                WHERE user_id = %s AND provider = %s
-            """, (user_id, provider))
-
-            row = cur.fetchone()
-            if not row:
-                return False
-
-            last_rotated = row[0]
-            return datetime.now() - last_rotated > timedelta(days=days)
+                SELECT provider, updated_at
+                FROM system_api_keys
+                ORDER BY provider
+            """)
+            return [
+                {'provider': row[0], 'updated_at': row[1].isoformat()}
+                for row in cur.fetchall()
+            ]
 ```
 
 #### API Endpoints
 
 ```python
-# src/api/routes/user_keys.py
+# src/api/routes/admin_keys.py
 """
-API endpoints for user API key management.
+Admin API endpoints for system-wide LLM API key management.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -481,42 +475,41 @@ import anthropic
 import openai
 
 from ..lib.encrypted_keys import EncryptedKeyStore
-from ..dependencies.auth import get_current_active_user
+from ..dependencies.auth import require_admin
 from ..lib.age_client import get_age_client
 
-router = APIRouter(prefix="/api/keys", tags=["user-keys"])
+router = APIRouter(prefix="/admin/keys", tags=["admin-keys"])
 
-class APIKeyUpload(BaseModel):
-    provider: Literal["openai", "anthropic"]
+class APIKeySet(BaseModel):
     api_key: str
 
-class APIKeyStatus(BaseModel):
+class APIKeyInfo(BaseModel):
     provider: str
-    has_key: bool
-    last_used: Optional[str]
-    rotation_needed: bool
+    configured: bool
+    updated_at: str | None
 
-@router.post("/upload", status_code=status.HTTP_201_CREATED)
-async def upload_api_key(
-    key_data: APIKeyUpload,
-    current_user = Depends(get_current_active_user),
+@router.post("/{provider}", status_code=status.HTTP_201_CREATED)
+async def set_api_key(
+    provider: Literal["openai", "anthropic"],
+    key_data: APIKeySet,
+    _admin = Depends(require_admin),
     age_client = Depends(get_age_client)
 ):
     """
-    Upload and encrypt user's API key.
+    Set or rotate system API key (admin only).
     Key is validated before storage.
     """
     # Validate key format
-    if key_data.provider == "anthropic":
+    if provider == "anthropic":
         if not key_data.api_key.startswith("sk-ant-"):
             raise HTTPException(400, "Invalid Anthropic API key format")
-    elif key_data.provider == "openai":
+    elif provider == "openai":
         if not key_data.api_key.startswith("sk-"):
             raise HTTPException(400, "Invalid OpenAI API key format")
 
     # Test the key by making a minimal API call
     try:
-        if key_data.provider == "anthropic":
+        if provider == "anthropic":
             client = anthropic.Anthropic(api_key=key_data.api_key)
             client.messages.create(
                 model="claude-3-5-sonnet-20241022",
@@ -526,7 +519,7 @@ async def upload_api_key(
         else:  # openai
             client = openai.OpenAI(api_key=key_data.api_key)
             client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 max_tokens=1,
                 messages=[{"role": "user", "content": "test"}]
             )
@@ -535,70 +528,71 @@ async def upload_api_key(
 
     # Store encrypted
     key_store = EncryptedKeyStore(age_client.conn)
-    key_store.store_key(current_user.user_id, key_data.provider, key_data.api_key)
+    key_store.store_key(provider, key_data.api_key)
 
     return {
         "status": "success",
-        "message": f"{key_data.provider} API key stored securely"
+        "message": f"{provider} API key configured for this shard"
     }
 
-@router.get("/status", response_model=list[APIKeyStatus])
-async def get_key_status(
-    current_user = Depends(get_current_active_user),
+@router.get("/", response_model=list[APIKeyInfo])
+async def list_api_keys(
+    _admin = Depends(require_admin),
     age_client = Depends(get_age_client)
 ):
-    """Get status of user's API keys"""
+    """List configured API providers (admin only)"""
     key_store = EncryptedKeyStore(age_client.conn)
+    configured = key_store.list_providers()
 
-    statuses = []
-    for provider in ["openai", "anthropic"]:
-        try:
-            # Check if key exists and get metadata
-            with age_client.conn.cursor() as cur:
-                cur.execute("""
-                    SELECT last_used, last_rotated
-                    FROM user_api_keys
-                    WHERE user_id = %s AND provider = %s
-                """, (current_user.user_id, provider))
-                row = cur.fetchone()
+    # Return all possible providers, marking which are configured
+    all_providers = ["openai", "anthropic"]
+    configured_map = {p['provider']: p for p in configured}
 
-                if row:
-                    last_used, last_rotated = row
-                    rotation_needed = key_store.check_rotation_needed(
-                        current_user.user_id, provider
-                    )
-                    statuses.append(APIKeyStatus(
-                        provider=provider,
-                        has_key=True,
-                        last_used=last_used.isoformat() if last_used else None,
-                        rotation_needed=rotation_needed
-                    ))
-                else:
-                    statuses.append(APIKeyStatus(
-                        provider=provider,
-                        has_key=False,
-                        last_used=None,
-                        rotation_needed=False
-                    ))
-        except Exception:
-            pass
-
-    return statuses
+    return [
+        APIKeyInfo(
+            provider=provider,
+            configured=provider in configured_map,
+            updated_at=configured_map[provider]['updated_at'] if provider in configured_map else None
+        )
+        for provider in all_providers
+    ]
 
 @router.delete("/{provider}")
 async def delete_api_key(
     provider: Literal["openai", "anthropic"],
-    current_user = Depends(get_current_active_user),
+    _admin = Depends(require_admin),
     age_client = Depends(get_age_client)
 ):
-    """Delete user's API key"""
+    """Delete system API key (admin only)"""
     key_store = EncryptedKeyStore(age_client.conn)
 
-    deleted = key_store.delete_key(current_user.user_id, provider)
+    deleted = key_store.delete_key(provider)
     if not deleted:
-        raise HTTPException(404, f"No {provider} API key found")
+        raise HTTPException(404, f"No {provider} API key configured")
 
-    return {"status": "success", "message": f"{provider} API key deleted"}
+    return {"status": "success", "message": f"{provider} API key removed"}
+```
+
+#### CLI Commands
+
+```bash
+# kg CLI admin key management commands
+
+# Set/rotate OpenAI key
+kg admin keys set openai sk-...
+
+# Set/rotate Anthropic key
+kg admin keys set anthropic sk-ant-...
+
+# List configured providers
+kg admin keys list
+# Output:
+# Provider    Configured  Updated
+# openai      ✓           2025-10-12T10:30:00Z
+# anthropic   ✗           -
+
+# Delete a key
+kg admin keys delete openai
 ```
 
 ### Phase 4: Migration from .env
@@ -673,15 +667,15 @@ echo "  3. Restart services: docker-compose down && docker-compose up -d"
    - Master key isolated in container secrets
    - Database dumps don't expose API keys
 
-3. **✅ Per-user keys (BYOK)**
-   - Cost tracking per user
-   - Users control their own quotas
-   - No shared key bottleneck
+3. **✅ Shard-scoped management**
+   - Each shard independently manages its own keys
+   - Simple admin API for key rotation
+   - No cross-shard coordination needed
 
 4. **✅ Runtime rotation**
-   - Users can update keys without redeployment
-   - API endpoint for key management
-   - Rotation reminders based on age
+   - Admins can rotate keys without redeployment
+   - API endpoints + CLI commands for management
+   - Validation ensures keys work before storage
 
 5. **✅ Docker/Podman agnostic**
    - Same interface for both runtimes
@@ -692,6 +686,11 @@ echo "  3. Restart services: docker-compose down && docker-compose up -d"
    - Step-by-step setup instructions
    - Automated scripts reduce errors
    - Verification steps included
+
+7. **✅ Multi-shard scalability**
+   - Multiple shards can use different keys/quotas
+   - Supports dev/staging/prod isolation
+   - Reflects operational reality of finite shard capacity
 
 ### Negative
 
@@ -713,9 +712,9 @@ echo "  3. Restart services: docker-compose down && docker-compose up -d"
    - Docker Swarm or Podman needed (not plain `docker run`)
    - Acceptable: This is how modern container deployments work
 
-2. **Per-user API cost**
-   - Users must provide their own keys
-   - Could be positive (better cost control) or negative (friction)
+2. **Shared keys within shard**
+   - All users on a shard share the same LLM keys
+   - Appropriate for self-hosted deployments with trusted users
 
 ## Future Extensibility: Enterprise Secret Backends
 
@@ -1253,11 +1252,18 @@ This architecture ensures:
 
 ### Backend (API Team)
 - [ ] Create `src/api/lib/secrets.py` (secret loading utility)
-- [ ] Create `src/api/lib/encrypted_keys.py` (encryption layer)
+- [ ] Create `src/api/lib/encrypted_keys.py` (encryption layer for system keys)
 - [ ] Update `src/api/lib/auth.py` to load JWT from secret
-- [ ] Create `src/api/routes/user_keys.py` (key management endpoints)
-- [ ] Update database schema with `user_api_keys` table
+- [ ] Create `src/api/routes/admin_keys.py` (admin key management endpoints)
+- [ ] Update database schema with `system_api_keys` table
 - [ ] Add key validation on upload (test with provider API)
+- [ ] Update AI provider initialization to check encrypted store first, then .env fallback
+
+### CLI (Client Team)
+- [ ] Add `kg admin keys set <provider> <key>` command
+- [ ] Add `kg admin keys list` command
+- [ ] Add `kg admin keys delete <provider>` command
+- [ ] Update help documentation
 
 ### Documentation
 - [ ] Write operator guide: `docs/deployment/SECRETS_MANAGEMENT.md`
@@ -1268,10 +1274,11 @@ This architecture ensures:
 ### Testing
 - [ ] Test Docker secrets flow end-to-end
 - [ ] Test Podman secrets flow end-to-end
-- [ ] Test key upload/delete/rotation endpoints
+- [ ] Test admin key set/list/delete endpoints
 - [ ] Test migration script with existing `.env`
 - [ ] Verify encryption/decryption round-trip
 - [ ] Test key validation with invalid keys
+- [ ] Test multi-shard: verify each shard has independent keys
 
 ## Rollout Plan
 
