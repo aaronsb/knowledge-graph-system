@@ -205,7 +205,8 @@ async def approve_job(
         background_tasks.add_task(queue.queue_serial_job, job_id)
     else:
         # Execute in parallel (immediate background task)
-        background_tasks.add_task(queue.execute_job, job_id)
+        # ADR-031: Use execute_job_async for non-blocking execution
+        background_tasks.add_task(queue.execute_job_async, job_id)
 
     return {
         "job_id": job_id,

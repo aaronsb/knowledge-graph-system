@@ -18,13 +18,13 @@ import json
 logger = logging.getLogger(__name__)
 
 
-def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Optional[str] = None) -> Optional[str]:
+def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Optional[str] = None, service_token: Optional[str] = None) -> Optional[str]:
     """
     Load API key with fallback chain (ADR-031).
 
     Priority order:
     1. Explicit key provided as parameter
-    2. Encrypted key from database (system_api_keys table)
+    2. Encrypted key from database (system_api_keys table) - requires service token
     3. Environment variable
     4. None (will raise error in provider __init__)
 
@@ -32,6 +32,7 @@ def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Op
         provider: Provider name ('openai' or 'anthropic')
         explicit_key: API key passed explicitly to constructor
         env_var: Environment variable name (e.g., 'OPENAI_API_KEY')
+        service_token: Internal service authorization token (for encrypted key access)
 
     Returns:
         API key if found, None otherwise
@@ -41,17 +42,29 @@ def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Op
         logger.debug(f"Using explicit API key for {provider}")
         return explicit_key
 
-    # 2. Try encrypted key store
+    # 2. Try encrypted key store (requires service token)
     try:
         from .encrypted_keys import get_system_api_key
         from .age_client import AGEClient
+        from .secrets import get_internal_key_service_secret
 
         try:
             client = AGEClient()
-            key = get_system_api_key(client.conn, provider)
-            if key:
-                logger.info(f"Loaded encrypted API key for {provider} from database")
-                return key
+            conn = client.pool.getconn()
+            try:
+                # Load service token if not provided
+                if service_token is None:
+                    service_token = get_internal_key_service_secret()
+
+                key = get_system_api_key(conn, provider, service_token)
+                if key:
+                    logger.info(f"Loaded encrypted API key for {provider} from database")
+                    return key
+            finally:
+                client.pool.putconn(conn)
+        except ValueError as e:
+            # ValueError is raised for missing/invalid token or missing key
+            logger.debug(f"Could not load encrypted key for {provider}: {e}")
         except Exception as e:
             logger.debug(f"Could not load encrypted key for {provider}: {e}")
     except ImportError:

@@ -128,6 +128,16 @@ def get_postgres_password() -> str:
     return _secrets_cache['postgres_password']
 
 
+def get_internal_key_service_secret() -> str:
+    """Get internal key service authorization token (ADR-031)"""
+    if 'internal_key_service_secret' not in _secrets_cache:
+        _secrets_cache['internal_key_service_secret'] = SecretManager.load_secret(
+            "internal_key_service_secret",
+            "INTERNAL_KEY_SERVICE_SECRET"
+        )
+    return _secrets_cache['internal_key_service_secret']
+
+
 # Backward compatibility: module-level variables
 # These will raise ValueError on import if secrets not available
 # For optional loading, use the get_*() functions instead
@@ -163,3 +173,22 @@ except ValueError:
     # Try without secrets for development
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
     logger.warning(f"Using fallback PostgreSQL password from POSTGRES_PASSWORD env var")
+
+try:
+    INTERNAL_KEY_SERVICE_SECRET = get_internal_key_service_secret()
+except ValueError:
+    # Development fallback: generate a temporary service token
+    # This allows testing without Docker secrets configured
+    import base64
+    import secrets as crypto_secrets
+
+    logger.warning(
+        "INTERNAL_KEY_SERVICE_SECRET not configured - generating temporary token for development. "
+        "For production, configure Docker/Podman secrets or set INTERNAL_KEY_SERVICE_SECRET env var."
+    )
+    # Generate a secure random token
+    temp_token = base64.urlsafe_b64encode(crypto_secrets.token_bytes(32))
+    INTERNAL_KEY_SERVICE_SECRET = temp_token.decode()
+    # Store in cache so get_internal_key_service_secret() returns this value
+    _secrets_cache['internal_key_service_secret'] = INTERNAL_KEY_SERVICE_SECRET
+    logger.info(f"Generated temporary internal service token (will be different on restart)")

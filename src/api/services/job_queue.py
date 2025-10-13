@@ -141,6 +141,13 @@ class InMemoryJobQueue(JobQueue):
         # Load active jobs from DB on startup
         self._load_active_jobs()
 
+        # Create thread pool for worker execution (ADR-031: Non-blocking workers)
+        import concurrent.futures
+        self.executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=4,  # Concurrent ingestion jobs
+            thread_name_prefix="kg-worker-"
+        )
+
     def _init_db(self):
         """Create jobs table if it doesn't exist"""
         self.db.execute("""
@@ -262,6 +269,23 @@ class InMemoryJobQueue(JobQueue):
     def register_worker(self, job_type: str, worker_func: Callable):
         """Register a worker function for a job type"""
         self.worker_registry[job_type] = worker_func
+
+    def execute_job_async(self, job_id: str):
+        """
+        Execute job in thread pool (non-blocking) - ADR-031.
+
+        This submits the job to a thread pool executor, allowing the FastAPI
+        event loop to continue processing other requests while the job runs.
+
+        Benefits:
+        - True concurrency: Multiple jobs can run in parallel
+        - Non-blocking API: Other requests processed while job runs
+        - Bounded resources: Thread pool limits concurrent jobs
+
+        Args:
+            job_id: Job ID to execute
+        """
+        self.executor.submit(self.execute_job, job_id)
 
     def enqueue(self, job_type: str, job_data: Dict) -> str:
         """Add job to queue"""
@@ -593,6 +617,13 @@ class PostgreSQLJobQueue(JobQueue):
             password=password
         )
 
+        # Create thread pool for worker execution (ADR-031: Non-blocking workers)
+        import concurrent.futures
+        self.executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=4,  # Concurrent ingestion jobs
+            thread_name_prefix="kg-worker-"
+        )
+
     def _get_connection(self):
         """Get connection from pool"""
         return self.pool.getconn()
@@ -604,6 +635,23 @@ class PostgreSQLJobQueue(JobQueue):
     def register_worker(self, job_type: str, worker_func: Callable):
         """Register a worker function for a job type"""
         self.worker_registry[job_type] = worker_func
+
+    def execute_job_async(self, job_id: str):
+        """
+        Execute job in thread pool (non-blocking) - ADR-031.
+
+        This submits the job to a thread pool executor, allowing the FastAPI
+        event loop to continue processing other requests while the job runs.
+
+        Benefits:
+        - True concurrency: Multiple jobs can run in parallel
+        - Non-blocking API: Other requests processed while job runs
+        - Bounded resources: Thread pool limits concurrent jobs
+
+        Args:
+            job_id: Job ID to execute
+        """
+        self.executor.submit(self.execute_job, job_id)
 
     def enqueue(self, job_type: str, job_data: Dict) -> str:
         """Add job to PostgreSQL queue"""
