@@ -266,9 +266,12 @@ async def restore_backup(
             )
 
         # Create restore job
+        # Note: System jobs (restore, backup, reset) use special "_system" ontology
+        # since they operate on the entire database rather than a specific ontology
         job_id = job_queue.enqueue(
             job_type="restore",
             job_data={
+                "ontology": "_system",  # System-level operation
                 "temp_file": str(temp_path),
                 "temp_file_id": str(temp_file_id),
                 "overwrite": overwrite,
