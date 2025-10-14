@@ -41,6 +41,7 @@ User and developer guides for getting started and working with the system.
 - **BACKUP_RESTORE.md** - Backup and restore operations guide
 - **INGESTION.md** - Document ingestion workflow and configuration
 - **EXAMPLES.md** - Usage examples and common patterns
+- **USE_CASES.md** - Real-world workflows (GitHub history analysis, multi-ontology patterns)
 
 ### 📖 `reference/`
 Conceptual documentation and terminology reference.
@@ -64,7 +65,7 @@ Images, diagrams, and other media assets.
 1. Start with [QUICKSTART.md](guides/QUICKSTART.md)
 2. Learn about [AI Providers](guides/AI_PROVIDERS.md)
 3. See [ENRICHMENT_JOURNEY.md](reference/ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
-4. Review [Examples](guides/EXAMPLES.md)
+4. Review [Examples](guides/EXAMPLES.md) and [Use Cases](guides/USE_CASES.md)
 
 ### Administrators
 1. Read [AUTHENTICATION.md](guides/AUTHENTICATION.md) for login and session management
