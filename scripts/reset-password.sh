@@ -13,6 +13,13 @@ BOLD='\033[1m'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
+# Check for and activate virtual environment
+if [ -d "$PROJECT_ROOT/venv" ]; then
+    source "$PROJECT_ROOT/venv/bin/activate"
+elif [ -d "$PROJECT_ROOT/.venv" ]; then
+    source "$PROJECT_ROOT/.venv/bin/activate"
+fi
+
 echo -e "${BLUE}${BOLD}"
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║        Knowledge Graph System - Password Reset            ║"
@@ -87,7 +94,7 @@ while true; do
     fi
 
     # Validate password strength using Python
-    VALIDATION_RESULT=$(python3 << EOF
+    VALIDATION_RESULT=$(python3 << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
 from src.api.lib.auth import validate_password_strength
@@ -100,7 +107,11 @@ else:
 EOF
 )
 
-    if [[ $VALIDATION_RESULT == "VALID" ]]; then
+    if echo "$VALIDATION_RESULT" | grep -q "ModuleNotFoundError"; then
+        echo -e "${RED}✗ Python dependencies not installed${NC}"
+        echo -e "${YELLOW}  Run: source venv/bin/activate && pip install -r requirements.txt${NC}"
+        exit 1
+    elif [[ $VALIDATION_RESULT == "VALID" ]]; then
         echo -e "${GREEN}✓${NC} Password meets requirements"
         break
     else
@@ -122,7 +133,11 @@ print(get_password_hash("$NEW_PASSWORD"))
 EOF
 )
 
-if echo "$HASH_OUTPUT" | grep -q "Traceback.*Error"; then
+if echo "$HASH_OUTPUT" | grep -q "ModuleNotFoundError"; then
+    echo -e "${RED}✗ Python dependencies not installed${NC}"
+    echo -e "${YELLOW}  Run: source venv/bin/activate && pip install -r requirements.txt${NC}"
+    exit 1
+elif echo "$HASH_OUTPUT" | grep -q "Traceback.*Error"; then
     echo -e "${RED}✗ Failed to hash password${NC}"
     echo "$HASH_OUTPUT"
     exit 1
