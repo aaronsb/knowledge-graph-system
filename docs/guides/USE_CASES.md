@@ -11,9 +11,18 @@ This guide documents real-world use cases for the Knowledge Graph System, showin
 
 ## Use Case 1: GitHub Project History Analysis
 
-**Problem:** Understanding a project's evolution through commits and pull requests, with the ability to query relationships between code changes, discussions, and contributor insights.
+### Mining Your Repository for Knowledge
 
-**Solution:** Extract GitHub data into structured documents, ingest as separate ontologies, and let the graph connect related concepts automatically.
+**The Insight:** Your GitHub repository contains a rich narrative of your project's evolution—every commit message documents decisions, every pull request captures rationale, and every merge represents completed work. Using the **GitHub CLI (`gh`)** to extract this data and transform it into ontologies unlocks semantic search across your entire project history.
+
+**What You'll Learn:**
+- Why features were implemented the way they were
+- Who has expertise in which areas of the codebase
+- How architectural decisions evolved over time
+- Which PRs and commits are related, even if they don't reference each other
+- Patterns in your team's development practices
+
+**The Approach:** Use `gh` CLI to extract commits and pull requests, convert them to text documents organized in directories, then ingest each directory as a separate ontology. The knowledge graph automatically discovers connections between commits and PRs through shared concepts—no manual tagging required.
 
 ### Overview
 

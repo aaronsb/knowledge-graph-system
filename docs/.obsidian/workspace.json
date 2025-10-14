@@ -172,6 +172,7 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "guides/USE_CASES.md.tmp.394069.1760455854242",
     "guides/USE_CASES.md.tmp.394069.1760455799169",
     "README.md.tmp.394069.1760455662050",
     "README.md.tmp.394069.1760455661877",
@@ -185,7 +186,6 @@
     "guides/SECURITY.md",
     "guides/SECURITY.md.tmp.394069.1760364148074",
     "guides/INGESTION.md",
-    "architecture/ADR-031-encrypted-api-key-storage.md.tmp.394069.1760362832507",
     "architecture/ADR-031-encrypted-api-key-storage.md",
     "architecture/ADR-023-markdown-structured-content-preprocessing.md",
     "architecture/ADR-024-multi-schema-postgresql-architecture.md",
