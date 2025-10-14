@@ -172,6 +172,7 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "guides/PASSWORD_RECOVERY.md.tmp.394069.1760474098013",
     "README.md.tmp.394069.1760474081766",
     "README.md.tmp.394069.1760474081573",
     "guides/PASSWORD_RECOVERY.md",
@@ -186,7 +187,6 @@
     "README.md.tmp.394069.1760455662050",
     "README.md.tmp.394069.1760455661877",
     "guides/USE_CASES.md",
-    "guides/USE_CASES.md.tmp.394069.1760455645361",
     "guides/SECURITY.md",
     "guides/INGESTION.md",
     "architecture/ADR-031-encrypted-api-key-storage.md",
