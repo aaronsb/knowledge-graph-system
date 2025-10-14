@@ -35,6 +35,7 @@ User and developer guides for getting started and working with the system.
 - **QUICKSTART.md** - Quick start guide for new users
 - **AI_PROVIDERS.md** - AI provider configuration (OpenAI, Anthropic)
 - **AUTHENTICATION.md** - Login, logout, and session management
+- **PASSWORD_RECOVERY.md** - Password reset and account recovery procedures
 - **RBAC.md** - Role-Based Access Control operations and user management
 - **SECURITY.md** - Security infrastructure and encrypted API key management
 - **MCP_SETUP.md** - MCP server setup for Claude Desktop integration
@@ -70,10 +71,11 @@ Images, diagrams, and other media assets.
 
 ### Administrators
 1. Read [AUTHENTICATION.md](guides/AUTHENTICATION.md) for login and session management
-2. Review [RBAC.md](guides/RBAC.md) for user and permission management
-3. **Important:** Read [SECURITY.md](guides/SECURITY.md) for encrypted API key management and security infrastructure
-4. Learn about [BACKUP_RESTORE.md](guides/BACKUP_RESTORE.md) for data protection
-5. Reference [MCP_SETUP.md](guides/MCP_SETUP.md) for service account configuration
+2. **Important:** Keep [PASSWORD_RECOVERY.md](guides/PASSWORD_RECOVERY.md) handy for account recovery
+3. Review [RBAC.md](guides/RBAC.md) for user and permission management
+4. **Important:** Read [SECURITY.md](guides/SECURITY.md) for encrypted API key management and security infrastructure
+5. Learn about [BACKUP_RESTORE.md](guides/BACKUP_RESTORE.md) for data protection
+6. Reference [MCP_SETUP.md](guides/MCP_SETUP.md) for service account configuration
 
 ### Developers
 1. Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md)
