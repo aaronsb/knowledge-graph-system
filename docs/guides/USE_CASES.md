@@ -24,11 +24,35 @@ This workflow demonstrates:
 - **Temporal analysis:** Query how ideas evolved over time
 - **Contributor patterns:** Understand who worked on related concepts
 
+### Prerequisites
+
+**GitHub CLI (`gh`)** - The simplest way to extract commit messages and pull requests:
+
+```bash
+# Install GitHub CLI (if not already installed)
+# macOS:
+brew install gh
+
+# Linux:
+# See: https://github.com/cli/cli/blob/trunk/docs/install_linux.md
+
+# Windows:
+# See: https://github.com/cli/cli#windows
+
+# Authenticate with GitHub
+gh auth login
+
+# Verify it works
+gh repo view
+```
+
+**Alternative:** You can also use the GitHub REST API directly, but `gh` CLI simplifies authentication and provides convenient commands for common tasks.
+
 ### Workflow
 
 #### Step 1: Extract GitHub Data
 
-Use the GitHub CLI (`gh`) or GitHub API to extract commit history and pull requests.
+Use the **GitHub CLI (`gh`)** to extract commit history and pull requests. The `gh` command provides a simple, authenticated way to access repository data without manually handling API tokens.
 
 **Extract commits:**
 ```bash
