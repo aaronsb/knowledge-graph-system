@@ -172,6 +172,12 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "README.md.tmp.394069.1760474081766",
+    "README.md.tmp.394069.1760474081573",
+    "guides/PASSWORD_RECOVERY.md",
+    "guides/use_cases/password_recovery.md",
+    "guides/use_cases/password_recovery.md.tmp.394069.1760474055296",
+    "README.md.tmp.394069.1760456023381",
     "guides/USE_CASES.md.tmp.394069.1760455994389",
     "guides/use_cases/github_project_history.md",
     "guides/use_cases",
@@ -181,10 +187,6 @@
     "README.md.tmp.394069.1760455661877",
     "guides/USE_CASES.md",
     "guides/USE_CASES.md.tmp.394069.1760455645361",
-    "architecture/ARCHITECTURE_DECISIONS.md.tmp.394069.1760395819413",
-    "architecture/ARCHITECTURE_DECISIONS.md.tmp.394069.1760395807394",
-    "README.md.tmp.394069.1760364208291",
-    "README.md.tmp.394069.1760364197485",
     "guides/SECURITY.md",
     "guides/INGESTION.md",
     "architecture/ADR-031-encrypted-api-key-storage.md",
@@ -206,8 +208,6 @@
     "guides/CLI_STATE_TREE.md",
     "architecture/ADR-029-cli-theory-of-operation.md",
     "operations/RBAC-OPERATIONS.md",
-    "guides/SCHEMA_REFERENCE.md",
-    "guides/QUICKSTART.md",
     "architecture/media/voltron-porter-stemmer.jpg"
   ]
 }
