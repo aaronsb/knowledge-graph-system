@@ -41,7 +41,8 @@ User and developer guides for getting started and working with the system.
 - **BACKUP_RESTORE.md** - Backup and restore operations guide
 - **INGESTION.md** - Document ingestion workflow and configuration
 - **EXAMPLES.md** - Usage examples and common patterns
-- **USE_CASES.md** - Real-world workflows (GitHub history analysis, multi-ontology patterns)
+- **USE_CASES.md** - Real-world workflow catalog (index to use_cases/ directory)
+- **use_cases/** - Individual use case guides (GitHub history analysis, etc.)
 
 ### 📖 `reference/`
 Conceptual documentation and terminology reference.
