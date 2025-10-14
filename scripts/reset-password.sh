@@ -94,7 +94,7 @@ while true; do
     fi
 
     # Validate password strength using Python
-    VALIDATION_RESULT=$(python3 << EOF 2>&1
+    VALIDATION_OUTPUT=$(python3 << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
 from src.api.lib.auth import validate_password_strength
@@ -107,11 +107,17 @@ else:
 EOF
 )
 
-    if echo "$VALIDATION_RESULT" | grep -q "ModuleNotFoundError"; then
+    # Check for errors
+    if echo "$VALIDATION_OUTPUT" | grep -q "ModuleNotFoundError"; then
         echo -e "${RED}✗ Python dependencies not installed${NC}"
         echo -e "${YELLOW}  Run: source venv/bin/activate && pip install -r requirements.txt${NC}"
         exit 1
-    elif [[ $VALIDATION_RESULT == "VALID" ]]; then
+    fi
+
+    # Extract just the last line (the actual result, ignoring warnings)
+    VALIDATION_RESULT=$(echo "$VALIDATION_OUTPUT" | tail -n 1)
+
+    if [[ $VALIDATION_RESULT == "VALID" ]]; then
         echo -e "${GREEN}✓${NC} Password meets requirements"
         break
     else
@@ -133,6 +139,7 @@ print(get_password_hash("$NEW_PASSWORD"))
 EOF
 )
 
+# Check for errors
 if echo "$HASH_OUTPUT" | grep -q "ModuleNotFoundError"; then
     echo -e "${RED}✗ Python dependencies not installed${NC}"
     echo -e "${YELLOW}  Run: source venv/bin/activate && pip install -r requirements.txt${NC}"
@@ -143,6 +150,7 @@ elif echo "$HASH_OUTPUT" | grep -q "Traceback.*Error"; then
     exit 1
 fi
 
+# Extract just the hash (last line, ignoring warnings)
 PASSWORD_HASH=$(echo "$HASH_OUTPUT" | tail -n 1)
 echo -e "${GREEN}✓${NC} Password hashed"
 
