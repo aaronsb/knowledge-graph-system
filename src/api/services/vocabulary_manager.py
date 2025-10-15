@@ -453,25 +453,15 @@ class VocabularyManager:
 
     async def _get_vocabulary_size(self) -> int:
         """Get current vocabulary size."""
-        # TODO: Implement with actual DB query
-        # SELECT COUNT(*) FROM kg_api.relationship_vocabulary WHERE is_active = TRUE
-        # For now, return mock value
-        return 45
+        return self.db.get_vocabulary_size()
 
     async def _get_all_edge_types(self) -> List[str]:
         """Get list of all active edge types."""
-        # TODO: Implement with actual DB query
-        # SELECT relationship_type FROM kg_api.relationship_vocabulary WHERE is_active = TRUE
-        return []
+        return self.db.get_all_edge_types(include_inactive=False)
 
     async def _get_category_distribution(self) -> Dict[str, int]:
         """Get count of types per category."""
-        # TODO: Implement with actual DB query
-        # SELECT category, COUNT(*) as count
-        # FROM kg_api.relationship_vocabulary
-        # WHERE is_active = TRUE
-        # GROUP BY category
-        return {}
+        return self.db.get_category_distribution()
 
     async def _detect_synonym_candidates(
         self,
@@ -517,33 +507,30 @@ class VocabularyManager:
 
         logger.info(f"Executing merge: {deprecate_type} → {preserve_type}")
 
-        # TODO: Implement actual merge in database
-        # 1. Update all edges using deprecate_type to use preserve_type
-        #    UPDATE graph_name SET relationship_type = preserve_type
-        #    WHERE relationship_type = deprecate_type
-        #
-        # 2. Merge usage stats
-        #    UPDATE kg_api.edge_usage_stats
-        #    Set preserve_type stats += deprecate_type stats
-        #
-        # 3. Mark deprecate_type as inactive
-        #    UPDATE kg_api.relationship_vocabulary
-        #    SET is_active = FALSE, deprecated_at = NOW(),
-        #        deprecation_reason = 'Merged into {preserve_type}'
-        #    WHERE relationship_type = deprecate_type
-        #
-        # 4. Record in vocabulary_history
-        #    INSERT INTO kg_api.vocabulary_history (...)
+        try:
+            # Use AGE client to merge types
+            result = self.db.merge_edge_types(
+                deprecated_type=deprecate_type,
+                target_type=preserve_type,
+                performed_by="vocabulary_manager"
+            )
 
-        # Mock implementation
-        affected_edges = action.metadata.get("deprecate_value", 0) if action.metadata else 0
+            affected_edges = result.get("edges_updated", 0)
 
-        return ExecutionResult(
-            action=action,
-            success=True,
-            message=f"Merged {deprecate_type} into {preserve_type}",
-            affected_edges=int(affected_edges)
-        )
+            return ExecutionResult(
+                action=action,
+                success=True,
+                message=f"Merged {deprecate_type} into {preserve_type}",
+                affected_edges=affected_edges
+            )
+        except Exception as e:
+            logger.error(f"Failed to merge {deprecate_type} → {preserve_type}: {e}")
+            return ExecutionResult(
+                action=action,
+                success=False,
+                message=f"Merge failed",
+                error=str(e)
+            )
 
     async def _execute_prune(self, action: ActionRecommendation) -> ExecutionResult:
         """
