@@ -1473,3 +1473,34 @@ class AGEClient:
         finally:
             conn.commit()
             self.pool.putconn(conn)
+
+    async def execute_query(self, query: str) -> List[Dict]:
+        """
+        Execute a raw PostgreSQL query and return results as list of dicts.
+
+        This method is used by VocabularyScorer and other modules that need
+        to query statistics tables directly with SQL (not Cypher).
+
+        Args:
+            query: Raw PostgreSQL query string
+
+        Returns:
+            List of row dictionaries
+
+        Example:
+            >>> results = await client.execute_query(
+            ...     "SELECT * FROM kg_api.relationship_vocabulary LIMIT 5"
+            ... )
+            >>> for row in results:
+            ...     print(row['relationship_type'])
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                cur.execute(query)
+                results = cur.fetchall()
+                # Convert RealDictRow to regular dict
+                return [dict(row) for row in results]
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)

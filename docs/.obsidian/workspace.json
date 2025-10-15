@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "reference/DISTRIBUTED_SHARDING_RESEARCH.md",
+                "file": "development/pattern-repetition-notes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "DISTRIBUTED_SHARDING_RESEARCH"
+              "title": "pattern-repetition-notes"
             }
           }
         ]
@@ -172,6 +172,7 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "reference/DISTRIBUTED_SHARDING_RESEARCH.md",
     "guides/AI_PROVIDERS.md",
     "guides/PASSWORD_RECOVERY.md.tmp.394069.1760474098013",
     "README.md.tmp.394069.1760474081766",
