@@ -28,12 +28,12 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
 
-    # Create logger
-    logger = logging.getLogger("kg_api")
-    logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+    # Configure ROOT logger so all loggers in the application inherit this config
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
 
     # Clear any existing handlers
-    logger.handlers.clear()
+    root_logger.handlers.clear()
 
     # Create formatters
     detailed_formatter = logging.Formatter(
@@ -50,7 +50,7 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)  # Shows INFO, WARNING, ERROR, CRITICAL
     console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
+    root_logger.addHandler(console_handler)
 
     # File handler with daily rotation
     today = datetime.now().strftime("%Y%m%d")
@@ -64,7 +64,10 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     )
     file_handler.setLevel(logging.DEBUG)  # File gets everything
     file_handler.setFormatter(detailed_formatter)
-    logger.addHandler(file_handler)
+    root_logger.addHandler(file_handler)
+
+    # Get a named logger for this module
+    logger = logging.getLogger("src.api.main")
 
     # Log startup message
     logger.info("=" * 80)
