@@ -33,8 +33,11 @@ References:
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import logging
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -231,7 +234,7 @@ class VocabularyScorer:
             return metrics
 
         except Exception as e:
-            print(f"Error querying edge metrics: {e}")
+            logger.error(f"Error querying edge metrics: {e}")
             return {}
 
     async def _detect_bridges(self) -> Dict[str, int]:
@@ -270,7 +273,7 @@ class VocabularyScorer:
             return bridges
 
         except Exception as e:
-            print(f"Error detecting bridges: {e}")
+            logger.error(f"Error detecting bridges: {e}")
             return {}
 
     async def _calculate_trends(self) -> Dict[str, float]:
@@ -317,7 +320,7 @@ class VocabularyScorer:
             return trends
 
         except Exception as e:
-            print(f"Error calculating trends: {e}")
+            logger.error(f"Error calculating trends: {e}")
             return {}
 
     async def _get_vocabulary_metadata(self) -> Dict[str, Dict]:
@@ -349,7 +352,7 @@ class VocabularyScorer:
             return metadata
 
         except Exception as e:
-            print(f"Error getting vocabulary metadata: {e}")
+            logger.error(f"Error getting vocabulary metadata: {e}")
             return {}
 
     async def _execute_query(self, query: str) -> List[Dict]:
@@ -445,7 +448,7 @@ class VocabularyScorer:
             return [row["relationship_type"] for row in result]
 
         except Exception as e:
-            print(f"Error getting zero-edge types: {e}")
+            logger.error(f"Error getting zero-edge types: {e}")
             return []
 
     def get_score_breakdown(self, score: EdgeTypeScore) -> Dict[str, float]:
