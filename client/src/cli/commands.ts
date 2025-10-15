@@ -14,6 +14,7 @@ import { databaseCommand } from './database';
 import { ontologyCommand } from './ontology';
 import { configCommand } from './config';
 import { adminCommand } from './admin';
+import { vocabularyCommand } from './vocabulary';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { createVerbRouter } from './verb-router';
@@ -91,6 +92,7 @@ export async function registerCommands(program: Command) {
     searchCommand,
     databaseCommand,
     ontologyCommand,
+    vocabularyCommand,
     adminCommand,
   ];
 

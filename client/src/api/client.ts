@@ -717,6 +717,87 @@ export class KnowledgeGraphClient {
     const response = await this.client.post('/rbac/check-permission', request);
     return response.data;
   }
+
+  // ========== Vocabulary Methods (ADR-032) ==========
+
+  /**
+   * Get current vocabulary status
+   */
+  async getVocabularyStatus(): Promise<any> {
+    const response = await this.client.get('/vocabulary/status');
+    return response.data;
+  }
+
+  /**
+   * List all edge types with statistics
+   */
+  async listEdgeTypes(includeInactive: boolean = false, includeBuiltin: boolean = true): Promise<any> {
+    const response = await this.client.get('/vocabulary/types', {
+      params: {
+        include_inactive: includeInactive,
+        include_builtin: includeBuiltin
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Manually add a new edge type (curator action)
+   */
+  async addEdgeType(request: {
+    relationship_type: string;
+    category: string;
+    description?: string;
+    is_builtin?: boolean;
+  }): Promise<any> {
+    const response = await this.client.post('/vocabulary/types', request);
+    return response.data;
+  }
+
+  /**
+   * Generate vocabulary optimization recommendations
+   */
+  async getVocabularyRecommendations(): Promise<any> {
+    const response = await this.client.get('/vocabulary/recommendations');
+    return response.data;
+  }
+
+  /**
+   * Execute all auto-approved recommendations
+   */
+  async executeAutoRecommendations(): Promise<any> {
+    const response = await this.client.post('/vocabulary/recommendations/execute');
+    return response.data;
+  }
+
+  /**
+   * Get detailed vocabulary analysis
+   */
+  async getVocabularyAnalysis(): Promise<any> {
+    const response = await this.client.get('/vocabulary/analysis');
+    return response.data;
+  }
+
+  /**
+   * Get vocabulary configuration
+   */
+  async getVocabularyConfig(): Promise<any> {
+    const response = await this.client.get('/vocabulary/config');
+    return response.data;
+  }
+
+  /**
+   * Merge two edge types (curator action)
+   */
+  async mergeEdgeTypes(request: {
+    deprecated_type: string;
+    target_type: string;
+    performed_by: string;
+    reason?: string;
+  }): Promise<any> {
+    const response = await this.client.post('/vocabulary/merge', request);
+    return response.data;
+  }
 }
 
 /**
