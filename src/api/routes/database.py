@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/database", tags=["database"])
 
 
-def get_neo4j_client() -> AGEClient:
+def get_age_client() -> AGEClient:
     """Get AGE client instance"""
     return AGEClient()
 
@@ -38,7 +38,7 @@ async def get_database_stats():
     Example:
         GET /database/stats
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         # Node counts by label
         stats = {}
@@ -115,7 +115,7 @@ async def get_database_info():
     }
 
     try:
-        client = get_neo4j_client()
+        client = get_age_client()
         try:
             # Get PostgreSQL version using direct SQL query
             import psycopg2
@@ -162,7 +162,7 @@ async def check_database_health():
     }
 
     try:
-        client = get_neo4j_client()
+        client = get_age_client()
         try:
             # Check basic connectivity
             result = client._execute_cypher("RETURN 1 as ping", fetch_one=True)

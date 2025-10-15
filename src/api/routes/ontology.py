@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ontology", tags=["ontology"])
 
 
-def get_neo4j_client() -> AGEClient:
+def get_age_client() -> AGEClient:
     """Get AGE client instance"""
     return AGEClient()
 
@@ -47,7 +47,7 @@ async def list_ontologies():
     Example:
         GET /ontology/
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         result = client._execute_cypher("""
             MATCH (s:Source)
@@ -108,7 +108,7 @@ async def get_ontology_info(ontology_name: str):
     Example:
         GET /ontology/Research%20Papers
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         # Check if ontology exists
         exists_check = client._execute_cypher(
@@ -177,7 +177,7 @@ async def get_ontology_files(ontology_name: str):
     Example:
         GET /ontology/Research%20Papers/files
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         result = client._execute_cypher(f"""
             MATCH (s:Source {{document: '{ontology_name}'}})
@@ -252,7 +252,7 @@ async def delete_ontology(
     """
     from ..services.job_queue import get_job_queue
 
-    client = get_neo4j_client()
+    client = get_age_client()
     queue = get_job_queue()
     try:
         # Check if ontology exists
@@ -347,7 +347,7 @@ async def rename_ontology(
           "new_name": "New Name"
         }
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         # Perform rename via AGE client
         try:

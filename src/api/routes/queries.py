@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/query", tags=["queries"])
 
 
-def get_neo4j_client() -> AGEClient:
+def get_age_client() -> AGEClient:
     """Get AGE client instance"""
     return AGEClient()
 
@@ -90,7 +90,7 @@ async def search_concepts(request: SearchRequest):
             embedding = embedding_result
 
         # Vector similarity search using AGE client
-        client = get_neo4j_client()
+        client = get_age_client()
         try:
             # Use AGEClient's vector_search method with threshold from request
             # Fetch limit + offset to handle pagination
@@ -206,7 +206,7 @@ async def get_concept_details(concept_id: str):
     Example:
         GET /query/concept/linear-scanning-system
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         # Get concept and documents
         concept_result = client._execute_cypher(
@@ -330,7 +330,7 @@ async def find_related_concepts(request: RelatedConceptsRequest):
           "relationship_types": ["SUPPORTS", "IMPLIES"]
         }
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         # Build and execute related concepts query
         query = QueryService.build_related_concepts_query(
@@ -400,7 +400,7 @@ async def find_connection(request: FindConnectionRequest):
           "max_hops": 5
         }
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     try:
         # Build and execute shortest path query
         query = QueryService.build_shortest_path_query(request.max_hops)
@@ -483,7 +483,7 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
           "threshold": 0.5
         }
     """
-    client = get_neo4j_client()
+    client = get_age_client()
     provider = get_provider()
 
     try:

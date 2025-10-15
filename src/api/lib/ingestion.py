@@ -158,7 +158,7 @@ def process_chunk(
     ontology_name: str,
     filename: str,
     file_path: str,
-    neo4j_client: AGEClient,
+    age_client: AGEClient,
     stats: ChunkedIngestionStats,
     existing_concepts: List[Dict[str, Any]],
     recent_concept_ids: List[str],
@@ -175,7 +175,7 @@ def process_chunk(
         ontology_name: Name of the ontology/collection (shared across documents)
         filename: Unique filename for source tracking
         file_path: Full path to the source file
-        neo4j_client: AGE client instance
+        age_client: AGE client instance
         stats: Statistics tracker
         existing_concepts: List of existing concepts for LLM context
         recent_concept_ids: List to track recent concept IDs
@@ -197,7 +197,7 @@ def process_chunk(
 
     # Step 1: Create Source node
     try:
-        neo4j_client.create_source_node(
+        age_client.create_source_node(
             source_id=source_id,
             document=ontology_name,  # Ontology name for logical grouping
             paragraph=chunk.chunk_number,  # Using chunk number as paragraph
@@ -264,7 +264,7 @@ def process_chunk(
 
         # Vector search for similar concepts
         try:
-            matches = neo4j_client.vector_search(
+            matches = age_client.vector_search(
                 embedding=embedding,
                 threshold=0.85,
                 top_k=5
@@ -281,7 +281,7 @@ def process_chunk(
                     "similarity": similarity
                 })
 
-                neo4j_client.link_concept_to_source(actual_concept_id, source_id)
+                age_client.link_concept_to_source(actual_concept_id, source_id)
                 stats.concepts_linked += 1
 
                 # Map LLM ID to actual ID for relationships
@@ -290,13 +290,13 @@ def process_chunk(
                 # Create new concept with unique ID
                 actual_concept_id = f"{source_id}_{uuid.uuid4().hex[:8]}"
 
-                neo4j_client.create_concept_node(
+                age_client.create_concept_node(
                     concept_id=actual_concept_id,
                     label=label,
                     embedding=embedding,
                     search_terms=search_terms
                 )
-                neo4j_client.link_concept_to_source(actual_concept_id, source_id)
+                age_client.link_concept_to_source(actual_concept_id, source_id)
                 stats.concepts_created += 1
 
                 new_concepts.append({"label": label, "id": actual_concept_id})
@@ -326,8 +326,8 @@ def process_chunk(
             continue
 
         try:
-            neo4j_client.create_instance_node(instance_id=instance_id, quote=quote)
-            neo4j_client.link_instance_to_concept_and_source(
+            age_client.create_instance_node(instance_id=instance_id, quote=quote)
+            age_client.link_instance_to_concept_and_source(
                 instance_id=instance_id,
                 concept_id=actual_concept_id,
                 source_id=source_id
@@ -345,7 +345,11 @@ def process_chunk(
         confidence = rel["confidence"]
 
         # Normalize relationship type using Porter Stemmer Enhanced Hybrid Matcher
-        canonical_type, category, similarity = normalize_relationship_type(llm_rel_type)
+        # Pass AGEClient so it can query existing edge types from graph
+        canonical_type, category, similarity = normalize_relationship_type(
+            llm_rel_type,
+            age_client=age_client
+        )
 
         if not canonical_type:
             # ADR-032: Automatically accept new edge types for vocabulary expansion
@@ -353,7 +357,20 @@ def process_chunk(
             canonical_type = llm_rel_type.strip().upper()
             category = "llm_generated"
             similarity = 1.0
-            logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (will be tracked for review)")
+
+            # Add to vocabulary table so it propagates to subsequent chunks
+            try:
+                age_client.add_edge_type(
+                    relationship_type=canonical_type,
+                    category=category,
+                    description=f"LLM-generated relationship type from ingestion",
+                    added_by="llm_extractor",
+                    is_builtin=False
+                )
+                logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (will be tracked for review)")
+            except Exception as e:
+                # If adding fails (e.g., already exists from another worker), continue anyway
+                logger.debug(f"  Note: Edge type '{canonical_type}' may already exist: {e}")
         elif similarity < 1.0:
             # Log normalization if it was fuzzy matched
             logger.info(f"  🔧 Normalized '{llm_rel_type}' → '{canonical_type}' ({category}, {similarity:.2f})")
@@ -367,7 +384,7 @@ def process_chunk(
             continue
 
         try:
-            neo4j_client.create_concept_relationship(
+            age_client.create_concept_relationship(
                 from_id=actual_from_id,
                 to_id=actual_to_id,
                 rel_type=canonical_type,
