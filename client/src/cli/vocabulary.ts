@@ -188,8 +188,7 @@ export const vocabularyCommand = new Command('vocabulary')
           } else {
             console.log(`  ${colors.stats.label('Reduction:')} ${colors.status.dim('0')}`);
           }
-          console.log(`  ${colors.stats.label('Auto-Executed:')} ${coloredCount(result.auto_executed.length)}`);
-          console.log(`  ${colors.stats.label('Needs Review:')} ${coloredCount(result.needs_review.length)}`);
+          console.log(`  ${colors.stats.label('Merged:')} ${coloredCount(result.auto_executed.length)}`);
           console.log(`  ${colors.stats.label('Rejected:')} ${coloredCount(result.rejected.length)}`);
 
           // Auto-executed merges
@@ -209,25 +208,6 @@ export const vocabularyCommand = new Command('vocabulary')
                 console.log(`   ${colors.status.error('ERROR:')} ${merge.error}`);
               }
             });
-          }
-
-          // Needs review
-          if (result.needs_review.length > 0) {
-            console.log('\n' + colors.stats.section('Needs Human Review'));
-            console.log(separator(80, '─'));
-            const displayCount = Math.min(10, result.needs_review.length);
-            result.needs_review.slice(0, displayCount).forEach((review: any) => {
-              console.log(`\n? ${review.type1} + ${review.type2}`);
-              if (review.suggested_term) {
-                console.log(`   ${colors.ui.key('Suggested:')} ${colors.ui.value(review.suggested_term)}`);
-              }
-              console.log(`   ${colors.ui.key('Similarity:')} ${colors.ui.value((review.similarity * 100).toFixed(1) + '%')}`);
-              console.log(`   ${colors.ui.key('Reasoning:')} ${colors.status.dim(review.reasoning)}`);
-            });
-            if (result.needs_review.length > 10) {
-              console.log('\n' + colors.status.dim(`  ... and ${result.needs_review.length - 10} more`));
-            }
-            console.log('\n' + colors.status.dim('  Use "kg vocab merge <type1> <type2>" to manually merge'));
           }
 
           // Rejected

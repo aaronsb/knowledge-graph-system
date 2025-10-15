@@ -636,18 +636,21 @@ class VocabularyManager:
         self,
         target_size: int = 90,
         batch_size: int = 1,  # Process ONE at a time
-        auto_execute_threshold: float = 0.90,
+        auto_execute_threshold: float = 0.90,  # DEPRECATED - now trusts LLM completely
         dry_run: bool = False
     ) -> Dict[str, List]:
         """
         AITL vocabulary consolidation - one merge at a time with re-query.
 
+        AITL Mode: Fully trust LLM decisions. No "needs review" - either merge or reject.
+
         Process:
         1. Get top 1 prioritized candidate (fresh query each iteration)
-        2. Evaluate with LLM
-        3. If approved → execute immediately
-        4. Re-query vocabulary (landscape has changed)
-        5. Repeat until vocab_size < target
+        2. Evaluate with LLM (synonym vs directional inverse)
+        3. If LLM approves → execute immediately
+        4. If LLM rejects → skip and continue
+        5. Re-query vocabulary (landscape has changed)
+        6. Repeat until vocab_size ≤ target
 
         This prevents contradictory recommendations by ensuring the vocabulary
         state is fresh for each decision.
@@ -655,18 +658,18 @@ class VocabularyManager:
         Args:
             target_size: Stop when vocabulary reaches this size (default: 90)
             batch_size: DEPRECATED - always processes 1 candidate at a time
-            auto_execute_threshold: Auto-merge if similarity ≥ this (default: 0.90)
+            auto_execute_threshold: DEPRECATED - now trusts LLM completely
             dry_run: If True, don't execute merges (default: False)
 
         Returns:
-            Dict with 'auto_executed', 'needs_review', 'rejected', 'iterations' lists
+            Dict with 'auto_executed' and 'rejected' lists (no 'needs_review')
 
         Example:
             >>> results = await manager.aitl_consolidate_vocabulary(
             ...     target_size=85, dry_run=False
             ... )
-            >>> print(f"Auto-merged: {len(results['auto_executed'])}")
-            >>> print(f"Need review: {len(results['needs_review'])}")
+            >>> print(f"Merged: {len(results['auto_executed'])}")
+            >>> print(f"Rejected: {len(results['rejected'])}")
         """
         from src.api.lib.pruning_strategies import llm_evaluate_merge
 
@@ -676,7 +679,7 @@ class VocabularyManager:
             'rejected': []
         }
 
-        # DRY RUN MODE: Just evaluate top candidates for validation
+        # DRY RUN MODE: Just evaluate top candidates for validation (AITL trusts LLM)
         if dry_run:
             logger.info("DRY RUN MODE: Evaluating top candidates (no execution)")
 
@@ -710,29 +713,26 @@ class VocabularyManager:
                     })
                     continue
 
-                # Would this be auto-executed?
-                if candidate.similarity >= auto_execute_threshold:
-                    results['auto_executed'].append({
-                        'deprecated': candidate.type1 if score1.edge_count <= score2.edge_count else candidate.type2,
-                        'target': decision.blended_term or (candidate.type2 if score1.edge_count <= score2.edge_count else candidate.type1),
-                        'similarity': candidate.similarity,
-                        'reasoning': decision.reasoning,
-                        'blended_description': decision.blended_description
-                    })
-                else:
-                    results['needs_review'].append({
-                        'type1': candidate.type1,
-                        'type2': candidate.type2,
-                        'suggested_term': decision.blended_term,
-                        'similarity': candidate.similarity,
-                        'reasoning': decision.reasoning
-                    })
+                # AITL: Trust LLM decision completely
+                target_term = decision.blended_term or (candidate.type1 if score1.edge_count >= score2.edge_count else candidate.type2)
+                deprecate = candidate.type2 if score1.edge_count >= score2.edge_count else candidate.type1
+
+                results['auto_executed'].append({
+                    'deprecated': deprecate,
+                    'target': target_term,
+                    'similarity': candidate.similarity,
+                    'reasoning': decision.reasoning,
+                    'blended_description': decision.blended_description
+                })
 
             return results
 
         # LIVE MODE: Process one at a time with re-query
         logger.info("LIVE MODE: Processing candidates one-at-a-time with re-query")
         iteration = 0
+
+        # Track processed pairs during this session to avoid re-presenting rejected candidates
+        processed_pairs: set[frozenset[str]] = set()
 
         while True:
             # Check if we've reached target
@@ -747,19 +747,27 @@ class VocabularyManager:
             # Get fresh analysis (vocabulary changes each iteration)
             analysis = await self.analyze_vocabulary()
 
-            # Prioritize candidates
+            # Prioritize candidates and filter out already-processed pairs
             prioritized = self.prioritize_merge_candidates(
                 analysis.synonym_candidates,
                 min_similarity=0.80,
                 max_edge_count=20
             )
 
-            if not prioritized:
-                logger.info("No more candidates available")
+            # Filter out already-processed pairs
+            unprocessed = []
+            for cand, s1, s2, pri in prioritized:
+                pair_key = frozenset([cand.type1, cand.type2])
+                if pair_key not in processed_pairs:
+                    unprocessed.append((cand, s1, s2, pri))
+
+            if not unprocessed:
+                logger.info("No more unprocessed candidates available")
                 break
 
-            # Take ONLY the top candidate (one at a time)
-            candidate, score1, score2, priority = prioritized[0]
+            # Take ONLY the top unprocessed candidate (one at a time)
+            candidate, score1, score2, priority = unprocessed[0]
+            pair_key = frozenset([candidate.type1, candidate.type2])
 
             logger.info(
                 f"Evaluating: {candidate.type1} ({score1.edge_count}) + "
@@ -783,10 +791,13 @@ class VocabularyManager:
                     'type2': candidate.type2,
                     'reasoning': decision.reasoning
                 })
+                # Mark as processed so we don't present it again
+                processed_pairs.add(pair_key)
                 logger.info(f"  ✗ Rejected: {decision.reasoning}")
                 # Continue to next iteration (will re-query)
                 continue
 
+            # LLM approved merge - trust the decision completely (AITL mode)
             # Use LLM-generated blended term, or fall back to higher-usage type
             target_term = decision.blended_term
             if not target_term:
@@ -798,50 +809,36 @@ class VocabularyManager:
             else:
                 deprecate = candidate.type1
 
-            # High confidence = auto-execute immediately
-            if candidate.similarity >= auto_execute_threshold:
-                merge_info = {
-                    'deprecated': deprecate,
-                    'target': target_term,
-                    'similarity': candidate.similarity,
-                    'reasoning': decision.reasoning,
-                    'blended_description': decision.blended_description,
-                    'edges_affected': min(score1.edge_count, score2.edge_count)
-                }
+            # AITL: Trust LLM decision - execute immediately
+            merge_info = {
+                'deprecated': deprecate,
+                'target': target_term,
+                'similarity': candidate.similarity,
+                'reasoning': decision.reasoning,
+                'blended_description': decision.blended_description,
+                'edges_affected': min(score1.edge_count, score2.edge_count)
+            }
 
-                if not dry_run:
-                    # Execute merge immediately
-                    try:
-                        merge_result = self.db.merge_edge_types(
-                            deprecated_type=deprecate,
-                            target_type=target_term,
-                            performed_by="aitl_consolidation"
-                        )
-                        merge_info['edges_updated'] = merge_result.get('edges_updated', 0)
-                        logger.info(f"  ✓ Auto-merged: {deprecate} → {target_term} (edges: {merge_info['edges_updated']})")
-                    except Exception as e:
-                        logger.error(f"  ✗ Merge failed: {e}")
-                        merge_info['error'] = str(e)
-                else:
-                    logger.info(f"  [DRY RUN] Would merge: {deprecate} → {target_term}")
-
-                results['auto_executed'].append(merge_info)
-                # Vocabulary has changed - next iteration will re-query
-
+            if not dry_run:
+                # Execute merge immediately
+                try:
+                    merge_result = self.db.merge_edge_types(
+                        deprecated_type=deprecate,
+                        target_type=target_term,
+                        performed_by="aitl_consolidation"
+                    )
+                    merge_info['edges_updated'] = merge_result.get('edges_updated', 0)
+                    logger.info(f"  ✓ LLM-approved merge: {deprecate} → {target_term} (edges: {merge_info['edges_updated']})")
+                except Exception as e:
+                    logger.error(f"  ✗ Merge failed: {e}")
+                    merge_info['error'] = str(e)
             else:
-                # Medium confidence = needs human review
-                review_info = {
-                    'type1': candidate.type1,
-                    'type2': candidate.type2,
-                    'suggested_term': target_term,
-                    'suggested_description': decision.blended_description,
-                    'similarity': candidate.similarity,
-                    'reasoning': decision.reasoning,
-                    'edge_count1': score1.edge_count,
-                    'edge_count2': score2.edge_count
-                }
-                results['needs_review'].append(review_info)
-                logger.info(f"  ? Needs review: {decision.reasoning}")
+                logger.info(f"  [DRY RUN] Would merge: {deprecate} → {target_term}")
+
+            results['auto_executed'].append(merge_info)
+            # Mark as processed so we don't present it again
+            processed_pairs.add(pair_key)
+            # Vocabulary has changed - next iteration will re-query
 
             # Safety: don't run forever
             if iteration >= 10:
@@ -850,8 +847,7 @@ class VocabularyManager:
 
         logger.info(
             f"AITL consolidation complete after {iteration} iterations: "
-            f"{len(results['auto_executed'])} auto-merged, "
-            f"{len(results['needs_review'])} need review, "
+            f"{len(results['auto_executed'])} merged, "
             f"{len(results['rejected'])} rejected"
         )
 
