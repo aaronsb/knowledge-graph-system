@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "guides/AI_PROVIDERS.md",
+                "file": "reference/DISTRIBUTED_SHARDING_RESEARCH.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "AI_PROVIDERS"
+              "title": "DISTRIBUTED_SHARDING_RESEARCH"
             }
           }
         ]
@@ -172,6 +172,7 @@
   },
   "active": "b49c283dceba9a5a",
   "lastOpenFiles": [
+    "guides/AI_PROVIDERS.md",
     "guides/PASSWORD_RECOVERY.md.tmp.394069.1760474098013",
     "README.md.tmp.394069.1760474081766",
     "README.md.tmp.394069.1760474081573",
@@ -185,7 +186,6 @@
     "guides/USE_CASES.md.tmp.394069.1760455854242",
     "guides/USE_CASES.md.tmp.394069.1760455799169",
     "README.md.tmp.394069.1760455662050",
-    "README.md.tmp.394069.1760455661877",
     "guides/USE_CASES.md",
     "guides/SECURITY.md",
     "guides/INGESTION.md",
@@ -200,7 +200,6 @@
     "reference/ENRICHMENT_JOURNEY.md",
     "reference/CONCEPT.md",
     "development/LEARNED_KNOWLEDGE_MCP.md",
-    "guides/AI_PROVIDERS.md",
     "guides/AUTHENTICATION.md",
     "reference/CONCEPTS_AND_TERMINOLOGY.md",
     "guides/CLI_USAGE.md",
