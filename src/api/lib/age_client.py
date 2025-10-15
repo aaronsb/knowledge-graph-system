@@ -1544,6 +1544,73 @@ class AGEClient:
             conn.commit()
             self.pool.putconn(conn)
 
+    def get_vocabulary_embedding(self, relationship_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Get embedding with metadata for vocabulary type from database.
+
+        Args:
+            relationship_type: The edge type to get embedding for
+
+        Returns:
+            Dict with 'embedding' (list of floats) and 'embedding_model' (str),
+            or None if not found or no embedding
+
+        Example:
+            >>> client = AGEClient()
+            >>> data = client.get_vocabulary_embedding("VALIDATES")
+            >>> if data:
+            ...     print(f"Embedding dimensions: {len(data['embedding'])}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT embedding, embedding_model
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type = %s
+                      AND embedding IS NOT NULL
+                """, (relationship_type,))
+                result = cur.fetchone()
+
+                if result and result[0]:
+                    return {
+                        'embedding': result[0],  # Already a Python list from JSONB
+                        'embedding_model': result[1]
+                    }
+                return None
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def update_vocabulary_embedding(
+        self,
+        relationship_type: str,
+        embedding: List[float],
+        embedding_model: str
+    ) -> bool:
+        """
+        Update embedding for a vocabulary type in database.
+
+        Wrapper around store_embedding() for consistency with get_vocabulary_embedding().
+
+        Args:
+            relationship_type: The edge type to update
+            embedding: Embedding vector as list of floats
+            embedding_model: Name of the model used (e.g., "text-embedding-ada-002")
+
+        Returns:
+            True if updated, False if type not found
+
+        Example:
+            >>> client = AGEClient()
+            >>> success = client.update_vocabulary_embedding(
+            ...     "VALIDATES",
+            ...     embedding_vector,
+            ...     "text-embedding-ada-002"
+            ... )
+        """
+        return self.store_embedding(relationship_type, embedding, embedding_model)
+
     def generate_vocabulary_embeddings(
         self,
         ai_provider,

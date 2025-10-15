@@ -50,6 +50,13 @@ from ..models.vocabulary import (
     GenerateEmbeddingsRequest,
     GenerateEmbeddingsResponse,
 
+    # AITL Consolidation
+    ConsolidateVocabularyRequest,
+    ConsolidateVocabularyResponse,
+    MergeResultInfo,
+    ReviewInfo,
+    RejectionInfo,
+
     # Enums
     ZoneEnum,
     PruningModeEnum,
@@ -300,250 +307,6 @@ async def add_edge_type(request: AddEdgeTypeRequest):
 
 
 # =============================================================================
-# Recommendations Endpoints (HITL Workflow)
-# =============================================================================
-
-@router.get("/recommendations", response_model=RecommendationsResponse)
-async def get_recommendations():
-    """
-    Generate vocabulary optimization recommendations.
-
-    Analyzes current vocabulary state and generates recommendations
-    for merging, pruning, or deprecating edge types based on the
-    configured pruning mode (naive/hitl/aitl).
-
-    Returns:
-        RecommendationsResponse with auto-execute and needs-review lists
-
-    Example:
-        GET /vocabulary/recommendations
-    """
-    try:
-        manager = get_vocabulary_manager()
-
-        # Generate recommendations
-        recommendations = await manager.generate_recommendations()
-
-        # Get current status
-        client = AGEClient()
-        try:
-            vocab_size = client.get_vocabulary_size()
-            vocab_min = int(os.getenv("VOCAB_MIN", "30"))
-            vocab_max = int(os.getenv("VOCAB_MAX", "90"))
-            vocab_emergency = int(os.getenv("VOCAB_EMERGENCY", "200"))
-            profile = os.getenv("VOCAB_AGGRESSIVENESS", "aggressive")
-
-            aggressiveness, zone = calculate_aggressiveness(
-                current_size=vocab_size,
-                vocab_min=vocab_min,
-                vocab_max=vocab_max,
-                vocab_emergency=vocab_emergency,
-                profile=profile
-            )
-        finally:
-            client.close()
-
-        # Convert to response models
-        auto_execute = [
-            ActionRecommendationResponse(
-                action_type=ActionTypeEnum(rec.action_type.value),
-                edge_type=rec.edge_type,
-                target_type=rec.target_type,
-                review_level=ReviewLevelEnum(rec.review_level.value),
-                should_execute=rec.should_execute,
-                needs_review=rec.needs_review,
-                reasoning=rec.reasoning,
-                metadata=rec.metadata
-            )
-            for rec in recommendations["auto_execute"]
-        ]
-
-        needs_review = [
-            ActionRecommendationResponse(
-                action_type=ActionTypeEnum(rec.action_type.value),
-                edge_type=rec.edge_type,
-                target_type=rec.target_type,
-                review_level=ReviewLevelEnum(rec.review_level.value),
-                should_execute=rec.should_execute,
-                needs_review=rec.needs_review,
-                reasoning=rec.reasoning,
-                metadata=rec.metadata
-            )
-            for rec in recommendations["needs_review"]
-        ]
-
-        return RecommendationsResponse(
-            vocab_size=vocab_size,
-            zone=ZoneEnum(zone),
-            aggressiveness=aggressiveness,
-            auto_execute=auto_execute,
-            needs_review=needs_review
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to generate recommendations: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {str(e)}")
-
-
-@router.post("/recommendations/execute", response_model=list[ExecutionResultResponse])
-async def execute_auto_recommendations():
-    """
-    Execute all auto-approved recommendations.
-
-    Only executes actions with should_execute=True (typically in naive or AITL modes).
-    HITL mode actions require explicit approval via /recommendations/{id}/approve.
-
-    Returns:
-        List of ExecutionResultResponse showing results
-
-    Example:
-        POST /vocabulary/recommendations/execute
-    """
-    try:
-        manager = get_vocabulary_manager()
-
-        # Generate recommendations
-        recommendations = await manager.generate_recommendations()
-
-        # Execute auto-approved actions
-        results = await manager.execute_auto_actions(recommendations["auto_execute"])
-
-        # Convert to response models
-        return [
-            ExecutionResultResponse(
-                success=result.success,
-                message=result.message,
-                affected_edges=result.affected_edges,
-                error=result.error
-            )
-            for result in results
-        ]
-
-    except Exception as e:
-        logger.error(f"Failed to execute recommendations: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to execute recommendations: {str(e)}")
-
-
-# =============================================================================
-# Analysis Endpoints
-# =============================================================================
-
-@router.get("/analysis", response_model=VocabularyAnalysisResponse)
-async def get_vocabulary_analysis():
-    """
-    Get detailed vocabulary analysis including value scores and synonym candidates.
-
-    Returns:
-        VocabularyAnalysisResponse with comprehensive analysis
-
-    Example:
-        GET /vocabulary/analysis
-    """
-    try:
-        manager = get_vocabulary_manager()
-
-        # Perform analysis
-        analysis = await manager.analyze_vocabulary()
-
-        # Convert edge type scores
-        edge_scores = [
-            EdgeTypeScoreResponse(
-                relationship_type=score.relationship_type,
-                edge_count=score.edge_count,
-                avg_traversal=score.avg_traversal,
-                bridge_count=score.bridge_count,
-                trend=score.trend,
-                value_score=score.value_score,
-                is_builtin=score.is_builtin,
-                last_used=score.last_used
-            )
-            for score in analysis.edge_type_scores.values()
-        ]
-
-        # Convert synonym candidates
-        synonym_candidates = [
-            SynonymCandidateResponse(
-                type1=candidate.type1,
-                type2=candidate.type2,
-                similarity=candidate.similarity,
-                strength=candidate.strength.value,
-                is_strong_match=candidate.is_strong_match,
-                needs_review=candidate.needs_review,
-                reasoning=candidate.reasoning
-            )
-            for candidate, _, _ in analysis.synonym_candidates
-        ]
-
-        # Convert low value types
-        low_value = [
-            EdgeTypeScoreResponse(
-                relationship_type=score.relationship_type,
-                edge_count=score.edge_count,
-                avg_traversal=score.avg_traversal,
-                bridge_count=score.bridge_count,
-                trend=score.trend,
-                value_score=score.value_score,
-                is_builtin=score.is_builtin,
-                last_used=score.last_used
-            )
-            for score in analysis.low_value_types
-        ]
-
-        return VocabularyAnalysisResponse(
-            vocab_size=analysis.vocab_size,
-            vocab_min=analysis.vocab_min,
-            vocab_max=analysis.vocab_max,
-            vocab_emergency=analysis.vocab_emergency,
-            aggressiveness=analysis.aggressiveness,
-            zone=ZoneEnum(analysis.zone),
-            edge_type_scores=edge_scores,
-            synonym_candidates=synonym_candidates,
-            low_value_types=low_value,
-            category_distribution=analysis.category_distribution
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to analyze vocabulary: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to analyze vocabulary: {str(e)}")
-
-
-# =============================================================================
-# Configuration Endpoints
-# =============================================================================
-
-@router.get("/config", response_model=VocabularyConfigResponse)
-async def get_vocabulary_config():
-    """
-    Get current vocabulary configuration.
-
-    Returns:
-        VocabularyConfigResponse with all configuration values
-
-    Example:
-        GET /vocabulary/config
-    """
-    try:
-        return VocabularyConfigResponse(
-            vocab_min=int(os.getenv("VOCAB_MIN", "30")),
-            vocab_max=int(os.getenv("VOCAB_MAX", "90")),
-            vocab_emergency=int(os.getenv("VOCAB_EMERGENCY", "200")),
-            pruning_mode=PruningModeEnum(os.getenv("VOCAB_PRUNING_MODE", "hitl")),
-            aggressiveness_profile=os.getenv("VOCAB_AGGRESSIVENESS", "aggressive"),
-            category_min=8,
-            category_max=15,
-            auto_expand_enabled=os.getenv("AUTO_EXPAND_ENABLED", "false").lower() == "true",
-            synonym_threshold_strong=float(os.getenv("SYNONYM_THRESHOLD_STRONG", "0.90")),
-            synonym_threshold_moderate=float(os.getenv("SYNONYM_THRESHOLD_MODERATE", "0.70")),
-            low_value_threshold=float(os.getenv("LOW_VALUE_THRESHOLD", "1.0")),
-            embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to get vocabulary config: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get vocabulary config: {str(e)}")
-
-
-# =============================================================================
 # Merge/Restore Endpoints
 # =============================================================================
 
@@ -593,6 +356,124 @@ async def merge_edge_types(request: MergeEdgeTypesRequest):
     except Exception as e:
         logger.error(f"Failed to merge edge types: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to merge edge types: {str(e)}")
+
+
+# =============================================================================
+# AITL Consolidation Endpoint
+# =============================================================================
+
+@router.post("/consolidate", response_model=ConsolidateVocabularyResponse)
+async def consolidate_vocabulary(request: ConsolidateVocabularyRequest):
+    """
+    Run AITL vocabulary consolidation workflow.
+
+    Modes:
+    - dry_run=True: Evaluate top candidates without executing (validation)
+    - dry_run=False: Execute merges automatically based on confidence threshold
+
+    Process:
+    1. Get prioritized merge candidates (similarity-based)
+    2. Evaluate each with LLM (synonym vs directional inverse)
+    3. Auto-execute high confidence (≥ auto_execute_threshold)
+    4. Flag medium confidence for human review
+    5. Reject low confidence or inverse relationships
+
+    Args:
+        request: Consolidation parameters
+
+    Returns:
+        ConsolidateVocabularyResponse with results
+
+    Example:
+        POST /vocabulary/consolidate
+        {
+            "target_size": 80,
+            "batch_size": 1,
+            "auto_execute_threshold": 0.90,
+            "dry_run": false
+        }
+    """
+    try:
+        manager = get_vocabulary_manager()
+        client = AGEClient()
+
+        try:
+            # Get initial size
+            initial_size = client.get_vocabulary_size()
+
+            # Run consolidation
+            results = await manager.aitl_consolidate_vocabulary(
+                target_size=request.target_size,
+                batch_size=request.batch_size,
+                auto_execute_threshold=request.auto_execute_threshold,
+                dry_run=request.dry_run
+            )
+
+            # Get final size
+            final_size = client.get_vocabulary_size()
+            size_reduction = initial_size - final_size
+
+            # Convert results to response models
+            auto_executed = [
+                MergeResultInfo(
+                    deprecated=merge['deprecated'],
+                    target=merge['target'],
+                    similarity=merge['similarity'],
+                    reasoning=merge['reasoning'],
+                    blended_description=merge.get('blended_description'),
+                    edges_affected=merge.get('edges_affected'),
+                    edges_updated=merge.get('edges_updated'),
+                    error=merge.get('error')
+                )
+                for merge in results['auto_executed']
+            ]
+
+            needs_review = [
+                ReviewInfo(
+                    type1=review['type1'],
+                    type2=review['type2'],
+                    suggested_term=review.get('suggested_term'),
+                    suggested_description=review.get('suggested_description'),
+                    similarity=review['similarity'],
+                    reasoning=review['reasoning'],
+                    edge_count1=review.get('edge_count1'),
+                    edge_count2=review.get('edge_count2')
+                )
+                for review in results['needs_review']
+            ]
+
+            rejected = [
+                RejectionInfo(
+                    type1=reject['type1'],
+                    type2=reject['type2'],
+                    reasoning=reject['reasoning']
+                )
+                for reject in results['rejected']
+            ]
+
+            # Build message
+            if request.dry_run:
+                message = f"Dry run completed: Evaluated {len(auto_executed) + len(needs_review) + len(rejected)} candidates"
+            else:
+                message = f"Consolidation completed: {size_reduction} types reduced ({initial_size} → {final_size})"
+
+            return ConsolidateVocabularyResponse(
+                success=True,
+                initial_size=initial_size,
+                final_size=final_size,
+                size_reduction=size_reduction,
+                auto_executed=auto_executed,
+                needs_review=needs_review,
+                rejected=rejected,
+                message=message
+            )
+
+        finally:
+            client.close()
+
+    except Exception as e:
+        logger.error(f"Failed to consolidate vocabulary: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to consolidate vocabulary: {str(e)}")
 
 
 # =============================================================================

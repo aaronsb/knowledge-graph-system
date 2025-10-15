@@ -292,3 +292,58 @@ class GenerateEmbeddingsResponse(BaseModel):
     skipped: int
     failed: int
     message: str
+
+
+# =============================================================================
+# AITL Consolidation Models
+# =============================================================================
+
+class ConsolidateVocabularyRequest(BaseModel):
+    """Request to run AITL vocabulary consolidation"""
+    target_size: int = Field(90, ge=30, le=200, description="Target vocabulary size")
+    batch_size: int = Field(1, ge=1, le=20, description="Number of candidates per iteration (usually 1)")
+    auto_execute_threshold: float = Field(0.90, ge=0.0, le=1.0, description="Auto-execute merges above this similarity")
+    dry_run: bool = Field(False, description="Evaluate candidates without executing merges")
+
+
+class MergeResultInfo(BaseModel):
+    """Information about a single merge result"""
+    deprecated: str
+    target: str
+    similarity: float
+    reasoning: str
+    blended_description: Optional[str] = None
+    edges_affected: Optional[int] = None
+    edges_updated: Optional[int] = None
+    error: Optional[str] = None
+
+
+class ReviewInfo(BaseModel):
+    """Information about a merge needing human review"""
+    type1: str
+    type2: str
+    suggested_term: Optional[str] = None
+    suggested_description: Optional[str] = None
+    similarity: float
+    reasoning: str
+    edge_count1: Optional[int] = None
+    edge_count2: Optional[int] = None
+
+
+class RejectionInfo(BaseModel):
+    """Information about a rejected merge"""
+    type1: str
+    type2: str
+    reasoning: str
+
+
+class ConsolidateVocabularyResponse(BaseModel):
+    """Result of AITL vocabulary consolidation"""
+    success: bool
+    initial_size: int
+    final_size: int
+    size_reduction: int
+    auto_executed: List[MergeResultInfo]
+    needs_review: List[ReviewInfo]
+    rejected: List[RejectionInfo]
+    message: str

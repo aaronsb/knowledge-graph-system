@@ -1,5 +1,6 @@
 /**
  * Vocabulary Management Commands (ADR-032)
+ * Simplified structure with clear intent and purpose
  */
 
 import { Command } from 'commander';
@@ -9,7 +10,7 @@ import { coloredCount, separator } from './colors';
 
 export const vocabularyCommand = new Command('vocabulary')
   .alias('vocab')
-  .description('Edge vocabulary management and optimization (ADR-032)')
+  .description('Edge vocabulary management and consolidation (ADR-032)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(
@@ -122,240 +123,128 @@ export const vocabularyCommand = new Command('vocabulary')
       })
   )
   .addCommand(
-    new Command('review')
-      .description('Show vocabulary optimization recommendations (HITL workflow)')
-      .action(async () => {
+    new Command('consolidate')
+      .description('AI-assisted vocabulary consolidation workflow (AITL)')
+      .option('-t, --target <size>', 'Target vocabulary size', '90')
+      .option('--threshold <value>', 'Auto-execute threshold (0.0-1.0)', '0.90')
+      .option('--dry-run', 'Evaluate candidates without executing merges')
+      .option('--auto', 'Auto-execute high confidence merges (AITL mode)')
+      .action(async (options) => {
         try {
           const client = createClientFromEnv();
-          const recommendations = await client.getVocabularyRecommendations();
+          const targetSize = parseInt(options.target);
+          const threshold = parseFloat(options.threshold);
+          const dryRun = options.dryRun || false;
+          const autoMode = options.auto || false;
 
+          // Validate inputs
+          if (isNaN(targetSize) || targetSize < 30 || targetSize > 200) {
+            console.error(colors.status.error('✗ Target size must be between 30 and 200'));
+            process.exit(1);
+          }
+
+          if (isNaN(threshold) || threshold < 0 || threshold > 1) {
+            console.error(colors.status.error('✗ Threshold must be between 0.0 and 1.0'));
+            process.exit(1);
+          }
+
+          // Show mode
           console.log('\n' + separator());
-          console.log(colors.ui.title('🔍 Vocabulary Recommendations'));
+          console.log(colors.ui.title('🔄 Vocabulary Consolidation'));
           console.log(separator());
 
-          // Context
-          console.log('\n' + colors.stats.section('Context'));
-          const zoneColors: Record<string, (text: string) => string> = {
-            comfort: colors.status.success,
-            watch: colors.status.warning,
-            emergency: colors.status.error,
-            block: colors.status.error
-          };
-          const zoneColor = zoneColors[recommendations.zone] || colors.ui.value;
-          console.log(`  ${colors.stats.label('Vocabulary Size:')} ${coloredCount(recommendations.vocab_size)}`);
-          console.log(`  ${colors.stats.label('Zone:')} ${zoneColor(recommendations.zone.toUpperCase())}`);
-          console.log(`  ${colors.stats.label('Aggressiveness:')} ${colors.ui.value((recommendations.aggressiveness * 100).toFixed(1) + '%')}`);
-
-          // Auto-execute recommendations
-          if (recommendations.auto_execute.length > 0) {
-            console.log('\n' + colors.stats.section('Auto-Execute (No Review Required)'));
-            console.log(separator(80, '─'));
-            recommendations.auto_execute.forEach((rec: any, idx: number) => {
-              const actionColor = rec.action_type === 'merge' ? colors.status.warning : colors.status.dim;
-              console.log(`\n${colors.stats.label(`[${idx + 1}]`)} ${actionColor(rec.action_type.toUpperCase())}`);
-              console.log(`    ${colors.ui.key('Edge Type:')} ${colors.getRelationshipColor(rec.edge_type)(rec.edge_type)}`);
-              if (rec.target_type) {
-                console.log(`    ${colors.ui.key('Target:')} ${colors.getRelationshipColor(rec.target_type)(rec.target_type)}`);
-              }
-              console.log(`    ${colors.ui.key('Reasoning:')} ${colors.status.dim(rec.reasoning)}`);
-              if (rec.metadata) {
-                if (rec.metadata.similarity !== undefined) {
-                  console.log(`    ${colors.ui.key('Similarity:')} ${colors.ui.value((rec.metadata.similarity * 100).toFixed(1) + '%')}`);
-                }
-                if (rec.metadata.value_score !== undefined) {
-                  console.log(`    ${colors.ui.key('Value Score:')} ${colors.ui.value(rec.metadata.value_score.toFixed(2))}`);
-                }
-              }
-            });
-          }
-
-          // Needs review recommendations
-          if (recommendations.needs_review.length > 0) {
-            console.log('\n' + colors.stats.section('Needs Review (Human Approval Required)'));
-            console.log(separator(80, '─'));
-            recommendations.needs_review.forEach((rec: any, idx: number) => {
-              const actionColor = rec.action_type === 'merge' ? colors.status.warning : colors.status.dim;
-              const reviewBadge = rec.review_level === 'human' ? colors.status.error(' [HUMAN]') : colors.status.warning(' [AI]');
-              console.log(`\n${colors.stats.label(`[${idx + 1}]`)} ${actionColor(rec.action_type.toUpperCase())}${reviewBadge}`);
-              console.log(`    ${colors.ui.key('Edge Type:')} ${colors.getRelationshipColor(rec.edge_type)(rec.edge_type)}`);
-              if (rec.target_type) {
-                console.log(`    ${colors.ui.key('Target:')} ${colors.getRelationshipColor(rec.target_type)(rec.target_type)}`);
-              }
-              console.log(`    ${colors.ui.key('Reasoning:')} ${colors.status.dim(rec.reasoning)}`);
-              if (rec.metadata) {
-                if (rec.metadata.similarity !== undefined) {
-                  console.log(`    ${colors.ui.key('Similarity:')} ${colors.ui.value((rec.metadata.similarity * 100).toFixed(1) + '%')}`);
-                }
-                if (rec.metadata.value_score !== undefined) {
-                  console.log(`    ${colors.ui.key('Value Score:')} ${colors.ui.value(rec.metadata.value_score.toFixed(2))}`);
-                }
-              }
-            });
-            console.log('\n' + colors.status.dim('  Use "kg vocab merge" to manually merge edge types'));
-          }
-
-          if (recommendations.auto_execute.length === 0 && recommendations.needs_review.length === 0) {
-            console.log('\n' + colors.status.success('✓ No recommendations at this time'));
+          if (dryRun) {
+            console.log(`\n${colors.ui.key('Mode:')} ${colors.status.dim('DRY RUN')} (validation only)`);
+          } else if (autoMode) {
+            console.log(`\n${colors.ui.key('Mode:')} ${colors.status.warning('AUTO')} (AITL - auto-execute)`);
           } else {
-            console.log('\n' + colors.status.dim(`  Generated: ${recommendations.generated_at}`));
+            console.log(`\n${colors.ui.key('Mode:')} ${colors.ui.value('DEFAULT')} (dry-run validation)`);
           }
 
-          console.log('\n' + separator());
-        } catch (error: any) {
-          console.error(colors.status.error('✗ Failed to get recommendations'));
-          console.error(colors.status.error(error.response?.data?.detail || error.message));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('config')
-      .description('Show vocabulary configuration')
-      .action(async () => {
-        try {
-          const client = createClientFromEnv();
-          const config = await client.getVocabularyConfig();
+          console.log(`${colors.ui.key('Target Size:')} ${coloredCount(targetSize)}`);
+          console.log(`${colors.ui.key('Auto-Execute Threshold:')} ${colors.ui.value((threshold * 100).toFixed(0) + '%')}`);
 
+          // Run consolidation
+          console.log('\n' + colors.status.dim('Running LLM-based consolidation workflow...'));
+          console.log(colors.status.dim('This may take a few minutes depending on vocabulary size.\n'));
+
+          const result = await client.consolidateVocabulary({
+            target_size: targetSize,
+            batch_size: 1,
+            auto_execute_threshold: threshold,
+            dry_run: dryRun || !autoMode  // Dry-run if not in auto mode
+          });
+
+          // Display results
           console.log('\n' + separator());
-          console.log(colors.ui.title('⚙️  Vocabulary Configuration'));
+          console.log(colors.ui.title('📊 Consolidation Results'));
           console.log(separator());
 
-          console.log('\n' + colors.stats.section('Thresholds'));
-          console.log(`  ${colors.stats.label('Minimum:')} ${coloredCount(config.vocab_min)}`);
-          console.log(`  ${colors.stats.label('Maximum:')} ${coloredCount(config.vocab_max)}`);
-          console.log(`  ${colors.stats.label('Emergency:')} ${coloredCount(config.vocab_emergency)}`);
-          console.log(`  ${colors.stats.label('Category Min:')} ${coloredCount(config.category_min)}`);
-          console.log(`  ${colors.stats.label('Category Max:')} ${coloredCount(config.category_max)}`);
+          console.log('\n' + colors.stats.section('Summary'));
+          console.log(`  ${colors.stats.label('Initial Size:')} ${coloredCount(result.initial_size)}`);
+          console.log(`  ${colors.stats.label('Final Size:')} ${coloredCount(result.final_size)}`);
+          if (result.size_reduction > 0) {
+            console.log(`  ${colors.stats.label('Reduction:')} ${colors.status.success('-' + result.size_reduction)}`);
+          } else {
+            console.log(`  ${colors.stats.label('Reduction:')} ${colors.status.dim('0')}`);
+          }
+          console.log(`  ${colors.stats.label('Auto-Executed:')} ${coloredCount(result.auto_executed.length)}`);
+          console.log(`  ${colors.stats.label('Needs Review:')} ${coloredCount(result.needs_review.length)}`);
+          console.log(`  ${colors.stats.label('Rejected:')} ${coloredCount(result.rejected.length)}`);
 
-          console.log('\n' + colors.stats.section('Pruning'));
-          console.log(`  ${colors.stats.label('Mode:')} ${colors.ui.value(config.pruning_mode.toUpperCase())}`);
-          console.log(`  ${colors.stats.label('Aggressiveness Profile:')} ${colors.ui.value(config.aggressiveness_profile)}`);
-          console.log(`  ${colors.stats.label('Auto-Expand:')} ${config.auto_expand_enabled ? colors.status.success('✓ Enabled') : colors.status.dim('✗ Disabled')}`);
+          // Auto-executed merges
+          if (result.auto_executed.length > 0) {
+            console.log('\n' + colors.stats.section('Auto-Executed Merges'));
+            console.log(separator(80, '─'));
+            result.auto_executed.forEach((merge: any) => {
+              const status = merge.error ? '✗' : '✓';
+              const statusColor = merge.error ? colors.status.error : colors.status.success;
+              console.log(`\n${statusColor(status)} ${merge.deprecated} → ${merge.target}`);
+              console.log(`   ${colors.ui.key('Similarity:')} ${colors.ui.value((merge.similarity * 100).toFixed(1) + '%')}`);
+              console.log(`   ${colors.ui.key('Reasoning:')} ${colors.status.dim(merge.reasoning)}`);
+              if (merge.edges_updated !== undefined) {
+                console.log(`   ${colors.ui.key('Edges Updated:')} ${coloredCount(merge.edges_updated)}`);
+              }
+              if (merge.error) {
+                console.log(`   ${colors.status.error('ERROR:')} ${merge.error}`);
+              }
+            });
+          }
 
-          console.log('\n' + colors.stats.section('Synonym Detection'));
-          console.log(`  ${colors.stats.label('Strong Threshold:')} ${colors.ui.value((config.synonym_threshold_strong * 100).toFixed(0) + '%')}`);
-          console.log(`  ${colors.stats.label('Moderate Threshold:')} ${colors.ui.value((config.synonym_threshold_moderate * 100).toFixed(0) + '%')}`);
+          // Needs review
+          if (result.needs_review.length > 0) {
+            console.log('\n' + colors.stats.section('Needs Human Review'));
+            console.log(separator(80, '─'));
+            const displayCount = Math.min(10, result.needs_review.length);
+            result.needs_review.slice(0, displayCount).forEach((review: any) => {
+              console.log(`\n? ${review.type1} + ${review.type2}`);
+              if (review.suggested_term) {
+                console.log(`   ${colors.ui.key('Suggested:')} ${colors.ui.value(review.suggested_term)}`);
+              }
+              console.log(`   ${colors.ui.key('Similarity:')} ${colors.ui.value((review.similarity * 100).toFixed(1) + '%')}`);
+              console.log(`   ${colors.ui.key('Reasoning:')} ${colors.status.dim(review.reasoning)}`);
+            });
+            if (result.needs_review.length > 10) {
+              console.log('\n' + colors.status.dim(`  ... and ${result.needs_review.length - 10} more`));
+            }
+            console.log('\n' + colors.status.dim('  Use "kg vocab merge <type1> <type2>" to manually merge'));
+          }
 
-          console.log('\n' + colors.stats.section('Value Scoring'));
-          console.log(`  ${colors.stats.label('Low Value Threshold:')} ${colors.ui.value(config.low_value_threshold.toFixed(1))}`);
-
-          console.log('\n' + colors.stats.section('Models'));
-          console.log(`  ${colors.stats.label('Embedding Model:')} ${colors.ui.value(config.embedding_model)}`);
+          // Rejected
+          if (result.rejected.length > 0) {
+            console.log('\n' + colors.stats.section(`Rejected Merges (showing first 10 of ${result.rejected.length})`));
+            console.log(separator(80, '─'));
+            result.rejected.slice(0, 10).forEach((reject: any) => {
+              console.log(`\n✗ ${reject.type1} + ${reject.type2}`);
+              console.log(`   ${colors.ui.key('Reasoning:')} ${colors.status.dim(reject.reasoning)}`);
+            });
+          }
 
           console.log('\n' + separator());
-        } catch (error: any) {
-          console.error(colors.status.error('✗ Failed to get vocabulary config'));
-          console.error(colors.status.error(error.response?.data?.detail || error.message));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('analysis')
-      .description('Detailed vocabulary analysis with value scores and synonyms')
-      .action(async () => {
-        try {
-          const client = createClientFromEnv();
-          const analysis = await client.getVocabularyAnalysis();
-
-          console.log('\n' + separator());
-          console.log(colors.ui.title('📊 Vocabulary Analysis'));
+          console.log(colors.status.success('✓ ' + result.message));
           console.log(separator());
-
-          // Context
-          console.log('\n' + colors.stats.section('Context'));
-          const zoneColors: Record<string, (text: string) => string> = {
-            comfort: colors.status.success,
-            watch: colors.status.warning,
-            emergency: colors.status.error,
-            block: colors.status.error
-          };
-          const zoneColor = zoneColors[analysis.zone] || colors.ui.value;
-          console.log(`  ${colors.stats.label('Vocabulary Size:')} ${coloredCount(analysis.vocab_size)} of ${coloredCount(analysis.vocab_max)}`);
-          console.log(`  ${colors.stats.label('Zone:')} ${zoneColor(analysis.zone.toUpperCase())}`);
-          console.log(`  ${colors.stats.label('Aggressiveness:')} ${colors.ui.value((analysis.aggressiveness * 100).toFixed(1) + '%')}`);
-
-          // Category distribution
-          if (Object.keys(analysis.category_distribution).length > 0) {
-            console.log('\n' + colors.stats.section('Category Distribution'));
-            Object.entries(analysis.category_distribution)
-              .sort(([, a]: any, [, b]: any) => b - a)
-              .forEach(([category, count]: any) => {
-                console.log(`  ${colors.stats.label(category + ':')} ${coloredCount(count)}`);
-              });
-          }
-
-          // Synonym candidates
-          if (analysis.synonym_candidates.length > 0) {
-            console.log('\n' + colors.stats.section('Synonym Candidates'));
-            console.log(separator(80, '─'));
-            console.log(
-              colors.status.dim(
-                `${'TYPE 1'.padEnd(20)} ${'TYPE 2'.padEnd(20)} ${'SIMILARITY'.padStart(12)} ${'STRENGTH'.padStart(12)}`
-              )
-            );
-            console.log(separator(80, '─'));
-
-            analysis.synonym_candidates
-              .sort((a: any, b: any) => b.similarity - a.similarity)
-              .slice(0, 10)  // Top 10
-              .forEach((candidate: any) => {
-                const simColor = candidate.similarity >= 0.90
-                  ? colors.status.error
-                  : candidate.similarity >= 0.70
-                    ? colors.status.warning
-                    : colors.status.dim;
-                const strengthBadge = candidate.is_strong_match
-                  ? colors.status.error('[STRONG]')
-                  : colors.status.dim('[' + candidate.strength.toUpperCase() + ']');
-
-                console.log(
-                  `${colors.getRelationshipColor(candidate.type1)(candidate.type1.padEnd(20))} ` +
-                  `${colors.getRelationshipColor(candidate.type2)(candidate.type2.padEnd(20))} ` +
-                  `${simColor((candidate.similarity * 100).toFixed(1).padStart(11) + '%')} ` +
-                  `${strengthBadge.padStart(12)}`
-                );
-              });
-
-            if (analysis.synonym_candidates.length > 10) {
-              console.log(separator(80, '─'));
-              console.log(colors.status.dim(`  ... and ${analysis.synonym_candidates.length - 10} more`));
-            }
-          }
-
-          // Low value types
-          if (analysis.low_value_types.length > 0) {
-            console.log('\n' + colors.stats.section('Low Value Types (Pruning Candidates)'));
-            console.log(separator(80, '─'));
-            console.log(
-              colors.status.dim(
-                `${'TYPE'.padEnd(25)} ${'EDGES'.padStart(8)} ${'TRAVERSAL'.padStart(12)} ${'SCORE'.padStart(10)}`
-              )
-            );
-            console.log(separator(80, '─'));
-
-            analysis.low_value_types
-              .sort((a: any, b: any) => a.value_score - b.value_score)
-              .slice(0, 10)  // Bottom 10
-              .forEach((type: any) => {
-                const scoreColor = type.value_score < 0.5 ? colors.status.error : colors.status.warning;
-                console.log(
-                  `${colors.getRelationshipColor(type.relationship_type)(type.relationship_type.padEnd(25))} ` +
-                  `${coloredCount(type.edge_count.toString().padStart(8))} ` +
-                  `${colors.ui.value(type.avg_traversal.toFixed(2).padStart(12))} ` +
-                  `${scoreColor(type.value_score.toFixed(2).padStart(10))}`
-                );
-              });
-
-            if (analysis.low_value_types.length > 10) {
-              console.log(separator(80, '─'));
-              console.log(colors.status.dim(`  ... and ${analysis.low_value_types.length - 10} more`));
-            }
-          }
-
-          console.log('\n' + separator());
         } catch (error: any) {
-          console.error(colors.status.error('✗ Failed to get vocabulary analysis'));
+          console.error(colors.status.error('✗ Failed to consolidate vocabulary'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
           process.exit(1);
         }
@@ -363,7 +252,7 @@ export const vocabularyCommand = new Command('vocabulary')
   )
   .addCommand(
     new Command('merge')
-      .description('Merge one edge type into another')
+      .description('Manually merge one edge type into another')
       .argument('<deprecated-type>', 'Edge type to deprecate')
       .argument('<target-type>', 'Target edge type to merge into')
       .option('-r, --reason <text>', 'Reason for merge')

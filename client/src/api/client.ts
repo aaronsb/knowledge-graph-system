@@ -812,6 +812,24 @@ export class KnowledgeGraphClient {
     });
     return response.data;
   }
+
+  /**
+   * Run AITL vocabulary consolidation workflow (ADR-032)
+   */
+  async consolidateVocabulary(request: {
+    target_size?: number;
+    batch_size?: number;
+    auto_execute_threshold?: number;
+    dry_run?: boolean;
+  }): Promise<any> {
+    const response = await this.client.post('/vocabulary/consolidate', {
+      target_size: request.target_size ?? 90,
+      batch_size: request.batch_size ?? 1,
+      auto_execute_threshold: request.auto_execute_threshold ?? 0.90,
+      dry_run: request.dry_run ?? false
+    });
+    return response.data;
+  }
 }
 
 /**
