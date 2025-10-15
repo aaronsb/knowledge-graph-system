@@ -251,6 +251,116 @@ class DataExporter:
         return relationships
 
     @staticmethod
+    def export_vocabulary(client: AGEClient) -> List[Dict[str, Any]]:
+        """
+        Export relationship vocabulary table (ADR-032)
+
+        Exports all edge types from kg_api.relationship_vocabulary table,
+        including builtin types and extended vocabulary discovered during ingestion.
+        This preserves vocabulary state across backup/restore cycles.
+
+        Args:
+            client: AGEClient instance
+
+        Returns:
+            List of vocabulary entry dictionaries
+        """
+        # Query vocabulary table directly (PostgreSQL, not Cypher)
+        conn = client.pool.getconn()
+        try:
+            import psycopg2.extras
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT relationship_type, description, category, added_by,
+                           added_at, usage_count, is_active, is_builtin,
+                           synonyms, deprecation_reason, embedding_model,
+                           embedding_generated_at, embedding
+                    FROM kg_api.relationship_vocabulary
+                    ORDER BY relationship_type
+                """)
+                results = cur.fetchall()
+
+                vocabulary = []
+                for row in results:
+                    # Convert row to dict and handle JSON fields
+                    entry = dict(row)
+
+                    # Parse JSONB fields
+                    if entry.get('synonyms'):
+                        try:
+                            entry['synonyms'] = json.loads(entry['synonyms']) if isinstance(entry['synonyms'], str) else entry['synonyms']
+                        except (json.JSONDecodeError, TypeError):
+                            entry['synonyms'] = []
+
+                    if entry.get('embedding'):
+                        try:
+                            entry['embedding'] = json.loads(entry['embedding']) if isinstance(entry['embedding'], str) else entry['embedding']
+                        except (json.JSONDecodeError, TypeError):
+                            entry['embedding'] = None
+
+                    # Convert datetime to ISO string
+                    if entry.get('added_at'):
+                        entry['added_at'] = entry['added_at'].isoformat() if hasattr(entry['added_at'], 'isoformat') else str(entry['added_at'])
+
+                    if entry.get('embedding_generated_at'):
+                        entry['embedding_generated_at'] = entry['embedding_generated_at'].isoformat() if hasattr(entry['embedding_generated_at'], 'isoformat') else str(entry['embedding_generated_at'])
+
+                    vocabulary.append(entry)
+
+                return vocabulary
+
+        finally:
+            conn.commit()
+            client.pool.putconn(conn)
+
+    @staticmethod
+    def _log_vocabulary_summary(relationships: List[Dict[str, Any]], vocabulary: List[Dict[str, Any]]):
+        """
+        Log vocabulary-aware summary of backed up relationships (ADR-032)
+
+        Instead of logging every relationship, provide a high-level view of
+        edge type distribution similar to kg db stats.
+
+        Args:
+            relationships: List of relationship dictionaries
+            vocabulary: List of vocabulary entry dictionaries
+        """
+        from collections import Counter
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        # Count edge types in relationships
+        edge_type_counts = Counter(rel["type"] for rel in relationships)
+        unique_types = len(edge_type_counts)
+
+        # Categorize edge types
+        builtin_types = set(v["relationship_type"] for v in vocabulary if v.get("is_builtin", False))
+
+        builtin_count = 0
+        custom_count = 0
+        builtin_edges = 0
+        custom_edges = 0
+
+        for edge_type, count in edge_type_counts.items():
+            if edge_type in builtin_types:
+                builtin_count += 1
+                builtin_edges += count
+            else:
+                custom_count += 1
+                custom_edges += count
+
+        # Get top 5 edge types
+        top_types = edge_type_counts.most_common(5)
+
+        # Log as structured info messages (appears in API logs)
+        logger.info(f"Relationships: {len(relationships)} edges across {unique_types} types ({builtin_count} builtin, {custom_count} custom)")
+
+        if top_types:
+            top_list = ", ".join(f"{t}({c})" for t, c in top_types)
+            logger.info(f"Top edge types: {top_list}")
+
+    @staticmethod
     def export_full_backup(client: AGEClient) -> Dict[str, Any]:
         """
         Export entire database
@@ -273,19 +383,27 @@ class DataExporter:
         Console.info("Exporting relationships...")
         relationships = DataExporter.export_relationships(client)
 
+        Console.info("Exporting vocabulary...")
+        vocabulary = DataExporter.export_vocabulary(client)
+
+        # Calculate vocabulary statistics (ADR-032)
+        DataExporter._log_vocabulary_summary(relationships, vocabulary)
+
         return {
             **BackupFormat.create_metadata(BackupFormat.FULL_BACKUP),
             "statistics": {
                 "concepts": len(concepts),
                 "sources": len(sources),
                 "instances": len(instances),
-                "relationships": len(relationships)
+                "relationships": len(relationships),
+                "vocabulary": len(vocabulary)
             },
             "data": {
                 "concepts": concepts,
                 "sources": sources,
                 "instances": instances,
-                "relationships": relationships
+                "relationships": relationships,
+                "vocabulary": vocabulary
             }
         }
 
@@ -315,19 +433,29 @@ class DataExporter:
         Console.info("  - Relationships...")
         relationships = DataExporter.export_relationships(client, ontology)
 
+        Console.info("  - Vocabulary...")
+        # NOTE: Vocabulary is global state, export entire vocabulary table
+        # even for ontology backups to preserve extended vocabulary (ADR-032)
+        vocabulary = DataExporter.export_vocabulary(client)
+
+        # Calculate vocabulary statistics (ADR-032)
+        DataExporter._log_vocabulary_summary(relationships, vocabulary)
+
         return {
             **BackupFormat.create_metadata(BackupFormat.ONTOLOGY_BACKUP, ontology),
             "statistics": {
                 "concepts": len(concepts),
                 "sources": len(sources),
                 "instances": len(instances),
-                "relationships": len(relationships)
+                "relationships": len(relationships),
+                "vocabulary": len(vocabulary)
             },
             "data": {
                 "concepts": concepts,
                 "sources": sources,
                 "instances": instances,
-                "relationships": relationships
+                "relationships": relationships,
+                "vocabulary": vocabulary
             }
         }
 
@@ -391,11 +519,77 @@ class DataImporter:
 
         data = backup_data["data"]
         stats = {
+            "vocabulary_imported": 0,
             "concepts_created": 0,
             "sources_created": 0,
             "instances_created": 0,
             "relationships_created": 0
         }
+
+        # Import vocabulary first (ADR-032) - needed before relationships
+        if "vocabulary" in data and len(data["vocabulary"]) > 0:
+            Console.info("Importing vocabulary...")
+            total_vocab = len(data["vocabulary"])
+
+            conn = client.pool.getconn()
+            try:
+                import psycopg2.extras
+                with conn.cursor() as cur:
+                    for i, entry in enumerate(data["vocabulary"]):
+                        current = i + 1
+                        Console.progress(current, total_vocab, "Vocabulary")
+
+                        if progress_callback and current % 10 == 0:
+                            percent = (current / total_vocab) * 100
+                            progress_callback("vocabulary", current, total_vocab, percent)
+
+                        # Convert JSON fields back to JSONB strings
+                        synonyms_json = json.dumps(entry.get('synonyms')) if entry.get('synonyms') else None
+                        embedding_json = json.dumps(entry.get('embedding')) if entry.get('embedding') else None
+
+                        # Insert or update vocabulary entry
+                        cur.execute("""
+                            INSERT INTO kg_api.relationship_vocabulary
+                                (relationship_type, description, category, added_by, added_at,
+                                 usage_count, is_active, is_builtin, synonyms, deprecation_reason,
+                                 embedding_model, embedding_generated_at, embedding)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s::jsonb)
+                            ON CONFLICT (relationship_type) DO UPDATE SET
+                                description = EXCLUDED.description,
+                                category = EXCLUDED.category,
+                                added_by = EXCLUDED.added_by,
+                                added_at = EXCLUDED.added_at,
+                                usage_count = EXCLUDED.usage_count,
+                                is_active = EXCLUDED.is_active,
+                                is_builtin = EXCLUDED.is_builtin,
+                                synonyms = EXCLUDED.synonyms,
+                                deprecation_reason = EXCLUDED.deprecation_reason,
+                                embedding_model = EXCLUDED.embedding_model,
+                                embedding_generated_at = EXCLUDED.embedding_generated_at,
+                                embedding = EXCLUDED.embedding
+                        """, (
+                            entry.get('relationship_type'),
+                            entry.get('description'),
+                            entry.get('category'),
+                            entry.get('added_by'),
+                            entry.get('added_at'),
+                            entry.get('usage_count', 0),
+                            entry.get('is_active', True),
+                            entry.get('is_builtin', False),
+                            synonyms_json,
+                            entry.get('deprecation_reason'),
+                            entry.get('embedding_model'),
+                            entry.get('embedding_generated_at'),
+                            embedding_json
+                        ))
+                        stats["vocabulary_imported"] += 1
+
+                conn.commit()
+            finally:
+                client.pool.putconn(conn)
+
+            if progress_callback and total_vocab > 0:
+                progress_callback("vocabulary", total_vocab, total_vocab, 100.0)
 
         # Import concepts
         Console.info("Importing concepts...")

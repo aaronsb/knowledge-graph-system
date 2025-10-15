@@ -36,6 +36,8 @@ class ZoneEnum(str, Enum):
     """Aggressiveness zone"""
     comfort = "comfort"
     watch = "watch"
+    merge = "merge"
+    mixed = "mixed"
     emergency = "emergency"
     block = "block"
 
@@ -270,4 +272,23 @@ class RestoreEdgeTypeResponse(BaseModel):
     """Result of restoring edge type"""
     success: bool
     relationship_type: str
+    message: str
+
+
+# =============================================================================
+# Embedding Models
+# =============================================================================
+
+class GenerateEmbeddingsRequest(BaseModel):
+    """Request to generate vocabulary embeddings"""
+    force_regenerate: bool = False
+    only_missing: bool = True
+
+
+class GenerateEmbeddingsResponse(BaseModel):
+    """Result of generating vocabulary embeddings"""
+    success: bool
+    generated: int
+    skipped: int
+    failed: int
     message: str

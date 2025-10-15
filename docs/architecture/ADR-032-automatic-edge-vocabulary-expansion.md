@@ -1363,6 +1363,196 @@ kg vocab restore CREATES --reason "Needed for new documentation ontology"
 kg vocab unmerge AUTHORED_BY --from CREATED_BY
 ```
 
+#### 8. Vocabulary State Portability (Backup/Restore Integration)
+
+**Implementation Insight:** During implementation, we discovered that vocabulary table state is essential for backup portability (Issue discovered: 2025-10-15).
+
+**Problem:** Initial backup system (ADR-015) only exported graph data:
+```json
+{
+  "data": {
+    "concepts": [...],
+    "sources": [...],
+    "instances": [...],
+    "relationships": [...]  // Contains edge types as strings
+  }
+}
+```
+
+Relationships contain edge type strings (e.g., `AUTHORED_BY`, `OPTIMIZES`), but the vocabulary table metadata was not preserved. On restore to a fresh database:
+- Graph structure restored ✅
+- Edge types present in relationships ✅
+- **Vocabulary table empty** ❌ (only 30 builtin types, missing 60+ custom types)
+- **Category assignments lost** ❌
+- **Usage statistics lost** ❌
+- **Embeddings lost** ❌
+- **Synonym mappings lost** ❌
+
+**Core Insight:**
+
+Because ADR-032 structures vocabulary as **managed state** (not just emergent properties), backups become snapshots of TWO things:
+1. **Graph data** (what was ingested)
+2. **Vocabulary state** (what was learned/curated)
+
+This is analogous to backing up both database tables AND schema definitions - you need both for complete restoration.
+
+**Solution: Include Vocabulary Table in Backups**
+
+Modified backup format to export complete vocabulary state:
+
+```json
+{
+  "version": "1.0",
+  "type": "full_backup",
+  "timestamp": "2025-10-15T12:26:31Z",
+  "statistics": {
+    "concepts": 807,
+    "sources": 661,
+    "instances": 3546,
+    "relationships": 1699,
+    "vocabulary": 90  // New: vocabulary count
+  },
+  "data": {
+    "concepts": [...],
+    "sources": [...],
+    "instances": [...],
+    "relationships": [...],
+    "vocabulary": [  // New: complete vocabulary table
+      {
+        "relationship_type": "AUTHORED_BY",
+        "description": "LLM-generated relationship type",
+        "category": "attribution",
+        "added_by": "llm_extractor",
+        "added_at": "2025-10-15T16:41:26Z",
+        "usage_count": 27,
+        "is_active": true,
+        "is_builtin": false,
+        "synonyms": ["CREATED_BY"],
+        "embedding": [0.123, -0.456, ...],  // 1536-dim vector
+        "embedding_model": "text-embedding-ada-002",
+        "embedding_generated_at": "2025-10-15T16:42:00Z",
+        "deprecation_reason": null
+      },
+      // ... 89 more types
+    ]
+  }
+}
+```
+
+**Vocabulary Import During Restore:**
+
+Vocabulary must be imported **BEFORE** relationships to ensure edge types exist:
+
+```python
+def import_backup(backup_data):
+    """Restore backup with vocabulary-first ordering."""
+
+    # 1. Import vocabulary FIRST (ADR-032)
+    if "vocabulary" in backup_data["data"]:
+        for entry in backup_data["data"]["vocabulary"]:
+            # INSERT...ON CONFLICT to handle existing types
+            db.execute("""
+                INSERT INTO kg_api.relationship_vocabulary
+                    (relationship_type, category, description, ...)
+                VALUES (%s, %s, %s, ...)
+                ON CONFLICT (relationship_type) DO UPDATE SET
+                    category = EXCLUDED.category,
+                    usage_count = EXCLUDED.usage_count,
+                    ...
+            """, entry_values)
+
+    # 2. Import concepts (needs vocabulary for validation)
+    import_concepts(backup_data["data"]["concepts"])
+
+    # 3. Import sources
+    import_sources(backup_data["data"]["sources"])
+
+    # 4. Import instances
+    import_instances(backup_data["data"]["instances"])
+
+    # 5. Import relationships (edge types now exist in vocabulary)
+    import_relationships(backup_data["data"]["relationships"])
+```
+
+**Backward Compatibility:**
+
+Old backups without vocabulary section still restore correctly:
+
+```python
+# Backup integrity checker (backup_integrity.py)
+if "vocabulary" in data_section:
+    # New backup: validate against vocabulary table
+    vocabulary_types = {v["relationship_type"] for v in data_section["vocabulary"]}
+
+    # Validate relationships use known types
+    for rel in relationships:
+        if rel["type"] not in vocabulary_types:
+            # Warn about unknown types
+            result.add_warning(f"Unknown type: {rel['type']}")
+else:
+    # Old backup: validate against builtin types only
+    vocabulary_types = BUILTIN_RELATIONSHIP_TYPES
+```
+
+**Why This Matters:**
+
+1. **Ontology Portability:** Export ontology from dev → import to prod with full vocabulary context
+2. **Disaster Recovery:** Complete system state restoration (not just graph data)
+3. **A/B Testing:** Clone production vocabulary state to test environment
+4. **Temporal Snapshots:** Backup captures "what the system knew" at that moment
+5. **Migration Safety:** Vocabulary state travels with graph data during migrations
+
+**Example Scenario:**
+
+```bash
+# Export ontology with learned vocabulary
+kg admin backup --type ontology --ontology "ML Research Papers"
+
+# Backup contains:
+# - 250 concepts from ML domain
+# - 45 relationship types (30 builtin + 15 custom)
+# - Custom types: TRAINS_ON, OPTIMIZES, OUTPERFORMS, PRETRAINED_ON, ...
+# - Category assignments: all 15 custom types → "ml_specific" category
+# - Embeddings for synonym detection
+# - Usage statistics for value scoring
+
+# Import to fresh database
+kg admin restore --file ml_research_papers.json
+
+# Result:
+# ✅ All 250 concepts restored
+# ✅ All 45 relationship types available
+# ✅ Custom ML types immediately usable
+# ✅ Category structure preserved
+# ✅ Ready for new ingestion without vocabulary re-learning
+```
+
+**Implementation Changes:**
+
+Modified files:
+- `src/lib/serialization.py`: Added `export_vocabulary()` method
+- `src/lib/serialization.py`: Modified `import_backup()` to import vocabulary first
+- `src/api/lib/backup_integrity.py`: Added vocabulary section validation
+- Backup format version remains `1.0` (backward compatible)
+
+**Statistics Tracking:**
+
+Backup integrity checker now reports vocabulary statistics:
+
+```
+✓ Backup validated successfully
+  Full database backup
+  - Concepts: 807
+  - Sources: 661
+  - Instances: 3546
+  - Relationships: 1699
+  - Vocabulary: 90 types (30 builtin, 60 extended)
+```
+
+**Data Integrity Note:**
+
+During testing, we discovered 851 relationships using edge types not in the vocabulary table (USED_FOR, CONTAINS, DEFINED_AS, etc.). These are pre-ADR-032 data - relationships created before vocabulary tracking was implemented. The backup integrity checker correctly flags these as warnings but still allows restore (they remain as string properties on edges).
+
 ## Implementation Plan
 
 ### Phase 1: Auto-Expansion Infrastructure

@@ -798,6 +798,20 @@ export class KnowledgeGraphClient {
     const response = await this.client.post('/vocabulary/merge', request);
     return response.data;
   }
+
+  /**
+   * Generate embeddings for vocabulary types (bulk operation)
+   */
+  async generateVocabularyEmbeddings(
+    forceRegenerate: boolean = false,
+    onlyMissing: boolean = true
+  ): Promise<any> {
+    const response = await this.client.post('/vocabulary/generate-embeddings', {
+      force_regenerate: forceRegenerate,
+      only_missing: onlyMissing
+    });
+    return response.data;
+  }
 }
 
 /**
