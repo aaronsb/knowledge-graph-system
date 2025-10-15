@@ -324,7 +324,7 @@ class OpenAIProvider(AIProvider):
             self.client.models.list()
             return True
         except Exception as e:
-            print(f"OpenAI API key validation failed: {e}")
+            logger.error(f"OpenAI API key validation failed: {e}")
             return False
 
     def list_available_models(self) -> Dict[str, List[str]]:
@@ -507,7 +507,7 @@ class AnthropicProvider(AIProvider):
             )
             return True
         except Exception as e:
-            print(f"Anthropic API key validation failed: {e}")
+            logger.error(f"Anthropic API key validation failed: {e}")
             return False
 
     def list_available_models(self) -> Dict[str, List[str]]:
