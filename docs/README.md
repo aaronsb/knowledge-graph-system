@@ -41,6 +41,7 @@ User and developer guides for getting started and working with the system.
 - **MCP_SETUP.md** - MCP server setup for Claude Desktop integration
 - **BACKUP_RESTORE.md** - Backup and restore operations guide
 - **INGESTION.md** - Document ingestion workflow and configuration
+- **VOCABULARY_CONSOLIDATION.md** - Edge vocabulary consolidation with AITL (ADR-032)
 - **EXAMPLES.md** - Usage examples and common patterns
 - **USE_CASES.md** - Real-world workflow catalog (index to use_cases/ directory)
 - **use_cases/** - Individual use case guides (GitHub history analysis, etc.)
@@ -66,8 +67,10 @@ Images, diagrams, and other media assets.
 ### New Users
 1. Start with [QUICKSTART.md](guides/QUICKSTART.md)
 2. Learn about [AI Providers](guides/AI_PROVIDERS.md)
-3. See [ENRICHMENT_JOURNEY.md](reference/ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
-4. Review [Examples](guides/EXAMPLES.md) and [Use Cases](guides/USE_CASES.md)
+3. Read [INGESTION.md](guides/INGESTION.md) for document ingestion workflow
+4. See [VOCABULARY_CONSOLIDATION.md](guides/VOCABULARY_CONSOLIDATION.md) for managing edge vocabulary growth
+5. See [ENRICHMENT_JOURNEY.md](reference/ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
+6. Review [Examples](guides/EXAMPLES.md) and [Use Cases](guides/USE_CASES.md)
 
 ### Administrators
 1. Read [AUTHENTICATION.md](guides/AUTHENTICATION.md) for login and session management
