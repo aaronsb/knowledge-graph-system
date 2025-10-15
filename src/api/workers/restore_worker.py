@@ -92,8 +92,23 @@ def run_restore_worker(
         with open(temp_file, 'r', encoding='utf-8') as f:
             backup_data = json.load(f)
 
+        # Stage 2.5: For full backups, clear database first
+        backup_type = backup_data.get("type", "")
+        if backup_type == "full_backup":
+            logger.info(f"[{job_id}] Detected full backup - clearing database before restore")
+            job_queue.update_job(job_id, {
+                "progress": {
+                    "stage": "clearing_database",
+                    "percent": 15,
+                    "message": "Clearing existing database for full backup restore"
+                }
+            })
+            _clear_database(client, job_id)
+            # Force overwrite for full backups (though database is now empty)
+            overwrite = True
+
         # Stage 3: Execute restore with progress tracking
-        logger.info(f"[{job_id}] Starting restore operation (overwrite={overwrite})")
+        logger.info(f"[{job_id}] Starting restore operation (overwrite={overwrite}, backup_type={backup_type})")
 
         restore_stats = _execute_restore(
             client=client,
@@ -200,6 +215,24 @@ def _create_checkpoint_backup(client: AGEClient, job_id: str) -> Path:
     logger.info(f"[{job_id}] Checkpoint backup created: {checkpoint_path} ({checkpoint_path.stat().st_size} bytes)")
 
     return checkpoint_path
+
+
+def _clear_database(client: AGEClient, job_id: str) -> None:
+    """
+    Clear all graph data from the database.
+
+    Used when restoring a full backup to ensure clean slate.
+    Deletes all nodes and relationships in the knowledge_graph.
+    """
+    logger.info(f"[{job_id}] Clearing all graph data")
+
+    # Delete all relationships first
+    client._execute_cypher("MATCH (n)-[r]-() DELETE r")
+
+    # Delete all nodes
+    client._execute_cypher("MATCH (n) DELETE n")
+
+    logger.info(f"[{job_id}] Database cleared successfully")
 
 
 def _execute_restore(

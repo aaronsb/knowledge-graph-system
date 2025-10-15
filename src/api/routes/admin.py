@@ -7,6 +7,7 @@ API endpoints for system administration:
 - Database restore (ADR-015 Phase 2: Multipart Upload)
 - Database reset
 - Job scheduler management (ADR-014)
+- API key management (ADR-031)
 """
 
 import uuid
@@ -35,6 +36,7 @@ from ..services.job_queue import get_job_queue
 from ..lib.backup_streaming import create_backup_stream
 from ..lib.backup_integrity import check_backup_integrity
 from ..lib.age_client import AGEClient
+from ..lib.encrypted_keys import EncryptedKeyStore
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 logger = logging.getLogger(__name__)
@@ -264,9 +266,12 @@ async def restore_backup(
             )
 
         # Create restore job
+        # Note: System jobs (restore, backup, reset) use special "_system" ontology
+        # since they operate on the entire database rather than a specific ontology
         job_id = job_queue.enqueue(
             job_type="restore",
             job_data={
+                "ontology": "_system",  # System-level operation
                 "temp_file": str(temp_path),
                 "temp_file_id": str(temp_file_id),
                 "overwrite": overwrite,
@@ -279,7 +284,8 @@ async def restore_backup(
         logger.info(f"Created restore job {job_id} for temp file {temp_path}")
 
         # Execute restore job immediately (authenticated operations don't need approval)
-        background_tasks.add_task(job_queue.execute_job, job_id)
+        # ADR-031: Use execute_job_async for non-blocking execution
+        background_tasks.add_task(job_queue.execute_job_async, job_id)
 
         return {
             "job_id": job_id,
@@ -490,4 +496,244 @@ async def trigger_scheduler_cleanup():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cleanup failed: {str(e)}"
+        )
+
+
+# ========== API Key Management Endpoints (ADR-031) ==========
+
+@router.post("/keys/{provider}", status_code=status.HTTP_201_CREATED)
+async def set_api_key(
+    provider: str,
+    api_key: str = Form(..., description="API key to store")
+):
+    """
+    Set or rotate system API key for a provider (ADR-031)
+
+    Stores encrypted API key for this shard's LLM inference.
+    Validates the key before storage by making a minimal API call.
+
+    Supported providers:
+    - `openai`: OpenAI API (GPT-4, GPT-4o, embeddings)
+    - `anthropic`: Anthropic API (Claude)
+
+    The key is:
+    - Validated against the provider's API
+    - Encrypted with Fernet (AES-128-CBC + HMAC-SHA256)
+    - Stored in PostgreSQL
+    - Decrypted only when needed for inference
+
+    Requires admin authentication (placeholder for now).
+
+    Example:
+    ```bash
+    curl -X POST http://localhost:8000/admin/keys/openai \\
+      -F "api_key=sk-..."
+    ```
+
+    Returns success message if key validated and stored.
+    """
+    # Validate provider
+    valid_providers = ["openai", "anthropic"]
+    if provider not in valid_providers:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid provider. Must be one of: {', '.join(valid_providers)}"
+        )
+
+    # Validate key format
+    if provider == "anthropic":
+        if not api_key.startswith("sk-ant-"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Anthropic API key format (must start with 'sk-ant-')"
+            )
+    elif provider == "openai":
+        if not api_key.startswith("sk-"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid OpenAI API key format (must start with 'sk-')"
+            )
+
+    # Test the key by making a minimal API call
+    try:
+        if provider == "anthropic":
+            import anthropic
+            client = anthropic.Anthropic(api_key=api_key)
+            client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1,
+                messages=[{"role": "user", "content": "test"}]
+            )
+        else:  # openai
+            import openai
+            client = openai.OpenAI(api_key=api_key)
+            client.chat.completions.create(
+                model="gpt-4o-mini",
+                max_tokens=1,
+                messages=[{"role": "user", "content": "test"}]
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"API key validation failed: {str(e)}"
+        )
+
+    # Store encrypted
+    try:
+        age_client = AGEClient()
+        conn = age_client.pool.getconn()
+        try:
+            key_store = EncryptedKeyStore(conn)
+            key_store.store_key(provider, api_key)
+
+            logger.info(f"API key configured for provider: {provider}")
+
+            return {
+                "status": "success",
+                "message": f"{provider} API key configured for this shard",
+                "provider": provider
+            }
+        finally:
+            age_client.pool.putconn(conn)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to store API key: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Error storing API key for {provider}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error storing API key"
+        )
+
+
+@router.get("/keys")
+async def list_api_keys():
+    """
+    List configured API providers (ADR-031)
+
+    Returns list of providers with status (configured/not configured)
+    and last update time.
+
+    Does NOT return the actual API keys (security).
+
+    Example response:
+    ```json
+    [
+        {
+            "provider": "openai",
+            "configured": true,
+            "updated_at": "2025-10-12T10:30:00Z"
+        },
+        {
+            "provider": "anthropic",
+            "configured": false,
+            "updated_at": null
+        }
+    ]
+    ```
+    """
+    try:
+        age_client = AGEClient()
+        conn = age_client.pool.getconn()
+        try:
+            # Try to initialize key store - if encryption key not configured, return unconfigured
+            try:
+                key_store = EncryptedKeyStore(conn)
+                configured = key_store.list_providers()
+            except ValueError as e:
+                # Encryption key not configured - all providers are unconfigured
+                logger.info(f"Encryption key not configured: {e}")
+                configured = []
+
+            # Return all possible providers, marking which are configured
+            all_providers = ["openai", "anthropic"]
+            configured_map = {p['provider']: p for p in configured}
+
+            return [
+                {
+                    "provider": provider,
+                    "configured": provider in configured_map,
+                    "updated_at": configured_map[provider]['updated_at'] if provider in configured_map else None
+                }
+                for provider in all_providers
+            ]
+        finally:
+            age_client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Error listing API keys: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error listing API keys: {str(e)}"
+        )
+
+
+@router.delete("/keys/{provider}")
+async def delete_api_key(provider: str):
+    """
+    Delete system API key for a provider (ADR-031)
+
+    Removes the encrypted API key from this shard's storage.
+    After deletion, inference using this provider will not work
+    until a new key is configured.
+
+    Requires admin authentication (placeholder for now).
+
+    Example:
+    ```bash
+    curl -X DELETE http://localhost:8000/admin/keys/openai
+    ```
+
+    Returns success if key was deleted, 404 if key wasn't configured.
+    """
+    # Validate provider
+    valid_providers = ["openai", "anthropic"]
+    if provider not in valid_providers:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid provider. Must be one of: {', '.join(valid_providers)}"
+        )
+
+    try:
+        age_client = AGEClient()
+        conn = age_client.pool.getconn()
+        try:
+            # Try to initialize key store - if encryption key not configured, no keys exist
+            try:
+                key_store = EncryptedKeyStore(conn)
+            except ValueError as e:
+                # Encryption key not configured - no keys can be stored
+                logger.info(f"Encryption key not configured: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No {provider} API key configured (encryption key not available)"
+                )
+
+            deleted = key_store.delete_key(provider)
+            if not deleted:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No {provider} API key configured"
+                )
+
+            logger.info(f"API key deleted for provider: {provider}")
+
+            return {
+                "status": "success",
+                "message": f"{provider} API key removed",
+                "provider": provider
+            }
+        finally:
+            age_client.pool.putconn(conn)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting API key for {provider}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error deleting API key"
         )

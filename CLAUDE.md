@@ -228,6 +228,23 @@ ANTHROPIC_API_KEY=sk-ant-...  # if using Anthropic
 3. Modify LLM extraction prompt to recognize new type
 4. Test with sample ingestion
 
+### Create a New ADR (Architecture Decision Record)
+
+When making significant architectural decisions:
+
+1. Create new ADR file: `docs/architecture/ADR-###-descriptive-name.md`
+   - Use the next sequential number (check existing ADRs)
+   - Follow the format from existing ADRs
+   - Include: Status, Date, Context, Decision, Consequences, Alternatives Considered
+2. **IMPORTANT:** Update `docs/architecture/ARCHITECTURE_DECISIONS.md`
+   - Add new entry to the ADR Index table with title, status, and brief summary
+   - Update "Last Updated" date
+   - This file serves as the master index for all ADRs
+3. Reference the new ADR in related documentation:
+   - Update `docs/README.md` if it's a major user-facing change
+   - Link from related ADRs using "Related ADRs" section
+   - Update CLAUDE.md if it affects development workflow
+
 ## Troubleshooting
 
 ### Database Connection Issues
