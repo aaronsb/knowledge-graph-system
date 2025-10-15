@@ -1391,12 +1391,33 @@ class AGEClient:
             >>> result = client.merge_edge_types("VERIFIES", "VALIDATES", "admin")
             >>> print(f"Updated {result['edges_updated']} edges")
         """
-        # TODO: Implement actual edge updates in graph
-        # For now, just mark as deprecated in vocabulary
         conn = self.pool.getconn()
         try:
             with conn.cursor() as cur:
-                # Mark deprecated type as inactive
+                # First, update all edges in the graph from deprecated_type to target_type
+                # Note: AGE doesn't support dynamic relationship types in parameterized queries
+                # We must use string interpolation for relationship types
+                try:
+                    # Delete existing edges of deprecated type and recreate with target type
+                    # This is a two-step process since AGE doesn't support SET on relationship labels
+                    merge_query = f"""
+                    MATCH (c1)-[r:{deprecated_type}]->(c2)
+                    CREATE (c1)-[new_r:{target_type}]->(c2)
+                    SET new_r = properties(r)
+                    DELETE r
+                    RETURN count(new_r) as edges_updated
+                    """
+
+                    result = self._execute_cypher(merge_query, fetch_one=True)
+                    edges_updated = int(str(result.get('edges_updated', 0))) if result else 0
+
+                    logger.info(f"Merged {edges_updated} edges from {deprecated_type} to {target_type}")
+                except Exception as e:
+                    logger.error(f"Failed to update graph edges during merge: {e}")
+                    # Continue with vocabulary update even if graph update fails
+                    edges_updated = 0
+
+                # Mark deprecated type as inactive in vocabulary
                 cur.execute("""
                     UPDATE kg_api.relationship_vocabulary
                     SET is_active = FALSE,
@@ -1404,20 +1425,16 @@ class AGEClient:
                     WHERE relationship_type = %s
                     RETURNING relationship_type
                 """, (f"Merged into {target_type}", deprecated_type))
-                
+
                 vocab_updated = 1 if cur.fetchone() else 0
-                
+
                 # Record in history
                 cur.execute("""
                     INSERT INTO kg_api.vocabulary_history
                         (relationship_type, action, performed_by, target_type, reason)
                     VALUES (%s, 'merged', %s, %s, %s)
                 """, (deprecated_type, performed_by, target_type, f"Merged into {target_type}"))
-                
-                # TODO: Update actual edges in graph
-                # This would require Cypher query to update all edges
-                edges_updated = 0  # Placeholder
-                
+
                 return {
                     "edges_updated": edges_updated,
                     "vocab_updated": vocab_updated
