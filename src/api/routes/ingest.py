@@ -71,8 +71,8 @@ async def run_job_analysis(job_id: str, auto_approve: bool = False):
                     "approved_at": datetime.now().isoformat(),
                     "approved_by": "auto"
                 })
-                # Execute immediately
-                queue.execute_job(job_id)
+                # Execute immediately (ADR-031: Non-blocking execution)
+                queue.execute_job_async(job_id)
 
         finally:
             # Clean up temp file
