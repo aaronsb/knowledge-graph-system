@@ -46,9 +46,9 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
         datefmt='%H:%M:%S'
     )
 
-    # Console handler (less verbose)
+    # Console handler (show INFO and above, including ERROR)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.INFO)  # Shows INFO, WARNING, ERROR, CRITICAL
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
 
