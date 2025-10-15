@@ -302,12 +302,20 @@ class ResetManager:
         try:
             conn = AGEConnection()
             client = conn.get_client()
-            client._execute_cypher("""
-                CREATE (c:Concept {concept_id: 'test_schema', label: 'Test', embedding: [0.1], search_terms: []})
-            """)
-            client._execute_cypher("""
-                MATCH (c:Concept {concept_id: 'test_schema'}) DELETE c
-            """)
+            # Use params to properly convert lists to JSON
+            client._execute_cypher(
+                "CREATE (c:Concept {concept_id: $cid, label: $label, embedding: $emb, search_terms: $terms})",
+                params={
+                    "cid": "test_schema",
+                    "label": "Test",
+                    "emb": [0.1],
+                    "terms": []
+                }
+            )
+            client._execute_cypher(
+                "MATCH (c:Concept {concept_id: $cid}) DELETE c",
+                params={"cid": "test_schema"}
+            )
             schema_test_passed = True
             conn.close()
         except Exception:

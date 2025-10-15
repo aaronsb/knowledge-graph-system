@@ -6,6 +6,7 @@ reporting progress back to the job queue.
 """
 
 import os
+import logging
 import tempfile
 import base64
 from pathlib import Path
@@ -18,6 +19,8 @@ from src.api.lib.checkpoint import IngestionCheckpoint
 from src.api.lib.age_client import AGEClient
 from src.api.lib.ingestion import ChunkedIngestionStats, process_chunk
 from src.api.lib.ai_providers import get_provider
+
+logger = logging.getLogger(__name__)
 
 
 def run_ingestion_worker(
@@ -63,7 +66,7 @@ def run_ingestion_worker(
         extraction_model = provider.get_extraction_model()
         embedding_model = provider.get_embedding_model()
     except Exception as e:
-        print(f"⚠️  Failed to get AI provider: {e}")
+        logger.warning(f"⚠️  Failed to get AI provider: {e}")
         provider = None
         extraction_model = None
         embedding_model = None
@@ -87,7 +90,7 @@ def run_ingestion_worker(
 
         if is_markdown:
             # Markdown: Use semantic AST-based chunking with code block translation
-            print(f"📝 Using markdown preprocessor (semantic AST chunking)")
+            logger.info(f"📝 Using markdown preprocessor (semantic AST chunking)")
             preprocessor = MarkdownPreprocessor(max_workers=3, ai_provider=provider)
             chunks = preprocessor.preprocess_to_chunks(
                 full_text,
@@ -97,7 +100,7 @@ def run_ingestion_worker(
             )
         else:
             # Plain text: Use legacy word-based chunker
-            print(f"📄 Using legacy chunker (word-based boundaries)")
+            logger.info(f"📄 Using legacy chunker (word-based boundaries)")
             config = ChunkingConfig(
                 target_words=target_words,
                 min_words=min_words,
@@ -128,11 +131,11 @@ def run_ingestion_worker(
             }
         })
 
-        # Initialize Neo4j client
-        neo4j_client = AGEClient()
+        # Initialize AGE client
+        age_client = AGEClient()
 
         # Get existing concepts for context
-        existing_concepts, has_empty_warnings = neo4j_client.get_document_concepts(
+        existing_concepts, has_empty_warnings = age_client.get_document_concepts(
             document_name=ontology,
             recent_chunks_only=3,  # Last 3 chunks for context
             warn_on_empty=True  # Let warnings flow through to logs
@@ -140,9 +143,9 @@ def run_ingestion_worker(
 
         # Log database state (empty is fine - just informational)
         if len(existing_concepts) == 0:
-            print(f"ℹ️  Starting with empty database (first ingestion for '{ontology}') - all concepts will be new")
+            logger.info(f"ℹ️  Starting with empty database (first ingestion for '{ontology}') - all concepts will be new")
         else:
-            print(f"ℹ️  Found {len(existing_concepts)} existing concepts in '{ontology}' for context")
+            logger.info(f"ℹ️  Found {len(existing_concepts)} existing concepts in '{ontology}' for context")
 
         # Process each chunk
         for i, chunk in enumerate(chunks, 1):
@@ -152,7 +155,7 @@ def run_ingestion_worker(
                 ontology_name=ontology,
                 filename=filename,
                 file_path=tmp_path,
-                neo4j_client=neo4j_client,
+                age_client=age_client,
                 stats=stats,
                 existing_concepts=existing_concepts,
                 recent_concept_ids=recent_concept_ids,
@@ -176,8 +179,8 @@ def run_ingestion_worker(
                 }
             })
 
-        # Close Neo4j connection
-        neo4j_client.close()
+        # Close AGE connection
+        age_client.close()
 
         # Calculate costs
         extraction_cost = stats.calculate_extraction_cost(extraction_model)

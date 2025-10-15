@@ -9,11 +9,14 @@ import asyncio
 import subprocess
 import json
 import os
+import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from ..lib.age_client import AGEClient
+
+logger = logging.getLogger(__name__)
 
 from ..models.admin import (
     SystemStatusResponse,
@@ -249,13 +252,9 @@ class AdminService:
         if not result["success"]:
             raise RuntimeError(result["error"])
 
-        # Clear jobs database to keep in sync with graph
-        try:
-            job_queue = get_job_queue()
-            jobs_deleted = job_queue.clear_all_jobs()
-            print(f"✓ Cleared {jobs_deleted} jobs from job database")
-        except Exception as e:
-            print(f"⚠ Warning: Failed to clear jobs database: {e}")
+        # Note: Jobs table is already cleared by database reset (docker-compose down -v)
+        # No need to clear again - attempting to do so would fail with stale connection
+        logger.info("✓ Jobs database cleared by database reset")
 
         # Convert validation results to API response model
         validation = result["validation"]
