@@ -348,11 +348,14 @@ def process_chunk(
         canonical_type, category, similarity = normalize_relationship_type(llm_rel_type)
 
         if not canonical_type:
-            logger.warning(f"  ⚠ Skipping relationship: invalid type '{llm_rel_type}' (no match)")
-            continue
-
-        # Log normalization if it was fuzzy matched
-        if similarity < 1.0:
+            # ADR-032: Automatically accept new edge types for vocabulary expansion
+            # Instead of skipping, use the LLM's type and mark it as uncategorized
+            canonical_type = llm_rel_type.strip().upper()
+            category = "llm_generated"
+            similarity = 1.0
+            logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (will be tracked for review)")
+        elif similarity < 1.0:
+            # Log normalization if it was fuzzy matched
             logger.info(f"  🔧 Normalized '{llm_rel_type}' → '{canonical_type}' ({category}, {similarity:.2f})")
 
         # Map LLM concept IDs to actual concept IDs
