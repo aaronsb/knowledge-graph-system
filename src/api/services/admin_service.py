@@ -9,11 +9,14 @@ import asyncio
 import subprocess
 import json
 import os
+import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from ..lib.age_client import AGEClient
+
+logger = logging.getLogger(__name__)
 
 from ..models.admin import (
     SystemStatusResponse,
@@ -253,9 +256,9 @@ class AdminService:
         try:
             job_queue = get_job_queue()
             jobs_deleted = job_queue.clear_all_jobs()
-            print(f"✓ Cleared {jobs_deleted} jobs from job database")
+            logger.info(f"✓ Cleared {jobs_deleted} jobs from job database")
         except Exception as e:
-            print(f"⚠ Warning: Failed to clear jobs database: {e}")
+            logger.warning(f"⚠ Warning: Failed to clear jobs database: {e}")
 
         # Convert validation results to API response model
         validation = result["validation"]

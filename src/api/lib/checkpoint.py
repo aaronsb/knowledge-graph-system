@@ -6,9 +6,12 @@ Tracks progress through large documents to enable resuming after interruption.
 
 import json
 import hashlib
+import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 class IngestionCheckpoint:
@@ -72,7 +75,7 @@ class IngestionCheckpoint:
         with open(checkpoint_path, 'w') as f:
             json.dump(checkpoint_data, f, indent=2)
 
-        print(f"\n💾 Checkpoint saved: {chunks_processed} chunks, position {char_position}")
+        logger.info(f"💾 Checkpoint saved: {chunks_processed} chunks, position {char_position}")
 
     def load(self, document_name: str) -> Optional[Dict[str, Any]]:
         """
@@ -105,12 +108,12 @@ class IngestionCheckpoint:
         file_path = checkpoint_data["file_path"]
 
         if not Path(file_path).exists():
-            print(f"⚠ Checkpoint invalid: File not found at {file_path}")
+            logger.warning(f"⚠ Checkpoint invalid: File not found at {file_path}")
             return False
 
         current_hash = self._compute_file_hash(file_path)
         if current_hash != checkpoint_data["file_hash"]:
-            print(f"⚠ Checkpoint invalid: File has been modified since checkpoint")
+            logger.warning(f"⚠ Checkpoint invalid: File has been modified since checkpoint")
             return False
 
         return True
@@ -125,7 +128,7 @@ class IngestionCheckpoint:
         checkpoint_path = self._get_checkpoint_path(document_name)
         if checkpoint_path.exists():
             checkpoint_path.unlink()
-            print(f"🗑️  Checkpoint deleted for '{document_name}'")
+            logger.info(f"🗑️  Checkpoint deleted for '{document_name}'")
 
     def list_checkpoints(self) -> List[Dict[str, Any]]:
         """
