@@ -48,6 +48,7 @@ All ADRs follow a consistent format:
 | [ADR-029](ADR-029-cli-theory-of-operation.md) | CLI Theory of Operation | Proposed | Hybrid Unix/domain-specific design with verb shortcuts and universal JSON mode |
 | [ADR-030](ADR-030-concept-deduplication-validation.md) | Concept Deduplication Validation | Accepted | Quality test suite for embedding-based concept matching |
 | [ADR-031](ADR-031-encrypted-api-key-storage.md) | Encrypted API Key Storage | Accepted | Fernet encryption with container secrets and service token authorization |
+| [ADR-032](ADR-032-automatic-edge-vocabulary-expansion.md) | Automatic Edge Vocabulary Expansion | Proposed | Auto-expand vocabulary on first use with intelligent pruning (naive/HITL/AITL modes) and sliding window (30-90 types) |
 
 ## How to Use This Index
 
@@ -121,6 +122,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-10-13
+**Last Updated:** 2025-10-15
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
