@@ -131,11 +131,11 @@ def run_ingestion_worker(
             }
         })
 
-        # Initialize Neo4j client
-        neo4j_client = AGEClient()
+        # Initialize AGE client
+        age_client = AGEClient()
 
         # Get existing concepts for context
-        existing_concepts, has_empty_warnings = neo4j_client.get_document_concepts(
+        existing_concepts, has_empty_warnings = age_client.get_document_concepts(
             document_name=ontology,
             recent_chunks_only=3,  # Last 3 chunks for context
             warn_on_empty=True  # Let warnings flow through to logs
@@ -155,7 +155,7 @@ def run_ingestion_worker(
                 ontology_name=ontology,
                 filename=filename,
                 file_path=tmp_path,
-                neo4j_client=neo4j_client,
+                age_client=age_client,
                 stats=stats,
                 existing_concepts=existing_concepts,
                 recent_concept_ids=recent_concept_ids,
@@ -179,8 +179,8 @@ def run_ingestion_worker(
                 }
             })
 
-        # Close Neo4j connection
-        neo4j_client.close()
+        # Close AGE connection
+        age_client.close()
 
         # Calculate costs
         extraction_cost = stats.calculate_extraction_cost(extraction_model)
