@@ -51,7 +51,7 @@ class EdgeTypeInfo(BaseModel):
     description: Optional[str] = None
     is_builtin: bool
     is_active: bool
-    added_by: str
+    added_by: Optional[str] = None
     added_at: Optional[datetime] = None
     usage_count: Optional[int] = None
     edge_count: Optional[int] = None
