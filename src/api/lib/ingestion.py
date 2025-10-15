@@ -8,7 +8,10 @@ Extracted from POC code for API-first architecture.
 import os
 import sys
 import uuid
+import logging
 from typing import List, Dict, Any, Union
+
+logger = logging.getLogger(__name__)
 
 from src.api.lib.chunker import Chunk
 from src.api.lib.markdown_preprocessor import SemanticChunk
@@ -187,11 +190,10 @@ def process_chunk(
     # Generate unique source ID using filename (not ontology name)
     source_id = f"{filename.replace(' ', '_').lower()}_chunk{chunk.chunk_number}"
 
-    print(f"\n{'='*70}")
-    print(f"[Chunk {chunk.chunk_number}] {chunk.word_count} words, "
-          f"boundary: {chunk.boundary_type}")
-    print(f"{'='*70}")
-    sys.stdout.flush()  # Ensure immediate display
+    logger.info(f"{'='*70}")
+    logger.info(f"[Chunk {chunk.chunk_number}] {chunk.word_count} words, "
+                f"boundary: {chunk.boundary_type}")
+    logger.info(f"{'='*70}")
 
     # Step 1: Create Source node
     try:
@@ -203,7 +205,7 @@ def process_chunk(
             file_path=file_path  # Track actual source file
         )
         stats.sources_created += 1
-        print(f"  ✓ Created Source node: {source_id}")
+        logger.info(f"  ✓ Created Source node: {source_id}")
     except Exception as e:
         raise Exception(f"Failed to create Source node: {e}")
 
@@ -218,16 +220,14 @@ def process_chunk(
         extraction_tokens = extraction_response.get("tokens", 0)
         stats.extraction_tokens += extraction_tokens
 
-        print(f"  ✓ Extracted {len(extraction['concepts'])} concepts, "
-              f"{len(extraction['instances'])} instances, "
-              f"{len(extraction['relationships'])} relationships")
-        sys.stdout.flush()  # Show extraction results immediately
+        logger.info(f"  ✓ Extracted {len(extraction['concepts'])} concepts, "
+                    f"{len(extraction['instances'])} instances, "
+                    f"{len(extraction['relationships'])} relationships")
     except Exception as e:
-        # Print full error for debugging
-        print(f"  ✗ Extraction failed: {str(e)}")
+        # Log full error for debugging
+        logger.error(f"  ✗ Extraction failed: {str(e)}")
         import traceback
         traceback.print_exc()
-        sys.stdout.flush()
         raise Exception(f"Failed to extract concepts: {e}")
 
     # Step 3: Process each concept
@@ -259,7 +259,7 @@ def process_chunk(
         except Exception as e:
             failed_concepts.append({"label": label, "reason": f"embedding: {e}"})
             if verbose:
-                print(f"  ⚠ Embedding failed: {label}")
+                logger.warning(f"  ⚠ Embedding failed: {label}")
             continue
 
         # Vector search for similar concepts
@@ -310,7 +310,7 @@ def process_chunk(
         except Exception as e:
             failed_concepts.append({"label": label, "reason": str(e)})
             if verbose:
-                print(f"  ⚠ Failed: {label}")
+                logger.warning(f"  ⚠ Failed: {label}")
             continue
 
     # Step 4: Create Instance nodes
@@ -322,7 +322,7 @@ def process_chunk(
         # Map LLM concept ID to actual concept ID
         actual_concept_id = concept_id_map.get(llm_concept_id)
         if not actual_concept_id:
-            print(f"  ⚠ Skipping instance: concept '{llm_concept_id}' not found")
+            logger.warning(f"  ⚠ Skipping instance: concept '{llm_concept_id}' not found")
             continue
 
         try:
@@ -334,7 +334,7 @@ def process_chunk(
             )
             stats.instances_created += 1
         except Exception as e:
-            print(f"  ⚠ Failed to create Instance: {e}")
+            logger.warning(f"  ⚠ Failed to create Instance: {e}")
             continue
 
     # Step 5: Create concept relationships
@@ -348,19 +348,19 @@ def process_chunk(
         canonical_type, category, similarity = normalize_relationship_type(llm_rel_type)
 
         if not canonical_type:
-            print(f"  ⚠ Skipping relationship: invalid type '{llm_rel_type}' (no match)")
+            logger.warning(f"  ⚠ Skipping relationship: invalid type '{llm_rel_type}' (no match)")
             continue
 
         # Log normalization if it was fuzzy matched
         if similarity < 1.0:
-            print(f"  🔧 Normalized '{llm_rel_type}' → '{canonical_type}' ({category}, {similarity:.2f})")
+            logger.info(f"  🔧 Normalized '{llm_rel_type}' → '{canonical_type}' ({category}, {similarity:.2f})")
 
         # Map LLM concept IDs to actual concept IDs
         actual_from_id = concept_id_map.get(llm_from_id)
         actual_to_id = concept_id_map.get(llm_to_id)
 
         if not actual_from_id or not actual_to_id:
-            print(f"  ⚠ Skipping relationship: concept not found")
+            logger.warning(f"  ⚠ Skipping relationship: concept not found")
             continue
 
         try:
@@ -373,58 +373,57 @@ def process_chunk(
             )
             stats.relationships_created += 1
         except Exception as e:
-            print(f"  ⚠ Failed to create relationship: {e}")
+            logger.warning(f"  ⚠ Failed to create relationship: {e}")
             continue
 
-    # Print verbose summary
+    # Log verbose summary
     if verbose:
-        print(f"\n{'-'*70}")
-        print("📊 CHUNK SUMMARY")
-        print(f"{'-'*70}")
+        logger.info(f"\n{'-'*70}")
+        logger.info("📊 CHUNK SUMMARY")
+        logger.info(f"{'-'*70}")
 
         # Calculate hit rate
         total_concepts = len(new_concepts) + len(matched_concepts)
         if total_concepts > 0:
             hit_rate = (len(matched_concepts) / total_concepts) * 100
-            print(f"\n📈 VECTOR SEARCH PERFORMANCE:")
-            print(f"  New concepts (miss):     {len(new_concepts):>3} ({100-hit_rate:>5.1f}%)")
-            print(f"  Matched existing (hit):  {len(matched_concepts):>3} ({hit_rate:>5.1f}%)")
+            logger.info(f"\n📈 VECTOR SEARCH PERFORMANCE:")
+            logger.info(f"  New concepts (miss):     {len(new_concepts):>3} ({100-hit_rate:>5.1f}%)")
+            logger.info(f"  Matched existing (hit):  {len(matched_concepts):>3} ({hit_rate:>5.1f}%)")
 
             # Show trend indicator
             if hit_rate == 0:
-                print(f"  Trend: 🌱 Building foundation - all concepts are new")
+                logger.info(f"  Trend: 🌱 Building foundation - all concepts are new")
             elif hit_rate < 20:
-                print(f"  Trend: 📚 Early growth - mostly creating new concepts")
+                logger.info(f"  Trend: 📚 Early growth - mostly creating new concepts")
             elif hit_rate < 50:
-                print(f"  Trend: 🔗 Connecting ideas - balanced creation and linking")
+                logger.info(f"  Trend: 🔗 Connecting ideas - balanced creation and linking")
             elif hit_rate < 80:
-                print(f"  Trend: 🕸️  Maturing graph - finding many connections")
+                logger.info(f"  Trend: 🕸️  Maturing graph - finding many connections")
             else:
-                print(f"  Trend: ✨ Dense graph - highly interconnected")
+                logger.info(f"  Trend: ✨ Dense graph - highly interconnected")
 
         if new_concepts:
-            print(f"\n✨ NEW CONCEPTS ({len(new_concepts)}):")
+            logger.info(f"\n✨ NEW CONCEPTS ({len(new_concepts)}):")
             for c in new_concepts[:5]:  # Show first 5
-                print(f"  • {c['label']}")
+                logger.info(f"  • {c['label']}")
             if len(new_concepts) > 5:
-                print(f"  ... and {len(new_concepts) - 5} more")
+                logger.info(f"  ... and {len(new_concepts) - 5} more")
 
         if matched_concepts:
-            print(f"\n🔗 LINKED TO EXISTING ({len(matched_concepts)}):")
+            logger.info(f"\n🔗 LINKED TO EXISTING ({len(matched_concepts)}):")
             for c in matched_concepts[:5]:  # Show first 5
                 sim_pct = int(c['similarity'] * 100)
-                print(f"  • '{c['label']}' → '{c['matched_to']}' ({sim_pct}%)")
+                logger.info(f"  • '{c['label']}' → '{c['matched_to']}' ({sim_pct}%)")
             if len(matched_concepts) > 5:
-                print(f"  ... and {len(matched_concepts) - 5} more")
+                logger.info(f"  ... and {len(matched_concepts) - 5} more")
 
         if failed_concepts:
-            print(f"\n⚠️  FAILED ({len(failed_concepts)}):")
+            logger.info(f"\n⚠️  FAILED ({len(failed_concepts)}):")
             for c in failed_concepts[:3]:  # Show max 3 failures
-                print(f"  • {c['label']}")
+                logger.info(f"  • {c['label']}")
 
-        print(f"\n📝 Instances: {len([i for i in extraction['instances'] if concept_id_map.get(i['concept_id'])])}")
-        print(f"🔀 Relationships: {len([r for r in extraction['relationships'] if concept_id_map.get(r['from_concept_id']) and concept_id_map.get(r['to_concept_id'])])}")
-        print(f"{'-'*70}\n")
-        sys.stdout.flush()  # Ensure summary appears immediately
+        logger.info(f"\n📝 Instances: {len([i for i in extraction['instances'] if concept_id_map.get(i['concept_id'])])}")
+        logger.info(f"🔀 Relationships: {len([r for r in extraction['relationships'] if concept_id_map.get(r['from_concept_id']) and concept_id_map.get(r['to_concept_id'])])}")
+        logger.info(f"{'-'*70}\n")
 
     return recent_concept_ids
