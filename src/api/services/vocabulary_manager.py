@@ -573,6 +573,290 @@ class VocabularyManager:
 
         return result
 
+    def prioritize_merge_candidates(
+        self,
+        candidates: List[Tuple[SynonymCandidate, EdgeTypeScore, EdgeTypeScore]],
+        min_similarity: float = 0.80,
+        max_edge_count: int = 20
+    ) -> List[Tuple[SynonymCandidate, EdgeTypeScore, EdgeTypeScore, float]]:
+        """
+        Filter and prioritize merge candidates for AITL processing.
+
+        Strategy:
+        1. Filter out low-similarity pairs (< min_similarity)
+        2. Filter out likely inverse relationships (_BY suffix patterns)
+        3. Prefer low-frequency types (easier to merge, less disruption)
+        4. Score by: (similarity * 2) - (min_edge_count / 100)
+        5. Sort by priority score descending
+
+        Args:
+            candidates: List of (SynonymCandidate, Score1, Score2) tuples
+            min_similarity: Minimum similarity threshold (default: 0.80)
+            max_edge_count: Skip high-frequency types initially (default: 20)
+
+        Returns:
+            List of (candidate, score1, score2, priority_score) sorted by priority
+        """
+        filtered = []
+
+        for candidate, score1, score2 in candidates:
+            # Filter: similarity threshold
+            if candidate.similarity < min_similarity:
+                continue
+
+            # Filter: skip likely inverse relationships
+            # Pattern: TYPE vs TYPE_BY (e.g., VERIFIED vs VERIFIED_BY)
+            type1_base = candidate.type1.replace('_BY', '').replace('_TO', '')
+            type2_base = candidate.type2.replace('_BY', '').replace('_TO', '')
+            if type1_base == type2_base:
+                logger.debug(f"Skipping inverse pair: {candidate.type1} / {candidate.type2}")
+                continue
+
+            # Filter: skip high-frequency types in first pass
+            min_count = min(score1.edge_count, score2.edge_count)
+            if min_count > max_edge_count:
+                continue
+
+            # Calculate priority score
+            # High similarity + low usage = high priority
+            priority_score = (candidate.similarity * 2) - (min_count / 100)
+            filtered.append((candidate, score1, score2, priority_score))
+
+        # Sort by priority score descending
+        filtered.sort(key=lambda x: -x[3])
+
+        logger.info(
+            f"Prioritized {len(filtered)} candidates from {len(candidates)} "
+            f"(similarity ≥ {min_similarity:.0%}, edge_count ≤ {max_edge_count})"
+        )
+
+        return filtered
+
+    async def aitl_consolidate_vocabulary(
+        self,
+        target_size: int = 90,
+        batch_size: int = 1,  # Process ONE at a time
+        auto_execute_threshold: float = 0.90,
+        dry_run: bool = False
+    ) -> Dict[str, List]:
+        """
+        AITL vocabulary consolidation - one merge at a time with re-query.
+
+        Process:
+        1. Get top 1 prioritized candidate (fresh query each iteration)
+        2. Evaluate with LLM
+        3. If approved → execute immediately
+        4. Re-query vocabulary (landscape has changed)
+        5. Repeat until vocab_size < target
+
+        This prevents contradictory recommendations by ensuring the vocabulary
+        state is fresh for each decision.
+
+        Args:
+            target_size: Stop when vocabulary reaches this size (default: 90)
+            batch_size: DEPRECATED - always processes 1 candidate at a time
+            auto_execute_threshold: Auto-merge if similarity ≥ this (default: 0.90)
+            dry_run: If True, don't execute merges (default: False)
+
+        Returns:
+            Dict with 'auto_executed', 'needs_review', 'rejected', 'iterations' lists
+
+        Example:
+            >>> results = await manager.aitl_consolidate_vocabulary(
+            ...     target_size=85, dry_run=False
+            ... )
+            >>> print(f"Auto-merged: {len(results['auto_executed'])}")
+            >>> print(f"Need review: {len(results['needs_review'])}")
+        """
+        from src.api.lib.pruning_strategies import llm_evaluate_merge
+
+        results = {
+            'auto_executed': [],
+            'needs_review': [],
+            'rejected': []
+        }
+
+        # DRY RUN MODE: Just evaluate top candidates for validation
+        if dry_run:
+            logger.info("DRY RUN MODE: Evaluating top candidates (no execution)")
+
+            # Get candidates once
+            analysis = await self.analyze_vocabulary()
+            prioritized = self.prioritize_merge_candidates(
+                analysis.synonym_candidates,
+                min_similarity=0.80,
+                max_edge_count=20
+            )
+
+            # Evaluate top 10 candidates for validation
+            max_eval = min(10, len(prioritized))
+            for i, (candidate, score1, score2, priority) in enumerate(prioritized[:max_eval]):
+                logger.info(f"[{i+1}/{max_eval}] Evaluating: {candidate.type1} + {candidate.type2}")
+
+                decision = await llm_evaluate_merge(
+                    type1=candidate.type1,
+                    type2=candidate.type2,
+                    type1_edge_count=score1.edge_count,
+                    type2_edge_count=score2.edge_count,
+                    similarity=candidate.similarity,
+                    ai_provider=self.ai_provider
+                )
+
+                if not decision.should_merge:
+                    results['rejected'].append({
+                        'type1': candidate.type1,
+                        'type2': candidate.type2,
+                        'reasoning': decision.reasoning
+                    })
+                    continue
+
+                # Would this be auto-executed?
+                if candidate.similarity >= auto_execute_threshold:
+                    results['auto_executed'].append({
+                        'deprecated': candidate.type1 if score1.edge_count <= score2.edge_count else candidate.type2,
+                        'target': decision.blended_term or (candidate.type2 if score1.edge_count <= score2.edge_count else candidate.type1),
+                        'similarity': candidate.similarity,
+                        'reasoning': decision.reasoning,
+                        'blended_description': decision.blended_description
+                    })
+                else:
+                    results['needs_review'].append({
+                        'type1': candidate.type1,
+                        'type2': candidate.type2,
+                        'suggested_term': decision.blended_term,
+                        'similarity': candidate.similarity,
+                        'reasoning': decision.reasoning
+                    })
+
+            return results
+
+        # LIVE MODE: Process one at a time with re-query
+        logger.info("LIVE MODE: Processing candidates one-at-a-time with re-query")
+        iteration = 0
+
+        while True:
+            # Check if we've reached target
+            vocab_size = await self._get_vocabulary_size()
+            if vocab_size <= target_size:
+                logger.info(f"Target reached: {vocab_size} ≤ {target_size}")
+                break
+
+            iteration += 1
+            logger.info(f"=== Iteration {iteration} (vocab_size: {vocab_size}, target: {target_size}) ===")
+
+            # Get fresh analysis (vocabulary changes each iteration)
+            analysis = await self.analyze_vocabulary()
+
+            # Prioritize candidates
+            prioritized = self.prioritize_merge_candidates(
+                analysis.synonym_candidates,
+                min_similarity=0.80,
+                max_edge_count=20
+            )
+
+            if not prioritized:
+                logger.info("No more candidates available")
+                break
+
+            # Take ONLY the top candidate (one at a time)
+            candidate, score1, score2, priority = prioritized[0]
+
+            logger.info(
+                f"Evaluating: {candidate.type1} ({score1.edge_count}) + "
+                f"{candidate.type2} ({score2.edge_count}) "
+                f"[similarity: {candidate.similarity:.1%}, priority: {priority:.3f}]"
+            )
+
+            # Call LLM for decision
+            decision = await llm_evaluate_merge(
+                type1=candidate.type1,
+                type2=candidate.type2,
+                type1_edge_count=score1.edge_count,
+                type2_edge_count=score2.edge_count,
+                similarity=candidate.similarity,
+                ai_provider=self.ai_provider
+            )
+
+            if not decision.should_merge:
+                results['rejected'].append({
+                    'type1': candidate.type1,
+                    'type2': candidate.type2,
+                    'reasoning': decision.reasoning
+                })
+                logger.info(f"  ✗ Rejected: {decision.reasoning}")
+                # Continue to next iteration (will re-query)
+                continue
+
+            # Use LLM-generated blended term, or fall back to higher-usage type
+            target_term = decision.blended_term
+            if not target_term:
+                target_term = candidate.type1 if score1.edge_count >= score2.edge_count else candidate.type2
+
+            # Deprecate the other type
+            if score1.edge_count >= score2.edge_count:
+                deprecate = candidate.type2
+            else:
+                deprecate = candidate.type1
+
+            # High confidence = auto-execute immediately
+            if candidate.similarity >= auto_execute_threshold:
+                merge_info = {
+                    'deprecated': deprecate,
+                    'target': target_term,
+                    'similarity': candidate.similarity,
+                    'reasoning': decision.reasoning,
+                    'blended_description': decision.blended_description,
+                    'edges_affected': min(score1.edge_count, score2.edge_count)
+                }
+
+                if not dry_run:
+                    # Execute merge immediately
+                    try:
+                        merge_result = self.db.merge_edge_types(
+                            deprecated_type=deprecate,
+                            target_type=target_term,
+                            performed_by="aitl_consolidation"
+                        )
+                        merge_info['edges_updated'] = merge_result.get('edges_updated', 0)
+                        logger.info(f"  ✓ Auto-merged: {deprecate} → {target_term} (edges: {merge_info['edges_updated']})")
+                    except Exception as e:
+                        logger.error(f"  ✗ Merge failed: {e}")
+                        merge_info['error'] = str(e)
+                else:
+                    logger.info(f"  [DRY RUN] Would merge: {deprecate} → {target_term}")
+
+                results['auto_executed'].append(merge_info)
+                # Vocabulary has changed - next iteration will re-query
+
+            else:
+                # Medium confidence = needs human review
+                review_info = {
+                    'type1': candidate.type1,
+                    'type2': candidate.type2,
+                    'suggested_term': target_term,
+                    'suggested_description': decision.blended_description,
+                    'similarity': candidate.similarity,
+                    'reasoning': decision.reasoning,
+                    'edge_count1': score1.edge_count,
+                    'edge_count2': score2.edge_count
+                }
+                results['needs_review'].append(review_info)
+                logger.info(f"  ? Needs review: {decision.reasoning}")
+
+            # Safety: don't run forever
+            if iteration >= 10:
+                logger.warning("Max iterations (10) reached, stopping")
+                break
+
+        logger.info(
+            f"AITL consolidation complete after {iteration} iterations: "
+            f"{len(results['auto_executed'])} auto-merged, "
+            f"{len(results['needs_review'])} need review, "
+            f"{len(results['rejected'])} rejected"
+        )
+
+        return results
+
     async def _get_minimal_scores(self) -> Dict[str, EdgeTypeScore]:
         """
         Get minimal scores directly from vocabulary table when scorer unavailable.

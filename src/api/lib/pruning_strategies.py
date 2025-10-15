@@ -43,10 +43,189 @@ References:
 from typing import Dict, List, Optional, Literal
 from dataclasses import dataclass
 from enum import Enum
+import json
+import logging
 
 # Type imports for other ADR-032 modules
 from src.api.lib.synonym_detector import SynonymCandidate, SynonymStrength
 from src.api.lib.vocabulary_scoring import EdgeTypeScore
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class MergeDecision:
+    """
+    LLM decision about merging two edge types.
+
+    Attributes:
+        should_merge: True if types should be merged
+        blended_term: New unified term name (if should_merge)
+        blended_description: Description of blended term (if should_merge)
+        reasoning: Explanation for decision
+        confidence: LLM confidence in decision (0.0-1.0)
+    """
+    should_merge: bool
+    reasoning: str
+    confidence: float = 0.8
+    blended_term: Optional[str] = None
+    blended_description: Optional[str] = None
+
+
+async def llm_evaluate_merge(
+    type1: str,
+    type2: str,
+    type1_edge_count: int,
+    type2_edge_count: int,
+    similarity: float,
+    ai_provider
+) -> MergeDecision:
+    """
+    Use LLM to evaluate whether two edge types should be merged.
+
+    This is the core AITL worker function. It asks the LLM:
+    1. Are these truly synonyms or do they have semantic distinctions?
+    2. If synonyms, what's a better unified name?
+
+    Args:
+        type1: First edge type name
+        type2: Second edge type name
+        type1_edge_count: Number of edges using type1
+        type2_edge_count: Number of edges using type2
+        similarity: Embedding similarity score (0.0-1.0)
+        ai_provider: AI provider instance (OpenAI/Anthropic)
+
+    Returns:
+        MergeDecision with structured decision
+
+    Example:
+        >>> from src.api.lib.ai_providers import get_provider
+        >>> provider = get_provider()
+        >>> decision = await llm_evaluate_merge(
+        ...     "STATUS", "HAS_STATUS", 5, 12, 0.934, provider
+        ... )
+        >>> if decision.should_merge:
+        ...     print(f"Merge into: {decision.blended_term}")
+    """
+
+    # Construct prompt for LLM
+    prompt = f"""You are evaluating whether two relationship types in a knowledge graph should be merged.
+
+**Type 1:** {type1}
+- Current usage: {type1_edge_count} edges
+- Embedding similarity to Type 2: {similarity:.1%}
+
+**Type 2:** {type2}
+- Current usage: {type2_edge_count} edges
+
+**Task:**
+Determine if these are truly synonymous and should be merged into a single type.
+
+Consider:
+1. **Semantic equivalence**: Do they mean the same thing in practice?
+2. **Directional inverses**: Are they opposite directions (e.g., PART_OF vs HAS_PART)?
+3. **Useful distinctions**: Would merging lose important nuance?
+4. **Graph consistency**: Would a unified term improve clarity?
+
+**Response format (JSON):**
+```json
+{{
+  "should_merge": true or false,
+  "reasoning": "Brief explanation of decision",
+  "blended_term": "UNIFIED_TERM_NAME" (only if merging, use SCREAMING_SNAKE_CASE),
+  "blended_description": "What this unified relationship represents"
+}}
+```
+
+**Important:**
+- If they're directional inverses (opposite directions), return should_merge=false
+- If they're truly synonymous, create a term that captures both meanings
+- Prefer the more commonly used term if no better alternative exists
+- Keep term names concise and clear (2-3 words max)
+
+Respond with ONLY the JSON, no other text."""
+
+    try:
+        # Call LLM (handle both OpenAI and Anthropic providers)
+        provider_name = ai_provider.get_provider_name().lower()
+
+        if provider_name == "openai":
+            response = ai_provider.client.chat.completions.create(
+                model=ai_provider.extraction_model,
+                messages=[
+                    {"role": "system", "content": "You are a knowledge graph vocabulary expert. Respond with valid JSON only."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=300,
+                response_format={"type": "json_object"}
+            )
+            content = response.choices[0].message.content.strip()
+
+        elif provider_name == "anthropic":
+            message = ai_provider.client.messages.create(
+                model=ai_provider.extraction_model,
+                max_tokens=300,
+                temperature=0.3,
+                system="You are a knowledge graph vocabulary expert. Respond with valid JSON only.",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            content = message.content[0].text.strip()
+
+        else:
+            raise ValueError(f"Unsupported AI provider: {provider_name}")
+
+        # Extract JSON if wrapped in markdown
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+
+        result = json.loads(content)
+
+        # Validate response structure
+        if "should_merge" not in result or "reasoning" not in result:
+            raise ValueError("LLM response missing required fields")
+
+        # Build MergeDecision
+        decision = MergeDecision(
+            should_merge=bool(result["should_merge"]),
+            reasoning=result["reasoning"],
+            blended_term=result.get("blended_term"),
+            blended_description=result.get("blended_description"),
+            confidence=0.8  # Could be extracted from LLM if it provides it
+        )
+
+        logger.info(
+            f"LLM merge decision: {type1} + {type2} → "
+            f"{'MERGE' if decision.should_merge else 'SKIP'} "
+            f"({decision.blended_term if decision.should_merge else 'N/A'})"
+        )
+
+        return decision
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse LLM response as JSON: {e}")
+        logger.error(f"Raw response: {content}")
+
+        # Fallback decision
+        return MergeDecision(
+            should_merge=False,
+            reasoning=f"LLM response parsing failed: {str(e)}",
+            confidence=0.0
+        )
+
+    except Exception as e:
+        logger.error(f"LLM evaluation failed: {e}", exc_info=True)
+
+        # Fallback decision
+        return MergeDecision(
+            should_merge=False,
+            reasoning=f"LLM call failed: {str(e)}",
+            confidence=0.0
+        )
 
 
 class PruningMode(Enum):
