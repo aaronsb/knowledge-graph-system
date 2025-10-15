@@ -193,18 +193,28 @@ class VocabularyManager:
             profile=self.profile
         )
 
-        # Get value scores for all types
-        edge_type_scores = await self.scorer.get_value_scores(include_builtin=True)
+        # Get value scores for all types (optional - used for prioritization)
+        # If scorer fails (e.g., missing edge_usage_stats), continue without value scores
+        try:
+            edge_type_scores = await self.scorer.get_value_scores(include_builtin=True)
+        except Exception as e:
+            logger.warning(f"Value scorer unavailable: {e}. Continuing without usage metrics.")
+            edge_type_scores = {}
 
-        # Detect synonym candidates
-        synonym_candidates = await self._detect_synonym_candidates(edge_type_scores)
+        # Detect synonym candidates using vocabulary types directly from database
+        # This decouples synonym detection from value scoring (per ADR-032 architecture)
+        synonym_candidates = await self._detect_synonym_candidates_from_vocab()
 
-        # Identify low-value types
-        low_value_types = await self.scorer.get_low_value_types(
-            threshold=self.LOW_VALUE_THRESHOLD,
-            exclude_builtin=True,
-            exclude_nonzero_edges=False
-        )
+        # Identify low-value types (if scorer available)
+        try:
+            low_value_types = await self.scorer.get_low_value_types(
+                threshold=self.LOW_VALUE_THRESHOLD,
+                exclude_builtin=True,
+                exclude_nonzero_edges=False
+            )
+        except Exception as e:
+            logger.warning(f"Low-value scoring unavailable: {e}")
+            low_value_types = []
 
         # Get category distribution
         category_distribution = await self._get_category_distribution()
@@ -491,6 +501,110 @@ class VocabularyManager:
                 result.append((candidate, score1, score2))
 
         return result
+
+    async def _detect_synonym_candidates_from_vocab(
+        self
+    ) -> List[Tuple[SynonymCandidate, EdgeTypeScore, EdgeTypeScore]]:
+        """
+        Detect synonym candidates by getting types directly from vocabulary table.
+
+        This decouples synonym detection from value scoring per ADR-032 architecture.
+        Synonym detection uses embeddings; scoring uses usage metrics.
+        They are separate concerns.
+
+        Returns:
+            List of (candidate, score1, score2) tuples
+            Scores use minimal defaults if scorer unavailable
+        """
+        # Get all active edge types directly from vocabulary table
+        edge_types = await self._get_all_edge_types()
+
+        logger.info(f"Detecting synonyms from {len(edge_types)} vocabulary types")
+
+        # Find synonyms using embedding similarity
+        candidates = await self.synonym_detector.find_synonyms(
+            edge_types,
+            min_similarity=0.70  # Include moderate and strong matches
+        )
+
+        logger.info(f"Found {len(candidates)} synonym candidates")
+
+        # Try to get full scores, fall back to minimal scores if scorer unavailable
+        all_scores = {}
+        try:
+            all_scores = await self.scorer.get_value_scores(include_builtin=True)
+            logger.info("Using full value scores for synonym evaluation")
+        except Exception as e:
+            logger.warning(f"Scorer unavailable ({e}), using minimal scores from vocabulary table")
+            # Get minimal scores directly from vocabulary table
+            all_scores = await self._get_minimal_scores()
+
+        # Pair each candidate with scores
+        result = []
+        for candidate in candidates:
+            score1 = all_scores.get(candidate.type1)
+            score2 = all_scores.get(candidate.type2)
+
+            # If scores still missing, create minimal defaults
+            if score1 is None:
+                score1 = EdgeTypeScore(
+                    relationship_type=candidate.type1,
+                    edge_count=0,
+                    avg_traversal=0.0,
+                    bridge_count=0,
+                    trend=0.0,
+                    value_score=0.0,
+                    is_builtin=False,
+                    last_used=None
+                )
+            if score2 is None:
+                score2 = EdgeTypeScore(
+                    relationship_type=candidate.type2,
+                    edge_count=0,
+                    avg_traversal=0.0,
+                    bridge_count=0,
+                    trend=0.0,
+                    value_score=0.0,
+                    is_builtin=False,
+                    last_used=None
+                )
+
+            result.append((candidate, score1, score2))
+
+        return result
+
+    async def _get_minimal_scores(self) -> Dict[str, EdgeTypeScore]:
+        """
+        Get minimal scores directly from vocabulary table when scorer unavailable.
+
+        Returns EdgeTypeScore objects with just edge_count and is_builtin populated.
+        """
+        try:
+            # Get all active edge types
+            edge_types = await self._get_all_edge_types()
+
+            scores = {}
+            for edge_type in edge_types:
+                # Get info for each type
+                info = self.db.get_edge_type_info(edge_type)
+                if info:
+                    edge_count = info.get('edge_count', 0)
+                    scores[edge_type] = EdgeTypeScore(
+                        relationship_type=edge_type,
+                        edge_count=edge_count,
+                        avg_traversal=0.0,
+                        bridge_count=0,
+                        trend=0.0,
+                        value_score=float(edge_count),  # Use count as proxy for value
+                        is_builtin=info.get('is_builtin', False),
+                        last_used=None
+                    )
+
+            logger.info(f"Retrieved minimal scores for {len(scores)} types")
+            return scores
+        except Exception as e:
+            logger.warning(f"Failed to get minimal scores from vocabulary table: {e}")
+            return {}
 
     async def _execute_merge(self, action: ActionRecommendation) -> ExecutionResult:
         """

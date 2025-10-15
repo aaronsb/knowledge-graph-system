@@ -443,27 +443,38 @@ class SynonymDetector:
         """
         Get embedding for edge type (with caching).
 
+        First checks in-memory cache, then database, then generates via API.
+
         Args:
             edge_type: Edge type name
 
         Returns:
             Numpy array of embedding vector
         """
-        # Check cache
+        # Check in-memory cache first
         if edge_type in self._embedding_cache:
             return self._embedding_cache[edge_type]
 
-        # TODO: Check persistent storage in relationship_vocabulary table
-        # SELECT embedding, embedding_model FROM kg_api.relationship_vocabulary
-        # WHERE relationship_type = edge_type
-        # If found and embedding_model matches current, use it
-        # Otherwise generate new and UPDATE table
-        #
-        # TODO: Implement embedding invalidation mechanism
-        # Trigger: When EMBEDDING_MODEL env var changes
-        # Action: SET embedding = NULL for all rows OR delete embeddings
-        # Location: Startup check in main.py or migration script
+        # Check database for pre-generated embedding
+        # Import here to avoid circular dependency
+        from .age_client import AGEClient
 
+        db = AGEClient()
+        try:
+            embedding_data = db.get_vocabulary_embedding(edge_type)
+
+            if embedding_data and embedding_data.get('embedding'):
+                # Use database embedding
+                embedding = np.array(embedding_data['embedding'])
+
+                # Cache for reuse
+                self._embedding_cache[edge_type] = embedding
+
+                return embedding
+        finally:
+            db.close()
+
+        # Fallback: Generate new embedding via API
         # Convert edge type to descriptive text
         descriptive_text = self._edge_type_to_text(edge_type)
 
@@ -474,10 +485,22 @@ class SynonymDetector:
         # Cache for reuse
         self._embedding_cache[edge_type] = embedding
 
-        # TODO: Store in database for persistent caching
-        # UPDATE kg_api.relationship_vocabulary
-        # SET embedding = embedding_vector, embedding_model = current_model
-        # WHERE relationship_type = edge_type
+        # Store in database for future use
+        try:
+            db = AGEClient()
+            try:
+                db.update_vocabulary_embedding(
+                    edge_type,
+                    embedding.tolist(),
+                    self.ai_provider.get_embedding_model()
+                )
+            finally:
+                db.close()
+        except Exception as e:
+            # Don't fail if database update fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to store embedding for {edge_type}: {e}")
 
         return embedding
 
