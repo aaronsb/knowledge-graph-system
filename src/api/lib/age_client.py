@@ -1110,3 +1110,653 @@ class AGEClient:
             return {"sources_updated": updated_count}
         except Exception as e:
             raise Exception(f"Failed to rename ontology: {e}")
+
+    # =========================================================================
+    # Vocabulary Management Methods (ADR-032)
+    # =========================================================================
+
+    def get_vocabulary_size(self) -> int:
+        """
+        Get count of active relationship types in vocabulary.
+
+        Returns:
+            Count of active (non-deprecated) relationship types
+
+        Example:
+            >>> client = AGEClient()
+            >>> size = client.get_vocabulary_size()
+            >>> print(f"Vocabulary size: {size}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT COUNT(*) 
+                    FROM kg_api.relationship_vocabulary 
+                    WHERE is_active = TRUE
+                """)
+                result = cur.fetchone()
+                return result[0] if result else 0
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def get_all_edge_types(self, include_inactive: bool = False) -> List[str]:
+        """
+        Get list of all relationship types in vocabulary.
+
+        Args:
+            include_inactive: Include deprecated types (default: False)
+
+        Returns:
+            List of relationship type names
+
+        Example:
+            >>> client = AGEClient()
+            >>> types = client.get_all_edge_types()
+            >>> print(f"Active types: {len(types)}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                if include_inactive:
+                    cur.execute("""
+                        SELECT relationship_type 
+                        FROM kg_api.relationship_vocabulary 
+                        ORDER BY relationship_type
+                    """)
+                else:
+                    cur.execute("""
+                        SELECT relationship_type 
+                        FROM kg_api.relationship_vocabulary 
+                        WHERE is_active = TRUE
+                        ORDER BY relationship_type
+                    """)
+                return [row[0] for row in cur.fetchall()]
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def get_edge_type_info(self, relationship_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Get detailed information about a relationship type.
+
+        Args:
+            relationship_type: Relationship type name
+
+        Returns:
+            Dict with type details, or None if not found
+
+        Example:
+            >>> info = client.get_edge_type_info("IMPLIES")
+            >>> print(f"Category: {info['category']}, Builtin: {info['is_builtin']}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT relationship_type, description, category, added_by,
+                           added_at, usage_count, is_active, is_builtin,
+                           synonyms, deprecation_reason, embedding_model,
+                           embedding_generated_at
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type = %s
+                """, (relationship_type,))
+                result = cur.fetchone()
+
+                if not result:
+                    return None
+
+                # Convert to dict
+                info = dict(result)
+
+                # Query graph for actual edge count
+                try:
+                    count_query = f"""
+                    MATCH ()-[r:{relationship_type}]->()
+                    RETURN count(r) as edge_count
+                    """
+                    edge_result = self._execute_cypher(count_query, fetch_one=True)
+                    if edge_result:
+                        info['edge_count'] = int(str(edge_result.get('edge_count', 0)))
+                    else:
+                        info['edge_count'] = 0
+                except Exception as e:
+                    logger.warning(f"Failed to count edges for {relationship_type}: {e}")
+                    info['edge_count'] = 0
+
+                return info
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def add_edge_type(
+        self,
+        relationship_type: str,
+        category: str,
+        description: Optional[str] = None,
+        added_by: str = "system",
+        is_builtin: bool = False,
+        ai_provider = None
+    ) -> bool:
+        """
+        Add a new relationship type to vocabulary with automatic embedding generation.
+
+        Args:
+            relationship_type: Relationship type name (e.g., "AUTHORED_BY")
+            category: Semantic category
+            description: Optional description
+            added_by: Who added the type (username or "system")
+            is_builtin: Whether this is a protected builtin type
+            ai_provider: Optional AI provider for embedding generation (auto-generation if provided)
+
+        Returns:
+            True if added successfully, False if already exists
+
+        Example:
+            >>> success = client.add_edge_type("AUTHORED_BY", "authorship",
+            ...                                 "Indicates authorship", "admin",
+            ...                                 ai_provider=provider)
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO kg_api.relationship_vocabulary
+                        (relationship_type, description, category, added_by, is_builtin, is_active)
+                    VALUES (%s, %s, %s, %s, %s, TRUE)
+                    ON CONFLICT (relationship_type) DO NOTHING
+                    RETURNING relationship_type
+                """, (relationship_type, description, category, added_by, is_builtin))
+                result = cur.fetchone()
+                was_added = result is not None
+
+                # Generate and store embedding if AI provider available and type was just added
+                if was_added and ai_provider is not None:
+                    try:
+                        # Convert edge type to descriptive text (same logic as SynonymDetector)
+                        descriptive_text = f"relationship: {relationship_type.lower().replace('_', ' ')}"
+
+                        # Generate embedding
+                        embedding_response = ai_provider.generate_embedding(descriptive_text)
+                        embedding = embedding_response["embedding"]
+                        model = embedding_response.get("model", "text-embedding-ada-002")
+
+                        # Store embedding
+                        embedding_json = json.dumps(embedding)
+                        cur.execute("""
+                            UPDATE kg_api.relationship_vocabulary
+                            SET embedding = %s::jsonb,
+                                embedding_model = %s,
+                                embedding_generated_at = NOW()
+                            WHERE relationship_type = %s
+                        """, (embedding_json, model, relationship_type))
+
+                        logger.debug(f"Generated embedding for vocabulary type '{relationship_type}' ({len(embedding)} dims)")
+                    except Exception as e:
+                        # Don't fail the entire operation if embedding generation fails
+                        logger.warning(f"Failed to generate embedding for '{relationship_type}': {e}")
+
+                return was_added
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def update_edge_type(
+        self,
+        relationship_type: str,
+        description: Optional[str] = None,
+        category: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        deprecation_reason: Optional[str] = None
+    ) -> bool:
+        """
+        Update relationship type properties.
+
+        Args:
+            relationship_type: Type to update
+            description: New description (optional)
+            category: New category (optional)
+            is_active: Active status (optional)
+            deprecation_reason: Reason for deprecation (optional)
+
+        Returns:
+            True if updated successfully
+
+        Example:
+            >>> client.update_edge_type("OLD_TYPE", is_active=False, 
+            ...                          deprecation_reason="Merged into NEW_TYPE")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                # Build dynamic UPDATE
+                updates = []
+                params = []
+                
+                if description is not None:
+                    updates.append("description = %s")
+                    params.append(description)
+                
+                if category is not None:
+                    updates.append("category = %s")
+                    params.append(category)
+                
+                if is_active is not None:
+                    updates.append("is_active = %s")
+                    params.append(is_active)
+                
+                if deprecation_reason is not None:
+                    updates.append("deprecation_reason = %s")
+                    params.append(deprecation_reason)
+                
+                if not updates:
+                    return False
+                
+                params.append(relationship_type)
+                
+                cur.execute(f"""
+                    UPDATE kg_api.relationship_vocabulary
+                    SET {', '.join(updates)}
+                    WHERE relationship_type = %s
+                    RETURNING relationship_type
+                """, params)
+                result = cur.fetchone()
+                return result is not None
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def merge_edge_types(
+        self,
+        deprecated_type: str,
+        target_type: str,
+        performed_by: str = "system"
+    ) -> Dict[str, int]:
+        """
+        Merge one relationship type into another.
+
+        This updates all edges using deprecated_type to use target_type instead,
+        marks deprecated_type as inactive, and records the change in history.
+
+        Args:
+            deprecated_type: Type to deprecate and merge
+            target_type: Type to preserve
+            performed_by: Who performed the merge
+
+        Returns:
+            Dict with counts: {"edges_updated": N, "vocab_updated": 1}
+
+        Example:
+            >>> result = client.merge_edge_types("VERIFIES", "VALIDATES", "admin")
+            >>> print(f"Updated {result['edges_updated']} edges")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                # First, update all edges in the graph from deprecated_type to target_type
+                # Note: AGE doesn't support dynamic relationship types in parameterized queries
+                # We must use string interpolation for relationship types
+                try:
+                    # Delete existing edges of deprecated type and recreate with target type
+                    # This is a two-step process since AGE doesn't support SET on relationship labels
+                    merge_query = f"""
+                    MATCH (c1)-[r:{deprecated_type}]->(c2)
+                    CREATE (c1)-[new_r:{target_type}]->(c2)
+                    SET new_r = properties(r)
+                    DELETE r
+                    RETURN count(new_r) as edges_updated
+                    """
+
+                    result = self._execute_cypher(merge_query, fetch_one=True)
+                    edges_updated = int(str(result.get('edges_updated', 0))) if result else 0
+
+                    logger.info(f"Merged {edges_updated} edges from {deprecated_type} to {target_type}")
+                except Exception as e:
+                    logger.error(f"Failed to update graph edges during merge: {e}")
+                    # Continue with vocabulary update even if graph update fails
+                    edges_updated = 0
+
+                # Mark deprecated type as inactive in vocabulary
+                cur.execute("""
+                    UPDATE kg_api.relationship_vocabulary
+                    SET is_active = FALSE,
+                        deprecation_reason = %s
+                    WHERE relationship_type = %s
+                    RETURNING relationship_type
+                """, (f"Merged into {target_type}", deprecated_type))
+
+                vocab_updated = 1 if cur.fetchone() else 0
+
+                # Record in history
+                cur.execute("""
+                    INSERT INTO kg_api.vocabulary_history
+                        (relationship_type, action, performed_by, target_type, reason)
+                    VALUES (%s, 'merged', %s, %s, %s)
+                """, (deprecated_type, performed_by, target_type, f"Merged into {target_type}"))
+
+                return {
+                    "edges_updated": edges_updated,
+                    "vocab_updated": vocab_updated
+                }
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def get_category_distribution(self) -> Dict[str, int]:
+        """
+        Get count of types per category.
+
+        Returns:
+            Dict mapping category name -> count
+
+        Example:
+            >>> distribution = client.get_category_distribution()
+            >>> for category, count in distribution.items():
+            ...     print(f"{category}: {count}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT category, COUNT(*) as count
+                    FROM kg_api.relationship_vocabulary
+                    WHERE is_active = TRUE
+                    GROUP BY category
+                    ORDER BY count DESC, category
+                """)
+                return {row[0]: row[1] for row in cur.fetchall()}
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def store_embedding(
+        self,
+        relationship_type: str,
+        embedding: List[float],
+        model: str = "text-embedding-ada-002"
+    ) -> bool:
+        """
+        Store embedding vector for relationship type.
+
+        Args:
+            relationship_type: Type to store embedding for
+            embedding: Embedding vector
+            model: Model used to generate embedding
+
+        Returns:
+            True if stored successfully
+
+        Example:
+            >>> embedding = [0.123, 0.456, ...]  # 1536 dimensions
+            >>> client.store_embedding("VALIDATES", embedding)
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                # Store as JSONB array
+                import json
+                embedding_json = json.dumps(embedding)
+                
+                cur.execute("""
+                    UPDATE kg_api.relationship_vocabulary
+                    SET embedding = %s::jsonb,
+                        embedding_model = %s,
+                        embedding_generated_at = NOW()
+                    WHERE relationship_type = %s
+                    RETURNING relationship_type
+                """, (embedding_json, model, relationship_type))
+                result = cur.fetchone()
+                return result is not None
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def get_embedding(self, relationship_type: str) -> Optional[List[float]]:
+        """
+        Get stored embedding for relationship type.
+
+        Args:
+            relationship_type: Type to get embedding for
+
+        Returns:
+            Embedding vector as list of floats, or None if not found
+
+        Example:
+            >>> embedding = client.get_embedding("VALIDATES")
+            >>> if embedding:
+            ...     print(f"Embedding dimension: {len(embedding)}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT embedding
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type = %s
+                """, (relationship_type,))
+                result = cur.fetchone()
+                if result and result[0]:
+                    import json
+                    return json.loads(result[0])
+                return None
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def get_vocabulary_embedding(self, relationship_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Get embedding with metadata for vocabulary type from database.
+
+        Args:
+            relationship_type: The edge type to get embedding for
+
+        Returns:
+            Dict with 'embedding' (list of floats) and 'embedding_model' (str),
+            or None if not found or no embedding
+
+        Example:
+            >>> client = AGEClient()
+            >>> data = client.get_vocabulary_embedding("VALIDATES")
+            >>> if data:
+            ...     print(f"Embedding dimensions: {len(data['embedding'])}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT embedding, embedding_model
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type = %s
+                      AND embedding IS NOT NULL
+                """, (relationship_type,))
+                result = cur.fetchone()
+
+                if result and result[0]:
+                    return {
+                        'embedding': result[0],  # Already a Python list from JSONB
+                        'embedding_model': result[1]
+                    }
+                return None
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)
+
+    def update_vocabulary_embedding(
+        self,
+        relationship_type: str,
+        embedding: List[float],
+        embedding_model: str
+    ) -> bool:
+        """
+        Update embedding for a vocabulary type in database.
+
+        Wrapper around store_embedding() for consistency with get_vocabulary_embedding().
+
+        Args:
+            relationship_type: The edge type to update
+            embedding: Embedding vector as list of floats
+            embedding_model: Name of the model used (e.g., "text-embedding-ada-002")
+
+        Returns:
+            True if updated, False if type not found
+
+        Example:
+            >>> client = AGEClient()
+            >>> success = client.update_vocabulary_embedding(
+            ...     "VALIDATES",
+            ...     embedding_vector,
+            ...     "text-embedding-ada-002"
+            ... )
+        """
+        return self.store_embedding(relationship_type, embedding, embedding_model)
+
+    def generate_vocabulary_embeddings(
+        self,
+        ai_provider,
+        force_regenerate: bool = False,
+        only_missing: bool = True
+    ) -> Dict[str, int]:
+        """
+        Bulk generate/regenerate embeddings for vocabulary types.
+
+        Useful for:
+        - Fixing missing embeddings after database issues
+        - Regenerating embeddings after model changes
+        - Updating embeddings after vocabulary merges
+
+        Args:
+            ai_provider: AI provider instance for embedding generation
+            force_regenerate: Regenerate all embeddings (default: False)
+            only_missing: Only generate for types without embeddings (default: True, ignored if force_regenerate=True)
+
+        Returns:
+            Dict with counts: {"generated": N, "skipped": M, "failed": K}
+
+        Example:
+            >>> from src.api.lib.ai_providers import get_provider
+            >>> provider = get_provider()
+            >>> result = client.generate_vocabulary_embeddings(provider, only_missing=True)
+            >>> print(f"Generated {result['generated']} embeddings")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                # Get vocabulary types to process
+                if force_regenerate:
+                    # Regenerate ALL embeddings
+                    cur.execute("""
+                        SELECT relationship_type
+                        FROM kg_api.relationship_vocabulary
+                        WHERE is_active = TRUE
+                        ORDER BY relationship_type
+                    """)
+                    logger.info("Generating embeddings for ALL vocabulary types (force_regenerate=True)")
+                elif only_missing:
+                    # Only types without embeddings
+                    cur.execute("""
+                        SELECT relationship_type
+                        FROM kg_api.relationship_vocabulary
+                        WHERE is_active = TRUE AND embedding IS NULL
+                        ORDER BY relationship_type
+                    """)
+                    logger.info("Generating embeddings for vocabulary types WITHOUT embeddings")
+                else:
+                    # All active types (might skip some if they already have embeddings)
+                    cur.execute("""
+                        SELECT relationship_type
+                        FROM kg_api.relationship_vocabulary
+                        WHERE is_active = TRUE
+                        ORDER BY relationship_type
+                    """)
+                    logger.info("Generating embeddings for active vocabulary types")
+
+                types_to_process = [row['relationship_type'] for row in cur.fetchall()]
+                total = len(types_to_process)
+
+                if total == 0:
+                    logger.info("No vocabulary types to process")
+                    return {"generated": 0, "skipped": 0, "failed": 0}
+
+                logger.info(f"Processing {total} vocabulary types...")
+
+                generated = 0
+                skipped = 0
+                failed = 0
+
+                for idx, rel_type in enumerate(types_to_process, 1):
+                    try:
+                        # Convert edge type to descriptive text (same logic as add_edge_type and SynonymDetector)
+                        descriptive_text = f"relationship: {rel_type.lower().replace('_', ' ')}"
+
+                        # Generate embedding
+                        embedding_response = ai_provider.generate_embedding(descriptive_text)
+                        embedding = embedding_response["embedding"]
+                        model = embedding_response.get("model", "text-embedding-ada-002")
+
+                        # Store embedding
+                        embedding_json = json.dumps(embedding)
+                        cur.execute("""
+                            UPDATE kg_api.relationship_vocabulary
+                            SET embedding = %s::jsonb,
+                                embedding_model = %s,
+                                embedding_generated_at = NOW()
+                            WHERE relationship_type = %s
+                        """, (embedding_json, model, rel_type))
+
+                        generated += 1
+
+                        # Log progress every 10 types
+                        if idx % 10 == 0:
+                            logger.info(f"  Progress: {idx}/{total} ({(idx/total)*100:.0f}%)")
+
+                    except Exception as e:
+                        failed += 1
+                        logger.error(f"Failed to generate embedding for '{rel_type}': {e}")
+
+                # Commit all changes
+                conn.commit()
+
+                logger.info(f"Bulk embedding generation complete: {generated} generated, {skipped} skipped, {failed} failed")
+                return {
+                    "generated": generated,
+                    "skipped": skipped,
+                    "failed": failed
+                }
+
+        except Exception as e:
+            conn.rollback()
+            raise Exception(f"Bulk embedding generation failed: {e}")
+        finally:
+            self.pool.putconn(conn)
+
+    async def execute_query(self, query: str) -> List[Dict]:
+        """
+        Execute a raw PostgreSQL query and return results as list of dicts.
+
+        This method is used by VocabularyScorer and other modules that need
+        to query statistics tables directly with SQL (not Cypher).
+
+        Args:
+            query: Raw PostgreSQL query string
+
+        Returns:
+            List of row dictionaries
+
+        Example:
+            >>> results = await client.execute_query(
+            ...     "SELECT * FROM kg_api.relationship_vocabulary LIMIT 5"
+            ... )
+            >>> for row in results:
+            ...     print(row['relationship_type'])
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                cur.execute(query)
+                results = cur.fetchall()
+                # Convert RealDictRow to regular dict
+                return [dict(row) for row in results]
+        finally:
+            conn.commit()
+            self.pool.putconn(conn)

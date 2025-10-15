@@ -164,11 +164,21 @@ class BackupIntegrityChecker:
         backup_type = data.get("type", "unknown")
         ontology = data.get("ontology")
         stats = data.get("statistics", {})
+        data_section = data.get("data", {})
 
         if ontology:
             result.add_info("info", f"Ontology backup: {ontology}", stats)
         else:
             result.add_info("info", f"Full database backup", stats)
+
+        # Check vocabulary section (ADR-032)
+        if "vocabulary" in data_section:
+            vocab_entries = data_section.get("vocabulary", [])
+            builtin_count = sum(1 for v in vocab_entries if v.get("is_builtin"))
+            custom_count = len(vocab_entries) - builtin_count
+            result.add_info("vocabulary",
+                f"Vocabulary: {len(vocab_entries)} types ({builtin_count} builtin, {custom_count} extended)",
+                {"builtin": builtin_count, "extended": custom_count})
 
         result.statistics = stats
 
@@ -242,16 +252,18 @@ class BackupIntegrityChecker:
             source_id = instance.get("source_id")
 
             if not concept_id:
-                result.add_error("references", f"Instance {idx} missing concept_id")
+                result.add_error("references", f"Instance {idx} missing concept_id field")
             elif concept_id not in concept_ids:
                 # External concept references are allowed in ontology backups (warnings handled separately)
                 if not is_ontology_backup:
-                    result.add_error("references", f"Instance {idx} references unknown concept: {concept_id}")
+                    result.add_error("references",
+                        f"Referential integrity: Instance {idx} references concept_id '{concept_id}' which doesn't exist in backup")
 
             if not source_id:
-                result.add_error("references", f"Instance {idx} missing source_id")
+                result.add_error("references", f"Instance {idx} missing source_id field")
             elif source_id not in source_ids:
-                result.add_error("references", f"Instance {idx} references unknown source: {source_id}")
+                result.add_error("references",
+                    f"Referential integrity: Instance {idx} references source_id '{source_id}' which doesn't exist in backup")
 
         # Check relationships reference valid concepts
         relationships = data_section.get("relationships", [])
@@ -261,22 +273,36 @@ class BackupIntegrityChecker:
             rel_type = rel.get("type")
 
             if not from_id:
-                result.add_error("references", f"Relationship {idx} missing 'from' concept")
+                result.add_error("references", f"Relationship {idx} missing 'from' field")
             elif from_id not in concept_ids:
                 # External concept references are allowed in ontology backups (warnings handled separately)
                 if not is_ontology_backup:
-                    result.add_error("references", f"Relationship {idx} references unknown 'from' concept: {from_id}")
+                    result.add_error("references",
+                        f"Referential integrity: Relationship {idx} 'from' references concept_id '{from_id}' which doesn't exist in backup")
 
             if not to_id:
-                result.add_error("references", f"Relationship {idx} missing 'to' concept")
+                result.add_error("references", f"Relationship {idx} missing 'to' field")
             elif to_id not in concept_ids:
                 # External concept references are allowed in ontology backups (warnings handled separately)
                 if not is_ontology_backup:
-                    result.add_error("references", f"Relationship {idx} references unknown 'to' concept: {to_id}")
+                    result.add_error("references",
+                        f"Referential integrity: Relationship {idx} 'to' references concept_id '{to_id}' which doesn't exist in backup")
 
-            # Check relationship type
-            if rel_type and rel_type not in self.VALID_RELATIONSHIP_TYPES:
-                result.add_warning("references", f"Relationship {idx} has unusual type: {rel_type}")
+            # Check relationship type (ADR-032: Extended vocabulary support)
+            # If backup has vocabulary section, check against that; otherwise use builtin types
+            vocabulary_types = set()
+            if "vocabulary" in data_section:
+                vocabulary_types = {v.get("relationship_type") for v in data_section.get("vocabulary", []) if v.get("relationship_type")}
+            else:
+                # Old backups without vocabulary section - use builtin types only
+                vocabulary_types = self.VALID_RELATIONSHIP_TYPES
+
+            if rel_type and rel_type not in vocabulary_types:
+                # Only warn if type is not in vocabulary AND not a structural type
+                structural_types = {"APPEARS_IN", "EVIDENCED_BY", "FROM_SOURCE"}
+                if rel_type not in structural_types:
+                    result.add_warning("references",
+                        f"Vocabulary integrity: Relationship {idx} uses edge type '{rel_type}' which is not in vocabulary table (pre-ADR-032 data)")
 
     def _check_statistics(self, data: Dict[str, Any], result: BackupIntegrity):
         """Validate statistics match actual data"""
@@ -342,7 +368,7 @@ class BackupIntegrityChecker:
         if total_external > 0:
             result.add_warning(
                 "external_deps",
-                f"Ontology backup has {total_external} external concept references",
+                f"Cross-ontology referential integrity: Ontology backup references {total_external} concept_ids from other ontologies not included in this backup",
                 {
                     "external_concepts_in_instances": len(external_concept_refs),
                     "external_concepts_in_relationships": len(external_rel_refs)
@@ -350,7 +376,7 @@ class BackupIntegrityChecker:
             )
             result.add_info(
                 "external_deps",
-                "Restoring this ontology may create dangling references if other ontologies are not present"
+                "These external references will create dangling edges if other ontologies are not present in target database"
             )
 
 
