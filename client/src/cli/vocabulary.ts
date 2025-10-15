@@ -400,4 +400,59 @@ export const vocabularyCommand = new Command('vocabulary')
           process.exit(1);
         }
       })
+  )
+  .addCommand(
+    new Command('generate-embeddings')
+      .description('Generate embeddings for vocabulary types')
+      .option('--force', 'Regenerate ALL embeddings regardless of existing state')
+      .option('--all', 'Process all active types (not just missing)')
+      .action(async (options) => {
+        try {
+          const client = createClientFromEnv();
+
+          // Determine mode
+          const forceRegenerate = options.force || false;
+          const onlyMissing = !options.all;
+
+          let modeDescription = '';
+          if (forceRegenerate) {
+            modeDescription = colors.status.warning('ALL vocabulary types (force regenerate)');
+          } else if (onlyMissing) {
+            modeDescription = colors.ui.value('vocabulary types WITHOUT embeddings (default)');
+          } else {
+            modeDescription = colors.ui.value('all active vocabulary types');
+          }
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('🔄 Generating Vocabulary Embeddings'));
+          console.log(separator());
+          console.log(`\n  ${colors.ui.key('Mode:')} ${modeDescription}`);
+          console.log('\n' + colors.status.dim('  Generating embeddings via OpenAI API...'));
+
+          const result = await client.generateVocabularyEmbeddings(
+            forceRegenerate,
+            onlyMissing
+          );
+
+          console.log('\n' + separator());
+          if (result.success) {
+            console.log(colors.status.success('✓ Embedding generation completed successfully'));
+          } else {
+            console.log(colors.status.warning('⚠️  Embedding generation completed with failures'));
+          }
+          console.log(`  ${colors.stats.label('Generated:')} ${coloredCount(result.generated)}`);
+          console.log(`  ${colors.stats.label('Skipped:')} ${coloredCount(result.skipped)}`);
+          if (result.failed > 0) {
+            console.log(`  ${colors.stats.label('Failed:')} ${colors.status.error(result.failed.toString())}`);
+          } else {
+            console.log(`  ${colors.stats.label('Failed:')} ${coloredCount(result.failed)}`);
+          }
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to generate embeddings'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
   );

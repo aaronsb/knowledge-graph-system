@@ -46,6 +46,10 @@ from ..models.vocabulary import (
     RestoreEdgeTypeRequest,
     RestoreEdgeTypeResponse,
 
+    # Embeddings
+    GenerateEmbeddingsRequest,
+    GenerateEmbeddingsResponse,
+
     # Enums
     ZoneEnum,
     PruningModeEnum,
@@ -589,3 +593,68 @@ async def merge_edge_types(request: MergeEdgeTypesRequest):
     except Exception as e:
         logger.error(f"Failed to merge edge types: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to merge edge types: {str(e)}")
+
+
+# =============================================================================
+# Embedding Endpoints
+# =============================================================================
+
+@router.post("/generate-embeddings", response_model=GenerateEmbeddingsResponse)
+async def generate_embeddings(request: GenerateEmbeddingsRequest):
+    """
+    Generate embeddings for vocabulary types (bulk operation).
+
+    Useful for:
+    - Fixing missing embeddings after database issues
+    - Regenerating embeddings after model changes
+    - Updating embeddings after vocabulary merges
+
+    Args:
+        request: Embedding generation options
+
+    Returns:
+        GenerateEmbeddingsResponse with counts of generated/skipped/failed
+
+    Example:
+        POST /vocabulary/generate-embeddings
+        {
+            "force_regenerate": false,
+            "only_missing": true
+        }
+    """
+    try:
+        client = AGEClient()
+        provider = get_provider()
+
+        try:
+            # Generate embeddings using AGEClient method
+            results = client.generate_vocabulary_embeddings(
+                ai_provider=provider,
+                force_regenerate=request.force_regenerate,
+                only_missing=request.only_missing
+            )
+
+            # Construct success message
+            if request.force_regenerate:
+                mode = "ALL vocabulary types (force regenerate)"
+            elif request.only_missing:
+                mode = "vocabulary types WITHOUT embeddings"
+            else:
+                mode = "active vocabulary types"
+
+            message = f"Generated embeddings for {mode}: {results['generated']} generated, {results['skipped']} skipped, {results['failed']} failed"
+
+            return GenerateEmbeddingsResponse(
+                success=results['failed'] == 0,
+                generated=results['generated'],
+                skipped=results['skipped'],
+                failed=results['failed'],
+                message=message
+            )
+
+        finally:
+            client.close()
+
+    except Exception as e:
+        logger.error(f"Failed to generate embeddings: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate embeddings: {str(e)}")

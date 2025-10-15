@@ -170,8 +170,9 @@
       "obsidian42-brat:BRAT": false
     }
   },
-  "active": "b49c283dceba9a5a",
+  "active": "8e5d43365caf7e21",
   "lastOpenFiles": [
+    "architecture/ADR-032-automatic-edge-vocabulary-expansion.md.tmp.3782316.1760549580273",
     "reference/DISTRIBUTED_SHARDING_RESEARCH.md",
     "guides/AI_PROVIDERS.md",
     "guides/PASSWORD_RECOVERY.md.tmp.394069.1760474098013",
@@ -207,7 +208,6 @@
     "guides/EXAMPLES.md",
     "guides/CLI_STATE_TREE.md",
     "architecture/ADR-029-cli-theory-of-operation.md",
-    "operations/RBAC-OPERATIONS.md",
     "architecture/media/voltron-porter-stemmer.jpg"
   ]
 }

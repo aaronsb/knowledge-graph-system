@@ -1195,7 +1195,7 @@ class AGEClient:
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
                 cur.execute("""
-                    SELECT relationship_type, description, category, added_by, 
+                    SELECT relationship_type, description, category, added_by,
                            added_at, usage_count, is_active, is_builtin,
                            synonyms, deprecation_reason, embedding_model,
                            embedding_generated_at
@@ -1203,7 +1203,29 @@ class AGEClient:
                     WHERE relationship_type = %s
                 """, (relationship_type,))
                 result = cur.fetchone()
-                return dict(result) if result else None
+
+                if not result:
+                    return None
+
+                # Convert to dict
+                info = dict(result)
+
+                # Query graph for actual edge count
+                try:
+                    count_query = f"""
+                    MATCH ()-[r:{relationship_type}]->()
+                    RETURN count(r) as edge_count
+                    """
+                    edge_result = self._execute_cypher(count_query, fetch_one=True)
+                    if edge_result:
+                        info['edge_count'] = int(str(edge_result.get('edge_count', 0)))
+                    else:
+                        info['edge_count'] = 0
+                except Exception as e:
+                    logger.warning(f"Failed to count edges for {relationship_type}: {e}")
+                    info['edge_count'] = 0
+
+                return info
         finally:
             conn.commit()
             self.pool.putconn(conn)
@@ -1214,10 +1236,11 @@ class AGEClient:
         category: str,
         description: Optional[str] = None,
         added_by: str = "system",
-        is_builtin: bool = False
+        is_builtin: bool = False,
+        ai_provider = None
     ) -> bool:
         """
-        Add a new relationship type to vocabulary.
+        Add a new relationship type to vocabulary with automatic embedding generation.
 
         Args:
             relationship_type: Relationship type name (e.g., "AUTHORED_BY")
@@ -1225,26 +1248,56 @@ class AGEClient:
             description: Optional description
             added_by: Who added the type (username or "system")
             is_builtin: Whether this is a protected builtin type
+            ai_provider: Optional AI provider for embedding generation (auto-generation if provided)
 
         Returns:
             True if added successfully, False if already exists
 
         Example:
-            >>> success = client.add_edge_type("AUTHORED_BY", "authorship", 
-            ...                                 "Indicates authorship", "admin")
+            >>> success = client.add_edge_type("AUTHORED_BY", "authorship",
+            ...                                 "Indicates authorship", "admin",
+            ...                                 ai_provider=provider)
         """
         conn = self.pool.getconn()
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO kg_api.relationship_vocabulary 
+                    INSERT INTO kg_api.relationship_vocabulary
                         (relationship_type, description, category, added_by, is_builtin, is_active)
                     VALUES (%s, %s, %s, %s, %s, TRUE)
                     ON CONFLICT (relationship_type) DO NOTHING
                     RETURNING relationship_type
                 """, (relationship_type, description, category, added_by, is_builtin))
                 result = cur.fetchone()
-                return result is not None
+                was_added = result is not None
+
+                # Generate and store embedding if AI provider available and type was just added
+                if was_added and ai_provider is not None:
+                    try:
+                        # Convert edge type to descriptive text (same logic as SynonymDetector)
+                        descriptive_text = f"relationship: {relationship_type.lower().replace('_', ' ')}"
+
+                        # Generate embedding
+                        embedding_response = ai_provider.generate_embedding(descriptive_text)
+                        embedding = embedding_response["embedding"]
+                        model = embedding_response.get("model", "text-embedding-ada-002")
+
+                        # Store embedding
+                        embedding_json = json.dumps(embedding)
+                        cur.execute("""
+                            UPDATE kg_api.relationship_vocabulary
+                            SET embedding = %s::jsonb,
+                                embedding_model = %s,
+                                embedding_generated_at = NOW()
+                            WHERE relationship_type = %s
+                        """, (embedding_json, model, relationship_type))
+
+                        logger.debug(f"Generated embedding for vocabulary type '{relationship_type}' ({len(embedding)} dims)")
+                    except Exception as e:
+                        # Don't fail the entire operation if embedding generation fails
+                        logger.warning(f"Failed to generate embedding for '{relationship_type}': {e}")
+
+                return was_added
         finally:
             conn.commit()
             self.pool.putconn(conn)
@@ -1472,6 +1525,125 @@ class AGEClient:
                 return None
         finally:
             conn.commit()
+            self.pool.putconn(conn)
+
+    def generate_vocabulary_embeddings(
+        self,
+        ai_provider,
+        force_regenerate: bool = False,
+        only_missing: bool = True
+    ) -> Dict[str, int]:
+        """
+        Bulk generate/regenerate embeddings for vocabulary types.
+
+        Useful for:
+        - Fixing missing embeddings after database issues
+        - Regenerating embeddings after model changes
+        - Updating embeddings after vocabulary merges
+
+        Args:
+            ai_provider: AI provider instance for embedding generation
+            force_regenerate: Regenerate all embeddings (default: False)
+            only_missing: Only generate for types without embeddings (default: True, ignored if force_regenerate=True)
+
+        Returns:
+            Dict with counts: {"generated": N, "skipped": M, "failed": K}
+
+        Example:
+            >>> from src.api.lib.ai_providers import get_provider
+            >>> provider = get_provider()
+            >>> result = client.generate_vocabulary_embeddings(provider, only_missing=True)
+            >>> print(f"Generated {result['generated']} embeddings")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                # Get vocabulary types to process
+                if force_regenerate:
+                    # Regenerate ALL embeddings
+                    cur.execute("""
+                        SELECT relationship_type
+                        FROM kg_api.relationship_vocabulary
+                        WHERE is_active = TRUE
+                        ORDER BY relationship_type
+                    """)
+                    logger.info("Generating embeddings for ALL vocabulary types (force_regenerate=True)")
+                elif only_missing:
+                    # Only types without embeddings
+                    cur.execute("""
+                        SELECT relationship_type
+                        FROM kg_api.relationship_vocabulary
+                        WHERE is_active = TRUE AND embedding IS NULL
+                        ORDER BY relationship_type
+                    """)
+                    logger.info("Generating embeddings for vocabulary types WITHOUT embeddings")
+                else:
+                    # All active types (might skip some if they already have embeddings)
+                    cur.execute("""
+                        SELECT relationship_type
+                        FROM kg_api.relationship_vocabulary
+                        WHERE is_active = TRUE
+                        ORDER BY relationship_type
+                    """)
+                    logger.info("Generating embeddings for active vocabulary types")
+
+                types_to_process = [row['relationship_type'] for row in cur.fetchall()]
+                total = len(types_to_process)
+
+                if total == 0:
+                    logger.info("No vocabulary types to process")
+                    return {"generated": 0, "skipped": 0, "failed": 0}
+
+                logger.info(f"Processing {total} vocabulary types...")
+
+                generated = 0
+                skipped = 0
+                failed = 0
+
+                for idx, rel_type in enumerate(types_to_process, 1):
+                    try:
+                        # Convert edge type to descriptive text (same logic as add_edge_type and SynonymDetector)
+                        descriptive_text = f"relationship: {rel_type.lower().replace('_', ' ')}"
+
+                        # Generate embedding
+                        embedding_response = ai_provider.generate_embedding(descriptive_text)
+                        embedding = embedding_response["embedding"]
+                        model = embedding_response.get("model", "text-embedding-ada-002")
+
+                        # Store embedding
+                        embedding_json = json.dumps(embedding)
+                        cur.execute("""
+                            UPDATE kg_api.relationship_vocabulary
+                            SET embedding = %s::jsonb,
+                                embedding_model = %s,
+                                embedding_generated_at = NOW()
+                            WHERE relationship_type = %s
+                        """, (embedding_json, model, rel_type))
+
+                        generated += 1
+
+                        # Log progress every 10 types
+                        if idx % 10 == 0:
+                            logger.info(f"  Progress: {idx}/{total} ({(idx/total)*100:.0f}%)")
+
+                    except Exception as e:
+                        failed += 1
+                        logger.error(f"Failed to generate embedding for '{rel_type}': {e}")
+
+                # Commit all changes
+                conn.commit()
+
+                logger.info(f"Bulk embedding generation complete: {generated} generated, {skipped} skipped, {failed} failed")
+                return {
+                    "generated": generated,
+                    "skipped": skipped,
+                    "failed": failed
+                }
+
+        except Exception as e:
+            conn.rollback()
+            raise Exception(f"Bulk embedding generation failed: {e}")
+        finally:
             self.pool.putconn(conn)
 
     async def execute_query(self, query: str) -> List[Dict]:

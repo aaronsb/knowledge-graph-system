@@ -18,6 +18,7 @@ from src.api.lib.markdown_preprocessor import SemanticChunk
 from src.api.lib.age_client import AGEClient
 from src.api.lib.llm_extractor import extract_concepts, generate_embedding
 from src.api.lib.relationship_mapper import normalize_relationship_type
+from src.api.lib.ai_providers import get_provider
 
 
 class ChunkedIngestionStats:
@@ -359,15 +360,18 @@ def process_chunk(
             similarity = 1.0
 
             # Add to vocabulary table so it propagates to subsequent chunks
+            # Generate embedding immediately for vocabulary matching on subsequent chunks
             try:
+                provider = get_provider()  # Get current AI provider for embedding generation
                 age_client.add_edge_type(
                     relationship_type=canonical_type,
                     category=category,
                     description=f"LLM-generated relationship type from ingestion",
                     added_by="llm_extractor",
-                    is_builtin=False
+                    is_builtin=False,
+                    ai_provider=provider  # Pass provider for automatic embedding generation
                 )
-                logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (will be tracked for review)")
+                logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (embedding generated)")
             except Exception as e:
                 # If adding fails (e.g., already exists from another worker), continue anyway
                 logger.debug(f"  Note: Edge type '{canonical_type}' may already exist: {e}")
