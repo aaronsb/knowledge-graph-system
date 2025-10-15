@@ -42,7 +42,7 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     )
 
     console_formatter = logging.Formatter(
-        fmt='%(asctime)s | %(levelname)-8s | %(message)s',
+        fmt='%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
         datefmt='%H:%M:%S'
     )
 
