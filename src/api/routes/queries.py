@@ -134,9 +134,10 @@ async def search_concepts(request: SearchRequest):
             # If few results found, check for additional concepts below threshold
             below_threshold_count = None
             suggested_threshold = None
-            if len(results) < 3 and request.min_similarity > 0.5:
-                # Search with lower threshold to find near-misses
-                lower_threshold = max(0.4, request.min_similarity - 0.2)
+            if len(results) < 3 and request.min_similarity > 0.3:
+                # Search with fixed lower threshold to find near-misses
+                # Use 0.3 (30%) to catch most reasonable matches
+                lower_threshold = 0.3
                 lower_matches = client.vector_search(
                     embedding,
                     threshold=lower_threshold,
