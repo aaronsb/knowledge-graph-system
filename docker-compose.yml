@@ -31,8 +31,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
       # Initialization scripts (run on first startup)
-      - ./schema/init_age.sql:/docker-entrypoint-initdb.d/01_init_age.sql
-      - ./schema/multi_schema.sql:/docker-entrypoint-initdb.d/02_multi_schema.sql
+      # Using consolidated baseline schema (v2.0.0)
+      - ./schema/00_baseline.sql:/docker-entrypoint-initdb.d/00_baseline.sql
 
       # Optional: Import directory for bulk data loads
       - postgres_import:/import
