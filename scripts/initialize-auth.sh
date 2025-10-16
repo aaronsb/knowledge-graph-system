@@ -13,6 +13,17 @@ BOLD='\033[1m'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
+# Use venv Python if available, otherwise system python3
+if [ -f "$PROJECT_ROOT/venv/bin/python" ]; then
+    PYTHON="$PROJECT_ROOT/venv/bin/python"
+elif [ -f "$PROJECT_ROOT/venv/bin/python3" ]; then
+    PYTHON="$PROJECT_ROOT/venv/bin/python3"
+else
+    PYTHON="python3"
+    echo -e "${YELLOW}⚠${NC}  Virtual environment not found, using system Python"
+    echo -e "${YELLOW}   Run: python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
+fi
+
 echo -e "${BLUE}${BOLD}"
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║   Knowledge Graph System - Authentication Initialization   ║"
@@ -71,7 +82,7 @@ while true; do
     fi
 
     # Validate password strength using Python
-    VALIDATION_RESULT=$(python3 << EOF
+    VALIDATION_RESULT=$($PYTHON << EOF
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
 from src.api.lib.auth import validate_password_strength
@@ -124,7 +135,7 @@ if [ "$GENERATE_SECRET" = true ]; then
         JWT_SECRET=$(openssl rand -hex 32)
         echo -e "${GREEN}✓${NC} Generated JWT secret using openssl"
     else
-        JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+        JWT_SECRET=$($PYTHON -c "import secrets; print(secrets.token_hex(32))")
         echo -e "${GREEN}✓${NC} Generated JWT secret using Python"
     fi
 
@@ -153,7 +164,7 @@ if [ "$RESET_MODE" = true ]; then
     echo -e "${BLUE}→${NC} Resetting admin password..."
 
     # Hash password using Python - capture both stdout and stderr
-    HASH_OUTPUT=$(python3 << EOF 2>&1
+    HASH_OUTPUT=$($PYTHON << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
 
@@ -218,7 +229,7 @@ else
     echo -e "${BLUE}→${NC} Creating admin user..."
 
     # Hash password using Python - capture both stdout and stderr
-    HASH_OUTPUT=$(python3 << EOF 2>&1
+    HASH_OUTPUT=$($PYTHON << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
 
