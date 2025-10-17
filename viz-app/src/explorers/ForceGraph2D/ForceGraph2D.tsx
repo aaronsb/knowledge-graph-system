@@ -5,7 +5,7 @@
  * Follows ADR-034 Explorer Plugin Interface.
  */
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
 import { ArrowRight } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
@@ -22,6 +22,46 @@ export const ForceGraph2D: React.FC<
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+
+  // Imperative function to apply gold ring - can be called anytime
+  const applyGoldRing = useCallback((nodeId: string) => {
+    if (!svgRef.current || !settings.interaction.showOriginNode) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Remove from previous node
+    svg.selectAll('circle.origin-node')
+      .interrupt()
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2)
+      .attr('stroke-opacity', 1)
+      .classed('origin-node', false);
+
+    // Add to target node
+    const targetCircle = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
+
+    if (!targetCircle.empty()) {
+      targetCircle
+        .attr('stroke', '#FFD700')
+        .attr('stroke-width', 4)
+        .classed('origin-node', true);
+
+      // Start pulsing animation
+      const pulse = () => {
+        targetCircle
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', 6)
+          .attr('stroke-opacity', 0.6)
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', 4)
+          .attr('stroke-opacity', 1)
+          .on('end', pulse);
+      };
+      pulse();
+    }
+  }, [settings.interaction.showOriginNode]);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
@@ -55,7 +95,6 @@ export const ForceGraph2D: React.FC<
     const g = svg.append('g').attr('class', 'graph-container');
     const linksGroup = g.append('g').attr('class', 'links');
     const nodesGroup = g.append('g').attr('class', 'nodes');
-    g.append('g').attr('class', 'indicators'); // On top of everything (for "You Are Here" ring)
 
     // Setup zoom behavior
     if (settings.interaction.enableZoom || settings.interaction.enablePan) {
@@ -150,10 +189,12 @@ export const ForceGraph2D: React.FC<
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
+      .attr('data-node-id', (d) => d.id) // Add ID for selection
       .on('click', (_event, d) => {
         // Left-click: Select node (show gold ring)
         setOriginNodeId(d.id);
         setContextMenu(null); // Close any open context menu
+        applyGoldRing(d.id); // Immediate visual feedback
       })
       .on('contextmenu', (event, d) => {
         // Right-click: Show context menu
@@ -281,76 +322,32 @@ export const ForceGraph2D: React.FC<
     });
   }, [hoveredNode, neighbors]);
 
-  // "You Are Here" highlighting for origin node
+  // "You Are Here" highlighting for origin node - async update after DOM ready
   useEffect(() => {
-    if (!svgRef.current || !originNodeId || !settings.interaction.showOriginNode) {
-      return;
-    }
+    if (!originNodeId || !settings.interaction.showOriginNode) return;
 
-    const svg = d3.select(svgRef.current);
-    const indicatorsGroup = svg.select('g.indicators');
-
-    // Find the origin node data
-    const originNode = data.nodes.find(n => n.id === originNodeId);
-
-    if (!originNode) {
-      // Node not in current graph, remove indicator
-      indicatorsGroup.selectAll('.origin-indicator').remove();
-      return;
-    }
-
-    const nodeRadius = (originNode.size || 10) * settings.visual.nodeSize;
-
-    // Update or create origin indicator
-    let originIndicator = indicatorsGroup.select<SVGCircleElement>('.origin-indicator');
-
-    if (originIndicator.empty()) {
-      // Create new indicator
-      originIndicator = indicatorsGroup
-        .append('circle')
-        .attr('class', 'origin-indicator')
-        .attr('fill', 'none')
-        .attr('stroke', '#FFD700') // Gold color
-        .attr('stroke-width', 3)
-        .attr('pointer-events', 'none');
-
-      // Start pulsing animation
-      function pulse() {
-        originIndicator
-          .transition()
-          .duration(1000)
-          .attr('r', nodeRadius + 12)
-          .style('opacity', 0.3)
-          .transition()
-          .duration(1000)
-          .attr('r', nodeRadius + 8)
-          .style('opacity', 1)
-          .on('end', pulse);
-      }
-      pulse();
-    }
-
-    // Update position and size
-    originIndicator
-      .attr('cx', originNode.x || 0)
-      .attr('cy', originNode.y || 0)
-      .attr('r', nodeRadius + 8)
-      .style('opacity', 1);
-
-    // Update position on simulation tick
-    const updateOriginIndicator = () => {
-      originIndicator
-        .attr('cx', originNode.x || 0)
-        .attr('cy', originNode.y || 0);
-    };
-
-    simulationRef.current?.on('tick.origin', updateOriginIndicator);
+    // Wait for next frame to ensure DOM is fully rendered
+    const rafId = requestAnimationFrame(() => {
+      // Double-raf for extra safety (ensures layout is complete)
+      requestAnimationFrame(() => {
+        applyGoldRing(originNodeId);
+      });
+    });
 
     return () => {
-      simulationRef.current?.on('tick.origin', null);
-      indicatorsGroup.selectAll('.origin-indicator').remove();
+      cancelAnimationFrame(rafId);
+      // Cleanup: remove gold ring
+      if (svgRef.current) {
+        d3.select(svgRef.current)
+          .selectAll('circle.origin-node')
+          .interrupt()
+          .attr('stroke', '#fff')
+          .attr('stroke-width', 2)
+          .attr('stroke-opacity', 1)
+          .classed('origin-node', false);
+      }
     };
-  }, [originNodeId, settings, data]);
+  }, [originNodeId, settings.interaction.showOriginNode, data, applyGoldRing]);
 
   // Handle window resize
   useEffect(() => {
