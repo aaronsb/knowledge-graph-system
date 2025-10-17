@@ -252,8 +252,9 @@ export const ForceGraph2D: React.FC<
 
     svg.selectAll<SVGLineElement, D3Link>('line').attr('stroke-opacity', (link) => {
       if (!hoveredNode) return 0.6;
-      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
+      if (!sourceId || !targetId) return 0.6; // Handle undefined during transition
       if (sourceId === hoveredNode || targetId === hoveredNode) return 1;
       return 0.1;
     });
