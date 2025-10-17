@@ -658,6 +658,240 @@ const animateFocus = (nodeId: string) => {
 };
 ```
 
+## Implementation Patterns
+
+### Imperative DOM Manipulation for Dynamic Highlighting
+
+**Problem:** React's declarative useEffect pattern can create timing issues when highlighting nodes in D3-rendered SVG graphs. Specifically:
+- Effects only run when dependencies change (clicking same node twice doesn't re-trigger)
+- Effects may run before D3 has positioned elements in the DOM
+- Graph data reloads clear the DOM, requiring re-application of highlights
+
+**Solution:** Hybrid imperative/declarative approach combining React hooks with direct DOM manipulation.
+
+**Pattern:**
+
+```typescript
+// 1. Create imperative function with useCallback to apply styles directly to DOM
+const applyHighlight = useCallback((nodeId: string, style: HighlightStyle) => {
+  if (!svgRef.current || !settings.highlightEnabled) return;
+
+  const svg = d3.select(svgRef.current);
+
+  // Remove previous highlights
+  svg.selectAll('circle.highlighted')
+    .interrupt()
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 2)
+    .classed('highlighted', false);
+
+  // Apply to target node using data-node-id attribute
+  const targetCircle = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
+
+  if (!targetCircle.empty()) {
+    targetCircle
+      .attr('stroke', style.color)
+      .attr('stroke-width', style.width)
+      .classed('highlighted', true);
+
+    // Optional: Add animation
+    if (style.animated) {
+      const pulse = () => {
+        targetCircle
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', style.width * 1.5)
+          .attr('stroke-opacity', 0.6)
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', style.width)
+          .attr('stroke-opacity', 1)
+          .on('end', pulse);
+      };
+      pulse();
+    }
+  }
+}, [settings.highlightEnabled]);
+
+// 2. Call imperatively for immediate feedback (e.g., on click)
+const handleNodeClick = (nodeId: string) => {
+  setSelectedNodeId(nodeId);
+  applyHighlight(nodeId, HIGHLIGHT_STYLES.origin); // Immediate visual update
+};
+
+// 3. Call declaratively from effect for persistence after data changes
+useEffect(() => {
+  if (!selectedNodeId) return;
+
+  // Wait for DOM to be fully rendered after data reload
+  const rafId = requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      applyHighlight(selectedNodeId, HIGHLIGHT_STYLES.origin);
+    });
+  });
+
+  return () => {
+    cancelAnimationFrame(rafId);
+    // Cleanup highlights on unmount
+    if (svgRef.current) {
+      d3.select(svgRef.current)
+        .selectAll('circle.highlighted')
+        .interrupt()
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2)
+        .classed('highlighted', false);
+    }
+  };
+}, [selectedNodeId, data, applyHighlight]);
+```
+
+**Key Techniques:**
+
+1. **Data Attributes for Selection**: Add `data-node-id` attributes to DOM elements for reliable selection
+2. **useCallback Memoization**: Prevents function recreation, making it safe to include in effect dependencies
+3. **Double requestAnimationFrame**: Ensures DOM layout is complete before manipulation
+4. **Interrupt Transitions**: Stop ongoing animations before applying new ones
+5. **CSS Classes for State**: Use classes like `.highlighted` for easier debugging and cleanup
+
+**Benefits:**
+- ✅ Works immediately on user interaction (no effect delay)
+- ✅ Persists across graph data changes
+- ✅ Handles same-node re-clicks correctly
+- ✅ No position tracking needed (styles the actual DOM element)
+- ✅ Graceful cleanup on unmount or settings changes
+
+### Application: Path Highlighting
+
+**Use Case:** Visualize query results like "find path from Concept A to Concept B" by highlighting multiple nodes and edges along the route.
+
+**Example - Highlighting a Path:**
+
+```typescript
+interface PathHighlight {
+  nodeIds: string[];
+  edgeIds: string[];
+  style: 'primary' | 'secondary' | 'alternate';
+}
+
+const applyPathHighlight = useCallback((path: PathHighlight) => {
+  if (!svgRef.current) return;
+
+  const svg = d3.select(svgRef.current);
+
+  // Clear previous path highlights
+  svg.selectAll('.path-highlight').classed('path-highlight', false);
+
+  // Highlight nodes in path
+  path.nodeIds.forEach((nodeId, index) => {
+    const circle = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
+
+    if (!circle.empty()) {
+      circle
+        .classed('path-highlight', true)
+        .attr('stroke', PATH_COLORS[path.style])
+        .attr('stroke-width', 4)
+        .attr('stroke-dasharray', index === 0 || index === path.nodeIds.length - 1 ? 'none' : '5,5');
+        // Dashed for intermediate nodes, solid for start/end
+    }
+  });
+
+  // Highlight edges in path
+  path.edgeIds.forEach(edgeId => {
+    const line = svg.select<SVGLineElement>(`line[data-edge-id="${edgeId}"]`);
+
+    if (!line.empty()) {
+      line
+        .classed('path-highlight', true)
+        .attr('stroke', PATH_COLORS[path.style])
+        .attr('stroke-width', 3)
+        .attr('stroke-opacity', 0.8);
+    }
+  });
+
+  // Optional: Animate path traversal
+  animatePathTraversal(path.nodeIds, path.edgeIds);
+}, []);
+
+// Animate a "flow" effect along the path
+const animatePathTraversal = (nodeIds: string[], edgeIds: string[]) => {
+  let delay = 0;
+
+  nodeIds.forEach((nodeId, index) => {
+    setTimeout(() => {
+      const circle = d3.select(`circle[data-node-id="${nodeId}"]`);
+      circle
+        .transition()
+        .duration(300)
+        .attr('r', (d: D3Node) => ((d.size || 10) * settings.visual.nodeSize) * 1.5)
+        .transition()
+        .duration(300)
+        .attr('r', (d: D3Node) => (d.size || 10) * settings.visual.nodeSize);
+    }, delay);
+
+    delay += 400;
+  });
+};
+```
+
+**Future Applications:**
+
+1. **Multi-Path Comparison**: Show 3-5 paths simultaneously with different colors
+   - Primary path: Gold (#FFD700)
+   - Alternate path 1: Blue (#4A90E2)
+   - Alternate path 2: Green (#50C878)
+
+2. **Confidence Visualization**: Edge thickness proportional to relationship confidence
+   ```typescript
+   .attr('stroke-width', (d) => 1 + (d.confidence * 4)) // 1-5px based on 0-1 confidence
+   ```
+
+3. **Interactive Path Exploration**:
+   - Click node in path → Show evidence from source documents
+   - Hover edge → Show relationship type and confidence tooltip
+   - Right-click path → "Find alternate paths" or "Explain this connection"
+
+4. **Breadcrumb Trail Visualization**: Highlight your navigation history in the graph
+   ```typescript
+   applyPathHighlight({
+     nodeIds: navigationHistory.trail.map(h => h.conceptId),
+     edgeIds: [], // Don't highlight edges for history
+     style: 'secondary'
+   });
+   ```
+
+5. **Query Result Highlighting**: Show subgraph matching a pattern query
+   - Highlight nodes matching pattern
+   - Differentiate by role in pattern (subject, object, predicate)
+
+**Performance Considerations:**
+
+- Batch DOM updates when highlighting many nodes/edges
+- Use CSS classes for bulk style changes when possible
+- Debounce frequent highlight changes (e.g., during animation scrubbing)
+- Consider virtual viewport for large graphs (only highlight visible elements)
+
+```typescript
+// Batch update example
+const applyBatchHighlight = (nodeIds: string[], style: HighlightStyle) => {
+  const svg = d3.select(svgRef.current);
+
+  // Single D3 selection update for all nodes
+  svg.selectAll<SVGCircleElement, D3Node>('circle')
+    .filter((d) => nodeIds.includes(d.id))
+    .attr('stroke', style.color)
+    .attr('stroke-width', style.width)
+    .classed('highlighted', true);
+};
+```
+
+**Testing Checklist:**
+- [ ] Highlights persist across graph reloads
+- [ ] Multiple paths can be highlighted simultaneously
+- [ ] Clicking same node re-applies highlight correctly
+- [ ] Animations can be interrupted/restarted cleanly
+- [ ] Cleanup occurs on unmount/setting toggle
+- [ ] Performance acceptable with 100+ node paths
+
 ## Terminology
 
 **Explorer vs. Workbench:**

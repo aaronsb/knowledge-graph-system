@@ -187,6 +187,7 @@
   },
   "active": "cbac5f1b64e45ac7",
   "lastOpenFiles": [
+    "architecture/ADR-035-explorer-methods-uses-capabilities.md.tmp.1314313.1760731456380",
     "architecture/ARCHITECTURE_DECISIONS.md.tmp.1314313.1760721141748",
     "architecture/ARCHITECTURE_DECISIONS.md.tmp.1314313.1760721132262",
     "architecture/ADR-035-explorer-methods-uses-capabilities.md",
@@ -203,7 +204,6 @@
     "guides/AI_PROVIDERS.md",
     "guides/PASSWORD_RECOVERY.md.tmp.394069.1760474098013",
     "README.md.tmp.394069.1760474081766",
-    "README.md.tmp.394069.1760474081573",
     "guides/PASSWORD_RECOVERY.md",
     "guides/use_cases/password_recovery.md",
     "guides/use_cases/github_project_history.md",
