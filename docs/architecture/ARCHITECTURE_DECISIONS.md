@@ -49,6 +49,7 @@ All ADRs follow a consistent format:
 | [ADR-030](ADR-030-concept-deduplication-validation.md) | Concept Deduplication Validation | Accepted | Quality test suite for embedding-based concept matching |
 | [ADR-031](ADR-031-encrypted-api-key-storage.md) | Encrypted API Key Storage | Accepted | Fernet encryption with container secrets and service token authorization |
 | [ADR-032](ADR-032-automatic-edge-vocabulary-expansion.md) | Automatic Edge Vocabulary Expansion | Proposed | Auto-expand vocabulary on first use with intelligent pruning (naive/HITL/AITL modes) and sliding window (30-90 types) |
+| [ADR-033](ADR-033-multimodal-ingestion-configurable-prompts.md) | Multimodal Image Ingestion with Configurable Prompts | Proposed | Vision AI describes images for concept extraction; database-stored prompts enable domain-specific extraction profiles |
 
 ## How to Use This Index
 
@@ -122,6 +123,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-10-15
+**Last Updated:** 2025-10-16
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
