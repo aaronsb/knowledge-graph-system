@@ -7,11 +7,13 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
+import { ArrowRight } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
+import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
@@ -20,6 +22,14 @@ export const ForceGraph2D: React.FC<
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId: string;
+    nodeLabel: string;
+  } | null>(null);
 
   // Get navigation state from store
   const { originNodeId, setOriginNodeId } = useGraphStore();
@@ -45,6 +55,7 @@ export const ForceGraph2D: React.FC<
     const g = svg.append('g').attr('class', 'graph-container');
     const linksGroup = g.append('g').attr('class', 'links');
     const nodesGroup = g.append('g').attr('class', 'nodes');
+    g.append('g').attr('class', 'indicators'); // On top of everything (for "You Are Here" ring)
 
     // Setup zoom behavior
     if (settings.interaction.enableZoom || settings.interaction.enablePan) {
@@ -140,9 +151,19 @@ export const ForceGraph2D: React.FC<
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
       .on('click', (_event, d) => {
-        // Set as origin node for "You Are Here" highlighting
+        // Left-click: Select node (show gold ring)
         setOriginNodeId(d.id);
-        if (onNodeClick) onNodeClick(d.id);
+        setContextMenu(null); // Close any open context menu
+      })
+      .on('contextmenu', (event, d) => {
+        // Right-click: Show context menu
+        event.preventDefault();
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          nodeId: d.id,
+          nodeLabel: d.label,
+        });
       })
       .on('mouseenter', (_event, d) => {
         setHoveredNode(d.id);
@@ -235,7 +256,7 @@ export const ForceGraph2D: React.FC<
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick, setOriginNodeId]);
+  }, [data, settings, dimensions, onNodeClick]);
 
   // Update highlighting based on hover
   useEffect(() => {
@@ -244,7 +265,7 @@ export const ForceGraph2D: React.FC<
     const svg = d3.select(svgRef.current);
 
     svg.selectAll<SVGCircleElement, D3Node>('circle').attr('opacity', (d) => {
-      if (!hoveredNode) return 1;
+      if (!d || !hoveredNode) return 1;
       if (d.id === hoveredNode) return 1;
       if (neighbors.has(d.id)) return 1;
       return 0.2;
@@ -262,47 +283,59 @@ export const ForceGraph2D: React.FC<
 
   // "You Are Here" highlighting for origin node
   useEffect(() => {
-    if (!svgRef.current || !originNodeId || !settings.interaction.showOriginNode) return;
+    if (!svgRef.current || !originNodeId || !settings.interaction.showOriginNode) {
+      return;
+    }
 
     const svg = d3.select(svgRef.current);
-    const nodesGroup = svg.select('g.nodes');
-
-    // Remove existing origin indicator
-    nodesGroup.selectAll('.origin-indicator').remove();
+    const indicatorsGroup = svg.select('g.indicators');
 
     // Find the origin node data
     const originNode = data.nodes.find(n => n.id === originNodeId);
-    if (!originNode) return;
+
+    if (!originNode) {
+      // Node not in current graph, remove indicator
+      indicatorsGroup.selectAll('.origin-indicator').remove();
+      return;
+    }
 
     const nodeRadius = (originNode.size || 10) * settings.visual.nodeSize;
 
-    // Add pulsing ring around origin node
-    const originIndicator = nodesGroup
-      .append('circle')
-      .attr('class', 'origin-indicator')
+    // Update or create origin indicator
+    let originIndicator = indicatorsGroup.select<SVGCircleElement>('.origin-indicator');
+
+    if (originIndicator.empty()) {
+      // Create new indicator
+      originIndicator = indicatorsGroup
+        .append('circle')
+        .attr('class', 'origin-indicator')
+        .attr('fill', 'none')
+        .attr('stroke', '#FFD700') // Gold color
+        .attr('stroke-width', 3)
+        .attr('pointer-events', 'none');
+
+      // Start pulsing animation
+      function pulse() {
+        originIndicator
+          .transition()
+          .duration(1000)
+          .attr('r', nodeRadius + 12)
+          .style('opacity', 0.3)
+          .transition()
+          .duration(1000)
+          .attr('r', nodeRadius + 8)
+          .style('opacity', 1)
+          .on('end', pulse);
+      }
+      pulse();
+    }
+
+    // Update position and size
+    originIndicator
       .attr('cx', originNode.x || 0)
       .attr('cy', originNode.y || 0)
       .attr('r', nodeRadius + 8)
-      .attr('fill', 'none')
-      .attr('stroke', '#FFD700') // Gold color
-      .attr('stroke-width', 3)
-      .attr('pointer-events', 'none')
       .style('opacity', 1);
-
-    // Pulsing animation
-    function pulse() {
-      originIndicator
-        .transition()
-        .duration(1000)
-        .attr('r', nodeRadius + 12)
-        .style('opacity', 0.3)
-        .transition()
-        .duration(1000)
-        .attr('r', nodeRadius + 8)
-        .style('opacity', 1)
-        .on('end', pulse);
-    }
-    pulse();
 
     // Update position on simulation tick
     const updateOriginIndicator = () => {
@@ -315,9 +348,9 @@ export const ForceGraph2D: React.FC<
 
     return () => {
       simulationRef.current?.on('tick.origin', null);
-      nodesGroup.selectAll('.origin-indicator').remove();
+      indicatorsGroup.selectAll('.origin-indicator').remove();
     };
-  }, [originNodeId, data.nodes, settings.visual.nodeSize, settings.interaction.showOriginNode]);
+  }, [originNodeId, settings.visual.nodeSize, settings.interaction.showOriginNode, data]);
 
   // Handle window resize
   useEffect(() => {
@@ -336,6 +369,21 @@ export const ForceGraph2D: React.FC<
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Context menu items
+  const contextMenuItems: ContextMenuItem[] = contextMenu
+    ? [
+        {
+          label: `Follow "${contextMenu.nodeLabel}"`,
+          icon: ArrowRight,
+          onClick: () => {
+            if (onNodeClick) {
+              onNodeClick(contextMenu.nodeId);
+            }
+          },
+        },
+      ]
+    : [];
+
   return (
     <div className={`relative w-full h-full ${className || ''}`}>
       <svg
@@ -351,6 +399,16 @@ export const ForceGraph2D: React.FC<
           {data.nodes.length} nodes • {data.links.length} edges
         </div>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 };
