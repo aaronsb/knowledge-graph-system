@@ -134,6 +134,7 @@ async def search_concepts(request: SearchRequest):
             # If few results found, check for additional concepts below threshold
             below_threshold_count = None
             suggested_threshold = None
+            top_match = None
             if len(results) < 3 and request.min_similarity > 0.3:
                 # Search with fixed lower threshold to find near-misses
                 # Use 0.3 (30%) to catch most reasonable matches
@@ -155,12 +156,37 @@ async def search_concepts(request: SearchRequest):
                     min_score = min(m['similarity'] for m in below_threshold_matches)
                     suggested_threshold = round(min_score - 0.02, 2)  # Slightly below lowest to include it
 
+                    # Get top match (highest similarity) for preview
+                    top_match_data = max(below_threshold_matches, key=lambda m: m['similarity'])
+
+                    # Get documents and evidence for top match
+                    top_concept_id = top_match_data['concept_id']
+                    top_docs_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:APPEARS_IN]->(s:Source) RETURN DISTINCT s.document as doc"
+                    )
+                    top_documents = [r['doc'] for r in (top_docs_query or [])]
+
+                    top_evidence_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as evidence_count",
+                        fetch_one=True
+                    )
+                    top_evidence_count = top_evidence_query['evidence_count'] if top_evidence_query else 0
+
+                    top_match = ConceptSearchResult(
+                        concept_id=top_concept_id,
+                        label=top_match_data['label'],
+                        score=top_match_data['similarity'],
+                        documents=top_documents,
+                        evidence_count=top_evidence_count
+                    )
+
             return SearchResponse(
                 query=request.query,
                 count=len(results),
                 results=results,
                 below_threshold_count=below_threshold_count if below_threshold_count else None,
                 suggested_threshold=suggested_threshold,
+                top_match=top_match,
                 threshold_used=request.min_similarity,
                 offset=request.offset
             )

@@ -37,6 +37,7 @@ class SearchResponse(BaseModel):
     results: List[ConceptSearchResult] = Field(..., description="Ranked search results")
     below_threshold_count: Optional[int] = Field(None, description="Number of additional concepts below threshold")
     suggested_threshold: Optional[float] = Field(None, description="Suggested threshold to reveal below-threshold results")
+    top_match: Optional[ConceptSearchResult] = Field(None, description="Best matching concept below threshold for quick preview")
     threshold_used: Optional[float] = Field(None, description="Similarity threshold used for filtering")
     offset: Optional[int] = Field(None, description="Offset used for pagination")
 
