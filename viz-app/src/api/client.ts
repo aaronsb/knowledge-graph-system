@@ -24,7 +24,7 @@ class APIClient {
 
   /**
    * Get subgraph centered on a concept
-   * Uses the /query/related endpoint to fetch related concepts
+   * Fetches related concepts and ALL relationships between them
    */
   async getSubgraph(params: {
     center_concept_id: string;
@@ -32,45 +32,61 @@ class APIClient {
     relationship_types?: string[];
     limit?: number;
   }): Promise<SubgraphResponse> {
+    // Step 1: Fetch related concepts
     const response = await this.client.post<any>('/query/related', {
       concept_id: params.center_concept_id,
-      max_depth: params.depth || 2,
+      max_depth: params.depth || 1, // Use depth 1 for better performance
       relationship_types: params.relationship_types,
     });
 
-    // Transform the /query/related response to SubgraphResponse format
-    // The response has: { concept_id, max_depth, count, results: [...] }
-    // We need to convert it to { nodes, links }
-
     const relatedConcepts = response.data.results || [];
 
-    // Fetch the center concept details
-    const centerResponse = await this.client.get(`/query/concept/${params.center_concept_id}`);
-    const centerConcept = centerResponse.data;
-
-    // Build nodes array
-    const nodes = [
-      {
-        concept_id: centerConcept.concept_id,
-        label: centerConcept.label,
-        ontology: 'default', // We'll need to add ontology info
-        search_terms: centerConcept.search_terms || [],
-      },
-      ...relatedConcepts.map((rc: any) => ({
-        concept_id: rc.concept_id,
-        label: rc.label,
-        ontology: 'default',
-        search_terms: [],
-      })),
+    // Step 2: Collect all concept IDs (center + related)
+    const allConceptIds = [
+      params.center_concept_id,
+      ...relatedConcepts.map((rc: any) => rc.concept_id)
     ];
 
-    // Build links array from relationships in center concept
-    const links = centerConcept.relationships?.map((rel: any) => ({
-      from_id: centerConcept.concept_id,
-      to_id: rel.to_id,
-      relationship_type: rel.rel_type,
-      confidence: rel.confidence,
-    })) || [];
+    // Step 3: Fetch details for all concepts in parallel
+    const conceptDetailsPromises = allConceptIds.map(id =>
+      this.client.get(`/query/concept/${id}`).then(r => r.data).catch(() => null)
+    );
+
+    const allConceptDetails = (await Promise.all(conceptDetailsPromises)).filter(Boolean);
+
+    // Step 4: Build nodes array
+    const nodes = allConceptDetails.map((concept: any) => ({
+      concept_id: concept.concept_id,
+      label: concept.label,
+      ontology: 'default',
+      search_terms: concept.search_terms || [],
+    }));
+
+    // Step 5: Build links array from ALL concepts' relationships
+    // Only include links where both source and target are in our node set
+    const nodeIdSet = new Set(allConceptIds);
+    const links: any[] = [];
+    const seenEdges = new Set<string>(); // Deduplicate edges
+
+    allConceptDetails.forEach((concept: any) => {
+      if (concept.relationships) {
+        concept.relationships.forEach((rel: any) => {
+          // Only include if target is in our subgraph
+          if (nodeIdSet.has(rel.to_id)) {
+            const edgeKey = `${concept.concept_id}->${rel.to_id}-${rel.rel_type}`;
+            if (!seenEdges.has(edgeKey)) {
+              seenEdges.add(edgeKey);
+              links.push({
+                from_id: concept.concept_id,
+                to_id: rel.to_id,
+                relationship_type: rel.rel_type,
+                confidence: rel.confidence,
+              });
+            }
+          }
+        });
+      }
+    });
 
     return {
       nodes,

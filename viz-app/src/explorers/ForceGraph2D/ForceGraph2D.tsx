@@ -11,6 +11,7 @@ import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors } from '../../utils/graphTransform';
+import { useGraphStore } from '../../store/graphStore';
 
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
@@ -19,6 +20,9 @@ export const ForceGraph2D: React.FC<
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+
+  // Get navigation state from store
+  const { originNodeId, setOriginNodeId } = useGraphStore();
 
   // Calculate neighbors for highlighting
   const neighbors = useMemo(() => {
@@ -109,6 +113,22 @@ export const ForceGraph2D: React.FC<
         .attr('fill', '#999');
     }
 
+    // Add edge labels showing relationship types
+    const edgeLabels = linksGroup
+      .selectAll<SVGTextElement, D3Link>('text')
+      .data(data.links)
+      .join('text')
+      .text((d) => d.type)
+      .attr('font-size', 9)
+      .attr('font-weight', 400)
+      .attr('fill', '#aaa')
+      .attr('stroke', '#1a1a2e')
+      .attr('stroke-width', 0.5)
+      .attr('paint-order', 'stroke')
+      .attr('text-anchor', 'middle')
+      .attr('pointer-events', 'none')
+      .style('user-select', 'none');
+
     // Draw nodes
     const node = nodesGroup
       .selectAll<SVGCircleElement, D3Node>('circle')
@@ -120,6 +140,8 @@ export const ForceGraph2D: React.FC<
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
       .on('click', (_event, d) => {
+        // Set as origin node for "You Are Here" highlighting
+        setOriginNodeId(d.id);
         if (onNodeClick) onNodeClick(d.id);
       })
       .on('mouseenter', (_event, d) => {
@@ -130,21 +152,22 @@ export const ForceGraph2D: React.FC<
       });
 
     // Add labels if enabled
+    let labels: d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown> | null = null;
     if (settings.visual.showLabels) {
-      const labels = nodesGroup
+      labels = nodesGroup
         .selectAll<SVGTextElement, D3Node>('text')
         .data(data.nodes)
         .join('text')
         .text((d) => d.label)
-        .attr('font-size', 10)
-        .attr('dx', (d) => (d.size || 10) * settings.visual.nodeSize + 5)
-        .attr('dy', 4)
-        .attr('fill', '#333')
-        .attr('pointer-events', 'none');
-
-      simulation.on('tick', () => {
-        labels.attr('x', (d) => d.x || 0).attr('y', (d) => d.y || 0);
-      });
+        .attr('font-size', 11)
+        .attr('font-weight', 500)
+        .attr('fill', '#fff')
+        .attr('stroke', '#000')
+        .attr('stroke-width', 0.3)
+        .attr('paint-order', 'stroke')
+        .attr('text-anchor', 'middle')
+        .attr('pointer-events', 'none')
+        .style('user-select', 'none');
     }
 
     // Enable dragging if configured
@@ -178,12 +201,41 @@ export const ForceGraph2D: React.FC<
         .attr('y2', (d) => (typeof d.target === 'object' ? d.target.y || 0 : 0));
 
       node.attr('cx', (d) => d.x || 0).attr('cy', (d) => d.y || 0);
+
+      // Update edge label positions and rotation to align with edges
+      edgeLabels.attr('transform', (d) => {
+        const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
+        const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
+        const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
+        const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+
+        // Calculate midpoint
+        const midX = (sourceX + targetX) / 2;
+        const midY = (sourceY + targetY) / 2;
+
+        // Calculate angle to rotate text along edge
+        let angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+
+        // Keep text readable (don't flip upside down)
+        if (angle > 90 || angle < -90) {
+          angle += 180;
+        }
+
+        return `translate(${midX},${midY}) rotate(${angle})`;
+      });
+
+      // Update node label positions to follow nodes (centered below node)
+      if (labels) {
+        labels
+          .attr('x', (d) => d.x || 0)
+          .attr('y', (d) => (d.y || 0) + (d.size || 10) * settings.visual.nodeSize + 14);
+      }
     });
 
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick]);
+  }, [data, settings, dimensions, onNodeClick, setOriginNodeId]);
 
   // Update highlighting based on hover
   useEffect(() => {
@@ -206,6 +258,65 @@ export const ForceGraph2D: React.FC<
       return 0.1;
     });
   }, [hoveredNode, neighbors]);
+
+  // "You Are Here" highlighting for origin node
+  useEffect(() => {
+    if (!svgRef.current || !originNodeId) return;
+
+    const svg = d3.select(svgRef.current);
+    const nodesGroup = svg.select('g.nodes');
+
+    // Remove existing origin indicator
+    nodesGroup.selectAll('.origin-indicator').remove();
+
+    // Find the origin node data
+    const originNode = data.nodes.find(n => n.id === originNodeId);
+    if (!originNode) return;
+
+    const nodeRadius = (originNode.size || 10) * settings.visual.nodeSize;
+
+    // Add pulsing ring around origin node
+    const originIndicator = nodesGroup
+      .append('circle')
+      .attr('class', 'origin-indicator')
+      .attr('cx', originNode.x || 0)
+      .attr('cy', originNode.y || 0)
+      .attr('r', nodeRadius + 8)
+      .attr('fill', 'none')
+      .attr('stroke', '#FFD700') // Gold color
+      .attr('stroke-width', 3)
+      .attr('pointer-events', 'none')
+      .style('opacity', 1);
+
+    // Pulsing animation
+    function pulse() {
+      originIndicator
+        .transition()
+        .duration(1000)
+        .attr('r', nodeRadius + 12)
+        .style('opacity', 0.3)
+        .transition()
+        .duration(1000)
+        .attr('r', nodeRadius + 8)
+        .style('opacity', 1)
+        .on('end', pulse);
+    }
+    pulse();
+
+    // Update position on simulation tick
+    const updateOriginIndicator = () => {
+      originIndicator
+        .attr('cx', originNode.x || 0)
+        .attr('cy', originNode.y || 0);
+    };
+
+    simulationRef.current?.on('tick.origin', updateOriginIndicator);
+
+    return () => {
+      simulationRef.current?.on('tick.origin', null);
+      nodesGroup.selectAll('.origin-indicator').remove();
+    };
+  }, [originNodeId, data.nodes, settings.visual.nodeSize]);
 
   // Handle window resize
   useEffect(() => {
