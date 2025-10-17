@@ -32,6 +32,7 @@ export interface ForceGraph2DSettings {
     enableZoom: boolean;
     enablePan: boolean;
     highlightNeighbors: boolean;
+    showOriginNode: boolean; // "You Are Here" highlighting
   };
 
   // Filters
@@ -69,6 +70,7 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     enableZoom: true,
     enablePan: true,
     highlightNeighbors: true,
+    showOriginNode: true,
   },
   filters: {
     relationshipTypes: [],
