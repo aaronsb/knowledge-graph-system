@@ -17,7 +17,7 @@ Humans possess intuitive knowledge that AI cannot extract from documents alone -
 
 **Scenario:** A user loads two disconnected graph clusters:
 1. "Enterprise Strategy" neighborhood (business concepts)
-2. "Northwind's Role" neighborhood (technical implementation)
+2. "NorthWind Role" neighborhood (technical implementation)
 
 The human sees: *"These should be connected because we're implementing the strategy through these systems"* - but the graph doesn't know this because no single document explicitly states it.
 
@@ -57,7 +57,7 @@ Implement **Human-Guided Graph Editing** system that treats human justifications
    - Text area for human justification
    - Ontology selector (smart default)
 4. User writes justification: "Enterprise strategy is implemented through
-   Northwind's integration systems because [reasoning]"
+   NorthWind's integration systems because [reasoning]"
 5. Submit → Feeds into ingestion pipeline
 ```
 
@@ -216,11 +216,11 @@ This preserves original relationship but marks it as disputed.
 
 **Claude-Assisted Workflow:**
 ```
-User: "Connect enterprise strategy to Northwind's systems"
+User: "Connect enterprise strategy to NorthWind's systems"
 Claude: [Uses search to find concepts]
 Claude: "I found:
   - 'Enterprise Strategy' (12 instances)
-  - 'Northwind's Role' (8 instances)
+  - 'NorthWind's Role' (8 instances)
 
   Why do you think these relate?"
 User: "We're implementing the strategy through their integration platform"
