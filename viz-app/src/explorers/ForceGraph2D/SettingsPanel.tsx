@@ -215,6 +215,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph2DSettings>> =
             />
             <span>Highlight Neighbors on Hover</span>
           </label>
+
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={settings.interaction.showOriginNode}
+              onChange={(e) => updateInteraction('showOriginNode', e.target.checked)}
+              className="rounded"
+            />
+            <span>Show "You Are Here" Indicator</span>
+          </label>
         </div>
       </section>
     </div>

@@ -261,7 +261,7 @@ export const ForceGraph2D: React.FC<
 
   // "You Are Here" highlighting for origin node
   useEffect(() => {
-    if (!svgRef.current || !originNodeId) return;
+    if (!svgRef.current || !originNodeId || !settings.interaction.showOriginNode) return;
 
     const svg = d3.select(svgRef.current);
     const nodesGroup = svg.select('g.nodes');
@@ -316,7 +316,7 @@ export const ForceGraph2D: React.FC<
       simulationRef.current?.on('tick.origin', null);
       nodesGroup.selectAll('.origin-indicator').remove();
     };
-  }, [originNodeId, data.nodes, settings.visual.nodeSize]);
+  }, [originNodeId, data.nodes, settings.visual.nodeSize, settings.interaction.showOriginNode]);
 
   // Handle window resize
   useEffect(() => {
