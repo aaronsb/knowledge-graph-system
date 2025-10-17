@@ -8,7 +8,7 @@
  * - Click center to advance forward (+)
  */
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Blocks, Code, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type QueryMode = 'smart-search' | 'block-builder' | 'cypher-editor';
@@ -35,6 +35,30 @@ interface ModeDialProps {
 
 export const ModeDial: React.FC<ModeDialProps> = ({ mode, onChange }) => {
   const currentIndex = MODES.findIndex((m) => m.id === mode);
+  const [rotationAngle, setRotationAngle] = useState(0);
+  const prevIndexRef = useRef(currentIndex);
+
+  // Track rotation cumulatively so we always proceed forward
+  useEffect(() => {
+    const prevIndex = prevIndexRef.current;
+    const newIndex = currentIndex;
+
+    if (prevIndex !== newIndex) {
+      let delta = newIndex - prevIndex;
+
+      // Detect wrap-around forward (2 → 0)
+      if (delta < 0 && Math.abs(delta) > MODES.length / 2) {
+        delta = delta + MODES.length;
+      }
+      // Detect wrap-around backward (0 → 2)
+      else if (delta > 0 && Math.abs(delta) > MODES.length / 2) {
+        delta = delta - MODES.length;
+      }
+
+      setRotationAngle((prev) => prev + delta * DEGREES_PER_MODE);
+      prevIndexRef.current = newIndex;
+    }
+  }, [currentIndex]);
 
   const advanceForward = () => {
     const nextIndex = (currentIndex + 1) % MODES.length;
@@ -49,9 +73,6 @@ export const ModeDial: React.FC<ModeDialProps> = ({ mode, onChange }) => {
   const selectMode = (modeId: QueryMode) => {
     onChange(modeId);
   };
-
-  // Calculate rotation angle for current mode
-  const rotationAngle = currentIndex * DEGREES_PER_MODE;
 
   return (
     <div className="flex items-center gap-3">
