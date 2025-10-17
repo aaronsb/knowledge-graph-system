@@ -2,7 +2,11 @@
 Backup Streaming Service
 
 Implements ADR-015 Phase 2: Streaming backup download with chunked transfer encoding.
-Converts backup dictionaries into JSON streams without loading entire backup into memory.
+Converts backup dictionaries into JSON or GEXF streams without loading entire backup into memory.
+
+Supports two formats:
+- JSON: Native format, restorable, includes all data (embeddings, sources, instances)
+- GEXF: Gephi visualization format, export-only, optimized for graph visualization
 
 Defense in Depth: Validates backup data before streaming to catch DataExporter bugs
 or database inconsistencies early.
@@ -16,6 +20,7 @@ from datetime import datetime
 from ...lib.serialization import DataExporter
 from .age_client import AGEClient
 from .backup_integrity import check_backup_data
+from .gexf_exporter import export_to_gexf, get_gexf_filename
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +46,32 @@ async def stream_backup_json(backup_data: Dict[str, Any], chunk_size: int = 8192
         yield chunk
 
 
+async def stream_backup_gexf(backup_data: Dict[str, Any], chunk_size: int = 8192) -> AsyncGenerator[bytes, None]:
+    """
+    Stream backup data as GEXF (Gephi) XML chunks
+
+    Args:
+        backup_data: Complete backup dictionary
+        chunk_size: Size of chunks to yield (default: 8KB)
+
+    Yields:
+        GEXF XML bytes in chunks for streaming response
+    """
+    # Convert to GEXF XML string
+    gexf_str = export_to_gexf(backup_data)
+    gexf_bytes = gexf_str.encode('utf-8')
+
+    # Yield in chunks
+    for i in range(0, len(gexf_bytes), chunk_size):
+        chunk = gexf_bytes[i:i + chunk_size]
+        yield chunk
+
+
 async def create_backup_stream(
     client: AGEClient,
     backup_type: str,
-    ontology_name: str = None
+    ontology_name: str = None,
+    format: str = "json"
 ) -> tuple[AsyncGenerator[bytes, None], str]:
     """
     Create streaming backup response
@@ -53,12 +80,13 @@ async def create_backup_stream(
         client: AGEClient instance
         backup_type: "full" or "ontology"
         ontology_name: Required if backup_type is "ontology"
+        format: Export format - "json" (default, restorable) or "gexf" (Gephi visualization)
 
     Returns:
         Tuple of (stream generator, filename)
 
     Raises:
-        ValueError: If backup_type is invalid or ontology_name missing
+        ValueError: If backup_type/format invalid or ontology_name missing
     """
     # Validate request
     if backup_type == "ontology" and not ontology_name:
@@ -67,15 +95,28 @@ async def create_backup_stream(
     if backup_type not in ("full", "ontology"):
         raise ValueError(f"Invalid backup_type: {backup_type}")
 
+    if format not in ("json", "gexf"):
+        raise ValueError(f"Invalid format: {format}. Must be 'json' or 'gexf'")
+
     # Generate backup data
     if backup_type == "full":
         backup_data = DataExporter.export_full_backup(client)
-        filename = f"full_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        ontology_name_for_file = None
     else:
         backup_data = DataExporter.export_ontology_backup(client, ontology_name)
-        # Sanitize ontology name for filename
-        safe_name = ontology_name.lower().replace(" ", "_").replace("/", "_")
-        filename = f"{safe_name}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        ontology_name_for_file = ontology_name
+
+    # Generate filename based on format
+    if format == "gexf":
+        filename = get_gexf_filename(ontology_name_for_file)
+    else:
+        # JSON format
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if ontology_name_for_file:
+            safe_name = ontology_name_for_file.lower().replace(" ", "_").replace("/", "_")
+            filename = f"{safe_name}_backup_{timestamp}.json"
+        else:
+            filename = f"full_backup_{timestamp}.json"
 
     # Validate backup before streaming (defense in depth)
     # Catches DataExporter bugs or database inconsistencies early
@@ -123,8 +164,13 @@ async def create_backup_stream(
             for warning in examples:
                 logger.warning(f"  Example: {warning.message}")
 
-    # Create stream
-    stream = stream_backup_json(backup_data)
+    # Create stream based on format
+    if format == "gexf":
+        stream = stream_backup_gexf(backup_data)
+        logger.info(f"Created GEXF export stream: {filename}")
+    else:
+        stream = stream_backup_json(backup_data)
+        logger.info(f"Created JSON backup stream: {filename}")
 
     return stream, filename
 

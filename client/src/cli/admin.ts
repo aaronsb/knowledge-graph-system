@@ -579,6 +579,7 @@ const backupCommand = new Command('backup')
   .option('--type <type>', 'Backup type: "full" or "ontology"')
   .option('--ontology <name>', 'Ontology name (required if type is ontology)')
   .option('--output <filename>', 'Custom output filename')
+  .option('--format <format>', 'Export format: "json" (native, restorable) or "gexf" (Gephi visualization)', 'json')
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
@@ -589,6 +590,13 @@ const backupCommand = new Command('backup')
 
       let backupType: 'full' | 'ontology' = 'full';
       let ontologyName: string | undefined;
+      let format: 'json' | 'gexf' = options.format || 'json';
+
+      // Validate format
+      if (format !== 'json' && format !== 'gexf') {
+        console.error(colors.status.error('✗ Invalid format. Must be "json" or "gexf"'));
+        process.exit(1);
+      }
 
       // Interactive mode if no options provided
       if (!options.type) {
@@ -625,13 +633,16 @@ const backupCommand = new Command('backup')
 
       // Determine output path
       let savePath: string;
+      const fileExtension = format === 'gexf' ? '.gexf' : '.json';
+
       if (options.output) {
-        // Custom filename specified
-        savePath = path.join(backupDir, options.output.endsWith('.json') ? options.output : `${options.output}.json`);
+        // Custom filename specified - ensure correct extension
+        const hasExtension = options.output.endsWith('.json') || options.output.endsWith('.gexf');
+        savePath = path.join(backupDir, hasExtension ? options.output : `${options.output}${fileExtension}`);
       } else {
         // Use timestamped filename (will be overwritten with server-provided name)
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-        savePath = path.join(backupDir, `temp_${timestamp}.json`);
+        savePath = path.join(backupDir, `temp_${timestamp}${fileExtension}`);
       }
 
       // Download backup with progress tracking using ora
@@ -642,13 +653,14 @@ const backupCommand = new Command('backup')
         const result = await client.createBackup(
           {
             backup_type: backupType,
-            ontology_name: ontologyName
+            ontology_name: ontologyName,
+            format: format
           },
           savePath,
           (downloaded: number, total: number, percent: number) => {
             const downloadedMB = (downloaded / (1024 * 1024)).toFixed(2);
             const totalMB = (total / (1024 * 1024)).toFixed(2);
-            spinner.text = `Downloading backup... ${percent}% (${downloadedMB}/${totalMB} MB)`;
+            spinner.text = `Downloading ${format.toUpperCase()} backup... ${percent}% (${downloadedMB}/${totalMB} MB)`;
           }
         );
 

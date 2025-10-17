@@ -210,10 +210,11 @@ class DataExporter:
             List of relationship dictionaries
         """
         if ontology:
+            # Apache AGE: Can't use path patterns in WHERE clause
+            # Instead, MATCH concepts via their source relationships first
             query = """
-                MATCH (c1:Concept)-[r]->(c2:Concept)
-                WHERE (c1)-[:APPEARS_IN]->(:Source {document: $ontology})
-                   OR (c2)-[:APPEARS_IN]->(:Source {document: $ontology})
+                MATCH (c1:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})
+                MATCH (c1)-[r]->(c2:Concept)
                 RETURN c1.concept_id as from_concept,
                        c2.concept_id as to_concept,
                        type(r) as relationship_type,
