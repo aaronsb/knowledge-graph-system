@@ -52,6 +52,7 @@ All ADRs follow a consistent format:
 | [ADR-033](ADR-033-multimodal-ingestion-configurable-prompts.md) | Multimodal Image Ingestion with Configurable Prompts | Proposed | Vision AI describes images for concept extraction; database-stored prompts enable domain-specific extraction profiles |
 | [ADR-034](ADR-034-graph-visualization-query-workbench.md) | Graph Visualization & Interactive Query Explorers | Proposed | React + TypeScript web application with modular explorer plugins (Force-Directed, Hierarchical, Sankey, Matrix, Timeline, Density) for interactive graph exploration |
 | [ADR-035](ADR-035-explorer-methods-uses-capabilities.md) | Explorer Methods, Uses, and Capabilities | Proposed | Comprehensive documentation of 6 explorer types, 5 query workbenches, and 7 navigation enhancements including "You Are Here" persistent highlighting |
+| [ADR-038](ADR-038-official-project-apparel.md) | Official Project Apparel Design Specifications | Proposed | Commemorative merchandise celebrating streaming entity resolution with O(n) full-scan cosine similarity - a genuinely unusual architectural choice backed by comprehensive scaling research |
 
 ## How to Use This Index
 
