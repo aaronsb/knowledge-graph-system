@@ -13,17 +13,17 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Network, GitBranch } from 'lucide-react';
+import { Search, Loader2, Network, GitBranch, Blocks, Code } from 'lucide-react';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
-import type { SearchMode } from './ModeDial';
+import type { QueryMode } from './ModeDial';
 
 type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
 
 export const SearchBar: React.FC = () => {
   // Top-level mode (dial): smart-search, block-builder, cypher-editor
-  const [queryMode, setQueryMode] = useState<SearchMode>('concept'); // Using dial, but only 'concept' is smart-search for now
+  const [queryMode, setQueryMode] = useState<QueryMode>('smart-search');
 
   // Smart Search sub-mode (pills)
   const [smartSearchMode, setSmartSearchMode] = useState<SmartSearchSubMode>('concept');
@@ -67,7 +67,7 @@ export const SearchBar: React.FC = () => {
       </div>
 
       {/* Smart Search Mode */}
-      {queryMode === 'concept' && (
+      {queryMode === 'smart-search' && (
         <div className="space-y-3">
           {/* Sub-mode Selector (Pill Buttons) */}
           <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -232,9 +232,9 @@ export const SearchBar: React.FC = () => {
       )}
 
       {/* Block Builder Mode (Future - ADR-036 Phase 4) */}
-      {queryMode === 'neighborhood' && (
+      {queryMode === 'block-builder' && (
         <div className="text-center py-12 text-muted-foreground">
-          <Network className="w-16 h-16 mx-auto mb-4 opacity-30" />
+          <Blocks className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <div className="text-lg font-medium">Visual Block Builder</div>
           <div className="text-sm mt-1">Drag-and-drop query construction</div>
           <div className="text-xs mt-3 text-muted-foreground/70">Phase 4 - Coming soon</div>
@@ -242,9 +242,9 @@ export const SearchBar: React.FC = () => {
       )}
 
       {/* openCypher Editor Mode (Future - ADR-036 Phase 3) */}
-      {queryMode === 'path' && (
+      {queryMode === 'cypher-editor' && (
         <div className="text-center py-12 text-muted-foreground">
-          <GitBranch className="w-16 h-16 mx-auto mb-4 opacity-30" />
+          <Code className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <div className="text-lg font-medium">openCypher Editor</div>
           <div className="text-sm mt-1">Raw graph query editing with syntax support</div>
           <div className="text-xs mt-3 text-muted-foreground/70">Phase 3 - Coming soon</div>

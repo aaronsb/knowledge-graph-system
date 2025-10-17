@@ -7,26 +7,26 @@
  */
 
 import React from 'react';
-import { Search, Network, GitBranch } from 'lucide-react';
+import { Search, Blocks, Code } from 'lucide-react';
 
-export type SearchMode = 'concept' | 'neighborhood' | 'path';
+export type QueryMode = 'smart-search' | 'block-builder' | 'cypher-editor';
 
 interface ModeConfig {
-  id: SearchMode;
+  id: QueryMode;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   angle: number; // degrees from top (0° = top)
 }
 
 const MODES: ModeConfig[] = [
-  { id: 'concept', icon: Search, label: 'Concept', angle: 0 },
-  { id: 'neighborhood', icon: Network, label: 'Neighborhood', angle: 120 },
-  { id: 'path', icon: GitBranch, label: 'Path', angle: 240 },
+  { id: 'smart-search', icon: Search, label: 'Smart Search', angle: 0 },
+  { id: 'block-builder', icon: Blocks, label: 'Block Builder', angle: 120 },
+  { id: 'cypher-editor', icon: Code, label: 'openCypher', angle: 240 },
 ];
 
 interface ModeDialProps {
-  mode: SearchMode;
-  onChange: (mode: SearchMode) => void;
+  mode: QueryMode;
+  onChange: (mode: QueryMode) => void;
 }
 
 export const ModeDial: React.FC<ModeDialProps> = ({ mode, onChange }) => {
