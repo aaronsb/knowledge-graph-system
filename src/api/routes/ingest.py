@@ -1,5 +1,6 @@
 """Ingestion API routes"""
 
+import logging
 from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException, Form, Depends
 from fastapi.responses import JSONResponse
 from typing import Optional
@@ -9,6 +10,8 @@ from datetime import datetime, timedelta
 import tempfile
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 from ..services.job_queue import get_job_queue
 from ..services.content_hasher import ContentHasher
 from ..services.job_analysis import JobAnalyzer
@@ -17,6 +20,24 @@ from ..models.job import JobSubmitResponse, DuplicateJobResponse
 from ..middleware.auth import get_current_user
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
+
+
+def _is_image_file(filename: str) -> bool:
+    """
+    Check if file is a supported image format.
+
+    Supported formats: PNG, JPEG, GIF, WebP, BMP
+
+    Args:
+        filename: Name of the file to check
+
+    Returns:
+        True if file extension indicates an image, False otherwise
+    """
+    if not filename:
+        return False
+    ext = filename.lower().split('.')[-1]
+    return ext in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
 
 
 async def run_job_analysis(job_id: str, auto_approve: bool = False):
@@ -154,6 +175,40 @@ async def ingest_document(
 
     # Read file content
     content = await file.read()
+
+    # ADR-033: Multimodal image ingestion
+    # If this is an image, use vision AI to describe it, then process description as text
+    if _is_image_file(file.filename):
+        from ..lib.ai_providers import get_provider, IMAGE_DESCRIPTION_PROMPT
+
+        logger.info(f"Detected image file: {file.filename}. Using vision AI for description...")
+
+        try:
+            provider = get_provider()
+            description_response = provider.describe_image(
+                image_data=content,
+                prompt=IMAGE_DESCRIPTION_PROMPT
+            )
+
+            # Replace image bytes with text description
+            original_size = len(content)
+            content = description_response["text"].encode('utf-8')
+            vision_tokens = description_response.get("tokens", 0)
+
+            logger.info(
+                f"Image described successfully: {original_size} bytes → "
+                f"{len(content)} bytes description ({vision_tokens} tokens)"
+            )
+
+            # TODO Phase 2: Store vision_tokens for cost tracking in job analysis
+            # For now, vision tokens will be counted in the extraction phase
+
+        except Exception as e:
+            logger.error(f"Failed to describe image: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Image description failed: {str(e)}"
+            )
 
     # Hash content for deduplication
     content_hash = hasher.hash_content(content)

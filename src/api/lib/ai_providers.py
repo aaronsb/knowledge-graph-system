@@ -18,6 +18,22 @@ import json
 logger = logging.getLogger(__name__)
 
 
+# Default prompt for image description (ADR-033 Phase 1)
+IMAGE_DESCRIPTION_PROMPT = """Analyze this image for knowledge extraction. Provide a detailed description:
+
+**Text Content:** Transcribe ALL visible text exactly as written (titles, headings, bullets, labels, annotations).
+
+**Visual Structure:** Describe diagrams, charts, tables, hierarchies, and layout organization.
+
+**Relationships:** Explain connections shown via arrows, lines, groupings, proximity, or color coding.
+
+**Key Concepts:** Identify main ideas, frameworks, terminology, principles, or models presented.
+
+**Context:** Note the content type (e.g., presentation slide, flowchart, system diagram).
+
+Be thorough - capture information density over brevity. Focus on facts and structure, not interpretation."""
+
+
 def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Optional[str] = None, service_token: Optional[str] = None) -> Optional[str]:
     """
     Load API key with fallback chain (ADR-031).
@@ -138,6 +154,24 @@ class AIProvider(ABC):
 
         Returns:
             Dict with 'text' (prose translation) and 'tokens' (usage info)
+        """
+        pass
+
+    @abstractmethod
+    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+        """
+        Generate detailed description of an image using multimodal AI.
+
+        Used for ingesting visual content (slides, diagrams, charts) into the
+        knowledge graph by converting them to text descriptions that can be
+        processed by the normal concept extraction pipeline.
+
+        Args:
+            image_data: Raw image bytes (PNG, JPEG, etc.)
+            prompt: Description prompt (e.g., "Describe this slide in detail")
+
+        Returns:
+            Dict with 'text' (description) and 'tokens' (usage info)
         """
         pass
 
@@ -307,6 +341,57 @@ class OpenAIProvider(AIProvider):
 
         except Exception as e:
             raise Exception(f"OpenAI code translation failed: {e}")
+
+    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+        """
+        Describe an image using GPT-4o vision capabilities.
+
+        Returns dict with 'text' (description) and 'tokens' (usage info)
+        """
+        import base64
+
+        try:
+            # Encode image to base64
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+
+            # Use gpt-4o which has vision capabilities
+            vision_model = "gpt-4o"
+
+            response = self.client.chat.completions.create(
+                model=vision_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}",
+                                    "detail": "high"  # High detail for better extraction
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=2000,  # Allow detailed descriptions
+                temperature=0.3   # Lower for consistency
+            )
+
+            description = response.choices[0].message.content.strip()
+
+            # Extract token usage
+            tokens = 0
+            if hasattr(response, 'usage') and response.usage:
+                tokens = response.usage.total_tokens
+
+            return {
+                "text": description,
+                "tokens": tokens
+            }
+
+        except Exception as e:
+            raise Exception(f"OpenAI image description failed: {e}")
 
     def get_provider_name(self) -> str:
         return "OpenAI"
@@ -486,6 +571,68 @@ class AnthropicProvider(AIProvider):
 
         except Exception as e:
             raise Exception(f"Anthropic code translation failed: {e}")
+
+    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+        """
+        Describe an image using Claude 3.5 Sonnet vision capabilities.
+
+        Returns dict with 'text' (description) and 'tokens' (usage info)
+        """
+        import base64
+
+        try:
+            # Encode image to base64
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+
+            # Detect image type from magic bytes
+            image_type = "image/png"  # Default
+            if image_data[:2] == b'\xff\xd8':
+                image_type = "image/jpeg"
+            elif image_data[:4] == b'GIF8':
+                image_type = "image/gif"
+            elif image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
+                image_type = "image/webp"
+
+            # Use latest Claude 3.5 Sonnet with vision
+            vision_model = "claude-3-5-sonnet-20241022"
+
+            message = self.client.messages.create(
+                model=vision_model,
+                max_tokens=2000,  # Allow detailed descriptions
+                temperature=0.3,  # Lower for consistency
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": image_type,
+                                "data": image_base64
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ]
+                }]
+            )
+
+            description = message.content[0].text.strip()
+
+            # Extract token usage
+            tokens = 0
+            if hasattr(message, 'usage') and message.usage:
+                tokens = message.usage.input_tokens + message.usage.output_tokens
+
+            return {
+                "text": description,
+                "tokens": tokens
+            }
+
+        except Exception as e:
+            raise Exception(f"Anthropic image description failed: {e}")
 
     def get_provider_name(self) -> str:
         return "Anthropic"
