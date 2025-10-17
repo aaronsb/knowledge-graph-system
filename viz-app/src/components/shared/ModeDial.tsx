@@ -7,13 +7,13 @@
  */
 
 import React from 'react';
-import { Search, Network, GitBranch, LucideIcon } from 'lucide-react';
+import { Search, Network, GitBranch } from 'lucide-react';
 
 export type SearchMode = 'concept' | 'neighborhood' | 'path';
 
 interface ModeConfig {
   id: SearchMode;
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   angle: number; // degrees from top (0° = top)
 }
