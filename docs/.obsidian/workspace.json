@@ -13,15 +13,30 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "development/pattern-repetition-notes.md",
+                "file": "architecture/ADR-035-explorer-methods-uses-capabilities.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "pattern-repetition-notes"
+              "title": "ADR-035-explorer-methods-uses-capabilities"
+            }
+          },
+          {
+            "id": "cbac5f1b64e45ac7",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "architecture/ADR-034-graph-visualization-query-workbench.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ADR-034-graph-visualization-query-workbench"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -170,8 +185,19 @@
       "obsidian42-brat:BRAT": false
     }
   },
-  "active": "8e5d43365caf7e21",
+  "active": "cbac5f1b64e45ac7",
   "lastOpenFiles": [
+    "architecture/ARCHITECTURE_DECISIONS.md.tmp.1314313.1760721141748",
+    "architecture/ARCHITECTURE_DECISIONS.md.tmp.1314313.1760721132262",
+    "architecture/ADR-035-explorer-methods-uses-capabilities.md",
+    "architecture/ADR-034-graph-visualization-query-workbench.md",
+    "architecture/ADR-035-explorer-methods-uses-capabilities.md.tmp.1314313.1760720092071",
+    "architecture/ADR-033-multimodal-ingestion-configurable-prompts.md",
+    "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667359203",
+    "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667218220",
+    "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667212058",
+    "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667201562",
+    "development/pattern-repetition-notes.md",
     "architecture/ADR-032-automatic-edge-vocabulary-expansion.md.tmp.3782316.1760549580273",
     "reference/DISTRIBUTED_SHARDING_RESEARCH.md",
     "guides/AI_PROVIDERS.md",
@@ -180,14 +206,7 @@
     "README.md.tmp.394069.1760474081573",
     "guides/PASSWORD_RECOVERY.md",
     "guides/use_cases/password_recovery.md",
-    "guides/use_cases/password_recovery.md.tmp.394069.1760474055296",
-    "README.md.tmp.394069.1760456023381",
-    "guides/USE_CASES.md.tmp.394069.1760455994389",
     "guides/use_cases/github_project_history.md",
-    "guides/use_cases",
-    "guides/USE_CASES.md.tmp.394069.1760455854242",
-    "guides/USE_CASES.md.tmp.394069.1760455799169",
-    "README.md.tmp.394069.1760455662050",
     "guides/USE_CASES.md",
     "guides/SECURITY.md",
     "guides/INGESTION.md",
@@ -204,10 +223,6 @@
     "development/LEARNED_KNOWLEDGE_MCP.md",
     "guides/AUTHENTICATION.md",
     "reference/CONCEPTS_AND_TERMINOLOGY.md",
-    "guides/CLI_USAGE.md",
-    "guides/EXAMPLES.md",
-    "guides/CLI_STATE_TREE.md",
-    "architecture/ADR-029-cli-theory-of-operation.md",
     "architecture/media/voltron-porter-stemmer.jpg"
   ]
 }

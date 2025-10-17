@@ -350,7 +350,7 @@ export const ForceGraph2D: React.FC<
       simulationRef.current?.on('tick.origin', null);
       indicatorsGroup.selectAll('.origin-indicator').remove();
     };
-  }, [originNodeId, settings.visual.nodeSize, settings.interaction.showOriginNode, data]);
+  }, [originNodeId, settings, data]);
 
   // Handle window resize
   useEffect(() => {
