@@ -59,7 +59,7 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
   },
   visual: {
     colorBy: 'ontology',
-    showLabels: true,
+    showLabels: false, // Disabled by default to avoid clutter
     showArrows: true,
     nodeSize: 1,
     linkWidth: 1,

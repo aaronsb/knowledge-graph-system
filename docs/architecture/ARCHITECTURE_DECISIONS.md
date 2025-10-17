@@ -50,6 +50,8 @@ All ADRs follow a consistent format:
 | [ADR-031](ADR-031-encrypted-api-key-storage.md) | Encrypted API Key Storage | Accepted | Fernet encryption with container secrets and service token authorization |
 | [ADR-032](ADR-032-automatic-edge-vocabulary-expansion.md) | Automatic Edge Vocabulary Expansion | Proposed | Auto-expand vocabulary on first use with intelligent pruning (naive/HITL/AITL modes) and sliding window (30-90 types) |
 | [ADR-033](ADR-033-multimodal-ingestion-configurable-prompts.md) | Multimodal Image Ingestion with Configurable Prompts | Proposed | Vision AI describes images for concept extraction; database-stored prompts enable domain-specific extraction profiles |
+| [ADR-034](ADR-034-graph-visualization-query-workbench.md) | Graph Visualization & Interactive Query Explorers | Proposed | React + TypeScript web application with modular explorer plugins (Force-Directed, Hierarchical, Sankey, Matrix, Timeline, Density) for interactive graph exploration |
+| [ADR-035](ADR-035-explorer-methods-uses-capabilities.md) | Explorer Methods, Uses, and Capabilities | Proposed | Comprehensive documentation of 6 explorer types, 5 query workbenches, and 7 navigation enhancements including "You Are Here" persistent highlighting |
 
 ## How to Use This Index
 
@@ -123,6 +125,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-10-16
+**Last Updated:** 2025-10-17
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.

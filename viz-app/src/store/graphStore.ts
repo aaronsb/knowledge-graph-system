@@ -50,6 +50,15 @@ interface GraphStore {
   focusedNodeId: string | null;
   setFocusedNodeId: (nodeId: string | null) => void;
 
+  // Navigation history ("You Are Here" feature)
+  originNodeId: string | null; // The node that was clicked to get here
+  navigationHistory: string[]; // Stack of previous focused nodes
+  historyIndex: number; // Current position in history
+  setOriginNodeId: (nodeId: string | null) => void;
+  navigateToNode: (nodeId: string) => void; // Updates focus + history
+  navigateBack: () => void;
+  navigateForward: () => void;
+
   // UI settings
   uiSettings: UISettings;
   setUISettings: (settings: Partial<UISettings>) => void;
@@ -101,6 +110,51 @@ export const useGraphStore = create<GraphStore>((set) => ({
   // Focused node
   focusedNodeId: null,
   setFocusedNodeId: (nodeId) => set({ focusedNodeId: nodeId }),
+
+  // Navigation history
+  originNodeId: null,
+  navigationHistory: [],
+  historyIndex: -1,
+  setOriginNodeId: (nodeId) => set({ originNodeId: nodeId }),
+
+  navigateToNode: (nodeId) =>
+    set((state) => {
+      // Truncate forward history and add new entry
+      const newHistory = state.navigationHistory.slice(0, state.historyIndex + 1);
+      newHistory.push(nodeId);
+      return {
+        focusedNodeId: nodeId,
+        originNodeId: nodeId,
+        navigationHistory: newHistory,
+        historyIndex: newHistory.length - 1,
+      };
+    }),
+
+  navigateBack: () =>
+    set((state) => {
+      if (state.historyIndex > 0) {
+        const newIndex = state.historyIndex - 1;
+        const nodeId = state.navigationHistory[newIndex];
+        return {
+          focusedNodeId: nodeId,
+          historyIndex: newIndex,
+        };
+      }
+      return state;
+    }),
+
+  navigateForward: () =>
+    set((state) => {
+      if (state.historyIndex < state.navigationHistory.length - 1) {
+        const newIndex = state.historyIndex + 1;
+        const nodeId = state.navigationHistory[newIndex];
+        return {
+          focusedNodeId: nodeId,
+          historyIndex: newIndex,
+        };
+      }
+      return state;
+    }),
 
   // UI settings
   uiSettings: defaultUISettings,
