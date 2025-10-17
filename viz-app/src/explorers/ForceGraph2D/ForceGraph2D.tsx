@@ -114,6 +114,9 @@ export const ForceGraph2D: React.FC<
       }
     }
 
+    // Check if nodes already have positions (from merge/previous simulation)
+    const hasExistingPositions = data.nodes.some(n => n.x !== undefined && n.y !== undefined);
+
     // Create force simulation
     const simulation = d3
       .forceSimulation<D3Node>(data.nodes)
@@ -128,6 +131,12 @@ export const ForceGraph2D: React.FC<
       .force('center', d3.forceCenter(width / 2, height / 2).strength(settings.physics.gravity))
       .force('collision', d3.forceCollide().radius((d) => ((d as D3Node).size || 10) * settings.visual.nodeSize + 5))
       .velocityDecay(1 - settings.physics.friction);
+
+    // If nodes already have positions (merged graph), start with lower alpha
+    // to avoid explosive force effects
+    if (hasExistingPositions) {
+      simulation.alpha(0.3).alphaDecay(0.05);
+    }
 
     simulationRef.current = simulation;
 

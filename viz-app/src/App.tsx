@@ -25,13 +25,17 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
-  const { selectedExplorer, focusedNodeId } = useGraphStore();
+  const { selectedExplorer, focusedNodeId, graphData: storeGraphData } = useGraphStore();
 
-  // Fetch graph data when a concept is focused
-  const { data: graphData, isLoading, error } = useSubgraph(focusedNodeId, {
+  // Fetch graph data when a concept is focused (but only if store doesn't have data)
+  const { data: fetchedGraphData, isLoading, error } = useSubgraph(focusedNodeId, {
     depth: 2,
     limit: 500,
+    enabled: !storeGraphData && !!focusedNodeId, // Only fetch if store is empty
   });
+
+  // Prefer store data over fetched data (allows manual loading via SearchBar)
+  const graphData = storeGraphData || fetchedGraphData;
 
   // Get the current explorer plugin
   const explorerPlugin = getExplorer(selectedExplorer);
@@ -87,7 +91,7 @@ const AppContent: React.FC = () => {
             </div>
           )}
 
-          {!focusedNodeId && !isLoading && (
+          {!graphData && !isLoading && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center max-w-md">
                 <h3 className="text-xl font-semibold mb-2">Welcome to Knowledge Graph Visualization</h3>
@@ -107,7 +111,7 @@ const AppContent: React.FC = () => {
             </div>
           )}
 
-          {graphData && focusedNodeId && !isLoading && (
+          {graphData && !isLoading && (
             <ExplorerComponent
               data={graphData}
               settings={explorerSettings}

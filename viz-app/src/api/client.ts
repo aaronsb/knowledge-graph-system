@@ -173,6 +173,31 @@ class APIClient {
     const response = await this.client.get(`/query/concept/${concept_id}`);
     return response.data;
   }
+
+  /**
+   * Find paths between two concepts using semantic phrase matching
+   */
+  async findConnectionBySearch(params: {
+    from_query: string;
+    to_query: string;
+    max_hops?: number;
+    threshold?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/connect-by-search', params);
+    return response.data;
+  }
+
+  /**
+   * Get related concepts (neighborhood)
+   */
+  async getRelatedConcepts(params: {
+    concept_id: string;
+    max_depth?: number;
+    relationship_types?: string[];
+  }): Promise<any> {
+    const response = await this.client.post('/query/related', params);
+    return response.data;
+  }
 }
 
 // Export singleton instance
