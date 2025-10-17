@@ -16,7 +16,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Loader2, Network, GitBranch } from 'lucide-react';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useGraphStore } from '../../store/graphStore';
-import { ModeDial, SearchMode } from './ModeDial';
+import { ModeDial } from './ModeDial';
+import type { SearchMode } from './ModeDial';
 
 type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
 
