@@ -93,26 +93,38 @@ async def create_backup(request: BackupRequest):
     - **full**: Backup entire database (all ontologies)
     - **ontology**: Backup specific ontology (requires ontology_name)
 
-    Backup includes:
+    Supports two formats:
+    - **json**: Native format (default) - includes all data, restorable
+    - **gexf**: Gephi visualization format - graph structure only, NOT restorable
+
+    JSON backup includes:
     - All concepts, sources, and instances
     - Full embeddings (1536-dim vectors)
     - All relationships
     - Metadata and statistics
 
-    Returns streaming JSON response with Content-Disposition header.
+    GEXF export includes:
+    - Concepts as nodes (with ontology, search terms, instance count)
+    - Relationships as edges (with type, category, confidence)
+    - Visual properties (colors by ontology, sizes, edge thickness)
+    - Compatible with Gephi for immediate visualization
 
-    Example:
+    Returns streaming response with Content-Disposition header.
+
+    Example (JSON):
     ```json
     {
-        "backup_type": "full"
+        "backup_type": "full",
+        "format": "json"
     }
     ```
 
-    Or for ontology-specific:
+    Example (GEXF for Gephi):
     ```json
     {
         "backup_type": "ontology",
-        "ontology_name": "My Ontology"
+        "ontology_name": "TBM Model",
+        "format": "gexf"
     }
     ```
     """
@@ -124,17 +136,22 @@ async def create_backup(request: BackupRequest):
         stream, filename = await create_backup_stream(
             client=client,
             backup_type=request.backup_type,
-            ontology_name=request.ontology_name
+            ontology_name=request.ontology_name,
+            format=request.format
         )
+
+        # Determine media type based on format
+        media_type = "application/gexf+xml" if request.format == "gexf" else "application/json"
 
         # Return streaming response
         return StreamingResponse(
             stream,
-            media_type="application/json",
+            media_type=media_type,
             headers={
                 "Content-Disposition": f"attachment; filename={filename}",
                 "X-Backup-Type": request.backup_type,
-                "X-Ontology-Name": request.ontology_name or "all"
+                "X-Ontology-Name": request.ontology_name or "all",
+                "X-Export-Format": request.format
             }
         )
 
