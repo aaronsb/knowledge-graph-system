@@ -332,6 +332,289 @@ kg embedding migrate --model nomic-embed-text-v1.5
 - Strong transformers.js support
 - Proven performance on MTEB benchmark
 
+## Model Acquisition and Storage
+
+### Model Source: HuggingFace Model Hub
+
+**Default Behavior:**
+- sentence-transformers downloads models from HuggingFace on first use
+- Models cached locally to avoid re-downloading
+- Requires internet access for initial download only
+- Subsequent loads use cached version (offline capable)
+
+**Model Identifiers:**
+```python
+# Full HuggingFace model names
+"nomic-ai/nomic-embed-text-v1.5"      # Recommended
+"BAAI/bge-base-en-v1.5"               # Alternative
+"BAAI/bge-large-en-v1.5"              # High-accuracy option
+```
+
+### Storage Location and Persistence
+
+**Default Cache Location:**
+```bash
+~/.cache/huggingface/hub/models--<org>--<model-name>/
+```
+
+**Example:**
+```bash
+~/.cache/huggingface/hub/models--nomic-ai--nomic-embed-text-v1.5/
+├── blobs/              # Model weights and tokenizer files
+├── refs/               # Git-style references
+└── snapshots/          # Versioned model snapshots
+```
+
+**Disk Space Requirements:**
+| Model | Cached Size | Runtime RAM |
+|-------|-------------|-------------|
+| nomic-embed-text-v1.5 | ~275MB | ~400MB |
+| bge-base-en-v1.5 | ~400MB | ~500MB |
+| bge-large-en-v1.5 | ~1.3GB | ~1.5GB |
+
+**Storage grows with multiple models:** Each model downloaded is cached separately.
+
+### Docker Volume Configuration
+
+**Problem:** Docker containers lose downloaded models on rebuild/restart.
+
+**Solution:** Mount persistent volume for HuggingFace cache.
+
+**docker-compose.yml:**
+```yaml
+services:
+  api:
+    image: knowledge-graph-api
+    volumes:
+      # Application code
+      - ./src:/app/src
+
+      # Persistent model cache (critical for local embeddings)
+      - huggingface-cache:/root/.cache/huggingface
+    environment:
+      # Optional: Use custom cache location
+      TRANSFORMERS_CACHE: /app/models
+      HF_HOME: /app/models
+
+volumes:
+  postgres_data:
+  huggingface-cache:  # Persistent across container restarts
+```
+
+**Alternative: Custom cache directory mounted from host:**
+```yaml
+volumes:
+  # Share host's HuggingFace cache with container
+  - ~/.cache/huggingface:/root/.cache/huggingface
+```
+
+**Benefits:**
+- Models downloaded once, persist across container rebuilds
+- Faster API startup (no re-download)
+- Shared cache if running multiple containers
+- Development and production use same cache
+
+### Model Versioning and Pinning
+
+**Unpinned (Latest):**
+```python
+# Downloads latest version from HuggingFace
+model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5")
+```
+
+**Pinned to Specific Revision:**
+```python
+# Pin to specific git commit for reproducibility
+model = SentenceTransformer(
+    "nomic-ai/nomic-embed-text-v1.5",
+    revision="c35f52e75c6d8068a51e0524f03a30da4e31eac9"  # Git commit hash
+)
+```
+
+**Database Configuration:**
+```sql
+-- Track exact model version used
+INSERT INTO kg_api.embedding_config (
+    model_name,
+    -- Store full reference including revision
+    model_name = 'nomic-ai/nomic-embed-text-v1.5@c35f52e7'
+)
+```
+
+**Recommendation:**
+- Development: Use latest (auto-update on model improvements)
+- Production: Pin to specific revision (reproducibility, avoid surprise changes)
+
+### Model Download Strategies
+
+**Strategy 1: Download on First Use (Default)**
+
+**Workflow:**
+1. API starts, checks cache
+2. If model not cached, downloads from HuggingFace (~30-60s for nomic)
+3. Caches model
+4. Loads into memory
+5. Subsequent starts use cache (fast)
+
+**Pros:**
+- ✅ Zero configuration
+- ✅ Always get latest model
+- ✅ Works out of the box
+
+**Cons:**
+- ⚠️ First startup slow (30-60s download time)
+- ⚠️ Requires internet access on first use
+- ⚠️ API health check fails during download
+
+**Strategy 2: Pre-Download During Deployment**
+
+**Workflow:**
+```bash
+# Pre-download models during container build or deployment
+python3 -c "
+from sentence_transformers import SentenceTransformer
+print('Downloading nomic-embed-text-v1.5...')
+SentenceTransformer('nomic-ai/nomic-embed-text-v1.5')
+print('Model cached successfully')
+"
+```
+
+**Add to Dockerfile:**
+```dockerfile
+# Pre-download model during image build
+RUN python3 -c "from sentence_transformers import SentenceTransformer; \
+    SentenceTransformer('nomic-ai/nomic-embed-text-v1.5')"
+```
+
+**Pros:**
+- ✅ Fast API startup (model already cached)
+- ✅ No internet required at runtime
+- ✅ Health checks pass immediately
+- ✅ Production-ready
+
+**Cons:**
+- ⚠️ Larger Docker image (~+300MB)
+- ⚠️ Slower image builds
+- ⚠️ Must rebuild image to update model
+
+**Strategy 3: Separate Init Container (Kubernetes)**
+
+**Workflow:**
+```yaml
+# Init container downloads model to shared volume
+initContainers:
+  - name: download-models
+    image: python:3.11
+    command:
+      - python3
+      - -c
+      - |
+        from sentence_transformers import SentenceTransformer
+        SentenceTransformer('nomic-ai/nomic-embed-text-v1.5')
+    volumeMounts:
+      - name: model-cache
+        mountPath: /root/.cache/huggingface
+```
+
+**Pros:**
+- ✅ Separation of concerns (download vs serve)
+- ✅ Can update models without rebuilding app image
+- ✅ Health checks pass on main container
+
+**Cons:**
+- ⚠️ Only applicable to Kubernetes deployments
+- ⚠️ More complex orchestration
+
+### Recommendation by Deployment Type
+
+**Development (Local):**
+- Strategy 1: Download on first use
+- Use host's HuggingFace cache
+- Accept slow first startup
+
+**Single Docker Container:**
+- Strategy 1 or 2
+- Use persistent volume for cache
+- Consider pre-download if startup speed critical
+
+**Production (Docker Compose):**
+- Strategy 2: Pre-download in Dockerfile
+- Use persistent volume as backup
+- Pin model version for reproducibility
+
+**Production (Kubernetes):**
+- Strategy 3: Init container
+- Separate model updates from app deployments
+- Use persistent volume claims
+
+### Model Management Commands
+
+**View cached models:**
+```bash
+ls -lh ~/.cache/huggingface/hub/
+```
+
+**Clear cache (free disk space):**
+```bash
+rm -rf ~/.cache/huggingface/hub/models--nomic-ai--nomic-embed-text-v1.5
+```
+
+**Check model disk usage:**
+```bash
+du -sh ~/.cache/huggingface/
+```
+
+**Verify model availability:**
+```python
+from pathlib import Path
+cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
+models = list(cache_dir.glob("models--*"))
+print(f"Cached models: {len(models)}")
+for model in models:
+    print(f"  {model.name}")
+```
+
+### Health Check Considerations
+
+**API health check should verify model availability:**
+
+```python
+@app.get("/health")
+async def health():
+    """Health check with model availability verification"""
+
+    # Check if model manager initialized
+    try:
+        manager = get_embedding_model_manager()
+        model_loaded = manager.is_loaded()
+    except RuntimeError:
+        model_loaded = False
+
+    return {
+        "status": "healthy" if model_loaded else "degraded",
+        "embedding_model_loaded": model_loaded,
+        "provider": os.getenv("EMBEDDING_PROVIDER", "openai")
+    }
+```
+
+**Degraded status during model download:**
+- API responds with HTTP 200 but status: "degraded"
+- Embedding endpoints return 503 Service Unavailable
+- Allows container to stay running while model downloads
+- Health check passes once model loaded
+
+### Disk Space Monitoring
+
+**Recommended:** Monitor cache directory size in production.
+
+**Alert thresholds:**
+- Warning: >5GB (multiple large models cached)
+- Critical: >10GB (potential disk space issue)
+
+**Cleanup strategy:**
+- Remove unused models manually
+- Or implement LRU cache pruning (delete least-recently-used models)
+
 ## Consequences
 
 ### Positive
