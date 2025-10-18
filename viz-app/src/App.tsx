@@ -28,6 +28,11 @@ const queryClient = new QueryClient({
 const AppContent: React.FC = () => {
   const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData } = useGraphStore();
 
+  // Resizable SearchBar state
+  const [searchBarHeight, setSearchBarHeight] = useState(300); // Default 300px
+  const [isDraggingSearchBar, setIsDraggingSearchBar] = useState(false);
+  const [savedSearchBarHeight, setSavedSearchBarHeight] = useState(300);
+
   // React to searchParams - fetch data based on mode
   // Concept mode: load single concept with neighbors
   const { data: conceptData, isLoading: isLoadingConcept } = useSubgraph(
@@ -213,6 +218,38 @@ const AppContent: React.FC = () => {
   const ExplorerComponent = explorerPlugin.component;
   const SettingsPanelComponent = explorerPlugin.settingsPanel;
 
+  // Resize handlers for SearchBar
+  const handleSearchBarMouseDown = React.useCallback(() => {
+    setIsDraggingSearchBar(true);
+  }, []);
+
+  const handleSearchBarMouseMove = React.useCallback((e: MouseEvent) => {
+    if (!isDraggingSearchBar) return;
+
+    const newHeight = e.clientY - 60; // 60px is AppLayout header height
+
+    // Constrain between 150px and 800px
+    const constrainedHeight = Math.max(150, Math.min(800, newHeight));
+    setSearchBarHeight(constrainedHeight);
+    setSavedSearchBarHeight(constrainedHeight);
+  }, [isDraggingSearchBar]);
+
+  const handleSearchBarMouseUp = React.useCallback(() => {
+    setIsDraggingSearchBar(false);
+  }, []);
+
+  // Attach global mouse listeners when dragging
+  useEffect(() => {
+    if (isDraggingSearchBar) {
+      document.addEventListener('mousemove', handleSearchBarMouseMove);
+      document.addEventListener('mouseup', handleSearchBarMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleSearchBarMouseMove);
+        document.removeEventListener('mouseup', handleSearchBarMouseUp);
+      };
+    }
+  }, [isDraggingSearchBar, handleSearchBarMouseMove, handleSearchBarMouseUp]);
+
   return (
     <AppLayout
       settingsPanel={
@@ -221,8 +258,19 @@ const AppContent: React.FC = () => {
     >
       <div className="h-full flex flex-col">
         {/* Search Bar */}
-        <div className="p-4 border-b border-border bg-card">
+        <div
+          className="p-4 border-b border-border bg-card overflow-auto"
+          style={{ height: `${searchBarHeight}px`, minHeight: '150px', maxHeight: '800px' }}
+        >
           <SearchBar />
+        </div>
+
+        {/* Draggable Divider */}
+        <div
+          onMouseDown={handleSearchBarMouseDown}
+          className="h-1 bg-gray-300 hover:bg-blue-500 cursor-ns-resize transition-colors flex items-center justify-center group"
+        >
+          <div className="w-16 h-0.5 bg-gray-400 group-hover:bg-blue-600 rounded-full" />
         </div>
 
         {/* Visualization Area */}

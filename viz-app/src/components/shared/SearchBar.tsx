@@ -42,6 +42,9 @@ export const SearchBar: React.FC = () => {
   // Collapsible state for openCypher editor
   const [cypherEditorExpanded, setCypherEditorExpanded] = useState(true);
 
+  // Collapsible state for block builder
+  const [blockBuilderExpanded, setBlockBuilderExpanded] = useState(true);
+
   const toggleSection = (mode: SmartSearchSubMode) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -56,6 +59,15 @@ export const SearchBar: React.FC = () => {
 
   const toggleCypherEditor = () => {
     setCypherEditorExpanded(!cypherEditorExpanded);
+
+    // Trigger window resize event after a short delay to let the DOM update
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  };
+
+  const toggleBlockBuilder = () => {
+    setBlockBuilderExpanded(!blockBuilderExpanded);
 
     // Trigger window resize event after a short delay to let the DOM update
     setTimeout(() => {
@@ -355,8 +367,23 @@ LIMIT 50`);
           </div>
         </div>
 
-        {/* Mode Dial */}
-        <ModeDial mode={queryMode} onChange={setQueryMode} />
+        {/* Mode Dial and Collapse Button */}
+        <div className="flex items-center gap-2">
+          {queryMode === 'block-builder' && (
+            <button
+              onClick={toggleBlockBuilder}
+              className="p-2 hover:bg-muted rounded transition-colors"
+              title={blockBuilderExpanded ? "Collapse block builder" : "Expand block builder"}
+            >
+              {blockBuilderExpanded ? (
+                <ChevronDown className="w-5 h-5" />
+              ) : (
+                <ChevronRight className="w-5 h-5" />
+              )}
+            </button>
+          )}
+          <ModeDial mode={queryMode} onChange={setQueryMode} />
+        </div>
       </div>
 
       {/* Smart Search Mode */}
@@ -1012,7 +1039,7 @@ LIMIT 50`);
       )}
 
       {/* Block Builder Mode */}
-      {queryMode === 'block-builder' && (
+      {queryMode === 'block-builder' && blockBuilderExpanded && (
         <div className="flex-1 min-h-0">
           <BlockBuilder onSendToEditor={handleSendToEditor} />
         </div>
