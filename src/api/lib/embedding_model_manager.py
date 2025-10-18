@@ -15,6 +15,7 @@ Usage:
 
 import os
 import logging
+import asyncio
 from typing import Optional, List
 import numpy as np
 
@@ -132,37 +133,52 @@ class EmbeddingModelManager:
         return self.model is not None
 
 
-async def init_embedding_model_manager(
-    model_name: Optional[str] = None,
-    precision: Optional[str] = None
-) -> Optional[EmbeddingModelManager]:
+async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     """
     Initialize the global embedding model manager (called at startup).
 
-    Only loads if EMBEDDING_PROVIDER=local is configured. For OpenAI,
-    returns None (no local model needed).
+    Loads configuration from database (kg_api.embedding_config table).
+    Only loads if provider='local' is configured. For OpenAI, returns None.
 
-    Args:
-        model_name: Model to load (default: from EMBEDDING_MODEL env var)
-        precision: Embedding precision (default: from EMBEDDING_PRECISION env var)
+    Database-first configuration (ADR-039):
+    - No environment variable fallback
+    - Config must be in database
+    - Use admin API to configure: POST /admin/embedding/config
 
     Returns:
         EmbeddingModelManager instance if local provider configured, None otherwise
     """
     global _model_manager
 
-    # Check if local embeddings are configured
-    embedding_provider = os.getenv("EMBEDDING_PROVIDER", "openai").lower()
+    # Load configuration from database (ADR-039: database-first, no .env fallback)
+    from .embedding_config import load_active_embedding_config
 
-    if embedding_provider != "local":
-        logger.info(f"📍 Embedding provider: {embedding_provider} (no local model needed)")
+    config = await asyncio.to_thread(load_active_embedding_config)
+
+    if config is None:
+        logger.info("⚠️  No embedding config in database")
+        logger.info("   Use: POST /admin/embedding/config to configure")
+        logger.info("   Defaulting to OpenAI embeddings via AI provider")
         return None
 
-    # Get configuration from environment
-    model_name = model_name or os.getenv("EMBEDDING_MODEL", "nomic-ai/nomic-embed-text-v1.5")
-    precision = precision or os.getenv("EMBEDDING_PRECISION", "float16")
+    if config['provider'] != 'local':
+        logger.info(f"📍 Embedding provider: {config['provider']} (no local model needed)")
+        return None
+
+    # Extract local model configuration
+    model_name = config.get('model_name')
+    if not model_name:
+        logger.error("❌ Local embedding provider configured but no model_name specified")
+        logger.error("   Use: POST /admin/embedding/config with model_name parameter")
+        return None
+
+    precision = config.get('precision', 'float16')
 
     logger.info(f"📍 Embedding provider: local")
+    logger.info(f"   Model: {model_name}")
+    logger.info(f"   Precision: {precision}")
+    logger.info(f"   Dimensions: {config.get('embedding_dimensions', 'auto-detect')}")
+    logger.info(f"   Resource limits: {config.get('max_memory_mb')}MB RAM, {config.get('num_threads')} threads")
     logger.info(f"   Initializing model manager...")
 
     try:
@@ -170,12 +186,19 @@ async def init_embedding_model_manager(
         _model_manager = EmbeddingModelManager(model_name=model_name, precision=precision)
         _model_manager.load_model()
 
+        # Verify dimensions match config (if specified)
+        actual_dims = _model_manager.get_dimensions()
+        expected_dims = config.get('embedding_dimensions')
+        if expected_dims and actual_dims != expected_dims:
+            logger.warning(f"⚠️  Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
+            logger.warning(f"   Consider updating config to match model dimensions")
+
         logger.info(f"✅ Local embedding model manager initialized")
         return _model_manager
 
     except Exception as e:
         logger.error(f"❌ Failed to initialize embedding model manager: {e}")
-        logger.error(f"   Consider switching to EMBEDDING_PROVIDER=openai in .env")
+        logger.error(f"   Check model_name in database config or switch to provider='openai'")
         raise
 
 

@@ -147,6 +147,18 @@ async def startup_event():
     scheduler.start()
     logger.info("✅ Job scheduler started (lifecycle management enabled)")
 
+    # ADR-039: Initialize embedding model manager (if local embeddings configured)
+    try:
+        from .lib.embedding_model_manager import init_embedding_model_manager
+        model_manager = await init_embedding_model_manager()
+        if model_manager:
+            logger.info(f"✅ Embedding model manager initialized: {model_manager.get_model_name()} ({model_manager.get_dimensions()} dims)")
+        else:
+            logger.info("📍 Using API-based embeddings (OpenAI or configured provider)")
+    except Exception as e:
+        logger.warning(f"⚠️  Failed to initialize local embedding model: {e}")
+        logger.info("   Falling back to API-based embeddings")
+
     logger.info("🎉 API ready!")
     logger.info(f"📚 Docs: http://localhost:8000/docs")
     logger.info(f"📚 ReDoc: http://localhost:8000/redoc")
