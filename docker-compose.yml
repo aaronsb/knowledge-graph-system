@@ -17,22 +17,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
 
-      # PostgreSQL memory configuration (adjust based on your system)
-      # Increase shared_buffers for better graph query performance
-      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-512MB}
-      POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-64MB}
-      POSTGRES_MAINTENANCE_WORK_MEM: ${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
-
-      # Enable parallel query execution for better performance
-      POSTGRES_MAX_PARALLEL_WORKERS_PER_GATHER: ${POSTGRES_MAX_PARALLEL_WORKERS:-4}
+      # Performance tuning: Use ./scripts/configure-db-profile.sh to apply resource profiles
+      # Profiles: small (8GB), medium (16GB), large (32GB+)
 
     volumes:
-      # Data persistence
+      # Data persistence (includes postgresql.auto.conf with ALTER SYSTEM settings)
       - postgres_data:/var/lib/postgresql/data
-
-      # PostgreSQL configuration (optimized for 32-core system)
-      # Mount to data directory where PostgreSQL expects it
-      - ./schema/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
 
       # Initialization scripts (run on first startup)
       # Using consolidated baseline schema (v2.0.0)
