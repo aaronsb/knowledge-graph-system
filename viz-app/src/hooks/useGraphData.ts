@@ -51,24 +51,31 @@ export function useSearchConcepts(
     minSimilarity?: number;
     offset?: number;
     enabled?: boolean;
+    minQueryLength?: number;
   }
 ) {
+  const minLength = options?.minQueryLength ?? 2; // Default: require 2+ characters
+  const trimmedQuery = query?.trim() || '';
+  const hasMinLength = trimmedQuery.length >= minLength;
+
   return useQuery({
     queryKey: ['search', query, options?.limit, options?.minSimilarity, options?.offset],
     queryFn: async () => {
-      if (!query || query.trim().length === 0) {
+      if (!hasMinLength) {
         return { results: [], total: 0 };
       }
 
       return await apiClient.searchConcepts({
-        query: query.trim(),
+        query: trimmedQuery,
         limit: options?.limit,
         min_similarity: options?.minSimilarity,
         offset: options?.offset,
       });
     },
-    enabled: options?.enabled !== false && !!query && query.trim().length > 0,
+    enabled: options?.enabled !== false && hasMinLength,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false, // Don't refetch when user switches browser tabs
+    refetchOnReconnect: false, // Don't refetch on network reconnect
   });
 }
 
@@ -88,7 +95,7 @@ export function useConceptDetails(conceptId: string | null, enabled = true) {
 }
 
 /**
- * Find path between two concepts
+ * Find path between two concepts (uses /viz/graph/path endpoint)
  */
 export function useFindPath(
   fromId: string | null,
@@ -123,6 +130,63 @@ export function useFindPath(
           path.edges.forEach((edge: any) => {
             allLinks.push(edge);
           });
+        });
+
+        return transformForD3(Array.from(allNodes.values()), allLinks);
+      }
+
+      return { nodes: [], links: [] };
+    },
+    enabled: options?.enabled !== false && !!fromId && !!toId,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+/**
+ * Find connection between two concepts (uses /query/connect endpoint)
+ * Uses ID-based search - no embedding generation needed
+ */
+export function useFindConnection(
+  fromId: string | null,
+  toId: string | null,
+  options?: {
+    maxHops?: number;
+    enabled?: boolean;
+  }
+) {
+  return useQuery({
+    queryKey: ['connection', fromId, toId, options?.maxHops],
+    queryFn: async () => {
+      if (!fromId || !toId) throw new Error('Both concept IDs are required');
+
+      const response = await apiClient.findConnection({
+        from_id: fromId,
+        to_id: toId,
+        max_hops: options?.maxHops,
+      });
+
+      // Transform paths to graph format
+      if (response.paths && response.paths.length > 0) {
+        const allNodes = new Map();
+        const allLinks: any[] = [];
+
+        response.paths.forEach((path: any) => {
+          path.nodes.forEach((node: any) => {
+            allNodes.set(node.id, {
+              concept_id: node.id,
+              label: node.label,
+              ontology: 'default',
+            });
+          });
+
+          // Build links from relationships
+          for (let i = 0; i < path.nodes.length - 1; i++) {
+            allLinks.push({
+              from_id: path.nodes[i].id,
+              to_id: path.nodes[i + 1].id,
+              relationship_type: path.relationships[i] || 'RELATED',
+            });
+          }
         });
 
         return transformForD3(Array.from(allNodes.values()), allLinks);

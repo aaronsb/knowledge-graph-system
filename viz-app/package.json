@@ -24,6 +24,7 @@
     "react-force-graph-2d": "^1.29.0",
     "react-force-graph-3d": "^1.29.0",
     "react-router-dom": "^7.9.4",
+    "reactflow": "^11.11.4",
     "three": "^0.180.0",
     "zustand": "^5.0.8"
   },

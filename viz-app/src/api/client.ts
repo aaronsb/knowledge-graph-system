@@ -167,10 +167,87 @@ class APIClient {
   }
 
   /**
+   * Search concepts by embedding (for Follow Concept functionality)
+   * Uses concept's existing embedding to find similar concepts
+   */
+  async searchByEmbedding(params: {
+    embedding: number[];
+    limit?: number;
+    min_similarity?: number;
+    offset?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/search', {
+      embedding: params.embedding,
+      limit: params.limit,
+      min_similarity: params.min_similarity,
+      offset: params.offset,
+    });
+    return response.data;
+  }
+
+  /**
    * Get concept details
    */
   async getConceptDetails(concept_id: string): Promise<any> {
     const response = await this.client.get(`/query/concept/${concept_id}`);
+    return response.data;
+  }
+
+  /**
+   * Find paths between two concepts using exact concept IDs
+   * No embedding generation needed - uses stored graph structure
+   */
+  async findConnection(params: {
+    from_id: string;
+    to_id: string;
+    max_hops?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/connect', params, {
+      timeout: 120000, // 2 minutes for complex path searches
+    });
+    return response.data;
+  }
+
+  /**
+   * Find paths between two concepts using semantic phrase matching
+   * Generates embeddings for text queries - use findConnection() if you already have concept IDs
+   * Note: Path searches can be slow - uses extended 120s timeout
+   */
+  async findConnectionBySearch(params: {
+    from_query: string;
+    to_query: string;
+    max_hops?: number;
+    threshold?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/connect-by-search', params, {
+      timeout: 120000, // 2 minutes for complex path searches
+    });
+    return response.data;
+  }
+
+  /**
+   * Execute a raw openCypher query
+   * For advanced users who want full control over graph queries
+   */
+  async executeCypherQuery(params: {
+    query: string;
+    limit?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/cypher', params, {
+      timeout: 60000, // 1 minute timeout for custom queries
+    });
+    return response.data;
+  }
+
+  /**
+   * Get related concepts (neighborhood)
+   */
+  async getRelatedConcepts(params: {
+    concept_id: string;
+    max_depth?: number;
+    relationship_types?: string[];
+  }): Promise<any> {
+    const response = await this.client.post('/query/related', params);
     return response.data;
   }
 }

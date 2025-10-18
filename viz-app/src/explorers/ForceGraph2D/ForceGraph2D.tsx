@@ -7,13 +7,14 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
-import { getNeighbors } from '../../utils/graphTransform';
+import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { apiClient } from '../../api/client';
 
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
@@ -71,8 +72,8 @@ export const ForceGraph2D: React.FC<
     nodeLabel: string;
   } | null>(null);
 
-  // Get navigation state from store
-  const { originNodeId, setOriginNodeId } = useGraphStore();
+  // Get navigation state and settings from store
+  const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Calculate neighbors for highlighting
   const neighbors = useMemo(() => {
@@ -114,6 +115,9 @@ export const ForceGraph2D: React.FC<
       }
     }
 
+    // Check if nodes already have positions (from merge/previous simulation)
+    const hasExistingPositions = data.nodes.some(n => n.x !== undefined && n.y !== undefined);
+
     // Create force simulation
     const simulation = d3
       .forceSimulation<D3Node>(data.nodes)
@@ -128,6 +132,12 @@ export const ForceGraph2D: React.FC<
       .force('center', d3.forceCenter(width / 2, height / 2).strength(settings.physics.gravity))
       .force('collision', d3.forceCollide().radius((d) => ((d as D3Node).size || 10) * settings.visual.nodeSize + 5))
       .velocityDecay(1 - settings.physics.friction);
+
+    // If nodes already have positions (merged graph), start with lower alpha
+    // to avoid explosive force effects
+    if (hasExistingPositions) {
+      simulation.alpha(0.3).alphaDecay(0.05);
+    }
 
     simulationRef.current = simulation;
 
@@ -366,6 +376,117 @@ export const ForceGraph2D: React.FC<
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Helper: Merge new graph data with existing (deduplicate nodes/links)
+  // Preserves existing node positions to prevent force explosion
+  const mergeGraphData = useCallback((newData: any) => {
+    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
+      return newData;
+    }
+
+    // Create map of existing nodes with their positions
+    const existingNodesMap = new Map(
+      graphData.nodes.map((n: any) => [n.id, n])
+    );
+
+    const mergedNodes: any[] = [];
+
+    // First, add all existing nodes (preserving positions)
+    graphData.nodes.forEach((node: any) => {
+      mergedNodes.push(node);
+    });
+
+    // Then add new nodes (they'll get positioned by force simulation)
+    newData.nodes.forEach((node: any) => {
+      if (!existingNodesMap.has(node.id)) {
+        // New node - position it near the center of existing graph
+        const existingPositions = graphData.nodes
+          .filter((n: any) => n.x !== undefined && n.y !== undefined)
+          .map((n: any) => ({ x: n.x, y: n.y }));
+
+        if (existingPositions.length > 0) {
+          // Calculate centroid of existing nodes
+          const centerX = existingPositions.reduce((sum, p) => sum + p.x, 0) / existingPositions.length;
+          const centerY = existingPositions.reduce((sum, p) => sum + p.y, 0) / existingPositions.length;
+
+          // Add small random offset to avoid exact overlap
+          node.x = centerX + (Math.random() - 0.5) * 50;
+          node.y = centerY + (Math.random() - 0.5) * 50;
+        }
+
+        mergedNodes.push(node);
+      }
+    });
+
+    // Merge links (deduplicate by source -> target -> type)
+    const existingLinks = graphData.links || [];
+    const existingLinkKeys = new Set(
+      existingLinks.map((l: any) => {
+        const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+        const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+        return `${sourceId}->${targetId}:${l.type}`;
+      })
+    );
+    const mergedLinks = [...existingLinks];
+
+    const newLinks = newData.links || [];
+    newLinks.forEach((link: any) => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      const key = `${sourceId}->${targetId}:${link.type}`;
+      if (!existingLinkKeys.has(key)) {
+        mergedLinks.push(link);
+        existingLinkKeys.add(key);
+      }
+    });
+
+    return {
+      nodes: mergedNodes,
+      links: mergedLinks,
+    };
+  }, [graphData]);
+
+  // Handler: Follow concept (replace graph)
+  // Matches SearchBar loadConcept('clean') pattern
+  const handleFollowConcept = useCallback(async (nodeId: string) => {
+    try {
+      const response = await apiClient.getSubgraph({
+        center_concept_id: nodeId,
+        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
+      });
+
+      // Transform API data to D3 format
+      const transformedData = transformForD3(response.nodes, response.links);
+
+      // Replace graph (clean mode)
+      setGraphData(transformedData);
+      setFocusedNodeId(nodeId);
+    } catch (error: any) {
+      console.error('Failed to follow concept:', error);
+      alert(`Failed to follow concept: ${error.message || 'Unknown error'}`);
+    }
+  }, [setGraphData, setFocusedNodeId]);
+
+  // Handler: Add concept to graph (merge)
+  // Matches SearchBar loadConcept('add') pattern
+  const handleAddToGraph = useCallback(async (nodeId: string) => {
+    try {
+      const response = await apiClient.getSubgraph({
+        center_concept_id: nodeId,
+        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
+      });
+
+      // Transform API data to D3 format
+      const transformedData = transformForD3(response.nodes, response.links);
+
+      // Merge with existing graph (add mode)
+      setGraphData(mergeGraphData(transformedData));
+      setFocusedNodeId(nodeId);
+    } catch (error: any) {
+      console.error('Failed to add concept to graph:', error);
+      alert(`Failed to add concept to graph: ${error.message || 'Unknown error'}`);
+    }
+  }, [mergeGraphData, setGraphData, setFocusedNodeId]);
+
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? [
@@ -373,9 +494,16 @@ export const ForceGraph2D: React.FC<
           label: `Follow "${contextMenu.nodeLabel}"`,
           icon: ArrowRight,
           onClick: () => {
-            if (onNodeClick) {
-              onNodeClick(contextMenu.nodeId);
-            }
+            handleFollowConcept(contextMenu.nodeId);
+            setContextMenu(null);
+          },
+        },
+        {
+          label: `Add "${contextMenu.nodeLabel}" to Graph`,
+          icon: Plus,
+          onClick: () => {
+            handleAddToGraph(contextMenu.nodeId);
+            setContextMenu(null);
           },
         },
       ]

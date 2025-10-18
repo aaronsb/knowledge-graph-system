@@ -25,6 +25,30 @@ interface UISettings {
   highlightNeighbors: boolean;
 }
 
+// Search parameters - describes WHAT to query, not HOW to query it
+// SearchBar sets these, App.tsx reacts to them
+export type SearchMode = 'concept' | 'neighborhood' | 'path' | null;
+export type QueryMode = 'smart-search' | 'block-builder' | 'cypher-editor';
+
+export interface SearchParams {
+  mode: SearchMode;
+
+  // Concept mode
+  conceptId?: string;
+
+  // Neighborhood mode
+  centerConceptId?: string;
+  depth?: number; // Also used for path enrichment
+
+  // Path mode
+  fromConceptId?: string;
+  toConceptId?: string;
+  maxHops?: number;
+
+  // Shared parameters
+  loadMode?: 'clean' | 'add'; // Replace graph or add to existing
+}
+
 interface GraphStore {
   // Explorer selection
   selectedExplorer: VisualizationType;
@@ -67,6 +91,23 @@ interface GraphStore {
   // Search query state
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+
+  // Search parameters
+  similarityThreshold: number; // 0.0 - 1.0, used for Follow Concept and searches
+  setSimilarityThreshold: (threshold: number) => void;
+
+  // Search params - what to query (SearchBar sets these, App.tsx reacts)
+  searchParams: SearchParams;
+  setSearchParams: (params: SearchParams) => void;
+  clearSearchParams: () => void;
+
+  // Query mode - UI mode for querying (smart-search, block-builder, cypher-editor)
+  queryMode: QueryMode;
+  setQueryMode: (mode: QueryMode) => void;
+
+  // Block builder expanded state
+  blockBuilderExpanded: boolean;
+  setBlockBuilderExpanded: (expanded: boolean) => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -80,6 +121,11 @@ const defaultUISettings: UISettings = {
   showLegend: true,
   darkMode: false,
   highlightNeighbors: true,
+};
+
+const defaultSearchParams: SearchParams = {
+  mode: null,
+  loadMode: 'clean',
 };
 
 export const useGraphStore = create<GraphStore>((set) => ({
@@ -173,4 +219,21 @@ export const useGraphStore = create<GraphStore>((set) => ({
   // Search query
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
+
+  // Search parameters
+  similarityThreshold: 0.5, // Default to 50%
+  setSimilarityThreshold: (threshold) => set({ similarityThreshold: threshold }),
+
+  // Search params
+  searchParams: defaultSearchParams,
+  setSearchParams: (params) => set({ searchParams: params }),
+  clearSearchParams: () => set({ searchParams: defaultSearchParams }),
+
+  // Query mode
+  queryMode: 'smart-search',
+  setQueryMode: (mode) => set({ queryMode: mode }),
+
+  // Block builder expanded
+  blockBuilderExpanded: true,
+  setBlockBuilderExpanded: (expanded) => set({ blockBuilderExpanded: expanded }),
 }));

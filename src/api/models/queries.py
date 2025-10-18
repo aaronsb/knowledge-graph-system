@@ -37,6 +37,7 @@ class SearchResponse(BaseModel):
     results: List[ConceptSearchResult] = Field(..., description="Ranked search results")
     below_threshold_count: Optional[int] = Field(None, description="Number of additional concepts below threshold")
     suggested_threshold: Optional[float] = Field(None, description="Suggested threshold to reveal below-threshold results")
+    top_match: Optional[ConceptSearchResult] = Field(None, description="Best matching concept below threshold for quick preview")
     threshold_used: Optional[float] = Field(None, description="Similarity threshold used for filtering")
     offset: Optional[int] = Field(None, description="Offset used for pagination")
 
@@ -75,6 +76,7 @@ class ConceptDetailsResponse(BaseModel):
     concept_id: str = Field(..., description="Unique concept identifier")
     label: str = Field(..., description="Human-readable concept label")
     search_terms: List[str] = Field(..., description="Alternative search terms for this concept")
+    embedding: Optional[List[float]] = Field(None, description="Vector embedding for semantic similarity (1536 dimensions)")
     documents: List[str] = Field(..., description="Documents where concept appears")
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
@@ -183,3 +185,38 @@ class FindConnectionBySearchResponse(BaseModel):
     max_hops: int = Field(..., description="Maximum path length searched")
     count: int = Field(..., description="Number of paths found")
     paths: List[ConnectionPath] = Field(..., description="Discovered paths between matched concepts")
+
+
+# Raw openCypher Query Models
+class CypherQueryRequest(BaseModel):
+    """Request to execute a raw openCypher query.
+
+    Allows direct execution of openCypher queries against the Apache AGE graph.
+    Returns nodes and relationships in a format suitable for visualization.
+    """
+    query: str = Field(..., description="Raw openCypher query to execute", min_length=1)
+    limit: Optional[int] = Field(None, description="Optional result limit (applied if query doesn't have LIMIT)", ge=1, le=1000)
+
+
+class CypherNode(BaseModel):
+    """Node returned from Cypher query"""
+    id: str = Field(..., description="Node identifier (concept_id)")
+    label: str = Field(..., description="Node label/name")
+    properties: Dict[str, Any] = Field(default_factory=dict, description="All node properties")
+
+
+class CypherRelationship(BaseModel):
+    """Relationship/edge returned from Cypher query"""
+    from_id: str = Field(..., description="Source node ID")
+    to_id: str = Field(..., description="Target node ID")
+    type: str = Field(..., description="Relationship type")
+    properties: Dict[str, Any] = Field(default_factory=dict, description="Relationship properties")
+
+
+class CypherQueryResponse(BaseModel):
+    """Response from executing raw openCypher query"""
+    nodes: List[CypherNode] = Field(..., description="Nodes returned by query")
+    relationships: List[CypherRelationship] = Field(..., description="Relationships returned by query")
+    execution_time_ms: float = Field(..., description="Query execution time in milliseconds")
+    row_count: int = Field(..., description="Number of rows returned")
+    query: str = Field(..., description="The executed query")

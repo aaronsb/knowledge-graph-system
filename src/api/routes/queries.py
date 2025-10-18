@@ -27,7 +27,11 @@ from ..models.queries import (
     FindConnectionBySearchRequest,
     FindConnectionBySearchResponse,
     ConnectionPath,
-    PathNode
+    PathNode,
+    CypherQueryRequest,
+    CypherQueryResponse,
+    CypherNode,
+    CypherRelationship
 )
 from ..services.query_service import QueryService
 from src.api.lib.age_client import AGEClient
@@ -134,6 +138,7 @@ async def search_concepts(request: SearchRequest):
             # If few results found, check for additional concepts below threshold
             below_threshold_count = None
             suggested_threshold = None
+            top_match = None
             if len(results) < 3 and request.min_similarity > 0.3:
                 # Search with fixed lower threshold to find near-misses
                 # Use 0.3 (30%) to catch most reasonable matches
@@ -155,12 +160,37 @@ async def search_concepts(request: SearchRequest):
                     min_score = min(m['similarity'] for m in below_threshold_matches)
                     suggested_threshold = round(min_score - 0.02, 2)  # Slightly below lowest to include it
 
+                    # Get top match (highest similarity) for preview
+                    top_match_data = max(below_threshold_matches, key=lambda m: m['similarity'])
+
+                    # Get documents and evidence for top match
+                    top_concept_id = top_match_data['concept_id']
+                    top_docs_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:APPEARS_IN]->(s:Source) RETURN DISTINCT s.document as doc"
+                    )
+                    top_documents = [r['doc'] for r in (top_docs_query or [])]
+
+                    top_evidence_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as evidence_count",
+                        fetch_one=True
+                    )
+                    top_evidence_count = top_evidence_query['evidence_count'] if top_evidence_query else 0
+
+                    top_match = ConceptSearchResult(
+                        concept_id=top_concept_id,
+                        label=top_match_data['label'],
+                        score=top_match_data['similarity'],
+                        documents=top_documents,
+                        evidence_count=top_evidence_count
+                    )
+
             return SearchResponse(
                 query=request.query,
                 count=len(results),
                 results=results,
                 below_threshold_count=below_threshold_count if below_threshold_count else None,
                 suggested_threshold=suggested_threshold,
+                top_match=top_match,
                 threshold_used=request.min_similarity,
                 offset=request.offset
             )
@@ -619,5 +649,104 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
     except Exception as e:
         logger.error(f"Failed to find connection by search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to find connection by search: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.post("/cypher", response_model=CypherQueryResponse)
+async def execute_cypher_query(request: CypherQueryRequest):
+    """
+    Execute a raw openCypher query against the Apache AGE graph.
+
+    Allows direct execution of openCypher queries for advanced users who want full control.
+    Returns nodes and relationships in a format suitable for graph visualization.
+
+    **Security Note:** This endpoint executes user-provided queries directly.
+    In production, consider:
+    - Read-only query enforcement
+    - Query timeout limits
+    - Rate limiting
+    - User authentication/authorization
+
+    **Example Query:**
+    ```cypher
+    MATCH (c:Concept)-[r]->(n:Concept)
+    WHERE c.label CONTAINS 'organizational'
+    RETURN c, r, n
+    LIMIT 50
+    ```
+
+    Returns graph data (nodes + relationships) for visualization.
+    """
+    client = get_age_client()
+    import time
+
+    try:
+        # Apply default limit if query doesn't have one
+        query = request.query.strip()
+        if request.limit and 'LIMIT' not in query.upper():
+            query = f"{query} LIMIT {request.limit}"
+
+        logger.info(f"Executing openCypher query: {query[:100]}...")
+
+        # Time the query execution
+        start_time = time.time()
+
+        # Execute the query
+        records = client._execute_cypher(query)
+
+        execution_time = (time.time() - start_time) * 1000  # Convert to ms
+
+        # Parse results into nodes and relationships
+        nodes_map = {}
+        relationships = []
+
+        for record in records:
+            # Extract nodes and relationships from each record
+            for key, value in record.items():
+                if isinstance(value, dict):
+                    # Check if it's a node (has 'id' and typically 'label')
+                    if 'id' in value:
+                        node_id = str(value['id'])
+                        if node_id not in nodes_map:
+                            nodes_map[node_id] = CypherNode(
+                                id=node_id,
+                                label=value.get('label', value.get('properties', {}).get('label', node_id)),
+                                properties=value.get('properties', {})
+                            )
+
+                elif isinstance(value, (list, tuple)):
+                    # Could be a path - extract nodes and relationships
+                    for item in value:
+                        if isinstance(item, dict):
+                            if 'id' in item and 'start' not in item:  # Node
+                                node_id = str(item['id'])
+                                if node_id not in nodes_map:
+                                    nodes_map[node_id] = CypherNode(
+                                        id=node_id,
+                                        label=item.get('label', item.get('properties', {}).get('label', node_id)),
+                                        properties=item.get('properties', {})
+                                    )
+                            elif 'start' in item and 'end' in item:  # Relationship
+                                relationships.append(CypherRelationship(
+                                    from_id=str(item['start']),
+                                    to_id=str(item['end']),
+                                    type=item.get('label', item.get('type', 'RELATED')),
+                                    properties=item.get('properties', {})
+                                ))
+
+        logger.info(f"Query returned {len(nodes_map)} nodes, {len(relationships)} relationships in {execution_time:.2f}ms")
+
+        return CypherQueryResponse(
+            nodes=list(nodes_map.values()),
+            relationships=relationships,
+            execution_time_ms=execution_time,
+            row_count=len(records),
+            query=query
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to execute Cypher query: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Query execution failed: {str(e)}")
     finally:
         client.close()
