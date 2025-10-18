@@ -75,10 +75,18 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
   const cypherParts: string[] = [];
   let variableCounter = 0;
   let currentVariable = 'start';
+  let limitValue: number | null = null;
 
   for (let i = 0; i < executionChain.length; i++) {
     const block = executionChain[i];
     const isFirst = i === 0;
+
+    // Special handling for LIMIT block - it must come after RETURN
+    if (block.data.type === 'limit') {
+      const params = block.data.params as LimitBlockParams;
+      limitValue = params.count;
+      continue; // Skip adding to cypherParts during loop
+    }
 
     try {
       const { cypher, outputVariable } = compileBlock(block, currentVariable, isFirst, variableCounter);
@@ -93,6 +101,11 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
 
   // Add final RETURN statement
   cypherParts.push(`RETURN DISTINCT ${currentVariable}`);
+
+  // Add LIMIT after RETURN if present
+  if (limitValue !== null) {
+    cypherParts.push(`LIMIT ${limitValue}`);
+  }
 
   const finalCypher = cypherParts.join('\n');
 
