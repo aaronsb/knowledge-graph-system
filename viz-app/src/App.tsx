@@ -5,13 +5,14 @@
  * Follows ADR-034 architecture.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/layout/AppLayout';
 import { SearchBar } from './components/shared/SearchBar';
 import { useGraphStore } from './store/graphStore';
-import { useSubgraph } from './hooks/useGraphData';
+import { useSubgraph, useFindConnection } from './hooks/useGraphData';
 import { getExplorer } from './explorers';
+import { apiClient } from './api/client';
 import './explorers'; // Import to register explorers
 
 // Create React Query client
@@ -25,17 +26,170 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
-  const { selectedExplorer, focusedNodeId, graphData: storeGraphData } = useGraphStore();
+  const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData } = useGraphStore();
 
-  // Fetch graph data when a concept is focused (but only if store doesn't have data)
-  const { data: fetchedGraphData, isLoading, error } = useSubgraph(focusedNodeId, {
-    depth: 2,
-    limit: 500,
-    enabled: !storeGraphData && !!focusedNodeId, // Only fetch if store is empty
-  });
+  // React to searchParams - fetch data based on mode
+  // Concept mode: load single concept with neighbors
+  const { data: conceptData, isLoading: isLoadingConcept } = useSubgraph(
+    searchParams.mode === 'concept' ? searchParams.conceptId || null : null,
+    {
+      depth: 1,
+      enabled: searchParams.mode === 'concept' && !!searchParams.conceptId,
+    }
+  );
 
-  // Prefer store data over fetched data (allows manual loading via SearchBar)
-  const graphData = storeGraphData || fetchedGraphData;
+  // Neighborhood mode: load subgraph with specified depth
+  const { data: neighborhoodData, isLoading: isLoadingNeighborhood } = useSubgraph(
+    searchParams.mode === 'neighborhood' ? searchParams.centerConceptId || null : null,
+    {
+      depth: searchParams.depth || 2,
+      enabled: searchParams.mode === 'neighborhood' && !!searchParams.centerConceptId,
+    }
+  );
+
+  // Path mode: find paths between two concepts
+  const { data: pathData, isLoading: isLoadingPath, error: pathError } = useFindConnection(
+    searchParams.mode === 'path' ? searchParams.fromConceptId || null : null,
+    searchParams.mode === 'path' ? searchParams.toConceptId || null : null,
+    {
+      maxHops: searchParams.maxHops || 5,
+      enabled: searchParams.mode === 'path' && !!searchParams.fromConceptId && !!searchParams.toConceptId && !searchParams.depth, // Only if no depth enrichment
+    }
+  );
+
+  // Path enrichment: When depth is specified, fetch neighborhoods around each hop
+  const [enrichedPathData, setEnrichedPathData] = React.useState<any>(null);
+  const [isEnrichingPath, setIsEnrichingPath] = React.useState(false);
+
+  useEffect(() => {
+    const enrichPath = async () => {
+      if (searchParams.mode !== 'path' || !searchParams.depth || searchParams.depth === 0) {
+        setEnrichedPathData(null);
+        return;
+      }
+
+      if (!searchParams.fromConceptId || !searchParams.toConceptId) return;
+
+      setIsEnrichingPath(true);
+      try {
+        // Step 1: Get the path
+        const pathResult = await apiClient.findConnection({
+          from_id: searchParams.fromConceptId,
+          to_id: searchParams.toConceptId,
+          max_hops: searchParams.maxHops || 5,
+        });
+
+        if (!pathResult.paths || pathResult.paths.length === 0) {
+          setEnrichedPathData({ nodes: [], links: [] });
+          setIsEnrichingPath(false);
+          return;
+        }
+
+        // Step 2: Get the first/best path
+        const bestPath = pathResult.paths[0];
+        const nodeIds = bestPath.nodes.map((n: any) => n.id);
+
+        // Step 3: Fetch neighborhood for each node in the path
+        const neighborhoodPromises = nodeIds.map((nodeId: string) =>
+          apiClient.getSubgraph({
+            center_concept_id: nodeId,
+            depth: searchParams.depth,
+          })
+        );
+
+        const neighborhoods = await Promise.all(neighborhoodPromises);
+
+        // Step 4: Merge all neighborhoods + path
+        const allNodes = new Map();
+        const allLinks: any[] = [];
+
+        // Add path nodes
+        bestPath.nodes.forEach((node: any) => {
+          allNodes.set(node.id, {
+            concept_id: node.id,
+            label: node.label,
+            ontology: 'default',
+          });
+        });
+
+        // Add path links
+        for (let i = 0; i < bestPath.nodes.length - 1; i++) {
+          allLinks.push({
+            from_id: bestPath.nodes[i].id,
+            to_id: bestPath.nodes[i + 1].id,
+            relationship_type: bestPath.relationships[i] || 'PATH',
+          });
+        }
+
+        // Add neighborhood nodes and links
+        neighborhoods.forEach((neighborhood) => {
+          neighborhood.nodes.forEach((node: any) => {
+            if (!allNodes.has(node.concept_id)) {
+              allNodes.set(node.concept_id, node);
+            }
+          });
+          neighborhood.links.forEach((link: any) => {
+            allLinks.push(link);
+          });
+        });
+
+        // Transform to D3 format
+        const { transformForD3 } = await import('./utils/graphTransform');
+        const enrichedData = transformForD3(Array.from(allNodes.values()), allLinks);
+        setEnrichedPathData(enrichedData);
+      } catch (error) {
+        console.error('Failed to enrich path:', error);
+        setEnrichedPathData(null);
+      } finally {
+        setIsEnrichingPath(false);
+      }
+    };
+
+    enrichPath();
+  }, [searchParams.mode, searchParams.fromConceptId, searchParams.toConceptId, searchParams.maxHops, searchParams.depth]);
+
+  // Update graphData when query results come back
+  useEffect(() => {
+    const newData = conceptData || neighborhoodData || pathData || enrichedPathData;
+    if (!newData) return;
+
+    if (searchParams.loadMode === 'clean') {
+      setGraphData(newData);
+    } else if (searchParams.loadMode === 'add') {
+      // Merge with existing data - get fresh store data to avoid stale closures
+      const currentGraphData = useGraphStore.getState().graphData;
+
+      if (!currentGraphData || !currentGraphData.nodes || currentGraphData.nodes.length === 0) {
+        setGraphData(newData);
+      } else {
+        // Simple merge - deduplicate by node ID
+        const existingNodeIds = new Set(currentGraphData.nodes.map((n: any) => n.id));
+        const newNodes = newData.nodes.filter((n: any) => !existingNodeIds.has(n.id));
+
+        const existingLinkKeys = new Set(
+          currentGraphData.links.map((l: any) => {
+            const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+            const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+            return `${sourceId}->${targetId}`;
+          })
+        );
+        const newLinks = newData.links.filter((l: any) => {
+          const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+          const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+          return !existingLinkKeys.has(`${sourceId}->${targetId}`);
+        });
+
+        setGraphData({
+          nodes: [...currentGraphData.nodes, ...newNodes],
+          links: [...currentGraphData.links, ...newLinks],
+        });
+      }
+    }
+  }, [conceptData, neighborhoodData, pathData, enrichedPathData, searchParams.loadMode]);
+
+  const isLoading = isLoadingConcept || isLoadingNeighborhood || isLoadingPath || isEnrichingPath;
+  const error = pathError;
+  const graphData = storeGraphData;
 
   // Get the current explorer plugin
   const explorerPlugin = getExplorer(selectedExplorer);
@@ -116,8 +270,15 @@ const AppContent: React.FC = () => {
               data={graphData}
               settings={explorerSettings}
               onNodeClick={(nodeId) => {
-                // Update focused node when clicking
-                useGraphStore.getState().setFocusedNodeId(nodeId);
+                // Follow Concept: Load clicked node's neighborhood
+                const store = useGraphStore.getState();
+                store.setFocusedNodeId(nodeId);
+                store.setSearchParams({
+                  mode: 'neighborhood',
+                  centerConceptId: nodeId,
+                  depth: 2, // Default depth for Follow Concept
+                  loadMode: 'add', // Add to existing graph
+                });
               }}
             />
           )}

@@ -12,7 +12,7 @@
  * - Path: Find paths connecting two concepts (IMPLEMENTED)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Loader2, Network, GitBranch, Blocks, Code } from 'lucide-react';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -20,7 +20,6 @@ import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import type { QueryMode } from './ModeDial';
 import { apiClient } from '../../api/client';
-import { transformForD3 } from '../../utils/graphTransform';
 
 type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
 
@@ -37,13 +36,11 @@ export const SearchBar: React.FC = () => {
   // Concept mode state
   const [conceptQuery, setConceptQuery] = useState('');
   const [selectedConcept, setSelectedConcept] = useState<any>(null);
-  const [isLoadingConcept, setIsLoadingConcept] = useState(false);
 
   // Neighborhood mode state
   const [neighborhoodQuery, setNeighborhoodQuery] = useState('');
   const [selectedCenterConcept, setSelectedCenterConcept] = useState<any>(null);
   const [neighborhoodDepth, setNeighborhoodDepth] = useState(2);
-  const [isLoadingNeighborhood, setIsLoadingNeighborhood] = useState(false);
 
   // Path mode state
   const [pathFromQuery, setPathFromQuery] = useState('');
@@ -52,9 +49,11 @@ export const SearchBar: React.FC = () => {
   const [selectedToConcept, setSelectedToConcept] = useState<any>(null);
   const [maxHops, setMaxHops] = useState(5);
   const [pathResults, setPathResults] = useState<any>(null);
+  const [selectedPath, setSelectedPath] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
+  const [pathEnrichmentDepth, setPathEnrichmentDepth] = useState(1); // Depth around each hop
 
-  const { setFocusedNodeId, setGraphData, graphData } = useGraphStore();
+  const { setSearchParams } = useGraphStore();
 
   // Debounce values to prevent excessive API calls while user is typing/dragging sliders
   // 800ms for typing (embeddings are expensive), 500ms for sliders (cheaper operations)
@@ -125,169 +124,58 @@ export const SearchBar: React.FC = () => {
   const handleSelectFromConcept = (concept: any) => {
     setSelectedFromConcept(concept);
     setPathFromQuery('');
-    setPathResults(null); // Clear previous results
   };
 
   // Handler: Select To concept in Path mode
   const handleSelectToConcept = (concept: any) => {
     setSelectedToConcept(concept);
     setPathToQuery('');
-    setPathResults(null); // Clear previous results
   };
 
-  // Helper: Merge new graph data with existing (deduplicate nodes/links)
-  // Works with D3 format: {id, label, ...} and {source, target, type, ...}
-  // IMPORTANT: Preserves existing node positions to prevent force explosion
-  const mergeGraphData = (newData: any) => {
-    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
-      return newData;
-    }
-
-    // Create map of existing nodes with their positions
-    const existingNodesMap = new Map(
-      graphData.nodes.map((n: any) => [n.id, n])
-    );
-
-    const mergedNodes: any[] = [];
-
-    // First, add all existing nodes (preserving positions)
-    graphData.nodes.forEach((node: any) => {
-      mergedNodes.push(node);
-    });
-
-    // Then add new nodes (they'll get positioned by force simulation)
-    newData.nodes.forEach((node: any) => {
-      if (!existingNodesMap.has(node.id)) {
-        // New node - add it but position it near the center of existing graph
-        // to avoid explosive initial forces
-        const existingPositions = graphData.nodes
-          .filter((n: any) => n.x !== undefined && n.y !== undefined)
-          .map((n: any) => ({ x: n.x, y: n.y }));
-
-        if (existingPositions.length > 0) {
-          // Calculate centroid of existing nodes
-          const centerX = existingPositions.reduce((sum, p) => sum + p.x, 0) / existingPositions.length;
-          const centerY = existingPositions.reduce((sum, p) => sum + p.y, 0) / existingPositions.length;
-
-          // Add small random offset to avoid exact overlap
-          node.x = centerX + (Math.random() - 0.5) * 50;
-          node.y = centerY + (Math.random() - 0.5) * 50;
-        }
-
-        mergedNodes.push(node);
-      }
-    });
-
-    // Merge links (deduplicate by source -> target -> type)
-    const existingLinks = graphData.links || [];
-    const existingLinkKeys = new Set(
-      existingLinks.map((l: any) => {
-        const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
-        const targetId = typeof l.target === 'string' ? l.target : l.target.id;
-        return `${sourceId}->${targetId}:${l.type}`;
-      })
-    );
-    const mergedLinks = [...existingLinks];
-
-    const newLinks = newData.links || [];
-    newLinks.forEach((link: any) => {
-      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-      const key = `${sourceId}->${targetId}:${link.type}`;
-      if (!existingLinkKeys.has(key)) {
-        mergedLinks.push(link);
-        existingLinkKeys.add(key);
-      }
-    });
-
-    return {
-      nodes: mergedNodes,
-      links: mergedLinks,
-    };
-  };
-
-  // Load: Concept into graph (clean or add)
-  const loadConcept = async (mode: 'clean' | 'add') => {
+  // Handler: Load concept (sets search parameters for App.tsx to react to)
+  const handleLoadConcept = (loadMode: 'clean' | 'add') => {
     if (!selectedConcept) return;
 
-    setIsLoadingConcept(true);
-    try {
-      const response = await apiClient.getSubgraph({
-        center_concept_id: selectedConcept.concept_id,
-        depth: 1, // Load immediate neighbors
-      });
-
-      // Transform API data to D3 format
-      const transformedData = transformForD3(response.nodes, response.links);
-
-      if (mode === 'clean') {
-        setGraphData(transformedData);
-      } else {
-        setGraphData(mergeGraphData(transformedData));
-      }
-
-      setFocusedNodeId(selectedConcept.concept_id);
-    } catch (error: any) {
-      console.error('Failed to load concept:', error);
-      // TODO: Show error in UI (could add error state to display to user)
-      alert(`Failed to load concept: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsLoadingConcept(false);
-    }
+    setSearchParams({
+      mode: 'concept',
+      conceptId: selectedConcept.concept_id,
+      loadMode,
+    });
   };
 
-  // Load: Neighborhood into graph (clean or add)
-  const loadNeighborhood = async (mode: 'clean' | 'add') => {
+  // Handler: Load neighborhood (sets search parameters for App.tsx to react to)
+  const handleLoadNeighborhood = (loadMode: 'clean' | 'add') => {
     if (!selectedCenterConcept) return;
 
-    setIsLoadingNeighborhood(true);
-    try {
-      const response = await apiClient.getSubgraph({
-        center_concept_id: selectedCenterConcept.concept_id,
-        depth: neighborhoodDepth,
-      });
-
-      // Transform API data to D3 format
-      const transformedData = transformForD3(response.nodes, response.links);
-
-      if (mode === 'clean') {
-        setGraphData(transformedData);
-      } else {
-        setGraphData(mergeGraphData(transformedData));
-      }
-
-      setFocusedNodeId(selectedCenterConcept.concept_id);
-    } catch (error: any) {
-      console.error('Failed to load neighborhood:', error);
-      // TODO: Show error in UI (could add error state to display to user)
-      alert(`Failed to load neighborhood: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsLoadingNeighborhood(false);
-    }
+    setSearchParams({
+      mode: 'neighborhood',
+      centerConceptId: selectedCenterConcept.concept_id,
+      depth: neighborhoodDepth,
+      loadMode,
+    });
   };
 
-  // Search: Find paths between selected concepts
-  // Uses ID-based endpoint - no embedding generation needed since concepts are already selected
-  const searchPaths = async () => {
+  // Handler: Search for paths between selected concepts (stores results locally)
+  const handleFindPaths = async () => {
     if (!selectedFromConcept || !selectedToConcept) return;
 
     setIsLoadingPath(true);
+    setPathResults(null);
+    setSelectedPath(null);
+
     try {
-      // Use ID-based endpoint - concepts already have stored embeddings in database
       const result = await apiClient.findConnection({
         from_id: selectedFromConcept.concept_id,
         to_id: selectedToConcept.concept_id,
-        max_hops: debouncedMaxHops,
+        max_hops: maxHops,
       });
       setPathResults(result);
     } catch (error: any) {
       console.error('Failed to find paths:', error);
 
-      // Handle different error types with user-friendly messages
       let errorMessage = 'Failed to find paths';
-
       if (error.code === 'ECONNABORTED') {
-        errorMessage = `Search timed out after ${Math.floor((error.config?.timeout || 30000) / 1000)}s. Try reducing max hops.`;
+        errorMessage = `Search timed out. Try reducing max hops.`;
       } else if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
       } else if (error.message) {
@@ -304,48 +192,18 @@ export const SearchBar: React.FC = () => {
     }
   };
 
-  // Load: Path into graph (clean or add)
-  const loadPath = (mode: 'clean' | 'add') => {
-    if (!pathResults || !pathResults.paths || pathResults.paths.length === 0) return;
+  // Handler: Load selected path with enriched neighborhoods
+  const handleLoadPath = (loadMode: 'clean' | 'add') => {
+    if (!selectedPath) return;
 
-    // Build subgraph from paths (API format)
-    const allNodes = new Map();
-    const allLinks: any[] = [];
-
-    pathResults.paths.forEach((path: any) => {
-      path.nodes.forEach((node: any) => {
-        allNodes.set(node.id, {
-          concept_id: node.id,
-          label: node.label,
-          ontology: 'default',
-        });
-      });
-
-      // Build links from relationships
-      for (let i = 0; i < path.nodes.length - 1; i++) {
-        allLinks.push({
-          from_id: path.nodes[i].id,
-          to_id: path.nodes[i + 1].id,
-          relationship_type: path.relationships[i] || 'RELATED',
-        });
-      }
+    setSearchParams({
+      mode: 'path',
+      fromConceptId: selectedFromConcept.concept_id,
+      toConceptId: selectedToConcept.concept_id,
+      maxHops,
+      depth: pathEnrichmentDepth, // Add neighborhood context around each hop
+      loadMode,
     });
-
-    // Transform API data to D3 format
-    const transformedData = transformForD3(
-      Array.from(allNodes.values()),
-      allLinks
-    );
-
-    if (mode === 'clean') {
-      setGraphData(transformedData);
-    } else {
-      setGraphData(mergeGraphData(transformedData));
-    }
-
-    if (pathResults.from_concept) {
-      setFocusedNodeId(pathResults.from_concept.id);
-    }
   };
 
   return (
@@ -540,26 +398,16 @@ export const SearchBar: React.FC = () => {
                   {/* Load Buttons */}
                   <div className="flex gap-2">
                     <button
-                      onClick={() => loadConcept('clean')}
-                      disabled={isLoadingConcept}
-                      className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      onClick={() => handleLoadConcept('clean')}
+                      className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
                     >
-                      {isLoadingConcept ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Load into Clean Graph'
-                      )}
+                      Load into Clean Graph
                     </button>
                     <button
-                      onClick={() => loadConcept('add')}
-                      disabled={isLoadingConcept}
-                      className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      onClick={() => handleLoadConcept('add')}
+                      className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium"
                     >
-                      {isLoadingConcept ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Add to Existing Graph'
-                      )}
+                      Add to Existing Graph
                     </button>
                   </div>
                 </div>
@@ -672,26 +520,16 @@ export const SearchBar: React.FC = () => {
                   {/* Load Buttons */}
                   <div className="flex gap-2">
                     <button
-                      onClick={() => loadNeighborhood('clean')}
-                      disabled={isLoadingNeighborhood}
-                      className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      onClick={() => handleLoadNeighborhood('clean')}
+                      className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
                     >
-                      {isLoadingNeighborhood ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Load into Clean Graph'
-                      )}
+                      Load into Clean Graph
                     </button>
                     <button
-                      onClick={() => loadNeighborhood('add')}
-                      disabled={isLoadingNeighborhood}
-                      className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      onClick={() => handleLoadNeighborhood('add')}
+                      className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium"
                     >
-                      {isLoadingNeighborhood ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Add to Existing Graph'
-                      )}
+                      Add to Existing Graph
                     </button>
                   </div>
                 </div>
@@ -826,7 +664,6 @@ export const SearchBar: React.FC = () => {
                           onClick={() => {
                             setSelectedFromConcept(null);
                             setSelectedToConcept(null);
-                            setPathResults(null);
                           }}
                           className="text-sm text-muted-foreground hover:text-foreground"
                         >
@@ -841,10 +678,7 @@ export const SearchBar: React.FC = () => {
                           <div className="font-medium">{selectedToConcept.label}</div>
                         </div>
                         <button
-                          onClick={() => {
-                            setSelectedToConcept(null);
-                            setPathResults(null);
-                          }}
+                          onClick={() => setSelectedToConcept(null)}
                           className="text-sm text-muted-foreground hover:text-foreground"
                         >
                           Change
@@ -899,7 +733,7 @@ export const SearchBar: React.FC = () => {
 
                   {/* Find Paths Button */}
                   <button
-                    onClick={() => searchPaths()}
+                    onClick={handleFindPaths}
                     disabled={isLoadingPath}
                     className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
@@ -914,41 +748,100 @@ export const SearchBar: React.FC = () => {
                   </button>
 
                   {/* Path Results */}
-                  {!isLoadingPath && pathResults && (
-                    <div className="p-4 bg-muted rounded-lg space-y-3">
+                  {pathResults && !isLoadingPath && (
+                    <div className="space-y-3">
                       {pathResults.error ? (
-                        <div className="text-center text-destructive text-sm">{pathResults.error}</div>
+                        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-center text-destructive text-sm">
+                          {pathResults.error}
+                        </div>
                       ) : pathResults.count > 0 ? (
                         <>
                           <div className="text-sm text-muted-foreground">
                             Found {pathResults.count} path{pathResults.count > 1 ? 's' : ''} ({pathResults.paths[0].hops} hop{pathResults.paths[0].hops > 1 ? 's' : ''})
                           </div>
+
+                          {/* Path Selection */}
+                          <div className="space-y-2">
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">Select a path:</div>
+                            {pathResults.paths.map((path: any, index: number) => (
+                              <button
+                                key={index}
+                                onClick={() => setSelectedPath(path)}
+                                className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                                  selectedPath === path
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-border bg-muted hover:border-primary/50'
+                                }`}
+                              >
+                                <div className="text-sm font-mono">
+                                  {path.nodes.map((node: any, i: number) => (
+                                    <span key={i}>
+                                      {i > 0 && <span className="text-muted-foreground"> → </span>}
+                                      <span className="font-medium">{node.label}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                                {path.score && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    Score: {(path.score * 100).toFixed(1)}%
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Enrichment Depth Slider (only if path selected) */}
+                          {selectedPath && (
+                            <>
+                              <div className="flex items-center gap-3 px-1">
+                                <label className="text-sm text-muted-foreground whitespace-nowrap">
+                                  Context Depth:
+                                </label>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="3"
+                                  value={pathEnrichmentDepth}
+                                  onChange={(e) => setPathEnrichmentDepth(parseInt(e.target.value))}
+                                  className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer
+                                             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                                             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary
+                                             [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4
+                                             [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
+                                />
+                                <span className="text-sm font-medium min-w-[1ch] text-right">
+                                  {pathEnrichmentDepth}
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground px-1">
+                                {pathEnrichmentDepth === 0
+                                  ? 'Show path only (no context)'
+                                  : `Show ${pathEnrichmentDepth}-hop neighborhood around each node in path`}
+                              </div>
+
+                              {/* Load Buttons */}
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleLoadPath('clean')}
+                                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                                >
+                                  Load into Clean Graph
+                                </button>
+                                <button
+                                  onClick={() => handleLoadPath('add')}
+                                  className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium"
+                                >
+                                  Add to Existing Graph
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </>
                       ) : (
-                        <div className="text-center text-muted-foreground text-sm">
+                        <div className="p-4 bg-muted rounded-lg text-center text-muted-foreground text-sm">
                           No paths found. Try lowering similarity or increasing max hops.
                         </div>
                       )}
-                    </div>
-                  )}
-
-                  {/* Load Buttons (only if paths found) */}
-                  {pathResults && pathResults.count > 0 && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => loadPath('clean')}
-                        disabled={isLoadingPath}
-                        className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        Load into Clean Graph
-                      </button>
-                      <button
-                        onClick={() => loadPath('add')}
-                        disabled={isLoadingPath}
-                        className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        Add to Existing Graph
-                      </button>
                     </div>
                   )}
                 </div>
