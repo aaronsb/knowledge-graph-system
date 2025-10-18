@@ -29,7 +29,7 @@ from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueu
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .workers.ingestion_worker import run_ingestion_worker
 from .workers.restore_worker import run_restore_worker
-from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary
+from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, embedding
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -192,6 +192,8 @@ app.include_router(database.router)
 app.include_router(ontology.router)
 app.include_router(admin.router)
 app.include_router(vocabulary.router)  # ADR-032: Vocabulary management
+app.include_router(embedding.public_router)  # ADR-039: Public embedding config
+app.include_router(embedding.admin_router)  # ADR-039: Admin embedding management
 
 
 # Root endpoint
