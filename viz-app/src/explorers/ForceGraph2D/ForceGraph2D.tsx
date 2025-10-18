@@ -73,7 +73,7 @@ export const ForceGraph2D: React.FC<
   } | null>(null);
 
   // Get navigation state and settings from store
-  const { originNodeId, setOriginNodeId, similarityThreshold, setGraphData, graphData } = useGraphStore();
+  const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Calculate neighbors for highlighting
   const neighbors = useMemo(() => {
@@ -446,43 +446,44 @@ export const ForceGraph2D: React.FC<
   }, [graphData]);
 
   // Handler: Follow concept (replace graph)
+  // Matches SearchBar loadConcept('clean') pattern
   const handleFollowConcept = useCallback(async (nodeId: string) => {
     try {
-      // Fetch subgraph centered on this concept (neighborhood)
-      const subgraphData = await apiClient.getSubgraph({
+      const response = await apiClient.getSubgraph({
         center_concept_id: nodeId,
-        depth: 2, // 2-hop neighborhood
-        limit: 100,
+        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
       });
 
-      // Transform to D3 format and replace graph
-      const transformedData = transformForD3(subgraphData.nodes, subgraphData.links);
+      // Transform API data to D3 format
+      const transformedData = transformForD3(response.nodes, response.links);
+
+      // Replace graph (clean mode)
       setGraphData(transformedData);
-      setOriginNodeId(nodeId);
+      setFocusedNodeId(nodeId);
     } catch (error) {
       console.error('Failed to follow concept:', error);
     }
-  }, [setGraphData, setOriginNodeId]);
+  }, [setGraphData, setFocusedNodeId]);
 
   // Handler: Add concept to graph (merge)
+  // Matches SearchBar loadConcept('add') pattern
   const handleAddToGraph = useCallback(async (nodeId: string) => {
     try {
-      // Fetch subgraph centered on this concept (neighborhood)
-      const subgraphData = await apiClient.getSubgraph({
+      const response = await apiClient.getSubgraph({
         center_concept_id: nodeId,
-        depth: 2, // 2-hop neighborhood
-        limit: 100,
+        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
       });
 
-      // Transform to D3 format and merge with existing graph
-      const transformedData = transformForD3(subgraphData.nodes, subgraphData.links);
-      const mergedData = mergeGraphData(transformedData);
-      setGraphData(mergedData);
-      setOriginNodeId(nodeId);
+      // Transform API data to D3 format
+      const transformedData = transformForD3(response.nodes, response.links);
+
+      // Merge with existing graph (add mode)
+      setGraphData(mergeGraphData(transformedData));
+      setFocusedNodeId(nodeId);
     } catch (error) {
       console.error('Failed to add concept to graph:', error);
     }
-  }, [mergeGraphData, setGraphData, setOriginNodeId]);
+  }, [mergeGraphData, setGraphData, setFocusedNodeId]);
 
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
