@@ -459,15 +459,15 @@ LIMIT 50`);
 
                   {/* Search Results */}
                   {debouncedConceptQuery && conceptResults && conceptResults.results && conceptResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
                       {conceptResults.results.map((result: any) => (
                         <button
                           key={result.concept_id}
                           onClick={() => handleSelectConcept(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-accent transition-colors border-b border-border last:border-b-0"
+                          className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                         >
-                          <div className="font-medium">{result.label}</div>
-                          <div className="text-sm text-muted-foreground mt-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
                           </div>
                         </button>
@@ -635,15 +635,15 @@ LIMIT 50`);
 
                   {/* Search Results */}
                   {debouncedNeighborhoodQuery && neighborhoodSearchResults && neighborhoodSearchResults.results && neighborhoodSearchResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
                       {neighborhoodSearchResults.results.map((result: any) => (
                         <button
                           key={result.concept_id}
                           onClick={() => handleSelectCenterConcept(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-accent transition-colors border-b border-border last:border-b-0"
+                          className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                         >
-                          <div className="font-medium">{result.label}</div>
-                          <div className="text-sm text-muted-foreground mt-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
                           </div>
                         </button>
@@ -778,15 +778,15 @@ LIMIT 50`);
 
                   {/* From Search Results */}
                   {debouncedPathFromQuery && pathFromSearchResults && pathFromSearchResults.results && pathFromSearchResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
                       {pathFromSearchResults.results.map((result: any) => (
                         <button
                           key={result.concept_id}
                           onClick={() => handleSelectFromConcept(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-accent transition-colors border-b border-border last:border-b-0"
+                          className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                         >
-                          <div className="font-medium">{result.label}</div>
-                          <div className="text-sm text-muted-foreground mt-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
                           </div>
                         </button>
@@ -830,15 +830,15 @@ LIMIT 50`);
 
                     {/* To Search Results */}
                     {debouncedPathToQuery && pathToSearchResults && pathToSearchResults.results && pathToSearchResults.results.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
                         {pathToSearchResults.results.map((result: any) => (
                           <button
                             key={result.concept_id}
                             onClick={() => handleSelectToConcept(result)}
-                            className="w-full text-left px-4 py-3 hover:bg-accent transition-colors border-b border-border last:border-b-0"
+                            className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                           >
-                            <div className="font-medium">{result.label}</div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                               Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
                             </div>
                           </button>
