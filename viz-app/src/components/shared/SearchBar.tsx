@@ -243,8 +243,10 @@ export const SearchBar: React.FC = () => {
       }
 
       setFocusedNodeId(selectedConcept.concept_id);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load concept:', error);
+      // TODO: Show error in UI (could add error state to display to user)
+      alert(`Failed to load concept: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoadingConcept(false);
     }
@@ -271,8 +273,10 @@ export const SearchBar: React.FC = () => {
       }
 
       setFocusedNodeId(selectedCenterConcept.concept_id);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load neighborhood:', error);
+      // TODO: Show error in UI (could add error state to display to user)
+      alert(`Failed to load neighborhood: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoadingNeighborhood(false);
     }
@@ -293,7 +297,23 @@ export const SearchBar: React.FC = () => {
       setPathResults(result);
     } catch (error: any) {
       console.error('Failed to find paths:', error);
-      setPathResults({ error: error.response?.data?.detail || 'Failed to find paths' });
+
+      // Handle different error types with user-friendly messages
+      let errorMessage = 'Failed to find paths';
+
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = `Search timed out after ${Math.floor((error.config?.timeout || 30000) / 1000)}s. Try reducing max hops or increasing similarity threshold.`;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setPathResults({
+        error: errorMessage,
+        count: 0,
+        paths: []
+      });
     } finally {
       setIsLoadingPath(false);
     }

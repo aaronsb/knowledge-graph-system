@@ -460,8 +460,9 @@ export const ForceGraph2D: React.FC<
       // Replace graph (clean mode)
       setGraphData(transformedData);
       setFocusedNodeId(nodeId);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to follow concept:', error);
+      alert(`Failed to follow concept: ${error.message || 'Unknown error'}`);
     }
   }, [setGraphData, setFocusedNodeId]);
 
@@ -480,8 +481,9 @@ export const ForceGraph2D: React.FC<
       // Merge with existing graph (add mode)
       setGraphData(mergeGraphData(transformedData));
       setFocusedNodeId(nodeId);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add concept to graph:', error);
+      alert(`Failed to add concept to graph: ${error.message || 'Unknown error'}`);
     }
   }, [mergeGraphData, setGraphData, setFocusedNodeId]);
 

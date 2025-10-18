@@ -195,6 +195,7 @@ class APIClient {
 
   /**
    * Find paths between two concepts using semantic phrase matching
+   * Note: Path searches can be slow - uses extended 120s timeout
    */
   async findConnectionBySearch(params: {
     from_query: string;
@@ -202,7 +203,9 @@ class APIClient {
     max_hops?: number;
     threshold?: number;
   }): Promise<any> {
-    const response = await this.client.post('/query/connect-by-search', params);
+    const response = await this.client.post('/query/connect-by-search', params, {
+      timeout: 120000, // 2 minutes for complex path searches
+    });
     return response.data;
   }
 
