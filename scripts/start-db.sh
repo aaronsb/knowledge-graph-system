@@ -6,7 +6,36 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+GRAY='\033[0;90m'
 NC='\033[0m'
+
+# Check for -y/--yes flag
+AUTO_CONFIRM=false
+if [ "$1" = "-y" ] || [ "$1" = "--yes" ]; then
+    AUTO_CONFIRM=true
+fi
+
+# Show usage and require confirmation
+if [ "$AUTO_CONFIRM" = false ]; then
+    echo -e "${BLUE}🐘 Start PostgreSQL + Apache AGE Database${NC}"
+    echo "=========================================="
+    echo ""
+    echo -e "${YELLOW}What this does:${NC}"
+    echo "  • Starts PostgreSQL container (creates if needed)"
+    echo "  • Waits for database to be ready"
+    echo "  • Shows connection info and performance settings"
+    echo ""
+    echo -e "${GRAY}Usage:${NC}"
+    echo "  $0 -y          # Start database (skip confirmation)"
+    echo "  $0 --yes       # Start database (skip confirmation)"
+    echo ""
+    read -p "$(echo -e ${YELLOW}Start database now? [y/N]:${NC} )" -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}Cancelled${NC}"
+        exit 0
+    fi
+fi
 
 echo -e "${BLUE}🐘 PostgreSQL + Apache AGE Database${NC}"
 echo "===================================="
