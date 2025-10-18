@@ -106,13 +106,8 @@ export const SearchBar: React.FC = () => {
     }
   );
 
-  // Auto-search paths when both concepts are selected (using debounced max hops)
-  // Note: Similarity threshold only affects initial concept dropdown search, not the path search itself
-  useEffect(() => {
-    if (smartSearchMode === 'path' && selectedFromConcept && selectedToConcept && !isLoadingPath) {
-      searchPaths();
-    }
-  }, [selectedFromConcept, selectedToConcept, debouncedMaxHops, smartSearchMode]);
+  // Note: Path search is now manual (via button) instead of auto-search
+  // This prevents the UI from appearing to hang during expensive path searches
 
   // Handler: Select concept in Concept mode
   const handleSelectConcept = (concept: any) => {
@@ -130,12 +125,14 @@ export const SearchBar: React.FC = () => {
   const handleSelectFromConcept = (concept: any) => {
     setSelectedFromConcept(concept);
     setPathFromQuery('');
+    setPathResults(null); // Clear previous results
   };
 
   // Handler: Select To concept in Path mode
   const handleSelectToConcept = (concept: any) => {
     setSelectedToConcept(concept);
     setPathToQuery('');
+    setPathResults(null); // Clear previous results
   };
 
   // Helper: Merge new graph data with existing (deduplicate nodes/links)
@@ -900,15 +897,24 @@ export const SearchBar: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Path Results */}
-                  {isLoadingPath && (
-                    <div className="p-4 bg-muted rounded-lg flex items-center justify-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Searching for paths...</span>
-                    </div>
-                  )}
+                  {/* Find Paths Button */}
+                  <button
+                    onClick={() => searchPaths()}
+                    disabled={isLoadingPath}
+                    className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isLoadingPath ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Searching...
+                      </>
+                    ) : (
+                      'Find Paths'
+                    )}
+                  </button>
 
-                  {pathResults && (
+                  {/* Path Results */}
+                  {!isLoadingPath && pathResults && (
                     <div className="p-4 bg-muted rounded-lg space-y-3">
                       {pathResults.error ? (
                         <div className="text-center text-destructive text-sm">{pathResults.error}</div>
