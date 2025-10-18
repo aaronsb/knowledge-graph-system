@@ -76690,7 +76690,7 @@ var path4 = __toESM(require("path"));
 
 // src/version.ts
 function getVersion() {
-  return "0.9.13";
+  return "0.9.14b";
 }
 
 // src/security/path-validator.ts
@@ -91471,6 +91471,7 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     const baseUrl = `${protocol}://localhost:${port}`;
     const claudeCommand = this.plugin.settings.dangerouslyDisableAuth ? `claude mcp add --transport http obsidian ${baseUrl}/mcp` : `claude mcp add --transport http obsidian ${baseUrl}/mcp --header "Authorization: Bearer ${this.plugin.settings.apiKey}"`;
     codeEl.textContent = claudeCommand;
+    this.addCopyButton(commandExample, claudeCommand);
     info.createEl("h4", { text: "Client Configuration (Claude Desktop, Cline, etc.)" });
     const desktopDesc = info.createEl("p", {
       text: "Add this to your MCP client configuration file:"
@@ -91498,7 +91499,9 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
         }
       }
     };
-    configEl.textContent = JSON.stringify(configJson, null, 2);
+    const configJsonText = JSON.stringify(configJson, null, 2);
+    configEl.textContent = configJsonText;
+    this.addCopyButton(configExample, configJsonText);
     info.createEl("p", { text: "Option 2: Via mcp-remote (for Claude Desktop):" }).style.fontWeight = "bold";
     const remoteDesc = info.createEl("p", {
       text: "mcp-remote supports authentication headers via the --header flag:",
@@ -91546,7 +91549,9 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
         };
       }
     }
-    remoteEl.textContent = JSON.stringify(remoteJson, null, 2);
+    const remoteJsonText = JSON.stringify(remoteJson, null, 2);
+    remoteEl.textContent = remoteJsonText;
+    this.addCopyButton(remoteExample, remoteJsonText);
     if (isUsingSelfSignedCert) {
       const certNote = info.createEl("p", {
         text: "\u{1F4DD} Self-signed certificate detected: NODE_TLS_REJECT_UNAUTHORIZED=0 is included to allow the secure connection.",
@@ -91555,42 +91560,44 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
       certNote.style.fontStyle = "italic";
       certNote.style.color = "var(--text-muted)";
     }
+    info.createEl("p", { text: "Option 2a: Windows Configuration (via mcp-remote):" }).style.fontWeight = "bold";
     const windowsNote = info.createEl("p", {
-      text: "Windows Users: If you have issues with spaces, use environment variables instead:",
+      text: "Windows has issues with spaces in npx arguments. Use environment variables to work around this:",
       cls: "setting-item-description"
     });
-    windowsNote.style.fontStyle = "italic";
     const windowsExample = info.createDiv("desktop-config-example");
     const windowsEl = windowsExample.createEl("pre");
     windowsEl.classList.add("mcp-config-example");
-    const windowsJson = this.plugin.settings.dangerouslyDisableAuth ? {
+    const windowsJson = {
       "mcpServers": {
         [this.app.vault.getName()]: {
           "command": "npx",
-          "args": [
+          "args": this.plugin.settings.dangerouslyDisableAuth ? [
             "mcp-remote",
             `${baseUrl}/mcp`
-          ]
-        }
-      }
-    } : {
-      "mcpServers": {
-        [this.app.vault.getName()]: {
-          "command": "npx",
-          "args": [
+          ] : [
             "mcp-remote",
             `${baseUrl}/mcp`,
             "--header",
-            "Authorization:Bearer ${OBSIDIAN_API_KEY}"
-            // No space around colon
-          ],
-          "env": {
-            "OBSIDIAN_API_KEY": this.plugin.settings.apiKey
-          }
+            "Authorization:${OBSIDIAN_API_KEY}"
+          ]
         }
       }
     };
-    windowsEl.textContent = JSON.stringify(windowsJson, null, 2);
+    if (!this.plugin.settings.dangerouslyDisableAuth) {
+      windowsJson.mcpServers[this.app.vault.getName()].env = {
+        "OBSIDIAN_API_KEY": `Bearer ${this.plugin.settings.apiKey}`
+      };
+    }
+    if (isUsingSelfSignedCert) {
+      if (!windowsJson.mcpServers[this.app.vault.getName()].env) {
+        windowsJson.mcpServers[this.app.vault.getName()].env = {};
+      }
+      windowsJson.mcpServers[this.app.vault.getName()].env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+    }
+    const windowsJsonText = JSON.stringify(windowsJson, null, 2);
+    windowsEl.textContent = windowsJsonText;
+    this.addCopyButton(windowsExample, windowsJsonText);
     const configPath = info.createEl("p", {
       text: "Configuration file location:"
     });
@@ -91599,6 +91606,46 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     pathList.createEl("li", { text: "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json" });
     pathList.createEl("li", { text: "Windows: %APPDATA%\\Claude\\claude_desktop_config.json" });
     pathList.createEl("li", { text: "Linux: ~/.config/Claude/claude_desktop_config.json" });
+  }
+  addCopyButton(container, textToCopy) {
+    container.style.position = "relative";
+    const copyButton = container.createEl("button", {
+      cls: "mcp-copy-button"
+    });
+    copyButton.setAttribute("aria-label", "Copy to clipboard");
+    (0, import_obsidian15.setIcon)(copyButton, "copy");
+    copyButton.style.position = "absolute";
+    copyButton.style.top = "8px";
+    copyButton.style.right = "8px";
+    copyButton.style.padding = "4px";
+    copyButton.style.background = "var(--interactive-normal)";
+    copyButton.style.border = "1px solid var(--background-modifier-border)";
+    copyButton.style.borderRadius = "4px";
+    copyButton.style.cursor = "pointer";
+    copyButton.style.opacity = "0.7";
+    copyButton.style.transition = "opacity 0.2s, background 0.2s";
+    copyButton.addEventListener("mouseenter", () => {
+      copyButton.style.opacity = "1";
+      copyButton.style.background = "var(--interactive-hover)";
+    });
+    copyButton.addEventListener("mouseleave", () => {
+      copyButton.style.opacity = "0.7";
+      copyButton.style.background = "var(--interactive-normal)";
+    });
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        (0, import_obsidian15.setIcon)(copyButton, "check");
+        copyButton.style.background = "var(--interactive-success)";
+        setTimeout(() => {
+          (0, import_obsidian15.setIcon)(copyButton, "copy");
+          copyButton.style.background = "var(--interactive-normal)";
+        }, 2e3);
+      } catch (error) {
+        new import_obsidian15.Notice("Failed to copy to clipboard");
+        Debug.error("Failed to copy to clipboard:", error);
+      }
+    });
   }
   async checkPortAvailability(port, setting) {
     if (!this.plugin.settings.autoDetectPortConflicts)

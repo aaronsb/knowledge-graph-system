@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "architecture/ADR-034-graph-visualization-query-workbench.md",
+                "file": "architecture/ADR-039-local-embedding-service.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ADR-034-graph-visualization-query-workbench"
+              "title": "ADR-039-local-embedding-service"
             }
           }
         ],
@@ -187,23 +187,24 @@
   },
   "active": "cbac5f1b64e45ac7",
   "lastOpenFiles": [
+    "architecture/ADR-039-local-embedding-service.md.tmp.2898750.1760810939300",
+    "architecture/ADR-039-local-embedding-service.md.tmp.2898750.1760810647981",
+    "architecture/ADR-039-local-embedding-service.md.tmp.2898750.1760809468723",
+    "architecture/ADR-034-graph-visualization-query-workbench.md",
+    "architecture/ARCHITECTURE_DECISIONS.md.tmp.2776407.1760806363077",
+    "architecture/ARCHITECTURE_DECISIONS.md.tmp.2776407.1760806356309",
+    "architecture/ADR-039-local-embedding-service.md",
+    "architecture/ADR-039-local-embedding-service.md.tmp.2776407.1760806288251",
     "architecture/ADR-035-explorer-methods-uses-capabilities.md.tmp.1314313.1760731456380",
     "architecture/ARCHITECTURE_DECISIONS.md.tmp.1314313.1760721141748",
     "architecture/ARCHITECTURE_DECISIONS.md.tmp.1314313.1760721132262",
     "architecture/ADR-035-explorer-methods-uses-capabilities.md",
-    "architecture/ADR-034-graph-visualization-query-workbench.md",
     "architecture/ADR-035-explorer-methods-uses-capabilities.md.tmp.1314313.1760720092071",
     "architecture/ADR-033-multimodal-ingestion-configurable-prompts.md",
     "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667359203",
-    "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667218220",
-    "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667212058",
-    "architecture/ADR-034-graph-visualization-query-workbench.md.tmp.433910.1760667201562",
     "development/pattern-repetition-notes.md",
-    "architecture/ADR-032-automatic-edge-vocabulary-expansion.md.tmp.3782316.1760549580273",
     "reference/DISTRIBUTED_SHARDING_RESEARCH.md",
     "guides/AI_PROVIDERS.md",
-    "guides/PASSWORD_RECOVERY.md.tmp.394069.1760474098013",
-    "README.md.tmp.394069.1760474081766",
     "guides/PASSWORD_RECOVERY.md",
     "guides/use_cases/password_recovery.md",
     "guides/use_cases/github_project_history.md",
@@ -222,7 +223,6 @@
     "reference/CONCEPT.md",
     "development/LEARNED_KNOWLEDGE_MCP.md",
     "guides/AUTHENTICATION.md",
-    "reference/CONCEPTS_AND_TERMINOLOGY.md",
     "architecture/media/voltron-porter-stemmer.jpg"
   ]
 }

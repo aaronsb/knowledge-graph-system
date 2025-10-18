@@ -183,7 +183,8 @@ class OpenAIProvider(AIProvider):
         self,
         api_key: Optional[str] = None,
         extraction_model: Optional[str] = None,
-        embedding_model: Optional[str] = None
+        embedding_model: Optional[str] = None,
+        embedding_provider: Optional[AIProvider] = None
     ):
         from openai import OpenAI
 
@@ -202,6 +203,9 @@ class OpenAIProvider(AIProvider):
         # Configurable models with defaults
         self.extraction_model = extraction_model or os.getenv("OPENAI_EXTRACTION_MODEL", "gpt-4o")
         self.embedding_model = embedding_model or os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+
+        # Optional separate embedding provider (e.g., LocalEmbeddingProvider)
+        self.embedding_provider = embedding_provider
 
     def extract_concepts(
         self,
@@ -282,10 +286,15 @@ class OpenAIProvider(AIProvider):
             )
 
     def generate_embedding(self, text: str) -> Dict[str, Any]:
-        """Generate embedding using OpenAI embedding models
+        """Generate embedding using OpenAI embedding models or configured provider
 
         Returns dict with 'embedding' (vector) and 'tokens' (usage info)
         """
+        # Delegate to separate embedding provider if configured (e.g., local)
+        if self.embedding_provider:
+            return self.embedding_provider.generate_embedding(text)
+
+        # Otherwise use OpenAI embeddings
         try:
             response = self.client.embeddings.create(
                 model=self.embedding_model,
@@ -400,6 +409,9 @@ class OpenAIProvider(AIProvider):
         return self.extraction_model
 
     def get_embedding_model(self) -> str:
+        """Get embedding model name (may be from separate provider)"""
+        if self.embedding_provider:
+            return self.embedding_provider.get_embedding_model()
         return self.embedding_model
 
     def validate_api_key(self) -> bool:
@@ -429,6 +441,129 @@ class OpenAIProvider(AIProvider):
         except Exception:
             # Fallback to hardcoded list
             return AVAILABLE_MODELS["openai"]
+
+
+class LocalEmbeddingProvider(AIProvider):
+    """
+    Local embedding provider using sentence-transformers models.
+
+    This provider runs embeddings locally (no API calls) using models like
+    nomic-embed-text or BGE. It uses the EmbeddingModelManager singleton
+    which loads models once at startup.
+
+    Note: This provider is ONLY for embeddings. Concept extraction still
+    requires an LLM provider (OpenAI or Anthropic).
+    """
+
+    def __init__(self):
+        """
+        Initialize local embedding provider.
+
+        Relies on EmbeddingModelManager being initialized at startup.
+        """
+        from .embedding_model_manager import get_embedding_model_manager
+
+        try:
+            self.model_manager = get_embedding_model_manager()
+        except RuntimeError as e:
+            raise ValueError(
+                f"Local embedding model not initialized: {e}\n"
+                "Ensure init_embedding_model_manager() was called at startup."
+            )
+
+    def extract_concepts(
+        self,
+        text: str,
+        system_prompt: str,
+        existing_concepts: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """
+        LocalEmbeddingProvider does not support concept extraction.
+
+        Use OpenAI or Anthropic providers for LLM-based extraction.
+        """
+        raise NotImplementedError(
+            "LocalEmbeddingProvider only supports embeddings, not concept extraction. "
+            "Use OpenAI or Anthropic for extraction."
+        )
+
+    def generate_embedding(self, text: str) -> Dict[str, Any]:
+        """
+        Generate embedding using local sentence-transformers model.
+
+        Returns dict with 'embedding' (vector) and 'tokens' (0 for local).
+        This matches the interface expected by the rest of the system.
+        """
+        try:
+            embedding = self.model_manager.generate_embedding(text)
+
+            return {
+                "embedding": embedding,
+                "tokens": 0  # Local embeddings have no token cost
+            }
+        except Exception as e:
+            raise Exception(f"Local embedding generation failed: {e}")
+
+    def get_provider_name(self) -> str:
+        return "Local (sentence-transformers)"
+
+    def get_extraction_model(self) -> str:
+        """LocalEmbeddingProvider doesn't support extraction"""
+        return "N/A (local embeddings only)"
+
+    def get_embedding_model(self) -> str:
+        """Get the local embedding model name"""
+        return self.model_manager.get_model_name()
+
+    def validate_api_key(self) -> bool:
+        """
+        Validate that local model is loaded and working.
+
+        For local provider, this checks model availability rather than API key.
+        """
+        try:
+            # Test embedding generation
+            test_embedding = self.model_manager.generate_embedding("test")
+
+            # Verify dimensions match expected
+            expected_dims = self.model_manager.get_dimensions()
+            if len(test_embedding) != expected_dims:
+                logger.error(f"Embedding dimension mismatch: got {len(test_embedding)}, expected {expected_dims}")
+                return False
+
+            logger.info(f"✅ Local embedding model validated ({expected_dims} dims)")
+            return True
+
+        except Exception as e:
+            logger.error(f"Local embedding model validation failed: {e}")
+            return False
+
+    def list_available_models(self) -> Dict[str, List[str]]:
+        """List recommended local embedding models"""
+        return {
+            "extraction": [],  # Local provider doesn't do extraction
+            "embedding": [
+                "nomic-ai/nomic-embed-text-v1.5",    # 768 dims, 8K context (recommended)
+                "BAAI/bge-small-en-v1.5",            # 384 dims, lightweight
+                "BAAI/bge-base-en-v1.5",             # 768 dims, balanced
+                "BAAI/bge-large-en-v1.5",            # 1024 dims, high quality
+                "sentence-transformers/all-MiniLM-L6-v2",  # 384 dims, fast
+            ]
+        }
+
+    def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
+        """LocalEmbeddingProvider doesn't support prose translation (requires LLM)"""
+        raise NotImplementedError(
+            "LocalEmbeddingProvider only supports embeddings, not prose translation. "
+            "Use OpenAI or Anthropic for translation."
+        )
+
+    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+        """LocalEmbeddingProvider doesn't support image description (requires multimodal LLM)"""
+        raise NotImplementedError(
+            "LocalEmbeddingProvider only supports embeddings, not image description. "
+            "Use OpenAI or Anthropic for image description."
+        )
 
 
 class AnthropicProvider(AIProvider):
@@ -662,6 +797,26 @@ class AnthropicProvider(AIProvider):
         return AVAILABLE_MODELS["anthropic"]
 
 
+def get_embedding_provider() -> Optional[AIProvider]:
+    """
+    Get the configured embedding provider (may be different from extraction provider).
+
+    Database-first approach (ADR-039):
+    - Checks if LocalEmbeddingProvider is available (model manager initialized)
+    - If yes, returns LocalEmbeddingProvider
+    - If no, returns None (caller will use default provider's embeddings)
+
+    Returns:
+        LocalEmbeddingProvider if configured, None otherwise
+    """
+    # Try to create LocalEmbeddingProvider (will fail if model manager not initialized)
+    try:
+        return LocalEmbeddingProvider()
+    except ValueError:
+        # Model manager not initialized (no local embeddings configured in database)
+        return None
+
+
 def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     """
     Factory function to get the configured AI provider.
@@ -684,8 +839,11 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
         For Anthropic:
             ANTHROPIC_API_KEY: Required
             ANTHROPIC_EXTRACTION_MODEL: Optional (default: "claude-sonnet-4-20250514")
-            OPENAI_API_KEY: Required for embeddings
-            OPENAI_EMBEDDING_MODEL: Optional (default: "text-embedding-3-small")
+            OPENAI_API_KEY: Required for embeddings (or configure local via database)
+
+        For Local Embeddings (ADR-039):
+            Configure via database: POST /admin/embedding/config
+            See kg_api.embedding_config table for parameters
 
         For Mock (testing):
             No API keys required
@@ -693,10 +851,13 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     """
     provider_name = provider_name or os.getenv("AI_PROVIDER", "openai").lower()
 
+    # Check for separate embedding provider configuration
+    embedding_provider = get_embedding_provider()
+
     if provider_name == "openai":
-        return OpenAIProvider()
+        return OpenAIProvider(embedding_provider=embedding_provider)
     elif provider_name == "anthropic":
-        return AnthropicProvider()
+        return AnthropicProvider(embedding_provider=embedding_provider)
     elif provider_name == "mock":
         from .mock_ai_provider import MockAIProvider
         mock_mode = os.getenv("MOCK_MODE", "default")
