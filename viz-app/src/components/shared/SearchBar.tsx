@@ -57,10 +57,11 @@ export const SearchBar: React.FC = () => {
   const { setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Debounce values to prevent excessive API calls while user is typing/dragging sliders
-  const debouncedConceptQuery = useDebouncedValue(conceptQuery, 300);
-  const debouncedNeighborhoodQuery = useDebouncedValue(neighborhoodQuery, 300);
-  const debouncedPathFromQuery = useDebouncedValue(pathFromQuery, 300);
-  const debouncedPathToQuery = useDebouncedValue(pathToQuery, 300);
+  // 800ms for typing (embeddings are expensive), 500ms for sliders (cheaper operations)
+  const debouncedConceptQuery = useDebouncedValue(conceptQuery, 800);
+  const debouncedNeighborhoodQuery = useDebouncedValue(neighborhoodQuery, 800);
+  const debouncedPathFromQuery = useDebouncedValue(pathFromQuery, 800);
+  const debouncedPathToQuery = useDebouncedValue(pathToQuery, 800);
   const debouncedSimilarity = useDebouncedValue(similarity, 500);
   const debouncedMaxHops = useDebouncedValue(maxHops, 500);
 

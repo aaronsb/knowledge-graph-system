@@ -51,24 +51,31 @@ export function useSearchConcepts(
     minSimilarity?: number;
     offset?: number;
     enabled?: boolean;
+    minQueryLength?: number;
   }
 ) {
+  const minLength = options?.minQueryLength ?? 3; // Default: require 3+ characters
+  const trimmedQuery = query?.trim() || '';
+  const hasMinLength = trimmedQuery.length >= minLength;
+
   return useQuery({
     queryKey: ['search', query, options?.limit, options?.minSimilarity, options?.offset],
     queryFn: async () => {
-      if (!query || query.trim().length === 0) {
+      if (!hasMinLength) {
         return { results: [], total: 0 };
       }
 
       return await apiClient.searchConcepts({
-        query: query.trim(),
+        query: trimmedQuery,
         limit: options?.limit,
         min_similarity: options?.minSimilarity,
         offset: options?.offset,
       });
     },
-    enabled: options?.enabled !== false && !!query && query.trim().length > 0,
+    enabled: options?.enabled !== false && hasMinLength,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false, // Don't refetch when user switches browser tabs
+    refetchOnReconnect: false, // Don't refetch on network reconnect
   });
 }
 
