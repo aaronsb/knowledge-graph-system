@@ -15,6 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Loader2, Network, GitBranch, Blocks, Code } from 'lucide-react';
 import { useSearchConcepts } from '../../hooks/useGraphData';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import type { QueryMode } from './ModeDial';
@@ -35,13 +36,11 @@ export const SearchBar: React.FC = () => {
 
   // Concept mode state
   const [conceptQuery, setConceptQuery] = useState('');
-  const [debouncedConceptQuery, setDebouncedConceptQuery] = useState('');
   const [selectedConcept, setSelectedConcept] = useState<any>(null);
   const [isLoadingConcept, setIsLoadingConcept] = useState(false);
 
   // Neighborhood mode state
   const [neighborhoodQuery, setNeighborhoodQuery] = useState('');
-  const [debouncedNeighborhoodQuery, setDebouncedNeighborhoodQuery] = useState('');
   const [selectedCenterConcept, setSelectedCenterConcept] = useState<any>(null);
   const [neighborhoodDepth, setNeighborhoodDepth] = useState(2);
   const [isLoadingNeighborhood, setIsLoadingNeighborhood] = useState(false);
@@ -49,19 +48,21 @@ export const SearchBar: React.FC = () => {
   // Path mode state
   const [pathFromQuery, setPathFromQuery] = useState('');
   const [pathToQuery, setPathToQuery] = useState('');
-  const [debouncedPathFromQuery, setDebouncedPathFromQuery] = useState('');
-  const [debouncedPathToQuery, setDebouncedPathToQuery] = useState('');
   const [selectedFromConcept, setSelectedFromConcept] = useState<any>(null);
   const [selectedToConcept, setSelectedToConcept] = useState<any>(null);
   const [maxHops, setMaxHops] = useState(5);
-  const [debouncedMaxHops, setDebouncedMaxHops] = useState(5);
   const [pathResults, setPathResults] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
 
-  // Debounced similarity for search hooks (prevents search spam while dragging slider)
-  const [debouncedSimilarity, setDebouncedSimilarity] = useState(similarity);
-
   const { setFocusedNodeId, setGraphData, graphData } = useGraphStore();
+
+  // Debounce values to prevent excessive API calls while user is typing/dragging sliders
+  const debouncedConceptQuery = useDebouncedValue(conceptQuery, 300);
+  const debouncedNeighborhoodQuery = useDebouncedValue(neighborhoodQuery, 300);
+  const debouncedPathFromQuery = useDebouncedValue(pathFromQuery, 300);
+  const debouncedPathToQuery = useDebouncedValue(pathToQuery, 300);
+  const debouncedSimilarity = useDebouncedValue(similarity, 500);
+  const debouncedMaxHops = useDebouncedValue(maxHops, 500);
 
   // Concept search results (only when no concept selected)
   // Uses debounced similarity to prevent search spam while dragging slider
@@ -103,38 +104,6 @@ export const SearchBar: React.FC = () => {
       enabled: smartSearchMode === 'path' && !selectedToConcept,
     }
   );
-
-  // Debounce queries
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedConceptQuery(conceptQuery), 300);
-    return () => clearTimeout(timer);
-  }, [conceptQuery]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedNeighborhoodQuery(neighborhoodQuery), 300);
-    return () => clearTimeout(timer);
-  }, [neighborhoodQuery]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedPathFromQuery(pathFromQuery), 300);
-    return () => clearTimeout(timer);
-  }, [pathFromQuery]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedPathToQuery(pathToQuery), 300);
-    return () => clearTimeout(timer);
-  }, [pathToQuery]);
-
-  // Debounce sliders to avoid excessive API calls while dragging
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedMaxHops(maxHops), 500);
-    return () => clearTimeout(timer);
-  }, [maxHops]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSimilarity(similarity), 500);
-    return () => clearTimeout(timer);
-  }, [similarity]);
 
   // Auto-search paths when both concepts are selected (using debounced max hops)
   // Note: Similarity threshold only affects initial concept dropdown search, not the path search itself
