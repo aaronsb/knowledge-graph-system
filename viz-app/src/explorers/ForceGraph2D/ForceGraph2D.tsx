@@ -448,74 +448,33 @@ export const ForceGraph2D: React.FC<
   // Handler: Follow concept (replace graph)
   const handleFollowConcept = useCallback(async (nodeId: string) => {
     try {
-      // 1. Get concept details including embedding
-      const conceptDetails = await apiClient.getConceptDetails(nodeId);
-
-      if (!conceptDetails || !conceptDetails.embedding) {
-        console.error('No embedding found for concept');
-        return;
-      }
-
-      // 2. Search using concept's existing embedding
-      const searchResults = await apiClient.searchByEmbedding({
-        embedding: conceptDetails.embedding,
-        limit: 50,
-        min_similarity: similarityThreshold,
-      });
-
-      if (!searchResults || !searchResults.results || searchResults.results.length === 0) {
-        console.warn('No similar concepts found');
-        return;
-      }
-
-      // 3. Build subgraph from search results
-      const relatedConceptIds = searchResults.results.map((r: any) => r.concept_id);
+      // Fetch subgraph centered on this concept (neighborhood)
       const subgraphData = await apiClient.getSubgraph({
         center_concept_id: nodeId,
-        depth: 1,
+        depth: 2, // 2-hop neighborhood
         limit: 100,
       });
 
-      // 4. Transform to D3 format and replace graph
+      // Transform to D3 format and replace graph
       const transformedData = transformForD3(subgraphData.nodes, subgraphData.links);
       setGraphData(transformedData);
       setOriginNodeId(nodeId);
     } catch (error) {
       console.error('Failed to follow concept:', error);
     }
-  }, [similarityThreshold, setGraphData, setOriginNodeId]);
+  }, [setGraphData, setOriginNodeId]);
 
   // Handler: Add concept to graph (merge)
   const handleAddToGraph = useCallback(async (nodeId: string) => {
     try {
-      // 1. Get concept details including embedding
-      const conceptDetails = await apiClient.getConceptDetails(nodeId);
-
-      if (!conceptDetails || !conceptDetails.embedding) {
-        console.error('No embedding found for concept');
-        return;
-      }
-
-      // 2. Search using concept's existing embedding
-      const searchResults = await apiClient.searchByEmbedding({
-        embedding: conceptDetails.embedding,
-        limit: 50,
-        min_similarity: similarityThreshold,
-      });
-
-      if (!searchResults || !searchResults.results || searchResults.results.length === 0) {
-        console.warn('No similar concepts found');
-        return;
-      }
-
-      // 3. Build subgraph from search results
+      // Fetch subgraph centered on this concept (neighborhood)
       const subgraphData = await apiClient.getSubgraph({
         center_concept_id: nodeId,
-        depth: 1,
+        depth: 2, // 2-hop neighborhood
         limit: 100,
       });
 
-      // 4. Transform to D3 format and merge with existing graph
+      // Transform to D3 format and merge with existing graph
       const transformedData = transformForD3(subgraphData.nodes, subgraphData.links);
       const mergedData = mergeGraphData(transformedData);
       setGraphData(mergedData);
@@ -523,7 +482,7 @@ export const ForceGraph2D: React.FC<
     } catch (error) {
       console.error('Failed to add concept to graph:', error);
     }
-  }, [similarityThreshold, mergeGraphData, setGraphData, setOriginNodeId]);
+  }, [mergeGraphData, setGraphData, setOriginNodeId]);
 
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
