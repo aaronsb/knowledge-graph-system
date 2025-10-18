@@ -133,12 +133,13 @@ export const SearchBar: React.FC = () => {
     return () => clearTimeout(timer);
   }, [similarity]);
 
-  // Auto-search paths when both concepts are selected (using debounced slider values)
+  // Auto-search paths when both concepts are selected (using debounced max hops)
+  // Note: similarity threshold only affects initial concept selection, not path search
   useEffect(() => {
     if (smartSearchMode === 'path' && selectedFromConcept && selectedToConcept && !isLoadingPath) {
       searchPaths();
     }
-  }, [selectedFromConcept, selectedToConcept, debouncedSimilarity, debouncedMaxHops, smartSearchMode]);
+  }, [selectedFromConcept, selectedToConcept, debouncedMaxHops, smartSearchMode]);
 
   // Handler: Select concept in Concept mode
   const handleSelectConcept = (concept: any) => {
@@ -295,17 +296,18 @@ export const SearchBar: React.FC = () => {
     }
   };
 
-  // Search: Find paths between selected concepts (using debounced slider values)
+  // Search: Find paths between selected concepts
+  // Uses ID-based endpoint - no embedding generation needed since concepts are already selected
   const searchPaths = async () => {
     if (!selectedFromConcept || !selectedToConcept) return;
 
     setIsLoadingPath(true);
     try {
-      const result = await apiClient.findConnectionBySearch({
-        from_query: selectedFromConcept.label,
-        to_query: selectedToConcept.label,
+      // Use ID-based endpoint - concepts already have stored embeddings in database
+      const result = await apiClient.findConnection({
+        from_id: selectedFromConcept.concept_id,
+        to_id: selectedToConcept.concept_id,
         max_hops: debouncedMaxHops,
-        threshold: debouncedSimilarity,
       });
       setPathResults(result);
     } catch (error: any) {
@@ -315,7 +317,7 @@ export const SearchBar: React.FC = () => {
       let errorMessage = 'Failed to find paths';
 
       if (error.code === 'ECONNABORTED') {
-        errorMessage = `Search timed out after ${Math.floor((error.config?.timeout || 30000) / 1000)}s. Try reducing max hops or increasing similarity threshold.`;
+        errorMessage = `Search timed out after ${Math.floor((error.config?.timeout || 30000) / 1000)}s. Try reducing max hops.`;
       } else if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
       } else if (error.message) {

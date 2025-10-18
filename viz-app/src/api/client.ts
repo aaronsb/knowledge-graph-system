@@ -194,7 +194,23 @@ class APIClient {
   }
 
   /**
+   * Find paths between two concepts using exact concept IDs
+   * No embedding generation needed - uses stored graph structure
+   */
+  async findConnection(params: {
+    from_id: string;
+    to_id: string;
+    max_hops?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/connect', params, {
+      timeout: 120000, // 2 minutes for complex path searches
+    });
+    return response.data;
+  }
+
+  /**
    * Find paths between two concepts using semantic phrase matching
+   * Generates embeddings for text queries - use findConnection() if you already have concept IDs
    * Note: Path searches can be slow - uses extended 120s timeout
    */
   async findConnectionBySearch(params: {
