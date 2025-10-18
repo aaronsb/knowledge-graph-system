@@ -274,12 +274,14 @@ const AppContent: React.FC = () => {
         {/* Search Bar */}
         <div
           className="border-b border-border bg-card overflow-hidden relative"
-          style={{ height: `${searchBarHeight}px` }}
+          style={{
+            height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto'
+          }}
         >
           <div
             className="p-4 h-full overflow-auto"
             style={{
-              // When searchBarHeight < content minimum, slide content down
+              // When searchBarHeight < content minimum, slide content down (block-builder only)
               transform: queryMode === 'block-builder' && searchBarHeight < BLOCK_BUILDER_MIN_HEIGHT
                 ? `translateY(${searchBarHeight - BLOCK_BUILDER_MIN_HEIGHT}px)`
                 : 'translateY(0)',
@@ -291,13 +293,15 @@ const AppContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Draggable Divider */}
-        <div
-          onMouseDown={handleSearchBarMouseDown}
-          className="h-1 bg-gray-300 hover:bg-blue-500 cursor-ns-resize transition-colors flex items-center justify-center group"
-        >
-          <div className="w-16 h-0.5 bg-gray-400 group-hover:bg-blue-600 rounded-full" />
-        </div>
+        {/* Draggable Divider - Only in block-builder mode */}
+        {queryMode === 'block-builder' && (
+          <div
+            onMouseDown={handleSearchBarMouseDown}
+            className="h-1 bg-gray-300 hover:bg-blue-500 cursor-ns-resize transition-colors flex items-center justify-center group"
+          >
+            <div className="w-16 h-0.5 bg-gray-400 group-hover:bg-blue-600 rounded-full" />
+          </div>
+        )}
 
         {/* Visualization Area */}
         <div className="flex-1 relative">
