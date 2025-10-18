@@ -13,7 +13,7 @@
  */
 
 import React, { useState } from 'react';
-import { Search, Loader2, Network, GitBranch, Blocks, Code } from 'lucide-react';
+import { Search, Loader2, Network, GitBranch, Blocks, Code, ChevronDown, ChevronRight } from 'lucide-react';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
@@ -29,6 +29,25 @@ export const SearchBar: React.FC = () => {
 
   // Smart Search sub-mode (pills)
   const [smartSearchMode, setSmartSearchMode] = useState<SmartSearchSubMode>('concept');
+
+  // Collapsible sections state
+  const [expandedSections, setExpandedSections] = useState<Record<SmartSearchSubMode, boolean>>({
+    concept: true,
+    neighborhood: true,
+    path: true,
+  });
+
+  const toggleSection = (mode: SmartSearchSubMode) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [mode]: !prev[mode],
+    }));
+
+    // Trigger window resize event after a short delay to let the DOM update
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  };
 
   // Shared controls - use global similarity threshold from store
   const { similarityThreshold: similarity, setSimilarityThreshold: setSimilarity } = useGraphStore();
@@ -262,7 +281,25 @@ export const SearchBar: React.FC = () => {
           {/* Concept Search */}
           {smartSearchMode === 'concept' && (
             <div className="space-y-3">
-              {!selectedConcept ? (
+              {/* Collapsible Header */}
+              <button
+                onClick={() => toggleSection('concept')}
+                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Search for Concept</span>
+                </div>
+                {expandedSections.concept ? (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
+
+              {expandedSections.concept && (
+                <>
+                  {!selectedConcept ? (
                 <div className="relative space-y-3">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -412,13 +449,33 @@ export const SearchBar: React.FC = () => {
                   </div>
                 </div>
               )}
+                </>
+              )}
             </div>
           )}
 
           {/* Neighborhood Search */}
           {smartSearchMode === 'neighborhood' && (
             <div className="space-y-3">
-              {!selectedCenterConcept ? (
+              {/* Collapsible Header */}
+              <button
+                onClick={() => toggleSection('neighborhood')}
+                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Network className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Explore Neighborhood</span>
+                </div>
+                {expandedSections.neighborhood ? (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
+
+              {expandedSections.neighborhood && (
+                <>
+                  {!selectedCenterConcept ? (
                 <div className="relative space-y-3">
                   <div className="relative">
                     <Network className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -534,14 +591,34 @@ export const SearchBar: React.FC = () => {
                   </div>
                 </div>
               )}
+                </>
+              )}
             </div>
           )}
 
           {/* Path Search */}
           {smartSearchMode === 'path' && (
             <div className="space-y-3">
-              {/* Step 1: Search for From concept */}
-              {!selectedFromConcept ? (
+              {/* Collapsible Header */}
+              <button
+                onClick={() => toggleSection('path')}
+                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Find Paths Between Concepts</span>
+                </div>
+                {expandedSections.path ? (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
+
+              {expandedSections.path && (
+                <>
+                  {/* Step 1: Search for From concept */}
+                  {!selectedFromConcept ? (
                 <div className="relative space-y-3">
                   <div className="relative">
                     <GitBranch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -845,6 +922,8 @@ export const SearchBar: React.FC = () => {
                     </div>
                   )}
                 </div>
+              )}
+                </>
               )}
             </div>
           )}
