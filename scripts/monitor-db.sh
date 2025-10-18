@@ -9,6 +9,12 @@ CYAN='\033[0;36m'
 GRAY='\033[0;90m'
 NC='\033[0m'
 
+# Parse arguments
+EXPLAIN_MODE=false
+if [ "$1" = "--explain" ] || [ "$1" = "-e" ]; then
+    EXPLAIN_MODE=true
+fi
+
 # Check if database is running
 if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
     echo -e "${RED}✗ Database is not running${NC}"
@@ -16,8 +22,15 @@ if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
     exit 1
 fi
 
-echo -e "${BLUE}🔍 PostgreSQL Performance Monitor${NC}"
-echo -e "${GRAY}=================================${NC}"
+if [ "$EXPLAIN_MODE" = true ]; then
+    echo -e "${BLUE}🔍 PostgreSQL Performance Monitor ${YELLOW}(EXPLAIN MODE)${NC}"
+    echo -e "${GRAY}================================================${NC}"
+    echo -e "${YELLOW}Shows query execution plans when queries are active${NC}"
+else
+    echo -e "${BLUE}🔍 PostgreSQL Performance Monitor${NC}"
+    echo -e "${GRAY}=================================${NC}"
+    echo -e "${YELLOW}Tip: Use --explain flag to see query execution plans${NC}"
+fi
 echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
 echo ""
 
@@ -104,6 +117,57 @@ while true; do
               AND pid != pg_backend_pid()
             ORDER BY query_start
             " 2>/dev/null | sed 's/^/  /'
+
+            # EXPLAIN MODE: Show query execution plan
+            if [ "$EXPLAIN_MODE" = true ]; then
+                echo -e "\n${CYAN}Query Execution Plan (EXPLAIN):${NC}"
+
+                # Get the first active query text
+                ACTIVE_QUERY=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "
+                SELECT query
+                FROM pg_stat_activity
+                WHERE state = 'active'
+                  AND pid != pg_backend_pid()
+                  AND query NOT LIKE '%pg_stat_activity%'
+                ORDER BY query_start
+                LIMIT 1
+                " 2>/dev/null)
+
+                if [ ! -z "$ACTIVE_QUERY" ]; then
+                    # Check if it's a cypher query
+                    if echo "$ACTIVE_QUERY" | grep -q "cypher("; then
+                        # Extract the cypher query from the SELECT wrapper
+                        CYPHER_QUERY=$(echo "$ACTIVE_QUERY" | sed -n "s/.*cypher('[^']*', *'\$\$\(.*\)\$\$').*/\1/p")
+
+                        if [ ! -z "$CYPHER_QUERY" ]; then
+                            echo -e "${GRAY}  Cypher Query: $CYPHER_QUERY${NC}"
+                            echo ""
+
+                            # Show EXPLAIN output
+                            docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "
+                            EXPLAIN (ANALYZE, BUFFERS)
+                            SELECT * FROM cypher('knowledge_graph', \$\$
+                            $CYPHER_QUERY
+                            \$\$) as (result agtype);
+                            " 2>/dev/null | sed 's/^/  /'
+                        else
+                            echo -e "${YELLOW}  Could not parse Cypher query${NC}"
+                        fi
+                    else
+                        # Not a cypher query, show EXPLAIN for regular SQL
+                        echo -e "${GRAY}  SQL Query: $(echo "$ACTIVE_QUERY" | head -c 100)...${NC}"
+                        echo ""
+
+                        # Show EXPLAIN for the query
+                        docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "
+                        EXPLAIN (ANALYZE, BUFFERS)
+                        $ACTIVE_QUERY
+                        " 2>/dev/null | sed 's/^/  /' || echo -e "${YELLOW}  Could not EXPLAIN query${NC}"
+                    fi
+                else
+                    echo -e "${GRAY}  No query to explain${NC}"
+                fi
+            fi
         fi
 
         # Show parallel workers if any
