@@ -369,6 +369,65 @@ CREATE INDEX idx_vocab_suggestions_reviewed ON kg_api.vocabulary_suggestions(rev
 
 COMMENT ON TABLE kg_api.vocabulary_suggestions IS 'LLM-assisted vocabulary curation suggestions - ADR-026';
 
+-- Embedding Configuration (ADR-039)
+CREATE TABLE kg_api.embedding_config (
+    id SERIAL PRIMARY KEY,
+
+    -- Provider configuration
+    provider VARCHAR(50) NOT NULL CHECK (provider IN ('local', 'openai')),
+
+    -- Model configuration
+    model_name VARCHAR(200) NOT NULL,
+    embedding_dimensions INTEGER NOT NULL,
+    precision VARCHAR(20) NOT NULL CHECK (precision IN ('float16', 'float32')),
+
+    -- Resource allocation (for local provider)
+    max_memory_mb INTEGER,
+    num_threads INTEGER,
+    device VARCHAR(20) CHECK (device IN ('cpu', 'cuda', 'mps')),
+    batch_size INTEGER DEFAULT 8,
+
+    -- Performance tuning
+    max_seq_length INTEGER,
+    normalize_embeddings BOOLEAN DEFAULT TRUE,
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(100),
+    active BOOLEAN DEFAULT TRUE,
+
+    -- Only one active config at a time
+    CONSTRAINT unique_active_config UNIQUE(active) WHERE active = TRUE
+);
+
+CREATE INDEX idx_embedding_config_active ON kg_api.embedding_config(active) WHERE active = TRUE;
+
+COMMENT ON TABLE kg_api.embedding_config IS 'Resource-aware embedding configuration for local and remote models - ADR-039';
+
+-- Trigger to update 'updated_at' timestamp
+CREATE OR REPLACE FUNCTION kg_api.update_embedding_config_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER embedding_config_update_timestamp
+    BEFORE UPDATE ON kg_api.embedding_config
+    FOR EACH ROW
+    EXECUTE FUNCTION kg_api.update_embedding_config_timestamp();
+
+-- Insert default OpenAI configuration (allows system to work out of the box)
+INSERT INTO kg_api.embedding_config (
+    provider, model_name, embedding_dimensions, precision,
+    max_seq_length, normalize_embeddings, updated_by, active
+) VALUES (
+    'openai', 'text-embedding-3-small', 1536, 'float32',
+    8191, TRUE, 'system', TRUE
+);
+
 -- ============================================================================
 -- KG_AUTH SCHEMA - Security (ADR-028 Dynamic RBAC)
 -- ============================================================================

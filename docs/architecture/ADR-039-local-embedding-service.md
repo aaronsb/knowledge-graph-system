@@ -403,6 +403,154 @@ kg embedding migrate --model nomic-embed-text-v1.5
 - Migration to pgvector should be its own decision when/if scale warrants it
 - Compatible with this ADR (provider abstraction unchanged)
 
+## Configuration Update Strategy (Worker Recycling)
+
+**Challenge:** sentence-transformers models are loaded into memory (300MB-1.3GB). Changing embedding configuration requires model reload. How to apply changes without extended downtime?
+
+### Phase 1: Manual API Restart (MVP - Current Implementation)
+
+**Approach:**
+- Embedding config stored in `kg_api.embedding_config` table
+- API reads config from database at startup
+- Configuration changes via `PUT /admin/embedding/config`
+- Changes require manual API server restart to apply
+
+**Workflow:**
+```bash
+# Update config via API
+curl -X PUT http://localhost:8000/admin/embedding/config \
+  -d '{"model_name": "BAAI/bge-large-en-v1.5", "num_threads": 8}'
+
+# Restart API to apply
+./scripts/stop-api.sh && ./scripts/start-api.sh
+```
+
+**Characteristics:**
+- ✅ Simple implementation
+- ✅ No risk of memory leaks
+- ✅ Clean process state after restart
+- ⚠️ ~2-5 second downtime during restart
+- ⚠️ In-flight requests dropped
+
+**When to use:** Single-instance deployments, infrequent config changes
+
+### Phase 2: Hot Reload with Signal Handling (Future Enhancement)
+
+**Approach:**
+- Signal handling: `SIGHUP` or `POST /admin/embedding/config/reload` triggers config reload
+- Graceful model swap in running process
+- No process restart required
+
+**Implementation Strategy:**
+```python
+async def reload_model(new_config: dict):
+    """
+    Hot reload model without process restart.
+
+    Process:
+    1. Load new model in parallel (brief 2x memory spike)
+    2. Atomic swap of model reference
+    3. Allow in-flight requests to finish with old model (5s grace period)
+    4. Explicit cleanup: del old_model, gc.collect()
+    5. Log reload time
+    """
+    logger.info(f"🔄 Hot reloading model: {new_config['model_name']}")
+    start = time.time()
+
+    # Load new model (2x memory temporarily)
+    new_model = SentenceTransformer(new_config['model_name'])
+
+    # Atomic swap
+    old_model = self.model
+    self.model = new_model
+    self.model_name = new_config['model_name']
+
+    # Grace period for in-flight requests
+    await asyncio.sleep(5)
+
+    # Explicit cleanup
+    del old_model
+    gc.collect()
+
+    elapsed = time.time() - start
+    logger.info(f"✅ Model reloaded in {elapsed:.2f}s")
+```
+
+**Workflow:**
+```bash
+# Update config and reload (single operation)
+curl -X POST http://localhost:8000/admin/embedding/config/reload \
+  -d '{"model_name": "BAAI/bge-large-en-v1.5", "num_threads": 8}'
+
+# API responds with reload status
+{
+  "status": "reloading",
+  "estimated_time_seconds": 5,
+  "old_model": "nomic-ai/nomic-embed-text-v1.5",
+  "new_model": "BAAI/bge-large-en-v1.5"
+}
+```
+
+**Characteristics:**
+- ✅ Zero downtime (in-flight requests complete)
+- ✅ Fast reload (~2-5 seconds)
+- ✅ No external tools required
+- ⚠️ Temporary 2x memory usage during reload
+- ⚠️ Risk of memory leaks if model not properly released
+- ⚠️ Requires testing to verify garbage collection
+
+**When to use:** Single-instance deployments with uptime requirements
+
+### Phase 3: Multi-Worker Rolling Restart (Future - Production Scale)
+
+**Approach:**
+- Process pool with multiple workers (e.g., gunicorn with 4-8 workers)
+- Rolling restart: reload one worker at a time
+- Load balancer routes traffic to healthy workers
+- True zero downtime
+
+**Implementation Strategy:**
+```bash
+# Supervisor manages multiple workers
+gunicorn src.api.main:app \
+  --workers 4 \
+  --worker-class uvicorn.workers.UvicornWorker \
+  --bind 0.0.0.0:8000
+
+# Rolling restart command (gunicorn built-in)
+kill -HUP <gunicorn-pid>  # Gracefully reload all workers
+```
+
+**Reload Process:**
+1. Worker 1: Reload model, rejoin pool
+2. Worker 2: Reload model while 1,3,4 serve traffic
+3. Worker 3: Reload model while 1,2,4 serve traffic
+4. Worker 4: Reload model while 1,2,3 serve traffic
+
+**Characteristics:**
+- ✅ True zero downtime
+- ✅ No memory spike (workers reload sequentially)
+- ✅ Production-grade reliability
+- ✅ Built-in gunicorn support
+- ⚠️ More complex deployment architecture
+- ⚠️ Requires load balancer or proxy
+- ⚠️ 4-8x memory overhead (multiple workers)
+
+**When to use:** Multi-user production deployments, high availability requirements
+
+### Decision: Start with Phase 1, Add Phase 2 if Hot Reload Performs Well
+
+**Rationale:**
+- Phase 1 is simple and sufficient for most use cases
+- Phase 2 can be added later if hot reload proves stable
+- Phase 3 only needed at significant scale (>100 concurrent users)
+- Discover actual reload performance before committing to complexity
+
+**Metrics to track:**
+- Model load time: `time to load model into memory`
+- Memory cleanup: `RAM freed after old model deletion`
+- Request impact: `number of requests affected during reload`
+
 ## Implementation Checklist
 
 **Phase 1: Server-Side Local Embeddings (Core Functionality)**
