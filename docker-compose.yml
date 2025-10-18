@@ -30,12 +30,18 @@ services:
       # Data persistence
       - postgres_data:/var/lib/postgresql/data
 
+      # PostgreSQL configuration (optimized for 32-core system)
+      - ./schema/postgresql.conf:/etc/postgresql/postgresql.conf
+
       # Initialization scripts (run on first startup)
       # Using consolidated baseline schema (v2.0.0)
       - ./schema/00_baseline.sql:/docker-entrypoint-initdb.d/00_baseline.sql
 
       # Optional: Import directory for bulk data loads
       - postgres_import:/import
+
+    # Use custom PostgreSQL configuration
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
     healthcheck:
       # Check if PostgreSQL is ready and AGE extension is loaded
