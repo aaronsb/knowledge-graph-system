@@ -78,12 +78,8 @@ fi
 
 source venv/bin/activate
 
-# Parse arguments
-PORT=${1:-8000}
-RELOAD=""
-
-if [ "$2" = "--reload" ]; then
-    RELOAD="--reload"
+# Show reload status if enabled
+if [ "$RELOAD" = "--reload" ]; then
     echo -e "${YELLOW}Hot reload enabled (development mode)${NC}"
 fi
 
