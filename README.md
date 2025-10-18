@@ -97,15 +97,16 @@ You've invested time (and API tokens) extracting knowledge from documents. Tradi
 ./scripts/configure-ai.sh
 
 # 3. Start API server
-source venv/bin/activate
-uvicorn src.api.main:app --reload --port 8000
+./scripts/start-api.sh
+# API docs: http://localhost:8000/docs
+# ReDoc API: http://localhost:8000/redoc
 
 # 4. Install TypeScript CLI
 cd client && npm install && npm run build && ./install.sh && cd ..
 
 # 5. Start visualization explorer (optional)
-cd viz-app && npm install && npm run dev
-# Open browser to http://localhost:5173
+./scripts/start-viz.sh
+# Open browser to http://localhost:3000
 
 # 6. Ingest documents
 kg ingest file document.txt --ontology "My Research"
@@ -118,7 +119,7 @@ kg database stats
 
 **Three ways to explore your graph:**
 - **CLI:** Use `kg` commands for querying and management
-- **Visualization Explorer:** Open http://localhost:5173 for interactive graph exploration
+- **Visualization Explorer:** Open http://localhost:3000 for interactive graph exploration
 - **MCP Server:** Connect via Claude Desktop/Code - See [MCP Setup Guide](docs/guides/MCP_SETUP.md)
 
 ## Live Example
