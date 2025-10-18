@@ -31,7 +31,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
       # PostgreSQL configuration (optimized for 32-core system)
-      - ./schema/postgresql.conf:/etc/postgresql/postgresql.conf
+      # Mount to data directory where PostgreSQL expects it
+      - ./schema/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
 
       # Initialization scripts (run on first startup)
       # Using consolidated baseline schema (v2.0.0)
@@ -39,9 +40,6 @@ services:
 
       # Optional: Import directory for bulk data loads
       - postgres_import:/import
-
-    # Use custom PostgreSQL configuration
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
     healthcheck:
       # Check if PostgreSQL is ready and AGE extension is loaded
