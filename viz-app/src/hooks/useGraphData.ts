@@ -54,7 +54,7 @@ export function useSearchConcepts(
     minQueryLength?: number;
   }
 ) {
-  const minLength = options?.minQueryLength ?? 3; // Default: require 3+ characters
+  const minLength = options?.minQueryLength ?? 2; // Default: require 2+ characters
   const trimmedQuery = query?.trim() || '';
   const hasMinLength = trimmedQuery.length >= minLength;
 
