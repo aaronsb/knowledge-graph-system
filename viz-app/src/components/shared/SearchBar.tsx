@@ -110,7 +110,7 @@ LIMIT 50`);
     {
       limit: 10,
       minSimilarity: debouncedSimilarity,
-      enabled: smartSearchMode === 'concept' && !selectedConcept,
+      enabled: queryMode === 'smart-search' && smartSearchMode === 'concept' && !selectedConcept,
     }
   );
 
@@ -120,7 +120,7 @@ LIMIT 50`);
     {
       limit: 10,
       minSimilarity: debouncedSimilarity,
-      enabled: smartSearchMode === 'neighborhood' && !selectedCenterConcept,
+      enabled: queryMode === 'smart-search' && smartSearchMode === 'neighborhood' && !selectedCenterConcept,
     }
   );
 
@@ -130,7 +130,7 @@ LIMIT 50`);
     {
       limit: 10,
       minSimilarity: debouncedSimilarity,
-      enabled: smartSearchMode === 'path' && !selectedFromConcept,
+      enabled: queryMode === 'smart-search' && smartSearchMode === 'path' && !selectedFromConcept,
     }
   );
 
@@ -140,7 +140,7 @@ LIMIT 50`);
     {
       limit: 10,
       minSimilarity: debouncedSimilarity,
-      enabled: smartSearchMode === 'path' && !selectedToConcept,
+      enabled: queryMode === 'smart-search' && smartSearchMode === 'path' && !selectedToConcept,
     }
   );
 
