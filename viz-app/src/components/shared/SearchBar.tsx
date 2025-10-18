@@ -30,8 +30,8 @@ export const SearchBar: React.FC = () => {
   // Smart Search sub-mode (pills)
   const [smartSearchMode, setSmartSearchMode] = useState<SmartSearchSubMode>('concept');
 
-  // Shared controls
-  const [similarity, setSimilarity] = useState(0.5); // 50% default
+  // Shared controls - use global similarity threshold from store
+  const { similarityThreshold: similarity, setSimilarityThreshold: setSimilarity } = useGraphStore();
 
   // Concept mode state
   const [conceptQuery, setConceptQuery] = useState('');

@@ -7,13 +7,14 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
-import { getNeighbors } from '../../utils/graphTransform';
+import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { apiClient } from '../../api/client';
 
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
@@ -71,8 +72,8 @@ export const ForceGraph2D: React.FC<
     nodeLabel: string;
   } | null>(null);
 
-  // Get navigation state from store
-  const { originNodeId, setOriginNodeId } = useGraphStore();
+  // Get navigation state and settings from store
+  const { originNodeId, setOriginNodeId, similarityThreshold, setGraphData, graphData } = useGraphStore();
 
   // Calculate neighbors for highlighting
   const neighbors = useMemo(() => {
@@ -375,6 +376,155 @@ export const ForceGraph2D: React.FC<
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Helper: Merge new graph data with existing (deduplicate nodes/links)
+  // Preserves existing node positions to prevent force explosion
+  const mergeGraphData = useCallback((newData: any) => {
+    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
+      return newData;
+    }
+
+    // Create map of existing nodes with their positions
+    const existingNodesMap = new Map(
+      graphData.nodes.map((n: any) => [n.id, n])
+    );
+
+    const mergedNodes: any[] = [];
+
+    // First, add all existing nodes (preserving positions)
+    graphData.nodes.forEach((node: any) => {
+      mergedNodes.push(node);
+    });
+
+    // Then add new nodes (they'll get positioned by force simulation)
+    newData.nodes.forEach((node: any) => {
+      if (!existingNodesMap.has(node.id)) {
+        // New node - position it near the center of existing graph
+        const existingPositions = graphData.nodes
+          .filter((n: any) => n.x !== undefined && n.y !== undefined)
+          .map((n: any) => ({ x: n.x, y: n.y }));
+
+        if (existingPositions.length > 0) {
+          // Calculate centroid of existing nodes
+          const centerX = existingPositions.reduce((sum, p) => sum + p.x, 0) / existingPositions.length;
+          const centerY = existingPositions.reduce((sum, p) => sum + p.y, 0) / existingPositions.length;
+
+          // Add small random offset to avoid exact overlap
+          node.x = centerX + (Math.random() - 0.5) * 50;
+          node.y = centerY + (Math.random() - 0.5) * 50;
+        }
+
+        mergedNodes.push(node);
+      }
+    });
+
+    // Merge links (deduplicate by source -> target -> type)
+    const existingLinks = graphData.links || [];
+    const existingLinkKeys = new Set(
+      existingLinks.map((l: any) => {
+        const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+        const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+        return `${sourceId}->${targetId}:${l.type}`;
+      })
+    );
+    const mergedLinks = [...existingLinks];
+
+    const newLinks = newData.links || [];
+    newLinks.forEach((link: any) => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      const key = `${sourceId}->${targetId}:${link.type}`;
+      if (!existingLinkKeys.has(key)) {
+        mergedLinks.push(link);
+        existingLinkKeys.add(key);
+      }
+    });
+
+    return {
+      nodes: mergedNodes,
+      links: mergedLinks,
+    };
+  }, [graphData]);
+
+  // Handler: Follow concept (replace graph)
+  const handleFollowConcept = useCallback(async (nodeId: string) => {
+    try {
+      // 1. Get concept details including embedding
+      const conceptDetails = await apiClient.getConceptDetails(nodeId);
+
+      if (!conceptDetails || !conceptDetails.embedding) {
+        console.error('No embedding found for concept');
+        return;
+      }
+
+      // 2. Search using concept's existing embedding
+      const searchResults = await apiClient.searchByEmbedding({
+        embedding: conceptDetails.embedding,
+        limit: 50,
+        min_similarity: similarityThreshold,
+      });
+
+      if (!searchResults || !searchResults.results || searchResults.results.length === 0) {
+        console.warn('No similar concepts found');
+        return;
+      }
+
+      // 3. Build subgraph from search results
+      const relatedConceptIds = searchResults.results.map((r: any) => r.concept_id);
+      const subgraphData = await apiClient.getSubgraph({
+        center_concept_id: nodeId,
+        depth: 1,
+        limit: 100,
+      });
+
+      // 4. Transform to D3 format and replace graph
+      const transformedData = transformForD3(subgraphData.nodes, subgraphData.links);
+      setGraphData(transformedData);
+      setOriginNodeId(nodeId);
+    } catch (error) {
+      console.error('Failed to follow concept:', error);
+    }
+  }, [similarityThreshold, setGraphData, setOriginNodeId]);
+
+  // Handler: Add concept to graph (merge)
+  const handleAddToGraph = useCallback(async (nodeId: string) => {
+    try {
+      // 1. Get concept details including embedding
+      const conceptDetails = await apiClient.getConceptDetails(nodeId);
+
+      if (!conceptDetails || !conceptDetails.embedding) {
+        console.error('No embedding found for concept');
+        return;
+      }
+
+      // 2. Search using concept's existing embedding
+      const searchResults = await apiClient.searchByEmbedding({
+        embedding: conceptDetails.embedding,
+        limit: 50,
+        min_similarity: similarityThreshold,
+      });
+
+      if (!searchResults || !searchResults.results || searchResults.results.length === 0) {
+        console.warn('No similar concepts found');
+        return;
+      }
+
+      // 3. Build subgraph from search results
+      const subgraphData = await apiClient.getSubgraph({
+        center_concept_id: nodeId,
+        depth: 1,
+        limit: 100,
+      });
+
+      // 4. Transform to D3 format and merge with existing graph
+      const transformedData = transformForD3(subgraphData.nodes, subgraphData.links);
+      const mergedData = mergeGraphData(transformedData);
+      setGraphData(mergedData);
+      setOriginNodeId(nodeId);
+    } catch (error) {
+      console.error('Failed to add concept to graph:', error);
+    }
+  }, [similarityThreshold, mergeGraphData, setGraphData, setOriginNodeId]);
+
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? [
@@ -382,9 +532,16 @@ export const ForceGraph2D: React.FC<
           label: `Follow "${contextMenu.nodeLabel}"`,
           icon: ArrowRight,
           onClick: () => {
-            if (onNodeClick) {
-              onNodeClick(contextMenu.nodeId);
-            }
+            handleFollowConcept(contextMenu.nodeId);
+            setContextMenu(null);
+          },
+        },
+        {
+          label: `Add "${contextMenu.nodeLabel}" to Graph`,
+          icon: Plus,
+          onClick: () => {
+            handleAddToGraph(contextMenu.nodeId);
+            setContextMenu(null);
           },
         },
       ]

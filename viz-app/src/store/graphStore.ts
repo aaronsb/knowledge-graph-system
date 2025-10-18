@@ -67,6 +67,10 @@ interface GraphStore {
   // Search query state
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+
+  // Search parameters
+  similarityThreshold: number; // 0.0 - 1.0, used for Follow Concept and searches
+  setSimilarityThreshold: (threshold: number) => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -173,4 +177,8 @@ export const useGraphStore = create<GraphStore>((set) => ({
   // Search query
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
+
+  // Search parameters
+  similarityThreshold: 0.5, // Default to 50%
+  setSimilarityThreshold: (threshold) => set({ similarityThreshold: threshold }),
 }));

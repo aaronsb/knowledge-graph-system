@@ -167,6 +167,25 @@ class APIClient {
   }
 
   /**
+   * Search concepts by embedding (for Follow Concept functionality)
+   * Uses concept's existing embedding to find similar concepts
+   */
+  async searchByEmbedding(params: {
+    embedding: number[];
+    limit?: number;
+    min_similarity?: number;
+    offset?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/search', {
+      embedding: params.embedding,
+      limit: params.limit,
+      min_similarity: params.min_similarity,
+      offset: params.offset,
+    });
+    return response.data;
+  }
+
+  /**
    * Get concept details
    */
   async getConceptDetails(concept_id: string): Promise<any> {
