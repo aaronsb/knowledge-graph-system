@@ -37,11 +37,23 @@ export const SearchBar: React.FC = () => {
     path: true,
   });
 
+  // Collapsible state for openCypher editor
+  const [cypherEditorExpanded, setCypherEditorExpanded] = useState(true);
+
   const toggleSection = (mode: SmartSearchSubMode) => {
     setExpandedSections(prev => ({
       ...prev,
       [mode]: !prev[mode],
     }));
+
+    // Trigger window resize event after a short delay to let the DOM update
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  };
+
+  const toggleCypherEditor = () => {
+    setCypherEditorExpanded(!cypherEditorExpanded);
 
     // Trigger window resize event after a short delay to let the DOM update
     setTimeout(() => {
@@ -71,6 +83,14 @@ export const SearchBar: React.FC = () => {
   const [selectedPath, setSelectedPath] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
   const [pathEnrichmentDepth, setPathEnrichmentDepth] = useState(1); // Depth around each hop
+
+  // Cypher editor state
+  const [cypherQuery, setCypherQuery] = useState(`MATCH (c:Concept)-[r]->(n:Concept)
+WHERE c.label CONTAINS 'organizational'
+RETURN c, r, n
+LIMIT 50`);
+  const [isExecutingCypher, setIsExecutingCypher] = useState(false);
+  const [cypherError, setCypherError] = useState<string | null>(null);
 
   const { setSearchParams } = useGraphStore();
 
@@ -225,13 +245,91 @@ export const SearchBar: React.FC = () => {
     });
   };
 
+  // Handler: Execute openCypher query
+  const handleExecuteCypher = async () => {
+    if (!cypherQuery.trim()) return;
+
+    setIsExecutingCypher(true);
+    setCypherError(null);
+
+    try {
+      const result = await apiClient.executeCypherQuery({
+        query: cypherQuery,
+        limit: 100, // Default limit for safety
+      });
+
+      // Transform result to graph format and load
+      const { transformForD3 } = await import('../../utils/graphTransform');
+
+      // Convert CypherNode to our node format
+      const nodes = result.nodes.map((n: any) => ({
+        concept_id: n.id,
+        label: n.label,
+        ontology: n.properties?.ontology || 'default',
+      }));
+
+      // Convert CypherRelationship to our link format
+      const links = result.relationships.map((r: any) => ({
+        from_id: r.from_id,
+        to_id: r.to_id,
+        relationship_type: r.type,
+      }));
+
+      const graphData = transformForD3(nodes, links);
+      useGraphStore.getState().setGraphData(graphData);
+
+    } catch (error: any) {
+      console.error('Failed to execute Cypher query:', error);
+      setCypherError(error.response?.data?.detail || error.message || 'Query execution failed');
+    } finally {
+      setIsExecutingCypher(false);
+    }
+  };
+
+  // Get mode-specific info for the header
+  const getModeInfo = () => {
+    switch (queryMode) {
+      case 'smart-search':
+        return {
+          icon: Search,
+          title: 'Smart Search',
+          description: 'Find concepts using semantic similarity, explore neighborhoods, and discover paths between ideas',
+        };
+      case 'block-builder':
+        return {
+          icon: Blocks,
+          title: 'Visual Block Builder',
+          description: 'Drag-and-drop query construction with visual blocks that compile to openCypher',
+        };
+      case 'cypher-editor':
+        return {
+          icon: Code,
+          title: 'openCypher Editor',
+          description: 'Write raw graph queries using Apache AGE openCypher syntax for advanced exploration',
+        };
+    }
+  };
+
+  const modeInfo = getModeInfo();
+  const ModeIcon = modeInfo.icon;
+
   return (
     <div className="space-y-4">
-      {/* Header with Mode Dial */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold">Query Builder</h2>
-          <p className="text-sm text-muted-foreground">Search and explore the knowledge graph</p>
+      {/* Header with Mode Info and Dial */}
+      <div className="flex items-start justify-between gap-4">
+        {/* Mode Description Panel */}
+        <div className="flex gap-3 flex-1">
+          <div className="flex-shrink-0">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ModeIcon className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold">{modeInfo.title}</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {modeInfo.description}
+            </p>
+          </div>
         </div>
 
         {/* Mode Dial */}
@@ -940,13 +1038,77 @@ export const SearchBar: React.FC = () => {
         </div>
       )}
 
-      {/* openCypher Editor Mode (Future - ADR-036 Phase 3) */}
+      {/* openCypher Editor Mode */}
       {queryMode === 'cypher-editor' && (
-        <div className="text-center py-12 text-muted-foreground">
-          <Code className="w-16 h-16 mx-auto mb-4 opacity-30" />
-          <div className="text-lg font-medium">openCypher Editor</div>
-          <div className="text-sm mt-1">Raw graph query editing with syntax support</div>
-          <div className="text-xs mt-3 text-muted-foreground/70">Phase 3 - Coming soon</div>
+        <div className="space-y-3">
+          {/* Collapsible Header */}
+          <button
+            onClick={toggleCypherEditor}
+            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Code className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Query Editor</span>
+            </div>
+            {cypherEditorExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+
+          {cypherEditorExpanded && (
+            <>
+              {/* Query Editor (Textarea for now, can upgrade to Monaco later) */}
+              <div className="space-y-2">
+            <textarea
+              value={cypherQuery}
+              onChange={(e) => setCypherQuery(e.target.value)}
+              placeholder="Enter openCypher query..."
+              className="w-full h-48 px-3 py-2 font-mono text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+              spellCheck={false}
+            />
+
+            {/* Error Display */}
+            {cypherError && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+                {cypherError}
+              </div>
+            )}
+
+            {/* Execute Button */}
+            <button
+              onClick={handleExecuteCypher}
+              disabled={isExecutingCypher || !cypherQuery.trim()}
+              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isExecutingCypher ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Executing Query...
+                </>
+              ) : (
+                <>
+                  <Code className="w-4 h-4" />
+                  Execute Query
+                </>
+              )}
+            </button>
+
+            {/* Help Text */}
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div className="font-medium">Example queries:</div>
+              <div className="font-mono bg-muted p-2 rounded">
+                <div>MATCH (c:Concept) WHERE c.label CONTAINS 'organizational' RETURN c LIMIT 10</div>
+                <div className="mt-1">{'MATCH (c:Concept)-[r:IMPLIES]->(n:Concept) RETURN c, r, n LIMIT 50'}</div>
+              </div>
+              <div className="text-muted-foreground/70 mt-2">
+                Results are automatically loaded into the graph visualization.
+              </div>
+            </div>
+          </div>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -226,6 +226,20 @@ class APIClient {
   }
 
   /**
+   * Execute a raw openCypher query
+   * For advanced users who want full control over graph queries
+   */
+  async executeCypherQuery(params: {
+    query: string;
+    limit?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/cypher', params, {
+      timeout: 60000, // 1 minute timeout for custom queries
+    });
+    return response.data;
+  }
+
+  /**
    * Get related concepts (neighborhood)
    */
   async getRelatedConcepts(params: {
