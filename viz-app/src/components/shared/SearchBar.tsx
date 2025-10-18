@@ -54,6 +54,8 @@ export const SearchBar: React.FC = () => {
   const [selectedFromConcept, setSelectedFromConcept] = useState<any>(null);
   const [selectedToConcept, setSelectedToConcept] = useState<any>(null);
   const [maxHops, setMaxHops] = useState(5);
+  const [debouncedMaxHops, setDebouncedMaxHops] = useState(5);
+  const [debouncedSimilarity, setDebouncedSimilarity] = useState(similarity);
   const [pathResults, setPathResults] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
 
@@ -120,12 +122,23 @@ export const SearchBar: React.FC = () => {
     return () => clearTimeout(timer);
   }, [pathToQuery]);
 
-  // Auto-search paths when both concepts are selected
+  // Debounce slider values to avoid excessive API calls while dragging
   useEffect(() => {
-    if (smartSearchMode === 'path' && selectedFromConcept && selectedToConcept) {
+    const timer = setTimeout(() => setDebouncedMaxHops(maxHops), 500);
+    return () => clearTimeout(timer);
+  }, [maxHops]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSimilarity(similarity), 500);
+    return () => clearTimeout(timer);
+  }, [similarity]);
+
+  // Auto-search paths when both concepts are selected (using debounced slider values)
+  useEffect(() => {
+    if (smartSearchMode === 'path' && selectedFromConcept && selectedToConcept && !isLoadingPath) {
       searchPaths();
     }
-  }, [selectedFromConcept, selectedToConcept, similarity, maxHops]);
+  }, [selectedFromConcept, selectedToConcept, debouncedSimilarity, debouncedMaxHops, smartSearchMode]);
 
   // Handler: Select concept in Concept mode
   const handleSelectConcept = (concept: any) => {
@@ -282,7 +295,7 @@ export const SearchBar: React.FC = () => {
     }
   };
 
-  // Search: Find paths between selected concepts
+  // Search: Find paths between selected concepts (using debounced slider values)
   const searchPaths = async () => {
     if (!selectedFromConcept || !selectedToConcept) return;
 
@@ -291,8 +304,8 @@ export const SearchBar: React.FC = () => {
       const result = await apiClient.findConnectionBySearch({
         from_query: selectedFromConcept.label,
         to_query: selectedToConcept.label,
-        max_hops: maxHops,
-        threshold: similarity,
+        max_hops: debouncedMaxHops,
+        threshold: debouncedSimilarity,
       });
       setPathResults(result);
     } catch (error: any) {
