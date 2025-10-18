@@ -9,20 +9,24 @@ RED='\033[0;31m'
 GRAY='\033[0;90m'
 NC='\033[0m'
 
-# Check for -y/--yes flag
+# Parse all arguments
 AUTO_CONFIRM=false
-if [ "$1" = "-y" ] || [ "$1" = "--yes" ]; then
-    AUTO_CONFIRM=true
-    shift
-fi
-
-# Parse remaining arguments (port and --reload)
-PORT=${1:-8000}
+PORT=8000
 RELOAD=""
 
-if [ "$2" = "--reload" ]; then
-    RELOAD="--reload"
-fi
+for arg in "$@"; do
+    case $arg in
+        -y|--yes)
+            AUTO_CONFIRM=true
+            ;;
+        --reload)
+            RELOAD="--reload"
+            ;;
+        [0-9]*)
+            PORT=$arg
+            ;;
+    esac
+done
 
 # Show usage and require confirmation
 if [ "$AUTO_CONFIRM" = false ]; then
@@ -36,9 +40,10 @@ if [ "$AUTO_CONFIRM" = false ]; then
     echo "  • Press Ctrl+C to stop"
     echo ""
     echo -e "${GRAY}Usage:${NC}"
-    echo "  $0 -y              # Start on port 8000 (skip confirmation)"
-    echo "  $0 -y 8080         # Start on custom port"
-    echo "  $0 -y --reload     # Start with hot reload (dev mode)"
+    echo "  $0 -y                   # Start on port 8000 (skip confirmation)"
+    echo "  $0 -y 8080              # Start on custom port"
+    echo "  $0 -y --reload          # Start with hot reload (dev mode)"
+    echo "  $0 -y --reload 8080     # All options (any order works)"
     echo ""
     echo -e "${GRAY}API Endpoints:${NC}"
     echo "  http://localhost:$PORT/docs   # Interactive API docs"
