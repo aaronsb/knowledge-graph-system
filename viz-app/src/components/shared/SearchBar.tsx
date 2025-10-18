@@ -55,7 +55,6 @@ export const SearchBar: React.FC = () => {
   const [selectedToConcept, setSelectedToConcept] = useState<any>(null);
   const [maxHops, setMaxHops] = useState(5);
   const [debouncedMaxHops, setDebouncedMaxHops] = useState(5);
-  const [debouncedSimilarity, setDebouncedSimilarity] = useState(similarity);
   const [pathResults, setPathResults] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
 
@@ -122,19 +121,14 @@ export const SearchBar: React.FC = () => {
     return () => clearTimeout(timer);
   }, [pathToQuery]);
 
-  // Debounce slider values to avoid excessive API calls while dragging
+  // Debounce max hops slider to avoid excessive API calls while dragging
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedMaxHops(maxHops), 500);
     return () => clearTimeout(timer);
   }, [maxHops]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSimilarity(similarity), 500);
-    return () => clearTimeout(timer);
-  }, [similarity]);
-
   // Auto-search paths when both concepts are selected (using debounced max hops)
-  // Note: similarity threshold only affects initial concept selection, not path search
+  // Note: Similarity threshold only affects initial concept dropdown search, not the path search itself
   useEffect(() => {
     if (smartSearchMode === 'path' && selectedFromConcept && selectedToConcept && !isLoadingPath) {
       searchPaths();
