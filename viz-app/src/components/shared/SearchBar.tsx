@@ -21,6 +21,7 @@ import { ModeDial } from './ModeDial';
 import type { QueryMode } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
+import { SearchResultsDropdown } from './SearchResultsDropdown';
 
 type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
 
@@ -459,20 +460,10 @@ LIMIT 50`);
 
                   {/* Search Results */}
                   {debouncedConceptQuery && conceptResults && conceptResults.results && conceptResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
-                      {conceptResults.results.map((result: any) => (
-                        <button
-                          key={result.concept_id}
-                          onClick={() => handleSelectConcept(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-                        >
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <SearchResultsDropdown
+                      results={conceptResults.results}
+                      onSelect={handleSelectConcept}
+                    />
                   )}
 
                   {/* No Results with Smart Recommendations */}
@@ -635,20 +626,10 @@ LIMIT 50`);
 
                   {/* Search Results */}
                   {debouncedNeighborhoodQuery && neighborhoodSearchResults && neighborhoodSearchResults.results && neighborhoodSearchResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
-                      {neighborhoodSearchResults.results.map((result: any) => (
-                        <button
-                          key={result.concept_id}
-                          onClick={() => handleSelectCenterConcept(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-                        >
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <SearchResultsDropdown
+                      results={neighborhoodSearchResults.results}
+                      onSelect={handleSelectCenterConcept}
+                    />
                   )}
                 </div>
               ) : (
@@ -778,20 +759,10 @@ LIMIT 50`);
 
                   {/* From Search Results */}
                   {debouncedPathFromQuery && pathFromSearchResults && pathFromSearchResults.results && pathFromSearchResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
-                      {pathFromSearchResults.results.map((result: any) => (
-                        <button
-                          key={result.concept_id}
-                          onClick={() => handleSelectFromConcept(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-                        >
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <SearchResultsDropdown
+                      results={pathFromSearchResults.results}
+                      onSelect={handleSelectFromConcept}
+                    />
                   )}
                 </div>
               ) : !selectedToConcept ? (
@@ -830,20 +801,10 @@ LIMIT 50`);
 
                     {/* To Search Results */}
                     {debouncedPathToQuery && pathToSearchResults && pathToSearchResults.results && pathToSearchResults.results.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
-                        {pathToSearchResults.results.map((result: any) => (
-                          <button
-                            key={result.concept_id}
-                            onClick={() => handleSelectToConcept(result)}
-                            className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-                          >
-                            <div className="font-medium text-gray-900 dark:text-gray-100">{result.label}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                      <SearchResultsDropdown
+                        results={pathToSearchResults.results}
+                        onSelect={handleSelectToConcept}
+                      />
                     )}
                   </div>
                 </div>
