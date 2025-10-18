@@ -47,6 +47,12 @@ Full-featured CLI for ingestion, querying, and system management.
 
 ![Command Line Interface](docs/media/screenshots/command_line.png)
 
+### REST API Documentation
+
+Interactive API documentation with OpenAPI (Swagger) and ReDoc interfaces.
+
+![ReDoc API Documentation](docs/media/screenshots/redoc-api-doc.png)
+
 ### MCP Server Integration
 
 Connect to Claude Desktop or Claude Code for agent-driven graph operations.
