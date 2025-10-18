@@ -20,6 +20,7 @@ import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import type { QueryMode } from './ModeDial';
 import { apiClient } from '../../api/client';
+import { BlockBuilder } from '../blocks/BlockBuilder';
 
 type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
 
@@ -101,7 +102,6 @@ LIMIT 50`);
   const debouncedPathFromQuery = useDebouncedValue(pathFromQuery, 800);
   const debouncedPathToQuery = useDebouncedValue(pathToQuery, 800);
   const debouncedSimilarity = useDebouncedValue(similarity, 500);
-  const debouncedMaxHops = useDebouncedValue(maxHops, 500);
 
   // Concept search results (only when no concept selected)
   // Uses debounced similarity to prevent search spam while dragging slider
@@ -284,6 +284,28 @@ LIMIT 50`);
     } finally {
       setIsExecutingCypher(false);
     }
+  };
+
+  // Handler: Send compiled blocks to openCypher editor
+  const handleSendToEditor = (compiledCypher: string) => {
+    // Check if there's existing code in the editor
+    const hasExistingCode = cypherQuery.trim().length > 0;
+
+    if (hasExistingCode) {
+      const confirmed = window.confirm(
+        'The openCypher editor already has code. Do you want to overwrite it with the compiled query from the block builder?'
+      );
+
+      if (!confirmed) {
+        return; // User cancelled
+      }
+    }
+
+    // Load the compiled query into the editor
+    setCypherQuery(compiledCypher);
+
+    // Switch to cypher-editor mode
+    setQueryMode('cypher-editor');
   };
 
   // Get mode-specific info for the header
@@ -1028,13 +1050,10 @@ LIMIT 50`);
         </div>
       )}
 
-      {/* Block Builder Mode (Future - ADR-036 Phase 4) */}
+      {/* Block Builder Mode */}
       {queryMode === 'block-builder' && (
-        <div className="text-center py-12 text-muted-foreground">
-          <Blocks className="w-16 h-16 mx-auto mb-4 opacity-30" />
-          <div className="text-lg font-medium">Visual Block Builder</div>
-          <div className="text-sm mt-1">Drag-and-drop query construction</div>
-          <div className="text-xs mt-3 text-muted-foreground/70">Phase 4 - Coming soon</div>
+        <div className="h-[600px]">
+          <BlockBuilder onSendToEditor={handleSendToEditor} />
         </div>
       )}
 
