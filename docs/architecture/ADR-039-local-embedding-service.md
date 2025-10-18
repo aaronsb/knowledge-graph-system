@@ -66,34 +66,34 @@ Mixing models (e.g., storing nomic embeddings but querying with BGE) produces me
 ### Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Embedding Configuration                  │
-│                 (PostgreSQL embedding_config)               │
-│                                                             │
-│  {                                                          │
-│    provider: "local" | "openai",                           │
-│    model: "nomic-embed-text-v1.5" | "text-embedding-3-small",│
-│    dimensions: 768 | 1536,                                 │
-│    precision: "float16" | "float32"                        │
-│  }                                                          │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                    Embedding Configuration                    │
+│                 (PostgreSQL embedding_config)                 │
+│                                                               │
+│  {                                                            │
+│    provider: "local" | "openai",                              │
+│    model: "nomic-embed-text-v1.5" | "text-embedding-3-small", │
+│    dimensions: 768 | 1536,                                    │
+│    precision: "float16" | "float32"                           │
+│  }                                                            │
+└───────────────────────────────────────────────────────────────┘
                               │
                               │ Config read at startup
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              FastAPI Server: /embedding/generate            │
 │                                                             │
-│  1. Read global embedding config                           │
-│  2. Route to appropriate provider:                         │
-│     - LocalEmbeddingProvider (sentence-transformers)       │
-│     - OpenAIProvider (API call)                            │
-│  3. Return embedding with metadata                         │
+│  1. Read global embedding config                            │
+│  2. Route to appropriate provider:                          │
+│     - LocalEmbeddingProvider (sentence-transformers)        │
+│     - OpenAIProvider (API call)                             │
+│  3. Return embedding with metadata                          │
 │                                                             │
-│  Response: {                                               │
-│    embedding: [0.123, -0.456, ...],                       │
-│    model: "nomic-embed-text-v1.5",                        │
-│    dimensions: 768,                                        │
-│    provider: "local"                                       │
+│  Response: {                                                │
+│    embedding: [0.123, -0.456, ...],                         │
+│    model: "nomic-embed-text-v1.5",                          │
+│    dimensions: 768,                                         │
+│    provider: "local"                                        │
 │  }                                                          │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -104,9 +104,9 @@ Mixing models (e.g., storing nomic embeddings but querying with BGE) produces me
          │  (Current behavior) │  │ (New)          │
          └─────────────────────┘  └────────────────┘
                     │                   │
-                    │         ┌─────────┴──────────┐
-                    │         │                    │
-              API Request   Server                 │
+                    │         ┌─────────┴───────────┐
+                    │         │                     │
+              API Request   Server                  │
               (internet)    (sentence-              │
                             transformers)           │
                                                     │
@@ -396,10 +396,11 @@ kg embedding migrate --model nomic-embed-text-v1.5
 **Approach:** Use pgvector extension for indexed vector similarity instead of full-scan numpy.
 
 **Deferred to Future ADR:**
+- Decision point determined by actual usage patterns and scale (not speculation)
 - Requires schema changes (vector column type)
 - Needs index tuning (HNSW, IVFFlat parameters)
 - ADR-038 documents full-scan as "genuinely unusual" architectural choice
-- Migration to pgvector should be its own decision
+- Migration to pgvector should be its own decision when/if scale warrants it
 - Compatible with this ADR (provider abstraction unchanged)
 
 ## Implementation Checklist
