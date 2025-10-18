@@ -459,7 +459,7 @@ LIMIT 50`);
 
                   {/* Search Results */}
                   {debouncedConceptQuery && conceptResults && conceptResults.results && conceptResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
                       {conceptResults.results.map((result: any) => (
                         <button
                           key={result.concept_id}
@@ -635,7 +635,7 @@ LIMIT 50`);
 
                   {/* Search Results */}
                   {debouncedNeighborhoodQuery && neighborhoodSearchResults && neighborhoodSearchResults.results && neighborhoodSearchResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
                       {neighborhoodSearchResults.results.map((result: any) => (
                         <button
                           key={result.concept_id}
@@ -778,7 +778,7 @@ LIMIT 50`);
 
                   {/* From Search Results */}
                   {debouncedPathFromQuery && pathFromSearchResults && pathFromSearchResults.results && pathFromSearchResults.results.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
                       {pathFromSearchResults.results.map((result: any) => (
                         <button
                           key={result.concept_id}
@@ -830,7 +830,7 @@ LIMIT 50`);
 
                     {/* To Search Results */}
                     {debouncedPathToQuery && pathToSearchResults && pathToSearchResults.results && pathToSearchResults.results.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
                         {pathToSearchResults.results.map((result: any) => (
                           <button
                             key={result.concept_id}
