@@ -58,14 +58,18 @@ export const SearchBar: React.FC = () => {
   const [pathResults, setPathResults] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
 
+  // Debounced similarity for search hooks (prevents search spam while dragging slider)
+  const [debouncedSimilarity, setDebouncedSimilarity] = useState(similarity);
+
   const { setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Concept search results (only when no concept selected)
+  // Uses debounced similarity to prevent search spam while dragging slider
   const { data: conceptResults, isLoading: isLoadingConcepts } = useSearchConcepts(
     debouncedConceptQuery,
     {
       limit: 10,
-      minSimilarity: similarity,
+      minSimilarity: debouncedSimilarity,
       enabled: smartSearchMode === 'concept' && !selectedConcept,
     }
   );
@@ -75,7 +79,7 @@ export const SearchBar: React.FC = () => {
     debouncedNeighborhoodQuery,
     {
       limit: 10,
-      minSimilarity: similarity,
+      minSimilarity: debouncedSimilarity,
       enabled: smartSearchMode === 'neighborhood' && !selectedCenterConcept,
     }
   );
@@ -85,7 +89,7 @@ export const SearchBar: React.FC = () => {
     debouncedPathFromQuery,
     {
       limit: 10,
-      minSimilarity: similarity,
+      minSimilarity: debouncedSimilarity,
       enabled: smartSearchMode === 'path' && !selectedFromConcept,
     }
   );
@@ -95,7 +99,7 @@ export const SearchBar: React.FC = () => {
     debouncedPathToQuery,
     {
       limit: 10,
-      minSimilarity: similarity,
+      minSimilarity: debouncedSimilarity,
       enabled: smartSearchMode === 'path' && !selectedToConcept,
     }
   );
@@ -121,11 +125,16 @@ export const SearchBar: React.FC = () => {
     return () => clearTimeout(timer);
   }, [pathToQuery]);
 
-  // Debounce max hops slider to avoid excessive API calls while dragging
+  // Debounce sliders to avoid excessive API calls while dragging
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedMaxHops(maxHops), 500);
     return () => clearTimeout(timer);
   }, [maxHops]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSimilarity(similarity), 500);
+    return () => clearTimeout(timer);
+  }, [similarity]);
 
   // Auto-search paths when both concepts are selected (using debounced max hops)
   // Note: Similarity threshold only affects initial concept dropdown search, not the path search itself
