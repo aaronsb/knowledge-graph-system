@@ -18,7 +18,6 @@ import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
-import type { QueryMode } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
 import { SearchResultsDropdown } from './SearchResultsDropdown';
@@ -27,7 +26,7 @@ type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
 
 export const SearchBar: React.FC = () => {
   // Top-level mode (dial): smart-search, block-builder, cypher-editor - use store
-  const { queryMode, setQueryMode } = useGraphStore();
+  const { queryMode, setQueryMode, blockBuilderExpanded, setBlockBuilderExpanded } = useGraphStore();
 
   // Smart Search sub-mode (pills)
   const [smartSearchMode, setSmartSearchMode] = useState<SmartSearchSubMode>('concept');
@@ -41,9 +40,6 @@ export const SearchBar: React.FC = () => {
 
   // Collapsible state for openCypher editor
   const [cypherEditorExpanded, setCypherEditorExpanded] = useState(true);
-
-  // Collapsible state for block builder
-  const [blockBuilderExpanded, setBlockBuilderExpanded] = useState(true);
 
   const toggleSection = (mode: SmartSearchSubMode) => {
     setExpandedSections(prev => ({

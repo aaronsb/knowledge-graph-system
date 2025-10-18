@@ -104,6 +104,10 @@ interface GraphStore {
   // Query mode - UI mode for querying (smart-search, block-builder, cypher-editor)
   queryMode: QueryMode;
   setQueryMode: (mode: QueryMode) => void;
+
+  // Block builder expanded state
+  blockBuilderExpanded: boolean;
+  setBlockBuilderExpanded: (expanded: boolean) => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -228,4 +232,8 @@ export const useGraphStore = create<GraphStore>((set) => ({
   // Query mode
   queryMode: 'smart-search',
   setQueryMode: (mode) => set({ queryMode: mode }),
+
+  // Block builder expanded
+  blockBuilderExpanded: true,
+  setBlockBuilderExpanded: (expanded) => set({ blockBuilderExpanded: expanded }),
 }));

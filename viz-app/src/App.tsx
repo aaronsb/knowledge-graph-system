@@ -26,19 +26,17 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
-  const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData, queryMode } = useGraphStore();
+  const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData, queryMode, blockBuilderExpanded } = useGraphStore();
 
   // Resizable SearchBar state
   const BLOCK_BUILDER_MIN_HEIGHT = 500; // Minimum for block builder to show all components
   const [searchBarHeight, setSearchBarHeight] = useState(300); // Default 300px
   const [isDraggingSearchBar, setIsDraggingSearchBar] = useState(false);
-  const [savedSearchBarHeight, setSavedSearchBarHeight] = useState(300);
 
   // Watch queryMode - ensure adequate height when switching to block-builder
   useEffect(() => {
     if (queryMode === 'block-builder' && searchBarHeight < BLOCK_BUILDER_MIN_HEIGHT) {
       setSearchBarHeight(BLOCK_BUILDER_MIN_HEIGHT);
-      setSavedSearchBarHeight(BLOCK_BUILDER_MIN_HEIGHT);
     }
   }, [queryMode, searchBarHeight, BLOCK_BUILDER_MIN_HEIGHT]);
 
@@ -245,7 +243,6 @@ const AppContent: React.FC = () => {
     // Constrain between minimum visible and maximum
     const constrainedHeight = Math.max(minVisibleHeight, Math.min(maxHeight, newHeight));
     setSearchBarHeight(constrainedHeight);
-    setSavedSearchBarHeight(constrainedHeight);
   }, [isDraggingSearchBar]);
 
   const handleSearchBarMouseUp = React.useCallback(() => {
@@ -273,13 +270,14 @@ const AppContent: React.FC = () => {
       <div className="h-full flex flex-col">
         {/* Search Bar */}
         <div
-          className="border-b border-border bg-card overflow-hidden relative"
+          className="border-b border-border bg-card relative z-10"
           style={{
-            height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto'
+            height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto',
+            overflow: queryMode === 'block-builder' ? 'hidden' : 'visible',
           }}
         >
           <div
-            className="p-4 h-full overflow-auto"
+            className="p-4 h-full"
             style={{
               // When searchBarHeight < content minimum, slide content down (block-builder only)
               transform: queryMode === 'block-builder' && searchBarHeight < BLOCK_BUILDER_MIN_HEIGHT
@@ -287,14 +285,15 @@ const AppContent: React.FC = () => {
                 : 'translateY(0)',
               transition: isDraggingSearchBar ? 'none' : 'transform 0.2s ease-out',
               minHeight: queryMode === 'block-builder' ? `${BLOCK_BUILDER_MIN_HEIGHT}px` : 'auto',
+              overflow: queryMode === 'block-builder' ? 'auto' : 'visible',
             }}
           >
             <SearchBar />
           </div>
         </div>
 
-        {/* Draggable Divider - Only in block-builder mode */}
-        {queryMode === 'block-builder' && (
+        {/* Draggable Divider - Only in block-builder mode when expanded */}
+        {queryMode === 'block-builder' && blockBuilderExpanded && (
           <div
             onMouseDown={handleSearchBarMouseDown}
             className="h-1 bg-gray-300 hover:bg-blue-500 cursor-ns-resize transition-colors flex items-center justify-center group"

@@ -44,7 +44,6 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const [bottomPanelHeight, setBottomPanelHeight] = useState(200); // Default 200px
   const [isDragging, setIsDragging] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [savedHeight, setSavedHeight] = useState(200); // Store height when collapsed
 
   // Register custom node types
   const nodeTypes: NodeTypes = useMemo(
@@ -189,7 +188,6 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     // Constrain between 100px and 600px
     const constrainedHeight = Math.max(100, Math.min(600, newHeight));
     setBottomPanelHeight(constrainedHeight);
-    setSavedHeight(constrainedHeight);
   }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
