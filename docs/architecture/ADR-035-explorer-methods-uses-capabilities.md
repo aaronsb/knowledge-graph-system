@@ -4,7 +4,7 @@
 **Date:** 2025-10-17
 **Last Updated:** 2025-10-17
 **Deciders:** Development Team
-**Related:** ADR-034 (Graph Visualization Architecture)
+**Related:** ADR-034 (Graph Visualization Architecture), ADR-037 (Human-Guided Graph Editing)
 
 ## Context
 
@@ -442,6 +442,209 @@ const HierarchyTree: React.FC<{ root: TreeNode }> = ({ root }) => {
 - Highlight new/modified nodes
 - Export as animated GIF/video
 
+## Universal Interaction Patterns
+
+All explorers implement a consistent interaction model for navigating and exploring the graph. These patterns work across Force-Directed, Hierarchical, Timeline, and all other explorer types.
+
+### Interaction Modes
+
+**View Mode (ADR-035):** Navigate and explore existing graph data
+- Query concepts, neighborhoods, and paths
+- Follow connections between concepts
+- Visualize relationships
+- Does NOT modify graph structure
+
+**Edit Mode (ADR-037):** Modify graph structure with human guidance
+- Create new relationships between concepts
+- Invalidate/flag incorrect relationships
+- Add human justifications as evidence
+- See **ADR-037: Human-Guided Graph Editing** for details
+
+### Core Interaction Patterns
+
+All explorers support these fundamental interactions:
+
+**Node Interactions:**
+- **Left-click node** → Select/highlight node
+- **Right-click node** → Context menu (actions vary by mode and explorer)
+- **Double-click node** → Explorer-specific action (e.g., expand neighbors, focus subtree)
+- **Hover node** → Show tooltip with concept details
+- **Drag node** → Reposition (in physics-based explorers)
+
+**Edge Interactions:**
+- **Left-click edge** → Select/highlight edge
+- **Right-click edge** → Context menu (view details, in edit mode: invalidate)
+- **Hover edge** → Show tooltip with relationship type and confidence
+
+**Empty Area Interactions:**
+- **Left-click empty area** → Deselect all (or start region selection box in some explorers)
+- **Right-click empty area** → Context menu (e.g., "Add Concept", "Create Node" in edit mode)
+- **Click+drag empty area** → Pan viewport
+- **Scroll/pinch** → Zoom in/out
+
+### View Mode: Context Menu Actions
+
+**Node Right-Click Menu (View Mode):**
+- **Follow [Concept Name]** → Query this concept and replace graph with results
+- **Add [Concept Name] to Graph** → Query this concept and merge results with existing graph
+- **Find Path To...** → Opens path finder dialog to find routes to another concept
+- **View Details** → Opens side panel with concept details, instances, evidence
+- **Copy Concept ID** → Copy concept_id to clipboard
+- **Export Subgraph** → Export neighborhood as JSON/GraphML
+- **Hide from Graph** → Temporarily hide this node from view
+
+**Edge Right-Click Menu (View Mode):**
+- **View Relationship Details** → Show confidence, source documents, evidence instances
+- **Find Similar Relationships** → Query for other edges of this type
+- **Hide Edge Type** → Temporarily hide all edges of this relationship type
+
+**Empty Area Right-Click Menu (View Mode):**
+- **Zoom to Fit** → Auto-zoom to show all visible nodes
+- **Reset View** → Return to initial graph state
+- **Export Graph** → Export current visualization as image or data
+
+For **Edit Mode** context menu actions (create connections, invalidate relationships), see **ADR-037: Human-Guided Graph Editing**.
+
+### Follow Concept Capability
+
+**Status:** Lost capability - needs restoration
+
+**Use Case:** Navigate the graph by following concepts without retyping queries
+
+**Workflow:**
+1. User performs initial search (concept/neighborhood/path) → graph loads
+2. User **left-clicks a node** → node highlights ("You Are Here")
+3. User **right-clicks highlighted node** → context menu appears
+4. User selects **"Follow [Concept Name]"** or **"Add [Concept Name] to Graph"**
+5. System queries using concept's **existing embedding** (no recomputation needed)
+6. New graph loads:
+   - **Follow**: Replace graph with new query results (clean slate)
+   - **Add to Graph**: Merge new results with existing nodes/edges (additive)
+
+**Key Implementation Details:**
+
+1. **No Embedding Recomputation:** The concept already has embeddings stored in the database
+2. **Respects Similarity Threshold:** Uses current similarity threshold slider setting
+3. **Direct API Query:** Bypasses text → embedding flow, queries directly using concept data
+
+**API Call Pattern:**
+```typescript
+// User right-clicks concept node and selects "Follow"
+async function followConcept(conceptId: string, mode: 'replace' | 'add') {
+  // Fetch concept details including embedding
+  const concept = await apiClient.get(`/query/concept/${conceptId}`);
+
+  // Query using existing embedding (no need to generate new one)
+  const results = await apiClient.post('/query/search', {
+    embedding: concept.embedding,  // Use stored embedding directly
+    similarity_threshold: currentThreshold,  // From UI slider
+    limit: 50
+  });
+
+  if (mode === 'replace') {
+    // Replace entire graph
+    setGraphData(results);
+  } else {
+    // Merge with existing graph
+    setGraphData(prev => ({
+      nodes: mergeNodes(prev.nodes, results.nodes),
+      links: mergeLinks(prev.links, results.links)
+    }));
+  }
+
+  // Update "You Are Here" highlight
+  setOriginNodeId(conceptId);
+}
+```
+
+**Context Menu Implementation:**
+```typescript
+interface ContextMenuProps {
+  node: GraphNode;
+  position: { x: number; y: number };
+  onClose: () => void;
+}
+
+const NodeContextMenu: React.FC<ContextMenuProps> = ({ node, position, onClose }) => {
+  return (
+    <ContextMenu x={position.x} y={position.y}>
+      <MenuItem
+        icon={<ArrowRight />}
+        onClick={() => {
+          followConcept(node.concept_id, 'replace');
+          onClose();
+        }}
+      >
+        Follow "{node.label}"
+      </MenuItem>
+
+      <MenuItem
+        icon={<Plus />}
+        onClick={() => {
+          followConcept(node.concept_id, 'add');
+          onClose();
+        }}
+      >
+        Add "{node.label}" to Graph
+      </MenuItem>
+
+      <Separator />
+
+      <MenuItem icon={<Route />} onClick={() => openPathFinder(node)}>
+        Find Path To...
+      </MenuItem>
+
+      <MenuItem icon={<Info />} onClick={() => openDetailsPanel(node)}>
+        View Details
+      </MenuItem>
+
+      <MenuItem icon={<Copy />} onClick={() => copyToClipboard(node.concept_id)}>
+        Copy ID
+      </MenuItem>
+
+      <Separator />
+
+      <MenuItem icon={<EyeOff />} onClick={() => hideNode(node.concept_id)}>
+        Hide from Graph
+      </MenuItem>
+    </ContextMenu>
+  );
+};
+```
+
+**Benefits:**
+- ✅ Fast navigation - no text input or embedding computation needed
+- ✅ Maintains user context - highlights show where you came from
+- ✅ Flexible - can replace or add to existing graph
+- ✅ Respects settings - uses current similarity threshold
+- ✅ Works across all explorers - universal interaction pattern
+
+**Restoration Priority:** Phase 2 (Next)
+
+### Explorer-Specific Variations
+
+While the core patterns above are universal, individual explorers may customize behaviors:
+
+**Force-Directed Graph:**
+- Double-click node → Expand neighbors (additive)
+- Drag node → Reposition and pin to location
+- Empty area drag → Lasso selection (if enabled)
+
+**Hierarchical Tree:**
+- Double-click node → Expand/collapse children
+- No node dragging (tree layout is computed)
+- Empty area interactions limited
+
+**Timeline Explorer:**
+- Node click → Show concept details at that time point
+- Scrub timeline → View graph at specific date
+- Play button → Animate growth over time
+
+**Matrix/Heatmap:**
+- Cell click → Show relationship details
+- Row/column click → Filter by concept
+- No spatial dragging (grid layout)
+
 ## Navigation Enhancements
 
 ### 1. "You Are Here" Persistent Highlighter
@@ -563,47 +766,21 @@ const handleNodeDoubleClick = async (nodeId: string) => {
 };
 ```
 
-### 5. Right-Click Context Menu
+### 5. Context Menu Reference
 
-**Concept:** Context-sensitive actions on nodes and edges
+**See "Universal Interaction Patterns" section above for complete context menu documentation.**
 
-**Node Context Menu:**
-- **Focus Here** - Re-center graph on this concept
-- **Expand Neighbors** - Add this node's neighbors to graph
-- **Find Path To...** - Opens path finder dialog
-- **View Details** - Opens side panel with concept details
-- **Copy Concept ID** - Copy to clipboard
-- **Export Subgraph** - Export neighborhood as JSON/GraphML
-- **Remove from Graph** - Hide this node (temporarily)
+The Universal Interaction Patterns section documents:
+- View Mode context menus (navigation and exploration)
+- Edit Mode context menus (see ADR-037: Human-Guided Graph Editing)
+- Follow Concept capability (lost feature to restore)
+- Explorer-specific variations
 
-**Edge Context Menu:**
-- **View Relationship Details** - Show confidence, source documents
-- **Find Similar Relationships** - Query for same relationship type
-- **Remove Edge Type** - Hide all edges of this type
+**Key Actions:**
+- **View Mode:** Follow, Add to Graph, Find Path To, View Details, Copy ID, Hide
+- **Edit Mode:** Connect Concepts, Flag as Invalid (see ADR-037)
 
-```typescript
-interface ContextMenuProps {
-  x: number;
-  y: number;
-  target: Node | Edge;
-  onClose: () => void;
-}
-
-const NodeContextMenu: React.FC<ContextMenuProps> = ({ x, y, target, onClose }) => {
-  return (
-    <div className="context-menu" style={{ left: x, top: y }}>
-      <MenuItem onClick={() => focusNode(target.id)}>Focus Here</MenuItem>
-      <MenuItem onClick={() => expandNeighbors(target.id)}>Expand Neighbors</MenuItem>
-      <MenuItem onClick={() => openPathFinder(target.id)}>Find Path To...</MenuItem>
-      <Separator />
-      <MenuItem onClick={() => viewDetails(target.id)}>View Details</MenuItem>
-      <MenuItem onClick={() => copyToClipboard(target.id)}>Copy ID</MenuItem>
-      <Separator />
-      <MenuItem onClick={() => removeNode(target.id)}>Remove from Graph</MenuItem>
-    </div>
-  );
-};
-```
+Individual explorers may extend these base menus with explorer-specific actions (e.g., "Expand Children" in Hierarchical Tree, "Pin Node" in Force-Directed Graph).
 
 ### 6. Multi-Select and Bulk Actions
 
@@ -911,7 +1088,8 @@ We use "Explorer" to describe each interactive visualization mode. This term emp
 - = "You Are Here" persistent highlighter
 - = Navigation history (back/forward buttons)
 - = Breadcrumb trail
-- = Right-click context menu
+- = Right-click context menu (View Mode)
+- = Follow Concept capability (restore lost feature)
 
 **Phase 3:**
 - Expand on double-click
