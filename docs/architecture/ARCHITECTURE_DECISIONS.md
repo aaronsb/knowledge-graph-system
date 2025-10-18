@@ -54,6 +54,7 @@ All ADRs follow a consistent format:
 | [ADR-035](ADR-035-explorer-methods-uses-capabilities.md) | Explorer Methods, Uses, and Capabilities | Proposed | Comprehensive documentation of 6 explorer types, 5 query workbenches, and 7 navigation enhancements including "You Are Here" persistent highlighting |
 | [ADR-036](ADR-036-universal-visual-query-builder.md) | Universal Visual Query Builder | Proposed | Tri-mode query system (Smart Search, Visual Blocks, openCypher) that teaches Apache AGE syntax through "Rosetta Stone" learning pattern - blocks generate code users can view and learn from |
 | [ADR-037](ADR-037-human-guided-graph-editing.md) | Human-Guided Graph Editing | Proposed | Human-in-the-loop system for connecting disconnected concepts and invalidating incorrect relationships - treats human justifications as first-class evidence fed through ingestion pipeline |
+| [ADR-038](ADR-038-official-project-apparel.md) | Official Project Apparel Design Specifications | Proposed | Commemorative merchandise celebrating streaming entity resolution with O(n) full-scan cosine similarity - a genuinely unusual architectural choice backed by comprehensive scaling research |
 
 ## How to Use This Index
 
