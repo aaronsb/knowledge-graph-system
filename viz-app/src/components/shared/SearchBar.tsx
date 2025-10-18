@@ -26,8 +26,8 @@ import { SearchResultsDropdown } from './SearchResultsDropdown';
 type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
 
 export const SearchBar: React.FC = () => {
-  // Top-level mode (dial): smart-search, block-builder, cypher-editor
-  const [queryMode, setQueryMode] = useState<QueryMode>('smart-search');
+  // Top-level mode (dial): smart-search, block-builder, cypher-editor - use store
+  const { queryMode, setQueryMode } = useGraphStore();
 
   // Smart Search sub-mode (pills)
   const [smartSearchMode, setSmartSearchMode] = useState<SmartSearchSubMode>('concept');

@@ -28,6 +28,7 @@ interface UISettings {
 // Search parameters - describes WHAT to query, not HOW to query it
 // SearchBar sets these, App.tsx reacts to them
 export type SearchMode = 'concept' | 'neighborhood' | 'path' | null;
+export type QueryMode = 'smart-search' | 'block-builder' | 'cypher-editor';
 
 export interface SearchParams {
   mode: SearchMode;
@@ -99,6 +100,10 @@ interface GraphStore {
   searchParams: SearchParams;
   setSearchParams: (params: SearchParams) => void;
   clearSearchParams: () => void;
+
+  // Query mode - UI mode for querying (smart-search, block-builder, cypher-editor)
+  queryMode: QueryMode;
+  setQueryMode: (mode: QueryMode) => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -219,4 +224,8 @@ export const useGraphStore = create<GraphStore>((set) => ({
   searchParams: defaultSearchParams,
   setSearchParams: (params) => set({ searchParams: params }),
   clearSearchParams: () => set({ searchParams: defaultSearchParams }),
+
+  // Query mode
+  queryMode: 'smart-search',
+  setQueryMode: (mode) => set({ queryMode: mode }),
 }));

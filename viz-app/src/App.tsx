@@ -26,12 +26,21 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
-  const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData } = useGraphStore();
+  const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData, queryMode } = useGraphStore();
 
   // Resizable SearchBar state
+  const BLOCK_BUILDER_MIN_HEIGHT = 500; // Minimum for block builder to show all components
   const [searchBarHeight, setSearchBarHeight] = useState(300); // Default 300px
   const [isDraggingSearchBar, setIsDraggingSearchBar] = useState(false);
   const [savedSearchBarHeight, setSavedSearchBarHeight] = useState(300);
+
+  // Watch queryMode - ensure adequate height when switching to block-builder
+  useEffect(() => {
+    if (queryMode === 'block-builder' && searchBarHeight < BLOCK_BUILDER_MIN_HEIGHT) {
+      setSearchBarHeight(BLOCK_BUILDER_MIN_HEIGHT);
+      setSavedSearchBarHeight(BLOCK_BUILDER_MIN_HEIGHT);
+    }
+  }, [queryMode, searchBarHeight, BLOCK_BUILDER_MIN_HEIGHT]);
 
   // React to searchParams - fetch data based on mode
   // Concept mode: load single concept with neighbors
@@ -228,8 +237,13 @@ const AppContent: React.FC = () => {
 
     const newHeight = e.clientY - 60; // 60px is AppLayout header height
 
-    // Constrain between 150px and 800px
-    const constrainedHeight = Math.max(150, Math.min(800, newHeight));
+    // Minimum visible height (just showing header)
+    const minVisibleHeight = 60;
+    // Maximum height
+    const maxHeight = 800;
+
+    // Constrain between minimum visible and maximum
+    const constrainedHeight = Math.max(minVisibleHeight, Math.min(maxHeight, newHeight));
     setSearchBarHeight(constrainedHeight);
     setSavedSearchBarHeight(constrainedHeight);
   }, [isDraggingSearchBar]);
@@ -259,10 +273,22 @@ const AppContent: React.FC = () => {
       <div className="h-full flex flex-col">
         {/* Search Bar */}
         <div
-          className="p-4 border-b border-border bg-card overflow-auto"
-          style={{ height: `${searchBarHeight}px`, minHeight: '150px', maxHeight: '800px' }}
+          className="border-b border-border bg-card overflow-hidden relative"
+          style={{ height: `${searchBarHeight}px` }}
         >
-          <SearchBar />
+          <div
+            className="p-4 h-full overflow-auto"
+            style={{
+              // When searchBarHeight < content minimum, slide content down
+              transform: queryMode === 'block-builder' && searchBarHeight < BLOCK_BUILDER_MIN_HEIGHT
+                ? `translateY(${searchBarHeight - BLOCK_BUILDER_MIN_HEIGHT}px)`
+                : 'translateY(0)',
+              transition: isDraggingSearchBar ? 'none' : 'transform 0.2s ease-out',
+              minHeight: queryMode === 'block-builder' ? `${BLOCK_BUILDER_MIN_HEIGHT}px` : 'auto',
+            }}
+          >
+            <SearchBar />
+          </div>
         </div>
 
         {/* Draggable Divider */}
