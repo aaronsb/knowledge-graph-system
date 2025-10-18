@@ -16,7 +16,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { Code, Play, Trash2, AlertCircle } from 'lucide-react';
+import { Code, Play, Trash2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { BlockPalette } from './BlockPalette';
 import { SearchBlock } from './SearchBlock';
 import { NeighborhoodBlock } from './NeighborhoodBlock';
@@ -39,6 +39,12 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const [compileErrors, setCompileErrors] = useState<string[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
+
+  // Resizable panel state
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(200); // Default 200px
+  const [isDragging, setIsDragging] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [savedHeight, setSavedHeight] = useState(200); // Store height when collapsed
 
   // Register custom node types
   const nodeTypes: NodeTypes = useMemo(
@@ -166,13 +172,56 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const hasErrors = compileErrors.length > 0;
   const canExecute = compiledCypher && !hasErrors && !isExecuting;
 
+  // Resize handlers
+  const handleMouseDown = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+
+    const container = document.querySelector('.block-builder-container');
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const newHeight = containerRect.bottom - e.clientY;
+
+    // Constrain between 100px and 600px
+    const constrainedHeight = Math.max(100, Math.min(600, newHeight));
+    setBottomPanelHeight(constrainedHeight);
+    setSavedHeight(constrainedHeight);
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Attach global mouse listeners when dragging
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  // Toggle collapse
+  const toggleCollapse = useCallback(() => {
+    setIsCollapsed(prev => !prev);
+  }, []);
+
+  const currentPanelHeight = isCollapsed ? 0 : bottomPanelHeight;
+
   return (
     <div className="flex h-full">
       {/* Block Palette */}
       <BlockPalette onAddBlock={handleAddBlock} />
 
       {/* Main Canvas Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col block-builder-container">
         {/* Top Toolbar */}
         <div className="h-14 bg-white border-b border-gray-200 px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -211,7 +260,10 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         </div>
 
         {/* React Flow Canvas */}
-        <div className="flex-1 bg-gray-50">
+        <div
+          className="bg-gray-50"
+          style={{ height: `calc(100% - 56px - ${currentPanelHeight}px${currentPanelHeight > 0 ? ' - 4px' : ''})` }}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -229,10 +281,34 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
           </ReactFlow>
         </div>
 
+        {/* Draggable Divider */}
+        {!isCollapsed && (
+          <div
+            onMouseDown={handleMouseDown}
+            className="h-1 bg-gray-300 hover:bg-blue-500 cursor-ns-resize transition-colors flex items-center justify-center group"
+          >
+            <div className="w-16 h-0.5 bg-gray-400 group-hover:bg-blue-600 rounded-full" />
+          </div>
+        )}
+
         {/* Bottom Panel - openCypher Preview */}
-        <div className="h-64 bg-gray-900 text-gray-100 p-4 overflow-auto border-t border-gray-700">
+        <div
+          className="bg-gray-900 text-gray-100 p-4 overflow-auto border-t border-gray-700"
+          style={{ height: `${currentPanelHeight}px` }}
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
+              <button
+                onClick={toggleCollapse}
+                className="hover:bg-gray-800 p-1 rounded transition-colors"
+                title={isCollapsed ? "Expand panel" : "Collapse panel"}
+              >
+                {isCollapsed ? (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
               <Code className="w-4 h-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-300">Generated openCypher</span>
             </div>

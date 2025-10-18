@@ -1013,7 +1013,7 @@ LIMIT 50`);
 
       {/* Block Builder Mode */}
       {queryMode === 'block-builder' && (
-        <div className="h-[600px]">
+        <div className="flex-1 min-h-0">
           <BlockBuilder onSendToEditor={handleSendToEditor} />
         </div>
       )}
