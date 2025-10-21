@@ -70,6 +70,17 @@ for i in {1..30}; do
     sleep 1
 done
 
+# Run pending migrations
+echo ""
+echo -e "${BLUE}Checking for pending migrations...${NC}"
+if [ -f "./scripts/migrate-db.sh" ]; then
+    ./scripts/migrate-db.sh -y
+    echo ""
+else
+    echo -e "${GRAY}Migration script not found, skipping${NC}"
+    echo ""
+fi
+
 # Show database info
 echo ""
 echo -e "${BLUE}Database Connection:${NC}"
@@ -97,3 +108,4 @@ echo ""
 echo -e "${GREEN}✓ Database started successfully${NC}"
 echo -e "${YELLOW}Monitor with:${NC}     ./scripts/monitor-db.sh"
 echo -e "${YELLOW}Stop with:${NC}        ./scripts/stop-db.sh"
+echo -e "${YELLOW}Migrations:${NC}       ./scripts/migrate-db.sh"

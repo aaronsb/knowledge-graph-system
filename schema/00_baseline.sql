@@ -44,6 +44,23 @@ COMMENT ON SCHEMA kg_auth IS 'Security: authentication, authorization, RBAC (ADR
 COMMENT ON SCHEMA kg_logs IS 'Observability: audit trails, metrics, telemetry (ADR-024)';
 
 -- ============================================================================
+-- Migration Tracking (ADR-040)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.schema_migrations (
+    version INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    applied_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_schema_migrations_applied ON public.schema_migrations(applied_at DESC);
+
+COMMENT ON TABLE public.schema_migrations IS 'Tracks applied schema migrations for safe schema evolution - ADR-040';
+COMMENT ON COLUMN public.schema_migrations.version IS 'Sequential migration number (001, 002, 003, ...)';
+COMMENT ON COLUMN public.schema_migrations.name IS 'Descriptive migration name (e.g., baseline, add_embedding_config)';
+COMMENT ON COLUMN public.schema_migrations.applied_at IS 'Timestamp when migration was applied';
+
+-- ============================================================================
 -- KG_API SCHEMA - Operational State
 -- ============================================================================
 
@@ -919,6 +936,14 @@ BEGIN
     RAISE NOTICE '  - Multi-schema architecture (ADR-024)';
     RAISE NOTICE '  - Dynamic RBAC system (ADR-028)';
     RAISE NOTICE '  - Vocabulary management (ADR-025, ADR-026, ADR-032)';
-    RAISE NOTICE '  - All applied migrations';
+    RAISE NOTICE '  - Migration tracking system (ADR-040)';
     RAISE NOTICE '========================================';
 END $$;
+
+-- ============================================================================
+-- Record Baseline Migration (ADR-040)
+-- ============================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (1, 'baseline')
+ON CONFLICT (version) DO NOTHING;
