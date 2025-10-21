@@ -1,0 +1,42 @@
+/*
+
+This CSS file will be included with your plugin, and
+available in the app when your plugin is enabled.
+
+If your plugin does not need CSS, delete this file.
+
+*/
+
+
+.gh-sync-ribbon
+{
+    order: 100;
+}
+
+.gh-sync-status
+{
+    order: -1;
+}
+
+.howto {
+  border: 1px solid var(--background-modifier-border);
+  padding: 10px;
+}
+
+.howto_title {
+  font-weight: 600;
+}
+
+.howto_text {
+  color: var(--text-muted);
+  font-size: smaller;
+}
+
+.my-plugin-setting-text {
+    width: 30em;
+}
+
+.my-plugin-setting-text2 {
+    width: 30em;
+}
+
