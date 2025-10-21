@@ -193,31 +193,40 @@ for pending in "${PENDING_MIGRATIONS[@]}"; do
         echo -e "${GRAY}----------------------------------------${NC}"
     fi
 
-    # Apply migration (PostgreSQL's transactional DDL handles rollback)
-    if docker exec -i $CONTAINER psql -U $DB_USER -d $DB_NAME < "$FILE" > /dev/null 2>&1; then
-        echo -e "${GREEN}  ✅ Migration $VERSION applied successfully${NC}"
-        APPLIED_COUNT=$((APPLIED_COUNT + 1))
+    # Apply migration (capture output to detect errors)
+    MIGRATION_OUTPUT=$(docker exec -i $CONTAINER psql -U $DB_USER -d $DB_NAME < "$FILE" 2>&1)
+    MIGRATION_EXIT_CODE=$?
 
-        # Verify it was recorded in schema_migrations
-        RECORDED=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
-          "SELECT version FROM public.schema_migrations WHERE version = $VERSION" 2>/dev/null || echo "")
+    # Show output in verbose mode
+    if [ "$VERBOSE" = true ]; then
+        echo -e "${GRAY}$MIGRATION_OUTPUT${NC}"
+    fi
 
-        if [ -z "$RECORDED" ]; then
-            echo -e "${YELLOW}  ⚠️  Warning: Migration $VERSION not recorded in schema_migrations table${NC}"
-            echo -e "${GRAY}     Migration may not have included INSERT statement${NC}"
-        fi
-    else
+    # Check for errors (either non-zero exit or ERROR/ROLLBACK in output)
+    if [ $MIGRATION_EXIT_CODE -ne 0 ] || echo "$MIGRATION_OUTPUT" | grep -qi "ERROR:\|ROLLBACK"; then
         echo -e "${RED}  ✗ Migration $VERSION failed${NC}"
         FAILED_COUNT=$((FAILED_COUNT + 1))
 
-        # Show detailed error
+        # Show error details
         echo -e "${RED}Error details:${NC}"
-        docker exec -i $CONTAINER psql -U $DB_USER -d $DB_NAME < "$FILE" 2>&1 | sed 's/^/  /'
+        echo "$MIGRATION_OUTPUT" | grep -i "ERROR:\|ROLLBACK\|LINE" | sed 's/^/  /'
 
         echo ""
         echo -e "${RED}✗ Migration $VERSION failed - stopping${NC}"
         echo -e "${YELLOW}Fix the migration and try again${NC}"
         exit 1
+    fi
+
+    echo -e "${GREEN}  ✅ Migration $VERSION applied successfully${NC}"
+    APPLIED_COUNT=$((APPLIED_COUNT + 1))
+
+    # Verify it was recorded in schema_migrations
+    RECORDED=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
+      "SELECT version FROM public.schema_migrations WHERE version = $VERSION" 2>/dev/null || echo "")
+
+    if [ -z "$RECORDED" ]; then
+        echo -e "${YELLOW}  ⚠️  Warning: Migration $VERSION not recorded in schema_migrations table${NC}"
+        echo -e "${GRAY}     Migration may not have included INSERT statement${NC}"
     fi
 
     echo ""

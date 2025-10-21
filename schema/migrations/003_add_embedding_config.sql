@@ -34,13 +34,12 @@ CREATE TABLE IF NOT EXISTS kg_api.embedding_config (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(100),
-    active BOOLEAN DEFAULT TRUE,
-
-    -- Only one active config at a time
-    CONSTRAINT unique_active_config UNIQUE(active) WHERE active = TRUE
+    active BOOLEAN DEFAULT TRUE
 );
 
-CREATE INDEX IF NOT EXISTS idx_embedding_config_active
+-- Partial unique index ensures only one active config at a time
+-- (PostgreSQL doesn't support partial UNIQUE constraints, only partial indexes)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_embedding_config_unique_active
 ON kg_api.embedding_config(active) WHERE active = TRUE;
 
 COMMENT ON TABLE kg_api.embedding_config IS 'Resource-aware embedding configuration for local and remote models - ADR-039';
@@ -61,10 +60,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER embedding_config_update_timestamp
-    BEFORE UPDATE ON kg_api.embedding_config
-    FOR EACH ROW
-    EXECUTE FUNCTION kg_api.update_embedding_config_timestamp();
+-- Create trigger only if it doesn't exist (PostgreSQL doesn't support IF NOT EXISTS for triggers)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger
+        WHERE tgname = 'embedding_config_update_timestamp'
+    ) THEN
+        CREATE TRIGGER embedding_config_update_timestamp
+            BEFORE UPDATE ON kg_api.embedding_config
+            FOR EACH ROW
+            EXECUTE FUNCTION kg_api.update_embedding_config_timestamp();
+    END IF;
+END $$;
 
 -- ============================================================================
 -- Seed Data: Default OpenAI Configuration
