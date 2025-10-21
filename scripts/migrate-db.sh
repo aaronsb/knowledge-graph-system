@@ -165,6 +165,36 @@ if [ "$DRY_RUN" = true ]; then
     exit 0
 fi
 
+# Check if database has data and offer snapshot
+if [ "$AUTO_CONFIRM" = false ]; then
+    # Count tables in kg_api schema (simple proxy for "has data")
+    TABLE_COUNT=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
+      "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'kg_api'" 2>/dev/null || echo "0")
+
+    if [ "$TABLE_COUNT" -gt 0 ]; then
+        echo -e "${BLUE}💾 Database Snapshot${NC}"
+        echo -e "${GRAY}Your database contains data ($TABLE_COUNT tables in kg_api schema)${NC}"
+        echo -e "${GRAY}It's recommended to create a snapshot before applying migrations${NC}"
+        echo ""
+        read -p "$(echo -e ${YELLOW}Create snapshot before migrating? [Y/n]:${NC} )" -n 1 -r
+        echo
+
+        # Default to Yes if Enter is pressed (empty response)
+        if [[ -z $REPLY ]] || [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo ""
+            if [ -f "./scripts/snapshot-db.sh" ]; then
+                ./scripts/snapshot-db.sh
+                echo ""
+            else
+                echo -e "${RED}✗ Snapshot script not found at ./scripts/snapshot-db.sh${NC}"
+                echo -e "${YELLOW}Continuing without snapshot...${NC}"
+                echo ""
+            fi
+        fi
+        echo ""
+    fi
+fi
+
 # Confirmation prompt (unless -y flag)
 if [ "$AUTO_CONFIRM" = false ]; then
     echo -e "${YELLOW}Apply $PENDING_COUNT migration(s)?${NC}"
