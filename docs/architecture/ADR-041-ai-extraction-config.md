@@ -824,13 +824,40 @@ docker-compose up -d
 3. OpenAI key expires
 4. User switches back to OpenAI embeddings → **Ingestion fails with expired key**
 
-**Solution:** API startup validates active provider configurations:
+**Solution:** Enhanced `system_api_keys` table with validation state tracking:
+
+```sql
+-- Migration 005: Add validation state to system_api_keys
+ALTER TABLE kg_api.system_api_keys
+ADD COLUMN validation_status VARCHAR(20) DEFAULT 'untested'
+    CHECK (validation_status IN ('valid', 'invalid', 'untested')),
+ADD COLUMN last_validated_at TIMESTAMPTZ,
+ADD COLUMN validation_error TEXT;
+
+-- Create index for quick validation status queries
+CREATE INDEX idx_system_api_keys_validation_status
+ON kg_api.system_api_keys(validation_status);
+```
+
+**Schema:**
+```
+system_api_keys
+├── provider (PK)
+├── encrypted_key (bytea)
+├── updated_at
+├── validation_status ('valid' | 'invalid' | 'untested') ← NEW
+├── last_validated_at ← NEW
+└── validation_error ← NEW
+```
+
+**Startup validation with state updates:**
 
 ```python
 # src/api/main.py - Startup event
 @app.on_event("startup")
 async def startup_validation():
-    """Validate active provider configurations on startup"""
+    """Validate active provider configurations and update key status"""
+    from .lib.encrypted_keys import validate_and_update_key_status
 
     # Load active extraction config
     extraction_config = load_active_extraction_config()
@@ -838,14 +865,15 @@ async def startup_validation():
         provider = extraction_config['provider']
         logger.info(f"Validating extraction provider: {provider}")
 
-        try:
-            # Test provider with minimal API call
-            ai_provider = get_provider(provider)
-            ai_provider.extract_concepts("test", "test_ontology")
+        # Validate and update status in database
+        is_valid = await validate_and_update_key_status(provider, 'extraction')
+
+        if is_valid:
             logger.info(f"✓ Extraction provider {provider} validated")
-        except Exception as e:
-            logger.warning(f"⚠ Extraction provider {provider} validation failed: {e}")
-            logger.warning(f"   Update API key via: kg admin keys set {provider} <new-key>")
+        else:
+            logger.warning(f"⚠ Extraction provider {provider} validation failed")
+            logger.warning(f"   View details: kg admin keys list")
+            logger.warning(f"   Update key: kg admin keys set {provider} <new-key>")
 
     # Load active embedding config
     embedding_config = load_active_embedding_config()
@@ -853,20 +881,275 @@ async def startup_validation():
         provider = embedding_config['provider']
         logger.info(f"Validating embedding provider: {provider}")
 
-        try:
-            # Test with minimal embedding
-            embedding_manager = get_embedding_model_manager()
-            embedding_manager.generate_embedding("test")
+        is_valid = await validate_and_update_key_status(provider, 'embedding')
+
+        if is_valid:
             logger.info(f"✓ Embedding provider {provider} validated")
-        except Exception as e:
-            logger.warning(f"⚠ Embedding provider {provider} validation failed: {e}")
-            logger.warning(f"   Update API key via: kg admin keys set {provider} <new-key>")
+        else:
+            logger.warning(f"⚠ Embedding provider {provider} validation failed")
+            logger.warning(f"   View details: kg admin keys list")
+```
+
+**Validation function:**
+
+```python
+# src/api/lib/encrypted_keys.py
+def validate_and_update_key_status(
+    provider: str,
+    usage_type: str  # 'extraction' or 'embedding'
+) -> bool:
+    """
+    Validate API key and update validation status in database.
+
+    Args:
+        provider: 'openai' or 'anthropic'
+        usage_type: 'extraction' or 'embedding'
+
+    Returns:
+        True if valid, False otherwise
+    """
+    from .age_client import AGEClient
+
+    client = AGEClient()
+    conn = client.pool.getconn()
+
+    try:
+        # Get encrypted key
+        key_store = EncryptedKeyStore(conn)
+        api_key = key_store.get_key(provider)
+
+        # Test the key
+        if usage_type == 'extraction':
+            ai_provider = get_provider(provider)
+            ai_provider.extract_concepts("test", "validation")
+        else:  # embedding
+            # Test embedding generation
+            if provider == 'openai':
+                import openai
+                client = openai.OpenAI(api_key=api_key)
+                client.embeddings.create(
+                    model="text-embedding-3-small",
+                    input="test"
+                )
+
+        # Validation succeeded - update status
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE kg_api.system_api_keys
+                SET
+                    validation_status = 'valid',
+                    last_validated_at = NOW(),
+                    validation_error = NULL
+                WHERE provider = %s
+            """, (provider,))
+            conn.commit()
+
+        logger.info(f"✓ {provider} key validated and marked as valid")
+        return True
+
+    except Exception as e:
+        # Validation failed - update status with error
+        error_msg = str(e)[:500]  # Truncate long errors
+
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE kg_api.system_api_keys
+                SET
+                    validation_status = 'invalid',
+                    last_validated_at = NOW(),
+                    validation_error = %s
+                WHERE provider = %s
+            """, (error_msg, provider))
+            conn.commit()
+
+        logger.warning(f"✗ {provider} key validation failed: {error_msg}")
+        return False
+
+    finally:
+        client.pool.putconn(conn)
+```
+
+**CLI view of key status:**
+
+```bash
+$ kg admin keys list
+
+API Keys Configuration
+=======================
+
+Provider    Status    Last Validated           Error
+--------    ------    --------------           -----
+openai      ✓ valid   2025-10-21 07:30:00 UTC  -
+anthropic   ✗ invalid 2025-10-21 07:30:05 UTC  API key expired
+
+Update invalid keys:
+  kg admin keys set anthropic sk-ant-...
 ```
 
 **Behavior:**
-- ✅ **Local embeddings**: No validation needed (no API key)
-- ⚠️ **Expired keys**: Log warning, API still starts (graceful degradation)
-- ❌ **Ingestion attempt**: Fails with clear error message pointing to key update command
+- ✅ **Valid keys**: Marked 'valid' with timestamp
+- ⚠️ **Invalid keys**: Marked 'invalid' with error message, API still starts
+- 📋 **Untested keys**: Newly added keys before first validation
+- 🔄 **Re-validation**: Occurs on every API startup
+- 📊 **Visibility**: Users see key status via `kg admin keys list`
+
+### Administrative API Endpoints for Key Management
+
+**Enhanced endpoints from ADR-031 with validation status:**
+
+```python
+# src/api/routes/admin_keys.py (Updated)
+
+class APIKeyInfo(BaseModel):
+    """API key information with validation status"""
+    provider: str
+    configured: bool
+    validation_status: Optional[str]  # 'valid', 'invalid', 'untested'
+    last_validated_at: Optional[str]
+    validation_error: Optional[str]
+    updated_at: Optional[str]
+
+
+@router.get("/", response_model=list[APIKeyInfo])
+async def list_api_keys(
+    _admin = Depends(require_admin),
+    age_client = Depends(get_age_client)
+):
+    """
+    List all API keys with validation status (admin only).
+
+    Returns validation state, last check time, and any errors.
+    """
+    key_store = EncryptedKeyStore(age_client.conn)
+
+    with age_client.conn.cursor() as cur:
+        cur.execute("""
+            SELECT
+                provider,
+                updated_at,
+                validation_status,
+                last_validated_at,
+                validation_error
+            FROM kg_api.system_api_keys
+            ORDER BY provider
+        """)
+
+        configured_keys = []
+        for row in cur.fetchall():
+            configured_keys.append({
+                'provider': row[0],
+                'updated_at': row[1].isoformat() if row[1] else None,
+                'validation_status': row[2],
+                'last_validated_at': row[3].isoformat() if row[3] else None,
+                'validation_error': row[4]
+            })
+
+    # Return all possible providers
+    all_providers = ["openai", "anthropic"]
+    configured_map = {k['provider']: k for k in configured_keys}
+
+    return [
+        APIKeyInfo(
+            provider=provider,
+            configured=provider in configured_map,
+            validation_status=configured_map[provider]['validation_status'] if provider in configured_map else None,
+            last_validated_at=configured_map[provider]['last_validated_at'] if provider in configured_map else None,
+            validation_error=configured_map[provider]['validation_error'] if provider in configured_map else None,
+            updated_at=configured_map[provider]['updated_at'] if provider in configured_map else None
+        )
+        for provider in all_providers
+    ]
+
+
+@router.post("/{provider}/validate")
+async def validate_api_key(
+    provider: Literal["openai", "anthropic"],
+    _admin = Depends(require_admin)
+):
+    """
+    Manually trigger API key validation (admin only).
+
+    Useful for testing keys after update without restarting API.
+    """
+    from ..lib.encrypted_keys import validate_and_update_key_status
+
+    # Determine usage type based on active configs
+    extraction_config = load_active_extraction_config()
+    embedding_config = load_active_embedding_config()
+
+    validated_extraction = False
+    validated_embedding = False
+
+    # Validate for extraction if provider matches
+    if extraction_config and extraction_config['provider'] == provider:
+        validated_extraction = await validate_and_update_key_status(provider, 'extraction')
+
+    # Validate for embedding if provider matches
+    if embedding_config and embedding_config.get('provider') == provider:
+        validated_embedding = await validate_and_update_key_status(provider, 'embedding')
+
+    # Get updated validation status
+    key_store = EncryptedKeyStore(...)
+    status = key_store.get_validation_status(provider)
+
+    return {
+        "provider": provider,
+        "validation_status": status['validation_status'],
+        "last_validated_at": status['last_validated_at'],
+        "validation_error": status['validation_error'],
+        "validated_for": {
+            "extraction": validated_extraction,
+            "embedding": validated_embedding
+        }
+    }
+```
+
+**Example API responses:**
+
+```bash
+# GET /admin/keys
+curl http://localhost:8000/admin/keys -H "Authorization: Bearer <token>"
+```
+
+```json
+[
+  {
+    "provider": "openai",
+    "configured": true,
+    "validation_status": "valid",
+    "last_validated_at": "2025-10-21T07:30:00Z",
+    "validation_error": null,
+    "updated_at": "2025-10-20T10:00:00Z"
+  },
+  {
+    "provider": "anthropic",
+    "configured": true,
+    "validation_status": "invalid",
+    "last_validated_at": "2025-10-21T07:30:05Z",
+    "validation_error": "AuthenticationError: API key has been revoked",
+    "updated_at": "2025-09-15T08:00:00Z"
+  }
+]
+```
+
+```bash
+# POST /admin/keys/openai/validate
+curl -X POST http://localhost:8000/admin/keys/openai/validate \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+{
+  "provider": "openai",
+  "validation_status": "valid",
+  "last_validated_at": "2025-10-21T08:15:30Z",
+  "validation_error": null,
+  "validated_for": {
+    "extraction": true,
+    "embedding": true
+  }
+}
+```
 
 ## References
 
