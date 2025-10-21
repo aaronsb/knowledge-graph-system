@@ -174,6 +174,23 @@ python cli.py --json ontology list
 python cli.py --json database stats
 ```
 
+## Database Migrations
+
+The knowledge graph uses a **migration system** to safely evolve the database schema:
+
+```bash
+# View current migration status
+./scripts/migrate-db.sh --dry-run
+
+# Apply pending migrations
+./scripts/migrate-db.sh -y
+
+# Migrations apply automatically when starting database
+./scripts/start-db.sh  # Auto-runs migrate-db.sh
+```
+
+**See:** `docs/guides/DATABASE_MIGRATIONS.md` for complete guide
+
 ## Troubleshooting
 
 ### PostgreSQL won't start
@@ -183,6 +200,15 @@ docker logs knowledge-graph-postgres
 
 # Restart
 docker-compose restart
+```
+
+### Schema migrations pending
+```bash
+# Check what's pending
+./scripts/migrate-db.sh --dry-run
+
+# Apply migrations
+./scripts/migrate-db.sh -y
 ```
 
 ### API key invalid
