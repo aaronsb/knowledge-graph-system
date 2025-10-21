@@ -1,0 +1,875 @@
+# ADR-041: AI Extraction Provider Configuration
+
+**Status:** Proposed
+**Date:** 2025-10-21
+**Deciders:** Development Team
+**Related:** ADR-031 (Encrypted API Key Storage), ADR-039 (Local Embedding Service)
+
+## Context
+
+The knowledge graph system uses LLM APIs (OpenAI GPT-4, Anthropic Claude) to extract concepts from documents. Currently, provider and model selection is configured via environment variables:
+
+```bash
+# .env
+AI_PROVIDER=openai                              # Which provider to use
+OPENAI_EXTRACTION_MODEL=gpt-4o                  # OpenAI model selection
+ANTHROPIC_EXTRACTION_MODEL=claude-sonnet-4-20250514  # Anthropic model selection
+```
+
+### Problems with Environment Variable Configuration
+
+1. **Static deployment**: Changing providers/models requires restarting the API server
+2. **No runtime management**: Cannot switch providers via API without redeployment
+3. **Inconsistent with embeddings**: Embeddings use database-first configuration (ADR-039)
+4. **Difficult testing**: Hard to test different models without environment changes
+5. **No validation**: Model name typos won't be caught until extraction fails
+6. **Split architecture**: API keys in database (ADR-031), but config in .env
+
+### Current Architecture (Split)
+
+```
+API Keys (ADR-031)               Configuration (Current)
+┌────────────────────┐          ┌────────────────────┐
+│ Database           │          │ Environment (.env) │
+│ system_api_keys    │          │ AI_PROVIDER        │
+│ - openai: sk-...   │          │ *_EXTRACTION_MODEL │
+│ - anthropic: sk-...│          └────────────────────┘
+└────────────────────┘
+```
+
+### Desired Architecture (Unified)
+
+```
+┌─────────────────────────────────────────┐
+│ Database (Unified Configuration)        │
+│                                         │
+│ system_api_keys                         │
+│ - openai: sk-... (encrypted)            │
+│ - anthropic: sk-... (encrypted)         │
+│                                         │
+│ ai_extraction_config ← NEW              │
+│ - provider: openai                      │
+│ - model_name: gpt-4o                    │
+│ - active: true                          │
+└─────────────────────────────────────────┘
+```
+
+## Decision
+
+Implement **database-first AI extraction provider configuration**, following the same pattern as ADR-039 (Local Embedding Service).
+
+### Key Principles
+
+1. **Database-First Configuration**
+   - Active configuration stored in `kg_api.ai_extraction_config` table
+   - No environment variable fallback in production
+   - Environment variables supported for development/testing
+
+2. **Hot-Swappable Providers**
+   - Switch between OpenAI and Anthropic via API
+   - Change models without server restart
+   - Validated before activation (test API call)
+
+3. **Consistency with Embeddings**
+   - Same configuration pattern as `embedding_config` (ADR-039)
+   - Single active configuration at a time
+   - Admin API for management
+
+4. **Backward Compatibility**
+   - Supports .env during migration period
+   - Graceful degradation if no database config exists
+   - Clear migration path documented
+
+## Implementation
+
+### Database Schema
+
+```sql
+-- Migration 004: AI Extraction Configuration Table
+CREATE TABLE IF NOT EXISTS kg_api.ai_extraction_config (
+    id SERIAL PRIMARY KEY,
+    provider VARCHAR(50) NOT NULL CHECK (provider IN ('openai', 'anthropic')),
+    model_name VARCHAR(200) NOT NULL,
+
+    -- Model capabilities
+    supports_vision BOOLEAN DEFAULT FALSE,
+    supports_json_mode BOOLEAN DEFAULT TRUE,
+    max_tokens INTEGER,
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(100),
+    active BOOLEAN DEFAULT TRUE
+);
+
+-- Only one active configuration at a time
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_extraction_config_unique_active
+ON kg_api.ai_extraction_config(active) WHERE active = TRUE;
+
+-- Update timestamp trigger
+CREATE OR REPLACE FUNCTION kg_api.update_ai_extraction_config_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger
+        WHERE tgname = 'ai_extraction_config_update_timestamp'
+    ) THEN
+        CREATE TRIGGER ai_extraction_config_update_timestamp
+            BEFORE UPDATE ON kg_api.ai_extraction_config
+            FOR EACH ROW
+            EXECUTE FUNCTION kg_api.update_ai_extraction_config_timestamp();
+    END IF;
+END $$;
+
+-- Seed default OpenAI configuration
+INSERT INTO kg_api.ai_extraction_config (
+    provider, model_name, supports_vision, supports_json_mode, max_tokens, updated_by, active
+) VALUES (
+    'openai', 'gpt-4o', TRUE, TRUE, 16384, 'system_migration', TRUE
+) ON CONFLICT DO NOTHING;
+```
+
+### Configuration Loading
+
+```python
+# src/api/lib/ai_extraction_config.py
+"""
+AI Extraction Provider Configuration Management.
+
+Handles loading and saving extraction provider configuration from/to database.
+Implements database-first configuration (ADR-041).
+"""
+
+import logging
+from typing import Optional, Dict, Any
+import psycopg2
+
+logger = logging.getLogger(__name__)
+
+
+def load_active_extraction_config() -> Optional[Dict[str, Any]]:
+    """
+    Load the active AI extraction configuration from the database.
+
+    Returns:
+        Dict with config parameters if found, None otherwise
+
+    Config dict structure:
+        {
+            "id": 1,
+            "provider": "openai" | "anthropic",
+            "model_name": "gpt-4o",
+            "supports_vision": True,
+            "supports_json_mode": True,
+            "max_tokens": 16384,
+            "created_at": "...",
+            "updated_at": "...",
+            "updated_by": "...",
+            "active": True
+        }
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        id, provider, model_name, supports_vision, supports_json_mode,
+                        max_tokens, created_at, updated_at, updated_by, active
+                    FROM kg_api.ai_extraction_config
+                    WHERE active = TRUE
+                    LIMIT 1
+                """)
+
+                row = cur.fetchone()
+
+                if not row:
+                    logger.info("📍 No active AI extraction config in database")
+                    return None
+
+                config = {
+                    "id": row[0],
+                    "provider": row[1],
+                    "model_name": row[2],
+                    "supports_vision": row[3],
+                    "supports_json_mode": row[4],
+                    "max_tokens": row[5],
+                    "created_at": row[6],
+                    "updated_at": row[7],
+                    "updated_by": row[8],
+                    "active": row[9]
+                }
+
+                logger.info(f"✅ Loaded AI extraction config: {config['provider']} / {config['model_name']}")
+                return config
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to load AI extraction config from database: {e}")
+        return None
+
+
+def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> bool:
+    """
+    Save AI extraction configuration to the database.
+
+    Deactivates any existing active config and creates a new one.
+
+    Args:
+        config: Configuration dict with keys:
+            - provider: "openai" or "anthropic" (required)
+            - model_name: Model identifier (required)
+            - supports_vision: True/False
+            - supports_json_mode: True/False
+            - max_tokens: Maximum tokens for model
+        updated_by: User/admin who made the change
+
+    Returns:
+        True if saved successfully, False otherwise
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                # Start transaction
+                cur.execute("BEGIN")
+
+                # Deactivate all existing configs
+                cur.execute("""
+                    UPDATE kg_api.ai_extraction_config
+                    SET active = FALSE
+                    WHERE active = TRUE
+                """)
+
+                # Insert new config as active
+                cur.execute("""
+                    INSERT INTO kg_api.ai_extraction_config (
+                        provider, model_name, supports_vision, supports_json_mode,
+                        max_tokens, updated_by, active
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, TRUE
+                    )
+                """, (
+                    config['provider'],
+                    config['model_name'],
+                    config.get('supports_vision', False),
+                    config.get('supports_json_mode', True),
+                    config.get('max_tokens'),
+                    updated_by
+                ))
+
+                # Commit transaction
+                cur.execute("COMMIT")
+
+                logger.info(f"✅ Saved AI extraction config: {config['provider']} / {config['model_name']}")
+                return True
+
+        except Exception as e:
+            # Rollback on error
+            try:
+                cur.execute("ROLLBACK")
+            except:
+                pass
+            raise e
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to save AI extraction config to database: {e}")
+        return False
+
+
+def get_extraction_config_summary() -> Dict[str, Any]:
+    """
+    Get a summary of the current AI extraction configuration.
+
+    Returns dict suitable for API responses:
+        {
+            "provider": "openai",
+            "model": "gpt-4o",
+            "supports_vision": True,
+            "supports_json_mode": True,
+            "max_tokens": 16384,
+            "config_id": 42
+        }
+    """
+    config = load_active_extraction_config()
+
+    if not config:
+        return {
+            "provider": "none",
+            "model": None,
+            "supports_vision": False,
+            "supports_json_mode": False,
+            "max_tokens": None,
+            "config_id": None
+        }
+
+    return {
+        "provider": config['provider'],
+        "model": config['model_name'],
+        "supports_vision": config.get('supports_vision', False),
+        "supports_json_mode": config.get('supports_json_mode', True),
+        "max_tokens": config.get('max_tokens'),
+        "config_id": config['id']
+    }
+```
+
+### API Provider Updates
+
+```python
+# src/api/lib/ai_providers.py (Updated get_provider function)
+
+def get_provider(provider_name: Optional[str] = None) -> AIProvider:
+    """
+    Factory function to get the configured AI provider.
+
+    Priority order (ADR-041):
+    1. Explicit provider_name parameter (for testing/overrides)
+    2. Database configuration (kg_api.ai_extraction_config table)
+    3. Environment variable AI_PROVIDER (development fallback)
+    4. Default to OpenAI
+
+    Args:
+        provider_name: Override provider selection (optional)
+
+    Returns:
+        AIProvider instance
+    """
+    # 1. Explicit parameter takes precedence
+    if provider_name:
+        logger.debug(f"Using explicit provider: {provider_name}")
+        provider = provider_name.lower()
+        model_name = None  # Will use provider defaults
+    else:
+        # 2. Try database configuration (ADR-041)
+        from .ai_extraction_config import load_active_extraction_config
+
+        config = load_active_extraction_config()
+
+        if config:
+            provider = config['provider']
+            model_name = config['model_name']
+            logger.info(f"📍 AI extraction provider: {provider} / {model_name} (from database)")
+        else:
+            # 3. Fall back to environment variable
+            provider = os.getenv("AI_PROVIDER", "openai").lower()
+            model_name = None  # Will read from env vars in provider __init__
+            logger.info(f"📍 AI extraction provider: {provider} (from environment)")
+
+    # Instantiate provider
+    if provider == "openai":
+        return OpenAIProvider(extraction_model=model_name)
+    elif provider == "anthropic":
+        return AnthropicProvider(extraction_model=model_name)
+    elif provider == "mock":
+        return MockProvider()
+    else:
+        raise ValueError(
+            f"Unknown AI provider: {provider}. "
+            f"Supported: openai, anthropic, mock"
+        )
+```
+
+### API Endpoints
+
+```python
+# src/api/routes/ai_extraction.py
+"""
+AI Extraction Provider Configuration API endpoints.
+"""
+
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
+from typing import Literal, Optional
+
+from ..lib.ai_extraction_config import (
+    load_active_extraction_config,
+    save_extraction_config,
+    get_extraction_config_summary
+)
+from ..lib.ai_providers import get_provider
+
+# Public router (no auth required)
+public_router = APIRouter(prefix="/ai-extraction", tags=["ai-extraction"])
+
+# Admin router (auth required)
+admin_router = APIRouter(prefix="/admin/ai-extraction", tags=["admin-ai-extraction"])
+
+
+class ExtractionConfigResponse(BaseModel):
+    """Public extraction config summary"""
+    provider: str
+    model: str
+    supports_vision: bool
+    supports_json_mode: bool
+    max_tokens: Optional[int]
+
+
+class ExtractionConfigDetail(BaseModel):
+    """Full extraction config details (admin only)"""
+    id: Optional[int]
+    provider: str
+    model_name: str
+    supports_vision: bool
+    supports_json_mode: bool
+    max_tokens: Optional[int]
+    created_at: Optional[str]
+    updated_at: Optional[str]
+    updated_by: Optional[str]
+    active: bool
+
+
+class UpdateExtractionConfigRequest(BaseModel):
+    """Update extraction config request"""
+    provider: Literal["openai", "anthropic"]
+    model_name: str
+    supports_vision: Optional[bool] = False
+    supports_json_mode: Optional[bool] = True
+    max_tokens: Optional[int] = None
+
+
+class UpdateExtractionConfigResponse(BaseModel):
+    """Update extraction config response"""
+    status: str
+    message: str
+    config: ExtractionConfigResponse
+
+
+@public_router.get("/config", response_model=ExtractionConfigResponse)
+async def get_extraction_config():
+    """
+    Get current AI extraction provider configuration (public).
+
+    Returns summary suitable for client applications.
+    """
+    summary = get_extraction_config_summary()
+
+    if summary['provider'] == 'none':
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No AI extraction provider configured"
+        )
+
+    return ExtractionConfigResponse(**summary)
+
+
+@admin_router.get("/config", response_model=ExtractionConfigDetail)
+async def get_extraction_config_detail():
+    """
+    Get full AI extraction configuration details (admin only).
+
+    Includes metadata like creation time, last update, etc.
+    """
+    config = load_active_extraction_config()
+
+    if not config:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active AI extraction configuration found"
+        )
+
+    return ExtractionConfigDetail(
+        id=config['id'],
+        provider=config['provider'],
+        model_name=config['model_name'],
+        supports_vision=config.get('supports_vision', False),
+        supports_json_mode=config.get('supports_json_mode', True),
+        max_tokens=config.get('max_tokens'),
+        created_at=config['created_at'].isoformat() if config.get('created_at') else None,
+        updated_at=config['updated_at'].isoformat() if config.get('updated_at') else None,
+        updated_by=config.get('updated_by'),
+        active=config.get('active', True)
+    )
+
+
+@admin_router.post("/config", response_model=UpdateExtractionConfigResponse)
+async def update_extraction_config(request: UpdateExtractionConfigRequest):
+    """
+    Update AI extraction provider configuration (admin only).
+
+    Validates the configuration by testing it before activation.
+    Deactivates previous config and activates the new one.
+    """
+    # Validate the configuration by creating a provider instance
+    try:
+        provider = get_provider(request.provider)
+
+        # Test with a minimal extraction to validate API key + model
+        test_text = "The quick brown fox jumps over the lazy dog."
+        concepts = provider.extract_concepts(test_text, "test")
+
+        if not concepts:
+            raise ValueError("Provider validation returned no concepts")
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Configuration validation failed: {str(e)}"
+        )
+
+    # Configuration is valid, save it
+    config_dict = {
+        "provider": request.provider,
+        "model_name": request.model_name,
+        "supports_vision": request.supports_vision,
+        "supports_json_mode": request.supports_json_mode,
+        "max_tokens": request.max_tokens
+    }
+
+    success = save_extraction_config(config_dict, updated_by="admin")
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save configuration to database"
+        )
+
+    # Return updated config
+    summary = get_extraction_config_summary()
+
+    return UpdateExtractionConfigResponse(
+        status="success",
+        message=f"AI extraction provider updated to {request.provider} / {request.model_name}",
+        config=ExtractionConfigResponse(**summary)
+    )
+```
+
+### CLI Commands
+
+```typescript
+// client/src/cli/ai-extraction.ts
+/**
+ * AI Extraction Provider Configuration CLI commands.
+ */
+
+import { Command } from 'commander';
+import { apiClient } from '../api/client';
+import chalk from 'chalk';
+
+export const aiExtractionCommand = new Command('ai-extraction')
+  .alias('ai')
+  .description('Manage AI extraction provider configuration');
+
+// View current configuration
+aiExtractionCommand
+  .command('config')
+  .description('View current AI extraction provider configuration')
+  .option('--detail', 'Show full configuration details (admin)')
+  .action(async (options) => {
+    try {
+      const endpoint = options.detail
+        ? '/admin/ai-extraction/config'
+        : '/ai-extraction/config';
+
+      const response = await apiClient.get(endpoint);
+      const config = response.data;
+
+      console.log(chalk.bold('\n🤖 AI Extraction Provider Configuration\n'));
+      console.log(`Provider:         ${chalk.green(config.provider)}`);
+      console.log(`Model:            ${chalk.green(config.model || config.model_name)}`);
+      console.log(`Vision Support:   ${config.supports_vision ? '✓' : '✗'}`);
+      console.log(`JSON Mode:        ${config.supports_json_mode ? '✓' : '✗'}`);
+
+      if (config.max_tokens) {
+        console.log(`Max Tokens:       ${config.max_tokens.toLocaleString()}`);
+      }
+
+      if (options.detail && config.updated_at) {
+        console.log(`\nLast Updated:     ${new Date(config.updated_at).toLocaleString()}`);
+        console.log(`Updated By:       ${config.updated_by || 'unknown'}`);
+      }
+
+      console.log();
+
+    } catch (error: any) {
+      console.error(chalk.red('✗ Failed to fetch configuration'));
+      console.error(chalk.gray(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
+// Set provider configuration
+aiExtractionCommand
+  .command('set <provider> <model>')
+  .description('Set AI extraction provider configuration (admin)')
+  .option('--vision', 'Model supports vision/images')
+  .option('--no-json', 'Model does not support JSON mode')
+  .option('--max-tokens <n>', 'Maximum tokens for model', parseInt)
+  .action(async (provider, model, options) => {
+    try {
+      console.log(chalk.blue(`\n🔄 Updating AI extraction configuration...\n`));
+      console.log(`Provider: ${chalk.bold(provider)}`);
+      console.log(`Model:    ${chalk.bold(model)}`);
+
+      const requestData = {
+        provider,
+        model_name: model,
+        supports_vision: options.vision || false,
+        supports_json_mode: options.json !== false,
+        max_tokens: options.maxTokens || null
+      };
+
+      console.log(chalk.gray('\nValidating configuration with API call...'));
+
+      const response = await apiClient.post('/admin/ai-extraction/config', requestData);
+      const result = response.data;
+
+      console.log(chalk.green(`\n✓ ${result.message}`));
+      console.log(chalk.gray('\nConfiguration will be used for all future extractions.'));
+      console.log();
+
+    } catch (error: any) {
+      console.error(chalk.red('\n✗ Failed to update configuration'));
+      console.error(chalk.gray(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+```
+
+## Migration Strategy
+
+### Phase 1: Add Database Configuration (Backward Compatible)
+
+1. Create migration 004 with `ai_extraction_config` table
+2. Seed with current .env values (if present)
+3. Update `get_provider()` to check database first, fall back to .env
+4. Deploy - **no breaking changes**
+
+### Phase 2: CLI Integration
+
+1. Add `kg ai config` and `kg ai set` commands
+2. Document configuration workflow
+3. Encourage users to migrate via CLI
+
+### Phase 3: Deprecate .env (Future)
+
+1. Add warnings when using .env configuration
+2. Update documentation to recommend database config
+3. Eventually remove .env fallback (with major version bump)
+
+## Consequences
+
+### Positive
+
+1. **✅ Unified configuration**: Both API keys and extraction config in database
+2. **✅ Hot-swappable**: Change providers/models via API without restart
+3. **✅ Validated**: Configuration tested before activation
+4. **✅ Consistent**: Same pattern as embedding configuration (ADR-039)
+5. **✅ Auditable**: Track who changed config and when
+6. **✅ Testable**: Easy to test different models via API
+
+### Negative
+
+1. **❌ Migration effort**: Existing deployments need to migrate from .env
+2. **❌ Additional complexity**: One more table to manage
+3. **❌ Database dependency**: Configuration requires database access
+
+### Neutral
+
+1. **Database-first**: Matches embedding configuration approach (ADR-039)
+2. **Admin-only**: Configuration changes require admin privileges
+3. **Single active config**: Only one provider active at a time per shard
+
+## Alternatives Considered
+
+### Alternative 1: Keep Environment Variables
+
+**Rejected**: Inconsistent with ADR-039 (embeddings), requires restart for changes
+
+### Alternative 2: Combine with embedding_config Table
+
+**Rejected**: Different concerns (extraction vs embedding), better separation
+
+### Alternative 3: Per-User Provider Selection
+
+**Rejected**: Adds significant complexity, most deployments use single provider
+
+## Unified Initialization & API Key Usage
+
+### API Key Resource Sharing
+
+API keys stored in `system_api_keys` (ADR-031) are **shared resources** used by multiple systems:
+
+```
+system_api_keys (encrypted, ADR-031)
+├── openai: sk-...
+│   ├── Used by: AI Extraction (GPT-4 for concept extraction)
+│   └── Used by: Embedding Generation (OpenAI embeddings, if configured)
+│
+└── anthropic: sk-ant-...
+    └── Used by: AI Extraction (Claude for concept extraction)
+```
+
+**Key insight:** Local embeddings (ADR-039) don't require API keys, so the embedding worker **skips API key lookup entirely** when `provider='local'`.
+
+### Configuration Independence
+
+```
+┌─────────────────────────────────────────────┐
+│ Shared: system_api_keys (ADR-031)          │
+│  - OpenAI key (extraction + embeddings)    │
+│  - Anthropic key (extraction only)         │
+└─────────────────────────────────────────────┘
+           ↓                      ↓
+┌───────────────────────┐  ┌──────────────────────┐
+│ ai_extraction_config  │  │ embedding_config     │
+│ (This ADR)            │  │ (ADR-039)            │
+│                       │  │                      │
+│ provider: openai      │  │ provider: local      │
+│ model: gpt-4o         │  │ model: nomic-ai/...  │
+│ active: true          │  │ active: true         │
+└───────────────────────┘  └──────────────────────┘
+```
+
+**Example configurations:**
+
+| Extraction | Embeddings | API Key Usage |
+|-----------|-----------|---------------|
+| OpenAI GPT-4 | OpenAI | Uses OpenAI key for both |
+| OpenAI GPT-4 | Local (nomic-embed) | Uses OpenAI key for extraction only |
+| Anthropic Claude | Local (nomic-embed) | Uses Anthropic key for extraction only |
+| Anthropic Claude | OpenAI | Uses both Anthropic + OpenAI keys |
+
+### Initial Setup Flow
+
+**Fresh installation** via `./scripts/initialize-auth.sh` (enhanced):
+
+```bash
+╔════════════════════════════════════════════════════════════╗
+║   Knowledge Graph System - Initial Setup                  ║
+╚════════════════════════════════════════════════════════════╝
+
+Step 1: Admin Password
+→ Enter admin password: ********
+→ Confirm password: ********
+✓ Password meets requirements
+
+Step 2: API Keys
+→ Enter OpenAI API key (required): sk-...
+✓ OpenAI key validated
+
+→ Enter Anthropic API key (optional, press Enter to skip): sk-ant-...
+✓ Anthropic key validated
+
+Step 3: AI Extraction Configuration
+→ Select extraction provider:
+  1. OpenAI (gpt-4o) [recommended]
+  2. Anthropic (claude-sonnet-4-20250514)
+→ Selection: 1
+✓ Set extraction provider: OpenAI / gpt-4o
+
+Step 4: Embedding Configuration
+→ Select embedding provider:
+  1. Local (nomic-ai/nomic-embed-text-v1.5) [free, recommended]
+  2. OpenAI (text-embedding-3-small)
+→ Selection: 1
+✓ Set embedding provider: Local / nomic-embed-text-v1.5
+
+╔════════════════════════════════════════════════════════════╗
+║              System Initialized Successfully!              ║
+╚════════════════════════════════════════════════════════════╝
+
+Configuration Summary:
+  Admin:      admin (password set)
+  Extraction: OpenAI / gpt-4o
+  Embeddings: Local / nomic-ai/nomic-embed-text-v1.5 (no API cost!)
+
+Next Steps:
+  1. Start API: ./scripts/start-api.sh
+  2. Login: kg auth login
+  3. Ingest docs: kg ingest file -o "Ontology" document.txt
+```
+
+### Database Reset Security
+
+**Complete database wipe** (intentional security feature):
+
+```bash
+docker-compose down -v  # Wipes volumes
+docker-compose up -d
+```
+
+**Effect:** All secrets erased:
+- ✗ Admin password → Must reset via `./scripts/initialize-auth.sh`
+- ✗ API keys (OpenAI, Anthropic) → Must re-enter
+- ✗ Provider configs → Must reconfigure
+- ✗ All ontology data → Lost
+
+**Rationale:** Prevents compromised database backups from containing active API keys. Forces explicit re-authentication and key validation on restore.
+
+### API Key Validation on Startup
+
+**Problem scenario:**
+1. User initializes with OpenAI key
+2. Switches to local embeddings (months of not using OpenAI key)
+3. OpenAI key expires
+4. User switches back to OpenAI embeddings → **Ingestion fails with expired key**
+
+**Solution:** API startup validates active provider configurations:
+
+```python
+# src/api/main.py - Startup event
+@app.on_event("startup")
+async def startup_validation():
+    """Validate active provider configurations on startup"""
+
+    # Load active extraction config
+    extraction_config = load_active_extraction_config()
+    if extraction_config:
+        provider = extraction_config['provider']
+        logger.info(f"Validating extraction provider: {provider}")
+
+        try:
+            # Test provider with minimal API call
+            ai_provider = get_provider(provider)
+            ai_provider.extract_concepts("test", "test_ontology")
+            logger.info(f"✓ Extraction provider {provider} validated")
+        except Exception as e:
+            logger.warning(f"⚠ Extraction provider {provider} validation failed: {e}")
+            logger.warning(f"   Update API key via: kg admin keys set {provider} <new-key>")
+
+    # Load active embedding config
+    embedding_config = load_active_embedding_config()
+    if embedding_config and embedding_config['provider'] != 'local':
+        provider = embedding_config['provider']
+        logger.info(f"Validating embedding provider: {provider}")
+
+        try:
+            # Test with minimal embedding
+            embedding_manager = get_embedding_model_manager()
+            embedding_manager.generate_embedding("test")
+            logger.info(f"✓ Embedding provider {provider} validated")
+        except Exception as e:
+            logger.warning(f"⚠ Embedding provider {provider} validation failed: {e}")
+            logger.warning(f"   Update API key via: kg admin keys set {provider} <new-key>")
+```
+
+**Behavior:**
+- ✅ **Local embeddings**: No validation needed (no API key)
+- ⚠️ **Expired keys**: Log warning, API still starts (graceful degradation)
+- ❌ **Ingestion attempt**: Fails with clear error message pointing to key update command
+
+## References
+
+- Related: ADR-031 (Encrypted API Key Storage) - Shared API keys
+- Related: ADR-039 (Local Embedding Service) - Parallel embedding configuration
+- Related: ADR-040 (Database Schema Migrations) - Schema evolution
