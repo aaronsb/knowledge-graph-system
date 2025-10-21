@@ -977,10 +977,10 @@ $ kg admin keys list
 API Keys Configuration
 =======================
 
-Provider    Status    Last Validated           Error
---------    ------    --------------           -----
-openai      ✓ valid   2025-10-21 07:30:00 UTC  -
-anthropic   ✗ invalid 2025-10-21 07:30:05 UTC  API key expired
+Provider    Key Preview        Status    Last Validated           Error
+--------    -----------        ------    --------------           -----
+openai      sk-proj-...a1B2c3  ✓ valid   2025-10-21 07:30:00 UTC  -
+anthropic   sk-ant-...x7Y8z9   ✗ invalid 2025-10-21 07:30:05 UTC  API key expired
 
 Update invalid keys:
   kg admin keys set anthropic sk-ant-...
@@ -1004,10 +1004,38 @@ class APIKeyInfo(BaseModel):
     """API key information with validation status"""
     provider: str
     configured: bool
+    key_preview: Optional[str]  # Masked key preview (e.g., "sk-...xyz123")
     validation_status: Optional[str]  # 'valid', 'invalid', 'untested'
     last_validated_at: Optional[str]
     validation_error: Optional[str]
     updated_at: Optional[str]
+
+
+def mask_api_key(plaintext_key: str) -> str:
+    """
+    Mask API key for display, showing only prefix and last 6 characters.
+
+    Examples:
+        "sk-proj-abc123...xyz789" → "sk-...xyz789"
+        "sk-ant-abc123...xyz789" → "sk-ant-...xyz789"
+    """
+    if not plaintext_key or len(plaintext_key) < 10:
+        return "***"
+
+    # Determine prefix length (sk- or sk-ant- or sk-proj-)
+    if plaintext_key.startswith("sk-ant-"):
+        prefix = "sk-ant-"
+    elif plaintext_key.startswith("sk-proj-"):
+        prefix = "sk-proj-"
+    elif plaintext_key.startswith("sk-"):
+        prefix = "sk-"
+    else:
+        prefix = ""
+
+    # Show last 6 characters
+    suffix = plaintext_key[-6:]
+
+    return f"{prefix}...{suffix}"
 
 
 @router.get("/", response_model=list[APIKeyInfo])
@@ -1019,6 +1047,7 @@ async def list_api_keys(
     List all API keys with validation status (admin only).
 
     Returns validation state, last check time, and any errors.
+    Keys are masked (only show prefix + last 6 chars).
     """
     key_store = EncryptedKeyStore(age_client.conn)
 
@@ -1026,6 +1055,7 @@ async def list_api_keys(
         cur.execute("""
             SELECT
                 provider,
+                encrypted_key,
                 updated_at,
                 validation_status,
                 last_validated_at,
@@ -1036,12 +1066,18 @@ async def list_api_keys(
 
         configured_keys = []
         for row in cur.fetchall():
+            # Decrypt key to get masked preview
+            encrypted_key = bytes(row[1])
+            plaintext_key = key_store.cipher.decrypt(encrypted_key).decode()
+            key_preview = mask_api_key(plaintext_key)
+
             configured_keys.append({
                 'provider': row[0],
-                'updated_at': row[1].isoformat() if row[1] else None,
-                'validation_status': row[2],
-                'last_validated_at': row[3].isoformat() if row[3] else None,
-                'validation_error': row[4]
+                'key_preview': key_preview,
+                'updated_at': row[2].isoformat() if row[2] else None,
+                'validation_status': row[3],
+                'last_validated_at': row[4].isoformat() if row[4] else None,
+                'validation_error': row[5]
             })
 
     # Return all possible providers
@@ -1052,6 +1088,7 @@ async def list_api_keys(
         APIKeyInfo(
             provider=provider,
             configured=provider in configured_map,
+            key_preview=configured_map[provider]['key_preview'] if provider in configured_map else None,
             validation_status=configured_map[provider]['validation_status'] if provider in configured_map else None,
             last_validated_at=configured_map[provider]['last_validated_at'] if provider in configured_map else None,
             validation_error=configured_map[provider]['validation_error'] if provider in configured_map else None,
@@ -1116,6 +1153,7 @@ curl http://localhost:8000/admin/keys -H "Authorization: Bearer <token>"
   {
     "provider": "openai",
     "configured": true,
+    "key_preview": "sk-proj-...a1B2c3",
     "validation_status": "valid",
     "last_validated_at": "2025-10-21T07:30:00Z",
     "validation_error": null,
@@ -1124,6 +1162,7 @@ curl http://localhost:8000/admin/keys -H "Authorization: Bearer <token>"
   {
     "provider": "anthropic",
     "configured": true,
+    "key_preview": "sk-ant-...x7Y8z9",
     "validation_status": "invalid",
     "last_validated_at": "2025-10-21T07:30:05Z",
     "validation_error": "AuthenticationError: API key has been revoked",
