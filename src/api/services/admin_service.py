@@ -259,8 +259,8 @@ class AdminService:
         # Convert validation results to API response model
         validation = result["validation"]
         schema_validation = SchemaValidation(
-            constraints_count=validation["table_count"],
-            vector_index_exists=validation["graph_exists"],
+            constraints_count=validation["schema_count"],    # PostgreSQL schemas (kg_api, kg_auth, kg_logs)
+            vector_index_exists=validation["graph_exists"],  # AGE graph exists
             node_count=validation["node_count"],
             schema_test_passed=validation["schema_test_passed"],
         )
