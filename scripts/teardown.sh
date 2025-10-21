@@ -11,7 +11,7 @@ echo "🛑 Knowledge Graph System - Teardown"
 echo "===================================="
 
 # Check if containers are running
-if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-neo4j; then
+if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
     echo -e "${YELLOW}⚠ No running containers found${NC}"
 else
     echo -e "\n${YELLOW}Stopping Docker containers...${NC}"
@@ -21,15 +21,15 @@ fi
 
 # Ask about data preservation
 echo -e "\n${YELLOW}What would you like to do with the data?${NC}"
-echo "1. Keep data (preserve Neo4j database volume)"
+echo "1. Keep data (preserve PostgreSQL database volume)"
 echo "2. Delete data (remove all graph data)"
 read -p "Enter choice [1/2]: " choice
 
 case $choice in
     2)
         echo -e "\n${YELLOW}Removing Docker volumes...${NC}"
-        docker volume rm knowledge-graph-system_neo4j_data 2>/dev/null || true
-        docker volume rm knowledge-graph-system_neo4j_logs 2>/dev/null || true
+        docker volume rm knowledge-graph-system_postgres_data 2>/dev/null || true
+        docker volume rm knowledge-graph-system_postgres_import 2>/dev/null || true
         echo -e "${GREEN}✓ Data volumes removed${NC}"
         ;;
     *)
@@ -53,12 +53,12 @@ echo -e "\n${YELLOW}Remove Node.js dependencies (node_modules)?${NC}"
 read -p "Enter choice [y/N]: " remove_node
 
 if [[ $remove_node =~ ^[Yy]$ ]]; then
-    if [ -d "mcp-server/node_modules" ]; then
-        rm -rf mcp-server/node_modules
+    if [ -d "client/node_modules" ]; then
+        rm -rf client/node_modules
         echo -e "${GREEN}✓ Node modules removed${NC}"
     fi
-    if [ -d "mcp-server/build" ]; then
-        rm -rf mcp-server/build
+    if [ -d "client/dist" ]; then
+        rm -rf client/dist
         echo -e "${GREEN}✓ Build artifacts removed${NC}"
     fi
 fi

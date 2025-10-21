@@ -72,13 +72,15 @@ class ResetManager:
 
             validation = result["validation"]
             Console.info("\nSchema Validation:")
-            Console.key_value("  Graph exists", "✓" if validation["graph_exists"] else "✗",
+            Console.key_value("  AGE Graph", "✓" if validation["graph_exists"] else "✗",
                             Colors.BOLD, Colors.OKGREEN if validation["graph_exists"] else Colors.FAIL)
-            Console.key_value("  Tables created", str(validation["table_count"]),
-                            Colors.BOLD, Colors.OKGREEN if validation["table_count"] >= 4 else Colors.WARNING)
+            Console.key_value("  PG Schemas", f"{validation['schema_count']}/3 (kg_api, kg_auth, kg_logs)",
+                            Colors.BOLD, Colors.OKGREEN if validation["schema_count"] == 3 else Colors.WARNING)
+            Console.key_value("  Core Tables", f"{validation['table_count']}/5 (users, api_keys, roles, jobs, sessions)",
+                            Colors.BOLD, Colors.OKGREEN if validation["table_count"] == 5 else Colors.WARNING)
             Console.key_value("  Node count", str(validation["node_count"]),
                             Colors.BOLD, Colors.OKGREEN if validation["node_count"] == 0 else Colors.WARNING)
-            Console.key_value("  Schema test", "✓" if validation["schema_test_passed"] else "✗",
+            Console.key_value("  Graph test", "✓" if validation["schema_test_passed"] else "✗",
                             Colors.BOLD, Colors.OKGREEN if validation["schema_test_passed"] else Colors.FAIL)
 
             Console.warning("\n💡 Database is now empty and ready for fresh data")
@@ -259,9 +261,9 @@ class ResetManager:
             }
 
     def _verify_schema(self) -> Dict[str, Any]:
-        """Verify schema was created correctly after reset"""
+        """Verify schema was created correctly after reset (PostgreSQL + AGE)"""
 
-        # Check that knowledge_graph exists
+        # Check that knowledge_graph exists in AGE
         result = subprocess.run(
             [
                 "docker", "exec", self.container_name,
@@ -273,20 +275,35 @@ class ResetManager:
         )
         graph_exists = "knowledge_graph" in result.stdout.strip()
 
-        # Check that application tables exist
+        # Check that schemas exist (PostgreSQL multi-schema architecture per ADR-024)
         result = subprocess.run(
             [
                 "docker", "exec", self.container_name,
                 "psql", "-U", self.postgres_user, "-d", self.postgres_db,
                 "-t", "-c",
-                "SELECT COUNT(*) FROM information_schema.tables WHERE table_name IN ('users', 'api_keys', 'sessions', 'ingestion_jobs')"
+                "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name IN ('kg_api', 'kg_auth', 'kg_logs')"
+            ],
+            capture_output=True,
+            text=True
+        )
+        schema_count = int(result.stdout.strip() or "0")
+
+        # Check that critical tables exist in their schemas
+        result = subprocess.run(
+            [
+                "docker", "exec", self.container_name,
+                "psql", "-U", self.postgres_user, "-d", self.postgres_db,
+                "-t", "-c",
+                """SELECT COUNT(*) FROM information_schema.tables
+                   WHERE (table_schema = 'kg_auth' AND table_name IN ('users', 'api_keys', 'roles'))
+                   OR (table_schema = 'kg_api' AND table_name IN ('ingestion_jobs', 'sessions'))"""
             ],
             capture_output=True,
             text=True
         )
         table_count = int(result.stdout.strip() or "0")
 
-        # Check graph node count (should be 0)
+        # Check graph node count (should be 0 after reset)
         node_count = 0
         try:
             conn = AGEConnection()
@@ -297,7 +314,7 @@ class ResetManager:
         except Exception:
             node_count = 0
 
-        # Schema test: Try creating and deleting a test concept
+        # Schema test: Try creating and deleting a test concept (verifies AGE graph works)
         schema_test_passed = False
         try:
             conn = AGEConnection()
@@ -323,7 +340,8 @@ class ResetManager:
 
         return {
             "graph_exists": graph_exists,
-            "table_count": table_count,
+            "schema_count": schema_count,  # PostgreSQL schemas (kg_api, kg_auth, kg_logs)
+            "table_count": table_count,     # Critical tables in those schemas
             "node_count": node_count,
             "schema_test_passed": schema_test_passed,
         }

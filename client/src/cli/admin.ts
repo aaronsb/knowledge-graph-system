@@ -1027,6 +1027,8 @@ const resetCommand = new Command('reset')
       console.log(`  ${colors.ui.key('Vector Index:')} ${result.schema_validation.vector_index_exists ? colors.status.success('Yes') : colors.status.error('No')}`);
       console.log(`  ${colors.ui.key('Nodes:')} ${colors.coloredCount(result.schema_validation.node_count)}`);
       console.log(`  ${colors.ui.key('Test Passed:')} ${result.schema_validation.schema_test_passed ? colors.status.success('Yes') : colors.status.error('No')}`);
+      console.log(colors.status.dim(`\n  Note: "Constraints" = PostgreSQL schemas (kg_api, kg_auth, kg_logs)`));
+      console.log(colors.status.dim(`        "Vector Index" = AGE graph exists (Apache AGE doesn't use Neo4j indexes)`));
 
       if (result.warnings.length > 0) {
         console.log(`\n  ${colors.status.warning('Warnings:')}`);
