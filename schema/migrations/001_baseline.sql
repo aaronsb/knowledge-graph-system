@@ -1,0 +1,32 @@
+-- Migration: 001_baseline
+-- Description: Baseline schema snapshot (v2.0.0)
+-- Date: 2025-10-20
+-- 
+-- NOTE: This is a reference snapshot only.
+-- Fresh databases automatically apply this via schema/00_baseline.sql
+-- during Docker initialization. This file documents what was included
+-- in the baseline migration.
+--
+-- Includes:
+--   - Apache AGE extension and knowledge_graph
+--   - Multi-schema architecture (kg_api, kg_auth, kg_logs)
+--   - Dynamic RBAC system (ADR-028)
+--   - Vocabulary management (ADR-025, ADR-026, ADR-032)
+--   - Embedding configuration (ADR-039)
+--   - Migration tracking (ADR-040)
+--
+-- For the actual baseline SQL, see: schema/00_baseline.sql
+-- For migration instructions, see: schema/migrations/README.md
+
+-- ============================================================================
+-- This migration is automatically applied by schema/00_baseline.sql
+-- No manual application needed.
+-- ============================================================================
+
+-- The baseline includes all tables, indexes, functions, and initial data
+-- that comprise the v2.0.0 consolidated schema.
+
+-- Migration is recorded in schema_migrations table by 00_baseline.sql:
+-- INSERT INTO public.schema_migrations (version, name)
+-- VALUES (1, 'baseline')
+-- ON CONFLICT (version) DO NOTHING;

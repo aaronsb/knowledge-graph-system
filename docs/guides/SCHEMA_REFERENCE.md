@@ -263,29 +263,47 @@ cursor.execute("SELECT * FROM kg_logs.audit_trail ORDER BY timestamp DESC LIMIT 
 
 ### Fresh Environment Setup
 
-On first startup, Docker runs initialization scripts from `/docker-entrypoint-initdb.d/`:
+On first startup, Docker automatically runs `schema/00_baseline.sql` from `/docker-entrypoint-initdb.d/`:
 
-1. `01_init_age.sql` - Apache AGE setup + old tables (deprecated)
-2. `02_multi_schema.sql` - Multi-schema architecture
+**What gets initialized:**
+1. Apache AGE extension and `knowledge_graph` graph
+2. Multi-schema architecture (`kg_api`, `kg_auth`, `kg_logs`)
+3. Migration tracking system (`public.schema_migrations`)
+4. All tables, indexes, and functions (see full list below)
+5. Baseline migration recorded as version 1
 
 **Verify Initialization:**
 ```bash
+# Check schemas were created
 docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "
 SELECT schemaname, count(*) as table_count
 FROM pg_tables
 WHERE schemaname IN ('kg_api', 'kg_auth', 'kg_logs')
 GROUP BY schemaname;
 "
+
+# Check migration system initialized
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "
+SELECT * FROM public.schema_migrations ORDER BY version;
+"
+# Expected: version=1, name='baseline'
 ```
 
-Expected output:
+### Schema Evolution via Migrations
+
+After initial setup, schema changes are managed via **migrations** (ADR-040).
+
+**Apply pending migrations:**
+```bash
+./scripts/migrate-db.sh -y
 ```
- schemaname | table_count
-------------+-------------
- kg_api     |          12
- kg_auth    |           4
- kg_logs    |           4
+
+**Check migration status:**
+```bash
+./scripts/migrate-db.sh --dry-run
 ```
+
+**See:** `docs/guides/DATABASE_MIGRATIONS.md` for complete migration guide
 
 ### Verify Seeded Data
 
@@ -314,39 +332,51 @@ SELECT username, role FROM kg_auth.users WHERE role = 'admin';
 # Expected: admin, admin
 ```
 
-## Migration from Old Schema
+## Migration from Old Schema (Pre-2.0)
 
-If migrating from an existing installation with tables in `public` schema:
+If migrating from an existing installation (before baseline consolidation):
 
 1. **Backup existing data:**
 ```bash
 docker exec knowledge-graph-postgres pg_dump -U admin knowledge_graph > backup.sql
 ```
 
-2. **Run migration script:**
+2. **Reset and restore approach (recommended):**
 ```bash
-docker exec -i knowledge-graph-postgres psql -U admin -d knowledge_graph < schema/multi_schema.sql
+# Reset to fresh baseline
+python -m src.admin.reset --auto-confirm
+
+# Restore your data
+docker exec -i knowledge-graph-postgres psql -U admin -d knowledge_graph < backup.sql
+
+# Apply any pending migrations
+./scripts/migrate-db.sh -y
 ```
 
-3. **Migrate job data from SQLite (if applicable):**
-```bash
-# TODO: Create data migration script for jobs.db → kg_api.ingestion_jobs
-```
-
-4. **Update application configuration:**
-```python
-# Old: queries against public schema
-cursor.execute("SELECT * FROM users")
-
-# New: queries against kg_auth schema
-cursor.execute("SELECT * FROM kg_auth.users")
-```
+3. **Or use migration system:**
+- Schema changes now managed via numbered migrations
+- See `docs/guides/DATABASE_MIGRATIONS.md`
+- Migration system automatically applies changes in order
 
 ## Schema Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2025-10-10 | Initial multi-schema architecture (ADR-024, ADR-025, ADR-026) |
+| Migration | Date | Changes |
+|-----------|------|---------|
+| 001 (baseline) | 2025-10-16 | Consolidated baseline schema v2.0.0 (ADR-024, ADR-025, ADR-026, ADR-028, ADR-039, ADR-040) |
+
+**Current migration version:**
+```bash
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
+  "SELECT MAX(version) FROM public.schema_migrations;"
+```
+
+**See all applied migrations:**
+```bash
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
+  "SELECT * FROM public.schema_migrations ORDER BY version;"
+```
+
+**For migration history:** See `schema/migrations/` directory and `docs/guides/DATABASE_MIGRATIONS.md`
 
 ## Troubleshooting
 

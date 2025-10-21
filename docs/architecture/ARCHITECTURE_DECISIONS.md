@@ -55,6 +55,7 @@ All ADRs follow a consistent format:
 | [ADR-036](ADR-036-universal-visual-query-builder.md) | Universal Visual Query Builder | Proposed | Tri-mode query system (Smart Search, Visual Blocks, openCypher) that teaches Apache AGE syntax through "Rosetta Stone" learning pattern - blocks generate code users can view and learn from |
 | [ADR-037](ADR-037-human-guided-graph-editing.md) | Human-Guided Graph Editing | Proposed | Human-in-the-loop system for connecting disconnected concepts and invalidating incorrect relationships - treats human justifications as first-class evidence fed through ingestion pipeline |
 | [ADR-038](ADR-038-official-project-apparel.md) | Official Project Apparel Design Specifications | Proposed | Commemorative merchandise celebrating streaming entity resolution with O(n) full-scan cosine similarity - a genuinely unusual architectural choice backed by comprehensive scaling research |
+| [ADR-040](ADR-040-database-schema-migrations.md) | Database Schema Migration Management | Proposed | Simple bash-based migration system with schema_migrations tracking table and numbered migration files for safe schema evolution |
 
 ## How to Use This Index
 
@@ -128,6 +129,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-10-17
+**Last Updated:** 2025-10-20
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
