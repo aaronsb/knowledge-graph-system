@@ -40,6 +40,8 @@ User and developer guides for getting started and working with the system.
 - **SECURITY.md** - Security infrastructure and encrypted API key management
 - **MCP_SETUP.md** - MCP server setup for Claude Desktop integration
 - **BACKUP_RESTORE.md** - Backup and restore operations guide
+- **DATABASE_MIGRATIONS.md** - Database schema migration management (ADR-040)
+- **SCHEMA_REFERENCE.md** - PostgreSQL schema reference and documentation
 - **INGESTION.md** - Document ingestion workflow and configuration
 - **VOCABULARY_CONSOLIDATION.md** - Edge vocabulary consolidation with AITL (ADR-032)
 - **EXAMPLES.md** - Usage examples and common patterns
@@ -83,8 +85,10 @@ Images, diagrams, and other media assets.
 ### Developers
 1. Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md)
 2. Review [ADR-016](architecture/ADR-016-apache-age-migration.md) for current database architecture
-3. Check [TEST_COVERAGE.md](testing/TEST_COVERAGE.md) for testing guidelines
-4. Reference [CYPHER_PATTERNS.md](api/CYPHER_PATTERNS.md) for query development
+3. Learn about [DATABASE_MIGRATIONS.md](guides/DATABASE_MIGRATIONS.md) for schema evolution (ADR-040)
+4. Reference [SCHEMA_REFERENCE.md](guides/SCHEMA_REFERENCE.md) for complete schema documentation
+5. Check [TEST_COVERAGE.md](testing/TEST_COVERAGE.md) for testing guidelines
+6. Reference [CYPHER_PATTERNS.md](api/CYPHER_PATTERNS.md) for query development
 
 ### Contributors
 1. Read architecture decisions in `architecture/`
