@@ -65,7 +65,8 @@ class EmbeddingModelManager:
             from sentence_transformers import SentenceTransformer
 
             # Load model (downloads if not cached)
-            self.model = SentenceTransformer(self.model_name)
+            # trust_remote_code=True required for models like nomic-embed-text that have custom code
+            self.model = SentenceTransformer(self.model_name, trust_remote_code=True)
             self.dimensions = self.model.get_sentence_embedding_dimension()
 
             logger.info(f"✅ Embedding model loaded: {self.model_name}")

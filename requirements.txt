@@ -4,6 +4,7 @@ python-dotenv>=1.0.0
 anthropic>=0.18.0  # Optional: only needed if using AI_PROVIDER=anthropic
 numpy>=1.24.0  # Required for learned knowledge similarity calculations & vector search
 sentence-transformers>=2.3.0  # Local embedding models for ADR-039 (nomic-embed-text, BGE)
+einops>=0.8.0  # Required by nomic-embed-text model architecture
 mistune>=3.0.0  # Markdown parsing for preprocessing (ADR-023)
 
 # API Server (Phase 1)
