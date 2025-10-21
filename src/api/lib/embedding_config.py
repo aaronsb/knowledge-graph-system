@@ -50,7 +50,7 @@ def load_active_embedding_config() -> Optional[Dict[str, Any]]:
                         id, provider, model_name, embedding_dimensions, precision,
                         max_memory_mb, num_threads, device, batch_size,
                         max_seq_length, normalize_embeddings,
-                        created_at, updated_at, updated_by
+                        created_at, updated_at, updated_by, active
                     FROM kg_api.embedding_config
                     WHERE active = TRUE
                     LIMIT 1
@@ -76,7 +76,8 @@ def load_active_embedding_config() -> Optional[Dict[str, Any]]:
                     "normalize_embeddings": row[10],
                     "created_at": row[11],
                     "updated_at": row[12],
-                    "updated_by": row[13]
+                    "updated_by": row[13],
+                    "active": row[14]
                 }
 
                 logger.info(f"✅ Loaded embedding config: {config['provider']} / {config.get('model_name', 'N/A')}")
