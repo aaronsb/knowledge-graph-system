@@ -1,0 +1,228 @@
+"""
+Embedding Configuration Management
+
+Handles loading and saving embedding configuration from/to the database.
+Implements database-first configuration (ADR-039).
+"""
+
+import logging
+from typing import Optional, Dict, Any
+import psycopg2
+
+logger = logging.getLogger(__name__)
+
+
+def load_active_embedding_config() -> Optional[Dict[str, Any]]:
+    """
+    Load the active embedding configuration from the database.
+
+    Returns:
+        Dict with config parameters if found, None otherwise
+
+    Config dict structure:
+        {
+            "id": 1,
+            "provider": "local" | "openai",
+            "model_name": "nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimensions": 768,
+            "precision": "float16" | "float32",
+            "max_memory_mb": 512,
+            "num_threads": 4,
+            "device": "cpu" | "cuda" | "mps",
+            "batch_size": 8,
+            "max_seq_length": 8192,
+            "normalize_embeddings": True,
+            "created_at": "...",
+            "updated_at": "...",
+            "updated_by": "..."
+        }
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        id, provider, model_name, embedding_dimensions, precision,
+                        max_memory_mb, num_threads, device, batch_size,
+                        max_seq_length, normalize_embeddings,
+                        created_at, updated_at, updated_by, active
+                    FROM kg_api.embedding_config
+                    WHERE active = TRUE
+                    LIMIT 1
+                """)
+
+                row = cur.fetchone()
+
+                if not row:
+                    logger.info("📍 No active embedding config in database")
+                    return None
+
+                config = {
+                    "id": row[0],
+                    "provider": row[1],
+                    "model_name": row[2],
+                    "embedding_dimensions": row[3],
+                    "precision": row[4],
+                    "max_memory_mb": row[5],
+                    "num_threads": row[6],
+                    "device": row[7],
+                    "batch_size": row[8],
+                    "max_seq_length": row[9],
+                    "normalize_embeddings": row[10],
+                    "created_at": row[11],
+                    "updated_at": row[12],
+                    "updated_by": row[13],
+                    "active": row[14]
+                }
+
+                logger.info(f"✅ Loaded embedding config: {config['provider']} / {config.get('model_name', 'N/A')}")
+                return config
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to load embedding config from database: {e}")
+        return None
+
+
+def save_embedding_config(config: Dict[str, Any], updated_by: str = "api") -> bool:
+    """
+    Save embedding configuration to the database.
+
+    Deactivates any existing active config and creates a new one.
+
+    Args:
+        config: Configuration dict with keys:
+            - provider: "local" or "openai" (required)
+            - model_name: HuggingFace model ID (for local provider)
+            - embedding_dimensions: Vector dimensions
+            - precision: "float16" or "float32"
+            - max_memory_mb: RAM limit
+            - num_threads: CPU threads
+            - device: "cpu", "cuda", or "mps"
+            - batch_size: Batch size for generation
+            - max_seq_length: Token limit
+            - normalize_embeddings: True/False
+        updated_by: User/admin who made the change
+
+    Returns:
+        True if saved successfully, False otherwise
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                # Start transaction
+                cur.execute("BEGIN")
+
+                # Deactivate all existing configs
+                cur.execute("""
+                    UPDATE kg_api.embedding_config
+                    SET active = FALSE
+                    WHERE active = TRUE
+                """)
+
+                # Insert new config as active
+                cur.execute("""
+                    INSERT INTO kg_api.embedding_config (
+                        provider, model_name, embedding_dimensions, precision,
+                        max_memory_mb, num_threads, device, batch_size,
+                        max_seq_length, normalize_embeddings, updated_by, active
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE
+                    )
+                """, (
+                    config['provider'],
+                    config.get('model_name'),
+                    config.get('embedding_dimensions'),
+                    config.get('precision', 'float16'),
+                    config.get('max_memory_mb'),
+                    config.get('num_threads'),
+                    config.get('device', 'cpu'),
+                    config.get('batch_size', 8),
+                    config.get('max_seq_length'),
+                    config.get('normalize_embeddings', True),
+                    updated_by
+                ))
+
+                # Commit transaction
+                cur.execute("COMMIT")
+
+                logger.info(f"✅ Saved embedding config: {config['provider']} / {config.get('model_name', 'N/A')}")
+                return True
+
+        except Exception as e:
+            # Rollback on error
+            try:
+                cur.execute("ROLLBACK")
+            except:
+                pass
+            raise e
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to save embedding config to database: {e}")
+        return False
+
+
+def get_embedding_config_summary() -> Dict[str, Any]:
+    """
+    Get a summary of the current embedding configuration.
+
+    Returns dict suitable for API responses:
+        {
+            "provider": "local",
+            "model": "nomic-ai/nomic-embed-text-v1.5",
+            "dimensions": 768,
+            "precision": "float16",
+            "config_id": 42,
+            "supports_browser": True,
+            "resource_allocation": {...}
+        }
+    """
+    config = load_active_embedding_config()
+
+    if not config:
+        return {
+            "provider": "none",
+            "model": None,
+            "dimensions": None,
+            "precision": None,
+            "config_id": None,
+            "supports_browser": False,
+            "resource_allocation": None
+        }
+
+    # Determine if model supports browser-side embeddings
+    supports_browser = False
+    if config['provider'] == 'local':
+        # Check if it's a transformers.js compatible model
+        model = config.get('model_name', '')
+        if 'nomic' in model.lower() or 'bge' in model.lower():
+            supports_browser = True
+
+    return {
+        "provider": config['provider'],
+        "model": config.get('model_name'),
+        "dimensions": config.get('embedding_dimensions'),
+        "precision": config.get('precision'),
+        "config_id": config['id'],
+        "supports_browser": supports_browser,
+        "resource_allocation": {
+            "max_memory_mb": config.get('max_memory_mb'),
+            "num_threads": config.get('num_threads'),
+            "device": config.get('device'),
+            "batch_size": config.get('batch_size')
+        } if config['provider'] == 'local' else None
+    }

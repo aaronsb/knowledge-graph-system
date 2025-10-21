@@ -385,6 +385,8 @@ CREATE INDEX idx_vocab_suggestions_confidence ON kg_api.vocabulary_suggestions(c
 CREATE INDEX idx_vocab_suggestions_reviewed ON kg_api.vocabulary_suggestions(reviewed);
 
 COMMENT ON TABLE kg_api.vocabulary_suggestions IS 'LLM-assisted vocabulary curation suggestions - ADR-026';
+-- Embedding Configuration - Moved to migration 003 (ADR-039)
+-- See: schema/migrations/003_add_embedding_config.sql
 
 -- ============================================================================
 -- KG_AUTH SCHEMA - Security (ADR-028 Dynamic RBAC)
