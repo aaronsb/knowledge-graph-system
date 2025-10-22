@@ -205,7 +205,58 @@ class ResetManager:
                         "error": "PostgreSQL initialization failed to complete within timeout"
                     }
 
-            # Step 5: Clear log files
+            # Step 5: Wait for schema initialization to fully complete
+            # Check that schema_migrations table exists (created by baseline migration)
+            if verbose:
+                Console.info("⏳ Waiting for schema initialization to complete...")
+
+            max_schema_wait = 30  # 30 attempts = 60 seconds max
+            schema_ready = False
+            for attempt in range(max_schema_wait):
+                time.sleep(2)
+
+                # Check if schema_migrations table exists
+                result = subprocess.run(
+                    [
+                        "docker", "exec", self.container_name,
+                        "psql", "-U", self.postgres_user, "-d", self.postgres_db,
+                        "-t", "-A", "-c",
+                        "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'schema_migrations')"
+                    ],
+                    capture_output=True,
+                    text=True
+                )
+
+                if result.returncode == 0 and "t" in result.stdout.lower():
+                    schema_ready = True
+                    if verbose:
+                        Console.success(f"✓ Schema initialized (took {(attempt + 1) * 2}s)")
+                    break
+
+                if verbose and attempt % 3 == 0:
+                    print(".", end="", flush=True)
+
+            if not schema_ready:
+                return {
+                    "success": False,
+                    "error": "Schema initialization timeout: schema_migrations table not created"
+                }
+
+            # Step 6: Apply database migrations (ADR-040)
+            if verbose:
+                Console.info("📦 Applying database migrations...")
+
+            migration_result = self._apply_migrations(verbose=verbose)
+            if not migration_result["success"]:
+                return {
+                    "success": False,
+                    "error": f"Failed to apply migrations: {migration_result['error']}"
+                }
+
+            if verbose:
+                Console.success(f"✓ Applied {migration_result['applied_count']} migration(s)")
+
+            # Step 8: Clear log files
             if clear_logs:
                 if verbose:
                     Console.info("🧹 Clearing log files...")
@@ -223,7 +274,7 @@ class ResetManager:
                     if verbose and log_count > 0:
                         Console.success(f"✓ Cleared {log_count} log file(s)")
 
-            # Step 6: Clear checkpoint files
+            # Step 9: Clear checkpoint files
             if clear_checkpoints:
                 if verbose:
                     Console.info("🧹 Clearing checkpoint files...")
@@ -241,7 +292,7 @@ class ResetManager:
                     if verbose and checkpoint_count > 0:
                         Console.success(f"✓ Cleared {checkpoint_count} checkpoint file(s)")
 
-            # Step 7: Verify schema
+            # Step 10: Verify schema
             if verbose:
                 Console.info("✅ Verifying schema...")
 
@@ -259,6 +310,90 @@ class ResetManager:
                 "error": str(e),
                 "validation": None
             }
+
+    def _apply_migrations(self, verbose: bool = False) -> Dict[str, Any]:
+        """
+        Apply database migrations from schema/migrations/ directory (ADR-040).
+
+        This is a Python-based migrator that works identically to migrate-db.sh:
+        - Idempotent: checks schema_migrations table
+        - Ordered: applies migrations in numeric order (001, 002, 003...)
+        - Atomic: stops on first failure
+
+        Returns:
+            Dict with success status, applied_count, and any errors
+        """
+        migrations_dir = self.project_root / "schema" / "migrations"
+
+        if not migrations_dir.exists():
+            return {"success": False, "error": "Migrations directory not found", "applied_count": 0}
+
+        # Get currently applied migrations from database
+        result = subprocess.run(
+            [
+                "docker", "exec", self.container_name,
+                "psql", "-U", self.postgres_user, "-d", self.postgres_db,
+                "-t", "-A", "-c",
+                "SELECT version FROM public.schema_migrations ORDER BY version"
+            ],
+            capture_output=True,
+            text=True
+        )
+
+        applied_versions = set()
+        if result.returncode == 0 and result.stdout.strip():
+            applied_versions = set(result.stdout.strip().split('\n'))
+
+        # Find pending migrations
+        pending_migrations = []
+        for migration_file in sorted(migrations_dir.glob("*.sql")):
+            # Extract version from filename (001_baseline.sql → 001)
+            filename = migration_file.name
+            if filename == "README.md":
+                continue
+
+            version = filename.split('_')[0]
+
+            # Skip if already applied
+            if version in applied_versions:
+                continue
+
+            pending_migrations.append((version, migration_file))
+
+        if not pending_migrations:
+            return {"success": True, "applied_count": 0}
+
+        # Apply each pending migration
+        applied_count = 0
+        for version, migration_file in pending_migrations:
+            if verbose:
+                print(f"  → Applying migration {version}...", end=" ", flush=True)
+
+            # Apply migration
+            with open(migration_file, 'r') as f:
+                result = subprocess.run(
+                    [
+                        "docker", "exec", "-i", self.container_name,
+                        "psql", "-U", self.postgres_user, "-d", self.postgres_db
+                    ],
+                    stdin=f,
+                    capture_output=True,
+                    text=True
+                )
+
+            if result.returncode != 0 or "ERROR" in result.stderr:
+                error_msg = result.stderr if result.stderr else result.stdout
+                return {
+                    "success": False,
+                    "error": f"Migration {version} failed: {error_msg}",
+                    "applied_count": applied_count
+                }
+
+            applied_count += 1
+            if verbose:
+                print("✓")
+
+        return {"success": True, "applied_count": applied_count}
 
     def _verify_schema(self) -> Dict[str, Any]:
         """Verify schema was created correctly after reset (PostgreSQL + AGE)"""

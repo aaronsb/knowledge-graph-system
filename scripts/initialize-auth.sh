@@ -156,6 +156,57 @@ if [ "$GENERATE_SECRET" = true ]; then
     echo -e "${GREEN}✓${NC} JWT secret saved to .env"
 fi
 
+# Generate or check ENCRYPTION_KEY (ADR-031)
+echo ""
+echo -e "${BOLD}Encryption Key Setup (ADR-031)${NC}"
+echo -e "${YELLOW}Used for encrypting API keys at rest${NC}"
+
+if [ -f "$PROJECT_ROOT/.env" ] && grep -q "^ENCRYPTION_KEY=" "$PROJECT_ROOT/.env"; then
+    echo -e "${GREEN}✓${NC} Encryption key already configured in .env"
+    read -p "Generate new encryption key? [y/N]: " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        GENERATE_ENCRYPTION_KEY=true
+        echo -e "${RED}⚠${NC}  Warning: Existing encrypted API keys will become unreadable!"
+        read -p "Continue? [y/N]: " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            GENERATE_ENCRYPTION_KEY=false
+        fi
+    else
+        GENERATE_ENCRYPTION_KEY=false
+    fi
+else
+    echo -e "${BLUE}→${NC} No encryption key found in .env"
+    GENERATE_ENCRYPTION_KEY=true
+fi
+
+if [ "$GENERATE_ENCRYPTION_KEY" = true ]; then
+    # Generate Fernet-compatible key (32 bytes, base64-encoded)
+    ENCRYPTION_KEY=$($PYTHON -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+    echo -e "${GREEN}✓${NC} Generated encryption key using Fernet"
+
+    # Update or create .env file
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        if grep -q "^ENCRYPTION_KEY=" "$PROJECT_ROOT/.env"; then
+            # Update existing
+            sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=$ENCRYPTION_KEY|" "$PROJECT_ROOT/.env"
+        else
+            # Append new
+            echo "" >> "$PROJECT_ROOT/.env"
+            echo "# Master encryption key for API keys (ADR-031)" >> "$PROJECT_ROOT/.env"
+            echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> "$PROJECT_ROOT/.env"
+        fi
+    else
+        # Create new .env
+        cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env" 2>/dev/null || true
+        echo "" >> "$PROJECT_ROOT/.env"
+        echo "# Master encryption key for API keys (ADR-031)" >> "$PROJECT_ROOT/.env"
+        echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> "$PROJECT_ROOT/.env"
+    fi
+    echo -e "${GREEN}✓${NC} Encryption key saved to .env"
+fi
+
 # Create or update admin user in database
 echo ""
 echo -e "${BOLD}Database Setup${NC}"
