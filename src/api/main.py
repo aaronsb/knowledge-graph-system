@@ -29,7 +29,7 @@ from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueu
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .workers.ingestion_worker import run_ingestion_worker
 from .workers.restore_worker import run_restore_worker
-from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, embedding
+from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, embedding, extraction
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -159,6 +159,14 @@ async def startup_event():
         logger.warning(f"⚠️  Failed to initialize local embedding model: {e}")
         logger.info("   Falling back to API-based embeddings")
 
+    # ADR-041: Validate API keys at startup (non-blocking)
+    try:
+        from .lib.api_key_validator import validate_api_keys_at_startup
+        validate_api_keys_at_startup()
+    except Exception as e:
+        logger.warning(f"⚠️  API key validation failed: {e}")
+        logger.info("   System will continue without validated keys")
+
     logger.info("🎉 API ready!")
     logger.info(f"📚 Docs: http://localhost:8000/docs")
     logger.info(f"📚 ReDoc: http://localhost:8000/redoc")
@@ -194,6 +202,8 @@ app.include_router(admin.router)
 app.include_router(vocabulary.router)  # ADR-032: Vocabulary management
 app.include_router(embedding.public_router)  # ADR-039: Public embedding config
 app.include_router(embedding.admin_router)  # ADR-039: Admin embedding management
+app.include_router(extraction.public_router)  # ADR-041: Public extraction config
+app.include_router(extraction.admin_router)  # ADR-041: Admin extraction management
 
 
 # Root endpoint

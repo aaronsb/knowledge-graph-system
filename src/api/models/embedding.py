@@ -88,9 +88,9 @@ class UpdateEmbeddingConfigResponse(BaseModel):
 
 
 class ReloadEmbeddingModelResponse(BaseModel):
-    """Response after hot reloading embedding model (Phase 2)"""
+    """Response after hot reloading embedding model"""
     success: bool
     message: str
-    reload_time_seconds: float
-    old_model: Optional[str] = None
-    new_model: Optional[str] = None
+    provider: str
+    model: Optional[str] = None
+    dimensions: Optional[int] = None

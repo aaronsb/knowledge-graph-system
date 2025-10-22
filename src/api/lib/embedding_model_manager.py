@@ -222,3 +222,88 @@ def get_embedding_model_manager() -> EmbeddingModelManager:
         )
 
     return _model_manager
+
+
+async def reload_embedding_model_manager() -> Optional[EmbeddingModelManager]:
+    """
+    Hot reload embedding model manager with new configuration from database.
+
+    This implements zero-downtime configuration updates:
+    1. Load new config from database
+    2. Create and load new model in parallel (old model still serves requests)
+    3. Atomic swap to new model
+    4. Old model garbage collected when no longer referenced
+
+    For provider switches (local ↔ openai):
+    - local → openai: New manager set to None, old model unloaded
+    - openai → local: New model loaded, replaces None
+
+    Returns:
+        New EmbeddingModelManager instance if local provider, None for openai
+
+    Raises:
+        RuntimeError: If configuration invalid or model loading fails
+    """
+    global _model_manager
+
+    logger.info("🔄 Hot reloading embedding model manager...")
+
+    # Load new configuration from database
+    from .embedding_config import load_active_embedding_config
+
+    config = await asyncio.to_thread(load_active_embedding_config)
+
+    if config is None:
+        logger.warning("⚠️  No embedding config in database after reload attempt")
+        logger.info("   Keeping existing configuration")
+        return _model_manager
+
+    provider = config['provider']
+    logger.info(f"📍 New provider: {provider}")
+
+    # If switching to non-local provider, unload model
+    if provider != 'local':
+        old_manager = _model_manager
+        _model_manager = None
+        logger.info(f"✅ Switched to {provider} embeddings (local model unloaded)")
+        return None
+
+    # Local provider - load or reload model
+    model_name = config.get('model_name')
+    if not model_name:
+        raise RuntimeError(
+            "Local embedding provider configured but no model_name specified. "
+            "Update config via: POST /admin/embedding/config"
+        )
+
+    precision = config.get('precision', 'float16')
+
+    logger.info(f"📥 Loading new model: {model_name}")
+    logger.info(f"   Precision: {precision}")
+
+    try:
+        # Create new manager and load model (in parallel with old model serving requests)
+        new_manager = EmbeddingModelManager(model_name=model_name, precision=precision)
+        new_manager.load_model()
+
+        # Verify dimensions
+        actual_dims = new_manager.get_dimensions()
+        expected_dims = config.get('embedding_dimensions')
+        if expected_dims and actual_dims != expected_dims:
+            logger.warning(f"⚠️  Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
+
+        # Atomic swap - old model will be garbage collected
+        old_manager = _model_manager
+        _model_manager = new_manager
+
+        if old_manager:
+            logger.info(f"✅ Hot reload complete: {old_manager.get_model_name()} → {model_name}")
+        else:
+            logger.info(f"✅ Model loaded: {model_name}")
+
+        return _model_manager
+
+    except Exception as e:
+        logger.error(f"❌ Hot reload failed: {e}")
+        logger.error(f"   Keeping existing model configuration")
+        raise RuntimeError(f"Failed to reload embedding model: {e}")

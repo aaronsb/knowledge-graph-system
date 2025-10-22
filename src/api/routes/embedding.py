@@ -92,10 +92,10 @@ async def update_embedding_config(request: UpdateEmbeddingConfigRequest):
     Creates a new configuration entry and deactivates the previous one.
     Configuration is stored in kg_api.embedding_config table.
 
-    **Important:** In Phase 1, changing configuration requires API restart.
-    Use: ./scripts/stop-api.sh && ./scripts/start-api.sh
+    **Important:** Configuration changes can be applied via hot reload (zero-downtime).
+    After updating config, call: POST /admin/embedding/config/reload
 
-    **Phase 2:** Will support hot reload via POST /admin/embedding/config/reload
+    Alternatively, restart API: ./scripts/stop-api.sh && ./scripts/start-api.sh
 
     Validation:
     - provider='local' requires model_name
@@ -188,22 +188,57 @@ async def update_embedding_config(request: UpdateEmbeddingConfigRequest):
 @admin_router.post("/config/reload", response_model=ReloadEmbeddingModelResponse)
 async def reload_embedding_model():
     """
-    Hot reload embedding model without API restart (Phase 2 - Not Yet Implemented).
+    Hot reload embedding model without API restart (zero-downtime updates).
 
-    This endpoint will be implemented in Phase 2 to support zero-downtime
-    configuration updates. Currently returns 501 Not Implemented.
-
-    Phase 2 implementation:
+    Implements zero-downtime configuration updates:
     1. Load new config from database
-    2. Initialize new model in parallel (brief 2x memory usage)
+    2. Initialize new model in parallel (old model still serves requests)
     3. Atomic swap to new model
-    4. Finish in-flight requests with old model
-    5. Garbage collect old model
+    4. In-flight requests complete with old model
+    5. Old model garbage collected automatically
 
-    See ADR-039 "Configuration Update Strategy" for details.
+    Note: Brief 2x memory usage during model loading (1-2 seconds for 300MB-1.3GB models).
+
+    For provider switches:
+    - local → openai: Unloads local model, switches to OpenAI API
+    - openai → local: Loads local model from database config
+    - local → local (different model): Hot swaps to new model
+
+    Returns success with new provider details.
+
+    Example response:
+    ```json
+    {
+        "success": true,
+        "message": "Embedding model reloaded successfully",
+        "provider": "local",
+        "model": "nomic-ai/nomic-embed-text-v1.5",
+        "dimensions": 768
+    }
+    ```
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Hot reload not yet implemented (ADR-039 Phase 2). "
-               "Please restart API: ./scripts/stop-api.sh && ./scripts/start-api.sh"
-    )
+    try:
+        from ..lib.embedding_model_manager import reload_embedding_model_manager
+
+        # Hot reload the model manager
+        manager = await reload_embedding_model_manager()
+
+        # Get new configuration summary
+        summary = get_embedding_config_summary()
+
+        logger.info(f"✅ Embedding model hot reload successful: {summary['provider']}")
+
+        return ReloadEmbeddingModelResponse(
+            success=True,
+            message="Embedding model reloaded successfully",
+            provider=summary['provider'],
+            model=summary.get('model'),
+            dimensions=summary.get('dimensions')
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Embedding model hot reload failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Hot reload failed: {str(e)}"
+        )
