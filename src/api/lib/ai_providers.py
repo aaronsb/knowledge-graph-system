@@ -819,16 +819,20 @@ def get_embedding_provider() -> Optional[AIProvider]:
 
 def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     """
-    Factory function to get the configured AI provider.
+    Factory function to get the configured AI provider (ADR-041).
+
+    Configuration source depends on DEVELOPMENT_MODE:
+    - DEVELOPMENT_MODE=true: Uses environment variables (.env file)
+    - DEVELOPMENT_MODE=false: Loads from database (kg_api.ai_extraction_config)
 
     Args:
         provider_name: Name of provider ("openai", "anthropic", or "mock")
-                      If None, reads from AI_PROVIDER env var (default: "openai")
+                      If None, reads from AI_PROVIDER env var or database
 
     Returns:
         Configured AIProvider instance
 
-    Environment Variables:
+    Environment Variables (DEVELOPMENT_MODE=true only):
         AI_PROVIDER: "openai", "anthropic", or "mock" (default: "openai")
 
         For OpenAI:
@@ -849,15 +853,51 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
             No API keys required
             MOCK_MODE: Optional ("default", "simple", "complex", "empty")
     """
-    provider_name = provider_name or os.getenv("AI_PROVIDER", "openai").lower()
+    from .config import is_development_mode, get_config_source
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    # Determine provider and model based on DEVELOPMENT_MODE
+    extraction_model = None
+
+    if is_development_mode():
+        # Development mode: Use environment variables
+        provider_name = provider_name or os.getenv("AI_PROVIDER", "openai").lower()
+        # extraction_model will be set by provider constructor from env vars
+        logger.debug(f"[DEV MODE] Using .env configuration: provider={provider_name}")
+    else:
+        # Production mode: Load from database
+        from .ai_extraction_config import load_active_extraction_config
+
+        config = load_active_extraction_config()
+
+        if not config:
+            raise RuntimeError(
+                "No AI extraction configuration found in database. "
+                "Either:\n"
+                "  1. Set DEVELOPMENT_MODE=true in .env to use environment variables\n"
+                "  2. Configure via API: POST /admin/extraction/config\n"
+                "  3. Run initialization script: ./scripts/initialize-auth.sh"
+            )
+
+        provider_name = provider_name or config['provider']
+        extraction_model = config['model_name']
+        logger.debug(f"[PROD MODE] Using database configuration: provider={provider_name}, model={extraction_model}")
 
     # Check for separate embedding provider configuration
     embedding_provider = get_embedding_provider()
 
     if provider_name == "openai":
-        return OpenAIProvider(embedding_provider=embedding_provider)
+        return OpenAIProvider(
+            extraction_model=extraction_model,
+            embedding_provider=embedding_provider
+        )
     elif provider_name == "anthropic":
-        return AnthropicProvider(embedding_provider=embedding_provider)
+        return AnthropicProvider(
+            extraction_model=extraction_model,
+            embedding_provider=embedding_provider
+        )
     elif provider_name == "mock":
         from .mock_ai_provider import MockAIProvider
         mock_mode = os.getenv("MOCK_MODE", "default")

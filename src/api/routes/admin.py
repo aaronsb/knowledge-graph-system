@@ -603,12 +603,17 @@ async def set_api_key(
             key_store = EncryptedKeyStore(conn)
             key_store.store_key(provider, api_key)
 
-            logger.info(f"API key configured for provider: {provider}")
+            # Mark key as validated (ADR-041)
+            # Key was validated above, so we can mark it as valid
+            key_store.update_validation_status(provider, "valid")
+
+            logger.info(f"API key configured and validated for provider: {provider}")
 
             return {
                 "status": "success",
-                "message": f"{provider} API key configured for this shard",
-                "provider": provider
+                "message": f"{provider} API key configured and validated for this shard",
+                "provider": provider,
+                "validation_status": "valid"
             }
         finally:
             age_client.pool.putconn(conn)
@@ -629,12 +634,19 @@ async def set_api_key(
 @router.get("/keys")
 async def list_api_keys():
     """
-    List configured API providers (ADR-031)
+    List configured API providers with validation status (ADR-031, ADR-041)
 
-    Returns list of providers with status (configured/not configured)
-    and last update time.
+    Returns list of providers with status (configured/not configured),
+    last update time, validation status, and masked keys.
 
-    Does NOT return the actual API keys (security).
+    The validation status indicates whether the API key was successfully validated:
+    - `valid`: Key validated successfully
+    - `invalid`: Key validation failed
+    - `untested`: Key not yet validated (newly added)
+    - `unknown`: Validation tracking not available (migration pending)
+
+    Does NOT return the actual API keys (security) - only masked versions showing
+    prefix + last 6 characters (e.g., "sk-proj-...abc123").
 
     Example response:
     ```json
@@ -642,12 +654,20 @@ async def list_api_keys():
         {
             "provider": "openai",
             "configured": true,
-            "updated_at": "2025-10-12T10:30:00Z"
+            "updated_at": "2025-10-21T10:30:00Z",
+            "validation_status": "valid",
+            "last_validated_at": "2025-10-21T10:30:00Z",
+            "validation_error": null,
+            "masked_key": "sk-proj-...abc123"
         },
         {
             "provider": "anthropic",
             "configured": false,
-            "updated_at": null
+            "updated_at": null,
+            "validation_status": null,
+            "last_validated_at": null,
+            "validation_error": null,
+            "masked_key": null
         }
     ]
     ```
@@ -659,7 +679,8 @@ async def list_api_keys():
             # Try to initialize key store - if encryption key not configured, return unconfigured
             try:
                 key_store = EncryptedKeyStore(conn)
-                configured = key_store.list_providers()
+                # Get configured providers with validation status and masked keys
+                configured = key_store.list_providers(include_masked_keys=True)
             except ValueError as e:
                 # Encryption key not configured - all providers are unconfigured
                 logger.info(f"Encryption key not configured: {e}")
@@ -673,7 +694,11 @@ async def list_api_keys():
                 {
                     "provider": provider,
                     "configured": provider in configured_map,
-                    "updated_at": configured_map[provider]['updated_at'] if provider in configured_map else None
+                    "updated_at": configured_map[provider]['updated_at'] if provider in configured_map else None,
+                    "validation_status": configured_map[provider].get('validation_status') if provider in configured_map else None,
+                    "last_validated_at": configured_map[provider].get('last_validated_at') if provider in configured_map else None,
+                    "validation_error": configured_map[provider].get('validation_error') if provider in configured_map else None,
+                    "masked_key": configured_map[provider].get('masked_key') if provider in configured_map else None
                 }
                 for provider in all_providers
             ]

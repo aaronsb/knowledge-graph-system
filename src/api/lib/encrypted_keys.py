@@ -24,6 +24,40 @@ from .secrets import get_encryption_key
 logger = logging.getLogger(__name__)
 
 
+def mask_api_key(plaintext_key: str) -> str:
+    """
+    Mask API key for display, showing only prefix and last 6 characters (ADR-041).
+
+    Examples:
+        "sk-proj-abc123def456ghi789" → "sk-proj-...ghi789"
+        "sk-ant-abc123def456ghi789" → "sk-ant-...ghi789"
+        "sk-abc123def456ghi789" → "sk-...ghi789"
+
+    Args:
+        plaintext_key: The plaintext API key
+
+    Returns:
+        Masked key showing prefix + "..." + last 6 chars
+    """
+    if not plaintext_key or len(plaintext_key) < 10:
+        return "***"
+
+    # Determine prefix
+    if plaintext_key.startswith("sk-ant-"):
+        prefix = "sk-ant-"
+    elif plaintext_key.startswith("sk-proj-"):
+        prefix = "sk-proj-"
+    elif plaintext_key.startswith("sk-"):
+        prefix = "sk-"
+    else:
+        prefix = ""
+
+    # Get last 6 characters
+    suffix = plaintext_key[-6:]
+
+    return f"{prefix}...{suffix}"
+
+
 class EncryptedKeyStore:
     """Manage system-wide API keys with encryption at rest"""
 
@@ -182,28 +216,101 @@ class EncryptedKeyStore:
             logger.error(f"Failed to delete API key for {provider}: {e}")
             raise ValueError(f"Failed to delete API key: {e}")
 
-    def list_providers(self) -> List[Dict[str, str]]:
+    def list_providers(self, include_masked_keys: bool = False) -> List[Dict[str, str]]:
         """
-        List configured providers.
+        List configured providers with validation status (ADR-041).
+
+        Args:
+            include_masked_keys: If True, decrypt and include masked keys in response
 
         Returns:
-            List of provider info dicts: [{'provider': 'openai', 'updated_at': '...'}]
+            List of provider info dicts with validation status:
+            [
+                {
+                    'provider': 'openai',
+                    'updated_at': '...',
+                    'validation_status': 'valid',
+                    'last_validated_at': '...',
+                    'validation_error': None,
+                    'masked_key': 'sk-proj-...abc123'  # Only if include_masked_keys=True
+                }
+            ]
         """
         try:
             with self.db.cursor() as cur:
+                # Check if validation columns exist (migration 005 may not have run yet)
                 cur.execute("""
-                    SELECT provider, updated_at
-                    FROM system_api_keys
-                    ORDER BY provider
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'kg_api'
+                      AND table_name = 'system_api_keys'
+                      AND column_name = 'validation_status'
                 """)
+                has_validation = cur.fetchone() is not None
 
-                return [
-                    {
-                        'provider': row[0],
-                        'updated_at': row[1].isoformat() if row[1] else None
-                    }
-                    for row in cur.fetchall()
-                ]
+                if has_validation:
+                    # Query with validation fields
+                    cur.execute("""
+                        SELECT provider, updated_at, encrypted_key,
+                               validation_status, last_validated_at, validation_error
+                        FROM system_api_keys
+                        ORDER BY provider
+                    """)
+
+                    results = []
+                    for row in cur.fetchall():
+                        provider_info = {
+                            'provider': row[0],
+                            'updated_at': row[1].isoformat() if row[1] else None,
+                            'validation_status': row[3] or 'untested',
+                            'last_validated_at': row[4].isoformat() if row[4] else None,
+                            'validation_error': row[5]
+                        }
+
+                        # Optionally decrypt and mask the key
+                        if include_masked_keys:
+                            try:
+                                encrypted = bytes(row[2])
+                                plaintext = self.cipher.decrypt(encrypted).decode()
+                                provider_info['masked_key'] = mask_api_key(plaintext)
+                            except Exception as e:
+                                logger.warning(f"Failed to decrypt key for masking: {e}")
+                                provider_info['masked_key'] = '***'
+
+                        results.append(provider_info)
+
+                    return results
+                else:
+                    # Fallback for when migration 005 hasn't run yet
+                    cur.execute("""
+                        SELECT provider, updated_at, encrypted_key
+                        FROM system_api_keys
+                        ORDER BY provider
+                    """)
+
+                    results = []
+                    for row in cur.fetchall():
+                        provider_info = {
+                            'provider': row[0],
+                            'updated_at': row[1].isoformat() if row[1] else None,
+                            'validation_status': 'unknown',  # Migration not applied
+                            'last_validated_at': None,
+                            'validation_error': None
+                        }
+
+                        # Optionally decrypt and mask the key
+                        if include_masked_keys:
+                            try:
+                                encrypted = bytes(row[2])
+                                plaintext = self.cipher.decrypt(encrypted).decode()
+                                provider_info['masked_key'] = mask_api_key(plaintext)
+                            except Exception as e:
+                                logger.warning(f"Failed to decrypt key for masking: {e}")
+                                provider_info['masked_key'] = '***'
+
+                        results.append(provider_info)
+
+                    return results
 
         except Exception as e:
             logger.error(f"Failed to list providers: {e}")
@@ -231,6 +338,67 @@ class EncryptedKeyStore:
 
         except Exception as e:
             logger.error(f"Failed to check key existence for {provider}: {e}")
+            return False
+
+    def update_validation_status(
+        self,
+        provider: str,
+        status: str,
+        error_message: Optional[str] = None
+    ) -> bool:
+        """
+        Update validation status for an API key (ADR-041).
+
+        Args:
+            provider: Provider name ('openai' or 'anthropic')
+            status: Validation status ('valid', 'invalid', 'untested')
+            error_message: Optional error message if validation failed
+
+        Returns:
+            True if updated successfully, False otherwise
+        """
+        try:
+            with self.db.cursor() as cur:
+                # Check if validation columns exist (migration 005 may not have run yet)
+                cur.execute("""
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'kg_api'
+                      AND table_name = 'system_api_keys'
+                      AND column_name = 'validation_status'
+                """)
+                has_validation = cur.fetchone() is not None
+
+                if not has_validation:
+                    logger.debug(
+                        f"Validation columns not available (migration 005 pending). "
+                        f"Skipping validation status update for {provider}."
+                    )
+                    return False
+
+                # Update validation status
+                cur.execute("""
+                    UPDATE system_api_keys
+                    SET validation_status = %s,
+                        last_validated_at = NOW(),
+                        validation_error = %s
+                    WHERE provider = %s
+                """, (status, error_message, provider))
+
+                self.db.commit()
+                updated = cur.rowcount > 0
+
+                if updated:
+                    logger.info(
+                        f"Updated validation status for {provider}: {status}" +
+                        (f" - {error_message}" if error_message else "")
+                    )
+
+                return updated
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to update validation status for {provider}: {e}")
             return False
 
 
