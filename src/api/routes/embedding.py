@@ -26,7 +26,10 @@ from ..models.embedding import (
 from ..lib.embedding_config import (
     load_active_embedding_config,
     save_embedding_config,
-    get_embedding_config_summary
+    get_embedding_config_summary,
+    list_all_embedding_configs,
+    set_embedding_config_protection,
+    delete_embedding_config
 )
 
 # Public router (no auth)
@@ -154,12 +157,12 @@ async def update_embedding_config(request: UpdateEmbeddingConfigRequest):
 
         # Save configuration
         config_dict = request.model_dump(exclude_none=True)
-        success = save_embedding_config(config_dict, updated_by=request.updated_by)
+        success, error_msg = save_embedding_config(config_dict, updated_by=request.updated_by)
 
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to save embedding configuration"
+                status_code=status.HTTP_400_BAD_REQUEST if "protected" in error_msg.lower() else status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=error_msg or "Failed to save embedding configuration"
             )
 
         # Get the new config ID
@@ -226,11 +229,18 @@ async def reload_embedding_model():
         # Get new configuration summary
         summary = get_embedding_config_summary()
 
+        # Auto-protect: Re-enable change protection on the new active config
+        # This prevents accidental changes after a successful reload
+        config = load_active_embedding_config()
+        if config:
+            set_embedding_config_protection(config['id'], change_protected=True)
+            logger.info(f"🔒 Auto-protected config {config['id']} after hot reload")
+
         logger.info(f"✅ Embedding model hot reload successful: {summary['provider']}")
 
         return ReloadEmbeddingModelResponse(
             success=True,
-            message="Embedding model reloaded successfully",
+            message="Embedding model reloaded successfully (config auto-protected)",
             provider=summary['provider'],
             model=summary.get('model'),
             dimensions=summary.get('dimensions')
@@ -241,4 +251,104 @@ async def reload_embedding_model():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Hot reload failed: {str(e)}"
+        )
+
+
+@admin_router.get("/configs", response_model=list)
+async def list_embedding_configs():
+    """
+    List all embedding configurations (admin endpoint).
+
+    Returns all configs (active and inactive) with protection flags.
+    Use this to see all historical configurations.
+    """
+    try:
+        configs = list_all_embedding_configs()
+        return configs
+    except Exception as e:
+        logger.error(f"Failed to list embedding configs: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list configs: {str(e)}"
+        )
+
+
+@admin_router.post("/config/{config_id}/protect")
+async def protect_embedding_config(
+    config_id: int,
+    delete_protected: Optional[bool] = None,
+    change_protected: Optional[bool] = None
+):
+    """
+    Set protection flags on an embedding configuration (admin endpoint).
+
+    Protection flags prevent accidental breaking changes:
+    - delete_protected: Prevents deletion without explicit unprotect
+    - change_protected: Prevents changing provider/dimensions (breaks vector search)
+
+    Example:
+    ```json
+    {
+        "delete_protected": true,
+        "change_protected": true
+    }
+    ```
+    """
+    try:
+        if delete_protected is None and change_protected is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Must specify at least one protection flag"
+            )
+
+        success = set_embedding_config_protection(
+            config_id,
+            delete_protected=delete_protected,
+            change_protected=change_protected
+        )
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Config {config_id} not found"
+            )
+
+        return {"success": True, "config_id": config_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to set protection flags: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to set protection: {str(e)}"
+        )
+
+
+@admin_router.delete("/config/{config_id}")
+async def delete_embedding_config_endpoint(config_id: int):
+    """
+    Delete an embedding configuration (admin endpoint).
+
+    Cannot delete configs that are delete-protected.
+    Remove protection first if needed.
+    """
+    try:
+        success, error_msg = delete_embedding_config(config_id)
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST if "protected" in error_msg.lower() else status.HTTP_404_NOT_FOUND,
+                detail=error_msg
+            )
+
+        return {"success": True, "config_id": config_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete embedding config: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete config: {str(e)}"
         )
