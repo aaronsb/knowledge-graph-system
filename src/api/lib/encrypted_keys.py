@@ -70,6 +70,10 @@ class EncryptedKeyStore:
 
         Raises:
             ValueError: If encryption key not configured
+
+        Note:
+            The system_api_keys table must already exist (created by migration 005).
+            See schema/migrations/005_add_api_key_validation.sql
         """
         self.db = db_connection
 
@@ -86,30 +90,6 @@ class EncryptedKeyStore:
             self.cipher = Fernet(encryption_key.encode())
         except Exception as e:
             raise ValueError(f"Invalid encryption key format: {e}")
-
-        # Ensure table exists
-        self._ensure_table()
-
-    def _ensure_table(self) -> None:
-        """Create system_api_keys table if it doesn't exist"""
-        try:
-            with self.db.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS system_api_keys (
-                        provider VARCHAR(50) PRIMARY KEY,
-                        encrypted_key BYTEA NOT NULL,
-                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                    );
-
-                    CREATE INDEX IF NOT EXISTS idx_system_api_keys_updated
-                    ON system_api_keys(updated_at);
-                """)
-                self.db.commit()
-                logger.debug("system_api_keys table ready")
-        except Exception as e:
-            self.db.rollback()
-            logger.error(f"Failed to create system_api_keys table: {e}")
-            raise
 
     def store_key(self, provider: str, plaintext_key: str) -> None:
         """
@@ -129,7 +109,7 @@ class EncryptedKeyStore:
             # Store in database
             with self.db.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO system_api_keys (provider, encrypted_key)
+                    INSERT INTO kg_api.system_api_keys (provider, encrypted_key)
                     VALUES (%s, %s)
                     ON CONFLICT (provider)
                     DO UPDATE SET
@@ -162,7 +142,7 @@ class EncryptedKeyStore:
             with self.db.cursor() as cur:
                 cur.execute("""
                     SELECT encrypted_key
-                    FROM system_api_keys
+                    FROM kg_api.system_api_keys
                     WHERE provider = %s
                 """, (provider,))
 
@@ -201,7 +181,7 @@ class EncryptedKeyStore:
         try:
             with self.db.cursor() as cur:
                 cur.execute("""
-                    DELETE FROM system_api_keys
+                    DELETE FROM kg_api.system_api_keys
                     WHERE provider = %s
                 """, (provider,))
                 self.db.commit()
@@ -253,7 +233,7 @@ class EncryptedKeyStore:
                     cur.execute("""
                         SELECT provider, updated_at, encrypted_key,
                                validation_status, last_validated_at, validation_error
-                        FROM system_api_keys
+                        FROM kg_api.system_api_keys
                         ORDER BY provider
                     """)
 
@@ -284,7 +264,7 @@ class EncryptedKeyStore:
                     # Fallback for when migration 005 hasn't run yet
                     cur.execute("""
                         SELECT provider, updated_at, encrypted_key
-                        FROM system_api_keys
+                        FROM kg_api.system_api_keys
                         ORDER BY provider
                     """)
 
@@ -330,7 +310,7 @@ class EncryptedKeyStore:
             with self.db.cursor() as cur:
                 cur.execute("""
                     SELECT 1
-                    FROM system_api_keys
+                    FROM kg_api.system_api_keys
                     WHERE provider = %s
                 """, (provider,))
 
@@ -378,7 +358,7 @@ class EncryptedKeyStore:
 
                 # Update validation status
                 cur.execute("""
-                    UPDATE system_api_keys
+                    UPDATE kg_api.system_api_keys
                     SET validation_status = %s,
                         last_validated_at = NOW(),
                         validation_error = %s
