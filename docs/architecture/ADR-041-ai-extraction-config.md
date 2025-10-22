@@ -1190,6 +1190,190 @@ curl -X POST http://localhost:8000/admin/keys/openai/validate \
 }
 ```
 
+## Development Mode vs Production Mode
+
+### Configuration Source Control
+
+**Problem:** Need to support both local development (quick .env edits) and production (database-first) without spaghetti code.
+
+**Solution:** Explicit `DEVELOPMENT_MODE` flag controls configuration source.
+
+```bash
+# .env
+DEVELOPMENT_MODE=true   # .env is source of truth
+# or
+DEVELOPMENT_MODE=false  # Database is source of truth (production)
+```
+
+### Mode Behavior
+
+| Aspect | Development Mode | Production Mode |
+|--------|-----------------|-----------------|
+| **Flag** | `DEVELOPMENT_MODE=true` | `DEVELOPMENT_MODE=false` (or omitted) |
+| **Config source** | `.env` file | Database tables |
+| **API keys** | From `.env` | From `system_api_keys` (encrypted) |
+| **Extraction config** | From `.env` (`AI_PROVIDER`, `*_EXTRACTION_MODEL`) | From `ai_extraction_config` table |
+| **Embedding config** | From `.env` (`EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`) | From `embedding_config` table |
+| **Startup warning** | ⚠️ Logs "DEVELOPMENT MODE ACTIVE" | ℹ️ Logs "Production mode" |
+| **Database writes** | Never (read-only) | Config stored in database |
+| **Hot reload** | Restart required | API endpoints update config |
+
+### Why This Approach?
+
+**Supports all future scenarios:**
+
+```bash
+# Scenario 1: All local (no API keys needed)
+DEVELOPMENT_MODE=true
+AI_PROVIDER=local
+LOCAL_EXTRACTION_MODEL=llama-3.1-70b
+EMBEDDING_PROVIDER=local
+EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1.5
+# No API keys! Still development mode.
+
+# Scenario 2: Hybrid development
+DEVELOPMENT_MODE=true
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+EMBEDDING_PROVIDER=local  # Cost optimization
+
+# Scenario 3: Production with local providers
+DEVELOPMENT_MODE=false
+# All config in database:
+#   ai_extraction_config: provider='local', model='llama-3.1-70b'
+#   embedding_config: provider='local', model='nomic-embed-text-v1.5'
+```
+
+**Key insight:** Mode is about **config source**, not **whether you have API keys**.
+
+### Implementation
+
+```python
+# src/api/lib/config.py (New centralized config module)
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Global development mode flag
+DEVELOPMENT_MODE = os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true'
+
+def is_development_mode() -> bool:
+    """Check if running in development mode."""
+    return DEVELOPMENT_MODE
+
+def get_config_source() -> str:
+    """Get configuration source name."""
+    return 'environment' if DEVELOPMENT_MODE else 'database'
+
+# Startup warning
+if DEVELOPMENT_MODE:
+    logger.warning("╔════════════════════════════════════════╗")
+    logger.warning("║   ⚠️  DEVELOPMENT MODE ACTIVE  ⚠️      ║")
+    logger.warning("╚════════════════════════════════════════╝")
+    logger.warning("Configuration source: .env file")
+    logger.warning("Database configuration will be IGNORED")
+    logger.warning("Set DEVELOPMENT_MODE=false for production")
+```
+
+```python
+# src/api/lib/ai_providers.py (Updated get_provider)
+from .config import DEVELOPMENT_MODE
+
+def get_provider(provider_name: Optional[str] = None) -> AIProvider:
+    """Factory with mode-aware configuration loading."""
+
+    if DEVELOPMENT_MODE:
+        # Development: .env is source of truth
+        provider = provider_name or os.getenv('AI_PROVIDER', 'openai')
+        model = os.getenv(f'{provider.upper()}_EXTRACTION_MODEL')
+        logger.debug(f"[DEV] Using .env: {provider}/{model}")
+    else:
+        # Production: database is source of truth
+        from .ai_extraction_config import load_active_extraction_config
+        config = load_active_extraction_config()
+
+        if not config:
+            raise RuntimeError(
+                "No AI extraction config in database. "
+                "Initialize via: ./scripts/initialize-auth.sh"
+            )
+
+        provider = config['provider']
+        model = config['model_name']
+        logger.debug(f"[PROD] Using database: {provider}/{model}")
+
+    # Instantiate provider (same for both modes)
+    if provider == 'openai':
+        return OpenAIProvider(extraction_model=model)
+    elif provider == 'anthropic':
+        return AnthropicProvider(extraction_model=model)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+```
+
+### Health Endpoint Enhancement
+
+```python
+@router.get("/health")
+async def health_check():
+    """Health check with mode information."""
+    from .lib.config import DEVELOPMENT_MODE, get_config_source
+
+    response = {
+        "status": "healthy",
+        "mode": "development" if DEVELOPMENT_MODE else "production",
+        "config_source": get_config_source()
+    }
+
+    if DEVELOPMENT_MODE:
+        response["warnings"] = [
+            "Development mode active: using .env configuration",
+            "Set DEVELOPMENT_MODE=false for production"
+        ]
+
+    return response
+```
+
+### .env.example Documentation
+
+```bash
+# ============================================================================
+# Development Mode
+# ============================================================================
+# Controls configuration source:
+#   true  = Use .env configuration (development, quick iteration)
+#   false = Use database configuration (production, runtime updates)
+#
+# This affects ALL configuration sources:
+#   - AI provider selection (OpenAI, Anthropic, Local)
+#   - Model selection (gpt-4o, claude-sonnet-4, llama-3.1)
+#   - Embedding configuration
+#   - API keys (if providers need them)
+#
+# Default: false (production mode)
+# ============================================================================
+DEVELOPMENT_MODE=true
+
+# ============================================================================
+# AI Configuration (Only used if DEVELOPMENT_MODE=true)
+# ============================================================================
+
+# Extraction Provider
+AI_PROVIDER=openai  # Options: openai, anthropic, local (future)
+OPENAI_EXTRACTION_MODEL=gpt-4o
+ANTHROPIC_EXTRACTION_MODEL=claude-sonnet-4-20250514
+# LOCAL_EXTRACTION_MODEL=llama-3.1-70b  # Future
+
+# Embedding Provider (already supported)
+# EMBEDDING_PROVIDER=local
+# EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1.5
+
+# API Keys (only if providers require them)
+# OPENAI_API_KEY=sk-proj-...
+# ANTHROPIC_API_KEY=sk-ant-...
+```
+
 ## References
 
 - Related: ADR-031 (Encrypted API Key Storage) - Shared API keys
