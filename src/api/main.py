@@ -159,6 +159,14 @@ async def startup_event():
         logger.warning(f"⚠️  Failed to initialize local embedding model: {e}")
         logger.info("   Falling back to API-based embeddings")
 
+    # ADR-041: Validate API keys at startup (non-blocking)
+    try:
+        from .lib.api_key_validator import validate_api_keys_at_startup
+        validate_api_keys_at_startup()
+    except Exception as e:
+        logger.warning(f"⚠️  API key validation failed: {e}")
+        logger.info("   System will continue without validated keys")
+
     logger.info("🎉 API ready!")
     logger.info(f"📚 Docs: http://localhost:8000/docs")
     logger.info(f"📚 ReDoc: http://localhost:8000/redoc")
