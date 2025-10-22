@@ -554,3 +554,126 @@ export interface PermissionCheckResponse {
   allowed: boolean;
   reason?: string;
 }
+
+// ========== AI Configuration Types (ADR-039, ADR-041) ==========
+
+// Embedding Configuration
+export interface EmbeddingConfigResponse {
+  provider: string;
+  model: string;
+  dimensions: number;
+  precision?: string;
+  config_id: number;
+  supports_browser?: boolean;
+  resource_allocation?: {
+    max_memory_mb: number;
+    num_threads: number;
+    device: string;
+    batch_size: number;
+  };
+}
+
+export interface EmbeddingConfigDetail {
+  id: number;
+  provider: string;
+  model_name: string;
+  dimensions: number;
+  precision?: string;
+  supports_browser?: boolean;
+  max_memory_mb?: number;
+  num_threads?: number;
+  device?: string;
+  batch_size?: number;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string;
+  active: boolean;
+}
+
+export interface UpdateEmbeddingConfigRequest {
+  provider: string;
+  model_name: string;
+  dimensions: number;
+  precision?: string;
+  supports_browser?: boolean;
+  max_memory_mb?: number;
+  num_threads?: number;
+  device?: string;
+  batch_size?: number;
+  updated_by?: string;
+}
+
+export interface UpdateEmbeddingConfigResponse {
+  success: boolean;
+  message: string;
+  config_id: number;
+  reload_required: boolean;
+}
+
+// Extraction Configuration
+export interface ExtractionConfigResponse {
+  provider: string;
+  model: string;
+  supports_vision: boolean;
+  supports_json_mode: boolean;
+  max_tokens: number;
+  config_id: number;
+}
+
+export interface ExtractionConfigDetail {
+  id: number;
+  provider: string;
+  model_name: string;
+  supports_vision: boolean;
+  supports_json_mode: boolean;
+  max_tokens?: number;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string;
+  active: boolean;
+}
+
+export interface UpdateExtractionConfigRequest {
+  provider: string;
+  model_name: string;
+  supports_vision?: boolean;
+  supports_json_mode?: boolean;
+  max_tokens?: number;
+  updated_by?: string;
+}
+
+export interface UpdateExtractionConfigResponse {
+  success: boolean;
+  message: string;
+  config_id: number;
+  reload_required: boolean;
+}
+
+// API Key Management
+export interface ApiKeyInfo {
+  provider: string;
+  configured: boolean;
+  updated_at?: string;
+  validation_status?: 'valid' | 'invalid' | 'untested';
+  last_validated_at?: string;
+  validation_error?: string;
+  masked_key?: string;
+}
+
+export interface SetApiKeyRequest {
+  provider: string;
+  api_key: string;
+}
+
+export interface SetApiKeyResponse {
+  status: string;
+  message: string;
+  provider: string;
+  validation_status: string;
+}
+
+export interface DeleteApiKeyResponse {
+  status: string;
+  message: string;
+  provider: string;
+}

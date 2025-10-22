@@ -91,12 +91,12 @@ async def update_extraction_config(request: UpdateExtractionConfigRequest):
     Creates a new configuration entry and deactivates the previous one.
     Configuration is stored in kg_api.ai_extraction_config table.
 
-    **Important:** Changing configuration requires API restart.
-    Use: ./scripts/stop-api.sh && ./scripts/start-api.sh
+    **Important:** Configuration changes are applied immediately (zero-downtime).
+    The next extraction request will use the new provider/model automatically.
 
     **DEVELOPMENT_MODE behavior:**
     - DEVELOPMENT_MODE=true: Configuration changes stored in database but .env takes precedence
-    - DEVELOPMENT_MODE=false: Configuration loaded from database on startup (recommended)
+    - DEVELOPMENT_MODE=false: Configuration loaded from database (hot-reloadable, recommended)
 
     Validation:
     - provider must be 'openai' or 'anthropic'
@@ -157,9 +157,9 @@ async def update_extraction_config(request: UpdateExtractionConfigRequest):
 
         return UpdateExtractionConfigResponse(
             success=True,
-            message="Configuration updated successfully. API restart required to apply changes.",
+            message="Configuration updated successfully. Changes applied immediately (zero-downtime).",
             config_id=config_id,
-            reload_required=True  # Manual restart required
+            reload_required=False  # Hot-reloadable via get_provider()
         )
 
     except HTTPException:

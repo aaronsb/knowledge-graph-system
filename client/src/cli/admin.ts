@@ -17,6 +17,7 @@ import { JobProgressStream, trackJobProgress } from '../lib/job-stream';
 import type { JobStatus, JobProgress } from '../types';
 import { registerAuthAdminCommand } from './auth-admin';
 import { createRbacCommand } from './rbac';
+import { createEmbeddingCommand, createExtractionCommand, createKeysCommand } from './ai-config';
 
 /**
  * Prompt for input from user
@@ -1145,7 +1146,7 @@ const schedulerCommand = new Command('scheduler')
 // ========== Main Admin Command ==========
 
 export const adminCommand = new Command('admin')
-  .description('System administration (status, backup, restore, reset, scheduler, user, rbac)')
+  .description('System administration (status, backup, restore, reset, scheduler, user, rbac, embedding, extraction, keys)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(statusCommand)
@@ -1163,6 +1164,19 @@ const client = createClientFromEnv();
 const rbacCommand = createRbacCommand(client);
 configureColoredHelp(rbacCommand);
 adminCommand.addCommand(rbacCommand);
+
+// ADR-039, ADR-041: Register AI configuration commands
+const embeddingCommand = createEmbeddingCommand(client);
+const extractionCommand = createExtractionCommand(client);
+const keysCommand = createKeysCommand(client);
+
+configureColoredHelp(embeddingCommand);
+configureColoredHelp(extractionCommand);
+configureColoredHelp(keysCommand);
+
+adminCommand.addCommand(embeddingCommand);
+adminCommand.addCommand(extractionCommand);
+adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
 [statusCommand, backupCommand, listBackupsCommand, restoreCommand, resetCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand].forEach(configureColoredHelp);

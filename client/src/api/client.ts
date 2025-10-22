@@ -830,6 +830,95 @@ export class KnowledgeGraphClient {
     });
     return response.data;
   }
+
+  // ========== AI Configuration Methods (ADR-039, ADR-041) ==========
+
+  /**
+   * Get current embedding configuration (public endpoint)
+   */
+  async getEmbeddingConfig(): Promise<any> {
+    const response = await this.client.get('/embedding/config');
+    return response.data;
+  }
+
+  /**
+   * Get detailed embedding configuration (admin endpoint)
+   */
+  async getEmbeddingConfigDetail(): Promise<any> {
+    const response = await this.client.get('/admin/embedding/config');
+    return response.data;
+  }
+
+  /**
+   * Update embedding configuration (admin endpoint)
+   */
+  async updateEmbeddingConfig(config: any): Promise<any> {
+    const response = await this.client.post('/admin/embedding/config', config);
+    return response.data;
+  }
+
+  /**
+   * Hot reload embedding model (admin endpoint)
+   */
+  async reloadEmbeddingModel(): Promise<any> {
+    const response = await this.client.post('/admin/embedding/config/reload');
+    return response.data;
+  }
+
+  /**
+   * Get current extraction configuration (public endpoint)
+   */
+  async getExtractionConfig(): Promise<any> {
+    const response = await this.client.get('/extraction/config');
+    return response.data;
+  }
+
+  /**
+   * Get detailed extraction configuration (admin endpoint)
+   */
+  async getExtractionConfigDetail(): Promise<any> {
+    const response = await this.client.get('/admin/extraction/config');
+    return response.data;
+  }
+
+  /**
+   * Update extraction configuration (admin endpoint)
+   */
+  async updateExtractionConfig(config: any): Promise<any> {
+    const response = await this.client.post('/admin/extraction/config', config);
+    return response.data;
+  }
+
+  /**
+   * List API keys with validation status (admin endpoint)
+   */
+  async listApiKeys(): Promise<any[]> {
+    const response = await this.client.get('/admin/keys');
+    return response.data;
+  }
+
+  /**
+   * Set API key for a provider (admin endpoint)
+   */
+  async setApiKey(provider: string, apiKey: string): Promise<any> {
+    const formData = new FormData();
+    formData.append('api_key', apiKey);
+
+    const response = await this.client.post(`/admin/keys/${provider}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete API key for a provider (admin endpoint)
+   */
+  async deleteApiKey(provider: string): Promise<any> {
+    const response = await this.client.delete(`/admin/keys/${provider}`);
+    return response.data;
+  }
 }
 
 /**
