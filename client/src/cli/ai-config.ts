@@ -134,7 +134,7 @@ function createEmbeddingSetCommand(client: KnowledgeGraphClient): Command {
 
         if (options.provider) config.provider = options.provider;
         if (options.model) config.model_name = options.model;
-        if (options.dimensions) config.dimensions = options.dimensions;
+        if (options.dimensions) config.embedding_dimensions = options.dimensions;
         if (options.precision) config.precision = options.precision;
         if (options.device) config.device = options.device;
         if (options.memory) config.max_memory_mb = options.memory;
@@ -205,6 +205,188 @@ function createEmbeddingReloadCommand(client: KnowledgeGraphClient): Command {
 }
 
 /**
+ * List all embedding configurations
+ */
+function createEmbeddingListCommand(client: KnowledgeGraphClient): Command {
+  return new Command('list')
+    .description('List all embedding configurations')
+    .action(async () => {
+      try {
+        console.log('\n' + separator());
+        console.log(colors.ui.title('📋 Embedding Configurations'));
+        console.log(separator());
+
+        const configs = await client.listEmbeddingConfigs();
+
+        if (configs.length === 0) {
+          console.log(colors.status.dim('\n  No configurations found\n'));
+        } else {
+          console.log('');
+          for (const config of configs) {
+            const activeMarker = config.active ? colors.status.success('✓ ACTIVE') : colors.status.dim('○ Inactive');
+            const deleteProtected = config.delete_protected ? '🔒' : '';
+            const changeProtected = config.change_protected ? '🔐' : '';
+            const protection = [deleteProtected, changeProtected].filter(p => p).join(' ');
+
+            console.log(`  ${activeMarker} ${colors.ui.header(`Config ${config.id}`)} ${protection}`);
+            console.log(`    ${colors.ui.key('Provider:')} ${colors.ui.value(config.provider)}`);
+
+            if (config.model_name) {
+              console.log(`    ${colors.ui.key('Model:')} ${colors.ui.value(config.model_name)}`);
+            }
+
+            if (config.embedding_dimensions) {
+              console.log(`    ${colors.ui.key('Dimensions:')} ${colors.ui.value(config.embedding_dimensions)}`);
+            }
+
+            if (config.delete_protected || config.change_protected) {
+              const flags = [];
+              if (config.delete_protected) flags.push('delete-protected');
+              if (config.change_protected) flags.push('change-protected');
+              console.log(`    ${colors.ui.key('Protection:')} ${colors.status.warning(flags.join(', '))}`);
+            }
+
+            console.log(`    ${colors.status.dim('Updated: ' + new Date(config.updated_at).toLocaleString())}`);
+            console.log(`    ${colors.status.dim('By: ' + config.updated_by)}`);
+            console.log('');
+          }
+        }
+
+        console.log(separator() + '\n');
+
+      } catch (error: any) {
+        console.error(colors.status.error('✗ Failed to list embedding configurations'));
+        console.error(colors.status.error(error.response?.data?.detail || error.message));
+        process.exit(1);
+      }
+    });
+}
+
+/**
+ * Protect an embedding configuration
+ */
+function createEmbeddingProtectCommand(client: KnowledgeGraphClient): Command {
+  return new Command('protect')
+    .description('Enable protection flags on an embedding configuration')
+    .argument('<config-id>', 'Configuration ID', parseInt)
+    .option('--delete', 'Enable delete protection')
+    .option('--change', 'Enable change protection')
+    .action(async (configId: number, options) => {
+      try {
+        console.log('\n' + separator());
+        console.log(colors.ui.title(`🔒 Protect Config ${configId}`));
+        console.log(separator());
+
+        if (!options.delete && !options.change) {
+          console.error(colors.status.error('\n✗ Must specify at least one protection flag'));
+          console.log(colors.status.dim('  Use --delete and/or --change\n'));
+          process.exit(1);
+        }
+
+        const result = await client.protectEmbeddingConfig(
+          configId,
+          options.delete ? true : undefined,
+          options.change ? true : undefined
+        );
+
+        console.log('\n' + colors.status.success('✓ Protection enabled'));
+
+        const flags = [];
+        if (options.delete) flags.push('delete-protected');
+        if (options.change) flags.push('change-protected');
+
+        console.log(`\n  ${colors.ui.key('Config ID:')} ${colors.ui.value(configId)}`);
+        console.log(`  ${colors.ui.key('Flags:')} ${colors.status.warning(flags.join(', '))}`);
+        console.log('\n' + separator() + '\n');
+
+      } catch (error: any) {
+        console.error(colors.status.error('✗ Failed to set protection'));
+        console.error(colors.status.error(error.response?.data?.detail || error.message));
+        process.exit(1);
+      }
+    });
+}
+
+/**
+ * Unprotect an embedding configuration
+ */
+function createEmbeddingUnprotectCommand(client: KnowledgeGraphClient): Command {
+  return new Command('unprotect')
+    .description('Disable protection flags on an embedding configuration')
+    .argument('<config-id>', 'Configuration ID', parseInt)
+    .option('--delete', 'Disable delete protection')
+    .option('--change', 'Disable change protection')
+    .action(async (configId: number, options) => {
+      try {
+        console.log('\n' + separator());
+        console.log(colors.ui.title(`🔓 Unprotect Config ${configId}`));
+        console.log(separator());
+
+        if (!options.delete && !options.change) {
+          console.error(colors.status.error('\n✗ Must specify at least one protection flag'));
+          console.log(colors.status.dim('  Use --delete and/or --change\n'));
+          process.exit(1);
+        }
+
+        const result = await client.protectEmbeddingConfig(
+          configId,
+          options.delete ? false : undefined,
+          options.change ? false : undefined
+        );
+
+        console.log('\n' + colors.status.success('✓ Protection disabled'));
+
+        const flags = [];
+        if (options.delete) flags.push('delete-protection');
+        if (options.change) flags.push('change-protection');
+
+        console.log(`\n  ${colors.ui.key('Config ID:')} ${colors.ui.value(configId)}`);
+        console.log(`  ${colors.ui.key('Removed:')} ${colors.status.dim(flags.join(', '))}`);
+        console.log('\n' + separator() + '\n');
+
+      } catch (error: any) {
+        console.error(colors.status.error('✗ Failed to remove protection'));
+        console.error(colors.status.error(error.response?.data?.detail || error.message));
+        process.exit(1);
+      }
+    });
+}
+
+/**
+ * Delete an embedding configuration
+ */
+function createEmbeddingDeleteCommand(client: KnowledgeGraphClient): Command {
+  return new Command('delete')
+    .description('Delete an embedding configuration')
+    .argument('<config-id>', 'Configuration ID', parseInt)
+    .action(async (configId: number) => {
+      try {
+        console.log('\n' + separator());
+        console.log(colors.ui.title(`🗑️  Delete Config ${configId}`));
+        console.log(separator());
+
+        // Confirm deletion
+        const confirm = await prompt(`\nDelete embedding config ${configId}? (yes/no): `);
+        if (confirm.toLowerCase() !== 'yes') {
+          console.log(colors.status.dim('Cancelled\n'));
+          process.exit(0);
+        }
+
+        const result = await client.deleteEmbeddingConfig(configId);
+
+        console.log('\n' + colors.status.success('✓ Configuration deleted'));
+        console.log(`\n  ${colors.ui.key('Config ID:')} ${colors.ui.value(configId)}`);
+        console.log('\n' + separator() + '\n');
+
+      } catch (error: any) {
+        console.error(colors.status.error('✗ Failed to delete configuration'));
+        console.error(colors.status.error(error.response?.data?.detail || error.message));
+        process.exit(1);
+      }
+    });
+}
+
+/**
  * Embedding command group
  */
 export function createEmbeddingCommand(client: KnowledgeGraphClient): Command {
@@ -214,6 +396,10 @@ export function createEmbeddingCommand(client: KnowledgeGraphClient): Command {
   embeddingCommand.addCommand(createEmbeddingConfigCommand(client));
   embeddingCommand.addCommand(createEmbeddingSetCommand(client));
   embeddingCommand.addCommand(createEmbeddingReloadCommand(client));
+  embeddingCommand.addCommand(createEmbeddingListCommand(client));
+  embeddingCommand.addCommand(createEmbeddingProtectCommand(client));
+  embeddingCommand.addCommand(createEmbeddingUnprotectCommand(client));
+  embeddingCommand.addCommand(createEmbeddingDeleteCommand(client));
 
   return embeddingCommand;
 }

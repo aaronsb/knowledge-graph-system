@@ -148,7 +148,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                                 return (False,
                                     f"Active config (ID {active_id}) is change-protected. "
                                     "Changing provider or dimensions breaks vector search. "
-                                    "Remove protection first with: kg admin embedding unprotect --change {active_id}")
+                                    f"Remove protection first with: kg admin embedding unprotect --change {active_id}")
 
                 # Deactivate all existing configs
                 cur.execute("""
