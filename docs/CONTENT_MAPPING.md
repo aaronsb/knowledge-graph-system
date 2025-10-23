@@ -775,38 +775,173 @@ This document maps existing documentation files to the new book structure define
 
 ---
 
-## Implementation Priority
+## Implementation Order (Commit-Based)
 
-### Phase 1: Critical Updates (Week 1)
-1. Fix Neo4j → Apache AGE references (Section 02, 31, 44)
-2. Update status in ARCHITECTURE_DECISIONS.md and individual ADRs
-3. Update ARCHITECTURE_OVERVIEW.md diagrams
+### Commit 1: Critical Updates - Neo4j → Apache AGE
+**Files to modify:** 8 files (~3,000 lines)
+- `architecture/ADR-001-multi-tier-agent-access.md`
+- `architecture/ADR-004-pure-graph-design.md`
+- `architecture/ADR-005-source-text-tracking.md`
+- `architecture/ADR-006-staging-migration-workflows.md`
+- `architecture/ADR-012-api-server-architecture.md`
+- `architecture/ADR-016-apache-age-migration.md`
+- `architecture/ARCHITECTURE_OVERVIEW.md`
+- Section 44 content (when creating)
 
-### Phase 2: Core Foundations (Week 2)
-1. Create Sections 01-09 (Part I: Foundations)
-2. Consolidate auth docs for Sections 20-23
-3. Create Appendix A (Glossary)
+**Actions:**
+- Global find/replace: "Neo4j" → "Apache AGE" (with context review)
+- Update security model references (Neo4j roles → PostgreSQL schemas)
+- Update diagrams in ARCHITECTURE_OVERVIEW.md
+- Verify all technical accuracy
 
-### Phase 3: Configuration & Operations (Week 3)
-1. Create Sections 10-15 (Configuration)
-2. Create Sections 24-26 (Database Operations + new admin docs)
-3. Create Appendix C (CLI Reference)
+---
 
-### Phase 4: Architecture Deep Dives (Week 4)
-1. Create Sections 30-37 (Architecture)
-2. Simplify RECURSIVE_UPSERT_ARCHITECTURE.md for Section 05
-3. Create REST API Reference (Section 37)
+### Commit 2: Status Fixes - ADR Implementation Status
+**Files to modify:** 7 files
+- `architecture/ARCHITECTURE_DECISIONS.md` (master index)
+- `architecture/ADR-016-apache-age-migration.md` (In Progress → Implemented)
+- `architecture/ADR-028-dynamic-rbac-system.md` (verify status)
+- `architecture/ADR-032-automatic-edge-vocabulary-expansion.md` (verify status)
+- `architecture/ADR-039-local-embedding-service.md` (verify status)
+- `architecture/ADR-040-database-schema-migrations.md` (verify status)
+- `architecture/ADR-041-ai-extraction-config.md` (verify status)
 
-### Phase 5: Advanced & Reference (Week 5)
-1. Create Sections 40-46 (Advanced Topics)
-2. Create Sections 50-53 (Developer Reference)
-3. Create remaining appendices
+**Actions:**
+- Check implementation status in codebase
+- Update status fields: Proposed/Accepted/Implemented
+- Add implementation dates where applicable
+- Update ARCHITECTURE_DECISIONS.md index table
 
-### Phase 6: Case Studies & Polish (Week 6)
-1. Create Sections 60-62 (Case Studies)
-2. Comprehensive read-through test
-3. Ingest into knowledge graph for validation
-4. Final cross-referencing and index updates
+---
+
+### Commit 3: Part I - Foundations (Sections 01-09)
+**Create 9 new numbered files:**
+- `01-what-is-a-knowledge-graph.md` (PORT: CONCEPT.md + CONCEPTS intro)
+- `02-system-overview.md` (UPDATE: ARCHITECTURE_OVERVIEW.md)
+- `03-quick-start-your-first-knowledge-graph.md` (PORT: QUICKSTART.md)
+- `04-understanding-concepts-and-relationships.md` (CONSOLIDATE: 3 files)
+- `05-the-extraction-process.md` (CONSOLIDATE: 3 files, simplified)
+- `06-querying-your-knowledge-graph.md` (CONSOLIDATE: CLI_USAGE + OPENCYPHER basics)
+- `07-real-world-example-project-history.md` (PORT: github_project_history.md)
+- `08-choosing-your-ai-provider.md` (CONSOLIDATE: 3 files)
+- `09-common-workflows-and-use-cases.md` (CONSOLIDATE: USE_CASES + INGESTION)
+
+**Estimated:** ~4,500 lines total, mostly porting/consolidating
+
+---
+
+### Commit 4: Part II - Configuration (Sections 10-15)
+**Create 6 new numbered files:**
+- `10-ai-extraction-configuration.md` (CONSOLIDATE: EXTRACTION_CONFIG + ADR-041)
+- `11-embedding-models-and-vector-search.md` (CONSOLIDATE: EMBEDDING_CONFIG + ADR-039)
+- `12-local-llm-inference-with-ollama.md` (PORT: LOCAL_INFERENCE + ADR-042/043)
+- `13-managing-relationship-vocabulary.md` (CONSOLIDATE: VOCAB_CONSOLIDATION + ADR-032)
+- `14-advanced-query-patterns.md` (PORT: CYPHER_PATTERNS.md)
+- `15-integration-with-claude-desktop.md` (PORT: MCP_SETUP.md)
+
+**Estimated:** ~4,700 lines total
+
+---
+
+### Commit 5: Part III - System Administration (Sections 20-26)
+**Create 7 new numbered files:**
+- `20-user-management-and-authentication.md` (CONSOLIDATE: AUTHENTICATION + ADR-027)
+- `21-role-based-access-control.md` (CONSOLIDATE: RBAC + ADR-028)
+- `22-securing-api-keys.md` (PORT: SECURITY + ADR-031)
+- `23-account-recovery-procedures.md` (PORT: PASSWORD_RECOVERY)
+- `24-database-operations.md` (CONSOLIDATE: BACKUP_RESTORE + DB_MIGRATIONS + ADRs)
+- `25-system-maintenance-and-monitoring.md` (CREATE: new operational guide)
+- `26-troubleshooting-guide.md` (CREATE: consolidate troubleshooting sections)
+
+**Estimated:** ~4,600 lines total (includes 2 new guides)
+
+---
+
+### Commit 6: Part IV - Architecture Deep Dives (Sections 30-37)
+**Create 8 new numbered files:**
+- `30-core-system-architecture.md` (CONSOLIDATE: 4 ADRs)
+- `31-apache-age-and-postgresql-integration.md` (CONSOLIDATE: ADR-016 + ADR-024)
+- `32-the-concept-extraction-pipeline.md` (CONSOLIDATE: RECURSIVE_UPSERT full version)
+- `33-concept-deduplication-and-matching.md` (CONSOLIDATE: ADR-030 + FUZZY_MATCHING)
+- `34-authentication-and-security-architecture.md` (CONSOLIDATE: 4 auth ADRs)
+- `35-job-management-and-approval-workflows.md` (CONSOLIDATE: ADR-014 + ADR-018)
+- `36-data-contracts-and-schema-governance.md` (CONSOLIDATE: DATA_CONTRACT + ADR-040)
+- `37-rest-api-reference.md` (EXTRACT: from src/api/routes/)
+
+**Estimated:** ~7,900 lines total (most complex section)
+
+---
+
+### Commit 7: Part V - Advanced Topics (Sections 40-46)
+**Create 7 new numbered files:**
+- `40-relationship-vocabulary-evolution.md` (CONSOLIDATE: 4 vocabulary ADRs)
+- `41-graph-visualization-and-interactive-exploration.md` (CONSOLIDATE: 4 visualization ADRs)
+- `42-human-guided-graph-editing.md` (PORT: ADR-037)
+- `43-multimodal-ingestion-images-and-documents.md` (PORT: ADR-033)
+- `44-advanced-governance-and-access-control.md` (CONSOLIDATE: 6 ADRs, update Neo4j refs)
+- `45-distributed-deployment-and-scaling.md` (CONSOLIDATE: DISTRIBUTED_SHARDING + ADRs)
+- `46-research-notes-and-experimental-features.md` (CONSOLIDATE: dev notes)
+
+**Estimated:** ~7,700 lines total (proposed features)
+
+---
+
+### Commit 8: Part VI - Developer Reference (Sections 50-53)
+**Create 4 new numbered files:**
+- `50-contributing-to-the-project.md` (EXTRACT: CLAUDE.md + new)
+- `51-testing-strategy-and-coverage.md` (CONSOLIDATE: TEST_COVERAGE + report)
+- `52-architecture-decision-records-index.md` (UPDATE: ARCHITECTURE_DECISIONS)
+- `53-development-journals.md` (CONSOLIDATE: 3 dev journals)
+
+**Estimated:** ~2,300 lines total
+
+---
+
+### Commit 9: Part VII - Case Studies (Sections 60-62)
+**Create 3 new numbered files:**
+- `60-case-study-multi-perspective-enrichment.md` (PORT: ENRICHMENT_JOURNEY)
+- `61-case-study-github-project-history.md` (cross-ref to section 07 or expand)
+- `62-query-examples-gallery.md` (PORT: EXAMPLES.md expanded)
+
+**Estimated:** ~1,300 lines total
+
+---
+
+### Commit 10: Appendices (A-G)
+**Create 7 appendix files:**
+- `appendix-a-glossary-of-terms.md` (PORT: CONCEPTS_AND_TERMINOLOGY)
+- `appendix-b-architecture-decisions-complete.md` (CREATE: themed ADR navigation)
+- `appendix-c-command-line-reference.md` (PORT: CLI_USAGE as reference)
+- `appendix-d-configuration-reference.md` (CREATE: all config params)
+- `appendix-e-troubleshooting-index.md` (CREATE: symptom→solution)
+- `appendix-f-project-roadmap.md` (CREATE: from TODO + Proposed ADRs)
+- `appendix-g-api-endpoint-reference.md` (cross-ref to section 37)
+
+**Estimated:** ~3,200 lines total
+
+---
+
+### Commit 11: Main Index and Archive
+**Update/create:**
+- `docs/README.md` (replace with new book structure index)
+- `docs/_archive/old-structure/` (move all old files)
+- Update cross-references throughout
+
+**Actions:**
+- Create new README.md with book TOC
+- Move old structure to _archive/
+- Verify all internal links
+- Add navigation helpers (prev/next section)
+
+---
+
+### Commit 12: Validation and Final Polish
+**Test and validate:**
+- Read-through test of sections 01-09
+- Ingest documentation into knowledge graph
+- Verify concept extraction quality
+- Fix any broken links or formatting issues
+- Update CLAUDE.md to reference new structure
 
 ---
 
