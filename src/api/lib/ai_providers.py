@@ -797,6 +797,430 @@ class AnthropicProvider(AIProvider):
         return AVAILABLE_MODELS["anthropic"]
 
 
+class OllamaProvider(AIProvider):
+    """
+    Local LLM inference provider using Ollama (ADR-042).
+
+    Ollama wraps llama.cpp and provides:
+    - Local inference (no API costs)
+    - Model management (download, update, list)
+    - OpenAI-compatible API
+    - JSON mode for structured output
+
+    This provider connects to an Ollama instance (local Docker, system install, or remote).
+    It does NOT manage the Ollama service itself.
+    """
+
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        extraction_model: Optional[str] = None,
+        embedding_provider: Optional[AIProvider] = None,
+        temperature: float = 0.1,
+        top_p: float = 0.9,
+        thinking_mode: str = 'off'
+    ):
+        """
+        Initialize Ollama provider.
+
+        Args:
+            base_url: Ollama API endpoint (default: http://localhost:11434)
+            extraction_model: Model name (e.g., "mistral:7b-instruct")
+            embedding_provider: Separate provider for embeddings (OpenAI or local)
+            temperature: Sampling temperature (0.0-1.0, lower = more consistent)
+            top_p: Nucleus sampling threshold (0.0-1.0)
+            thinking_mode: Thinking mode - 'off', 'low', 'medium', 'high' (Ollama 0.12.x+)
+        """
+        import requests
+
+        self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        self.extraction_model = extraction_model or os.getenv("OLLAMA_EXTRACTION_MODEL", "mistral:7b-instruct")
+        self.temperature = temperature
+        self.top_p = top_p
+        self.thinking_mode = thinking_mode
+        logger.info(f"🔍 OllamaProvider.__init__: thinking_mode={self.thinking_mode}")
+        self.session = requests.Session()
+
+        # Ollama doesn't provide embeddings - delegate to separate provider
+        self.embedding_provider = embedding_provider
+        if not self.embedding_provider:
+            # Default to OpenAI for embeddings (or will use local if configured)
+            try:
+                self.embedding_provider = OpenAIProvider(
+                    embedding_model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+                )
+            except ValueError:
+                # Try local embeddings as fallback
+                try:
+                    self.embedding_provider = LocalEmbeddingProvider()
+                except ValueError:
+                    raise ValueError(
+                        "Ollama requires an embedding provider. Either:\n"
+                        "  1. Set OPENAI_API_KEY for OpenAI embeddings\n"
+                        "  2. Configure local embeddings via: POST /admin/embedding/config"
+                    )
+
+    def extract_concepts(
+        self,
+        text: str,
+        system_prompt: str,
+        existing_concepts: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """
+        Extract concepts using Ollama local LLM.
+
+        Returns dict with 'result' (extracted data) and 'tokens' (always 0 for local).
+
+        **Reasoning Models:**
+        For thinking-capable models (deepseek-r1, qwen3, gpt-oss), this provider
+        supports configurable thinking modes (off/low/medium/high) via the `think` parameter.
+        Requires Ollama 0.12.x+ for `think` parameter support.
+
+        **Recommended Models:**
+        - **Standard:** mistral:7b-instruct, llama3.1:8b-instruct, qwen2.5:7b-instruct
+        - **Reasoning:** deepseek-r1:8b, gpt-oss:20b, qwen3:8b (with configurable thinking)
+        - **Large:** qwen2.5:14b-instruct, llama3.1:70b-instruct (requires more VRAM)
+
+        Note: system_prompt is already formatted by llm_extractor.py
+        """
+        import requests
+
+        try:
+            # Ollama API request (using /api/chat endpoint)
+            # Adjust num_predict based on thinking mode (thinking uses tokens too)
+            # Token allocation scaled up significantly to handle massive thinking traces
+            if self.thinking_mode == 'high':
+                num_predict = 32768  # 8x for high thinking (extensive reasoning traces)
+            elif self.thinking_mode == 'medium':
+                num_predict = 20480  # 5x for medium thinking (supports ~16K token traces)
+            else:
+                num_predict = 4096  # Default for off/low
+
+            logger.info(f"🔍 extract_concepts: thinking_mode={self.thinking_mode}, num_predict={num_predict}")
+
+            request_data = {
+                "model": self.extraction_model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Text to analyze:\n\n{text}"
+                    }
+                ],
+                "format": "json",  # Enable JSON mode
+                "stream": False,
+                "options": {
+                    "temperature": self.temperature,
+                    "top_p": self.top_p,
+                    "num_predict": num_predict  # Max tokens to generate (includes thinking)
+                }
+            }
+
+            # Map thinking_mode to model-specific parameter
+            # thinking_mode: 'off', 'low', 'medium', 'high'
+            if "gpt-oss" in self.extraction_model.lower():
+                # GPT-OSS requires think levels ("low"/"medium"/"high"), ignores true/false
+                # "off" → "low" (minimal reasoning)
+                # Note: Higher thinking modes may timeout on complex/long prompts
+                think_value = self.thinking_mode if self.thinking_mode != 'off' else 'low'
+                request_data["think"] = think_value
+                logger.info(f"🤔 GPT-OSS: think={think_value}, num_predict={num_predict}")
+            elif self.thinking_mode == 'off':
+                # Standard models: off = disabled
+                request_data["think"] = False
+            else:
+                # Standard models: low/medium/high = enabled (they don't distinguish levels)
+                request_data["think"] = True
+                logger.info(f"🤔 Thinking: {self.thinking_mode}, num_predict={num_predict}")
+
+            response = self.session.post(
+                f"{self.base_url}/api/chat",
+                json=request_data,
+                timeout=300  # 5 minute timeout for local inference
+            )
+
+            response.raise_for_status()
+            response_data = response.json()
+
+            # Extract message from /api/chat response
+            message = response_data.get("message", {})
+            response_text = message.get("content", "")
+            thinking_text = message.get("thinking", "")
+
+            # Fallback: If content is empty but thinking has content, try parsing thinking
+            # This happens with GPT-OSS reasoning models - they sometimes put JSON in thinking field
+            if not response_text.strip() and thinking_text.strip():
+                logger.warning("⚠️  Content field empty, attempting to parse thinking field (GPT-OSS reasoning behavior)")
+                response_text = thinking_text
+
+            # Parse JSON response
+            try:
+                result = self._extract_json(response_text)
+            except json.JSONDecodeError as json_err:
+                # Log both fields for debugging
+                logger.error(f"Content field length: {len(message.get('content', ''))}")
+                logger.error(f"Thinking field length: {len(thinking_text)}")
+                if thinking_text:
+                    logger.error(f"Thinking field preview: {thinking_text[:200]}...")
+                raise Exception(
+                    f"Failed to parse JSON from Ollama response.\n"
+                    f"Error: {json_err}\n"
+                    f"Response text (first 500 chars): {response_text[:500]}"
+                )
+
+            # Validate structure
+            result.setdefault("concepts", [])
+            result.setdefault("instances", [])
+            result.setdefault("relationships", [])
+
+            # Extract performance metrics from Ollama response
+            metrics = {
+                "tokens": 0,  # No cost for local
+                "performance": {}
+            }
+
+            # Ollama returns timing information
+            if "eval_count" in response_data and "eval_duration" in response_data:
+                eval_count = response_data["eval_count"]
+                eval_duration_ns = response_data["eval_duration"]
+                eval_duration_s = eval_duration_ns / 1e9
+
+                tokens_per_sec = eval_count / eval_duration_s if eval_duration_s > 0 else 0
+
+                metrics["performance"] = {
+                    "tokens_generated": eval_count,
+                    "eval_duration_s": round(eval_duration_s, 2),
+                    "tokens_per_sec": round(tokens_per_sec, 2)
+                }
+
+            # Include prompt evaluation if available
+            if "prompt_eval_count" in response_data and "prompt_eval_duration" in response_data:
+                prompt_count = response_data["prompt_eval_count"]
+                prompt_duration_ns = response_data["prompt_eval_duration"]
+                prompt_duration_s = prompt_duration_ns / 1e9
+
+                metrics["performance"]["prompt_tokens"] = prompt_count
+                metrics["performance"]["prompt_duration_s"] = round(prompt_duration_s, 2)
+                metrics["performance"]["total_duration_s"] = round(
+                    metrics["performance"]["eval_duration_s"] + prompt_duration_s, 2
+                )
+
+            return {
+                "result": result,
+                "tokens": metrics["tokens"],
+                "performance": metrics["performance"]
+            }
+
+        except requests.exceptions.ConnectionError:
+            raise Exception(
+                f"Cannot connect to Ollama at {self.base_url}. "
+                "Ensure Ollama is running:\n"
+                "  - Docker: docker-compose -f docker-compose.ollama.yml up -d\n"
+                "  - System: systemctl status ollama\n"
+                "  - Remote: Check base_url configuration"
+            )
+        except requests.exceptions.Timeout:
+            raise Exception(
+                f"Ollama request timed out after 300s. "
+                f"Model '{self.extraction_model}' may be too large or system is overloaded."
+            )
+        except Exception as e:
+            raise Exception(f"Ollama concept extraction failed: {e}")
+
+    def _extract_json(self, text: str) -> Dict[str, Any]:
+        """
+        Extract JSON from response text.
+
+        Handles markdown code blocks and basic whitespace cleanup.
+        """
+        # Remove markdown code blocks if present
+        cleaned = text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+
+        cleaned = cleaned.strip()
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            # Provide detailed error for debugging
+            raise json.JSONDecodeError(
+                f"JSON parsing failed: {e.msg}. Response snippet: {cleaned[:100]}...",
+                e.doc,
+                e.pos
+            )
+
+    def generate_embedding(self, text: str) -> Dict[str, Any]:
+        """Generate embedding using the configured embedding provider"""
+        return self.embedding_provider.generate_embedding(text)
+
+    def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
+        """
+        Translate code/diagram to prose using Ollama.
+
+        Returns dict with 'text' (prose) and 'tokens' (always 0 for local).
+        """
+        import requests
+
+        try:
+            response = self.session.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": self.extraction_model,
+                    "prompt": f"You are a technical writer who explains code and diagrams in clear, simple prose.\n\n{prompt}\n\n{code}",
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.5,  # Balanced: clear but not robotic
+                        "top_p": self.top_p,
+                        "num_predict": 1000
+                    }
+                },
+                timeout=120  # 2 minute timeout
+            )
+
+            response.raise_for_status()
+            response_data = response.json()
+            prose = response_data.get("response", "").strip()
+
+            return {
+                "text": prose,
+                "tokens": 0  # No token costs for local inference
+            }
+
+        except Exception as e:
+            raise Exception(f"Ollama code translation failed: {e}")
+
+    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+        """
+        Describe an image using Ollama vision model (e.g., llava, bakllava).
+
+        Returns dict with 'text' (description) and 'tokens' (always 0 for local).
+
+        Note: Requires a vision-capable model like llava:7b, llava:13b, or bakllava.
+        """
+        import requests
+        import base64
+
+        try:
+            # Encode image to base64
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+
+            # Use vision model (override extraction model if it's not vision-capable)
+            vision_model = self.extraction_model
+            if "llava" not in vision_model.lower() and "bakllava" not in vision_model.lower():
+                logger.warning(
+                    f"Model '{vision_model}' may not support vision. "
+                    "Consider using 'llava:7b' or 'llava:13b' for image description."
+                )
+
+            response = self.session.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": vision_model,
+                    "prompt": prompt,
+                    "images": [image_base64],
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,  # Lower for consistency
+                        "top_p": self.top_p,
+                        "num_predict": 2000
+                    }
+                },
+                timeout=180  # 3 minute timeout for vision
+            )
+
+            response.raise_for_status()
+            response_data = response.json()
+            description = response_data.get("response", "").strip()
+
+            return {
+                "text": description,
+                "tokens": 0  # No token costs for local inference
+            }
+
+        except Exception as e:
+            raise Exception(f"Ollama image description failed: {e}")
+
+    def get_provider_name(self) -> str:
+        return "Ollama (Local)"
+
+    def get_extraction_model(self) -> str:
+        return self.extraction_model
+
+    def get_embedding_model(self) -> str:
+        return self.embedding_provider.get_embedding_model()
+
+    def validate_api_key(self) -> bool:
+        """
+        Validate that Ollama is accessible and the model is available.
+
+        For local provider, this checks service availability and model presence.
+        """
+        import requests
+
+        try:
+            # Check if Ollama is running
+            response = self.session.get(f"{self.base_url}/api/version", timeout=5)
+            response.raise_for_status()
+
+            # Check if model is available
+            models_response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
+            models_response.raise_for_status()
+
+            models_data = models_response.json()
+            available_models = [m['name'] for m in models_data.get('models', [])]
+
+            if self.extraction_model not in available_models:
+                logger.warning(
+                    f"Model '{self.extraction_model}' not found. Available models: {available_models}\n"
+                    f"Download with: ollama pull {self.extraction_model}"
+                )
+                return False
+
+            logger.info(f"✅ Ollama validated at {self.base_url} with model '{self.extraction_model}'")
+            return True
+
+        except requests.exceptions.ConnectionError:
+            logger.error(f"Cannot connect to Ollama at {self.base_url}")
+            return False
+        except Exception as e:
+            logger.error(f"Ollama validation failed: {e}")
+            return False
+
+    def list_available_models(self) -> Dict[str, List[str]]:
+        """List available models from Ollama (queries /api/tags endpoint)"""
+        import requests
+
+        try:
+            response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
+            response.raise_for_status()
+
+            models_data = response.json()
+            available_models = [m['name'] for m in models_data.get('models', [])]
+
+            # Separate vision models from text models
+            vision_models = [m for m in available_models if any(v in m.lower() for v in ['llava', 'bakllava', 'vision'])]
+            text_models = [m for m in available_models if m not in vision_models]
+
+            return {
+                "extraction": text_models or AVAILABLE_MODELS["ollama"]["extraction"],
+                "embedding": [],  # Ollama doesn't provide embeddings
+                "vision": vision_models  # Vision-capable models
+            }
+
+        except Exception as e:
+            logger.warning(f"Could not fetch Ollama models: {e}")
+            # Return recommended models as fallback
+            return AVAILABLE_MODELS["ollama"]
+
+
 def get_embedding_provider() -> Optional[AIProvider]:
     """
     Get the configured embedding provider (may be different from extraction provider).
@@ -898,12 +1322,36 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
             extraction_model=extraction_model,
             embedding_provider=embedding_provider
         )
+    elif provider_name == "ollama":
+        # Load Ollama-specific config from database (production) or environment (dev)
+        if is_development_mode():
+            # Dev mode: Read from environment variables
+            base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            temperature = float(os.getenv("OLLAMA_TEMPERATURE", "0.1"))
+            top_p = float(os.getenv("OLLAMA_TOP_P", "0.9"))
+            thinking_mode = os.getenv("OLLAMA_THINKING_MODE", "off")
+        else:
+            # Production mode: Read from database config
+            base_url = config.get('base_url') or "http://localhost:11434"
+            temperature = config.get('temperature') or 0.1
+            top_p = config.get('top_p') or 0.9
+            thinking_mode = config.get('thinking_mode') or 'off'
+            logger.info(f"🔍 get_provider: thinking_mode={thinking_mode} (from config)")
+
+        return OllamaProvider(
+            base_url=base_url,
+            extraction_model=extraction_model,
+            embedding_provider=embedding_provider,
+            temperature=temperature,
+            top_p=top_p,
+            thinking_mode=thinking_mode
+        )
     elif provider_name == "mock":
         from .mock_ai_provider import MockAIProvider
         mock_mode = os.getenv("MOCK_MODE", "default")
         return MockAIProvider(mode=mock_mode)
     else:
-        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai', 'anthropic', or 'mock'")
+        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai', 'anthropic', 'ollama', or 'mock'")
 
 
 # Model configurations for reference
@@ -933,6 +1381,35 @@ AVAILABLE_MODELS = {
         "embedding": [
             # Anthropic doesn't provide embeddings
             # Falls back to OpenAI text-embedding-3-small
+        ]
+    },
+    "ollama": {
+        "extraction": [
+            # 7-8B models (recommended for most hardware)
+            "mistral:7b-instruct",        # Mistral 7B (balanced, recommended)
+            "llama3.1:8b-instruct",       # Llama 3.1 8B (high quality)
+            "qwen2.5:7b-instruct",        # Qwen 2.5 7B (excellent reasoning)
+            "phi3.5:3.8b-mini-instruct",  # Phi-3.5 Mini (fastest)
+            "gemma2:9b-instruct",         # Gemma 2 9B (good quality)
+
+            # 14B models (high-end GPU)
+            "qwen2.5:14b-instruct",       # Qwen 2.5 14B (best quality for 16GB VRAM)
+
+            # 70B+ models (professional/enterprise)
+            "llama3.1:70b-instruct",      # Llama 3.1 70B (GPT-4 quality)
+            "qwen2.5:72b-instruct",       # Qwen 2.5 72B (best reasoning)
+            "mixtral:8x7b-instruct",      # Mixtral 8x7B MoE
+            "mixtral:8x22b-instruct",     # Mixtral 8x22B MoE
+            "deepseek-coder:33b",         # DeepSeek Coder 33B (code-focused)
+        ],
+        "embedding": [
+            # Ollama doesn't provide embeddings
+            # Use OpenAI or local embeddings
+        ],
+        "vision": [
+            "llava:7b",                   # LLaVA 7B (image understanding)
+            "llava:13b",                  # LLaVA 13B (better quality)
+            "bakllava:7b",                # BakLLaVA 7B (alternative)
         ]
     }
 }

@@ -126,10 +126,13 @@ async def update_extraction_config(request: UpdateExtractionConfigRequest):
     """
     try:
         # Validate provider
-        if request.provider not in ['openai', 'anthropic']:
+        from src.api.constants import EXTRACTION_PROVIDERS
+
+        if request.provider not in EXTRACTION_PROVIDERS:
+            valid_list = ', '.join(f"'{p}'" for p in sorted(EXTRACTION_PROVIDERS))
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid provider: {request.provider}. Must be 'openai' or 'anthropic'"
+                detail=f"Invalid provider: {request.provider}. Must be one of: {valid_list}"
             )
 
         # Validate model_name is provided

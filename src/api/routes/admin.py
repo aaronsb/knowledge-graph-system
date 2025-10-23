@@ -37,6 +37,7 @@ from ..lib.backup_streaming import create_backup_stream
 from ..lib.backup_integrity import check_backup_integrity
 from ..lib.age_client import AGEClient
 from ..lib.encrypted_keys import EncryptedKeyStore
+from ..constants import API_KEY_PROVIDERS
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 logger = logging.getLogger(__name__)
@@ -550,11 +551,11 @@ async def set_api_key(
     Returns success message if key validated and stored.
     """
     # Validate provider
-    valid_providers = ["openai", "anthropic"]
-    if provider not in valid_providers:
+    if provider not in API_KEY_PROVIDERS:
+        valid_list = ', '.join(f"'{p}'" for p in sorted(API_KEY_PROVIDERS))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid provider. Must be one of: {', '.join(valid_providers)}"
+            detail=f"Invalid provider. Must be one of: {valid_list}"
         )
 
     # Validate key format
@@ -687,7 +688,7 @@ async def list_api_keys():
                 configured = []
 
             # Return all possible providers, marking which are configured
-            all_providers = ["openai", "anthropic"]
+            all_providers = sorted(API_KEY_PROVIDERS)
             configured_map = {p['provider']: p for p in configured}
 
             return [
@@ -732,11 +733,11 @@ async def delete_api_key(provider: str):
     Returns success if key was deleted, 404 if key wasn't configured.
     """
     # Validate provider
-    valid_providers = ["openai", "anthropic"]
-    if provider not in valid_providers:
+    if provider not in API_KEY_PROVIDERS:
+        valid_list = ', '.join(f"'{p}'" for p in sorted(API_KEY_PROVIDERS))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid provider. Must be one of: {', '.join(valid_providers)}"
+            detail=f"Invalid provider. Must be one of: {valid_list}"
         )
 
     try:

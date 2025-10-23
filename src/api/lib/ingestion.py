@@ -259,8 +259,8 @@ def process_chunk(
             stats.embedding_tokens += embedding_tokens
         except Exception as e:
             failed_concepts.append({"label": label, "reason": f"embedding: {e}"})
-            if verbose:
-                logger.warning(f"  ⚠ Embedding failed: {label}")
+            # Always log embedding failures (critical errors, not just verbose output)
+            logger.error(f"  ✗ Embedding generation failed for '{label}': {e}")
             continue
 
         # Vector search for similar concepts
@@ -314,6 +314,26 @@ def process_chunk(
                 logger.warning(f"  ⚠ Failed: {label}")
             continue
 
+    # Report concept processing results
+    total_concepts = len(extraction["concepts"])
+    successful_concepts = len(new_concepts) + len(matched_concepts)
+    failed_count = len(failed_concepts)
+
+    if failed_count > 0:
+        logger.warning(f"  ⚠ {failed_count}/{total_concepts} concepts failed processing")
+        if failed_count == total_concepts:
+            # All concepts failed - this is a critical error
+            failure_reasons = {}
+            for fc in failed_concepts:
+                reason = fc["reason"].split(":")[0]  # Extract category (e.g., "embedding")
+                failure_reasons[reason] = failure_reasons.get(reason, 0) + 1
+
+            error_summary = ", ".join([f"{count} {reason} failures" for reason, count in failure_reasons.items()])
+            raise Exception(
+                f"All {total_concepts} concepts failed processing ({error_summary}). "
+                "Check embedding model availability and API connectivity."
+            )
+
     # Step 4: Create Instance nodes
     for instance in extraction["instances"]:
         instance_id = f"{source_id}_inst_{uuid.uuid4().hex[:8]}"
@@ -340,10 +360,19 @@ def process_chunk(
 
     # Step 5: Create concept relationships
     for rel in extraction["relationships"]:
-        llm_from_id = rel["from_concept_id"]
-        llm_to_id = rel["to_concept_id"]
-        llm_rel_type = rel["relationship_type"]
-        confidence = rel["confidence"]
+        try:
+            # Validate required fields exist
+            if not all(k in rel for k in ["from_concept_id", "to_concept_id", "relationship_type"]):
+                logger.warning(f"  ⚠ Skipping malformed relationship (missing required fields): {rel}")
+                continue
+
+            llm_from_id = rel["from_concept_id"]
+            llm_to_id = rel["to_concept_id"]
+            llm_rel_type = rel["relationship_type"]
+            confidence = rel.get("confidence", 1.0)  # Default to 1.0 if missing
+        except (KeyError, TypeError) as e:
+            logger.warning(f"  ⚠ Skipping invalid relationship structure: {e}")
+            continue
 
         # Normalize relationship type using Porter Stemmer Enhanced Hybrid Matcher
         # Pass AGEClient so it can query existing edge types from graph

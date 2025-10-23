@@ -70,52 +70,11 @@ function prompt(question: string): Promise<string> {
 // ========== Embedding Commands ==========
 
 /**
- * Show current embedding configuration
+ * Create a new embedding configuration
  */
-function createEmbeddingConfigCommand(client: KnowledgeGraphClient): Command {
-  return new Command('config')
-    .description('Show current embedding configuration')
-    .action(async () => {
-      try {
-        console.log('\n' + separator());
-        console.log(colors.ui.title('🎯 Embedding Configuration'));
-        console.log(separator());
-
-        const config = await client.getEmbeddingConfig();
-
-        console.log(`\n  ${colors.ui.key('Provider:')} ${colors.ui.value(config.provider)}`);
-        console.log(`  ${colors.ui.key('Model:')} ${colors.ui.value(config.model)}`);
-        console.log(`  ${colors.ui.key('Dimensions:')} ${colors.ui.value(config.dimensions)}`);
-
-        if (config.precision) {
-          console.log(`  ${colors.ui.key('Precision:')} ${colors.ui.value(config.precision)}`);
-        }
-
-        if (config.resource_allocation) {
-          console.log(`\n  ${colors.ui.header('Resource Allocation:')}`);
-          console.log(`    ${colors.ui.key('Device:')} ${colors.ui.value(config.resource_allocation.device)}`);
-          console.log(`    ${colors.ui.key('Max Memory:')} ${colors.ui.value(config.resource_allocation.max_memory_mb + ' MB')}`);
-          console.log(`    ${colors.ui.key('Threads:')} ${colors.ui.value(config.resource_allocation.num_threads)}`);
-          console.log(`    ${colors.ui.key('Batch Size:')} ${colors.ui.value(config.resource_allocation.batch_size)}`);
-        }
-
-        console.log(`\n  ${colors.status.dim('Config ID: ' + config.config_id)}`);
-        console.log('\n' + separator() + '\n');
-
-      } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to get embedding configuration'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
-      }
-    });
-}
-
-/**
- * Update embedding configuration
- */
-function createEmbeddingSetCommand(client: KnowledgeGraphClient): Command {
-  return new Command('set')
-    .description('Update embedding configuration')
+function createEmbeddingCreateCommand(client: KnowledgeGraphClient): Command {
+  return new Command('create')
+    .description('Create a new embedding configuration (inactive)')
     .option('--provider <provider>', 'Provider: local or openai')
     .option('--model <model>', 'Model name')
     .option('--dimensions <dims>', 'Embedding dimensions', parseInt)
@@ -127,7 +86,7 @@ function createEmbeddingSetCommand(client: KnowledgeGraphClient): Command {
     .action(async (options) => {
       try {
         console.log('\n' + separator());
-        console.log(colors.ui.title('🎯 Update Embedding Configuration'));
+        console.log(colors.ui.title('➕ Create Embedding Configuration'));
         console.log(separator());
 
         const config: any = {};
@@ -149,18 +108,19 @@ function createEmbeddingSetCommand(client: KnowledgeGraphClient): Command {
 
         const result = await client.updateEmbeddingConfig(config);
 
-        console.log('\n' + colors.status.success('✓ Configuration updated successfully'));
+        console.log('\n' + colors.status.success('✓ Configuration created successfully'));
         console.log(`\n  ${colors.ui.key('Config ID:')} ${colors.ui.value(result.config_id)}`);
+        console.log(`  ${colors.ui.key('Status:')} ${colors.status.dim('Inactive')}`);
 
-        if (result.reload_required) {
-          console.log(`\n  ${colors.status.warning('⚠️  API restart required to apply changes')}`);
-          console.log(`  ${colors.status.dim('Run: ./scripts/stop-api.sh && ./scripts/start-api.sh')}`);
-        }
+        console.log('\n' + colors.status.warning('⚠️  Next steps:'));
+        console.log(colors.status.dim(`  1. Review: kg admin embedding list`));
+        console.log(colors.status.dim(`  2. Activate: kg admin embedding activate ${result.config_id}`));
+        console.log(colors.status.dim(`  3. Apply: kg admin embedding reload\n`));
 
-        console.log('\n' + separator() + '\n');
+        console.log(separator() + '\n');
 
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to update embedding configuration'));
+        console.error(colors.status.error('✗ Failed to create embedding configuration'));
         console.error(colors.status.error(error.response?.data?.detail || error.message));
         process.exit(1);
       }
@@ -353,6 +313,57 @@ function createEmbeddingUnprotectCommand(client: KnowledgeGraphClient): Command 
 }
 
 /**
+ * Activate an embedding configuration
+ */
+function createEmbeddingActivateCommand(client: KnowledgeGraphClient): Command {
+  return new Command('activate')
+    .description('Activate an embedding configuration (with automatic protection)')
+    .argument('<config-id>', 'Configuration ID', parseInt)
+    .option('--force', 'Force activation even with dimension mismatch (dangerous!)')
+    .action(async (configId: number, options: any) => {
+      try {
+        console.log('\n' + separator());
+        console.log(colors.ui.title(`🔄 Activate Config ${configId}`));
+        console.log(separator());
+
+        if (options.force) {
+          console.log(colors.status.warning('\n⚠️  FORCE MODE: Bypassing dimension safety check'));
+          console.log(colors.status.dim('  This may break vector search if dimensions change!\n'));
+        }
+
+        console.log(colors.status.info('\nActivating configuration...'));
+        console.log(colors.status.dim('  • Unlocking current config (change protection)'));
+        console.log(colors.status.dim('  • Switching to new config'));
+        console.log(colors.status.dim('  • Locking new config (delete + change protection)'));
+
+        const result = await client.activateEmbeddingConfig(configId, options.force);
+
+        console.log('\n' + colors.status.success('✓ Configuration activated successfully'));
+
+        console.log(`\n  ${colors.ui.key('Config ID:')} ${colors.ui.value(result.config_id)}`);
+        console.log(`  ${colors.ui.key('Provider:')} ${colors.ui.value(result.provider)}`);
+
+        if (result.model) {
+          console.log(`  ${colors.ui.key('Model:')} ${colors.ui.value(result.model)}`);
+        }
+
+        if (result.dimensions) {
+          console.log(`  ${colors.ui.key('Dimensions:')} ${colors.ui.value(result.dimensions)}`);
+        }
+
+        console.log('\n' + colors.status.warning('⚠️  Next step: Hot reload to apply changes'));
+        console.log(colors.status.dim('  Run: kg admin embedding reload\n'));
+        console.log(separator() + '\n');
+
+      } catch (error: any) {
+        console.error(colors.status.error('✗ Failed to activate configuration'));
+        console.error(colors.status.error(error.response?.data?.detail || error.message));
+        process.exit(1);
+      }
+    });
+}
+
+/**
  * Delete an embedding configuration
  */
 function createEmbeddingDeleteCommand(client: KnowledgeGraphClient): Command {
@@ -393,10 +404,10 @@ export function createEmbeddingCommand(client: KnowledgeGraphClient): Command {
   const embeddingCommand = new Command('embedding')
     .description('Manage embedding model configuration (ADR-039)');
 
-  embeddingCommand.addCommand(createEmbeddingConfigCommand(client));
-  embeddingCommand.addCommand(createEmbeddingSetCommand(client));
-  embeddingCommand.addCommand(createEmbeddingReloadCommand(client));
   embeddingCommand.addCommand(createEmbeddingListCommand(client));
+  embeddingCommand.addCommand(createEmbeddingCreateCommand(client));
+  embeddingCommand.addCommand(createEmbeddingActivateCommand(client));
+  embeddingCommand.addCommand(createEmbeddingReloadCommand(client));
   embeddingCommand.addCommand(createEmbeddingProtectCommand(client));
   embeddingCommand.addCommand(createEmbeddingUnprotectCommand(client));
   embeddingCommand.addCommand(createEmbeddingDeleteCommand(client));
@@ -426,6 +437,29 @@ function createExtractionConfigCommand(client: KnowledgeGraphClient): Command {
         console.log(`  ${colors.ui.key('JSON Mode:')} ${config.supports_json_mode ? colors.status.success('Yes') : colors.status.dim('No')}`);
         console.log(`  ${colors.ui.key('Max Tokens:')} ${colors.ui.value(config.max_tokens)}`);
 
+        // Show local provider configuration (ADR-042)
+        if (config.provider === 'ollama' || config.provider === 'vllm') {
+          console.log(`\n  ${colors.ui.header('Local Inference Configuration:')}`);
+          if (config.base_url) {
+            console.log(`    ${colors.ui.key('Base URL:')} ${colors.ui.value(config.base_url)}`);
+          }
+          if (config.temperature !== undefined) {
+            console.log(`    ${colors.ui.key('Temperature:')} ${colors.ui.value(config.temperature)}`);
+          }
+          if (config.top_p !== undefined) {
+            console.log(`    ${colors.ui.key('Top P:')} ${colors.ui.value(config.top_p)}`);
+          }
+          if (config.gpu_layers !== undefined) {
+            console.log(`    ${colors.ui.key('GPU Layers:')} ${colors.ui.value(config.gpu_layers === -1 ? 'auto' : config.gpu_layers)}`);
+          }
+          if (config.num_threads !== undefined) {
+            console.log(`    ${colors.ui.key('CPU Threads:')} ${colors.ui.value(config.num_threads)}`);
+          }
+          if (config.thinking_mode !== undefined) {
+            console.log(`    ${colors.ui.key('Thinking Mode:')} ${colors.ui.value(config.thinking_mode)}`);
+          }
+        }
+
         console.log(`\n  ${colors.status.dim('Config ID: ' + config.config_id)}`);
         console.log('\n' + separator() + '\n');
 
@@ -443,13 +477,19 @@ function createExtractionConfigCommand(client: KnowledgeGraphClient): Command {
 function createExtractionSetCommand(client: KnowledgeGraphClient): Command {
   return new Command('set')
     .description('Update AI extraction configuration')
-    .option('--provider <provider>', 'Provider: openai or anthropic')
-    .option('--model <model>', 'Model name (e.g., gpt-4o, claude-sonnet-4)')
+    .option('--provider <provider>', 'Provider: openai, anthropic, ollama, or vllm')
+    .option('--model <model>', 'Model name (e.g., gpt-4o, mistral:7b-instruct)')
     .option('--vision', 'Enable vision support')
     .option('--no-vision', 'Disable vision support')
     .option('--json-mode', 'Enable JSON mode')
     .option('--no-json-mode', 'Disable JSON mode')
     .option('--max-tokens <n>', 'Max tokens', parseInt)
+    .option('--base-url <url>', 'Base URL for local providers (e.g., http://localhost:11434)')
+    .option('--temperature <n>', 'Sampling temperature 0.0-1.0 (default: 0.1)', parseFloat)
+    .option('--top-p <n>', 'Nucleus sampling threshold 0.0-1.0 (default: 0.9)', parseFloat)
+    .option('--gpu-layers <n>', 'GPU layers: -1=auto, 0=CPU only, >0=specific count', parseInt)
+    .option('--num-threads <n>', 'CPU threads for inference (default: 4)', parseInt)
+    .option('--thinking-mode <mode>', 'Thinking mode: off, low, medium, high (Ollama 0.12.x+)')
     .action(async (options) => {
       try {
         console.log('\n' + separator());
@@ -458,11 +498,29 @@ function createExtractionSetCommand(client: KnowledgeGraphClient): Command {
 
         const config: any = {};
 
+        // Common options
         if (options.provider) config.provider = options.provider;
         if (options.model) config.model_name = options.model;
         if (options.vision !== undefined) config.supports_vision = options.vision;
         if (options.jsonMode !== undefined) config.supports_json_mode = options.jsonMode;
         if (options.maxTokens) config.max_tokens = options.maxTokens;
+
+        // Local provider options (ADR-042)
+        if (options.baseUrl) config.base_url = options.baseUrl;
+        if (options.temperature !== undefined) config.temperature = options.temperature;
+        if (options.topP !== undefined) config.top_p = options.topP;
+        if (options.gpuLayers !== undefined) config.gpu_layers = options.gpuLayers;
+        if (options.numThreads !== undefined) config.num_threads = options.numThreads;
+        if (options.thinkingMode) {
+          // Validate thinking mode
+          const validModes = ['off', 'low', 'medium', 'high'];
+          if (!validModes.includes(options.thinkingMode)) {
+            console.error(colors.status.error(`\n✗ Invalid thinking mode: ${options.thinkingMode}`));
+            console.log(colors.status.dim('  Valid options: off, low, medium, high\n'));
+            process.exit(1);
+          }
+          config.thinking_mode = options.thinkingMode;
+        }
 
         if (Object.keys(config).length === 0) {
           console.error(colors.status.error('\n✗ No configuration options provided'));
@@ -470,10 +528,27 @@ function createExtractionSetCommand(client: KnowledgeGraphClient): Command {
           process.exit(1);
         }
 
+        // Validate provider-specific requirements
+        if (config.provider === 'ollama' || config.provider === 'vllm') {
+          if (!config.model_name && !options.model) {
+            console.error(colors.status.error('\n✗ Model name required for local providers'));
+            console.log(colors.status.dim('  Example: --model mistral:7b-instruct\n'));
+            process.exit(1);
+          }
+        }
+
         const result = await client.updateExtractionConfig(config);
 
         console.log('\n' + colors.status.success('✓ Configuration updated successfully'));
         console.log(`\n  ${colors.ui.key('Config ID:')} ${colors.ui.value(result.config_id)}`);
+
+        // Show helpful next steps for Ollama
+        if (config.provider === 'ollama') {
+          console.log(`\n  ${colors.ui.header('Next Steps:')}`);
+          console.log(`    1. Ensure Ollama is running: ${colors.status.dim('./scripts/start-ollama.sh -y')}`);
+          console.log(`    2. Pull model: ${colors.status.dim(`docker exec kg-ollama ollama pull ${config.model_name || '<model>'}`)}`);
+          console.log(`    3. Test extraction: ${colors.status.dim('kg admin extraction test')}`);
+        }
 
         if (result.reload_required) {
           console.log(`\n  ${colors.status.warning('⚠️  API restart required to apply changes')}`);

@@ -174,6 +174,30 @@ Respond with ONLY the JSON, no other text."""
             )
             content = message.content[0].text.strip()
 
+        elif "ollama" in provider_name:
+            # Ollama provider - use direct HTTP API
+            response = ai_provider.session.post(
+                f"{ai_provider.base_url}/api/chat",
+                json={
+                    "model": ai_provider.extraction_model,
+                    "messages": [
+                        {"role": "system", "content": "You are a knowledge graph vocabulary expert. Respond with valid JSON only."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "format": "json",  # Ollama JSON mode
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,
+                        "top_p": ai_provider.top_p,
+                        "num_predict": 300
+                    }
+                },
+                timeout=60
+            )
+            response.raise_for_status()
+            response_data = response.json()
+            content = response_data["message"]["content"].strip()
+
         else:
             raise ValueError(f"Unsupported AI provider: {provider_name}")
 

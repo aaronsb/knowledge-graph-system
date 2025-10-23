@@ -91,7 +91,7 @@ Output:
 - **Legacy**: `gpt-4-turbo` - If you need older model behavior
 
 **Anthropic:**
-- **Production**: `claude-sonnet-4` - Excellent quality, competitive pricing
+- **Production**: `claude-sonnet-4-5` - Excellent quality, competitive pricing
 - **High-quality**: `claude-opus-4` - Best quality, higher cost
 - **Legacy**: `claude-3-5-sonnet-20241022` - Previous generation
 
