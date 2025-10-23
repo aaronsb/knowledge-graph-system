@@ -8,317 +8,308 @@
 
 ## Introduction
 
-You're probably familiar with searching through documents, skimming text, and hoping you find what you need. Maybe you've used RAG (Retrieval-Augmented Generation) systems that throw similar text chunks at an LLM and cross your fingers. These approaches work... sometimes. But they have fundamental limitations.
+This system extracts concepts from documents and represents them as nodes in a graph, connected by typed relationships. Instead of searching for similar text chunks (like RAG systems do), you can explore how ideas connect, accumulate knowledge over time, and trace claims back to their source evidence.
 
-What if, instead of searching for *text*, you could explore *ideas*? What if concepts could connect to each other across documents, preserving their relationships and evidence? What if knowledge could accumulate and grow smarter over time, instead of being rebuilt from scratch for every query?
-
-That's what a knowledge graph does.
+This section explains what knowledge graphs are, how they differ from text retrieval systems, and what that difference enables.
 
 ---
 
-## The Problem with Traditional Text Retrieval
+## How RAG Systems Work
 
-### How RAG Systems Work
+Most document retrieval systems follow this pattern:
 
-Traditional Retrieval-Augmented Generation (RAG) systems follow a simple pattern:
+1. Split documents into chunks (usually 500-2000 words)
+2. Generate vector embeddings for each chunk
+3. When queried, find chunks with similar embeddings
+4. Pass those chunks to an LLM for synthesis
+5. Return an answer
 
-1. Break documents into chunks
-2. Create vector embeddings for each chunk
-3. Find chunks similar to your query
-4. Stuff those chunks into LLM context
-5. Hope the LLM can figure it out
+This works well for quick lookups in well-structured documents.
 
-This works for quick lookups, but it has serious limitations:
+## Limitations of Text Chunk Retrieval
 
-###  **Ephemeral Knowledge**
+### Knowledge Gets Rebuilt Every Time
 
-Every query rebuilds understanding from scratch. There's no persistent structure, no accumulated insight. Each search is like reading the document for the first time. The system has no memory of what it learned before.
+Each query starts from scratch. The system doesn't remember what it learned from previous queries or accumulate understanding. If you ask the same question twice, it does the same work twice.
 
-### **Similarity ≠ Understanding**
+### Similarity Doesn't Capture Relationships
 
-Vector similarity finds "related text" but doesn't understand *how* ideas relate:
-- Does concept A support concept B?
-- Does it contradict it?
-- Does it depend on it?
-- Is it a prerequisite?
+Vector embeddings tell you that two chunks of text are semantically similar. They don't tell you *how* the ideas relate. Does concept A support concept B? Contradict it? Depend on it? You can't tell from similarity scores alone.
 
-RAG can't tell you. It just knows the vectors are close in 1536-dimensional space.
+### Documents Stay Isolated
 
-### **No Cross-Document Synthesis**
+If two papers discuss the same concept using different terminology, RAG won't connect them unless their embedding vectors happen to be close. You lose cross-document synthesis.
 
-RAG treats documents as silos. If two papers discuss the same concept using different terminology, RAG won't connect them unless the vectors happen to align. You lose the synthesis across your knowledge base.
+### Evidence Gets Lost
 
-### **Lost Provenance**
+When RAG returns an answer, you get chunks with rough citations. You don't get precise quotes, paragraph references, or the ability to verify the source directly.
 
-When you get an answer, where did it come from? Which specific quote? From what paragraph? In what context? RAG gives you chunks and vague citations, not precise evidence trails.
+### No Graph Traversal
 
-### **No Traversal**
-
-You can't ask:
-- "Show me what connects to this concept"
-- "Explore related ideas"
-- "Trace the argument chain"
-
-RAG is search-only, not exploration.
+You can search, but you can't explore. Questions like "show me what connects these two concepts" or "what supports this idea" don't have answers in pure retrieval systems.
 
 ---
 
-## The Knowledge Graph Approach
+## Knowledge Graph Approach
 
-A knowledge graph system thinks about documents fundamentally differently. Instead of treating text as the primary unit, it extracts and models the *ideas* within that text as first-class entities.
+A knowledge graph treats concepts as first-class entities with explicit relationships.
 
-### Concepts Are Explicit
+### Concepts as Nodes
 
-Instead of "chunk 47 from document X," you have:
+Instead of storing "chunk 47 from document X," you store:
 
 ```
-Concept: "Requisite Variety"
+Concept ID: c_20240315_1523
 Label: "Requisite Variety"
 Search Terms: ["Ashby's Law", "system control", "variety matching"]
+Embedding: [0.023, -0.145, 0.891, ... 1533 more dimensions]
+
 Relationships:
-  - SUPPORTS → "AI Sandwich Systems Model"
-  - IMPLIES → "Control requires matching complexity"
+  SUPPORTS → "Control System Design" (c_20240315_1524)
+  IMPLIES → "Complexity Matching" (c_20240315_1525)
+
 Evidence:
-  - "A control system must have variety...at least equal to the variety
-     of the system being controlled" (Source: cybernetics_101.md, ¶3)
-  - "You can't control what you can't match" (Source: systems_thinking.pdf, ¶12)
+  Instance 1: "A control system must have variety at least equal
+               to the variety of the system being controlled"
+    Source: cybernetics_101.md, paragraph 3
+
+  Instance 2: "You can't control what you can't match"
+    Source: systems_thinking.pdf, paragraph 12
 ```
 
-This concept is *persistent*. It exists as a node in the graph, connected to other concepts, backed by evidence.
+This concept persists. It's not ephemeral. When you ingest a new document that mentions requisite variety, it can link to this existing concept rather than creating a duplicate.
 
-### Relationships Model Understanding
+### Relationships Are Typed
 
-The system captures *how* ideas connect, not just that they're "similar":
+The system records how concepts relate using semantic types:
 
-- **IMPLIES**: Concept A logically leads to Concept B
-- **SUPPORTS**: Concept A provides evidence for Concept B
-- **CONTRADICTS**: Concept A conflicts with Concept B
-- **DEPENDS_ON**: Concept A requires understanding Concept B first
-- **EXEMPLIFIES**: Concept A is a specific instance of Concept B
+- **IMPLIES** - Concept A logically leads to Concept B
+- **SUPPORTS** - Concept A provides evidence for Concept B
+- **CONTRADICTS** - Concept A conflicts with Concept B
+- **DEPENDS_ON** - Understanding A requires understanding B first
+- **EXEMPLIFIES** - A is a specific instance of B
 
-These aren't just links—they represent the document's argument structure. When you explore the graph, you're following the author's reasoning, not just vector similarity.
+These relationships come from the extraction process—the LLM identifies them while reading the text. When you traverse the graph, you're following the document's argument structure.
 
-### Persistent, Growing Knowledge
+### Knowledge Accumulates
 
-Once extracted, concepts persist. New documents:
-- Add new concepts
-- Connect to existing concepts
-- Merge with similar concepts automatically
-- Provide additional evidence for existing ideas
+New documents add concepts, create new relationships, and provide additional evidence for existing ideas. The graph grows denser and more connected over time. Concepts that appear across multiple documents accumulate evidence instances, making them more central to the knowledge base.
 
-The graph becomes smarter with each document ingested. It's not ephemeral—it's cumulative.
+### Evidence Links to Source
 
-### Evidence-Based Retrieval
-
-Every concept links back to the source quotes that support it:
+Every concept includes quoted text from source documents:
 
 ```
 Concept: "Value of Uselessness"
+
 Evidence Instance 1:
-  Quote: "The whole notion of something of life...being useful...
+  Quote: "The whole notion of something of life being useful
           is to a Taoist absurd."
   Source: Alan Watts - Tao of Philosophy - 02, paragraph 1
+  Ingested: 2024-03-15
 
 Evidence Instance 2:
-  Quote: "The moment you make something useful, you've destroyed its
-          intrinsic value."
+  Quote: "The moment you make something useful, you've destroyed
+          its intrinsic value."
   Source: Alan Watts - Tao of Philosophy - 04, paragraph 7
+  Ingested: 2024-03-17
 ```
 
-You can trace any claim back to its origins. You can *verify*, not just trust.
+You can verify claims by reading the original quotes in context.
 
 ### Graph Traversal
 
-You can explore the knowledge space:
-- "What concepts support this idea?"
-- "What does this contradict?"
-- "Show me the evidence chain from A to B"
-- "Find all concepts 2 hops away from this one"
-- "What connects these two seemingly unrelated concepts?"
+You can query relationships explicitly:
 
-This is **exploration**, not just search.
+- "What concepts support this idea?"
+- "Show me the path between concepts A and B"
+- "Find concepts 2 relationships away from this one"
+- "What evidence supports this claim?"
+
+This is exploration, not just search.
 
 ---
 
 ## What This Enables
 
-### For Human Learning
+### For Research and Learning
 
-**Exploration, Not Just Search**
-Start with one concept, traverse relationships, discover connections you didn't know to look for. Learn the way your brain actually works—by association and connection, not linear text.
+When you ingest a large document set (like a 500-page codebase or 200 research papers), you can explore from multiple angles. Start with one concept, follow relationships, and discover connections that weren't obvious from linear reading.
 
-**Provenance & Trust**
-Every claim traces back to specific quotes. You can verify, question, and understand the source of knowledge.
+You can see which architectural decisions led to specific design patterns, or how theoretical findings from different papers relate to each other. The graph makes implicit connections explicit.
 
-**Concept Maps**
-Visualize how ideas connect across an entire document collection. See the big picture and the details simultaneously.
+### For Verification
 
-**Multi-Perspective Understanding**
-When you ingest a 500-page codebase and 280 commits, you can explore from multiple angles:
-- "Show me all authentication-related concepts"
-- "What architectural decisions led to this design?"
-- "How did the approach evolve over time?"
+Every claim traces to source quotes. If the system says "Concept A supports Concept B," you can read the evidence instances to verify that relationship makes sense. You're not trusting an LLM's synthesis—you're verifying against quoted text.
 
-(See [Section 60](60-case-study-multi-perspective-enrichment.md) for a real example of this.)
+### For AI Assistants
 
-### For AI Assistants (LLMs)
+When an LLM queries the graph, it receives structured information:
 
-**Semantic Grounding**
-Instead of "here's some similar text," the LLM receives:
-- "Here's the concept of Requisite Variety"
-- "It SUPPORTS the AI Sandwich model with 0.85 confidence"
-- "Evidence: [3 exact quotes with sources]"
-- "It's related to these 5 other concepts via these relationship types"
+- The concept label and search terms
+- Relationship types and targets
+- Exact quotes with sources
+- Connected concepts
 
-**Relationship Awareness**
-The LLM can reason about how concepts connect, not just what they say. It understands the argument structure, not just the content.
-
-**Multi-Document Synthesis**
-Concepts from different sources automatically link. The LLM can synthesize across your entire knowledge base, not just similar chunks from a single document.
+This is more precise than passing similar text chunks and hoping the LLM figures out the structure.
 
 ---
 
-## The Hybrid Architecture
+## The Hybrid Approach
 
-This system doesn't replace other approaches—it combines them:
+This system combines three query methods:
 
-1. **Vector Search** - Find concepts semantically similar to a query (like RAG)
-2. **Graph Traversal** - Explore relationships between concepts (unique to graphs)
-3. **Full-Text Search** - Find exact quotes or terminology (classic search)
+**Vector Search**
+Find concepts semantically similar to a query. Uses the same embedding approach as RAG but returns concepts, not chunks.
 
-RAG only has #1. This system has all three.
+**Graph Traversal**
+Follow relationships between concepts. This is unique to graph structures.
 
-You get the semantic power of embeddings, the structural power of graphs, and the precision of exact search.
+**Full-Text Search**
+Find exact quotes or terminology in evidence instances. Useful for precise lookups.
+
+You're not replacing one approach with another. You're using all three where appropriate.
 
 ---
 
 ## Core Terminology
 
-Before we go further, let's define the core terms you'll see throughout this documentation:
+**Knowledge Graph**: A data structure representing information as nodes connected by typed edges.
 
-**Knowledge Graph**
-A data structure that represents information as nodes (concepts) connected by edges (relationships), rather than as linear text or flat tables.
+**Concept**: An idea extracted from text. Examples: "Linear Thinking", "Microservices Architecture", "Requisite Variety".
 
-**Concept**
-A core idea, entity, or principle extracted from source text. Examples: "Linear Thinking", "Microservices Architecture", "Requisite Variety".
+**Relationship**: A typed connection between concepts (IMPLIES, SUPPORTS, CONTRADICTS, etc.).
 
-**Relationship**
-A typed connection between concepts that captures how they relate. Examples: IMPLIES, SUPPORTS, CONTRADICTS, DEPENDS_ON.
+**Evidence Instance**: A quoted passage from source text that supports a concept. Links concepts to original documents.
 
-**Evidence / Instance**
-A specific quote from source text that supports or exemplifies a concept. Every concept has one or more evidence instances linking it to the original text.
+**Source**: The original document/paragraph where text was extracted.
 
-**Source**
-The original document, paragraph, or text unit from which concepts and evidence were extracted.
+**Ontology**: A thematic collection of documents forming a knowledge domain. Examples: "Alan Watts Lectures", "Company Docs".
 
-**Ontology**
-In this system: a thematic collection of related documents that form a knowledge domain. Examples: "Alan Watts Lectures", "Company Architecture Docs", "Research Papers - Cognitive Science".
+**Extraction**: Using an LLM to identify concepts, relationships, and evidence in text.
 
-**Extraction**
-The process of using an LLM (GPT-4, Claude, local models) to read text and identify concepts, relationships, and evidence.
+**Embedding**: A 1536-dimensional vector representing a concept's meaning, used for similarity search.
 
-**Embedding**
-A 1536-dimensional vector representation of a concept's meaning, used for semantic similarity search.
-
-**Graph Traversal**
-The process of following relationships from concept to concept, exploring the knowledge structure.
+**Graph Traversal**: Following relationships from concept to concept.
 
 ---
 
-## What We're Not Claiming
+## Practical Differences
 
-Let's be clear about what this system is and isn't.
+### RAG Strengths
+- Fast for one-off queries
+- No extraction cost upfront
+- Works well with homogeneous documents
+- Good for quick lookups
 
-This is **not**:
-- A replacement for reading (you still need to engage with ideas)
-- Perfect extraction (LLMs make mistakes in identification and relationships)
-- A solved problem (this is experimental and evolving)
-- The only way to do knowledge graphs (many approaches exist)
-- Faster than RAG for simple queries (the graph takes time to build)
+### Knowledge Graph Strengths
+- Relationships are explicit and typed
+- Knowledge accumulates across documents
+- Concepts deduplicate automatically
+- Evidence is precisely cited
+- You can explore, not just search
+- Cross-document synthesis works
 
-This **is**:
-- A different paradigm: persistent concepts vs. ephemeral retrieval
-- A synthesis of LLM extraction + graph storage + semantic search
-- An experiment in what becomes possible when you model ideas, not just text
-- A tool for long-term knowledge building, not one-off queries
+### RAG Weaknesses
+- No persistent knowledge structure
+- Relationships are implicit (inferred by LLM)
+- Documents stay isolated
+- Same work repeated for each query
 
----
+### Knowledge Graph Weaknesses
+- Initial extraction takes time and costs tokens
+- LLMs can make mistakes during extraction
+- Requires more infrastructure (graph database)
+- Slower for simple lookups
 
-## When to Use Each Approach
-
-### Use RAG When:
-- You need quick, one-off queries
-- Documents are homogeneous and well-structured
-- You don't need to understand relationships between concepts
-- You're okay rebuilding context every time
-- Query speed is more important than knowledge depth
-
-### Use Knowledge Graphs When:
-- You're building long-term knowledge bases
-- Relationships between ideas matter
-- You need provenance and evidence tracking
-- You want to explore, not just retrieve
-- You're synthesizing across multiple documents or sources
-- The cost of initial extraction is worth the long-term value
+Different tools for different needs.
 
 ---
 
-## The Vision: What Becomes Possible
+## What You Can Build
 
-Imagine ingesting:
-- **Your entire codebase** - Concepts = architectural decisions, components, dependencies, design patterns
-- **Research paper collections** - Concepts = theories, findings, methodologies, experimental results
-- **Company documentation** - Concepts = policies, procedures, best practices, tribal knowledge
-- **Historical texts** - Concepts = events, figures, philosophical ideas, cultural movements
-- **Meeting transcripts** - Concepts = decisions made, action items, strategic directions
+Once you have a knowledge graph, you can query:
 
-Then querying:
+**In a codebase:**
 - "Show me all architectural decisions related to authentication"
-- "What research findings contradict the embodied cognition hypothesis?"
-- "Trace the evolution of our deployment policy across all document versions"
-- "How do Stoic and Taoist concepts of acceptance relate to each other?"
-- "What design patterns led to our current microservices architecture?"
+- "What design patterns led to the current microservices structure?"
+- "Trace the evolution of our API design across commits"
 
-Not just finding similar text. **Understanding the knowledge.**
+**In research papers:**
+- "What findings contradict the embodied cognition hypothesis?"
+- "How do these three theoretical frameworks relate?"
+- "What evidence supports this claim?"
 
----
+**In documentation:**
+- "Trace our deployment policy changes over time"
+- "What concepts connect security and performance?"
+- "Show me all procedures that depend on this one"
 
-## Implementation Reality
-
-This system:
-- Uses LLMs for extraction (OpenAI GPT-4, Anthropic Claude, local Ollama models)
-- Stores concepts in Apache AGE (PostgreSQL graph extension) with vector embeddings
-- Deduplicates concepts via vector similarity (concepts merge automatically across documents)
-- Preserves evidence links to source quotes with exact paragraph references
-- Provides multiple query interfaces:
-  - MCP server (Claude Desktop integration)
-  - CLI (`kg` command)
-  - REST API
-  - Direct openCypher queries
-
-It's not magic. It's:
-1. Structured extraction by LLMs
-2. Graph storage with relationships
-3. Semantic retrieval via embeddings
-4. Evidence preservation for trust
-
-But the combination creates something qualitatively different from RAG.
+The graph makes it possible to ask relationship questions, not just similarity questions.
 
 ---
 
-## What's Next
+## Implementation Notes
 
-Now that you understand the conceptual foundation, let's see how this system actually works:
+This system uses:
+- **LLMs for extraction**: OpenAI GPT-4, Anthropic Claude, or local Ollama models
+- **Apache AGE for storage**: PostgreSQL graph extension with openCypher queries
+- **Vector embeddings**: For semantic similarity (OpenAI or local sentence-transformers)
+- **Deduplication**: Concepts merge automatically when similarity exceeds threshold
+- **Multiple interfaces**: MCP server (Claude Desktop), CLI (`kg` command), REST API
 
-- **[Section 02 - System Overview](02-system-overview.md)**: Architecture and components
+The extraction process:
+1. Document is split into semantic chunks (~1000 words)
+2. LLM reads each chunk and outputs structured JSON with concepts, relationships, evidence
+3. Concepts are embedded and matched against existing concepts
+4. Similar concepts merge; new concepts are added
+5. Relationships and evidence instances are stored in the graph
+
+This isn't magic. It's structured prompting + graph storage + semantic retrieval. But the combination produces different capabilities than text-chunk RAG.
+
+---
+
+## Limitations
+
+**Extraction isn't perfect**: LLMs make mistakes. They might miss concepts, misidentify relationships, or extract the wrong level of granularity.
+
+**It's not fast**: Initial ingestion takes time. A 100-page document might take 5-10 minutes to process and cost $0.50-$2.00 in API calls.
+
+**You still need to think**: The graph organizes information. It doesn't think for you.
+
+**This is experimental**: The field is evolving. Best practices aren't established yet.
+
+---
+
+## When to Use This
+
+**Use knowledge graphs when:**
+- You're building a long-term knowledge base
+- Relationships between ideas matter
+- You need precise evidence tracking
+- You're synthesizing across multiple documents
+- Exploration is as important as search
+- The extraction cost is worth the long-term value
+
+**Use RAG when:**
+- You need quick, one-off answers
+- Documents are well-structured and homogeneous
+- Relationships don't matter much
+- Speed is more important than depth
+
+---
+
+## Next Steps
+
+Now that you understand what knowledge graphs are and how they differ from text retrieval, you can:
+
+- **[Section 02 - System Overview](02-system-overview.md)**: See how the components fit together
 - **[Section 03 - Quick Start](03-quick-start-your-first-knowledge-graph.md)**: Build your first graph in 5 minutes
-- **[Section 07 - Real World Example](07-real-world-example-project-history.md)**: See it in action with a real codebase
+- **[Section 07 - Real World Example](07-real-world-example-project-history.md)**: See it working with actual data
 
-Or jump ahead to see the evidence:
-- **[Section 60 - Multi-Perspective Enrichment](60-case-study-multi-perspective-enrichment.md)**: How 280 commits and 31 PRs become navigable knowledge
+Or jump to a case study:
+- **[Section 60 - Multi-Perspective Enrichment](60-case-study-multi-perspective-enrichment.md)**: How 280 commits become navigable knowledge
 
 ---
-
-**The goal isn't to replace RAG. It's to explore what becomes possible when we move from retrieving text to modeling knowledge.**
 
 ← [Documentation Index](README.md) | [Next: System Overview →](02-system-overview.md)
