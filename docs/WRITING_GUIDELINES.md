@@ -6,6 +6,16 @@ These guidelines ensure consistent tone, quality, and authenticity across the Kn
 
 ## Core Principles
 
+### 0. Primary Purpose: Clarity and Utility
+
+The documentation exists to:
+1. **Explain concepts** - What is this thing?
+2. **Show how it works** - What's happening under the hood?
+3. **Teach usage** - How do I actually use it?
+4. **Extract value** - Why would I care? What can I do with this?
+
+Everything else—humor, analogies, theory—serves these goals. Don't write to excite the reader. Write to **inform** the reader.
+
 ### 1. Avoid AI Constructivism
 
 **Don't do this:**
@@ -33,20 +43,34 @@ better when you need to explore relationships and accumulate
 knowledge over time. Different tools for different jobs.
 ```
 
-### 2. Humor Is Welcome
+### 2. Humor and Analogies - Use Sparingly
 
-**Good humor:**
-- Self-deprecating about AI verbosity
-- Analogies that land (Abe Simpson rambling stories)
-- Real frustrations expressed lightly
-- Technical jokes that don't distract
+The main goal is **explaining concepts clearly**. Humor and analogies are tools to aid understanding, not entertainment.
 
-**Example:**
+**When to use:**
+- When an analogy genuinely clarifies a complex idea
+- When humor makes a technical point memorable
+- When it helps the reader connect to their own experience
+
+**When NOT to use:**
+- Don't force humor into every section
+- Don't use analogies when direct explanation is clearer
+- Don't entertain at the expense of clarity
+
+**Example - Good (helps understanding):**
 ```
-The LLM will sometimes extract "The Importance of Being Ernest" as
+The LLM sometimes extracts "The Importance of Being Ernest" as three
+separate concepts. This happens when context boundaries aren't clear
+to the model.
+```
+
+**Example - Too Much:**
+```
+The LLM will hilariously extract "The Importance of Being Ernest" as
 three separate concepts: "Importance", "Being", and "Ernest". This
 is like asking your grandfather about his childhood and getting a
-45-minute story about onions.
+45-minute story about onions and how they cost a nickel. The point
+is, extraction isn't perfect—much like Grandpa's memory!
 ```
 
 ### 3. Ground Concepts in Theory
