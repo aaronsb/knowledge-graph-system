@@ -1,117 +1,187 @@
-# Documentation Index
+# Knowledge Graph System - Documentation
 
-This directory contains all documentation for the Knowledge Graph System, organized by category.
+**Version:** 1.0 (Book Structure)
+**Last Updated:** 2025-10-23
+**Format:** Progressive narrative designed for front-to-back reading
 
-## Directory Structure
+---
 
-### 📐 `architecture/`
-Architecture decisions, design documents, and ADRs (Architectural Decision Records).
+## About This Documentation
 
-- **ARCHITECTURE.md** - System architecture overview
-- **ARCHITECTURE_DECISIONS.md** - Consolidated architecture decisions
-- **ADR-012-api-server-architecture.md** - FastAPI REST server design
-- **ADR-013-unified-typescript-client.md** - TypeScript client consolidation
-- **ADR-014-job-approval-workflow.md** - Job approval and queue management
-- **ADR-015-backup-restore-streaming.md** - Database backup/restore strategy
-- **ADR-016-apache-age-migration.md** - Apache AGE migration (Neo4j → PostgreSQL + AGE)
-- **ADR-027-user-management-api.md** - User authentication and session management
-- **ADR-028-dynamic-rbac.md** - Dynamic Role-Based Access Control system
-- **ADR-031-encrypted-api-key-storage.md** - Encrypted API key storage with Fernet encryption
+This documentation is organized as a **coherent narrative** that builds understanding progressively, like a lecture series or technical book. Each section introduces concepts that build on previous knowledge, while the ADR (Architecture Decision Record) collection provides the historical decision-making context.
 
-### 🧪 `testing/`
-Test coverage specifications and testing documentation.
+**Reading Paths:**
+- **New Users:** Start with [Part I](#part-i-foundations-01-09) (Sections 01-09)
+- **Operators:** Jump to [Part II](#part-ii-configuration--customization-10-19) and [Part III](#part-iii-system-administration-20-29)
+- **Developers:** Begin with [Part I](#part-i-foundations-01-09), then [Part IV](#part-iv-architecture-deep-dives-30-39)
+- **Architects:** [Part IV](#part-iv-architecture-deep-dives-30-39), [Part V](#part-v-advanced-topics-40-49), [ADR Index](#part-vi-developer-reference-50-59)
 
-- **TEST_COVERAGE.md** - Comprehensive test coverage plan and philosophy
+---
 
-### 🔌 `api/`
-API documentation and query pattern references.
+## Part I: Foundations (01-09)
 
-- **CYPHER_PATTERNS.md** - AGE Cypher query patterns and compatibility notes
-- **OPENCYPHER_QUERIES.md** - openCypher query examples and patterns for Apache AGE
+**Goal:** Understand what knowledge graphs are, why they matter, and how to use this system.
 
-### 📚 `guides/`
-User and developer guides for getting started and working with the system.
+- [01 - What Is a Knowledge Graph?](01-what-is-a-knowledge-graph.md)
+- [02 - System Overview](02-system-overview.md)
+- [03 - Quick Start: Your First Knowledge Graph](03-quick-start-your-first-knowledge-graph.md)
+- [04 - Understanding Concepts and Relationships](04-understanding-concepts-and-relationships.md)
+- [05 - The Extraction Process](05-the-extraction-process.md)
+- [06 - Querying Your Knowledge Graph](06-querying-your-knowledge-graph.md)
+- [07 - Real World Example: Project History Analysis](07-real-world-example-project-history.md)
+- [08 - Choosing Your AI Provider](08-choosing-your-ai-provider.md)
+- [09 - Common Workflows and Use Cases](09-common-workflows-and-use-cases.md)
 
-- **QUICKSTART.md** - Quick start guide for new users
-- **AI_PROVIDERS.md** - AI provider configuration (OpenAI, Anthropic)
-- **EXTRACTION_CONFIGURATION.md** - AI extraction configuration details (ADR-041)
-- **EXTRACTION_QUALITY_COMPARISON.md** - Empirical quality comparison across providers
-- **SWITCHING_EXTRACTION_PROVIDERS.md** - How to switch between OpenAI, Anthropic, and Ollama
-- **LOCAL_INFERENCE_IMPLEMENTATION.md** - Ollama local inference implementation phases (ADR-042)
-- **EMBEDDING_CONFIGURATION.md** - AI embedding configuration details (ADR-039)
-- **AUTHENTICATION.md** - Login, logout, and session management
-- **PASSWORD_RECOVERY.md** - Password reset and account recovery procedures
-- **RBAC.md** - Role-Based Access Control operations and user management
-- **SECURITY.md** - Security infrastructure and encrypted API key management
-- **MCP_SETUP.md** - MCP server setup for Claude Desktop integration
-- **BACKUP_RESTORE.md** - Backup and restore operations guide
-- **DATABASE_MIGRATIONS.md** - Database schema migration management (ADR-040)
-- **SCHEMA_REFERENCE.md** - PostgreSQL schema reference and documentation
-- **INGESTION.md** - Document ingestion workflow and configuration
-- **VOCABULARY_CONSOLIDATION.md** - Edge vocabulary consolidation with AITL (ADR-032)
-- **EXAMPLES.md** - Usage examples and common patterns
-- **USE_CASES.md** - Real-world workflow catalog (index to use_cases/ directory)
-- **use_cases/** - Individual use case guides (GitHub history analysis, etc.)
+---
 
-### 📖 `reference/`
-Conceptual documentation and terminology reference.
+## Part II: Configuration & Customization (10-19)
 
-- **CONCEPT.md** - Core concept definitions
-- **CONCEPTS_AND_TERMINOLOGY.md** - System terminology and glossary
-- **ENRICHMENT_JOURNEY.md** - How the graph learns from multiple perspectives
+**Goal:** Configure the system for your specific needs and environment.
 
-### 🔨 `development/`
-Development journals, learnings, and internal notes.
+- [10 - AI Extraction Configuration](10-ai-extraction-configuration.md)
+- [11 - Embedding Models and Vector Search](11-embedding-models-and-vector-search.md)
+- [12 - Local LLM Inference with Ollama](12-local-llm-inference-with-ollama.md)
+- [13 - Managing Relationship Vocabulary](13-managing-relationship-vocabulary.md)
+- [14 - Advanced Query Patterns](14-advanced-query-patterns.md)
+- [15 - Integration with Claude Desktop (MCP)](15-integration-with-claude-desktop.md)
 
-- **DEV_JOURNAL_chunked_ingestion.md** - Chunked ingestion development journal
-- **LEARNED_KNOWLEDGE_MCP.md** - MCP integration learnings
+---
 
-### 🖼️ `media/`
-Images, diagrams, and other media assets.
+## Part III: System Administration (20-29)
 
-## Quick Navigation
+**Goal:** Operate and maintain a production knowledge graph system.
 
-### New Users
-1. Start with [QUICKSTART.md](guides/QUICKSTART.md)
-2. Learn about [AI Providers](guides/AI_PROVIDERS.md)
-3. Read [INGESTION.md](guides/INGESTION.md) for document ingestion workflow
-4. See [VOCABULARY_CONSOLIDATION.md](guides/VOCABULARY_CONSOLIDATION.md) for managing edge vocabulary growth
-5. See [ENRICHMENT_JOURNEY.md](reference/ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
-6. Review [Examples](guides/EXAMPLES.md) and [Use Cases](guides/USE_CASES.md)
+- [20 - User Management and Authentication](20-user-management-and-authentication.md)
+- [21 - Role-Based Access Control (RBAC)](21-role-based-access-control.md)
+- [22 - Securing API Keys](22-securing-api-keys.md)
+- [23 - Account Recovery Procedures](23-account-recovery-procedures.md)
+- [24 - Database Operations](24-database-operations.md)
+- [25 - System Maintenance and Monitoring](25-system-maintenance-and-monitoring.md)
+- [26 - Troubleshooting Guide](26-troubleshooting-guide.md)
 
-### Administrators
-1. Read [AUTHENTICATION.md](guides/AUTHENTICATION.md) for login and session management
-2. **Important:** Keep [PASSWORD_RECOVERY.md](guides/PASSWORD_RECOVERY.md) handy for account recovery
-3. Review [RBAC.md](guides/RBAC.md) for user and permission management
-4. **Important:** Read [SECURITY.md](guides/SECURITY.md) for encrypted API key management and security infrastructure
-5. Learn about [BACKUP_RESTORE.md](guides/BACKUP_RESTORE.md) for data protection
-6. Reference [MCP_SETUP.md](guides/MCP_SETUP.md) for service account configuration
+---
 
-### Developers
-1. Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md)
-2. Review [ADR-016](architecture/ADR-016-apache-age-migration.md) for current database architecture
-3. Learn about [DATABASE_MIGRATIONS.md](guides/DATABASE_MIGRATIONS.md) for schema evolution (ADR-040)
-4. Reference [SCHEMA_REFERENCE.md](guides/SCHEMA_REFERENCE.md) for complete schema documentation
-5. Check [TEST_COVERAGE.md](testing/TEST_COVERAGE.md) for testing guidelines
-6. Reference [CYPHER_PATTERNS.md](api/CYPHER_PATTERNS.md) for query development
+## Part IV: Architecture Deep Dives (30-39)
 
-### Contributors
-1. Read architecture decisions in `architecture/`
-2. Follow test guidelines in `testing/`
-3. Review development journals in `development/`
-4. Understand system concepts in `reference/`
+**Goal:** Understand the technical design and implementation details.
 
-## Migration Notes
+- [30 - Core System Architecture](30-core-system-architecture.md)
+- [31 - Apache AGE and PostgreSQL Integration](31-apache-age-and-postgresql-integration.md)
+- [32 - The Concept Extraction Pipeline](32-the-concept-extraction-pipeline.md)
+- [33 - Concept Deduplication and Matching](33-concept-deduplication-and-matching.md)
+- [34 - Authentication and Security Architecture](34-authentication-and-security-architecture.md)
+- [35 - Job Management and Approval Workflows](35-job-management-and-approval-workflows.md)
+- [36 - Data Contracts and Schema Governance](36-data-contracts-and-schema-governance.md)
+- [37 - REST API Reference](37-rest-api-reference.md)
 
-This documentation was reorganized on 2025-10-08 to improve organization and maintainability. Previous flat structure has been split into logical categories.
+---
 
-**Breaking Changes:**
-- All documentation links in code and README files may need updating
-- File paths have changed (e.g., `docs/ARCHITECTURE.md` → `docs/architecture/ARCHITECTURE.md`)
+## Part V: Advanced Topics (40-49)
 
-**Migration TODO:**
-- [x] Rename NEO4J_QUERIES.md to OPENCYPHER_QUERIES.md
-- [x] Update Neo4j references to Apache AGE + PostgreSQL
-- [ ] Update main README.md links
-- [ ] Update CLAUDE.md references
-- [ ] Update any hardcoded documentation paths in code
+**Goal:** Explore advanced features and future directions.
+
+- [40 - Relationship Vocabulary Evolution](40-relationship-vocabulary-evolution.md)
+- [41 - Graph Visualization and Interactive Exploration](41-graph-visualization-and-interactive-exploration.md)
+- [42 - Human-Guided Graph Editing](42-human-guided-graph-editing.md)
+- [43 - Multimodal Ingestion: Images and Documents](43-multimodal-ingestion-images-and-documents.md)
+- [44 - Advanced Governance and Access Control](44-advanced-governance-and-access-control.md)
+- [45 - Distributed Deployment and Scaling](45-distributed-deployment-and-scaling.md)
+- [46 - Research Notes and Experimental Features](46-research-notes-and-experimental-features.md)
+
+---
+
+## Part VI: Developer Reference (50-59)
+
+**Goal:** Contribute to the project and understand development practices.
+
+- [50 - Contributing to the Project](50-contributing-to-the-project.md)
+- [51 - Testing Strategy and Coverage](51-testing-strategy-and-coverage.md)
+- [52 - Architecture Decision Records (Index)](52-architecture-decision-records-index.md)
+- [53 - Development Journals](53-development-journals.md)
+
+---
+
+## Part VII: Case Studies (60-69)
+
+**Goal:** See the system in action with real-world examples.
+
+- [60 - Case Study: Multi-Perspective Enrichment](60-case-study-multi-perspective-enrichment.md)
+- [61 - Case Study: GitHub Project History Analysis](61-case-study-github-project-history.md)
+- [62 - Query Examples Gallery](62-query-examples-gallery.md)
+
+---
+
+## Appendices
+
+**Quick reference materials for looking up specific information.**
+
+- [Appendix A: Glossary of Terms](appendix-a-glossary-of-terms.md)
+- [Appendix B: Architecture Decisions (Complete)](appendix-b-architecture-decisions-complete.md)
+- [Appendix C: Command Line Reference](appendix-c-command-line-reference.md)
+- [Appendix D: Configuration Reference](appendix-d-configuration-reference.md)
+- [Appendix E: Troubleshooting Index](appendix-e-troubleshooting-index.md)
+- [Appendix F: Project Roadmap](appendix-f-project-roadmap.md)
+- [Appendix G: API Endpoint Reference](appendix-g-api-endpoint-reference.md)
+
+---
+
+## Original Documentation (Archive)
+
+The original documentation structure has been preserved in subdirectories:
+
+- `architecture/` - Architecture Decision Records (ADRs) and design documents
+- `guides/` - Operational guides and how-tos
+- `reference/` - Reference material and conceptual documents
+- `api/` - API and query language documentation
+- `testing/` - Testing strategy and reports
+- `development/` - Development journals and notes
+
+**Important:** ADRs remain the authoritative source for design decisions. The numbered sections reference and consolidate ADRs but do not replace them.
+
+---
+
+## Documentation Philosophy
+
+### Progressive Refinement
+
+This documentation is built through **progressive refinement passes**:
+
+1. **Structure First:** Create numbered files with goals and outlines
+2. **Content Consolidation:** Port and merge existing content
+3. **Cross-Referencing:** Link related sections
+4. **Validation:** Ingest documentation into the knowledge graph system itself
+
+### ADRs as Historical Record
+
+Architecture Decision Records (ADRs) in `architecture/` are **kept as-is** - they represent the historical decision-making process, including decisions about migration from Neo4j to Apache AGE. These provide valuable context for why the system works the way it does.
+
+### Lessons Learned
+
+Decisions about system evolution (like the Neo4j → Apache AGE migration) are incorporated as **lessons learned** in relevant sections, explaining not just what we built but why we made those choices.
+
+---
+
+## Contributing to Documentation
+
+See [Section 50 - Contributing to the Project](50-contributing-to-the-project.md) for guidelines on:
+- Adding new sections (decimal numbering allows insertions)
+- Updating existing content
+- Creating new ADRs
+- Cross-referencing between sections
+
+---
+
+## Meta-Validation
+
+This documentation structure is designed to validate the knowledge graph system itself. When ingested, it should:
+
+- Create clean concept extraction
+- Show proper relationship structures
+- Demonstrate multi-perspective learning
+- Validate the system can handle technical documentation
+
+See [BOOK_STRUCTURE.md](BOOK_STRUCTURE.md) for the design rationale and [CONTENT_MAPPING.md](CONTENT_MAPPING.md) for the implementation plan.
+
+---
+
+**Start Reading:** [01 - What Is a Knowledge Graph?](01-what-is-a-knowledge-graph.md) →
