@@ -866,6 +866,33 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * List all embedding configurations (admin endpoint)
+   */
+  async listEmbeddingConfigs(): Promise<any[]> {
+    const response = await this.client.get('/admin/embedding/configs');
+    return response.data;
+  }
+
+  /**
+   * Set protection flags on an embedding config (admin endpoint)
+   */
+  async protectEmbeddingConfig(configId: number, deleteProtected?: boolean, changeProtected?: boolean): Promise<any> {
+    const params: any = {};
+    if (deleteProtected !== undefined) params.delete_protected = deleteProtected;
+    if (changeProtected !== undefined) params.change_protected = changeProtected;
+    const response = await this.client.post(`/admin/embedding/config/${configId}/protect`, null, { params });
+    return response.data;
+  }
+
+  /**
+   * Delete an embedding configuration (admin endpoint)
+   */
+  async deleteEmbeddingConfig(configId: number): Promise<any> {
+    const response = await this.client.delete(`/admin/embedding/config/${configId}`);
+    return response.data;
+  }
+
+  /**
    * Get current extraction configuration (public endpoint)
    */
   async getExtractionConfig(): Promise<any> {

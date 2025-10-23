@@ -91,11 +91,12 @@ def load_active_embedding_config() -> Optional[Dict[str, Any]]:
         return None
 
 
-def save_embedding_config(config: Dict[str, Any], updated_by: str = "api") -> bool:
+def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force_change: bool = False) -> tuple[bool, str]:
     """
     Save embedding configuration to the database.
 
     Deactivates any existing active config and creates a new one.
+    Checks change protection before allowing provider/dimension changes.
 
     Args:
         config: Configuration dict with keys:
@@ -110,9 +111,10 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api") -> bo
             - max_seq_length: Token limit
             - normalize_embeddings: True/False
         updated_by: User/admin who made the change
+        force_change: Bypass change protection (admin override)
 
     Returns:
-        True if saved successfully, False otherwise
+        Tuple of (success, error_message)
     """
     from .age_client import AGEClient
 
@@ -124,6 +126,29 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api") -> bo
             with conn.cursor() as cur:
                 # Start transaction
                 cur.execute("BEGIN")
+
+                # Check if active config is change-protected
+                if not force_change:
+                    cur.execute("""
+                        SELECT id, provider, embedding_dimensions, change_protected
+                        FROM kg_api.embedding_config
+                        WHERE active = TRUE
+                    """)
+
+                    active_row = cur.fetchone()
+
+                    if active_row:
+                        active_id, active_provider, active_dims, change_protected = active_row
+
+                        if change_protected:
+                            # Check if provider or dimensions are changing
+                            if (config['provider'] != active_provider or
+                                config.get('embedding_dimensions') != active_dims):
+                                cur.execute("ROLLBACK")
+                                return (False,
+                                    f"Active config (ID {active_id}) is change-protected. "
+                                    "Changing provider or dimensions breaks vector search. "
+                                    f"Remove protection first with: kg admin embedding unprotect --change {active_id}")
 
                 # Deactivate all existing configs
                 cur.execute("""
@@ -159,7 +184,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api") -> bo
                 cur.execute("COMMIT")
 
                 logger.info(f"✅ Saved embedding config: {config['provider']} / {config.get('model_name', 'N/A')}")
-                return True
+                return (True, "")
 
         except Exception as e:
             # Rollback on error
@@ -173,7 +198,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api") -> bo
 
     except Exception as e:
         logger.error(f"Failed to save embedding config to database: {e}")
-        return False
+        return (False, str(e))
 
 
 def get_embedding_config_summary() -> Dict[str, Any]:
@@ -226,3 +251,205 @@ def get_embedding_config_summary() -> Dict[str, Any]:
             "batch_size": config.get('batch_size')
         } if config['provider'] == 'local' else None
     }
+
+
+def list_all_embedding_configs() -> list[Dict[str, Any]]:
+    """
+    List all embedding configurations (active and inactive).
+
+    Returns:
+        List of config dicts with protection flags included
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        id, provider, model_name, embedding_dimensions, precision,
+                        max_memory_mb, num_threads, device, batch_size,
+                        max_seq_length, normalize_embeddings,
+                        created_at, updated_at, updated_by, active,
+                        delete_protected, change_protected
+                    FROM kg_api.embedding_config
+                    ORDER BY id DESC
+                """)
+
+                rows = cur.fetchall()
+
+                configs = []
+                for row in rows:
+                    configs.append({
+                        "id": row[0],
+                        "provider": row[1],
+                        "model_name": row[2],
+                        "embedding_dimensions": row[3],
+                        "precision": row[4],
+                        "max_memory_mb": row[5],
+                        "num_threads": row[6],
+                        "device": row[7],
+                        "batch_size": row[8],
+                        "max_seq_length": row[9],
+                        "normalize_embeddings": row[10],
+                        "created_at": row[11],
+                        "updated_at": row[12],
+                        "updated_by": row[13],
+                        "active": row[14],
+                        "delete_protected": row[15] if len(row) > 15 else False,
+                        "change_protected": row[16] if len(row) > 16 else False
+                    })
+
+                return configs
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to list embedding configs: {e}")
+        return []
+
+
+def set_embedding_config_protection(config_id: int, delete_protected: bool = None, change_protected: bool = None) -> bool:
+    """
+    Set or remove protection flags on an embedding configuration.
+
+    Args:
+        config_id: Database ID of the config
+        delete_protected: Set delete protection (None = no change)
+        change_protected: Set change protection (None = no change)
+
+    Returns:
+        True if updated successfully, False otherwise
+    """
+    from .age_client import AGEClient
+
+    if delete_protected is None and change_protected is None:
+        return True  # Nothing to update
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                updates = []
+                params = []
+
+                if delete_protected is not None:
+                    updates.append("delete_protected = %s")
+                    params.append(delete_protected)
+
+                if change_protected is not None:
+                    updates.append("change_protected = %s")
+                    params.append(change_protected)
+
+                params.append(config_id)
+
+                cur.execute(f"""
+                    UPDATE kg_api.embedding_config
+                    SET {', '.join(updates)}
+                    WHERE id = %s
+                """, params)
+
+                conn.commit()
+
+                logger.info(f"✅ Updated protection flags for config {config_id}")
+                return True
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to update protection flags: {e}")
+        return False
+
+
+def check_embedding_config_protection(config_id: int) -> Dict[str, bool]:
+    """
+    Check protection status of an embedding configuration.
+
+    Args:
+        config_id: Database ID of the config
+
+    Returns:
+        Dict with delete_protected and change_protected flags
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT delete_protected, change_protected
+                    FROM kg_api.embedding_config
+                    WHERE id = %s
+                """, (config_id,))
+
+                row = cur.fetchone()
+
+                if not row:
+                    return {"delete_protected": False, "change_protected": False}
+
+                return {
+                    "delete_protected": row[0] if row[0] is not None else False,
+                    "change_protected": row[1] if row[1] is not None else False
+                }
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to check protection flags: {e}")
+        return {"delete_protected": False, "change_protected": False}
+
+
+def delete_embedding_config(config_id: int) -> tuple[bool, str]:
+    """
+    Delete an embedding configuration (if not protected).
+
+    Args:
+        config_id: Database ID of the config to delete
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    from .age_client import AGEClient
+
+    try:
+        # Check protection first
+        protection = check_embedding_config_protection(config_id)
+
+        if protection["delete_protected"]:
+            return (False, "Config is delete-protected. Remove protection first with: kg admin embedding unprotect --delete")
+
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DELETE FROM kg_api.embedding_config
+                    WHERE id = %s
+                """, (config_id,))
+
+                if cur.rowcount == 0:
+                    return (False, f"Config {config_id} not found")
+
+                conn.commit()
+
+                logger.info(f"✅ Deleted embedding config {config_id}")
+                return (True, "")
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to delete embedding config: {e}")
+        return (False, str(e))

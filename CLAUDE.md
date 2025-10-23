@@ -59,6 +59,7 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 - `scripts/start-api.sh` - Start FastAPI server
 - `scripts/stop-api.sh` - Stop API server
 - `scripts/configure-ai.sh` - AI provider configuration
+- `scripts/migrate-db.sh` - Apply database schema migrations
 - `client/install.sh` - Install kg CLI globally
 
 ### Documentation
@@ -124,9 +125,16 @@ tail -f logs/api_*.log
 4. Test ingestion: `kg ingest file -o "Test" -y <test-file>`
 
 **When modifying database schema:**
-1. Edit `schema/init.sql`
-2. Rebuild Docker container: `docker-compose down && docker-compose up -d`
-3. Restart API and re-ingest test data
+1. Create new migration file: `schema/migrations/00N_descriptive_name.sql`
+2. Apply migration: `./scripts/migrate-db.sh` (or `./scripts/migrate-db.sh -y` to skip confirmation)
+3. Test the changes with kg CLI commands
+4. **Important**: Never manually apply migrations with `docker exec` - always use `migrate-db.sh`
+
+**Migration script options:**
+- `./scripts/migrate-db.sh` - Interactive mode with confirmation
+- `./scripts/migrate-db.sh --dry-run` - Preview pending migrations
+- `./scripts/migrate-db.sh -y` - Apply without confirmation
+- `./scripts/migrate-db.sh -y --verbose` - Apply with detailed SQL output
 
 **When modifying API endpoints:**
 1. Edit files in `src/api/routes/`
