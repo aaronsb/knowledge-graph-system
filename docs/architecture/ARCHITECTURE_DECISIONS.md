@@ -57,6 +57,9 @@ All ADRs follow a consistent format:
 | [ADR-038](ADR-038-official-project-apparel.md) | Official Project Apparel Design Specifications | Proposed | Commemorative merchandise celebrating streaming entity resolution with O(n) full-scan cosine similarity - a genuinely unusual architectural choice backed by comprehensive scaling research |
 | [ADR-039](ADR-039-local-embedding-service.md) | Local Embedding Service with Hybrid Client/Server Architecture | Proposed | Replace OpenAI embeddings with local models (nomic-embed-text, BGE) via single model-aware API endpoint; optional browser-side quantized search with two-pass reranking |
 | [ADR-040](ADR-040-database-schema-migrations.md) | Database Schema Migration Management | Proposed | Simple bash-based migration system with schema_migrations tracking table and numbered migration files for safe schema evolution |
+| [ADR-041](ADR-041-ai-extraction-config.md) | AI Extraction Provider Configuration | Proposed | Database-first configuration for LLM provider/model selection with hot-reload capability and unified management interface |
+| [ADR-042](ADR-042-local-extraction-inference.md) | Local LLM Inference for Concept Extraction | Accepted | Ollama integration for local extraction with GPU acceleration, eliminating cloud API dependency and enabling air-gapped deployment |
+| [ADR-043](ADR-043-single-node-resource-management.md) | Single-Node Resource Management for Local Inference | Accepted | Dynamic device selection with intelligent CPU fallback for embeddings when VRAM contention detected (~100ms penalty, prevents silent failures) |
 
 ## How to Use This Index
 
@@ -130,10 +133,6 @@ Proposed capabilities:
 
 ---
 
-<<<<<<< HEAD
-**Last Updated:** 2025-10-18
-=======
-**Last Updated:** 2025-10-20
->>>>>>> origin/main
+**Last Updated:** 2025-10-23
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.

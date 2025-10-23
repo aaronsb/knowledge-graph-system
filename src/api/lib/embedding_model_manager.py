@@ -98,7 +98,7 @@ class EmbeddingModelManager:
 
         try:
             # Generate embedding with normalization (for cosine similarity)
-            embedding = self.model.encode(text, normalize_embeddings=True)
+            embedding = self.model.encode(text, normalize_embeddings=True, show_progress_bar=False)
 
             # Apply precision conversion
             if self.precision == "float16":

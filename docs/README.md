@@ -34,6 +34,11 @@ User and developer guides for getting started and working with the system.
 
 - **QUICKSTART.md** - Quick start guide for new users
 - **AI_PROVIDERS.md** - AI provider configuration (OpenAI, Anthropic)
+- **EXTRACTION_CONFIGURATION.md** - AI extraction configuration details (ADR-041)
+- **EXTRACTION_QUALITY_COMPARISON.md** - Empirical quality comparison across providers
+- **SWITCHING_EXTRACTION_PROVIDERS.md** - How to switch between OpenAI, Anthropic, and Ollama
+- **LOCAL_INFERENCE_IMPLEMENTATION.md** - Ollama local inference implementation phases (ADR-042)
+- **EMBEDDING_CONFIGURATION.md** - AI embedding configuration details (ADR-039)
 - **AUTHENTICATION.md** - Login, logout, and session management
 - **PASSWORD_RECOVERY.md** - Password reset and account recovery procedures
 - **RBAC.md** - Role-Based Access Control operations and user management

@@ -180,7 +180,12 @@ tail -f logs/api_*.log
 
 ### AI Provider System
 
-**Environment Variables:**
+**Available Providers:**
+- **OpenAI** - Cloud API (GPT-4o, GPT-4o-mini)
+- **Anthropic** - Cloud API (Claude Sonnet 4, Claude 3.5 Sonnet)
+- **Ollama** - Local inference (Mistral, Llama, Qwen, etc.) - ADR-042
+
+**Cloud Provider Environment Variables:**
 ```bash
 AI_PROVIDER=openai  # or "anthropic"
 OPENAI_API_KEY=sk-...
@@ -188,10 +193,34 @@ OPENAI_EXTRACTION_MODEL=gpt-4o  # optional
 ANTHROPIC_API_KEY=sk-ant-...  # if using Anthropic
 ```
 
+**Local Provider Environment Variables (Ollama):**
+```bash
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434  # or http://ollama:11434 in Docker
+OLLAMA_EXTRACTION_MODEL=mistral:7b-instruct
+OLLAMA_TEMPERATURE=0.1  # optional
+OLLAMA_TOP_P=0.9  # optional
+```
+
+**Resource Management (ADR-043):**
+When using local inference with Ollama + local embeddings on single-GPU systems, the system automatically manages VRAM contention:
+- **Sufficient VRAM (>500MB free):** Embeddings run on GPU (~1-2ms per concept)
+- **VRAM contention (<500MB free):** Embeddings fall back to CPU (~5-10ms per concept)
+- **Performance impact:** ~100ms per chunk (negligible in 2-3 minute extraction jobs)
+- **User notification:** Clear warning logs when CPU fallback activated
+
 **Switching Providers:**
-- Set `AI_PROVIDER` in `.env`
-- Test with `./scripts/configure-ai.sh`
-- Both use OpenAI for embeddings
+- **Cloud (OpenAI/Anthropic):**
+  - Set `AI_PROVIDER` in `.env`
+  - Test with `./scripts/configure-ai.sh`
+
+- **Local (Ollama):**
+  - Start Ollama: `./scripts/start-ollama.sh -y`
+  - Pull model: `docker exec kg-ollama ollama pull mistral:7b-instruct`
+  - Configure: `kg admin extraction set --provider ollama --model mistral:7b-instruct`
+  - Test: `kg admin extraction test`
+
+**Note:** All providers can use either OpenAI embeddings or local embeddings (configured separately)
 
 ## Common Tasks
 

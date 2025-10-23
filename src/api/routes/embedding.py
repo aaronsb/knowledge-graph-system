@@ -29,7 +29,8 @@ from ..lib.embedding_config import (
     get_embedding_config_summary,
     list_all_embedding_configs,
     set_embedding_config_protection,
-    delete_embedding_config
+    delete_embedding_config,
+    activate_embedding_config
 )
 
 # Public router (no auth)
@@ -88,32 +89,32 @@ async def get_embedding_config_detail():
 
 
 @admin_router.post("/config", response_model=UpdateEmbeddingConfigResponse)
-async def update_embedding_config(request: UpdateEmbeddingConfigRequest):
+async def create_embedding_config(request: UpdateEmbeddingConfigRequest):
     """
-    Update embedding configuration (admin endpoint).
+    Create a new embedding configuration (admin endpoint).
 
-    Creates a new configuration entry and deactivates the previous one.
-    Configuration is stored in kg_api.embedding_config table.
+    Creates a new INACTIVE configuration entry. Use the activate endpoint to switch to it.
 
-    **Important:** Configuration changes can be applied via hot reload (zero-downtime).
-    After updating config, call: POST /admin/embedding/config/reload
+    **Workflow:**
+    1. Create config: POST /admin/embedding/config (this endpoint)
+    2. Review configs: GET /admin/embedding/configs
+    3. Activate: POST /admin/embedding/config/{id}/activate
+    4. Hot reload: POST /admin/embedding/config/reload
 
-    Alternatively, restart API: ./scripts/stop-api.sh && ./scripts/start-api.sh
-
-    Validation:
+    **Validation:**
     - provider='local' requires model_name
     - embedding_dimensions auto-detected from model (can be specified for validation)
     - precision must be 'float16' or 'float32'
     - device must be 'cpu', 'cuda', or 'mps'
 
-    Example (OpenAI):
+    **Example (OpenAI):**
     ```json
     {
         "provider": "openai"
     }
     ```
 
-    Example (Local):
+    **Example (Local):**
     ```json
     {
         "provider": "local",
@@ -155,27 +156,23 @@ async def update_embedding_config(request: UpdateEmbeddingConfigRequest):
                 detail=f"Invalid device: {request.device}. Must be 'cpu', 'cuda', or 'mps'"
             )
 
-        # Save configuration
+        # Create configuration (inactive by default)
         config_dict = request.model_dump(exclude_none=True)
-        success, error_msg = save_embedding_config(config_dict, updated_by=request.updated_by)
+        success, error_msg, config_id = save_embedding_config(config_dict, updated_by=request.updated_by)
 
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST if "protected" in error_msg.lower() else status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=error_msg or "Failed to save embedding configuration"
+                detail=error_msg or "Failed to create embedding configuration"
             )
 
-        # Get the new config ID
-        new_config = load_active_embedding_config()
-        config_id = new_config['id'] if new_config else 0
-
-        logger.info(f"✅ Embedding config updated: {request.provider} / {request.model_name or 'N/A'}")
+        logger.info(f"✅ Embedding config created (ID {config_id}, inactive): {request.provider} / {request.model_name or 'N/A'}")
 
         return UpdateEmbeddingConfigResponse(
             success=True,
-            message="Configuration updated successfully. API restart required to apply changes.",
+            message=f"Configuration created (ID {config_id}, inactive). Use 'kg admin embedding activate {config_id}' to switch to this config.",
             config_id=config_id,
-            reload_required=True  # Phase 1: manual restart required
+            reload_required=False  # Not active yet, so no reload needed
         )
 
     except HTTPException:
@@ -351,4 +348,74 @@ async def delete_embedding_config_endpoint(config_id: int):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete config: {str(e)}"
+        )
+
+
+@admin_router.post("/config/{config_id}/activate")
+async def activate_embedding_config_endpoint(config_id: int, force: bool = False):
+    """
+    Activate an embedding configuration with automatic protection management.
+
+    This provides a clean "unlock → activate → lock" workflow:
+    1. Unprotects currently active config (change protection)
+    2. Deactivates current config
+    3. Activates target config
+    4. Protects target config (both delete and change protection)
+
+    **Safety checks:**
+    - Prevents switching between configs with different embedding dimensions
+    - Changing dimensions breaks vector search for all existing concepts
+    - Use `?force=true` to bypass dimension check (dangerous!)
+
+    **Example workflow:**
+    ```bash
+    # List available configs
+    kg admin embedding list
+
+    # Activate a preset (e.g., nomic-embed-text-v1.5)
+    kg admin embedding activate 3
+
+    # Force activation with dimension mismatch (use with caution!)
+    kg admin embedding activate 3 --force
+
+    # Hot reload to apply changes
+    kg admin embedding reload
+    ```
+
+    Query Parameters:
+    - force: Bypass dimension mismatch check (default: false)
+
+    Returns:
+    - success: True if activation successful
+    - config_id: ID of activated config
+    - message: Next steps (hot reload recommended)
+    """
+    try:
+        success, error_msg = activate_embedding_config(config_id, updated_by="api", force_dimension_change=force)
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_msg
+            )
+
+        # Get the activated config details
+        config = load_active_embedding_config()
+
+        return {
+            "success": True,
+            "config_id": config_id,
+            "message": "Configuration activated successfully. Run 'kg admin embedding reload' to apply changes.",
+            "provider": config.get('provider') if config else None,
+            "model": config.get('model_name') if config else None,
+            "dimensions": config.get('embedding_dimensions') if config else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to activate embedding config: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to activate config: {str(e)}"
         )

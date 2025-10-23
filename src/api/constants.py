@@ -122,3 +122,27 @@ COGNITIVE_LEAP_LEVELS: Set[str] = {
     "MEDIUM",  # Moderate insight
     "HIGH",    # Significant conceptual leap
 }
+
+# ============================================================================
+# AI Providers (ADR-041, ADR-042)
+# ============================================================================
+
+# Valid extraction providers
+EXTRACTION_PROVIDERS: Set[str] = {
+    "openai",      # OpenAI API (GPT-4o, etc.)
+    "anthropic",   # Anthropic API (Claude Sonnet, etc.)
+    "ollama",      # Local inference via Ollama (ADR-042)
+    "vllm",        # Local inference via vLLM (ADR-042 Phase 4)
+}
+
+# Providers that require API keys
+API_KEY_PROVIDERS: Set[str] = {
+    "openai",
+    "anthropic",
+}
+
+# Local inference providers (no API keys needed)
+LOCAL_PROVIDERS: Set[str] = {
+    "ollama",
+    "vllm",
+}

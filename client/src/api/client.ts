@@ -893,6 +893,15 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Activate an embedding configuration with automatic protection management (admin endpoint)
+   */
+  async activateEmbeddingConfig(configId: number, force?: boolean): Promise<any> {
+    const params = force ? { force: true } : {};
+    const response = await this.client.post(`/admin/embedding/config/${configId}/activate`, null, { params });
+    return response.data;
+  }
+
+  /**
    * Get current extraction configuration (public endpoint)
    */
   async getExtractionConfig(): Promise<any> {

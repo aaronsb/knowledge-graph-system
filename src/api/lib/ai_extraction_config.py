@@ -44,7 +44,9 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
                     SELECT
                         id, provider, model_name, supports_vision,
                         supports_json_mode, max_tokens,
-                        created_at, updated_at, updated_by, active
+                        created_at, updated_at, updated_by, active,
+                        base_url, temperature, top_p, gpu_layers, num_threads,
+                        thinking_mode
                     FROM kg_api.ai_extraction_config
                     WHERE active = TRUE
                     LIMIT 1
@@ -66,10 +68,17 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
                     "created_at": row[6],
                     "updated_at": row[7],
                     "updated_by": row[8],
-                    "active": row[9]
+                    "active": row[9],
+                    "base_url": row[10],
+                    "temperature": row[11],
+                    "top_p": row[12],
+                    "gpu_layers": row[13],
+                    "num_threads": row[14],
+                    "thinking_mode": row[15]
                 }
 
-                logger.info(f"✅ Loaded AI extraction config: {config['provider']} / {config.get('model_name', 'N/A')}")
+                logger.debug(f"✅ Loaded AI extraction config: {config['provider']} / {config.get('model_name', 'N/A')}")
+                logger.info(f"🔍 Config thinking_mode from database: {config.get('thinking_mode', 'NOT_SET')}")
                 return config
 
         finally:
@@ -120,9 +129,12 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                 cur.execute("""
                     INSERT INTO kg_api.ai_extraction_config (
                         provider, model_name, supports_vision, supports_json_mode,
-                        max_tokens, updated_by, active
+                        max_tokens, updated_by, active,
+                        base_url, temperature, top_p, gpu_layers, num_threads,
+                        thinking_mode
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, TRUE
+                        %s, %s, %s, %s, %s, %s, TRUE,
+                        %s, %s, %s, %s, %s, %s
                     )
                 """, (
                     config['provider'],
@@ -130,7 +142,13 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                     config.get('supports_vision', False),
                     config.get('supports_json_mode', True),
                     config.get('max_tokens'),
-                    updated_by
+                    updated_by,
+                    config.get('base_url'),
+                    config.get('temperature'),
+                    config.get('top_p'),
+                    config.get('gpu_layers'),
+                    config.get('num_threads'),
+                    config.get('thinking_mode', 'off')
                 ))
 
                 # Commit transaction
@@ -186,5 +204,11 @@ def get_extraction_config_summary() -> Dict[str, Any]:
         "supports_vision": config.get('supports_vision', False),
         "supports_json_mode": config.get('supports_json_mode', True),
         "max_tokens": config.get('max_tokens'),
-        "config_id": config['id']
+        "config_id": config['id'],
+        "base_url": config.get('base_url'),
+        "temperature": config.get('temperature'),
+        "top_p": config.get('top_p'),
+        "gpu_layers": config.get('gpu_layers'),
+        "num_threads": config.get('num_threads'),
+        "thinking_mode": config.get('thinking_mode')
     }

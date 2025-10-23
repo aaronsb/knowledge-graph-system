@@ -91,12 +91,17 @@ def load_active_embedding_config() -> Optional[Dict[str, Any]]:
         return None
 
 
-def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force_change: bool = False) -> tuple[bool, str]:
+def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force_change: bool = False) -> tuple[bool, str, int]:
     """
-    Save embedding configuration to the database.
+    Create a new embedding configuration in the database (inactive by default).
 
-    Deactivates any existing active config and creates a new one.
-    Checks change protection before allowing provider/dimension changes.
+    IMPORTANT: This function only CREATES a config entry, it does NOT activate it.
+    Use activate_embedding_config() to switch to a different config.
+
+    Workflow:
+    1. Create config with save_embedding_config() → Returns new config ID
+    2. Review with list_all_embedding_configs()
+    3. Activate with activate_embedding_config(config_id)
 
     Args:
         config: Configuration dict with keys:
@@ -111,10 +116,10 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
             - max_seq_length: Token limit
             - normalize_embeddings: True/False
         updated_by: User/admin who made the change
-        force_change: Bypass change protection (admin override)
+        force_change: Unused (kept for backward compatibility)
 
     Returns:
-        Tuple of (success, error_message)
+        Tuple of (success, error_message, config_id)
     """
     from .age_client import AGEClient
 
@@ -127,45 +132,16 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                 # Start transaction
                 cur.execute("BEGIN")
 
-                # Check if active config is change-protected
-                if not force_change:
-                    cur.execute("""
-                        SELECT id, provider, embedding_dimensions, change_protected
-                        FROM kg_api.embedding_config
-                        WHERE active = TRUE
-                    """)
-
-                    active_row = cur.fetchone()
-
-                    if active_row:
-                        active_id, active_provider, active_dims, change_protected = active_row
-
-                        if change_protected:
-                            # Check if provider or dimensions are changing
-                            if (config['provider'] != active_provider or
-                                config.get('embedding_dimensions') != active_dims):
-                                cur.execute("ROLLBACK")
-                                return (False,
-                                    f"Active config (ID {active_id}) is change-protected. "
-                                    "Changing provider or dimensions breaks vector search. "
-                                    f"Remove protection first with: kg admin embedding unprotect --change {active_id}")
-
-                # Deactivate all existing configs
-                cur.execute("""
-                    UPDATE kg_api.embedding_config
-                    SET active = FALSE
-                    WHERE active = TRUE
-                """)
-
-                # Insert new config as active
+                # Insert new config as INACTIVE
                 cur.execute("""
                     INSERT INTO kg_api.embedding_config (
                         provider, model_name, embedding_dimensions, precision,
                         max_memory_mb, num_threads, device, batch_size,
                         max_seq_length, normalize_embeddings, updated_by, active
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, FALSE
                     )
+                    RETURNING id
                 """, (
                     config['provider'],
                     config.get('model_name'),
@@ -180,11 +156,13 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                     updated_by
                 ))
 
+                new_config_id = cur.fetchone()[0]
+
                 # Commit transaction
                 cur.execute("COMMIT")
 
-                logger.info(f"✅ Saved embedding config: {config['provider']} / {config.get('model_name', 'N/A')}")
-                return (True, "")
+                logger.info(f"✅ Created embedding config {new_config_id} (inactive): {config['provider']} / {config.get('model_name', 'N/A')}")
+                return (True, "", new_config_id)
 
         except Exception as e:
             # Rollback on error
@@ -452,4 +430,124 @@ def delete_embedding_config(config_id: int) -> tuple[bool, str]:
 
     except Exception as e:
         logger.error(f"Failed to delete embedding config: {e}")
+        return (False, str(e))
+
+
+def activate_embedding_config(config_id: int, updated_by: str = "api", force_dimension_change: bool = False) -> tuple[bool, str]:
+    """
+    Activate an embedding configuration with automatic protection management.
+
+    Workflow:
+    1. Unprotect currently active config (change protection)
+    2. Deactivate current config
+    3. Activate new config
+    4. Protect new config (both delete and change protection)
+
+    This provides a clean "unlock → activate → lock" workflow.
+
+    Args:
+        config_id: Database ID of the config to activate
+        updated_by: User/admin who made the change
+        force_dimension_change: Bypass dimension mismatch check (dangerous!)
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+
+        try:
+            with conn.cursor() as cur:
+                # Start transaction
+                cur.execute("BEGIN")
+
+                # Check if target config exists
+                cur.execute("""
+                    SELECT id, provider, model_name, embedding_dimensions
+                    FROM kg_api.embedding_config
+                    WHERE id = %s
+                """, (config_id,))
+
+                target_row = cur.fetchone()
+
+                if not target_row:
+                    cur.execute("ROLLBACK")
+                    return (False, f"Config {config_id} not found")
+
+                target_id, target_provider, target_model, target_dims = target_row
+
+                # Get currently active config
+                cur.execute("""
+                    SELECT id, provider, embedding_dimensions, change_protected
+                    FROM kg_api.embedding_config
+                    WHERE active = TRUE
+                """)
+
+                active_row = cur.fetchone()
+
+                if active_row:
+                    active_id, active_provider, active_dims, change_protected = active_row
+
+                    # Check if dimensions are changing (this breaks vector search)
+                    if target_dims != active_dims and not force_dimension_change:
+                        cur.execute("ROLLBACK")
+                        return (False,
+                            f"Cannot switch: dimension mismatch ({active_dims}D → {target_dims}D). "
+                            "Changing embedding dimensions breaks vector search for all existing concepts. "
+                            "You must re-embed all concepts after switching. "
+                            "Use --force to bypass this check (dangerous!). "
+                            "See ADR-039 for migration procedures.")
+
+                    # Unprotect current config (change protection only)
+                    if change_protected:
+                        cur.execute("""
+                            UPDATE kg_api.embedding_config
+                            SET change_protected = FALSE
+                            WHERE id = %s
+                        """, (active_id,))
+                        logger.info(f"🔓 Unprotected config {active_id} (change protection)")
+
+                # Deactivate all configs
+                cur.execute("""
+                    UPDATE kg_api.embedding_config
+                    SET active = FALSE
+                    WHERE active = TRUE
+                """)
+
+                # Activate target config
+                cur.execute("""
+                    UPDATE kg_api.embedding_config
+                    SET active = TRUE, updated_at = CURRENT_TIMESTAMP, updated_by = %s
+                    WHERE id = %s
+                """, (updated_by, config_id))
+
+                # Protect the newly activated config (both delete and change)
+                cur.execute("""
+                    UPDATE kg_api.embedding_config
+                    SET delete_protected = TRUE, change_protected = TRUE
+                    WHERE id = %s
+                """, (config_id,))
+
+                # Commit transaction
+                cur.execute("COMMIT")
+
+                logger.info(f"✅ Activated config {config_id}: {target_provider} / {target_model}")
+                logger.info(f"🔒 Protected config {config_id} (delete + change protection)")
+                return (True, "")
+
+        except Exception as e:
+            # Rollback on error
+            try:
+                cur.execute("ROLLBACK")
+            except:
+                pass
+            raise e
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to activate embedding config: {e}")
         return (False, str(e))
