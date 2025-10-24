@@ -237,6 +237,14 @@ body,
     border: 1px solid var(--graph-border);
 }
 
+[data-md-color-scheme="default"] .md-search__input {
+    color: var(--graph-text-dark);
+}
+
+[data-md-color-scheme="default"] .md-search__input::placeholder {
+    color: rgba(38, 50, 56, 0.6);
+}
+
 /* Footer */
 .md-footer {
     border-top: 2px solid var(--graph-border);
