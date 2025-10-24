@@ -208,6 +208,10 @@ body,
     font-size: 0.85rem;
 }
 
+.md-nav__link {
+    font-size: 0.85rem;
+}
+
 .md-nav__item--active > .md-nav__link {
     font-weight: 600;
     color: var(--md-accent-fg-color);
