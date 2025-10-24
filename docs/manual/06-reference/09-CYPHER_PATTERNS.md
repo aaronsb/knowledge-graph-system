@@ -430,7 +430,7 @@ def find_scored_path(
 
 - [Apache AGE Documentation](https://age.apache.org/age-manual/master/intro/overview.html)
 - [Cypher Query Language](https://neo4j.com/docs/cypher-manual/current/)
-- [AGE vs Neo4j Differences](./CYPHER_COMPAT.md)
+- [AGE vs Neo4j Differences](../../architecture/ADR-016-apache-age-migration.md)
 
 ---
 

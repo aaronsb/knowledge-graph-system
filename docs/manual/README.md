@@ -1,6 +1,6 @@
-# Documentation Guides
+# Knowledge Graph System Manual
 
-This directory contains organized documentation for the Knowledge Graph System.
+This directory contains the complete manual for the Knowledge Graph System.
 
 ## Structure
 
@@ -24,7 +24,7 @@ Media files (images, diagrams, etc.) for any document are stored in a `/media` s
 **Example:**
 ```
 02-configuration/
-  01-AI_PROVIDERS.md
+  01-01-AI_PROVIDERS.md
   media/
     provider-diagram.png
     config-flow.svg

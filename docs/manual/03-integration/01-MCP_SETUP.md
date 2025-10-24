@@ -5,7 +5,7 @@ The Knowledge Graph MCP (Model Context Protocol) server enables Claude to query 
 ## Prerequisites
 
 - Node.js 18+ installed
-- PostgreSQL + Apache AGE database running (see `docs/guides/QUICKSTART.md`)
+- PostgreSQL + Apache AGE database running (see `docs/guides/01-QUICKSTART.md`)
 - FastAPI server running (`./scripts/start-api.sh`)
 - kg CLI installed globally (`cd client && ./install.sh`)
 
@@ -316,7 +316,7 @@ The kg CLI uses the same REST API as the MCP server.
 
 ### API Server Authentication
 
-- The FastAPI server requires authentication (see `docs/guides/AUTHENTICATION.md`)
+- The FastAPI server requires authentication (see `docs/guides/01-AUTHENTICATION.md`)
 - MCP server connects to API server via `http://localhost:8000`
 - For production, use HTTPS and proper authentication
 
@@ -356,4 +356,4 @@ and the concept about "Signal-Based Decision Making"
 Search for concepts related to "leadership", show me the next 10 results
 ```
 
-For more examples, see `docs/EXAMPLES.md`.
+For more examples, see `docs/03-EXAMPLES.md`.

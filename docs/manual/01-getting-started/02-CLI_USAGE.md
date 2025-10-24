@@ -871,7 +871,7 @@ kg admin scheduler cleanup
 
 ## 9. Authentication Commands
 
-> **Note:** Detailed authentication documentation is in [AUTHENTICATION.md](./AUTHENTICATION.md) (ADR-027)
+> **Note:** Detailed authentication documentation is in [01-AUTHENTICATION.md](../04-security-and-access/01-AUTHENTICATION.md) (ADR-027)
 
 ### 9.1 `kg login`
 

@@ -403,7 +403,7 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
 **Last Updated:** 2025-10-14
 
 **Related Documentation:**
-- [AUTHENTICATION.md](AUTHENTICATION.md) - Authentication system overview
-- [SECURITY.md](SECURITY.md) - Security infrastructure and best practices
-- [RBAC.md](RBAC.md) - Role-based access control
-- [ADR-027](../architecture/ADR-027-user-management-api.md) - User management design
+- [01-AUTHENTICATION.md](01-AUTHENTICATION.md) - Authentication system overview
+- [03-SECURITY.md](03-SECURITY.md) - Security infrastructure and best practices
+- [02-RBAC.md](02-RBAC.md) - Role-based access control
+- [ADR-027](../../architecture/ADR-027-user-management-api.md) - User management design

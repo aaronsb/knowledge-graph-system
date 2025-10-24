@@ -1,0 +1,95 @@
+site_name: Knowledge Graph System
+site_description: Multi-dimensional knowledge extraction system using Apache AGE
+site_author: Knowledge Graph System Contributors
+repo_url: https://github.com/aaronsb/knowledge-graph-system
+repo_name: aaronsb/knowledge-graph-system
+
+theme:
+  name: material
+  palette:
+    # Dark mode (default - listed first)
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+    # Light mode
+    - scheme: default
+      primary: blue grey
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  font:
+    text: Roboto Mono
+    code: Roboto Mono
+  icon:
+    logo: material/graph-outline
+
+  # Custom CSS
+  custom_dir: docs/overrides
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+  - include_dir_to_nav:
+      file_name_as_title: true
+      sort_file: true
+      sort_directory: true
+      flat: false
+      recurse: true
+      include_empty_dir: false
+
+# Navigation structure (order controlled, content auto-generated)
+nav:
+  - Documentation Index: README.md
+  - Manual:
+    - manual/README.md
+    - Getting Started: manual/01-getting-started/
+    - Configuration: manual/02-configuration/
+    - Integration: manual/03-integration/
+    - Security & Access: manual/04-security-and-access/
+    - Maintenance: manual/05-maintenance/
+    - Reference: manual/06-reference/
+  - Architecture: architecture/
+  - Development: development/
+  - Testing: testing/
+
+extra_css:
+  - assets/css/graph-theme.css
+
+# Build settings
+docs_dir: docs
+site_dir: site
+
+# Don't include these in the built site
+exclude_docs: |
+  site/

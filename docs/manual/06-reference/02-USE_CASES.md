@@ -4,7 +4,7 @@ This guide catalogs real-world workflows for the Knowledge Graph System. Each us
 
 ## Available Use Cases
 
-### 1. [GitHub Project History Analysis](use_cases/github_project_history.md)
+### 1. [GitHub Project History Analysis](04-github_project_history.md)
 
 **Mining your repository for knowledge using GitHub CLI**
 
@@ -23,7 +23,7 @@ Extract commit messages and pull requests with `gh` CLI, organize them into dire
 - Related commits/PRs (even without explicit references)
 - Team development patterns
 
-[Read full guide →](use_cases/github_project_history.md)
+[Read full guide →](04-github_project_history.md)
 
 ---
 
@@ -71,7 +71,7 @@ Have you developed a novel workflow using the Knowledge Graph System? We'd love 
 
 1. **Create the use case document:**
    - Create a new file in `docs/guides/use_cases/your_use_case.md`
-   - Follow the structure of existing use cases (see [github_project_history.md](use_cases/github_project_history.md))
+   - Follow the structure of existing use cases (see [github_project_history.md](04-github_project_history.md))
 
 2. **Include these sections:**
    - **Title and introduction** - Problem statement and key insight
@@ -188,7 +188,7 @@ Tags: tag1, tag2, tag3
 **Last Updated:** 2025-10-14
 
 **Related Documentation:**
-- [INGESTION.md](INGESTION.md) - Detailed ingestion configuration
-- [EXAMPLES.md](EXAMPLES.md) - Query examples and results
-- [CLI_USAGE.md](CLI_USAGE.md) - Complete CLI command reference
-- [QUICKSTART.md](QUICKSTART.md) - Getting started guide
+- [03-INGESTION.md](../01-getting-started/03-INGESTION.md) - Detailed ingestion configuration
+- [03-EXAMPLES.md](03-EXAMPLES.md) - Query examples and results
+- [02-CLI_USAGE.md](../01-getting-started/02-CLI_USAGE.md) - Complete CLI command reference
+- [01-QUICKSTART.md](../01-getting-started/01-QUICKSTART.md) - Getting started guide

@@ -851,9 +851,9 @@ kg database stats  # Record results
 ---
 
 **Related Documentation:**
-- [Switching Extraction Providers](./SWITCHING_EXTRACTION_PROVIDERS.md) - How to switch between providers
-- [Extraction Configuration Guide](./EXTRACTION_CONFIGURATION.md) - Configuration details
-- [Local Inference Implementation](./LOCAL_INFERENCE_IMPLEMENTATION.md) - Ollama setup and phases
-- [ADR-042: Local LLM Inference](../architecture/ADR-042-local-extraction-inference.md) - Architecture decision
+- [Switching Extraction Providers](./04-SWITCHING_EXTRACTION_PROVIDERS.md) - How to switch between providers
+- [Extraction Configuration Guide](./02-EXTRACTION_CONFIGURATION.md) - Configuration details
+- [Local Inference Implementation](./05-LOCAL_INFERENCE_IMPLEMENTATION.md) - Ollama setup and phases
+- [ADR-042: Local LLM Inference](../../architecture/ADR-042-local-extraction-inference.md) - Architecture decision
 
 **Last Updated:** October 23, 2025 (Added Qwen3:14b comprehensive analysis)

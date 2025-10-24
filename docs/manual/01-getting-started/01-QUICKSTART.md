@@ -189,7 +189,7 @@ The knowledge graph uses a **migration system** to safely evolve the database sc
 ./scripts/start-db.sh  # Auto-runs migrate-db.sh
 ```
 
-**See:** `docs/guides/DATABASE_MIGRATIONS.md` for complete guide
+**See:** `docs/guides/02-DATABASE_MIGRATIONS.md` for complete guide
 
 ## Troubleshooting
 
@@ -236,7 +236,7 @@ pip install -r requirements.txt
 
 1. **Read the docs:**
    - `docs/ARCHITECTURE.md` - System design
-   - `docs/AI_PROVIDERS.md` - AI configuration
+   - `docs/01-AI_PROVIDERS.md` - AI configuration
    - `docs/MCP_TOOLS.md` - MCP server tools
 
 2. **Ingest your documents:**

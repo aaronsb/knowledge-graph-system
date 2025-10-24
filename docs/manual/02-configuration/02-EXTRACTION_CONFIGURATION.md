@@ -739,11 +739,11 @@ ENCRYPTION_KEY=your-generated-key-here
 
 ## Related Documentation
 
-- [Embedding Configuration Guide](EMBEDDING_CONFIGURATION.md) - Embedding model configuration
-- [AI Providers Guide](AI_PROVIDERS.md) - Provider comparison and setup
-- [CLI Usage Guide](CLI_USAGE.md) - General CLI commands
-- [Ingestion Guide](INGESTION.md) - Document ingestion workflow
-- [Authentication Guide](AUTHENTICATION.md) - System authentication
+- [Embedding Configuration Guide](03-EMBEDDING_CONFIGURATION.md) - Embedding model configuration
+- [AI Providers Guide](01-AI_PROVIDERS.md) - Provider comparison and setup
+- [CLI Usage Guide](../01-getting-started/02-CLI_USAGE.md) - General CLI commands
+- [Ingestion Guide](../01-getting-started/03-INGESTION.md) - Document ingestion workflow
+- [Authentication Guide](../04-security-and-access/01-AUTHENTICATION.md) - System authentication
 
 ---
 

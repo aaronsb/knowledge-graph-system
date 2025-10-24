@@ -716,7 +716,7 @@ The `schema_migrations` table is included in backups, so restored databases know
 - **ADR-040:** Database Schema Migration Management (design decisions)
 - **schema/migrations/README.md:** Detailed migration reference (550+ lines)
 - **ADR-024:** Multi-Schema PostgreSQL Architecture
-- **SCHEMA_REFERENCE.md:** Complete schema documentation
+- **01-SCHEMA_REFERENCE.md:** Complete schema documentation
 
 ---
 
