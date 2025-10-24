@@ -62,7 +62,7 @@ nav:
     - testing/
 
 # Build settings
-docs_dir: .
+docs_dir: docs
 site_dir: site
 
 # Don't include these in the built site

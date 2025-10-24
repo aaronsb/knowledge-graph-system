@@ -1,6 +1,6 @@
-# Documentation Guides
+# Knowledge Graph System Manual
 
-This directory contains organized documentation for the Knowledge Graph System.
+This directory contains the complete manual for the Knowledge Graph System.
 
 ## Structure
 
