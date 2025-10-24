@@ -77,7 +77,6 @@ nav:
   - Architecture: architecture/
   - Development: development/
   - Testing: testing/
-  - Media: media/
 
 extra_css:
   - assets/css/graph-theme.css
