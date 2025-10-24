@@ -17,6 +17,10 @@ Feed it research papers, meeting notes, code commits, or philosophical texts. Th
 
 **The difference matters:** Traditional RAG retrieves text chunks that match your query. Knowledge graphs reveal how concepts *relate* - what enables what, what contradicts what, what emerges from what. The graph grows smarter with each document, automatically connecting new concepts to existing knowledge.
 
+## Documentation
+
+**📖 [Complete Documentation (Book Format)](docs/README.md)** - Start here for a guided tour from basics to advanced topics.
+
 ## Visual Overview
 
 ### Interactive Graph Visualization
