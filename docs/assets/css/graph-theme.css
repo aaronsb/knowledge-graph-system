@@ -212,6 +212,14 @@ body,
     font-size: 0.85rem;
 }
 
+/* Section headings (nested nav items) - make them stand out */
+.md-nav__item--nested > .md-nav__link {
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    color: var(--md-accent-fg-color);
+}
+
 .md-nav__item--active > .md-nav__link {
     font-weight: 600;
     color: var(--md-accent-fg-color);

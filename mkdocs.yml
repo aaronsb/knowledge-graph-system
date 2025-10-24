@@ -73,7 +73,14 @@ plugins:
 # Navigation structure (order controlled, content auto-generated)
 nav:
   - Documentation Index: README.md
-  - Manual: manual/
+  - Manual:
+    - manual/README.md
+    - Getting Started: manual/01-getting-started/
+    - Configuration: manual/02-configuration/
+    - Integration: manual/03-integration/
+    - Security & Access: manual/04-security-and-access/
+    - Maintenance: manual/05-maintenance/
+    - Reference: manual/06-reference/
   - Architecture: architecture/
   - Development: development/
   - Testing: testing/
