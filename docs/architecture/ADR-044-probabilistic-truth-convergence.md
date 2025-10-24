@@ -169,15 +169,38 @@ Beyond the philosophical and evolutionary metaphors, this approach is grounded i
 
 **1. Track Contradiction Metrics per Concept**
 
-For any concept node, calculate:
+For any concept node, calculate weighted contradiction ratio using edge confidence scores:
 
 ```python
-support_edges = count(incoming SUPPORTS relationships)
-contradiction_edges = count(incoming CONTRADICTS relationships)
-total_edges = support_edges + contradiction_edges
+# Sum confidence scores (force magnitude), not just count edges
+support_weight = sum(confidence for edge in incoming SUPPORTS relationships)
+contradict_weight = sum(confidence for edge in incoming CONTRADICTS relationships)
+total_weight = support_weight + contradict_weight
 
-contradiction_ratio = contradiction_edges / total_edges if total_edges > 0 else 0
+contradiction_ratio = contradict_weight / total_weight if total_weight > 0 else 0
 ```
+
+**Why weighted, not counted:**
+
+Edges have **direction** (FROM → TO) and **magnitude** (confidence: 0.0-1.0). To properly calculate statistical distributions, we need **force vectors**, not binary counts:
+
+- **Binary counting** (wrong): 47 contradictions = 47.0 total force
+- **Weighted summing** (correct): 47 contradictions with avg confidence 0.72 = 33.84 total force
+
+**Example showing the difference:**
+
+| Approach | SUPPORTS | CONTRADICTS | Ratio | Triggers 0.80? |
+|----------|----------|-------------|-------|----------------|
+| Count edges | 12 | 47 | 47/59 = **0.797** | ❌ Just below |
+| Sum confidence | 10.2 | 33.84 | 33.84/44.04 = **0.768** | ❌ More clearly below |
+| Sum confidence (higher) | 10.2 | 38.0 | 38.0/48.2 = **0.788** | ❌ Still below |
+| Sum confidence (strong contradictions) | 10.2 | 42.5 | 42.5/52.7 = **0.806** | ✅ Exceeds threshold |
+
+Weighted approach is more statistically sound:
+- Gives continuous variable (suitable for normal distribution)
+- Weak contradictions (confidence < 0.6) don't overwhelm strong supports
+- Strong contradictions (confidence > 0.9) appropriately dominate
+- Aligns with information-theoretic grounding (confidence = information content)
 
 **2. Apply Statistical Threshold (Three Sigma Rule)**
 
@@ -263,21 +286,35 @@ If agent confidence ≥ 0.90:
 **1. Contradiction Analysis Query:**
 
 ```cypher
-// Find concepts with high contradiction ratios
+// Find concepts with high weighted contradiction ratios
 MATCH (c:Concept)
 OPTIONAL MATCH (c)<-[s:SUPPORTS]-()
 OPTIONAL MATCH (c)<-[d:CONTRADICTS]-()
 WITH c,
-     count(DISTINCT s) as support_count,
-     count(DISTINCT d) as contradict_count,
-     count(DISTINCT s) + count(DISTINCT d) as total_edges
-WHERE total_edges > 5  // Minimum edge count for statistical significance
+     collect(s) as support_edges,
+     collect(d) as contradict_edges
 WITH c,
+     support_edges,
+     contradict_edges,
+     reduce(sum = 0.0, edge IN support_edges | sum + coalesce(edge.confidence, 0.8)) as support_weight,
+     reduce(sum = 0.0, edge IN contradict_edges | sum + coalesce(edge.confidence, 0.8)) as contradict_weight,
+     size(support_edges) as support_count,
+     size(contradict_edges) as contradict_count
+WITH c,
+     support_weight,
+     contradict_weight,
      support_count,
      contradict_count,
-     total_edges,
-     CASE WHEN total_edges > 0
-          THEN toFloat(contradict_count) / toFloat(total_edges)
+     support_weight + contradict_weight as total_weight
+WHERE total_weight > 3.0  // Minimum weight for statistical significance (not count)
+WITH c,
+     support_weight,
+     contradict_weight,
+     support_count,
+     contradict_count,
+     total_weight,
+     CASE WHEN total_weight > 0
+          THEN contradict_weight / total_weight
           ELSE 0.0
      END as contradiction_ratio
 WHERE contradiction_ratio >= 0.80
@@ -285,9 +322,17 @@ RETURN c.label,
        c.concept_id,
        support_count,
        contradict_count,
-       contradiction_ratio
-ORDER BY contradiction_ratio DESC, contradict_count DESC
+       round(support_weight * 100) / 100 as support_weight,
+       round(contradict_weight * 100) / 100 as contradict_weight,
+       round(contradiction_ratio * 1000) / 1000 as contradiction_ratio
+ORDER BY contradiction_ratio DESC, contradict_weight DESC
 ```
+
+**Key differences from naive counting:**
+- Uses `reduce()` to sum edge confidence scores, not `count()`
+- Falls back to 0.8 if confidence missing (backward compatibility)
+- Minimum weight threshold (3.0) instead of minimum count (5)
+- Orders by `contradict_weight` (total force) not `contradict_count`
 
 **2. Add concept properties:**
 ```cypher
