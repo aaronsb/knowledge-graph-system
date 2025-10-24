@@ -68,18 +68,3 @@ Images, diagrams, and other media assets.
 2. Follow test guidelines in `testing/`
 3. Review development journals in `development/`
 4. Understand system concepts in `reference/`
-
-## Migration Notes
-
-This documentation was reorganized on 2025-10-08 to improve organization and maintainability. Previous flat structure has been split into logical categories.
-
-**Breaking Changes:**
-- All documentation links in code and README files may need updating
-- File paths have changed (e.g., `docs/ARCHITECTURE.md` → `docs/architecture/ARCHITECTURE.md`)
-
-**Migration TODO:**
-- [x] Rename NEO4J_QUERIES.md to OPENCYPHER_QUERIES.md
-- [x] Update Neo4j references to Apache AGE + PostgreSQL
-- [ ] Update main README.md links
-- [ ] Update CLAUDE.md references
-- [ ] Update any hardcoded documentation paths in code
