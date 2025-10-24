@@ -188,7 +188,7 @@ Tags: tag1, tag2, tag3
 **Last Updated:** 2025-10-14
 
 **Related Documentation:**
-- [03-INGESTION.md](../01-getting-started/03-03-INGESTION.md) - Detailed ingestion configuration
-- [03-EXAMPLES.md](03-03-EXAMPLES.md) - Query examples and results
-- [02-CLI_USAGE.md](../01-getting-started/02-02-CLI_USAGE.md) - Complete CLI command reference
-- [01-QUICKSTART.md](../01-getting-started/01-01-QUICKSTART.md) - Getting started guide
+- [03-INGESTION.md](../01-getting-started/03-INGESTION.md) - Detailed ingestion configuration
+- [03-EXAMPLES.md](03-EXAMPLES.md) - Query examples and results
+- [02-CLI_USAGE.md](../01-getting-started/02-CLI_USAGE.md) - Complete CLI command reference
+- [01-QUICKSTART.md](../01-getting-started/01-QUICKSTART.md) - Getting started guide

@@ -741,9 +741,9 @@ ENCRYPTION_KEY=your-generated-key-here
 
 - [Embedding Configuration Guide](03-EMBEDDING_CONFIGURATION.md) - Embedding model configuration
 - [AI Providers Guide](01-AI_PROVIDERS.md) - Provider comparison and setup
-- [CLI Usage Guide](02-CLI_USAGE.md) - General CLI commands
-- [Ingestion Guide](03-INGESTION.md) - Document ingestion workflow
-- [Authentication Guide](01-AUTHENTICATION.md) - System authentication
+- [CLI Usage Guide](../01-getting-started/02-CLI_USAGE.md) - General CLI commands
+- [Ingestion Guide](../01-getting-started/03-INGESTION.md) - Document ingestion workflow
+- [Authentication Guide](../04-security-and-access/01-AUTHENTICATION.md) - System authentication
 
 ---
 

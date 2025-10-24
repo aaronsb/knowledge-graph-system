@@ -485,5 +485,5 @@ Adjust chunking for different document types:
 
 - [openCypher Query Examples](../06-reference/10-OPENCYPHER_QUERIES.md) - Query patterns for ontologies
 - [Quick Start Guide](01-QUICKSTART.md) - Basic setup and first ingestion
-- [Technical Assessment](ASSESSMENT.md) - Iterative graph traversal analysis
+- [Technical Assessment](01-QUICKSTART.md) - Iterative graph traversal analysis
 - [GitHub Issue #8](https://github.com/aaronsb/knowledge-graph-system/issues/8) - Batch processing roadmap
