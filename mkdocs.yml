@@ -70,6 +70,7 @@ nav:
   - Documentation Index: README.md
   - Manual:
     - manual/README.md
+    - Introduction: manual/00-introduction/
     - Getting Started: manual/01-getting-started/
     - Configuration: manual/02-configuration/
     - Integration: manual/03-integration/

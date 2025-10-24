@@ -1910,8 +1910,8 @@ This visualization shows the concepts and their relationships, centered on "Inte
 - asyncio (concurrent processing)
 
 **Graph Database:**
-- **Phase 1:** PostgreSQL 15+ with pgvector extension
-- **Phase 2:** Neo4j 5+ (optional, for advanced graph queries)
+- **Current:** PostgreSQL 16+ with Apache AGE (graph extension)
+- **Note:** Migrated from Neo4j to Apache AGE per ADR-016
 
 **Vector Search:**
 - pgvector (PostgreSQL extension)
@@ -2122,7 +2122,7 @@ volumes:
 - Production hardening
 
 **Deliverables:**
-1. Neo4j migration (optional)
+1. Apache AGE optimization (completed - see ADR-016)
 2. Caching layer (Redis)
 3. Advanced visualization:
    - Time-based filtering
@@ -2140,8 +2140,8 @@ volumes:
 ### Deployment Checklist
 
 **Infrastructure:**
-- [ ] Set up production database (PostgreSQL or Neo4j)
-- [ ] Configure vector index optimization
+- [ ] Set up production database (PostgreSQL + Apache AGE)
+- [ ] Configure vector index optimization (pgvector or in-app)
 - [ ] Set up backup strategy
 - [ ] Configure monitoring (logs, metrics)
 
@@ -2206,7 +2206,7 @@ HAVING count(*) > 1
 ORDER BY co_occurrence_count DESC;
 ```
 
-### A.2 Neo4j Cypher Queries
+### A.2 openCypher Queries (Apache AGE)
 
 **Find most central concepts (highest degree):**
 ```cypher
@@ -3151,7 +3151,7 @@ async def get_community_summary_cached(level: int, community_id: int):
 ✅ Multi-level reasoning patterns  
 
 **Keeping from Our Design (Architecture):**
-✅ Real graph database (PostgreSQL/Neo4j)  
+✅ Real graph database (PostgreSQL + Apache AGE)  
 ✅ MCP server for Claude Desktop  
 ✅ 3D visualization interface  
 ✅ Direct provenance tracking  
