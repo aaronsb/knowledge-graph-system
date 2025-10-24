@@ -9,7 +9,7 @@ The Knowledge Graph System transforms linear documents into interconnected conce
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                    Document Ingestion                         │
-│  .txt/.pdf files → API Server → Background Jobs → Neo4j      │
+│  .txt/.pdf files → API Server → Background Jobs → AGE        │
 └──────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────┐
@@ -21,7 +21,7 @@ The Knowledge Graph System transforms linear documents into interconnected conce
 └──────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────┐
-│                Neo4j Graph Database                           │
+│         Apache AGE + PostgreSQL Graph Database                │
 │  • Concepts (nodes with vector embeddings)                    │
 │  • Instances (evidence quotes)                                │
 │  • Sources (document paragraphs)                              │
@@ -86,7 +86,7 @@ Modular abstraction for LLM providers:
 **Components:**
 - `parser.py` - Document parsing (text, PDF, DOCX)
 - `llm_extractor.py` - LLM-based concept extraction
-- `neo4j_client.py` - Graph database operations
+- `age_client.py` - Apache AGE graph database operations
 - `chunker.py` - Smart document chunking with semantic boundaries
 - `ingestion.py` - Chunk processing and statistics tracking
 - `checkpoint.py` - Ingestion checkpoint management
@@ -99,8 +99,8 @@ Modular abstraction for LLM providers:
    - Query recent concepts from graph (context)
    - Extract concepts using LLM
    - Generate embeddings
-   - Match against existing concepts (vector similarity > 0.85)
-   - Upsert to Neo4j (create/update nodes and relationships)
+   - Match against existing concepts (vector similarity ≥ 0.85)
+   - Upsert to Apache AGE (create/update nodes and relationships)
    - Update job progress (percent, concepts created)
 5. **Complete**: Worker writes final stats to job result
 
@@ -126,7 +126,7 @@ Modular abstraction for LLM providers:
 
 See [ADR-013](ADR-013-unified-typescript-client.md) for detailed design.
 
-### 5. Graph Database (Neo4j)
+### 5. Graph Database (Apache AGE + PostgreSQL)
 
 **Node Types:**
 
@@ -180,7 +180,7 @@ See [ADR-013](ADR-013-unified-typescript-client.md) for detailed design.
 ### 6. Legacy Query Interfaces
 
 **Legacy MCP Server (`mcp-server/`):**
-- Direct Neo4j database access
+- Direct Apache AGE database access
 - Claude Desktop integration
 - Tools: search_concepts, get_concept_details, find_related_concepts, etc.
 - **Status**: Will migrate to unified TypeScript client (Phase 2)
@@ -217,10 +217,10 @@ Chunks with context overlap
   ├→ Generate embeddings (OpenAI)
   │
   ├→ Match existing concepts (vector search)
-  │   ├→ similarity > 0.85: use existing
+  │   ├→ similarity ≥ 0.85: use existing
   │   └→ else: create new
   │
-  ├→ Upsert to Neo4j
+  ├→ Upsert to Apache AGE
   │   ├→ CREATE/UPDATE concepts
   │   ├→ CREATE instances
   │   └→ CREATE relationships
@@ -270,10 +270,12 @@ OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_EXTRACTION_MODEL=claude-sonnet-4-20250514
 
-# Neo4j
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=password
+# PostgreSQL + Apache AGE
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=password
+POSTGRES_DB=knowledge_graph
 
 # Authentication (Phase 1: disabled)
 AUTH_ENABLED=false
@@ -303,7 +305,7 @@ Multi-stage matching to prevent duplicates:
 **Stage 2: Vector Similarity (Primary)**
 - Embed: `label + search_terms`
 - Cosine similarity search
-- Threshold > 0.85 → match
+- Threshold ≥ 0.85 → match
 - Confidence: similarity score
 
 **Stage 3: Create New**
@@ -315,7 +317,7 @@ Multi-stage matching to prevent duplicates:
 ### Phase 1 (Current)
 - **API Server**: Single FastAPI instance with BackgroundTasks
 - **Job Queue**: In-memory dict + SQLite persistence
-- **Database**: Single Neo4j instance
+- **Database**: Single PostgreSQL + Apache AGE instance
 - **Limitations**: No distributed workers, no multi-instance API
 
 ### Phase 2 (Planned)
@@ -326,8 +328,9 @@ Multi-stage matching to prevent duplicates:
 - **Authentication**: Full API key validation and rate limiting
 
 ### Future Enhancements
-- Neo4j cluster for HA
-- Dedicated vector database (Pinecone, Weaviate)
+- PostgreSQL replication for HA
+- Apache AGE performance optimization
+- Dedicated vector database (pgvector, Pinecone, Weaviate)
 - Incremental updates (avoid re-processing)
 - Caching layer for query results
 
@@ -339,7 +342,8 @@ Multi-stage matching to prevent duplicates:
 - Validated on startup
 
 ### Database
-- Neo4j auth required (no anonymous access)
+- PostgreSQL auth required (no anonymous access)
+- Apache AGE graph access via PostgreSQL roles
 - Local development: simple password
 - Production: strong auth + TLS
 
