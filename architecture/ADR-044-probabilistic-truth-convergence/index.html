@@ -2774,27 +2774,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#implement-non-destructive-probabilistic-truth-convergence" class="md-nav__link">
+  <a href="#implement-query-time-grounding-strength-calculation" class="md-nav__link">
     <span class="md-ellipsis">
-      Implement Non-Destructive, Probabilistic Truth Convergence
+      Implement Query-Time Grounding Strength Calculation
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#mechanism-edge-weight-analysis-with-statistical-thresholds" class="md-nav__link">
+  <a href="#mechanism-dynamic-grounding-strength-computation" class="md-nav__link">
     <span class="md-ellipsis">
-      Mechanism: Edge Weight Analysis with Statistical Thresholds
+      Mechanism: Dynamic Grounding Strength Computation
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#reversibility-truth-can-shift-back" class="md-nav__link">
+  <a href="#automatic-reversibility-through-continuous-calculation" class="md-nav__link">
     <span class="md-ellipsis">
-      Reversibility: Truth Can Shift Back
+      Automatic Reversibility Through Continuous Calculation
     </span>
   </a>
   
@@ -2825,18 +2825,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-agent-introspection-near-term" class="md-nav__link">
+  <a href="#phase-2-agent-context-generation-optional-enhancement" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 2: Agent Introspection (Near-term)
+      Phase 2: Agent Context Generation (Optional Enhancement)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-automated-resolution-future" class="md-nav__link">
+  <a href="#phase-3-performance-optimization-future" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 3: Automated Resolution (Future)
+      Phase 3: Performance Optimization (Future)
     </span>
   </a>
   
@@ -2867,18 +2867,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-2-threshold-based-confidence-reversal" class="md-nav__link">
+  <a href="#example-2-multiple-thresholds-for-different-use-cases" class="md-nav__link">
     <span class="md-ellipsis">
-      Example 2: Threshold-Based Confidence Reversal
+      Example 2: Multiple Thresholds for Different Use Cases
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-3-reversibility-future-architecture-change" class="md-nav__link">
+  <a href="#example-3-automatic-reversibility-future-architecture-change" class="md-nav__link">
     <span class="md-ellipsis">
-      Example 3: Reversibility - Future Architecture Change
+      Example 3: Automatic Reversibility - Future Architecture Change
     </span>
   </a>
   
@@ -2972,6 +2972,15 @@
   <a href="#4-bayesian-belief-networks-considered" class="md-nav__link">
     <span class="md-ellipsis">
       4. Bayesian Belief Networks (Considered)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-static-irrelevant-marking-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Static IRRELEVANT Marking (Rejected)
     </span>
   </a>
   
@@ -3675,372 +3684,466 @@
 - ❌ Defeats purpose of automated knowledge extraction
 - ❌ Requires constant human intervention</p>
 <h2 id="decision">Decision</h2>
-<h3 id="implement-non-destructive-probabilistic-truth-convergence">Implement Non-Destructive, Probabilistic Truth Convergence</h3>
-<p><strong>Core Principle:</strong> Truth emerges from statistical preponderance of evidence, not absolute certainty.</p>
-<h3 id="mechanism-edge-weight-analysis-with-statistical-thresholds">Mechanism: Edge Weight Analysis with Statistical Thresholds</h3>
-<p><strong>1. Track Contradiction Metrics per Concept</strong></p>
-<p>For any concept node, calculate weighted contradiction ratio using edge confidence scores:</p>
+<h3 id="implement-query-time-grounding-strength-calculation">Implement Query-Time Grounding Strength Calculation</h3>
+<p><strong>Core Principle:</strong> Truth emerges from statistical preponderance of evidence, calculated dynamically at query time, not stored as static labels.</p>
+<p><strong>Key insight:</strong> Rather than marking concepts as "IRRELEVANT" (static, binary, query-exclusion problem), we calculate a continuous <strong>grounding_strength</strong> score (0.0-1.0) based on current edge weights whenever the concept is queried.</p>
+<h3 id="mechanism-dynamic-grounding-strength-computation">Mechanism: Dynamic Grounding Strength Computation</h3>
+<p><strong>1. Calculate Grounding Strength (Query-Time)</strong></p>
+<p>For any concept node, calculate grounding strength using edge confidence scores:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Sum confidence scores (force magnitude), not just count edges</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">support_weight</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">confidence</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">incoming</span> <span class="n">SUPPORTS</span> <span class="n">relationships</span><span class="p">)</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">contradict_weight</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">confidence</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">incoming</span> <span class="n">CONTRADICTS</span> <span class="n">relationships</span><span class="p">)</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">total_weight</span> <span class="o">=</span> <span class="n">support_weight</span> <span class="o">+</span> <span class="n">contradict_weight</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">contradiction_ratio</span> <span class="o">=</span> <span class="n">contradict_weight</span> <span class="o">/</span> <span class="n">total_weight</span> <span class="k">if</span> <span class="n">total_weight</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Grounding strength = proportion of support vs total evidence</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">grounding_strength</span> <span class="o">=</span> <span class="n">support_weight</span> <span class="o">/</span> <span class="n">total_weight</span> <span class="k">if</span> <span class="n">total_weight</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Default 1.0 = no contradictions = assume well-grounded</span>
 </code></pre></div>
+<p><strong>Why grounding_strength, not "irrelevant" marking:</strong></p>
+<p><strong>Problems with static marking:</strong>
+- ❌ <strong>Query paradox:</strong> If we exclude marked concepts, how do we find them to re-evaluate?
+- ❌ <strong>Stale state:</strong> Marking freezes a point-in-time decision, but edges keep accumulating
+- ❌ <strong>Binary thinking:</strong> Concept is either relevant or not - but truth is continuous
+- ❌ <strong>Computational waste:</strong> Agent introspection needed every mark/unmark operation</p>
+<p><strong>Advantages of dynamic calculation:</strong>
+- ✅ <strong>Always current:</strong> Reflects latest edge weights at query time
+- ✅ <strong>Continuous score:</strong> 0.0 (contradicted) to 1.0 (supported), not binary
+- ✅ <strong>Query-time filtering:</strong> <code>WHERE grounding_strength &gt;= 0.20</code> (adjustable threshold)
+- ✅ <strong>Always findable:</strong> Lower threshold to find weakly-grounded concepts
+- ✅ <strong>Self-updating:</strong> New edges automatically affect score
+- ✅ <strong>Pure mathematics:</strong> No agent needed for score calculation</p>
+<p><strong>Example showing grounding_strength:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Edges</th>
+<th>Support Weight</th>
+<th>Contradict Weight</th>
+<th>Grounding Strength</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12 S, 47 C</td>
+<td>10.2</td>
+<td>33.84</td>
+<td>10.2/44.04 = <strong>0.232</strong></td>
+<td>Weakly grounded (23%)</td>
+</tr>
+<tr>
+<td>47 S, 12 C</td>
+<td>33.84</td>
+<td>10.2</td>
+<td>33.84/44.04 = <strong>0.768</strong></td>
+<td>Well grounded (77%)</td>
+</tr>
+<tr>
+<td>50 S, 5 C</td>
+<td>42.0</td>
+<td>4.2</td>
+<td>42.0/46.2 = <strong>0.909</strong></td>
+<td>Strongly grounded (91%)</td>
+</tr>
+<tr>
+<td>5 S, 50 C</td>
+<td>4.2</td>
+<td>42.0</td>
+<td>4.2/46.2 = <strong>0.091</strong></td>
+<td>Contradicted (9%)</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Why weighted, not counted:</strong></p>
 <p>Edges have <strong>direction</strong> (FROM → TO) and <strong>magnitude</strong> (confidence: 0.0-1.0). To properly calculate statistical distributions, we need <strong>force vectors</strong>, not binary counts:</p>
 <ul>
 <li><strong>Binary counting</strong> (wrong): 47 contradictions = 47.0 total force</li>
 <li><strong>Weighted summing</strong> (correct): 47 contradictions with avg confidence 0.72 = 33.84 total force</li>
 </ul>
-<p><strong>Example showing the difference:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Approach</th>
-<th>SUPPORTS</th>
-<th>CONTRADICTS</th>
-<th>Ratio</th>
-<th>Triggers 0.80?</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Count edges</td>
-<td>12</td>
-<td>47</td>
-<td>47/59 = <strong>0.797</strong></td>
-<td>❌ Just below</td>
-</tr>
-<tr>
-<td>Sum confidence</td>
-<td>10.2</td>
-<td>33.84</td>
-<td>33.84/44.04 = <strong>0.768</strong></td>
-<td>❌ More clearly below</td>
-</tr>
-<tr>
-<td>Sum confidence (higher)</td>
-<td>10.2</td>
-<td>38.0</td>
-<td>38.0/48.2 = <strong>0.788</strong></td>
-<td>❌ Still below</td>
-</tr>
-<tr>
-<td>Sum confidence (strong contradictions)</td>
-<td>10.2</td>
-<td>42.5</td>
-<td>42.5/52.7 = <strong>0.806</strong></td>
-<td>✅ Exceeds threshold</td>
-</tr>
-</tbody>
-</table>
 <p>Weighted approach is more statistically sound:
 - Gives continuous variable (suitable for normal distribution)
 - Weak contradictions (confidence &lt; 0.6) don't overwhelm strong supports
 - Strong contradictions (confidence &gt; 0.9) appropriately dominate
 - Aligns with information-theoretic grounding (confidence = information content)</p>
-<p><strong>2. Apply Statistical Threshold (Three Sigma Rule)</strong></p>
-<p>When <code>contradiction_ratio ≥ 0.80</code> (80th percentile):
-- Concept has <strong>overwhelming contradictory evidence</strong>
-- Trigger <strong>introspection agent</strong> for evaluation</p>
-<p><strong>Why 80%?</strong>
+<p><strong>2. Query-Time Filtering with Adjustable Threshold</strong></p>
+<p>Default queries filter by minimum grounding strength:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span><span class="w">  </span><span class="c1">// Default: exclude concepts with &lt;20% support</span>
+</code></pre></div>
+<p><strong>Why 20% (0.20) threshold?</strong>
+- Inverse of 80% contradiction ratio (1.0 - 0.80 = 0.20)
 - Corresponds to ~1.28σ in normal distribution
 - Represents clear statistical signal while avoiding noise
-- Requires 4:1 ratio of contradictions to supports (strong evidence shift)</p>
-<p><strong>3. Agent-Based Introspection</strong></p>
-<p>When threshold triggered:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Agent retrieves:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  - Highly contradicted concept
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  - All adjacent CONTRADICTS edges
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  - All adjacent SUPPORTS edges
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  - Evidence text from all instances
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  - Source documents and dates
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Agent reasons:
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  &quot;Given evidence that:
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>   - Neo4j mentioned in 12 documents (2025-10-01 to 2025-10-08)
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>   - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-01-24)
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>   - ADR-016 states migration occurred 2025-10-09
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>   - Current codebase uses age_client.py, not neo4j_client.py
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>   Recommendation: Mark &#39;System uses Neo4j&#39; as IRRELEVANT
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>   Reasoning: Temporal evidence + codebase verification + explicit ADR
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>   Confidence: 0.95&quot;
+- Requires 4:1 ratio of contradictions to supports (strong evidence shift)
+- <strong>Adjustable per query:</strong> Can lower to 0.10 or raise to 0.50 based on needs</p>
+<p><strong>3. Optional Agent-Based Context (For LLM Queries)</strong></p>
+<p>When presenting weakly-grounded concepts to LLMs, optionally include agent-generated context:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Agent retrieves:
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  - Weakly-grounded concept (grounding_strength &lt; 0.20)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  - All adjacent CONTRADICTS edges
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  - All adjacent SUPPORTS edges
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  - Evidence text from all instances
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  - Source documents and dates
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>Agent provides context:
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  &quot;Given evidence that:
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>   - Neo4j mentioned in 12 documents (2025-10-01 to 2025-10-08)
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>   - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-01-24)
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>   - ADR-016 states migration occurred 2025-10-09
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>   - Current codebase uses age_client.py, not neo4j_client.py
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>   Context: &#39;System uses Neo4j&#39; has grounding_strength of 0.232 (23% support)
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>   Interpretation: Temporal evidence + codebase verification suggests this
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>   represents historical state, not current architecture.
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>   Confidence: 0.95&quot;
 </code></pre></div>
-<p><strong>4. Non-Destructive Marking</strong></p>
-<p>If agent confidence ≥ 0.90:
-- Add <code>status: IRRELEVANT</code> property to concept node
-- Add <code>marked_irrelevant_date: timestamp</code>
-- Add <code>marked_irrelevant_reason: string</code> (agent's reasoning)
-- <strong>Do NOT delete node</strong>
-- <strong>Do NOT delete edges</strong>
-- <strong>Do NOT delete evidence</strong></p>
-<p><strong>Effect on queries:</strong>
-- Default queries exclude <code>status: IRRELEVANT</code> concepts
-- Historical queries can include them with flag: <code>include_irrelevant=true</code>
-- Provenance preserved for audit</p>
-<h3 id="reversibility-truth-can-shift-back">Reversibility: Truth Can Shift Back</h3>
-<p><strong>Scenario:</strong> New evidence reverses the contradiction direction</p>
+<p><strong>Agent's new role:</strong>
+- ❌ Does NOT mark concepts as irrelevant
+- ❌ Does NOT modify graph structure
+- ✅ Provides explanatory context for weakly-grounded concepts
+- ✅ Helps LLMs synthesize accurate responses
+- ✅ Optional enhancement - queries work without agent</p>
+<p><strong>LLM query pattern with agent context:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Presupposition: The following concepts have weak grounding in evidence:
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Concept: &quot;System uses Neo4j&quot;
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>- Grounding strength: 0.232 (23% support, 77% contradiction)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>- Context: Represents historical state (pre-2025-10-09 migration)
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>- Current alternative: &quot;System uses Apache AGE + PostgreSQL&quot; (grounding: 0.901)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>Given this context, synthesize the best possible true statement about:
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>&quot;What database does the system use?&quot;
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>Expected response: &quot;The system currently uses Apache AGE + PostgreSQL.
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>It previously used Neo4j but migrated in October 2025 per ADR-016.&quot;
+</code></pre></div>
+<p><strong>Key insight:</strong> Agent provides interpretive context, but the <strong>grounding_strength calculation is pure mathematics</strong> - no agent needed for the core filtering mechanism.</p>
+<h3 id="automatic-reversibility-through-continuous-calculation">Automatic Reversibility Through Continuous Calculation</h3>
+<p><strong>Scenario:</strong> New evidence reverses the grounding strength</p>
 <p><strong>Example:</strong>
-1. System marks "Neo4j" as IRRELEVANT (80% contradictions)
+1. "System uses Neo4j" has <code>grounding_strength = 0.232</code> (weakly grounded)
 2. Later, 50 new documents describe "Neo4j cluster for HA" (future architecture)
-3. New SUPPORTS edges overwhelm old CONTRADICTS edges
-4. Recalculated ratio: <code>contradiction_ratio = 0.15</code> (now only 15% contradictions)</p>
-<p><strong>Trigger re-evaluation when:</strong>
-- Concept marked IRRELEVANT
-- New edges added
-- Recalculated <code>contradiction_ratio &lt; 0.30</code> (reversed threshold)
-- Agent introspection with new evidence</p>
-<p><strong>If agent confidence ≥ 0.90 to unmark:</strong>
-- Remove <code>status: IRRELEVANT</code>
-- Add <code>status: REINSTATED</code>
-- Add <code>reinstated_date: timestamp</code>
-- Add <code>reinstated_reason: string</code></p>
-<p><strong>Cascading re-evaluation:</strong>
-- When concept reinstated, queue adjacent IRRELEVANT concepts for re-evaluation
-- Process at lower priority (not urgent)
-- Allows graph to "heal" if truth shifts</p>
+3. New SUPPORTS edges shift the balance
+4. Recalculated: <code>grounding_strength = 0.851</code> (now well-grounded)</p>
+<p><strong>Automatic behavior:</strong>
+- ✅ <strong>No manual re-evaluation needed</strong> - grounding_strength recalculates at every query
+- ✅ <strong>No state management</strong> - no marking/unmarking operations
+- ✅ <strong>Always current</strong> - reflects latest edge weights immediately
+- ✅ <strong>No cascading updates</strong> - each concept's score is independent</p>
+<p><strong>Query behavior changes automatically:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// When grounding_strength was 0.232 (below 0.20 threshold)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1">// Concept excluded from results</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1">// After new evidence, grounding_strength becomes 0.851</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1">// Concept now included in results - automatically!</span>
+</code></pre></div>
+<p><strong>Historical queries still work:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// View all concepts regardless of grounding</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span><span class="w">  </span><span class="c1">// Include everything</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">// View only weakly-grounded concepts (for analysis)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span><span class="w">  </span><span class="c1">// Show contradicted concepts</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1">// View grounding strength evolution (if we add temporal tracking)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">label</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">       </span><span class="n">grounding_strength_current</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">       </span><span class="n">grounding_strength_30_days_ago</span><span class="p">,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">       </span><span class="n">grounding_strength_delta</span>
+</code></pre></div>
+<p><strong>No state management needed:</strong>
+- No IRRELEVANT → REINSTATED transitions
+- No dated markers (marked_irrelevant_date, reinstated_date)
+- No agent reasoning stored
+- Just pure mathematical calculation from current edge weights</p>
 <h2 id="implementation">Implementation</h2>
 <h3 id="phase-1-detection-metrics-immediate">Phase 1: Detection &amp; Metrics (Immediate)</h3>
-<p><strong>1. Contradiction Analysis Query:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// Find concepts with high weighted contradiction ratios</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">&lt;-[</span><span class="n">s</span><span class="p">:</span><span class="n">SUPPORTS</span><span class="o">]-</span><span class="p">()</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">&lt;-[</span><span class="n">d</span><span class="p">:</span><span class="n">CONTRADICTS</span><span class="o">]-</span><span class="p">()</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">     </span><span class="k">collect</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_edges</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">     </span><span class="k">collect</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_edges</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">     </span><span class="n">support_edges</span><span class="p">,</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">     </span><span class="n">contradict_edges</span><span class="p">,</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">     </span><span class="n">reduce</span><span class="p">(</span><span class="n">sum</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="n">support_edges</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">coalesce</span><span class="p">(</span><span class="n">edge</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_weight</span><span class="p">,</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">     </span><span class="n">reduce</span><span class="p">(</span><span class="n">sum</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="n">contradict_edges</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">coalesce</span><span class="p">(</span><span class="n">edge</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_weight</span><span class="p">,</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">     </span><span class="n">size</span><span class="p">(</span><span class="n">support_edges</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_count</span><span class="p">,</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">     </span><span class="n">size</span><span class="p">(</span><span class="n">contradict_edges</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_count</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">     </span><span class="n">support_weight</span><span class="p">,</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">     </span><span class="n">contradict_weight</span><span class="p">,</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">     </span><span class="n">support_count</span><span class="p">,</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">     </span><span class="n">contradict_count</span><span class="p">,</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">     </span><span class="n">support_weight</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">total_weight</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">total_weight</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">3</span><span class="p">.</span><span class="m">0</span><span class="w">  </span><span class="c1">// Minimum weight for statistical significance (not count)</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">     </span><span class="n">support_weight</span><span class="p">,</span>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">     </span><span class="n">contradict_weight</span><span class="p">,</span>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="w">     </span><span class="n">support_count</span><span class="p">,</span>
-<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">     </span><span class="n">contradict_count</span><span class="p">,</span>
-<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="w">     </span><span class="n">total_weight</span><span class="p">,</span>
-<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="w">     </span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">total_weight</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span>
-<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">          </span><span class="k">THEN</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="n">total_weight</span>
-<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">          </span><span class="n">ELSE</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span>
-<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="w">     </span><span class="k">END</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradiction_ratio</span>
-<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">contradiction_ratio</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">80</span>
-<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">label</span><span class="p">,</span>
-<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="w">       </span><span class="n">c</span><span class="p">.</span><span class="n">concept_id</span><span class="p">,</span>
-<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">       </span><span class="n">support_count</span><span class="p">,</span>
-<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="w">       </span><span class="n">contradict_count</span><span class="p">,</span>
-<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="w">       </span><span class="n">round</span><span class="p">(</span><span class="n">support_weight</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="m">100</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_weight</span><span class="p">,</span>
-<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="w">       </span><span class="n">round</span><span class="p">(</span><span class="n">contradict_weight</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="m">100</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_weight</span><span class="p">,</span>
-<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="w">       </span><span class="n">round</span><span class="p">(</span><span class="n">contradiction_ratio</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="m">1000</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradiction_ratio</span>
-<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">contradiction_ratio</span><span class="w"> </span><span class="k">DESC</span><span class="p">,</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="k">DESC</span>
+<p><strong>1. Grounding Strength Query (Standard Pattern):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// Calculate grounding_strength for all concepts</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">&lt;-[</span><span class="n">s</span><span class="p">:</span><span class="n">SUPPORTS</span><span class="o">]-</span><span class="p">()</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">&lt;-[</span><span class="n">d</span><span class="p">:</span><span class="n">CONTRADICTS</span><span class="o">]-</span><span class="p">()</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">     </span><span class="k">collect</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_edges</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">     </span><span class="k">collect</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_edges</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">     </span><span class="n">support_edges</span><span class="p">,</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">     </span><span class="n">contradict_edges</span><span class="p">,</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">     </span><span class="n">reduce</span><span class="p">(</span><span class="n">sum</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="n">support_edges</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">coalesce</span><span class="p">(</span><span class="n">edge</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_weight</span><span class="p">,</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">     </span><span class="n">reduce</span><span class="p">(</span><span class="n">sum</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="n">contradict_edges</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">coalesce</span><span class="p">(</span><span class="n">edge</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_weight</span><span class="p">,</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">     </span><span class="n">size</span><span class="p">(</span><span class="n">support_edges</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_count</span><span class="p">,</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">     </span><span class="n">size</span><span class="p">(</span><span class="n">contradict_edges</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_count</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">     </span><span class="n">support_weight</span><span class="p">,</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">     </span><span class="n">contradict_weight</span><span class="p">,</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">     </span><span class="n">support_count</span><span class="p">,</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">     </span><span class="n">contradict_count</span><span class="p">,</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">     </span><span class="n">support_weight</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">total_weight</span><span class="p">,</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">     </span><span class="k">CASE</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">       </span><span class="k">WHEN</span><span class="w"> </span><span class="n">support_weight</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">       </span><span class="k">THEN</span><span class="w"> </span><span class="n">support_weight</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="p">(</span><span class="n">support_weight</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">contradict_weight</span><span class="p">)</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">       </span><span class="n">ELSE</span><span class="w"> </span><span class="m">1</span><span class="p">.</span><span class="m">0</span><span class="w">  </span><span class="c1">// No contradictions = assume well-grounded</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">     </span><span class="k">END</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">grounding_strength</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">total_weight</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">3</span><span class="p">.</span><span class="m">0</span><span class="w">  </span><span class="c1">// Minimum weight for statistical significance</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span><span class="w">  </span><span class="c1">// Default threshold: 20% support minimum</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">label</span><span class="p">,</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="w">       </span><span class="n">c</span><span class="p">.</span><span class="n">concept_id</span><span class="p">,</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">       </span><span class="n">support_count</span><span class="p">,</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">       </span><span class="n">contradict_count</span><span class="p">,</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">       </span><span class="n">round</span><span class="p">(</span><span class="n">support_weight</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="m">100</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_weight</span><span class="p">,</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="w">       </span><span class="n">round</span><span class="p">(</span><span class="n">contradict_weight</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="m">100</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_weight</span><span class="p">,</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="w">       </span><span class="n">round</span><span class="p">(</span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="m">1000</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">grounding_strength</span>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="k">ASC</span><span class="p">,</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="k">DESC</span>
 </code></pre></div>
-<p><strong>Key differences from naive counting:</strong>
+<p><strong>Key features:</strong>
 - Uses <code>reduce()</code> to sum edge confidence scores, not <code>count()</code>
 - Falls back to 0.8 if confidence missing (backward compatibility)
 - Minimum weight threshold (3.0) instead of minimum count (5)
-- Orders by <code>contradict_weight</code> (total force) not <code>contradict_count</code></p>
-<p><strong>2. Add concept properties:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="n">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ACTIVE&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="s">&quot;IRRELEVANT&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="s">&quot;REINSTATED&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="n">marked_irrelevant_date</span><span class="p">:</span><span class="w"> </span><span class="n">timestamp</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="n">marked_irrelevant_reason</span><span class="p">:</span><span class="w"> </span><span class="n">text</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="n">marked_irrelevant_confidence</span><span class="p">:</span><span class="w"> </span><span class="n">float</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="n">reinstated_date</span><span class="p">:</span><span class="w"> </span><span class="n">timestamp</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="n">reinstated_reason</span><span class="p">:</span><span class="w"> </span><span class="n">text</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">})</span>
-</code></pre></div></p>
-<p><strong>3. API endpoints:</strong>
-- <code>GET /admin/contradictions</code> - List high-contradiction concepts
-- <code>POST /admin/introspect/{concept_id}</code> - Trigger agent evaluation
-- <code>POST /admin/mark-irrelevant/{concept_id}</code> - Manual override
-- <code>POST /admin/reinstate/{concept_id}</code> - Manual reinstatement</p>
-<h3 id="phase-2-agent-introspection-near-term">Phase 2: Agent Introspection (Near-term)</h3>
-<p><strong>Introspection Agent prompt:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>You are analyzing a concept in a knowledge graph that has contradictory evidence.
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Concept: {label}
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Support edges: {support_count}
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Contradict edges: {contradict_count}
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>Contradiction ratio: {contradiction_ratio}
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>Evidence supporting this concept:
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>{formatted_support_evidence}
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>Evidence contradicting this concept:
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>{formatted_contradict_evidence}
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>Source documents:
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>{document_list_with_dates}
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>Your task:
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>1. Analyze the temporal pattern (are contradictions newer?)
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>2. Assess evidence quality (are contradictions more specific/authoritative?)
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>3. Consider scope (is this historical vs current state?)
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>4. Recommend: MARK_IRRELEVANT or KEEP_ACTIVE
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>Provide:
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>- Decision: MARK_IRRELEVANT | KEEP_ACTIVE
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>- Confidence: 0.0-1.0
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>- Reasoning: 2-3 sentence explanation grounded in evidence
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>Format response as JSON.
+- <code>grounding_strength</code> = support_weight / total_weight (continuous 0.0-1.0)
+- Adjustable threshold: change 0.20 to query different confidence levels</p>
+<p><strong>2. Find weakly-grounded concepts (for analysis):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// Find concepts with low grounding (potential contradictions)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">&lt;-[</span><span class="n">s</span><span class="p">:</span><span class="n">SUPPORTS</span><span class="o">]-</span><span class="p">()</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">&lt;-[</span><span class="n">d</span><span class="p">:</span><span class="n">CONTRADICTS</span><span class="o">]-</span><span class="p">()</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">     </span><span class="n">reduce</span><span class="p">(</span><span class="n">sum</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="k">collect</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">coalesce</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">support_weight</span><span class="p">,</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">     </span><span class="n">reduce</span><span class="p">(</span><span class="n">sum</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="k">collect</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">coalesce</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradict_weight</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">     </span><span class="n">support_weight</span><span class="p">,</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">     </span><span class="n">contradict_weight</span><span class="p">,</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">     </span><span class="k">CASE</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">       </span><span class="k">WHEN</span><span class="w"> </span><span class="n">support_weight</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">       </span><span class="k">THEN</span><span class="w"> </span><span class="n">support_weight</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="p">(</span><span class="n">support_weight</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">contradict_weight</span><span class="p">)</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">       </span><span class="n">ELSE</span><span class="w"> </span><span class="m">1</span><span class="p">.</span><span class="m">0</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">     </span><span class="k">END</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">grounding_strength</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span><span class="w">  </span><span class="c1">// Weakly grounded</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">support_weight</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">contradict_weight</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">3</span><span class="p">.</span><span class="m">0</span><span class="w">  </span><span class="c1">// Minimum significance</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">label</span><span class="p">,</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">       </span><span class="n">grounding_strength</span><span class="p">,</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">       </span><span class="n">support_weight</span><span class="p">,</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">       </span><span class="n">contradict_weight</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="k">ASC</span>
+</code></pre></div>
+<p><strong>3. No concept properties needed:</strong></p>
+<p>Concepts remain unchanged - no status field, no marking dates. Grounding strength is computed purely from edges at query time.</p>
+<p><strong>4. API endpoints:</strong>
+- <code>GET /admin/grounding-analysis</code> - List weakly-grounded concepts
+- <code>POST /admin/agent-context/{concept_id}</code> - Generate agent interpretation (optional)
+- <code>GET /concepts?min_grounding=0.20</code> - Query with custom threshold</p>
+<h3 id="phase-2-agent-context-generation-optional-enhancement">Phase 2: Agent Context Generation (Optional Enhancement)</h3>
+<p><strong>Context Generation Agent prompt:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>You are providing interpretive context for a weakly-grounded concept in a knowledge graph.
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Concept: {label}
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>Grounding strength: {grounding_strength} ({percent}% support)
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Support weight: {support_weight} (from {support_count} edges)
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>Contradict weight: {contradict_weight} (from {contradict_count} edges)
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>Evidence supporting this concept:
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>{formatted_support_evidence}
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>Evidence contradicting this concept:
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>{formatted_contradict_evidence}
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>Source documents:
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>{document_list_with_dates}
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>Your task:
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>1. Analyze the temporal pattern (is this historical vs current?)
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>2. Assess evidence quality (which evidence is more authoritative?)
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>3. Identify the most likely alternative concept (higher grounding)
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>4. Provide context that helps an LLM synthesize accurate responses
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>Provide:
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>- Interpretation: 2-3 sentence explanation grounded in evidence
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>- Alternative concept: {concept_label} (grounding: {grounding_strength})
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>- Temporal context: &quot;Historical&quot; | &quot;Current&quot; | &quot;Future&quot; | &quot;Context-dependent&quot;
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>- Confidence: 0.0-1.0
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>Format response as JSON.
 </code></pre></div>
 <p><strong>Agent uses:</strong>
 - OpenAI GPT-4o or Anthropic Claude Sonnet 4
 - Temperature: 0.1 (low, for consistency)
 - Max tokens: 500
 - Retrieves up to 50 evidence instances per concept</p>
-<h3 id="phase-3-automated-resolution-future">Phase 3: Automated Resolution (Future)</h3>
-<p><strong>Background job scheduler:</strong>
-- Run contradiction analysis daily
-- Queue concepts with <code>contradiction_ratio ≥ 0.80</code> for introspection
-- Batch process with rate limiting (avoid API cost spikes)
-- Log all decisions for audit</p>
+<p><strong>Key difference from marking approach:</strong>
+- Agent does NOT make binary decisions (mark/don't mark)
+- Agent provides interpretive context for LLMs to use
+- Agent output is optional enhancement, not required for filtering
+- Grounding strength calculation happens independently of agent</p>
+<h3 id="phase-3-performance-optimization-future">Phase 3: Performance Optimization (Future)</h3>
+<p><strong>Caching grounding_strength:</strong></p>
+<p>For performance, optionally cache grounding_strength calculations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// Materialized view pattern (recalculated periodically)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="n">grounding_strength_cached</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">768</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="n">grounding_cache_date</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2025-01-24T10:30:00Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="n">grounding_cache_ttl</span><span class="p">:</span><span class="w"> </span><span class="m">3600</span><span class="w">  </span><span class="c1">// seconds</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">})</span>
+</code></pre></div>
+<p><strong>Cache invalidation:</strong>
+- Invalidate when new SUPPORTS or CONTRADICTS edges added to concept
+- Or use TTL (time-to-live) approach: recalculate every N seconds
+- Trade-off: staleness vs query performance</p>
 <p><strong>Monitoring metrics:</strong>
-- Concepts marked irrelevant per day
-- Concepts reinstated per day
-- Average contradiction ratio over time
-- Agent decision confidence distribution</p>
+- Average grounding_strength across all concepts
+- Distribution of grounding_strength (histogram)
+- Concepts with grounding &lt; 0.20 (count trending over time)
+- Query performance with/without caching</p>
 <h2 id="examples">Examples</h2>
 <h3 id="example-1-neo4j-apache-age-actual">Example 1: Neo4j → Apache AGE (Actual)</h3>
 <p><strong>Initial state (2025-10-08):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  ← SUPPORTS ← (12 evidence instances from docs)
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  ← SUPPORTS ← (Architecture overview)
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  ← SUPPORTS ← (Setup scripts)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  ← SUPPORTS ← (12 evidence instances from docs, avg confidence 0.85)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>Grounding calculation:
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  support_weight: 12 × 0.85 = 10.2
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  contradict_weight: 0
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  grounding_strength: 10.2 / 10.2 = 1.00 (fully supported)
 </code></pre></div></p>
 <p><strong>After ingestion (2025-01-24):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  ← SUPPORTS ← (12 evidence instances from old docs)
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  ← CONTRADICTS ← (47 evidence instances from new docs)
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  ← CONTRADICTS ← (ADR-016: Migration decision)
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  ← CONTRADICTS ← (age_client.py in codebase)
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  ← CONTRADICTS ← (README.md: &quot;Apache AGE + PostgreSQL&quot;)
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>Metrics:
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>  support_edges: 12
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>  contradict_edges: 47
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>  contradiction_ratio: 47/59 = 0.797 ≈ 0.80 ✓ THRESHOLD TRIGGERED
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  ← SUPPORTS ← (12 evidence instances from old docs, avg confidence 0.85)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  ← CONTRADICTS ← (47 evidence instances from new docs, avg confidence 0.72)
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>Grounding calculation:
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  support_weight: 12 × 0.85 = 10.2
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>  contradict_weight: 47 × 0.72 = 33.84
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>  total_weight: 44.04
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>  grounding_strength: 10.2 / 44.04 = 0.232 (23% support, 77% contradiction)
 </code></pre></div></p>
-<p><strong>Agent introspection:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">&quot;decision&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;MARK_IRRELEVANT&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span><span class="p">,</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Temporal analysis shows Neo4j references end 2025-10-08. ADR-016 explicitly documents migration to Apache AGE on 2025-10-09. Current codebase (age_client.py) and all recent documentation reference Apache AGE. Neo4j represents historical state, not current architecture.&quot;</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="p">}</span>
+<p><strong>Optional agent context:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">&quot;interpretation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Temporal analysis shows Neo4j references end 2025-10-08. ADR-016 explicitly documents migration to Apache AGE on 2025-10-09. Current codebase (age_client.py) and all recent documentation reference Apache AGE. Neo4j represents historical state, not current architecture.&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">&quot;alternative_concept&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;System uses Apache AGE + PostgreSQL&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">&quot;alternative_grounding&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.901</span><span class="p">,</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">&quot;temporal_context&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Historical&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">}</span>
 </code></pre></div></p>
-<p><strong>Result:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>(:Concept {
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  label: &quot;System uses Neo4j&quot;,
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  status: &quot;IRRELEVANT&quot;,
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  marked_irrelevant_date: &quot;2025-01-24T10:30:00Z&quot;,
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  marked_irrelevant_reason: &quot;Temporal analysis shows...&quot;,
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  marked_irrelevant_confidence: 0.95
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>})
+<p><strong>Query behavior (automatic):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// Default query (grounding &gt;= 0.20)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1">// ... calculate grounding_strength ...</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1">// &quot;System uses Neo4j&quot; has grounding 0.232 → INCLUDED (just above threshold)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="c1">// Stricter query (grounding &gt;= 0.50)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="c1">// ... calculate grounding_strength ...</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="c1">// &quot;System uses Neo4j&quot; has grounding 0.232 → EXCLUDED</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="c1">// Find weakly-grounded concepts</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">30</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="c1">// &quot;System uses Neo4j&quot; appears here for investigation</span>
 </code></pre></div></p>
-<p><strong>Query behavior:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// Default query (excludes irrelevant)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="s">&#39;IRRELEVANT&#39;</span><span class="w"> </span><span class="n">OR</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">// Historical query (includes all)</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span>
+<p><strong>No concept modification needed</strong> - grounding_strength calculated dynamically at query time.</p>
+<h3 id="example-2-multiple-thresholds-for-different-use-cases">Example 2: Multiple Thresholds for Different Use Cases</h3>
+<p><strong>Scenario:</strong> Query with different grounding thresholds</p>
+<p><strong>Concept states:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&quot;Similarity threshold is 0.85&quot; → grounding: 0.90 (code + docs)
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>&quot;Similarity threshold is 0.75&quot; → grounding: 0.35 (old docs)
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>&quot;Similarity threshold is 0.80&quot; → grounding: 0.28 (mixed references)
 </code></pre></div></p>
-<h3 id="example-2-threshold-based-confidence-reversal">Example 2: Threshold-Based Confidence Reversal</h3>
-<p><strong>Scenario:</strong> Documentation incorrectly states threshold is 0.75</p>
-<p><strong>Initial state:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>(:Concept {label: &quot;Similarity threshold is 0.75&quot;})
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  ← SUPPORTS ← (Introduction doc: &quot;≥0.75 cosine&quot;)
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  ← SUPPORTS ← (Research notes: &quot;0.75 default&quot;)
+<p><strong>Query behaviors:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// High-confidence query (production use)</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">80</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Similarity threshold is 0.85&quot;</span><span class="w"> </span><span class="n">only</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1">// Medium-confidence query (general use)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Similarity threshold is 0.85&quot;</span><span class="w"> </span><span class="n">only</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="c1">// Low-confidence query (include uncertain)</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="k">All</span><span class="w"> </span><span class="n">three</span><span class="w"> </span><span class="n">concepts</span><span class="w"> </span><span class="p">(</span><span class="n">investigation</span><span class="w"> </span><span class="n">mode</span><span class="p">)</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1">// Find contradictory concepts (analysis)</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">40</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.75&quot;</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="s">&quot;0.80&quot;</span><span class="w"> </span><span class="n">concepts</span><span class="w"> </span><span class="p">(</span><span class="n">needs</span><span class="w"> </span><span class="n">investigation</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>LLM receives context:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>High-grounding concept: &quot;Similarity threshold is 0.85&quot; (grounding: 0.90)
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>Weakly-grounded alternatives: &quot;0.75&quot; (grounding: 0.35), &quot;0.80&quot; (grounding: 0.28)
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>Synthesize response: &quot;What is the similarity threshold?&quot;
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>Expected: &quot;The system uses 0.85 as the similarity threshold (verified in code).&quot;
 </code></pre></div></p>
-<p><strong>After verification:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>(:Concept {label: &quot;Similarity threshold is 0.85&quot;})
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  ← SUPPORTS ← (age_client.py: threshold=0.85)
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  ← SUPPORTS ← (ingestion.py: &quot;≥ 0.85&quot;)
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  ← SUPPORTS ← (ADR-030: &quot;Match threshold: 80% similarity&quot;)
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  ← CONTRADICTS → &quot;Similarity threshold is 0.75&quot;
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>Metrics for &quot;0.75&quot; concept:
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>  support_edges: 2
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>  contradict_edges: 3 (from code + docs)
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>  contradiction_ratio: 3/5 = 0.60  (below 0.80 threshold)
-</code></pre></div></p>
-<p><strong>No automatic action</strong> (ratio too low), but manual introspection available.</p>
-<p><strong>Manual resolution:</strong>
-- Developer runs: <code>kg admin introspect similarity-threshold-0-75</code>
-- Agent analyzes: code is authoritative source
-- Decision: MARK_IRRELEVANT (confidence: 0.92)</p>
-<h3 id="example-3-reversibility-future-architecture-change">Example 3: Reversibility - Future Architecture Change</h3>
-<p><strong>Current state:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>(:Concept {
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  label: &quot;System uses Neo4j&quot;,
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  status: &quot;IRRELEVANT&quot;
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>})
+<h3 id="example-3-automatic-reversibility-future-architecture-change">Example 3: Automatic Reversibility - Future Architecture Change</h3>
+<p><strong>Current state (2025-01-24):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>&quot;System uses Neo4j&quot; → grounding: 0.232 (weakly grounded)
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>&quot;System uses Apache AGE&quot; → grounding: 0.901 (well grounded)
 </code></pre></div></p>
 <p><strong>Future ingestion (2026-06-01):</strong>
 - New ADR: "ADR-089: Neo4j Enterprise for Multi-Region HA"
 - Architecture docs: "PostgreSQL + AGE for single-region, Neo4j for geo-distributed"
 - Deployment guides: "Neo4j cluster configuration"</p>
-<p><strong>Edge changes:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  ← SUPPORTS ← (35 new evidence instances about Neo4j cluster)
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  ← CONTRADICTS ← (12 old &quot;replaced by AGE&quot; statements)
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Recalculated:
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  support_edges: 47 (12 old + 35 new)
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>  contradict_edges: 47 (same)
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>  contradiction_ratio: 47/94 = 0.50  (dropped from 0.80)
+<p><strong>Automatic recalculation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>&quot;System uses Neo4j&quot;
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>  support_weight: 10.2 (old) + 29.75 (new) = 39.95
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>  contradict_weight: 33.84 (unchanged)
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>  grounding_strength: 39.95 / 73.79 = 0.541 (54% support - improved!)
 </code></pre></div></p>
-<p><strong>Automatic re-evaluation triggered:</strong>
-- <code>contradiction_ratio &lt; 0.30</code>? No (it's 0.50)
-- Manual introspection available
-- Developer decides: Context matters - both are true (AGE for single-region, Neo4j for multi-region)</p>
-<p><strong>Solution:</strong>
-- Refine concept: "System uses Neo4j" → split into two concepts
-  - "System uses Neo4j for geo-distributed deployment"
-  - "System uses Apache AGE for single-region deployment"
-- Both ACTIVE, no contradiction</p>
+<p><strong>Query behavior automatically changes:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1">// Before: grounding was 0.232</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="err">→</span><span class="w"> </span><span class="n">Excluded</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1">// After: grounding is 0.541</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="err">→</span><span class="w"> </span><span class="n">Included</span><span class="w"> </span><span class="p">(</span><span class="n">automatically</span><span class="p">,</span><span class="w"> </span><span class="n">no</span><span class="w"> </span><span class="n">manual</span><span class="w"> </span><span class="n">intervention</span><span class="err">!</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Developer investigates:</strong>
+- Runs: <code>kg admin grounding-analysis</code>
+- Finds: Both "Neo4j" (0.541) and "Apache AGE" (0.901) have good grounding
+- Realizes: Context matters - both are true in different scenarios</p>
+<p><strong>Solution (concept refinement):</strong>
+- Split concept: "System uses Neo4j" → two more specific concepts
+  - "System uses Neo4j for geo-distributed deployment" (grounding: 0.89)
+  - "System uses Apache AGE for single-region deployment" (grounding: 0.92)
+- Both well-grounded, no contradiction, clearer semantics</p>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
-<p>✅ <strong>Non-destructive:</strong> Historical information preserved
-✅ <strong>Reversible:</strong> Truth can shift as evidence accumulates
-✅ <strong>Statistical:</strong> Grounded in quantitative evidence, not arbitrary rules
-✅ <strong>Transparent:</strong> Agent reasoning logged and auditable
-✅ <strong>Scalable:</strong> Automated detection, human oversight for edge cases
-✅ <strong>Philosophically sound:</strong> Acknowledges Gödelian incompleteness
-✅ <strong>Query-time filtering:</strong> Default queries exclude noise, historians can include it</p>
+<p>✅ <strong>Always current:</strong> Grounding strength reflects latest edge weights at every query
+✅ <strong>No state management:</strong> No marking/unmarking, no status fields, no timestamps
+✅ <strong>Automatic reversibility:</strong> Truth shifts automatically as evidence accumulates
+✅ <strong>No query paradox:</strong> Lowering threshold always finds weakly-grounded concepts
+✅ <strong>Continuous scores:</strong> 0.0-1.0 range, not binary relevant/irrelevant
+✅ <strong>Adjustable filtering:</strong> Different queries use different thresholds (0.20, 0.50, 0.80)
+✅ <strong>Pure mathematics:</strong> Core mechanism requires no agent or human intervention
+✅ <strong>Statistical soundness:</strong> Grounded in force vector summing (confidence weights)
+✅ <strong>Non-destructive:</strong> All concepts preserved, filtering happens at query time
+✅ <strong>Philosophically sound:</strong> Acknowledges Gödelian incompleteness through continuous probability
+✅ <strong>Performance:</strong> Can cache grounding_strength for frequently-queried concepts (optional)
+✅ <strong>No cascading updates:</strong> Each concept's score is independent</p>
 <h3 id="negative">Negative</h3>
-<p>⚠️ <strong>Agent costs:</strong> Each introspection = 1 LLM API call (~$0.01-0.05)
-⚠️ <strong>Threshold tuning:</strong> 80% may need domain-specific adjustment
-⚠️ <strong>Cascade complexity:</strong> Reinstating one concept may trigger many re-evaluations
-⚠️ <strong>Edge case ambiguity:</strong> What if contradiction_ratio = 0.79? (just below threshold)
-⚠️ <strong>Temporal bias:</strong> System favors newer information by default</p>
+<p>⚠️ <strong>Query overhead:</strong> Must calculate grounding_strength for each concept (mitigated by caching)
+⚠️ <strong>Threshold selection:</strong> Default 0.20 may not suit all domains or queries
+⚠️ <strong>No explicit marking:</strong> Concepts don't have "this is wrong" labels (feature, not bug)
+⚠️ <strong>Agent context optional:</strong> LLMs don't get interpretive context unless explicitly requested
+⚠️ <strong>Temporal information lost:</strong> Can't track "when did grounding drop below threshold?"</p>
 <h3 id="trade-offs">Trade-offs</h3>
-<p><strong>Precision vs Recall:</strong>
-- High threshold (0.90): Few false positives, miss some true contradictions
-- Low threshold (0.70): Catch more contradictions, risk marking valid concepts irrelevant
-- <strong>Current choice (0.80):</strong> Balance point</p>
-<p><strong>Automation vs Control:</strong>
-- Fully automated: Fast, scales, but may make mistakes
-- Manual approval: Accurate, but doesn't scale
-- <strong>Hybrid approach:</strong> Automated detection + agent recommendation + optional human override</p>
-<p><strong>Deletion vs Marking:</strong>
-- Delete: Clean graph, but catastrophic if wrong
-- Mark irrelevant: Cluttered graph, but reversible
-- <strong>Current choice:</strong> Mark (reversibility &gt; cleanliness)</p>
+<p><strong>Computation vs Storage:</strong>
+- <strong>Query-time calculation:</strong> No storage overhead, always current, but adds query latency
+- <strong>Cached grounding:</strong> Faster queries, but cache invalidation complexity
+- <strong>Current choice:</strong> Query-time (prefer correctness over speed initially)</p>
+<p><strong>Threshold Flexibility vs Consistency:</strong>
+- <strong>Adjustable thresholds:</strong> Different queries use different confidence levels (flexible)
+- <strong>Fixed threshold:</strong> All queries use same standard (consistent)
+- <strong>Current choice:</strong> Adjustable per query (0.20 default, user can override)</p>
+<p><strong>Pure Math vs Agent Context:</strong>
+- <strong>Pure math:</strong> Fast, deterministic, no API costs, but no interpretation
+- <strong>With agent:</strong> Interpretive context for LLMs, but API costs and latency
+- <strong>Current choice:</strong> Pure math by default, agent context optional enhancement</p>
+<p><strong>Continuous Scores vs Binary Labels:</strong>
+- <strong>Continuous (0.0-1.0):</strong> Nuanced, flexible filtering, but harder to understand at a glance
+- <strong>Binary (relevant/irrelevant):</strong> Simple, clear, but loses information about degree of grounding
+- <strong>Current choice:</strong> Continuous (preserves information, enables flexible querying)</p>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <h3 id="1-temporal-versioning-rejected">1. Temporal Versioning (Rejected)</h3>
 <p><strong>Approach:</strong> Track concept versions with timestamps, always use newest</p>
@@ -4066,6 +4169,32 @@
 - Mathematically elegant but complex to implement
 - Requires prior probability estimates
 - May revisit in Phase 3 if edge-count approach proves insufficient</p>
+<h3 id="5-static-irrelevant-marking-rejected">5. Static IRRELEVANT Marking (Rejected)</h3>
+<p><strong>Approach:</strong> Mark concepts as IRRELEVANT when contradiction ratio ≥ 0.80, exclude from default queries</p>
+<p><strong>Implementation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="n">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;IRRELEVANT&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="n">marked_date</span><span class="p">:</span><span class="w"> </span><span class="n">timestamp</span><span class="p">,</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">  </span><span class="n">marked_reason</span><span class="p">:</span><span class="w"> </span><span class="n">text</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="p">})</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1">// Queries</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="s">&#39;IRRELEVANT&#39;</span><span class="w"> </span><span class="n">OR</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
+</code></pre></div></p>
+<p><strong>Why rejected:</strong></p>
+<p>❌ <strong>Query paradox:</strong> If we exclude IRRELEVANT concepts from queries, how do we find them to re-evaluate when new evidence arrives?</p>
+<p>❌ <strong>Stale state:</strong> Marking freezes a point-in-time decision, but edges continue to accumulate. A concept marked IRRELEVANT yesterday might become relevant today.</p>
+<p>❌ <strong>State management complexity:</strong> Need to track marked_date, marked_reason, reinstated_date, reinstated_reason - significant bookkeeping overhead.</p>
+<p>❌ <strong>Cascading updates:</strong> When reinstating a concept, must trigger re-evaluation of adjacent concepts - complex dependency management.</p>
+<p>❌ <strong>Binary thinking:</strong> Either RELEVANT or IRRELEVANT - loses nuance. What about concepts with 40% support? 60% support?</p>
+<p>❌ <strong>Agent dependency:</strong> Requires agent introspection for every mark/unmark operation - API costs and latency.</p>
+<p><strong>Dynamic grounding_strength solves all these problems:</strong>
+- ✅ Always findable (just lower threshold)
+- ✅ Always current (recalculated at query time)
+- ✅ No state management (no bookkeeping)
+- ✅ No cascading (independent scores)
+- ✅ Continuous spectrum (0.0-1.0)
+- ✅ Pure mathematics (no agent required)</p>
 <h2 id="related-decisions">Related Decisions</h2>
 <ul>
 <li><strong>ADR-025:</strong> Dynamic relationship vocabulary - establishes CONTRADICTS edge type</li>
