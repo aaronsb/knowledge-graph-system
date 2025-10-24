@@ -205,11 +205,11 @@ body,
 
 /* Navigation */
 .md-nav {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .md-nav__link {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 /* Section headings (nested nav items) - make them stand out */
