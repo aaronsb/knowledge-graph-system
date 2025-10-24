@@ -1,5 +1,4 @@
 # MkDocs and dependencies for documentation site
 mkdocs>=1.5.3
 mkdocs-material>=9.5.0
-mkdocs-awesome-pages-plugin>=2.9.0
 pymdown-extensions>=10.7.0
