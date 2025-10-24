@@ -58,6 +58,7 @@ body,
 .md-header__title,
 .md-footer {
     font-family: "Roboto Mono", monospace;
+    font-size: 14px;
     line-height: 1.6;
 }
 
