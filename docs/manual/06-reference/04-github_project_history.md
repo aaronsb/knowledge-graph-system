@@ -509,6 +509,6 @@ This shows the entire implementation lifecycle: design decision → code → doc
 
 **Related Documentation:**
 - [INGESTION.md](../01-getting-started/03-INGESTION.md) - Detailed ingestion configuration
-- [EXAMPLES.md](../EXAMPLES.md) - Query examples and results
-- [CLI_USAGE.md](../CLI_USAGE.md) - Complete CLI command reference
-- [USE_CASES.md](../USE_CASES.md) - Back to use cases index
+- [EXAMPLES.md](03-EXAMPLES.md) - Query examples and results
+- [CLI_USAGE.md](../01-getting-started/02-CLI_USAGE.md) - Complete CLI command reference
+- [USE_CASES.md](02-USE_CASES.md) - Back to use cases index
