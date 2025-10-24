@@ -7,20 +7,19 @@ repo_name: aaronsb/knowledge-graph-system
 theme:
   name: material
   palette:
-    # Dark mode (default)
-    - media: "(prefers-color-scheme)"
-      scheme: slate
+    # Dark mode (default - listed first)
+    - scheme: slate
       primary: indigo
       accent: cyan
       toggle:
-        icon: material/brightness-4
+        icon: material/brightness-7
         name: Switch to light mode
     # Light mode
     - scheme: default
       primary: blue grey
       accent: deep orange
       toggle:
-        icon: material/brightness-7
+        icon: material/brightness-4
         name: Switch to dark mode
   features:
     - navigation.instant
