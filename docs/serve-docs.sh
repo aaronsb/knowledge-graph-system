@@ -86,4 +86,7 @@ echo -e "${YELLOW}➜ Press Ctrl+C to stop${NC}"
 echo ""
 
 cd "$PROJECT_ROOT"
-mkdocs serve --dev-addr 127.0.0.1:8001
+mkdocs serve --dev-addr 127.0.0.1:8001 \
+  --watch docs/ \
+  --watch mkdocs.yml \
+  --livereload
