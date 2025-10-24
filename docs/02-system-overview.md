@@ -15,28 +15,24 @@ The system has four main components:
 3. **Client** - TypeScript CLI (`kg` command) and MCP server for Claude Desktop
 4. **LLM Providers** - OpenAI, Anthropic, or local Ollama models for extraction
 
-```
-┌─────────────┐
-│   kg CLI    │  User runs commands
-└──────┬──────┘
-       │ HTTP
-       ↓
-┌─────────────────────────────────┐
-│      FastAPI REST Server        │  Manages jobs, coordinates work
-│  • Job queue (SQLite)           │
-│  • Background workers           │
-│  • Content deduplication        │
-└────────┬────────────────────────┘
-         │
-    ┌────┴────┬──────────────┐
-    │         │              │
-    ↓         ↓              ↓
-┌────────┐ ┌──────┐  ┌──────────────┐
-│ OpenAI │ │ AGE  │  │   Anthropic  │
-│   or   │ │(PostgreSQL)│    or      │
-│ Ollama │ │Graph │  │   Ollama     │
-└────────┘ └──────┘  └──────────────┘
-Embeddings  Storage   Extraction
+```mermaid
+flowchart TD
+    CLI["<b>kg CLI</b><br/>User runs commands"]
+    API["<b>FastAPI REST Server</b><br/>• Job queue (PostgreSQL)<br/>• Background workers<br/>• Content deduplication"]
+    EMB["<b>Embeddings</b><br/>OpenAI or<br/>Local Models"]
+    DB["<b>Graph Storage</b><br/>Apache AGE<br/>(PostgreSQL)"]
+    EXT["<b>Extraction</b><br/>OpenAI GPT-4o<br/>Anthropic Claude<br/>or Ollama"]
+
+    CLI -->|HTTP| API
+    API --> EMB
+    API --> DB
+    API --> EXT
+
+    style CLI fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style API fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style EMB fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
+    style DB fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
+    style EXT fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
 ```
 
 ## Component Details
@@ -121,20 +117,21 @@ kg search query "concept"    # Search for concepts
 ```
 
 **MCP Server Mode** (for Claude Desktop):
-The same codebase runs as an MCP server when `MCP_SERVER_MODE=true`. Claude Desktop can then use tools to query the graph during conversations.
+The MCP server is built from the same TypeScript codebase as the CLI, sharing types and API client classes, but it's an independent build that runs as a separate process. When invoked, it provides MCP tools for Claude Desktop to query the graph during conversations.
 
 **Key Files:**
-- `client/src/api/client.ts` - HTTP client for REST API
-- `client/src/cli/` - Command implementations
-- `client/src/types/` - TypeScript types matching API schemas
+- `client/src/api/client.ts` - HTTP client for REST API (shared with CLI)
+- `client/src/cli/` - CLI command implementations
+- `client/src/mcp/` - MCP server implementation
+- `client/src/types/` - TypeScript types matching API schemas (shared)
 
 ### LLM Providers
 
 The system uses LLMs for two tasks:
 
 **Extraction** - Reading text and identifying concepts/relationships
-- OpenAI: GPT-4o, GPT-4o-mini
-- Anthropic: Claude Sonnet 4, Claude 3.5 Sonnet
+- OpenAI: GPT-4o (latest, recommended), GPT-4o-mini (faster/cheaper)
+- Anthropic: Claude Sonnet 4.5 (SOTA as of Oct 2025), Haiku 4.5 (fast SOTA), Opus 4.1 (highest quality, slower)
 - Ollama: Local models (Mistral, Llama, Qwen, etc.)
 
 **Embeddings** - Converting text to vector representations
@@ -166,7 +163,7 @@ POST /ingest
 - Checks if this exact content was already ingested
   - If yes: returns existing job result (prevents duplicate work)
   - If no: creates new job
-- Stores job in SQLite database
+- Stores job in PostgreSQL database (all work, jobs, and API state in PostgreSQL)
 - Returns job ID immediately
 - Starts background worker
 
@@ -344,9 +341,13 @@ results = db.execute("""
 
 ## Configuration
 
-The system uses environment variables for configuration.
+The system uses different configuration modes depending on deployment:
 
-**API Server** (`.env` file):
+**Development Mode** - Using keys and configurations in `.env` file puts the API server into dev mode. This is simpler for local development and testing.
+
+**Production Mode** - In production deployments, these properties (API keys, extraction/embedding configuration) are stored in PostgreSQL database tables managed via the `kg admin` commands. This provides better security, auditability, and hot-reload capabilities.
+
+**API Server** (`.env` file for dev mode):
 ```bash
 # AI Provider
 AI_PROVIDER=openai          # or "anthropic" or "ollama"
@@ -371,7 +372,7 @@ KG_API_URL=http://localhost:8000
 KG_CLIENT_ID=my-client-id
 ```
 
-See [Section 10](10-ai-extraction-configuration.md) for detailed provider configuration.
+See [Section 10](10-ai-extraction-configuration.md) for detailed provider configuration and production setup using `kg admin` commands.
 
 ---
 
@@ -487,13 +488,17 @@ This prevents accidentally spending $2.00 to re-ingest a document you already pr
 - Embeddings dominate (1536 floats × 4 bytes = 6KB per concept)
 - Text quotes add ~1-2KB per concept
 
+**Performance:**
+- Typical throughput: 4-8 chunks per minute with GPT-4o and local embedding models
+- Varies based on document complexity and LLM provider latency
+
 ---
 
 ## Limitations
 
 **Single Server:** Current architecture runs on one API server. Can't distribute work across multiple machines yet.
 
-**Synchronous Processing:** Each chunk processed sequentially. Parallel processing would be faster but more complex.
+**Synchronous Chunk Processing:** Chunks within a document are processed sequentially by design to maximize the human document order trait—most documents are written and read linearly by human thinking. However, multiple ingestion jobs are parallelized across documents. Query caching is a planned capability.
 
 **Vector Search:** Full scan of all concepts. Dedicated vector databases (Pinecone, Weaviate) would be faster at scale.
 

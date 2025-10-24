@@ -79,10 +79,11 @@ After changing extraction configuration, restart the API server:
 - `gpt-4o-mini` - Faster and cheaper for testing
 - `gpt-4-turbo` - Legacy model
 
-**Anthropic:**
-- `claude-sonnet-4-20250514` - Excellent quality, competitive pricing
-- `claude-opus-4` - Highest quality, higher cost
-- `claude-3-5-sonnet-20241022` - Previous generation
+**Anthropic** (as of October 23, 2025):
+- `claude-sonnet-4-5` - State-of-the-art quality, excellent performance
+- `claude-opus-4-1` - Highest quality, slower but more accurate
+- `claude-haiku-4-5` - Fast, cost-effective, still very capable
+- `claude-3-5-sonnet-20241022` - Previous generation (legacy)
 
 **Ollama (local models):**
 - `qwen3:14b` - Maximum concept extraction (57 concepts/doc)
@@ -111,6 +112,8 @@ kg admin extraction set --json-mode
 # Disable vision support
 kg admin extraction set --no-vision
 ```
+
+**Note:** Vision support for processing images and diagrams in documents is planned for future implementation in the intake pipeline.
 
 Most users don't need to adjust these. Defaults work well.
 

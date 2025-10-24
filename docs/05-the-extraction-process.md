@@ -187,6 +187,8 @@ action = "CREATE"
 
 **Why 0.85 threshold?** Lower than 0.85 creates too many false matches (merging distinct concepts). Higher than 0.85 creates unnecessary duplicates. Testing showed 0.85 balances precision and recall well.
 
+**Note:** This threshold is tunable in the database configuration. It may be exposed as a user-configurable option in the future, depending on model and embedding performance relationship analysis.
+
 **Example matching decisions:**
 
 | New Concept | Existing Concept | Similarity | Decision |
@@ -433,7 +435,29 @@ Each paragraph sees concepts from previous paragraphs. This helps the LLM:
 - **Create better relationships**: Knows what concepts exist to link to
 - **Maintain consistency**: Same terminology across paragraphs
 
-**Why limit to 50 concepts?** Token limits. Showing all concepts would exceed context windows. The 50 most recent are usually sufficient for matching.
+**Why limit to 50 concepts?** Token limits. Showing all concepts would exceed context windows. The system doesn't just present the "most recent" 50 concepts chronologically—it presents the 50 most semantically relevant concepts via vector search, ordered by similarity to the current chunk being processed. This ensures the LLM sees the most contextually appropriate concepts for accurate matching and relationship creation.
+
+**Visual representation of concept selection:**
+
+```mermaid
+graph TD
+    A["<b>Current Chunk<br/>Being Processed</b>"]
+    B["<b>Vector Embedding<br/>Generated</b>"]
+    C["<b>Similarity Search<br/>Against All Concepts</b>"]
+    D["<b>Top 50 Most Similar<br/>Concepts Selected</b>"]
+    E["<b>Provided to LLM<br/>for Context</b>"]
+
+    A -->|Generate| B
+    B -->|Search| C
+    C -->|Ranked| D
+    D -->|Context| E
+
+    style A fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style B fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
+    style C fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
+    style D fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
+    style E fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+```
 
 ---
 
@@ -563,6 +587,8 @@ The extraction quality depends on several factors:
 **Concept granularity:** The LLM decides what constitutes a "concept." Sometimes it extracts "The Importance of Being Ernest" as three concepts ("Importance," "Being," "Ernest"). Sometimes it extracts an entire paragraph as one concept. Prompting helps but doesn't eliminate this variability.
 
 **Relationship accuracy:** The LLM sometimes confuses CAUSES with ENABLES, or IMPLIES with SUPPORTS. Confidence scores help identify uncertain relationships, but manual review may be needed for critical applications.
+
+**Highly structured data:** Source code and other highly structured formats are poorly represented by this extraction approach. Code is already HIGHLY optimized for deep semantic structure (it's executable!), and the requisite variety of the code often exceeds the semantic summarization (compression) that occurs during concept extraction and graph upsert. This relates to fundamental information-theoretic limits (variety, Gödel incompleteness, Shannon's law of information transfer), though a detailed explanation is beyond the scope of this guide. For code analysis, consider specialized tools designed for abstract syntax trees and control flow graphs.
 
 ---
 

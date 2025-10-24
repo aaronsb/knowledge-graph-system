@@ -37,6 +37,8 @@ kg ingest file chapter-3.md --ontology "Book Title"
 
 Documents ingested into the same ontology share concepts. If Chapter 1 mentions "distributed authority" and Chapter 3 mentions "distributed authority," the graph links them to the same concept node automatically.
 
+**Directory ingestion:** The `kg` client supports ingesting entire directories at once, so you don't have to process files one-by-one. Use `kg ingest dir ./chapters --ontology "Book Title"` to process all files in a directory.
+
 **How it works:**
 
 The system performs vector similarity matching on every extracted concept. When a new concept has ≥85% similarity to an existing concept, it links to the existing node instead of creating a duplicate. This happens across all documents in the ontology.
@@ -92,6 +94,8 @@ kg search details retrieval-augmented-generation
 # Find what connects two approaches
 kg search connect graph-based-rag vector-based-rag
 ```
+
+**Note on PDFs:** Direct PDF support is not yet implemented. For best results, convert PDFs to rich markdown format using a hybrid OCR/vision model that preserves structure and formatting, then ingest the markdown files. This produces cleaner extraction than raw PDF text parsing.
 
 **What this enables:**
 

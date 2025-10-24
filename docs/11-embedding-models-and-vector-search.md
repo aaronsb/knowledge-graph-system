@@ -205,6 +205,8 @@ kg admin embedding reload
 kg embedding migrate --model text-embedding-3-small
 ```
 
+**Note:** Switching between valid embedding models is simplified with the `--force` command and does not require unlocking the configuration first.
+
 ---
 
 ## Local Model Setup
@@ -422,6 +424,8 @@ Cannot delete if:
 ---
 
 ## Troubleshooting
+
+**Note:** We recognize that the current configuration commands can be verbose, as they're essentially creating database entries for configuration. A guided model builder interface is planned to simplify this process and make configuration more user-friendly.
 
 ### Error: "Active config is change-protected"
 

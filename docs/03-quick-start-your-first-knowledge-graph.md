@@ -26,6 +26,8 @@ cd knowledge-graph-system
 docker-compose up -d
 ```
 
+**Note:** Scripts in `./scripts/` are provided to facilitate setup and management tasks throughout this guide.
+
 This starts PostgreSQL on port 5432. The database will auto-create the graph schema on first run.
 
 **Verify it's running:**
@@ -54,10 +56,13 @@ POSTGRES_PASSWORD=password
 AGE_GRAPH_NAME=knowledge_graph
 ```
 
+**Note:** This `.env` configuration puts the API server into development mode. For production deployments or guided setup, you can use `./scripts/initialize-auth.sh` which provides an interactive configuration experience. Production mode stores these settings in the PostgreSQL database instead of `.env` files.
+
 **Test your configuration:**
 ```bash
 ./scripts/configure-ai.sh
 # Choose option 1 to test OpenAI connection
+# Note: This script is superseded by 'kg admin extraction' commands for production use
 ```
 
 ## Step 3: Start the API Server
@@ -65,16 +70,11 @@ AGE_GRAPH_NAME=knowledge_graph
 The API server processes ingestion requests and handles queries.
 
 ```bash
-# Create Python virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start API server
+# Start API server (automatically handles venv and dependencies)
 ./scripts/start-api.sh
 ```
+
+**Note:** The `start-api.sh` script automatically manages the Python virtual environment and dependencies. In the future, a Docker build is planned to containerize all major components (API, database, visualization client) into a microservice ecosystem.
 
 The server starts on `http://localhost:8000`.
 
@@ -111,8 +111,10 @@ kg health
 Let's ingest a test document to create your first knowledge graph.
 
 ```bash
-kg ingest file ingest_source/watts_lecture_1.txt --ontology "Test Ontology"
+kg ingest file your_document.md --ontology "Test Ontology"
 ```
+
+**Note:** Replace `your_document.md` with any text or markdown document you want to ingest.
 
 This command:
 1. Reads the file
@@ -186,7 +188,7 @@ Here's a complete workflow:
 
 ```bash
 # Start services
-docker-compose up -d
+./scripts/start-db.sh     # Wrapper for docker-compose up -d
 ./scripts/start-api.sh
 
 # Ingest a document
@@ -215,7 +217,19 @@ kg ingest file doc2.txt --ontology "Project Docs"
 kg ingest file doc3.txt --ontology "Project Docs"
 ```
 
-Concepts from all three documents merge automatically. If doc1 and doc2 both mention "authentication," they'll link to the same concept node.
+**Directory Ingestion:**
+
+You can also ingest entire directories, including recursive subdirectories and "ontology-per-directory" organization:
+
+```bash
+# Ingest all files in a directory
+kg ingest dir ./my-documents --ontology "Project Docs"
+
+# Ingest recursively with ontology-per-directory
+kg ingest dir ./docs --recursive --ontology-per-dir
+```
+
+Concepts from all documents merge automatically. If doc1 and doc2 both mention "authentication," they'll link to the same concept node.
 
 ### Avoid Duplicate Ingestion
 

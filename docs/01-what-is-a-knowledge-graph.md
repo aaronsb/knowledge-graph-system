@@ -245,6 +245,11 @@ Once you have a knowledge graph, you can query:
 - "What concepts connect security and performance?"
 - "Show me all procedures that depend on this one"
 
+**In ongoing knowledge collection:**
+- Call transcripts from customer support
+- Forum posts and community discussions
+- Selected curated incremental discussions from meetings or Slack threads
+
 The graph makes it possible to ask relationship questions, not just similarity questions.
 
 ---
@@ -265,7 +270,7 @@ The extraction process:
 4. Similar concepts merge; new concepts are added
 5. Relationships and evidence instances are stored in the graph
 
-This isn't magic. It's structured prompting + graph storage + semantic retrieval. But the combination produces different capabilities than text-chunk RAG.
+This isn't magic—it's structured prompting + graph storage + semantic retrieval. But the combination produces different capabilities than text-chunk RAG. When coupled with tool-calling AI systems (like Claude with MCP access to the graph), it can appear remarkably intelligent: the AI queries precise relationships rather than retrieving vague chunks, leading to higher accuracy and lower context consumption.
 
 ---
 

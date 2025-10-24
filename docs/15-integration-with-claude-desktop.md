@@ -10,7 +10,9 @@ This section explains how to connect your knowledge graph to Claude Desktop or C
 
 ## What Is MCP Integration
 
-The Model Context Protocol (MCP) is a standard that lets AI assistants access external tools and data sources. The knowledge graph MCP server exposes your graph to Claude, enabling:
+The Model Context Protocol (MCP) is a standard that lets AI assistants access external tools and data sources. The knowledge graph MCP server exposes your graph to Claude Desktop, Claude Code, or any other AI system that supports MCP, enabling:
+
+**Installation Note:** Users should run the client installer in `./client/install.sh` (or `./client/uninstall.sh` to remove symlinks) which allows the `kg` command to run from anywhere in the system and invokes the MCP server via `kg-mcp-server` from any location. This is developed enough for current use but could benefit from modern MCP distribution packaging in the future. When the knowledge graph platform is installed in a broad-scope network environment, it can function as a remote MCP server (though this needs further development for production use).
 
 **Direct graph queries during conversations:**
 ```
@@ -587,6 +589,8 @@ The MCP server has **full access** to the API:
 - Can delete ontologies (with force=true)
 
 **Use with caution** - the MCP server has write access.
+
+**Future RBAC:** The MCP server will eventually respect the permissions tied to its user RBAC role, providing fine-grained access control for production deployments.
 
 In production:
 - Use HTTPS for API connections

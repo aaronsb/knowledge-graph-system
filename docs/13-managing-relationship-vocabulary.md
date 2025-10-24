@@ -670,7 +670,7 @@ This helps you understand vocabulary evolution over time.
 
 ### Don't Delete Default Types
 
-The default 30 builtin types are protected for good reason. Keep them for rollback purposes and semantic consistency.
+The default 30 builtin types are protected for good reason: they prevent semantic relationship collapse through overoptimization of vocabulary. Keep them for rollback purposes and semantic consistency.
 
 ### Consolidate Periodically, Not Continuously
 

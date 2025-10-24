@@ -126,6 +126,8 @@ Ollama is a local inference engine that runs LLMs on your hardware. It wraps lla
 
 The easiest way to run Ollama is with Docker Compose. The system includes hardware-optimized profiles.
 
+**Note:** There's no hard requirement to use the bundled Ollama Docker Compose script. Ollama can be configured to run anywhere—on another machine, already locally set up, or on a remote server. The bundled script is provided for convenience. Authentication is not currently supported but is planned for future releases.
+
 **Start Ollama with automatic hardware detection:**
 
 ```bash

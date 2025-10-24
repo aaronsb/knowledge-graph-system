@@ -22,6 +22,8 @@ You maintain a software project with 280 commits and 60 pull requests spread acr
 
 **The solution:** Extract commit messages and PR descriptions into a knowledge graph, then query it semantically.
 
+**The power multiplier:** When coupling this ingested data with a coding agent that has MCP server access to the graph (Claude Code, Cline, Copilot, etc.), it becomes an extremely powerful concept accelerator. The agent can query precise relationships and architectural decisions directly from the knowledge graph, reducing context consumption and often providing higher accuracy than built-in search systems that rely on text similarity alone.
+
 ---
 
 ## Step 1: Extracting Git History

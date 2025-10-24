@@ -206,6 +206,8 @@ Reasoning models are philosophers. Instruction models are librarians. Concept ex
 
 **Start with GPT-4o** for your first 10-20 documents. This lets you learn the system, understand extraction quality, and calibrate expectations without Ollama setup complexity.
 
+**Experimentation encouraged:** In development environments, feel free to experiment with different models and providers to understand their extraction characteristics and find the right balance for your specific use case.
+
 **Switch to Qwen 2.5 14B** when your corpus exceeds 50 documents, privacy matters, or long-term cost accumulation is a concern. You get professional quality (92% canonical) with zero ongoing cost.
 
 **Switch to Qwen3 14B** when you want maximum concept extraction (57 concepts versus Qwen 2.5's 24). You need 16GB VRAM and can tolerate 60 seconds per chunk. The wait is worth it for 9.5 concepts extracted per chunk.
@@ -273,6 +275,8 @@ Restart the API server to apply changes:
 ```bash
 ./scripts/stop-api.sh && ./scripts/start-api.sh
 ```
+
+**Simplified management:** The `kg` client provides simplified provider management via `kg admin extraction` commands. The `./scripts/initialize-auth.sh` script also provides guided configuration for setting up authentication and AI providers interactively.
 
 ### Local Provider Setup (Ollama)
 

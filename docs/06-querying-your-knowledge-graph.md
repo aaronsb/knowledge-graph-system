@@ -40,7 +40,7 @@ kg search query "linear thinking"
 
 **What happens:**
 
-1. Your query text is embedded into a 1536-dimensional vector
+1. Your query text is embedded using the configured embedder model (1536 dimensions for OpenAI text-embedding-3-small, or fewer for other models)
 2. The system searches all concept embeddings for similarity
 3. Results ranked by cosine similarity (0.0-1.0)
 4. Concepts above the threshold (default 0.7) are returned
@@ -219,7 +219,7 @@ Discover how two concepts connect:
 kg search connect linear-thinking "distributed systems"
 ```
 
-**Note:** Currently returns shortest path via openCypher query. Phrase-based matching (searching by phrases instead of exact IDs) is planned.
+**Note:** The system supports both exact ID matching and phrase-based matching (searching by natural language phrases instead of exact concept IDs) via the MCP `find_connection_by_search` tool and REST API `/queries/path-by-search` endpoint.
 
 **Example output:**
 

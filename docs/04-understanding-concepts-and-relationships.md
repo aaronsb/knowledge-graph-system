@@ -119,6 +119,23 @@ Every instance traces back to the source paragraph it came from. This creates th
 
 You can traverse from concept to exact quote to full paragraph to source document. Nothing is lost.
 
+**Visual representation:**
+
+```mermaid
+graph LR
+    C["<b>Concept</b><br/>Linear Thinking<br/>Pattern"]
+    I["<b>Instance</b><br/>'The sequential<br/>processing...'"]
+    S["<b>Source</b><br/>Cognitive Science<br/>Paper (para 7)"]
+
+    C -->|EVIDENCED_BY| I
+    I -->|FROM_SOURCE| S
+    C -.->|APPEARS_IN| S
+
+    style C fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style I fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
+    style S fill:#1a365d,stroke:#2c5282,stroke-width:2px,color:#fff
+```
+
 ---
 
 ## Semantic Relationships
@@ -233,6 +250,29 @@ A is the outcome of B. Reverse of production.
 ```
 
 A controls or moderates B. Active regulation.
+
+**Visual representation of causal relationships:**
+
+```mermaid
+graph TD
+    A["<b>High Memory<br/>Pressure</b>"]
+    B["<b>Process Swap</b>"]
+    C["<b>Input<br/>Validation</b>"]
+    D["<b>SQL Injection</b>"]
+    E["<b>API Rate<br/>Limiting</b>"]
+    F["<b>Service<br/>Stability</b>"]
+
+    A -->|CAUSES| B
+    C -->|PREVENTS| D
+    E -->|ENABLES| F
+
+    style A fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style B fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style C fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style D fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style E fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+    style F fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff
+```
 
 ### Category 3: Structural
 
@@ -540,7 +580,7 @@ Earlier versions used just 5 relationship types: IMPLIES, SUPPORTS, CONTRADICTS,
 
 **The solution:** 30 semantically sparse types that match how LLMs conceptualize relationships. The taxonomy captures distinctions the LLM is already making internally.
 
-**Trade-off:** More types add ~50 tokens to each extraction prompt (~$0.000025 per extraction). This is negligible compared to the value of preserving semantic nuance.
+**Trade-off:** More types add ~50 tokens to each extraction prompt (~$0.000025 per extraction). This is negligible compared to the value of preserving semantic nuance. Additionally, maintaining a core set of 30 types prevents runaway overfitting that can result in catastrophic forgetting during concept simplification passes—the taxonomy provides enough granularity for nuanced relationships while maintaining coherence across the knowledge graph.
 
 **Query benefit:** You can ask specific questions:
 
