@@ -1,0 +1,4422 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../07-ENRICHMENT_JOURNEY/">
+      
+      
+        <link rel="next" href="../09-CYPHER_PATTERNS/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Distributed Graph Database Sharding: Research and Architectural Patterns - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#distributed-graph-database-sharding-research-and-architectural-patterns" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Distributed Graph Database Sharding: Research and Architectural Patterns
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of Contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context-and-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context and Motivation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context and Motivation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-single-shard-reality" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Single-Shard Reality
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-scaling-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Scaling Question
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research Goals
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current System Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current System Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-shard-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single-Shard Components
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recursive-upsert-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recursive Upsert Process
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#natural-ontology-separation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Natural Ontology Separation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-architectures-in-distributed-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parallel Architectures in Distributed Systems
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parallel Architectures in Distributed Systems">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-powergraph-vertex-cut-partitioning-2012" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. PowerGraph: Vertex-Cut Partitioning (2012)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-fennel-streaming-graph-partitioning-2014" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. FENNEL: Streaming Graph Partitioning (2014)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-workload-aware-adaptive-partitioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Workload-Aware Adaptive Partitioning
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Workload-Aware Adaptive Partitioning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#awapart-2022" class="md-nav__link">
+    <span class="md-ellipsis">
+      AWAPart (2022)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wasp-2021" class="md-nav__link">
+    <span class="md-ellipsis">
+      WASP (2021)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-semantic-overlay-networks-dht-based-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Semantic Overlay Networks &amp; DHT-Based Routing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-federated-sparql-query-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Federated SPARQL Query Optimization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Federated SPARQL Query Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lothbrok-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lothbrok Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fedx-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      FedX Engine
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-hybrid-vector-graph-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Hybrid Vector + Graph Systems
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-apache-age-with-citus-sharding" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Apache AGE with Citus Sharding
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-research-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Research Findings
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Research Findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-graph-partitioning-fundamentals" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Graph Partitioning Fundamentals
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-semantic-routing-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Semantic Routing Patterns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-workload-aware-adaptation" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Workload-Aware Adaptation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-natural-graph-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Natural Graph Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-vector-similarity-in-distributed-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Vector Similarity in Distributed Systems
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conceptual-design-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conceptual Design Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conceptual Design Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pattern-1-graceful-degradation-single-multi" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 1: Graceful Degradation (Single → Multi)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-2-router-as-metadata-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 2: Router as Metadata Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-3-self-healing-with-convergence-guarantee" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 3: Self-Healing with Convergence Guarantee
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-4-hub-concept-replication-vertex-cut" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 4: Hub Concept Replication (Vertex-Cut)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-5-fennel-style-streaming-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 5: FENNEL-Style Streaming Assignment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-implementation-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Implementation Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Implementation Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-single-shard-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Single-Shard Foundation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-router-multi-shard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Router + Multi-Shard
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-workload-aware-adaptation-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Workload-Aware Adaptation (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-hub-concept-replication-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Hub Concept Replication (Advanced)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apache-age-citus-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apache AGE + Citus Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-bitter-lesson-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Bitter Lesson Perspective
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Bitter Lesson Perspective">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#applying-the-lesson" class="md-nav__link">
+    <span class="md-ellipsis">
+      Applying the Lesson
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#our-design-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Our Design Alignment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-anthropomorphizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not Anthropomorphizing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="References">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#academic-papers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Academic Papers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technical-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Documentation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relevant-blog-posts-guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      Relevant Blog Posts &amp; Guides
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-and-next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary and Next Steps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Summary and Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-we-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      What We Learned
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-path-forward" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Path Forward
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-questions-for-future-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      Open Questions for Future Research
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="distributed-graph-database-sharding-research-and-architectural-patterns">Distributed Graph Database Sharding: Research and Architectural Patterns</h1>
+<p><em>Research findings on distributed graph database architectures, semantic routing, and workload-aware partitioning strategies - compiled October 15, 2025</em></p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#context-and-motivation">Context and Motivation</a></li>
+<li><a href="#current-system-architecture">Current System Architecture</a></li>
+<li><a href="#parallel-architectures-in-distributed-systems">Parallel Architectures in Distributed Systems</a></li>
+<li><a href="#key-research-findings">Key Research Findings</a></li>
+<li><a href="#conceptual-design-patterns">Conceptual Design Patterns</a></li>
+<li><a href="#technical-implementation-considerations">Technical Implementation Considerations</a></li>
+<li><a href="#the-bitter-lesson-perspective">The Bitter Lesson Perspective</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+<hr />
+<h2 id="context-and-motivation">Context and Motivation</h2>
+<h3 id="the-single-shard-reality">The Single-Shard Reality</h3>
+<p>The current Knowledge Graph System operates successfully on a single Apache AGE (PostgreSQL graph extension) instance with:</p>
+<ul>
+<li><strong>Recursive concept upsert</strong>: LLM-driven extraction with vector similarity matching (≥0.75 threshold)</li>
+<li><strong>Natural domain separation</strong>: Disconnected subgraphs form organically within AGE</li>
+<li><strong>Full-scan vector search</strong>: NumPy-based cosine similarity (works well, will hit scaling limits)</li>
+<li><strong>Hub concept emergence</strong>: High-connectivity nodes naturally identify domain expertise</li>
+</ul>
+<p><strong>Key observation</strong>: Apache AGE already handles multiple disconnected ontologies on a single shard without performance degradation - they simply exist as separate subgraphs with sparse or no inter-connections.</p>
+<h3 id="the-scaling-question">The Scaling Question</h3>
+<p>What problems does multi-shard architecture actually solve?</p>
+<ol>
+<li><strong>Resource limits</strong>: Single PostgreSQL instance has finite RAM/disk/CPU capacity</li>
+<li><strong>Query performance</strong>: Graph traversal degrades with total graph size (even if disconnected)</li>
+<li><strong>Write throughput</strong>: Concurrent upserts compete for locks</li>
+<li><strong>Ontology discovery</strong>: With 50+ ontologies, knowing "which to query" becomes non-trivial</li>
+<li><strong>Geographic/organizational distribution</strong>: Teams or regions need autonomous instances</li>
+</ol>
+<p><strong>Not solving</strong>: Domain pollution (AGE already separates), or complex "reasoning" (computation &gt; hand-crafted knowledge)</p>
+<h3 id="research-goals">Research Goals</h3>
+<p>Investigate distributed graph database architectures to:</p>
+<ol>
+<li>Identify proven patterns for semantic-based sharding</li>
+<li>Understand routing mechanisms for content-based partitioning</li>
+<li>Evaluate workload-aware adaptation strategies</li>
+<li>Assess Apache AGE horizontal scaling options</li>
+<li>Avoid anthropomorphizing design (focus on computational patterns)</li>
+</ol>
+<hr />
+<h2 id="current-system-architecture">Current System Architecture</h2>
+<h3 id="single-shard-components">Single-Shard Components</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Document → REST API → LLM Extraction → Apache AGE Graph
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>              ↓
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>       Vector Similarity Search
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>              ↓
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       Recursive Concept Upsert
+</code></pre></div>
+<p><strong>Tech Stack</strong>:
+- Python 3.11+ FastAPI (REST API + ingestion pipeline)
+- Apache AGE 1.5.0 / PostgreSQL 16 (graph database using openCypher)
+- TypeScript/Node.js (unified <code>kg</code> CLI + MCP client)
+- OpenAI/Anthropic APIs (LLM providers for extraction + embeddings)</p>
+<h3 id="recursive-upsert-process">Recursive Upsert Process</h3>
+<ol>
+<li><strong>Chunk document</strong> into semantic boundaries (~1000 words, configurable)</li>
+<li><strong>Vectorize chunk</strong> using OpenAI embeddings (1536-dim)</li>
+<li><strong>Query local ontology</strong> for similar concepts (≥0.75 cosine similarity)</li>
+<li><strong>Extract relationships</strong> - LLM receives high-similarity concepts + their relationship clusters as context</li>
+<li><strong>Upsert to graph</strong> - merge similar concepts or create new ones</li>
+<li><strong>Update hub concepts</strong> - track high-connectivity nodes (PageRank/betweenness centrality)</li>
+</ol>
+<p><strong>Critical insight</strong>: Existing knowledge shapes how new knowledge integrates - recursive, context-aware extraction.</p>
+<h3 id="natural-ontology-separation">Natural Ontology Separation</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// Two unrelated ontologies on same shard</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">ontology</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;CRISPR Techniques&quot;</span><span class="p">})</span><span class="o">-[</span><span class="p">*</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">ontology</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1980s Cartoons&quot;</span><span class="p">})</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">path</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">// Result: No paths found (semantic distance too high, no edges created)</span>
+</code></pre></div>
+<p><strong>What this means</strong>: Multi-shard architecture isn't solving "domain pollution" - it's solving resource scaling and ontology discovery.</p>
+<hr />
+<h2 id="parallel-architectures-in-distributed-systems">Parallel Architectures in Distributed Systems</h2>
+<h3 id="1-powergraph-vertex-cut-partitioning-2012">1. PowerGraph: Vertex-Cut Partitioning (2012)</h3>
+<p><strong>Source</strong>: PowerGraph: Distributed Graph-Parallel Computation on Natural Graphs (OSDI 2012)</p>
+<p><strong>Problem</strong>: Natural graphs (social networks, web graphs, knowledge graphs) follow <strong>power-law distributions</strong>:
+- A small number of high-degree vertices connect to most edges
+- Example: 1% of vertices in Twitter graph connect to 50% of edges</p>
+<p><strong>Traditional edge-cut approach fails</strong>:
+- Partitions vertices, cuts edges between partitions
+- High-degree vertices and ALL their edges land on one partition → hotspot
+- Massive imbalance in work distribution</p>
+<p><strong>PowerGraph's vertex-cut approach</strong>:
+- Partitions edges, allows vertices to be replicated across machines
+- High-degree vertices distributed across partitions
+- Work balances automatically
+- <strong>Percolation theory</strong>: Power-law graphs have good natural vertex-cuts</p>
+<p><strong>Parallel to our design</strong>:
+- <strong>Hub concepts</strong> (high-connectivity nodes in our graph) ≈ PowerGraph's high-degree vertices
+- Distributing hub concepts across shards ≈ vertex-cut strategy
+- Our emergent hub concepts = data-driven identification of natural cut points</p>
+<p><strong>Key insight</strong>: "By cutting a small fraction of very high degree vertices, you can quickly shatter a graph" - natural partitioning emerges from graph structure, not prescribed boundaries.</p>
+<hr />
+<h3 id="2-fennel-streaming-graph-partitioning-2014">2. FENNEL: Streaming Graph Partitioning (2014)</h3>
+<p><strong>Source</strong>: FENNEL: Streaming Graph Partitioning for Massive Scale Graphs (WSDM 2014)</p>
+<p><strong>Problem</strong>: How to assign vertices/edges to partitions as they arrive in stream, without knowing full graph upfront?</p>
+<p><strong>FENNEL's objective function</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>assign vertex v to partition that maximizes:
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  score = (# neighbors already in partition) - α * (partition_size)^γ
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>where:
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  first term  = locality benefit (keep related things together)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  second term = balance penalty (prevent overload)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  α, γ        = tuning parameters (typically γ = 1.5)
+</code></pre></div></p>
+<p><strong>Performance</strong>:
+- One-pass streaming algorithm
+- Comparable to offline METIS but <strong>6-8x faster</strong>
+- Twitter graph (1.4B edges): FENNEL 40 minutes (6.8% edge cuts) vs METIS 8.5 hours (11.98% edge cuts)</p>
+<p><strong>Direct parallel to our routing design</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">route_document</span><span class="p">(</span><span class="n">doc_vector</span><span class="p">,</span> <span class="n">shard_stats</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">for</span> <span class="n">shard</span> <span class="ow">in</span> <span class="n">shards</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="c1"># Locality term (FENNEL&#39;s neighbor count)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">similarity</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">doc_vector</span><span class="p">,</span> <span class="n">shard</span><span class="o">.</span><span class="n">hub_vector_summary</span><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="c1"># Balance penalty (FENNEL&#39;s partition size penalty)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="n">α</span> <span class="o">=</span> <span class="mf">1.5</span>  <span class="c1"># tuning parameter</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="n">γ</span> <span class="o">=</span> <span class="mf">1.5</span>  <span class="c1"># FENNEL recommendation</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">penalty</span> <span class="o">=</span> <span class="n">α</span> <span class="o">*</span> <span class="p">(</span><span class="n">shard</span><span class="o">.</span><span class="n">concept_count</span> <span class="o">/</span> <span class="n">target_size</span><span class="p">)</span> <span class="o">**</span> <span class="n">γ</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="n">score</span> <span class="o">=</span> <span class="n">similarity</span> <span class="o">-</span> <span class="n">penalty</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">shard</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+</code></pre></div></p>
+<p><strong>Key insight</strong>: Our "router decides where documents upsert" based on similarity + capacity = FENNEL's proven streaming partitioning approach.</p>
+<hr />
+<h3 id="3-workload-aware-adaptive-partitioning">3. Workload-Aware Adaptive Partitioning</h3>
+<h4 id="awapart-2022">AWAPart (2022)</h4>
+<p><strong>Source</strong>: AWAPart: Adaptive Workload-Aware Partitioning of Knowledge Graphs (arXiv 2203.14884)</p>
+<p><strong>Problem</strong>: Static partitioning optimizes for initial data distribution, but query workloads change over time.</p>
+<p><strong>Approach</strong>:
+- Monitor query patterns to identify frequently co-accessed concepts
+- <strong>Dynamically repartition</strong> to cluster query-relevant triples together
+- Minimize cross-partition joins by adapting to actual usage</p>
+<p><strong>Metrics</strong>:
+- Query processing time improved after dynamic adaptation
+- Reduces communication overhead for common query patterns</p>
+<h4 id="wasp-2021">WASP (2021)</h4>
+<p><strong>Source</strong>: A Workload-Adaptive Streaming Partitioner for Distributed Graph Stores</p>
+<p><strong>Problem</strong>: Existing methods don't adapt to dynamic workloads that keep emerging</p>
+<p><strong>Approach</strong>:
+- <strong>Runtime adaptation</strong>: Incrementally adjusts partitions based on active edges in query workload
+- Tracks "hot paths" through the graph (frequently traversed relationships)
+- Rebalances to colocate frequently co-traversed subgraphs</p>
+<p><strong>Parallel to our "active management agent"</strong>:
+- Coherence monitoring → detects ontology drift
+- Misfit detection → identifies poorly-matched concepts
+- Reorganization → splits + re-routes to better shard
+- Convergent process → once concepts find "right home" (high similarity), stops triggering reorganization</p>
+<p><strong>Key insight</strong>: Our self-healing architecture with coherence scoring = workload-aware adaptive partitioning applied to semantic knowledge graphs.</p>
+<hr />
+<h3 id="4-semantic-overlay-networks-dht-based-routing">4. Semantic Overlay Networks &amp; DHT-Based Routing</h3>
+<p><strong>Sources</strong>:
+- DHT-based Semantic Overlay Network for Service Discovery
+- Content Addressable Networks (CAN)</p>
+<p><strong>Traditional DHT problem</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">shard</span> <span class="o">=</span> <span class="nb">hash</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span>  <span class="c1"># Destroys semantic locality</span>
+</code></pre></div>
+- Documents about "quantum physics" scatter randomly across shards
+- No locality benefit for related queries</p>
+<p><strong>Semantic overlay approach</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">shard</span> <span class="o">=</span> <span class="n">argmax</span><span class="p">(</span><span class="n">similarity</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">shard_semantic_profile</span><span class="p">))</span>  <span class="c1"># Preserves locality</span>
+</code></pre></div>
+- Nodes advertise <strong>semantic descriptions</strong> of their content
+- Routing based on semantic similarity, not hash distribution
+- TTL prevents infinite routing loops (like our router hop limits)</p>
+<p><strong>Content-Addressable Networks (CAN)</strong>:
+- Treats nodes as points in d-dimensional coordinate space
+- Routes to nearest node in semantic space
+- <strong>Our vector embeddings = CAN's coordinate space</strong></p>
+<p><strong>Parallel to our router shard</strong>:
+- Router maintains <strong>ontology fingerprints</strong> (hub concepts + vector summaries)
+- Routes queries/upserts based on vector similarity to shard profiles
+- Each router knows peer routers + reachable ontology clusters
+- Message passing with hop limits prevents loops</p>
+<p><strong>Key insight</strong>: Our "router tracks hub concepts for semantic routing" = DHT-based semantic overlay networks, proven pattern in P2P systems.</p>
+<hr />
+<h3 id="5-federated-sparql-query-optimization">5. Federated SPARQL Query Optimization</h3>
+<p><strong>Sources</strong>:
+- Lothbrok: Optimizing SPARQL Queries over Decentralized Knowledge Graphs
+- FedX Federation Engine</p>
+<h4 id="lothbrok-strategy">Lothbrok Strategy</h4>
+<p><strong>Problem</strong>: How to efficiently query knowledge graphs distributed across multiple endpoints?</p>
+<p><strong>Approach</strong>:
+1. <strong>Cardinality estimation</strong>: Predict result sizes to plan query execution
+2. <strong>Locality awareness</strong>: Minimize network transfers by smart join ordering
+3. <strong>Fragmentation strategy</strong>: Based on <strong>characteristic sets</strong> (natural clusters) vs predicate-based</p>
+<p><strong>Characteristic sets</strong> ≈ our concept clusters (domain-driven grouping)</p>
+<h4 id="fedx-engine">FedX Engine</h4>
+<p><strong>Capabilities</strong>:
+- Transparent federation of multiple SPARQL endpoints
+- <strong>Source selection</strong>: Determine which endpoints have relevant data (like our router)
+- Join processing that minimizes remote requests
+- Automatically selects relevant sources based on query patterns</p>
+<p><strong>Index structures</strong>:
+- <strong>PPBF (Prefix-Partitioned Bloom Filters)</strong>: Compact summary of endpoint contents
+  - Analogous to our router's hub concept index
+- Query planning uses index to prune unnecessary endpoints</p>
+<p><strong>Parallel to our cross-shard queries</strong>:
+- Router knows which shards contain which ontologies (source selection)
+- Can dispatch to multiple shards in parallel if query spans domains
+- Aggregates results from distributed endpoints</p>
+<p><strong>Key insight</strong>: Federated SPARQL systems solve exactly the problem we're designing for - semantic routing to distributed knowledge without centralized data.</p>
+<hr />
+<h3 id="6-hybrid-vector-graph-systems">6. Hybrid Vector + Graph Systems</h3>
+<p><strong>Source</strong>: High-Throughput Vector Similarity Search in Knowledge Graphs (Apple ML Research, 2023)</p>
+<p><strong>System</strong>: HQI (High-Throughput Query Index)</p>
+<p><strong>Problem</strong>: Queries combine <strong>vector similarity search</strong> + <strong>graph traversal predicates</strong></p>
+<p><strong>Example query</strong>: "Find songs similar to past queries, matching artist='X' AND genre='Y' AND release_date&gt;2020"
+- Vector part: Similarity to past query embeddings
+- Graph part: Traverse artist→genre relationships, filter by attributes</p>
+<p><strong>Approach</strong>:
+- <strong>Workload-aware vector partitioning</strong>: Organize vectors based on common query patterns
+- <strong>Multi-query optimization</strong>: Batch similar searches to reduce overhead
+- Co-optimize vector search + graph operations</p>
+<p><strong>Performance</strong>: 31× throughput improvement for hybrid queries</p>
+<p><strong>Parallel to our recursive concept upsert</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Query: &quot;Find similar concepts (≥0.75 threshold) with their relationship clusters&quot;
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  ↓
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Vector part: Embedding similarity to existing concepts
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  ↓
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Graph part: Pull relationship subgraph for context
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  ↓
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>LLM extraction: Use context to guide new concept creation
+</code></pre></div></p>
+<p><strong>Key insight</strong>: Our system is already a hybrid vector-graph architecture - the research validates co-optimizing both aspects.</p>
+<hr />
+<h3 id="7-apache-age-with-citus-sharding">7. Apache AGE with Citus Sharding</h3>
+<p><strong>Source</strong>: Scaling Apache AGE for Large Datasets (Dev.to, 2024)</p>
+<p><strong>Citus extension for PostgreSQL</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="n">citus</span><span class="p">;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">create_distributed_table</span><span class="p">(</span><span class="s1">&#39;vertex_label&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;id&#39;</span><span class="p">);</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">create_distributed_table</span><span class="p">(</span><span class="s1">&#39;edge_label&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;id&#39;</span><span class="p">);</span>
+</code></pre></div></p>
+<p><strong>Capabilities</strong>:
+- Horizontal scaling of PostgreSQL tables across worker nodes
+- Distributed query execution with pushdown
+- Colocated joins if partitioning keys match</p>
+<p><strong>Challenge for semantic routing</strong>:
+- Citus uses <strong>hash-based sharding</strong> by default: <code>shard = hash(id) % workers</code>
+- <strong>Destroys semantic locality</strong> - related concepts scatter randomly
+- Performance benefit from parallelism, but loses domain coherence</p>
+<p><strong>Solution options</strong>:
+1. <strong>Custom distribution column</strong>: Use semantic key (e.g., ontology name) instead of hash
+2. <strong>Application-level routing</strong>: Our router layer directs to specific Citus workers
+3. <strong>Hybrid approach</strong>: Citus for storage distribution, semantic router for query/upsert routing</p>
+<p><strong>Key insight</strong>: Citus provides infrastructure for multi-shard AGE, but semantic routing must be application-layer (exactly what we're designing).</p>
+<hr />
+<h2 id="key-research-findings">Key Research Findings</h2>
+<h3 id="1-graph-partitioning-fundamentals">1. Graph Partitioning Fundamentals</h3>
+<p><strong>Edge-Cut vs Vertex-Cut</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>How It Works</th>
+<th>Best For</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Edge-Cut</strong></td>
+<td>Partition vertices, cut edges between partitions</td>
+<td>Regular graphs, balanced degree</td>
+<td>Power-law graphs create hotspots</td>
+</tr>
+<tr>
+<td><strong>Vertex-Cut</strong></td>
+<td>Partition edges, replicate high-degree vertices</td>
+<td>Natural graphs (social, web, knowledge)</td>
+<td>Requires vertex replication</td>
+</tr>
+</tbody>
+</table>
+<p><strong>METIS</strong>: Classical offline partitioning (multilevel coarsening)
+- High quality partitions
+- Slow on massive graphs
+- Requires full graph knowledge upfront</p>
+<p><strong>Streaming Partitioning</strong> (FENNEL, etc.):
+- One-pass, online assignment
+- Near-METIS quality, much faster
+- Works with unknown graph structure
+- <strong>Perfect for our upsert-as-you-go model</strong></p>
+<hr />
+<h3 id="2-semantic-routing-patterns">2. Semantic Routing Patterns</h3>
+<p><strong>Content-based routing</strong> consistently outperforms hash-based for knowledge graphs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Hash-based:     semantic locality = 0   (random distribution)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Semantic-based: semantic locality → 1   (related concepts colocated)
+</code></pre></div>
+<p><strong>Objective function design</strong> (from FENNEL, AWAPart, others):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>routing_score = locality_benefit - balance_penalty
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>where:
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>  locality   = how well content matches shard domain
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>  balance    = prevent any shard from becoming overloaded
+</code></pre></div></p>
+<p><strong>Trade-off</strong>: Perfect locality vs perfect balance
+- All related content on one shard → hotspot
+- Perfectly balanced load → poor locality
+- <strong>Solution</strong>: Tunable penalty function (α, γ parameters)</p>
+<hr />
+<h3 id="3-workload-aware-adaptation">3. Workload-Aware Adaptation</h3>
+<p><strong>Key findings from AWAPart, WASP, Q-Graph</strong>:</p>
+<ol>
+<li><strong>Static partitioning is suboptimal</strong>: Initial data distribution ≠ query patterns</li>
+<li><strong>Runtime monitoring essential</strong>: Track frequently co-accessed concepts</li>
+<li><strong>Incremental adaptation works</strong>: No need for full repartitioning</li>
+<li><strong>Locality trumps balance for queries</strong>: Better to have slight imbalance if it reduces cross-shard communication</li>
+</ol>
+<p><strong>Adaptation triggers</strong>:
+- Query latency exceeds threshold
+- Cross-shard join rate too high
+- Shard coherence score drops (concepts don't "fit" together)</p>
+<p><strong>Our coherence monitoring</strong> fits this pattern:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">detect_misfit</span><span class="p">(</span><span class="n">ontology</span><span class="p">):</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="c1"># Measure intra-ontology similarity</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">concept_vectors</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">embedding</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ontology</span><span class="o">.</span><span class="n">concepts</span><span class="p">]</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">avg_similarity</span> <span class="o">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">pairwise_cosine_similarity</span><span class="p">(</span><span class="n">concept_vectors</span><span class="p">))</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="k">if</span> <span class="n">avg_similarity</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>  <span class="c1"># Low coherence</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>        <span class="c1"># Trigger reorganization</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>        <span class="n">split_into_new_ontology</span><span class="p">()</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>        <span class="n">find_better_shard</span><span class="p">()</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>        <span class="n">re_upsert</span><span class="p">()</span>
+</code></pre></div></p>
+<hr />
+<h3 id="4-natural-graph-properties">4. Natural Graph Properties</h3>
+<p><strong>Power-law degree distribution</strong> is universal in knowledge graphs:
+- Few hub concepts with many connections
+- Many peripheral concepts with few connections
+- <strong>Proven by our own data</strong>: Some concepts appear in hundreds of relationships, most in &lt;5</p>
+<p><strong>Implications</strong>:
+- Vertex-cut naturally balances work (replicate hubs)
+- Hub concepts = natural partitioning boundaries
+- Emergent specialization (hubs attract related concepts)</p>
+<p><strong>Percolation theory result</strong>: By cutting small fraction of high-degree vertices, graph shatters into manageable components
+- <strong>Our application</strong>: Replicating hub concepts across shards enables efficient cross-shard queries</p>
+<hr />
+<h3 id="5-vector-similarity-in-distributed-systems">5. Vector Similarity in Distributed Systems</h3>
+<p><strong>Workload-aware partitioning</strong> (Apple HQI, others):
+- Organize vectors based on common query patterns
+- <strong>Hot vectors</strong>: Frequently queried, should be cached/replicated
+- <strong>Cold vectors</strong>: Rarely accessed, can be on slower storage</p>
+<p><strong>Our current full-scan approach</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># O(n) where n = all concepts in ontology</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">similarity_scores</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">query_vector</span><span class="p">,</span> <span class="n">all_concept_vectors</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Scaling options</strong>:
+1. <strong>HNSW index</strong> (Hierarchical Navigable Small World): O(log n) approximate search
+2. <strong>Shard-level parallelism</strong>: Query each shard independently, merge results
+3. <strong>Hybrid</strong>: HNSW within shards + semantic routing across shards</p>
+<hr />
+<h2 id="conceptual-design-patterns">Conceptual Design Patterns</h2>
+<h3 id="pattern-1-graceful-degradation-single-multi">Pattern 1: Graceful Degradation (Single → Multi)</h3>
+<p><strong>Design principle</strong>: Single-shard mode IS the core implementation, multi-shard is orchestration</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Configuration determines mode:
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>SINGLE_SHARD (n=1):
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  ├─ Apache AGE instance
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  ├─ Recursive upsert (existing code)
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>  ├─ Local vector search (NumPy full scan)
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>  └─ No router needed
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>MULTI_SHARD (n&gt;1):
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>  ├─ Multiple AGE instances (identical to single-shard code)
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>  ├─ Router layer (lightweight, optional)
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>  │   ├─ Tracks: which ontologies exist where
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>  │   ├─ Stores: hub concept vectors per ontology
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>  │   └─ Routes: based on semantic similarity
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>  └─ Each shard operates autonomously
+</code></pre></div>
+<p><strong>Key insight</strong>: The shard implementation doesn't change. Multi-shard adds orchestration, not re-architecture.</p>
+<hr />
+<h3 id="pattern-2-router-as-metadata-layer">Pattern 2: Router as Metadata Layer</h3>
+<p><strong>Design</strong>: Router is NOT on critical path for shard operations</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>Router Shard {
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  ontology_index: [
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    {
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>      id: &quot;biology_001&quot;,
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>      shard: &quot;shard_3&quot;,
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>      hub_concepts: [&quot;CRISPR&quot;, &quot;gene_editing&quot;, &quot;DNA&quot;],
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>      vector_summary: [0.23, 0.45, ...],  // centroid of hub concept vectors
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>      concept_count: 15420,
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>      capacity_metrics: { load: 0.6, latency_ms: 45 }
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    },
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    ...
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>  ]
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>}
+</code></pre></div>
+<p><strong>Query flow</strong>:
+1. User query → Vectorize
+2. Router: Similarity search against ontology summaries
+3. Router: "biology_001 on shard_3 matches 0.92"
+4. Direct query to shard_3, ontology biology_001
+5. Shard executes query (no router involved)</p>
+<p><strong>Upsert flow</strong>:
+1. Document arrives → Vectorize
+2. Router: "biology_001 matches 0.88, software_dev_001 matches 0.15"
+3. Route to shard_3, ontology biology_001
+4. Recursive upsert runs locally on shard
+5. If new hub concepts emerge → push update to router</p>
+<p><strong>Router failure mode</strong>: Shards continue operating, router can be rebuilt from shard metadata</p>
+<hr />
+<h3 id="pattern-3-self-healing-with-convergence-guarantee">Pattern 3: Self-Healing with Convergence Guarantee</h3>
+<p><strong>Problem</strong>: Initial routing decisions may be suboptimal (user error, novel domain, etc.)</p>
+<p><strong>Solution</strong>: Active management agent with convergent reorganization</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Periodic audit cycle:
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  ├─ Query router for high-activity shards
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  ├─ Analyze ontology coherence:
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  │   └─ coherence = mean(pairwise_similarity(concepts in ontology))
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>  ├─ Detect misfits:
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>  │   └─ IF coherence &lt; 0.5 THEN misfit detected
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>  ├─ Local reorganization:
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>  │   ├─ Split misfit concepts → new local ontology
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>  │   ├─ Query router for better shard location
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>  │   └─ Re-upsert to higher-match shard
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>  └─ Convergence property:
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>      └─ Once concepts reach high-similarity shard, coherence &gt; 0.5
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>      └─ No longer triggers reorganization
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>      └─ Process terminates (no infinite loops)
+</code></pre></div>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>User uploads &quot;Smurfs 1980s cartoons&quot; to CRISPR ontology (mistake)
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  ↓
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>Coherence score drops (CRISPR concepts + Smurfs = low similarity)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>  ↓
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Agent detects: avg_similarity = 0.35 &lt; 0.5 threshold
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>  ↓
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>Splits &quot;Smurfs&quot; concepts → new ontology on same shard
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>  ↓
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>Queries router: &quot;which shard has &#39;1980s cartoons&#39; knowledge?&quot;
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>  ↓
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>Router: &quot;pop_culture_shard has &#39;Saturday morning cartoons&#39; (similarity 0.87)&quot;
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>  ↓
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>Re-upserts &quot;Smurfs&quot; ontology to pop_culture_shard
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>  ↓
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>New coherence: 0.91 &gt; 0.5 → stable, no further reorganization
+</code></pre></div></p>
+<p><strong>Parallel to research</strong>: AWAPart's dynamic adaptation + WASP's workload-aware rebalancing</p>
+<hr />
+<h3 id="pattern-4-hub-concept-replication-vertex-cut">Pattern 4: Hub Concept Replication (Vertex-Cut)</h3>
+<p><strong>Insight from PowerGraph</strong>: Replicate high-degree vertices to balance work</p>
+<p><strong>Our application</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Hub concept: &quot;gene_editing&quot; appears in:
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>  ├─ biology_shard (primary)
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  ├─ ethics_shard (replica - bioethics discussions)
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>  └─ policy_shard (replica - regulation documents)
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>Query: &quot;What are ethical concerns about gene editing?&quot;
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>  ↓
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>Router: Ethics context → route to ethics_shard
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>  ↓
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>ethics_shard has local replica of &quot;gene_editing&quot; hub concept
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>  ↓
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>No cross-shard traversal needed for initial query
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>  ↓
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>Can optionally follow reference to biology_shard for deeper technical details
+</code></pre></div></p>
+<p><strong>Trade-off</strong>: Storage overhead (replicas) vs query performance (local access)</p>
+<p><strong>When to replicate</strong>:
+- Concept appears in 3+ ontologies across different shards
+- High query frequency
+- Cross-shard traversal is common</p>
+<hr />
+<h3 id="pattern-5-fennel-style-streaming-assignment">Pattern 5: FENNEL-Style Streaming Assignment</h3>
+<p><strong>Implementation</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ShardRouter</span><span class="p">:</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">route_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Shard</span><span class="p">,</span> <span class="n">Ontology</span><span class="p">]:</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>        <span class="c1"># Vectorize document</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>        <span class="n">doc_vector</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">document_text</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>        <span class="c1"># Score all shards</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>        <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>        <span class="k">for</span> <span class="n">shard</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">shards</span><span class="p">:</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>            <span class="k">for</span> <span class="n">ontology</span> <span class="ow">in</span> <span class="n">shard</span><span class="o">.</span><span class="n">ontologies</span><span class="p">:</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>                <span class="c1"># Locality benefit (semantic similarity)</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>                <span class="n">locality</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">doc_vector</span><span class="p">,</span> <span class="n">ontology</span><span class="o">.</span><span class="n">vector_summary</span><span class="p">)</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>                <span class="c1"># Balance penalty (prevent overload)</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>                <span class="n">load_ratio</span> <span class="o">=</span> <span class="n">shard</span><span class="o">.</span><span class="n">concept_count</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_shard_size</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>                <span class="n">penalty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">load_ratio</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>                <span class="n">score</span> <span class="o">=</span> <span class="n">locality</span> <span class="o">-</span> <span class="n">penalty</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>                <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">shard</span><span class="p">,</span> <span class="n">ontology</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>        <span class="c1"># Threshold check</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>        <span class="n">best_shard</span><span class="p">,</span> <span class="n">best_ontology</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>        <span class="k">if</span> <span class="n">best_score</span> <span class="o">&lt;</span> <span class="mf">0.4</span><span class="p">:</span>  <span class="c1"># Novel domain</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a>            <span class="c1"># Create new ontology on least-loaded shard</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>            <span class="n">target_shard</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shards</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">concept_count</span><span class="p">)</span>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>            <span class="n">new_ontology</span> <span class="o">=</span> <span class="n">target_shard</span><span class="o">.</span><span class="n">create_ontology</span><span class="p">()</span>
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>            <span class="k">return</span> <span class="n">target_shard</span><span class="p">,</span> <span class="n">new_ontology</span>
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a>
+<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>        <span class="k">return</span> <span class="n">best_shard</span><span class="p">,</span> <span class="n">best_ontology</span>
+</code></pre></div></p>
+<p><strong>Parameters</strong> (from FENNEL research):
+- <code>alpha</code>: Balance weight (typically 1.5)
+- <code>gamma</code>: Penalty exponent (typically 1.5)
+- <code>threshold</code>: Novel domain cutoff (typically 0.4-0.5)</p>
+<hr />
+<h2 id="technical-implementation-considerations">Technical Implementation Considerations</h2>
+<h3 id="phase-1-single-shard-foundation">Phase 1: Single-Shard Foundation</h3>
+<p><strong>Current state</strong>: Already works well</p>
+<p><strong>Additions</strong>:
+1. <strong>Hub concept extraction</strong>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Use PageRank or betweenness centrality</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">hub_concepts</span> <span class="o">=</span> <span class="n">compute_pagerank</span><span class="p">(</span><span class="n">ontology</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</code></pre></div></p>
+<ol>
+<li>
+<p><strong>Ontology metadata API</strong>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">GET</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">ontology</span><span class="o">/</span><span class="p">{</span><span class="n">name</span><span class="p">}</span><span class="o">/</span><span class="n">profile</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="n">Returns</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">hub_concepts</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="n">vector_summary</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>  <span class="c1"># centroid of hub vectors</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="n">concept_count</span><span class="p">:</span> <span class="mi">1523</span><span class="p">,</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">capacity_metrics</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="p">}</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Monitor for scaling triggers</strong>:</p>
+</li>
+<li>Concept count &gt; 100K (vector search slows)</li>
+<li>Query latency &gt; 500ms</li>
+<li>Write contention detected</li>
+</ol>
+<hr />
+<h3 id="phase-2-router-multi-shard">Phase 2: Router + Multi-Shard</h3>
+<p><strong>Router service</strong> (lightweight Python/FastAPI):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">OntologyRouter</span><span class="p">:</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shards</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ShardConnection</span><span class="p">]):</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># ontology_id -&gt; shard profile</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">shards</span> <span class="o">=</span> <span class="n">shards</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">sync_from_shards</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Pull metadata from all shards&quot;&quot;&quot;</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>        <span class="k">for</span> <span class="n">shard</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">shards</span><span class="p">:</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>            <span class="n">profiles</span> <span class="o">=</span> <span class="n">shard</span><span class="o">.</span><span class="n">get_ontology_profiles</span><span class="p">()</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">route_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_vector</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ShardOntology</span><span class="p">]:</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Find top-k matching ontologies&quot;&quot;&quot;</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>        <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>            <span class="p">(</span><span class="n">ont_id</span><span class="p">,</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">query_vector</span><span class="p">,</span> <span class="n">profile</span><span class="o">.</span><span class="n">vector_summary</span><span class="p">))</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>            <span class="k">for</span> <span class="n">ont_id</span><span class="p">,</span> <span class="n">profile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>        <span class="p">]</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a>
+<a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">route_upsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc_vector</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShardOntology</span><span class="p">:</span>
+<a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;FENNEL-style assignment&quot;&quot;&quot;</span>
+<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fennel_assignment</span><span class="p">(</span><span class="n">doc_vector</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Shard modification</strong> (minimal):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Add: Push updates to router when hub concepts change</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="k">if</span> <span class="n">hub_concepts_changed_significantly</span><span class="p">():</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">router</span><span class="o">.</span><span class="n">update_ontology_profile</span><span class="p">(</span><span class="n">ontology_id</span><span class="p">,</span> <span class="n">new_profile</span><span class="p">)</span>
+</code></pre></div></p>
+<hr />
+<h3 id="phase-3-workload-aware-adaptation-optional">Phase 3: Workload-Aware Adaptation (Optional)</h3>
+<p><strong>Monitor query patterns</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">WorkloadMonitor</span><span class="p">:</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">track_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ontologies_accessed</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>        <span class="c1"># Record which ontologies are frequently co-queried</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">coquery_matrix</span><span class="p">[</span><span class="n">ontologies_accessed</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">identify_hotspots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>        <span class="c1"># Find ontology pairs queried together often</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>        <span class="c1"># Suggests they should be on same shard</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>        <span class="k">return</span> <span class="n">high_cooccurrence_pairs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coquery_matrix</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Periodic rebalancing</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveRebalancer</span><span class="p">:</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">rebalance_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>        <span class="k">for</span> <span class="n">ontology</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ontologies</span><span class="p">:</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>            <span class="n">coherence</span> <span class="o">=</span> <span class="n">compute_coherence</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>            <span class="k">if</span> <span class="n">coherence</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>  <span class="c1"># Misfit detected</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>                <span class="c1"># Split + find better home</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>                <span class="n">better_shard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">router</span><span class="o">.</span><span class="n">find_best_shard</span><span class="p">(</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>                    <span class="n">ontology</span><span class="o">.</span><span class="n">hub_concepts</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>                <span class="p">)</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>                <span class="k">if</span> <span class="n">better_shard</span> <span class="o">!=</span> <span class="n">ontology</span><span class="o">.</span><span class="n">current_shard</span><span class="p">:</span>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">move_ontology</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">better_shard</span><span class="p">)</span>
+</code></pre></div></p>
+<hr />
+<h3 id="phase-4-hub-concept-replication-advanced">Phase 4: Hub Concept Replication (Advanced)</h3>
+<p><strong>Identify replication candidates</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">should_replicate</span><span class="p">(</span><span class="n">concept</span><span class="p">:</span> <span class="n">Concept</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>    <span class="c1"># Appears in 3+ ontologies across different shards</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="n">cross_shard_refs</span> <span class="o">=</span> <span class="n">count_cross_shard_references</span><span class="p">(</span><span class="n">concept</span><span class="p">)</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="c1"># High query frequency</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="n">query_freq</span> <span class="o">=</span> <span class="n">concept</span><span class="o">.</span><span class="n">query_count</span> <span class="o">/</span> <span class="n">total_queries</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    <span class="k">return</span> <span class="n">cross_shard_refs</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">query_freq</span> <span class="o">&gt;</span> <span class="mf">0.01</span>
+</code></pre></div></p>
+<p><strong>Replication strategy</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ConceptReplicator</span><span class="p">:</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">replicate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concept</span><span class="p">:</span> <span class="n">Concept</span><span class="p">,</span> <span class="n">target_shards</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Shard</span><span class="p">]):</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>        <span class="k">for</span> <span class="n">shard</span> <span class="ow">in</span> <span class="n">target_shards</span><span class="p">:</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>            <span class="n">shard</span><span class="o">.</span><span class="n">create_replica</span><span class="p">(</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>                <span class="n">concept_id</span><span class="o">=</span><span class="n">concept</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>                <span class="n">primary_shard</span><span class="o">=</span><span class="n">concept</span><span class="o">.</span><span class="n">home_shard</span><span class="p">,</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>                <span class="n">vector</span><span class="o">=</span><span class="n">concept</span><span class="o">.</span><span class="n">embedding</span><span class="p">,</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">}</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>            <span class="p">)</span>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">sync_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>        <span class="c1"># Eventual consistency: periodically sync replicas</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>        <span class="k">for</span> <span class="n">replica</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">replicas</span><span class="p">:</span>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>            <span class="k">if</span> <span class="n">replica</span><span class="o">.</span><span class="n">is_stale</span><span class="p">():</span>
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>                <span class="n">replica</span><span class="o">.</span><span class="n">sync_from_primary</span><span class="p">()</span>
+</code></pre></div></p>
+<hr />
+<h3 id="apache-age-citus-integration">Apache AGE + Citus Integration</h3>
+<p><strong>Option A: Custom distribution key</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1">-- Instead of hash(id), use ontology name for locality</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">create_distributed_table</span><span class="p">(</span><span class="s1">&#39;vertex_label&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ontology&#39;</span><span class="p">);</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">create_distributed_table</span><span class="p">(</span><span class="s1">&#39;edge_label&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ontology&#39;</span><span class="p">);</span>
+</code></pre></div>
+- ✅ Simple, uses Citus built-in
+- ❌ Less flexible than application-layer routing</p>
+<p><strong>Option B: Application-layer routing</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Router maintains mapping: ontology -&gt; Citus worker</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="n">ontology_to_worker</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>    <span class="s2">&quot;biology_001&quot;</span><span class="p">:</span> <span class="s2">&quot;worker_1:5432&quot;</span><span class="p">,</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>    <span class="s2">&quot;software_dev_001&quot;</span><span class="p">:</span> <span class="s2">&quot;worker_2:5432&quot;</span><span class="p">,</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>    <span class="o">...</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="p">}</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="c1"># Direct connections to specific workers</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_shard_connection</span><span class="p">(</span><span class="n">ontology_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">Connection</span><span class="p">:</span>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>    <span class="n">worker_url</span> <span class="o">=</span> <span class="n">ontology_to_worker</span><span class="p">[</span><span class="n">ontology_id</span><span class="p">]</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>    <span class="k">return</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">worker_url</span><span class="p">)</span>
+</code></pre></div>
+- ✅ Full control over routing logic
+- ❌ More complex to manage</p>
+<p><strong>Recommendation</strong>: Start with Option A (Citus with semantic key), migrate to Option B if needed</p>
+<hr />
+<h2 id="the-bitter-lesson-perspective">The Bitter Lesson Perspective</h2>
+<p><strong>Sutton's Bitter Lesson</strong> (2019): Methods that leverage computation are ultimately more effective than those that leverage human knowledge.</p>
+<h3 id="applying-the-lesson">Applying the Lesson</h3>
+<p><strong>❌ Don't</strong>:
+- Hard-code domain taxonomies ("biology goes here, software goes there")
+- Prescribe ontology structures
+- Build complex "reasoning rules" for routing
+- Anthropomorphize the system (avoid "expert" metaphors in implementation)</p>
+<p><strong>✅ Do</strong>:
+- Let patterns emerge from data (hub concepts via graph metrics)
+- Use computation (vector similarity, graph traversal)
+- Scale with compute (more shards, parallel processing)
+- Learn routing patterns from query workload</p>
+<h3 id="our-design-alignment">Our Design Alignment</h3>
+<p><strong>Computational approaches in our architecture</strong>:</p>
+<ol>
+<li><strong>Vector embeddings</strong> determine similarity, not hand-crafted similarity functions</li>
+<li><strong>LLM extraction</strong> discovers relationships, not pre-defined schema</li>
+<li><strong>Graph metrics</strong> identify hub concepts, not manual classification</li>
+<li><strong>Streaming partitioning</strong> (FENNEL) uses objective function, not rules</li>
+<li><strong>Workload-aware adaptation</strong> learns from queries, not prescribed optimization</li>
+</ol>
+<p><strong>Minimal human knowledge encoded</strong>:
+- Relationship type vocabulary (30 canonical types) - but even this is fuzzy-matched and expandable
+- Coherence threshold (0.5) - but this is tunable, not fundamental
+- FENNEL parameters (α, γ) - researched defaults, adjustable</p>
+<p><strong>Where computation wins</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>Question: &quot;Should concept X be on shard A or shard B?&quot;
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>Hard-coded approach:
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>  IF concept.domain == &quot;biology&quot; THEN shard_A
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>  ELSE IF concept.domain == &quot;software&quot; THEN shard_B
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>  (Brittle, requires maintaining taxonomy)
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>Computational approach:
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>  similarity_A = cosine(concept.vector, shard_A.profile)
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>  similarity_B = cosine(concept.vector, shard_B.profile)
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>  RETURN argmax(similarity - balance_penalty)
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>  (Generalizes, learns from data)
+</code></pre></div></p>
+<h3 id="not-anthropomorphizing">Not Anthropomorphizing</h3>
+<p><strong>Original metaphor</strong>: "Shards as enterprise architects with expertise"
+- Useful for human understanding
+- Misleading for implementation</p>
+<p><strong>Computational reality</strong>: "Shards as partitions optimizing objective function"
+- Hub concepts = high PageRank/betweenness nodes
+- Routing = maximize FENNEL score
+- Reorganization = minimize coherence loss + balance constraint</p>
+<p>The architecture <strong>rhymes with</strong> human expert collaboration, but that's emergent, not designed in. We're applying percolation theory and streaming partitioning algorithms, not modeling organizational behavior.</p>
+<hr />
+<h2 id="references">References</h2>
+<h3 id="academic-papers">Academic Papers</h3>
+<p><strong>PowerGraph (2012)</strong>
+- Gonzalez, J.E., et al. "PowerGraph: Distributed Graph-Parallel Computation on Natural Graphs"
+- USENIX OSDI 2012
+- Key contribution: Vertex-cut partitioning for power-law graphs</p>
+<p><strong>FENNEL (2014)</strong>
+- Tsourakakis, C., et al. "FENNEL: Streaming Graph Partitioning for Massive Scale Graphs"
+- ACM WSDM 2014
+- Key contribution: One-pass streaming partitioning with locality-balance objective</p>
+<p><strong>AWAPart (2022)</strong>
+- "AWAPart: Adaptive Workload-Aware Partitioning of Knowledge Graphs"
+- arXiv:2203.14884
+- Key contribution: Dynamic repartitioning based on query workload</p>
+<p><strong>WASP (2021)</strong>
+- "A Workload-Adaptive Streaming Partitioner for Distributed Graph Stores"
+- Data Science and Engineering, 2021
+- Key contribution: Runtime adaptation to emerging query patterns</p>
+<p><strong>Apple HQI (2023)</strong>
+- "High-Throughput Vector Similarity Search in Knowledge Graphs"
+- ACM SIGMOD 2023
+- Key contribution: Workload-aware vector partitioning + multi-query optimization</p>
+<p><strong>Lothbrok</strong>
+- "Optimizing SPARQL Queries over Decentralized Knowledge Graphs"
+- Semantic Web Journal, 2023
+- Key contribution: Locality-aware federated query planning</p>
+<h3 id="technical-documentation">Technical Documentation</h3>
+<p><strong>Apache AGE</strong>
+- Apache AGE Manual: https://age.apache.org/age-manual/master/intro/overview.html
+- openCypher Reference: https://s3.amazonaws.com/artifacts.opencypher.org/openCypher9.pdf</p>
+<p><strong>Citus for PostgreSQL</strong>
+- Citus Documentation: https://docs.citusdata.com/
+- Scaling PostgreSQL: https://www.citusdata.com/blog/</p>
+<p><strong>Graph Partitioning</strong>
+- METIS: http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
+- Graph Partition (Wikipedia): https://en.wikipedia.org/wiki/Graph_partition</p>
+<p><strong>Distributed Hash Tables</strong>
+- Chord DHT: https://pdos.csail.mit.edu/papers/chord:sigcomm01/
+- Content Addressable Networks: https://dl.acm.org/doi/10.1145/964723.383072</p>
+<h3 id="relevant-blog-posts-guides">Relevant Blog Posts &amp; Guides</h3>
+<p><strong>Scaling Apache AGE</strong>
+- "Scaling Apache AGE for Large Datasets" (Dev.to, 2024)
+- URL: https://dev.to/humzakt/scaling-apache-age-for-large-datasets-3nfi</p>
+<p><strong>PuppyGraph on Distributed Graphs</strong>
+- "Distributed Graph Database: The Ultimate Guide"
+- URL: https://www.puppygraph.com/blog/distributed-graph-database</p>
+<p><strong>Neo4j Infinigraph (2025)</strong>
+- Property sharding architecture
+- Keeps topology intact while distributing properties</p>
+<hr />
+<h2 id="summary-and-next-steps">Summary and Next Steps</h2>
+<h3 id="what-we-learned">What We Learned</h3>
+<ol>
+<li><strong>Our architectural intuitions align with proven patterns</strong>:</li>
+<li>Hub concept routing ↔ PowerGraph vertex-cut</li>
+<li>Streaming document assignment ↔ FENNEL</li>
+<li>Coherence monitoring ↔ AWAPart/WASP</li>
+<li>
+<p>Router metadata layer ↔ Semantic overlay networks</p>
+</li>
+<li>
+<p><strong>Single-shard mode is the foundation</strong>, multi-shard is orchestration</p>
+</li>
+<li>
+<p>Don't redesign the shard, enable it to participate in topology</p>
+</li>
+<li>
+<p><strong>Semantic routing preserves locality</strong> where hash-based routing destroys it</p>
+</li>
+<li>
+<p>Critical for knowledge graphs (unlike key-value stores)</p>
+</li>
+<li>
+<p><strong>Workload-aware adaptation is proven</strong> to improve query performance</p>
+</li>
+<li>
+<p>Our coherence-based reorganization fits this pattern</p>
+</li>
+<li>
+<p><strong>Apache AGE can scale horizontally</strong> with Citus, but semantic routing must be application-layer</p>
+</li>
+<li>Citus provides infrastructure, we provide intelligence</li>
+</ol>
+<h3 id="recommended-path-forward">Recommended Path Forward</h3>
+<p><strong>Phase 1: Enhance Single-Shard</strong> <em>(no architecture changes)</em>
+- Extract hub concepts (PageRank/betweenness)
+- Expose ontology metadata API
+- Monitor for scaling triggers</p>
+<p><strong>Phase 2: Add Router Layer</strong> <em>(additive, not breaking)</em>
+- Lightweight router service (Python/FastAPI)
+- FENNEL-style streaming assignment
+- Sync from shards, stateless design</p>
+<p><strong>Phase 3: Deploy Multi-Shard</strong> <em>(configuration-driven)</em>
+- Multiple AGE instances (same codebase)
+- Router routes queries/upserts
+- Each shard operates autonomously</p>
+<p><strong>Phase 4: Workload Adaptation</strong> <em>(optional, based on real usage)</em>
+- Monitor query patterns
+- Coherence-based reorganization
+- Hub concept replication if needed</p>
+<h3 id="open-questions-for-future-research">Open Questions for Future Research</h3>
+<ol>
+<li><strong>Optimal FENNEL parameters</strong> (α, γ) for our specific workload?</li>
+<li><strong>Hub concept replication threshold</strong> - when does it pay off?</li>
+<li><strong>Cross-shard query optimization</strong> - when to federate vs consolidate?</li>
+<li><strong>Coherence metrics</strong> - is average pairwise similarity best, or graph modularity?</li>
+<li><strong>Router failure modes</strong> - how long can shards operate without router?</li>
+</ol>
+<hr />
+<p><em>This research demonstrates that distributed knowledge graph architectures are well-studied, with proven patterns from PowerGraph (2012) to AWAPart (2022). Our design leverages computational approaches (vector similarity, streaming partitioning, graph metrics) rather than hand-coded knowledge, aligning with Sutton's Bitter Lesson. The path from single-shard to multi-shard is incremental, additive, and grounded in established distributed systems research.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,4433 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../04-SWITCHING_EXTRACTION_PROVIDERS/">
+      
+      
+        <link rel="next" href="../06-EXTRACTION_QUALITY_COMPARISON/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Local LLM Inference Implementation Guide - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#local-llm-inference-implementation-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Local LLM Inference Implementation Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Phases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-ollama-integration-mvp-completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Phase 1: Ollama Integration (MVP) - COMPLETED
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thinking-mode-for-reasoning-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      Thinking Mode for Reasoning Models
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Thinking Mode for Reasoning Models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-thinking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is Thinking Mode?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-specific-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Model-Specific Behavior
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Model-Specific Behavior">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gpt-oss-requires-think-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPT-OSS (Requires Think Levels)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standard-models-mistral-llama-qwen25" class="md-nav__link">
+    <span class="md-ellipsis">
+      Standard Models (mistral, llama, qwen2.5)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-enable-thinking" class="md-nav__link">
+    <span class="md-ellipsis">
+      When to Enable Thinking
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Impact
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Output
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-quality-validation-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      📋 Phase 2: Quality Validation &amp; Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📋 Phase 2: Quality Validation &amp; Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-quality-testing-suite" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 Quality Testing Suite
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-relationship-type-accuracy-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 Relationship Type Accuracy Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-edge-case-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 Edge Case Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-performance-benchmarking" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 Performance Benchmarking
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-advanced-features-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔀 Phase 3: Advanced Features &amp; Optimization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔀 Phase 3: Advanced Features &amp; Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-model-management-hot-reload" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Model Management &amp; Hot Reload
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-hybrid-cloudlocal-fallback-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Hybrid Cloud/Local Fallback Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-resource-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Resource Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-batch-processing-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 Batch Processing Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-cost-tracking-analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.5 Cost Tracking &amp; Analytics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-enterprise-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Phase 4: Enterprise Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚀 Phase 4: Enterprise Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-vllm-backend-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 vLLM Backend Support
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-multi-model-deployment-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Multi-Model Deployment &amp; Routing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-vision-model-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 Vision Model Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-load-balancing-high-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.4 Load Balancing &amp; High Availability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-model-fine-tuning-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.5 Model Fine-Tuning Support
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-metrics-overall" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Metrics (Overall)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Success Metrics (Overall)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quality-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quality Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adoption Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reliability-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reliability Metrics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#end-to-end-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      End-to-End Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoring &amp; Observability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring &amp; Observability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metrics-to-track-prometheusgrafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics to Track (Prometheus/Grafana)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alerts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rollout-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rollout Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rollout Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-weeks-3-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2 (Weeks 3-4)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-weeks-5-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3 (Weeks 5-6)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-weeks-7-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4 (Weeks 7-10)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="local-llm-inference-implementation-guide">Local LLM Inference Implementation Guide</h1>
+<p><strong>Related ADRs:</strong> ADR-042 (Local Extraction), ADR-039 (Local Embeddings - Reference Pattern)
+<strong>Status:</strong> Phase 1 Complete, Phases 2-4 Planned
+<strong>Last Updated:</strong> 2025-10-22</p>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>This guide documents the phased implementation of local LLM inference for concept extraction. The architecture follows the same pattern established by ADR-039 (local embeddings):</p>
+<ul>
+<li><strong>Provider abstraction</strong> - Multiple backends supported via common interface</li>
+<li><strong>Database-driven configuration</strong> - Runtime-switchable models</li>
+<li><strong>Flexible deployment</strong> - Docker, external endpoint, or system install</li>
+<li><strong>Graceful fallback</strong> - Optional hybrid cloud/local mode</li>
+</ul>
+<hr />
+<h2 id="implementation-phases">Implementation Phases</h2>
+<h3 id="phase-1-ollama-integration-mvp-completed">✅ Phase 1: Ollama Integration (MVP) - COMPLETED</h3>
+<p><strong>Goal:</strong> Basic local extraction with Ollama, supporting 7-8B models.</p>
+<p><strong>Completed Tasks:</strong></p>
+<ol>
+<li><strong>OllamaProvider Class</strong> (<code>src/api/lib/ai_providers.py</code>)</li>
+<li>✅ Extends <code>AIProvider</code> abstract base class</li>
+<li>✅ Implements <code>extract_concepts()</code> using Ollama API</li>
+<li>✅ JSON mode configuration for structured output</li>
+<li>✅ Error handling with helpful troubleshooting messages</li>
+<li>✅ Vision model support (llava, bakllava)</li>
+<li>
+<p>✅ Model listing via <code>/api/tags</code> endpoint</p>
+</li>
+<li>
+<p><strong>Database Schema Extension</strong> (Migration 007)</p>
+</li>
+<li>✅ Added <code>base_url</code> column for endpoint configuration</li>
+<li>✅ Added <code>temperature</code>, <code>top_p</code> for sampling control</li>
+<li>✅ Added <code>gpu_layers</code>, <code>num_threads</code> for resource tuning</li>
+<li>
+<p>✅ Updated provider CHECK constraint (ollama, vllm)</p>
+</li>
+<li>
+<p><strong>Docker Compose Profiles</strong> (<code>docker-compose.ollama.yml</code>)</p>
+</li>
+<li>✅ NVIDIA GPU variant (most common)</li>
+<li>✅ AMD GPU variant (ROCm)</li>
+<li>✅ Intel GPU variant (Arc, Iris Xe)</li>
+<li>
+<p>✅ CPU-only variant with resource limits</p>
+</li>
+<li>
+<p><strong>Management Scripts</strong></p>
+</li>
+<li>✅ <code>scripts/start-ollama.sh</code> - Auto-detection, model pull</li>
+<li>
+<p>✅ <code>scripts/stop-ollama.sh</code> - Clean shutdown, optional cleanup</p>
+</li>
+<li>
+<p><strong>CLI Commands</strong> (<code>client/src/cli/ai-config.ts</code>)</p>
+</li>
+<li>✅ <code>kg admin extraction set --provider ollama --model &lt;model&gt;</code></li>
+<li>✅ Display local provider configuration</li>
+<li>✅ Validation and helpful next steps</li>
+</ol>
+<p><strong>Deliverables:</strong>
+- ✅ Working local extraction with Mistral 7B, Llama 8B, Qwen 7B
+- ✅ Documentation (ADR-042, CLAUDE.md)
+- ✅ Zero-cost alternative to cloud APIs
+- ✅ Thinking mode support for reasoning models</p>
+<hr />
+<h2 id="thinking-mode-for-reasoning-models">Thinking Mode for Reasoning Models</h2>
+<p><strong>Status:</strong> ✅ Implemented (Ollama 0.12.x+)
+<strong>Migration:</strong> 009_add_thinking_parameter.sql</p>
+<h3 id="what-is-thinking-mode">What is Thinking Mode?</h3>
+<p>Ollama 0.12.x+ supports <strong>reasoning models</strong> that can "think before responding":</p>
+<ul>
+<li><strong>Reasoning models:</strong> <code>gpt-oss</code>, <code>deepseek-r1</code>, <code>qwen3</code></li>
+<li><strong>Thinking trace:</strong> Models output their reasoning process separately from the final answer</li>
+<li><strong>Quality trade-off:</strong> Slower but potentially higher quality extraction</li>
+</ul>
+<h3 id="how-it-works">How It Works</h3>
+<p>When thinking mode is enabled:</p>
+<ol>
+<li>Model generates a <strong>thinking trace</strong> (reasoning process)</li>
+<li>Model generates a <strong>response</strong> (actual JSON output)</li>
+<li>System uses only the <strong>response</strong> for extraction</li>
+<li><strong>Thinking trace is logged</strong> but not used (for debugging)</li>
+</ol>
+<p><strong>API Response Structure</strong> (Ollama <code>/api/chat</code> endpoint):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;assistant&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{...JSON output...}&quot;</span><span class="p">,</span><span class="w">    </span><span class="c1">// Used for extraction</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">&quot;thinking&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Analyzing concepts...&quot;</span><span class="w">  </span><span class="c1">// Logged, not used</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="configuration">Configuration</h3>
+<p><strong>Database-driven</strong> (not .env):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Set thinking mode (off, low, medium, high)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>low
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Disable thinking (default)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>off
+</code></pre></div>
+<p><strong>Database Schema</strong> (Migration 010):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">thinking_mode</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;off&#39;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">thinking_mode</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;low&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;medium&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;high&#39;</span><span class="p">));</span>
+</code></pre></div>
+<h3 id="model-specific-behavior">Model-Specific Behavior</h3>
+<p><strong>Unified Interface:</strong> All models use <code>thinking_mode</code>: <code>'off'</code>, <code>'low'</code>, <code>'medium'</code>, <code>'high'</code></p>
+<p><strong>Internal Mapping:</strong></p>
+<h4 id="gpt-oss-requires-think-levels">GPT-OSS (Requires Think Levels)</h4>
+<ul>
+<li><code>'off'</code> → <code>think="low"</code> (minimal reasoning, 4096 tokens)</li>
+<li><code>'low'</code> → <code>think="low"</code> (4096 tokens)</li>
+<li><code>'medium'</code> → <code>think="medium"</code> (12,288 tokens - 3x)</li>
+<li><code>'high'</code> → <code>think="high"</code> (16,384 tokens - 4x)</li>
+</ul>
+<p><strong>Token allocation:</strong> Higher thinking modes generate extensive reasoning traces. Token limits are scaled to ensure both thinking trace and JSON output fit:
+- <strong>off/low</strong>: 4096 tokens (standard)
+- <strong>medium</strong>: 12,288 tokens (3x for moderate reasoning)
+- <strong>high</strong>: 16,384 tokens (4x for extensive reasoning)</p>
+<h4 id="standard-models-mistral-llama-qwen25">Standard Models (mistral, llama, qwen2.5)</h4>
+<ul>
+<li><code>'off'</code> → <code>think=false</code> (no thinking)</li>
+<li><code>'low'</code>, <code>'medium'</code>, <code>'high'</code> → <code>think=true</code> (enabled, no level distinction)</li>
+</ul>
+<p>Standard models don't support graduated thinking levels.</p>
+<p><strong>Implementation</strong> (<code>src/api/lib/ai_providers.py</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Map thinking_mode to model-specific parameter</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">if</span> <span class="s2">&quot;gpt-oss&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extraction_model</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="c1"># GPT-OSS: off→low, others pass through</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">think_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_mode</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_mode</span> <span class="o">!=</span> <span class="s1">&#39;off&#39;</span> <span class="k">else</span> <span class="s1">&#39;low&#39;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">request_data</span><span class="p">[</span><span class="s2">&quot;think&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">think_value</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_mode</span> <span class="o">==</span> <span class="s1">&#39;off&#39;</span><span class="p">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">request_data</span><span class="p">[</span><span class="s2">&quot;think&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Disabled</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">request_data</span><span class="p">[</span><span class="s2">&quot;think&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Enabled (all levels)</span>
+</code></pre></div>
+<h3 id="when-to-enable-thinking">When to Enable Thinking</h3>
+<p><strong>Enable thinking if:</strong>
+- ✅ Using reasoning models (gpt-oss, deepseek-r1, qwen3)
+- ✅ Complex philosophical or technical documents
+- ✅ Quality is more important than speed
+- ✅ You want to debug model reasoning</p>
+<p><strong>Disable thinking if:</strong>
+- ❌ Speed is critical (thinking adds latency)
+- ❌ Simple straightforward documents
+- ❌ Using standard models (mistral, llama)</p>
+<p><strong>GPT-OSS Note:</strong> Always uses <code>think="low"</code> internally for clean JSON output, regardless of user setting.</p>
+<h3 id="performance-impact">Performance Impact</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Without Thinking</th>
+<th>With Thinking</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mistral 7B</td>
+<td>8s/chunk</td>
+<td>N/A (not supported)</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>GPT-OSS 20B</td>
+<td>25s/chunk (think=low)</td>
+<td>40s/chunk (think=high)</td>
+<td>+60%</td>
+</tr>
+<tr>
+<td>DeepSeek-R1</td>
+<td>15s/chunk</td>
+<td>28s/chunk</td>
+<td>+87%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="troubleshooting">Troubleshooting</h3>
+<p><strong>Problem:</strong> Empty JSON response, error parsing</p>
+<p><strong>Cause:</strong> GPT-OSS was putting all output in <code>thinking</code> field, nothing in <code>content</code></p>
+<p><strong>Solution:</strong> Always use <code>think="low"</code> for GPT-OSS (implemented in code)</p>
+<p><strong>Problem:</strong> Thinking text mixed with JSON</p>
+<p><strong>Cause:</strong> Using old <code>/api/generate</code> endpoint</p>
+<p><strong>Solution:</strong> Use <code>/api/chat</code> endpoint (Ollama 0.12.x+) which separates thinking from content</p>
+<h3 id="example-output">Example Output</h3>
+<p><strong>Logs with thinking enabled:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>🤔 GPT-OSS: think=low (minimal reasoning)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>💭 Model thinking (54 chars): Need concepts, instances, relationships...
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>✓ Extracted 9 concepts, 9 instances, 7 relationships
+</code></pre></div>
+<p><strong>Logs with thinking disabled:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>✓ Extracted 9 concepts, 9 instances, 7 relationships
+</code></pre></div>
+<hr />
+<h2 id="phase-2-quality-validation-testing">📋 Phase 2: Quality Validation &amp; Testing</h2>
+<p><strong>Goal:</strong> Validate extraction quality vs GPT-4o, establish reliability metrics, test edge cases.</p>
+<p><strong>Reference Pattern (ADR-039):</strong>
+- Local embeddings validated against OpenAI embeddings
+- Cosine similarity tests ensure quality
+- Dimension checks, performance benchmarks</p>
+<p><strong>Tasks:</strong></p>
+<h3 id="21-quality-testing-suite">2.1 Quality Testing Suite</h3>
+<p><strong>Test Corpus (100 documents):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>docs/test_corpus/
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── technical/          # 30 docs - code, APIs, technical specs
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>├── academic/           # 30 docs - research papers, citations
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>├── conversational/     # 20 docs - dialogues, informal text
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>├── structured/         # 10 docs - tables, lists, hierarchies
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>└── edge_cases/         # 10 docs - malformed, ambiguous, minimal
+</code></pre></div></p>
+<p><strong>Create:</strong> <code>tests/integration/test_extraction_quality.py</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_concept_extraction_quality</span><span class="p">():</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare Ollama vs GPT-4o concept extraction on test corpus&quot;&quot;&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="c1"># For each test document:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="c1"># 1. Extract with GPT-4o (baseline)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="c1"># 2. Extract with Ollama (Mistral 7B, Llama 8B, Qwen 7B)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="c1"># 3. Compare:</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="c1">#    - Concept overlap (F1 score)</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="c1">#    - Relationship accuracy (type correctness)</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="c1">#    - Quote precision (exact match vs semantic)</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="c1">#    - JSON validity rate</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="c1"># Success criteria:</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    <span class="c1"># - Concept F1 &gt;= 0.90 (90% overlap with GPT-4o)</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    <span class="c1"># - Relationship accuracy &gt;= 0.90</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="c1"># - JSON validity &gt;= 0.99</span>
+</code></pre></div>
+<p><strong>Metrics to Track:</strong>
+- Concept extraction F1 score (precision/recall vs GPT-4o)
+- Relationship type accuracy (% correct vs GPT-4o baseline)
+- JSON parsing success rate (% valid responses)
+- Quote extraction precision (% exact matches)
+- Inference time per chunk (7B, 14B, 70B models)</p>
+<p><strong>Create:</strong> <code>scripts/benchmark-extraction.sh</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1"># Run extraction benchmarks across models and hardware profiles</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Test models</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nv">MODELS</span><span class="o">=(</span><span class="s2">&quot;mistral:7b-instruct&quot;</span><span class="w"> </span><span class="s2">&quot;llama3.1:8b-instruct&quot;</span><span class="w"> </span><span class="s2">&quot;qwen2.5:7b-instruct&quot;</span><span class="w"> </span><span class="s2">&quot;qwen2.5:14b-instruct&quot;</span><span class="o">)</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Test each model</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">for</span><span class="w"> </span>model<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">MODELS</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$model</span><span class="s2">&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span>python<span class="w"> </span>tests/integration/test_extraction_quality.py<span class="w"> </span>--model<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$model</span><span class="s2">&quot;</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="k">done</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># Generate comparison report</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>python<span class="w"> </span>tests/integration/generate_quality_report.py
+</code></pre></div></p>
+<h3 id="22-relationship-type-accuracy-testing">2.2 Relationship Type Accuracy Testing</h3>
+<p><strong>Dynamic Vocabulary Challenge (ADR-025):</strong>
+- Baseline: 30 relationship types
+- Expanded: 30-90 types (curator-approved)
+- Test model's ability to handle variable-length lists</p>
+<p><strong>Create:</strong> <code>tests/integration/test_relationship_accuracy.py</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_relationship_type_accuracy</span><span class="p">():</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test accuracy with 30, 60, and 90 relationship types&quot;&quot;&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="c1"># Test with different vocabulary sizes</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="k">for</span> <span class="n">vocab_size</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">90</span><span class="p">]:</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>        <span class="c1"># Use test documents with known ground-truth relationships</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="c1"># Compare model output to ground truth</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>        <span class="c1"># Measure:</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>        <span class="c1">#   - Type selection accuracy</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>        <span class="c1">#   - Confidence calibration</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>        <span class="c1">#   - Hallucination rate (invented relationships)</span>
+</code></pre></div>
+<h3 id="23-edge-case-handling">2.3 Edge Case Handling</h3>
+<p><strong>Test Scenarios:</strong>
+- <strong>Malformed JSON recovery</strong> - Retry logic, fallback strategies
+- <strong>Timeout handling</strong> - Large chunks, slow models
+- <strong>Empty/minimal text</strong> - 1-2 sentence chunks
+- <strong>Ambiguous concepts</strong> - Homonyms, context-dependent
+- <strong>Unicode/special characters</strong> - Non-ASCII, emojis, symbols</p>
+<p><strong>Create:</strong> <code>tests/integration/test_edge_cases.py</code></p>
+<h3 id="24-performance-benchmarking">2.4 Performance Benchmarking</h3>
+<p><strong>Hardware Profiles to Test:</strong>
+- CPU-only (8 cores, 16GB RAM)
+- Mid-range GPU (RTX 4060 Ti, 16GB VRAM)
+- High-end GPU (RTX 4080, 16GB VRAM)
+- Professional GPU (A100, 40GB VRAM)</p>
+<p><strong>Metrics:</strong>
+- Tokens/second by model size (7B, 14B, 70B)
+- Memory usage (RAM, VRAM)
+- CPU/GPU utilization
+- Throughput (chunks/minute)
+- End-to-end document ingestion time</p>
+<p><strong>Create:</strong> <code>scripts/benchmark-performance.sh</code></p>
+<p><strong>Deliverables:</strong>
+- ✅ Quality validation report (quality vs GPT-4o)
+- ✅ Edge case test suite with 99%+ pass rate
+- ✅ Performance benchmarks by hardware profile
+- ✅ Model recommendations matrix (quality/speed trade-offs)</p>
+<p><strong>Acceptance Criteria:</strong>
+- 99%+ valid JSON responses
+- 90%+ relationship type accuracy
+- 90-95% extraction quality (F1 vs GPT-4o)
+- &lt;5% quote extraction errors</p>
+<hr />
+<h2 id="phase-3-advanced-features-optimization">🔀 Phase 3: Advanced Features &amp; Optimization</h2>
+<p><strong>Goal:</strong> Model switching, resource optimization, hybrid cloud/local mode, hot reload.</p>
+<p><strong>Reference Pattern (ADR-039):</strong>
+- Embedding model hot reload without API restart
+- Resource allocation configuration
+- Fallback strategies</p>
+<p><strong>Tasks:</strong></p>
+<h3 id="31-model-management-hot-reload">3.1 Model Management &amp; Hot Reload</h3>
+<p><strong>Feature:</strong> Switch models without API restart</p>
+<p><strong>Implementation:</strong>
+1. <strong>Model caching</strong> - Keep frequently-used models loaded
+2. <strong>Lazy loading</strong> - Load on first request
+3. <strong>Automatic unloading</strong> - Free VRAM when switching models
+4. <strong>Status endpoint</strong> - Show loaded models, VRAM usage</p>
+<p><strong>Create:</strong> <code>src/api/routes/models.py</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/models/status&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_model_status</span><span class="p">():</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Show loaded models and resource usage&quot;&quot;&quot;</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>        <span class="s2">&quot;loaded_models&quot;</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>            <span class="p">{</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mistral:7b-instruct&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>                <span class="s2">&quot;vram_mb&quot;</span><span class="p">:</span> <span class="mi">4500</span><span class="p">,</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>                <span class="s2">&quot;last_used&quot;</span><span class="p">:</span> <span class="s2">&quot;2025-10-22T10:30:00Z&quot;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>            <span class="p">}</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>        <span class="p">],</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>        <span class="s2">&quot;available_vram_mb&quot;</span><span class="p">:</span> <span class="mi">11500</span><span class="p">,</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>        <span class="s2">&quot;total_vram_mb&quot;</span><span class="p">:</span> <span class="mi">16000</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    <span class="p">}</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/models/reload&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reload_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hot reload extraction model&quot;&quot;&quot;</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>    <span class="c1"># Similar to embedding model reload (ADR-039)</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>    <span class="k">pass</span>
+</code></pre></div>
+<p><strong>CLI Command:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>reload<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
+</code></pre></div></p>
+<h3 id="32-hybrid-cloudlocal-fallback-mode">3.2 Hybrid Cloud/Local Fallback Mode</h3>
+<p><strong>Feature:</strong> Try local first, fallback to cloud on error or timeout</p>
+<p><strong>Configuration:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># ai_extraction_config table</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">fallback_provider</span> <span class="n">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>        <span class="c1"># &quot;openai&quot; or &quot;anthropic&quot;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">fallback_on_error</span> <span class="n">BOOLEAN</span>            <span class="c1"># Fallback if local fails</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">fallback_on_timeout</span> <span class="n">BOOLEAN</span>          <span class="c1"># Fallback if local times out</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">local_timeout_seconds</span> <span class="n">INTEGER</span>        <span class="c1"># Max wait for local (default: 300s)</span>
+</code></pre></div></p>
+<p><strong>Implementation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">extract_with_fallback</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Try local extraction, fallback to cloud if needed&quot;&quot;&quot;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>        <span class="c1"># Try local provider first</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>        <span class="k">return</span> <span class="k">await</span> <span class="n">ollama_provider</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">prompt</span><span class="p">)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="k">except</span> <span class="p">(</span><span class="ne">TimeoutError</span><span class="p">,</span> <span class="ne">ConnectionError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">fallback_on_error</span><span class="p">:</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Local extraction failed, falling back to </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">fallback_provider</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>            <span class="k">return</span> <span class="k">await</span> <span class="n">cloud_provider</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">prompt</span><span class="p">)</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>            <span class="k">raise</span>
+</code></pre></div></p>
+<p><strong>Metrics to Track:</strong>
+- Fallback trigger rate (% of requests)
+- Cost tracking (local vs cloud requests)
+- Fallback latency overhead</p>
+<h3 id="33-resource-optimization">3.3 Resource Optimization</h3>
+<p><strong>Quantization Recommendations:</strong>
+- Auto-detect available VRAM
+- Suggest optimal quantization level (FP16, 8-bit, 4-bit)
+- Warn if model too large for hardware</p>
+<p><strong>Implementation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">recommend_quantization</span><span class="p">(</span><span class="n">model_size_gb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">available_vram_gb</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Suggest optimal quantization based on VRAM&quot;&quot;&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="k">if</span> <span class="n">model_size_gb</span> <span class="o">*</span> <span class="mf">1.2</span> <span class="o">&lt;=</span> <span class="n">available_vram_gb</span><span class="p">:</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>        <span class="k">return</span> <span class="s2">&quot;FP16&quot;</span>  <span class="c1"># Full precision fits comfortably</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="k">elif</span> <span class="n">model_size_gb</span> <span class="o">*</span> <span class="mf">0.6</span> <span class="o">&lt;=</span> <span class="n">available_vram_gb</span><span class="p">:</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>        <span class="k">return</span> <span class="s2">&quot;8-bit&quot;</span>  <span class="c1"># 8-bit quantization fits</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="k">elif</span> <span class="n">model_size_gb</span> <span class="o">*</span> <span class="mf">0.35</span> <span class="o">&lt;=</span> <span class="n">available_vram_gb</span><span class="p">:</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>        <span class="k">return</span> <span class="s2">&quot;4-bit&quot;</span>  <span class="c1"># 4-bit quantization required</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>        <span class="k">return</span> <span class="s2">&quot;CPU&quot;</span>  <span class="c1"># Offload to CPU, too large for GPU</span>
+</code></pre></div></p>
+<p><strong>CLI Helper:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>recommend<span class="w"> </span>--model<span class="w"> </span>llama3.1:70b-instruct
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Model: llama3.1:70b-instruct (70B parameters)</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># Size: ~140GB (FP16), ~70GB (8-bit), ~35GB (4-bit)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Your VRAM: 16GB</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Recommendation: Use 4-bit quantization or offload to CPU</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># Command: ollama pull llama3.1:70b-instruct-q4_k_m</span>
+</code></pre></div></p>
+<h3 id="34-batch-processing-optimization">3.4 Batch Processing Optimization</h3>
+<p><strong>Feature:</strong> Process multiple chunks in parallel</p>
+<p><strong>Implementation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">extract_batch</span><span class="p">(</span><span class="n">chunks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">max_parallel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple chunks in parallel&quot;&quot;&quot;</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="c1"># Respect OLLAMA_NUM_PARALLEL setting</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">semaphore</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">max_parallel</span><span class="p">)</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>        <span class="k">async</span> <span class="k">with</span> <span class="n">semaphore</span><span class="p">:</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>            <span class="k">return</span> <span class="k">await</span> <span class="n">extract_concepts</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">process_chunk</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">])</span>
+</code></pre></div></p>
+<p><strong>Configuration:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># docker-compose.ollama.yml</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>environment:
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>-<span class="w"> </span><span class="nv">OLLAMA_NUM_PARALLEL</span><span class="o">=</span><span class="m">2</span><span class="w">  </span><span class="c1"># Process 2 chunks at once</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>-<span class="w"> </span><span class="nv">OLLAMA_MAX_LOADED_MODELS</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1"># Keep 1 model in VRAM</span>
+</code></pre></div></p>
+<h3 id="35-cost-tracking-analytics">3.5 Cost Tracking &amp; Analytics</h3>
+<p><strong>Feature:</strong> Track local vs cloud API costs over time</p>
+<p><strong>Create:</strong> <code>kg_api.extraction_analytics</code> table</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">extraction_analytics</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="k">timestamp</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">CURRENT_TIMESTAMP</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="n">provider</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">           </span><span class="c1">-- &quot;ollama&quot;, &quot;openai&quot;, &quot;anthropic&quot;</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="n">model_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span><span class="n">chunks_processed</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">    </span><span class="n">tokens_processed</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span><span class="w">       </span><span class="c1">-- 0 for local</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">    </span><span class="n">cost_usd</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span><span class="w">        </span><span class="c1">-- 0 for local</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">    </span><span class="n">avg_latency_ms</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">    </span><span class="n">success_rate</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w">      </span><span class="c1">-- % successful extractions</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="p">);</span>
+</code></pre></div>
+<p><strong>CLI Command:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>analytics<span class="w"> </span>--last-30-days
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Extraction Analytics (Last 30 Days)</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1"># =====================================</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="c1"># Provider: ollama (mistral:7b-instruct)</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1">#   Chunks: 5,432</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="c1">#   Cost: $0.00</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="c1">#   Avg Latency: 8.2s/chunk</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1">#   Success Rate: 98.5%</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="c1">#</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="c1"># Provider: openai (gpt-4o)</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="c1">#   Chunks: 1,234</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="c1">#   Cost: $24.68</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="c1">#   Avg Latency: 2.1s/chunk</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="c1">#   Success Rate: 99.8%</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a><span class="c1">#</span>
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a><span class="c1"># Total Savings: $109.28 (vs all cloud)</span>
+</code></pre></div></p>
+<p><strong>Deliverables:</strong>
+- ✅ Model hot reload without API restart
+- ✅ Hybrid cloud/local fallback mode
+- ✅ Resource optimization and recommendations
+- ✅ Cost tracking and analytics dashboard</p>
+<p><strong>Acceptance Criteria:</strong>
+- Model switch &lt; 10 seconds
+- Fallback trigger rate &lt; 5%
+- Cost tracking accurate to $0.01
+- Quantization recommendations match VRAM constraints</p>
+<hr />
+<h2 id="phase-4-enterprise-features">🚀 Phase 4: Enterprise Features</h2>
+<p><strong>Goal:</strong> vLLM backend, multi-model deployment, vision integration, advanced routing.</p>
+<p><strong>Reference Pattern (ADR-039):</strong>
+- Multiple embedding providers coexist
+- Provider-specific optimizations
+- Enterprise-grade features</p>
+<p><strong>Tasks:</strong></p>
+<h3 id="41-vllm-backend-support">4.1 vLLM Backend Support</h3>
+<p><strong>Why vLLM:</strong>
+- Highest throughput for GPU deployments (2-5x faster than Ollama)
+- Tensor parallelism for 70B+ models across multiple GPUs
+- Production-grade load balancing
+- OpenAI-compatible API</p>
+<p><strong>Create:</strong> <code>VLLMProvider</code> class</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">VLLMProvider</span><span class="p">(</span><span class="n">AIProvider</span><span class="p">):</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="sd">    vLLM inference provider (ADR-042 Phase 4).</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="sd">    Optimized for production deployments with:</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="sd">    - Tensor parallelism (multi-GPU)</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="sd">    - Continuous batching</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="sd">    - PagedAttention memory optimization</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>        <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:8000&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>        <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;meta-llama/Llama-3.1-70B-Instruct&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>        <span class="n">tensor_parallel_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># GPUs to use</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>    <span class="p">):</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>        <span class="c1"># vLLM uses OpenAI-compatible API</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="n">base_url</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;EMPTY&quot;</span><span class="p">)</span>
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+</code></pre></div>
+<p><strong>Docker Compose:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># docker-compose.vllm.yml</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">  </span><span class="nt">vllm</span><span class="p">:</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vllm/vllm-openai:latest</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;8000:8000&quot;</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="w">      </span><span class="no">--model meta-llama/Llama-3.1-70B-Instruct</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="w">      </span><span class="no">--gpu-memory-utilization 0.95</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="w">      </span><span class="no">--tensor-parallel-size 2  # Use 2 GPUs</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="w">      </span><span class="no">--max-model-len 8192</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="w">    </span><span class="nt">deploy</span><span class="p">:</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="w">        </span><span class="nt">reservations</span><span class="p">:</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="w">          </span><span class="nt">devices</span><span class="p">:</span>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nvidia</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="w">              </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">  </span><span class="c1"># 2 GPUs required</span>
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a><span class="w">              </span><span class="nt">capabilities</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpu</span><span class="p p-Indicator">]</span>
+</code></pre></div></p>
+<p><strong>Startup Script:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># scripts/start-vllm.sh</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1">#!/bin/bash</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># Start vLLM with multi-GPU tensor parallelism</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="nv">MODEL</span><span class="o">=</span><span class="s2">&quot;meta-llama/Llama-3.1-70B-Instruct&quot;</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="nv">GPUS</span><span class="o">=</span><span class="m">2</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>docker-compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.vllm.yml<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">MODEL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$MODEL</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">TENSOR_PARALLEL_SIZE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$GPUS</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="w">  </span>up<span class="w"> </span>-d
+</code></pre></div></p>
+<h3 id="42-multi-model-deployment-routing">4.2 Multi-Model Deployment &amp; Routing</h3>
+<p><strong>Feature:</strong> Run multiple models, route by complexity or content type</p>
+<p><strong>Architecture:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Ingestion Pipeline
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>        ↓
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>   Router (analyze chunk)
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>   ├─→ Simple chunk → Mistral 7B (fast)
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>   ├─→ Complex chunk → Qwen 14B (quality)
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>   └─→ Code chunk → DeepSeek Coder 33B (specialized)
+</code></pre></div></p>
+<p><strong>Implementation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MultiModelRouter</span><span class="p">:</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Route chunks to appropriate model based on complexity&quot;&quot;&quot;</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">analyze_complexity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine chunk complexity: simple, medium, complex&quot;&quot;&quot;</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>        <span class="c1"># Heuristics:</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>        <span class="c1"># - Word count, sentence length</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>        <span class="c1"># - Technical terms density</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>        <span class="c1"># - Relationship density (references, citations)</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>        <span class="c1"># - Code blocks, formulas</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>        <span class="k">if</span> <span class="n">avg_sentence_length</span> <span class="o">&lt;</span> <span class="mi">15</span> <span class="ow">and</span> <span class="n">technical_term_density</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>            <span class="k">return</span> <span class="s2">&quot;simple&quot;</span>
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>        <span class="k">elif</span> <span class="n">avg_sentence_length</span> <span class="o">&gt;</span> <span class="mi">25</span> <span class="ow">or</span> <span class="n">technical_term_density</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>            <span class="k">return</span> <span class="s2">&quot;complex&quot;</span>
+<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>            <span class="k">return</span> <span class="s2">&quot;medium&quot;</span>
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>
+<a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">route_extraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Route to appropriate model&quot;&quot;&quot;</span>
+<a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>
+<a id="__codelineno-24-23" name="__codelineno-24-23" href="#__codelineno-24-23"></a>        <span class="n">complexity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_complexity</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+<a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>
+<a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>        <span class="k">if</span> <span class="n">complexity</span> <span class="o">==</span> <span class="s2">&quot;simple&quot;</span><span class="p">:</span>
+<a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>            <span class="k">return</span> <span class="k">await</span> <span class="n">mistral_7b</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+<a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>        <span class="k">elif</span> <span class="n">complexity</span> <span class="o">==</span> <span class="s2">&quot;complex&quot;</span><span class="p">:</span>
+<a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>            <span class="k">return</span> <span class="k">await</span> <span class="n">qwen_14b</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+<a id="__codelineno-24-29" name="__codelineno-24-29" href="#__codelineno-24-29"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>            <span class="k">return</span> <span class="k">await</span> <span class="n">llama_8b</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Configuration:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1">-- ai_extraction_routing table</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_routing</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span><span class="n">rule_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">    </span><span class="n">condition</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span><span class="w">         </span><span class="c1">-- &quot;complexity = &#39;simple&#39;&quot;</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">    </span><span class="n">target_provider</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">    </span><span class="n">target_model</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">    </span><span class="n">priority</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span><span class="w">               </span><span class="c1">-- Higher = evaluated first</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="w">    </span><span class="n">active</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">TRUE</span>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="p">);</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="c1">-- Example routing rules</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_routing</span><span class="w"> </span><span class="k">VALUES</span>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a><span class="w">    </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Simple chunks&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;complexity = simple&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ollama&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;mistral:7b-instruct&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a><span class="w">    </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Complex chunks&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;complexity = complex&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ollama&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;qwen2.5:14b-instruct&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a><span class="w">    </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Code chunks&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;content_type = code&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ollama&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;deepseek-coder:33b&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">);</span>
+</code></pre></div></p>
+<h3 id="43-vision-model-integration">4.3 Vision Model Integration</h3>
+<p><strong>Feature:</strong> Extract concepts from images using multimodal models</p>
+<p><strong>Models:</strong>
+- <strong>Llama 3.2 Vision (11B, 90B)</strong> - General vision understanding
+- <strong>LLaVA (7B, 13B)</strong> - Lightweight image description
+- <strong>BakLLaVA (7B)</strong> - Improved visual reasoning</p>
+<p><strong>Implementation:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract concepts from an image&quot;&quot;&quot;</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="c1"># 1. Load image</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>    <span class="n">image_data</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>    <span class="c1"># 2. Generate description using vision model</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>    <span class="n">vision_provider</span> <span class="o">=</span> <span class="n">OllamaProvider</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;llava:13b&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>    <span class="n">description</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vision_provider</span><span class="o">.</span><span class="n">describe_image</span><span class="p">(</span>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>        <span class="n">image_data</span><span class="p">,</span>
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>        <span class="n">IMAGE_DESCRIPTION_PROMPT</span>  <span class="c1"># From ai_providers.py</span>
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>    <span class="p">)</span>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>    <span class="c1"># 3. Extract concepts from description</span>
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>    <span class="n">text_provider</span> <span class="o">=</span> <span class="n">OllamaProvider</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;mistral:7b-instruct&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>    <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">text_provider</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span>
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>        <span class="n">description</span><span class="p">,</span>
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>        <span class="n">EXTRACTION_PROMPT</span>
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>    <span class="p">)</span>
+<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>
+<a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a>    <span class="c1"># 4. Store in graph with image source reference</span>
+<a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>    <span class="k">await</span> <span class="n">store_concepts</span><span class="p">(</span><span class="n">concepts</span><span class="p">,</span> <span class="n">source_type</span><span class="o">=</span><span class="s2">&quot;IMAGE&quot;</span><span class="p">,</span> <span class="n">source_path</span><span class="o">=</span><span class="n">image_path</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>CLI Command:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>image<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Presentation Slides&quot;</span><span class="w"> </span>slide_01.png<span class="w"> </span>slide_02.png<span class="w"> </span>...
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Processing slide_01.png...</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="c1">#   ✓ Described with llava:13b (2.3s)</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="c1">#   ✓ Extracted 12 concepts (mistral:7b-instruct, 8.1s)</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># Processing slide_02.png...</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="c1">#   ✓ Described with llava:13b (2.1s)</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="c1">#   ✓ Extracted 15 concepts (mistral:7b-instruct, 9.2s)</span>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="c1">#</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a><span class="c1"># Total: 27 concepts from 2 images</span>
+</code></pre></div></p>
+<h3 id="44-load-balancing-high-availability">4.4 Load Balancing &amp; High Availability</h3>
+<p><strong>Feature:</strong> Multiple Ollama/vLLM instances for parallel ingestion</p>
+<p><strong>Architecture:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>API Server
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    ↓
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>Load Balancer
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>  ├─→ Ollama Instance 1 (mistral:7b-instruct)
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>  ├─→ Ollama Instance 2 (mistral:7b-instruct)
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>  └─→ Ollama Instance 3 (mistral:7b-instruct)
+</code></pre></div></p>
+<p><strong>Docker Compose:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">  </span><span class="nt">ollama-1</span><span class="p">:</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/ollama:latest</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span><span class="nt">deploy</span><span class="p">:</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="w">        </span><span class="nt">reservations</span><span class="p">:</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="w">          </span><span class="nt">devices</span><span class="p">:</span>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nvidia</span>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a><span class="w">              </span><span class="nt">device_ids</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;0&#39;</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># GPU 0</span>
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="w">              </span><span class="nt">capabilities</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpu</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>
+<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a><span class="w">  </span><span class="nt">ollama-2</span><span class="p">:</span>
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/ollama:latest</span>
+<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a><span class="w">    </span><span class="nt">deploy</span><span class="p">:</span>
+<a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a><span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
+<a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a><span class="w">        </span><span class="nt">reservations</span><span class="p">:</span>
+<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="w">          </span><span class="nt">devices</span><span class="p">:</span>
+<a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a><span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nvidia</span>
+<a id="__codelineno-29-19" name="__codelineno-29-19" href="#__codelineno-29-19"></a><span class="w">              </span><span class="nt">device_ids</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;1&#39;</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># GPU 1</span>
+<a id="__codelineno-29-20" name="__codelineno-29-20" href="#__codelineno-29-20"></a><span class="w">              </span><span class="nt">capabilities</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpu</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-29-21" name="__codelineno-29-21" href="#__codelineno-29-21"></a>
+<a id="__codelineno-29-22" name="__codelineno-29-22" href="#__codelineno-29-22"></a><span class="w">  </span><span class="nt">ollama-lb</span><span class="p">:</span>
+<a id="__codelineno-29-23" name="__codelineno-29-23" href="#__codelineno-29-23"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:alpine</span>
+<a id="__codelineno-29-24" name="__codelineno-29-24" href="#__codelineno-29-24"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-29-25" name="__codelineno-29-25" href="#__codelineno-29-25"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./nginx-lb.conf:/etc/nginx/nginx.conf</span>
+<a id="__codelineno-29-26" name="__codelineno-29-26" href="#__codelineno-29-26"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<a id="__codelineno-29-27" name="__codelineno-29-27" href="#__codelineno-29-27"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;11434:11434&quot;</span>
+</code></pre></div></p>
+<p><strong>Load Balancing Config:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># nginx-lb.conf</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="k">upstream</span><span class="w"> </span><span class="s">ollama_backends</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span><span class="kn">least_conn</span><span class="p">;</span><span class="w">  </span><span class="c1"># Route to instance with fewest connections</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span><span class="kn">server</span><span class="w"> </span><span class="n">ollama-1</span><span class="p">:</span><span class="mi">11434</span><span class="p">;</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">    </span><span class="kn">server</span><span class="w"> </span><span class="n">ollama-2</span><span class="p">:</span><span class="mi">11434</span><span class="p">;</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">    </span><span class="kn">server</span><span class="w"> </span><span class="n">ollama-3</span><span class="p">:</span><span class="mi">11434</span><span class="p">;</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="p">}</span>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">11434</span><span class="p">;</span>
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a><span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://ollama_backends</span><span class="p">;</span>
+<a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a><span class="p">}</span>
+</code></pre></div></p>
+<h3 id="45-model-fine-tuning-support">4.5 Model Fine-Tuning Support</h3>
+<p><strong>Feature:</strong> Fine-tune models on domain-specific data</p>
+<p><strong>Workflow:</strong>
+1. Export training data from existing extractions
+2. Fine-tune model with LoRA/QLoRA
+3. Deploy fine-tuned model to Ollama
+4. Configure as extraction provider</p>
+<p><strong>Create:</strong> <code>scripts/export-training-data.sh</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="c1"># Export extraction examples for fine-tuning</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>export-training-data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="w">  </span>--ontology<span class="w"> </span><span class="s2">&quot;Technical Documentation&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="w">  </span>--min-quality<span class="w"> </span><span class="m">0</span>.9<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="w">  </span>--format<span class="w"> </span>jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="w">  </span>--output<span class="w"> </span>training_data.jsonl
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a><span class="c1"># Format: {&quot;prompt&quot;: &quot;...&quot;, &quot;completion&quot;: &quot;...&quot;}</span>
+</code></pre></div>
+<p><strong>Documentation:</strong> Create <code>docs/guides/FINE_TUNING.md</code> with:
+- Data export procedures
+- LoRA fine-tuning with HuggingFace
+- Model deployment to Ollama
+- Quality validation checklist</p>
+<p><strong>Deliverables:</strong>
+- ✅ vLLM backend support for enterprise deployments
+- ✅ Multi-model routing by complexity/content
+- ✅ Vision model integration for image ingestion
+- ✅ Load balancing across multiple inference instances
+- ✅ Fine-tuning guide and tooling</p>
+<p><strong>Acceptance Criteria:</strong>
+- vLLM throughput 2x+ Ollama for 70B models
+- Multi-model routing improves avg quality by 5%+
+- Vision models achieve 85%+ concept accuracy on slides/diagrams
+- Load balancer distributes requests evenly (±10%)
+- Fine-tuned models show 10%+ improvement on domain data</p>
+<hr />
+<h2 id="success-metrics-overall">Success Metrics (Overall)</h2>
+<h3 id="quality-metrics">Quality Metrics</h3>
+<ul>
+<li>✅ 99%+ valid JSON responses across all models</li>
+<li>✅ 90%+ relationship type accuracy (vs GPT-4o)</li>
+<li>✅ 95%+ concept extraction quality (F1 score)</li>
+<li>✅ &lt;5% quote extraction errors</li>
+</ul>
+<h3 id="performance-metrics">Performance Metrics</h3>
+<ul>
+<li>✅ &lt;30s/chunk on mid-range GPU (acceptable)</li>
+<li>✅ &lt;15s/chunk on high-end GPU (production)</li>
+<li>✅ &lt;10min for 10,000-word document (end-to-end)</li>
+</ul>
+<h3 id="adoption-metrics">Adoption Metrics</h3>
+<ul>
+<li>✅ 50% of users try local inference within 6 months</li>
+<li>✅ 25% of production deployments use local</li>
+<li>✅ Positive user feedback on cost savings</li>
+</ul>
+<h3 id="reliability-metrics">Reliability Metrics</h3>
+<ul>
+<li>✅ 99.9% uptime for local inference service</li>
+<li>✅ &lt;1% error rate during extraction</li>
+<li>✅ Graceful degradation under load</li>
+</ul>
+<hr />
+<h2 id="testing-strategy">Testing Strategy</h2>
+<h3 id="unit-tests">Unit Tests</h3>
+<ul>
+<li><code>tests/unit/test_ollama_provider.py</code> - Provider methods</li>
+<li><code>tests/unit/test_vllm_provider.py</code> - vLLM integration</li>
+<li><code>tests/unit/test_model_router.py</code> - Routing logic</li>
+</ul>
+<h3 id="integration-tests">Integration Tests</h3>
+<ul>
+<li><code>tests/integration/test_extraction_quality.py</code> - Quality validation</li>
+<li><code>tests/integration/test_relationship_accuracy.py</code> - Type correctness</li>
+<li><code>tests/integration/test_edge_cases.py</code> - Error handling</li>
+<li><code>tests/integration/test_fallback.py</code> - Cloud fallback</li>
+</ul>
+<h3 id="performance-tests">Performance Tests</h3>
+<ul>
+<li><code>tests/performance/test_throughput.py</code> - Chunks/minute</li>
+<li><code>tests/performance/test_latency.py</code> - Response time</li>
+<li><code>tests/performance/test_memory.py</code> - VRAM/RAM usage</li>
+<li><code>tests/performance/test_batch.py</code> - Parallel processing</li>
+</ul>
+<h3 id="end-to-end-tests">End-to-End Tests</h3>
+<ul>
+<li><code>tests/e2e/test_document_ingestion.py</code> - Full pipeline</li>
+<li><code>tests/e2e/test_model_switching.py</code> - Hot reload</li>
+<li><code>tests/e2e/test_hybrid_mode.py</code> - Fallback scenarios</li>
+</ul>
+<hr />
+<h2 id="monitoring-observability">Monitoring &amp; Observability</h2>
+<h3 id="metrics-to-track-prometheusgrafana">Metrics to Track (Prometheus/Grafana)</h3>
+<ul>
+<li>Inference latency (p50, p95, p99)</li>
+<li>Throughput (chunks/second)</li>
+<li>Error rate (% failed extractions)</li>
+<li>Fallback rate (% cloud requests)</li>
+<li>VRAM usage (% utilized)</li>
+<li>Model load/unload events</li>
+<li>Cost savings ($ saved vs cloud)</li>
+</ul>
+<h3 id="alerts">Alerts</h3>
+<ul>
+<li>Inference latency &gt; 60s</li>
+<li>Error rate &gt; 5%</li>
+<li>VRAM usage &gt; 95%</li>
+<li>Ollama service down</li>
+<li>Fallback rate &gt; 20%</li>
+</ul>
+<hr />
+<h2 id="rollout-plan">Rollout Plan</h2>
+<h3 id="phase-2-weeks-3-4">Phase 2 (Weeks 3-4)</h3>
+<ol>
+<li>Create test corpus (100 documents)</li>
+<li>Run quality benchmarks (Ollama vs GPT-4o)</li>
+<li>Edge case testing and fixes</li>
+<li>Performance profiling by hardware</li>
+</ol>
+<h3 id="phase-3-weeks-5-6">Phase 3 (Weeks 5-6)</h3>
+<ol>
+<li>Implement model hot reload</li>
+<li>Hybrid fallback mode</li>
+<li>Resource optimization helpers</li>
+<li>Cost tracking analytics</li>
+</ol>
+<h3 id="phase-4-weeks-7-10">Phase 4 (Weeks 7-10)</h3>
+<ol>
+<li>vLLM provider implementation</li>
+<li>Multi-model routing</li>
+<li>Vision model integration</li>
+<li>Load balancing setup</li>
+<li>Fine-tuning guide</li>
+</ol>
+<hr />
+<h2 id="references">References</h2>
+<ul>
+<li><strong>ADR-042:</strong> Local LLM Inference Decision</li>
+<li><strong>ADR-039:</strong> Local Embedding Service (reference pattern)</li>
+<li><strong>ADR-041:</strong> AI Extraction Config</li>
+<li><strong>ADR-025:</strong> Dynamic Relationship Vocabulary</li>
+<li><strong>Ollama Documentation:</strong> https://ollama.com/</li>
+<li><strong>vLLM Documentation:</strong> https://github.com/vllm-project/vllm</li>
+<li><strong>Llama.cpp:</strong> https://github.com/ggerganov/llama.cpp</li>
+</ul>
+<hr />
+<p><strong>Last Updated:</strong> 2025-10-22
+<strong>Status:</strong> Phase 1 Complete ✅, Phases 2-4 Planned 📋</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

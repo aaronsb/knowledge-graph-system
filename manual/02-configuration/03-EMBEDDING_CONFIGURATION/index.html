@@ -1,0 +1,3995 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../02-EXTRACTION_CONFIGURATION/">
+      
+      
+        <link rel="next" href="../04-SWITCHING_EXTRACTION_PROVIDERS/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Embedding Configuration Guide - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#embedding-configuration-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Embedding Configuration Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of Contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-configuration-protection-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Configuration Protection Matters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viewing-current-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Viewing Current Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viewing-all-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Viewing All Configurations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protection-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Protection System
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Protection System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#protection-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Protection Flags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Protection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-1-switch-from-openai-to-local-embeddings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow 1: Switch from OpenAI to Local Embeddings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-2-switch-back-to-openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow 2: Switch Back to OpenAI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-3-adjust-local-model-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow 3: Adjust Local Model Settings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-4-clean-up-old-configs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow 4: Clean Up Old Configs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#view-active-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      View Active Config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-all-configs" class="md-nav__link">
+    <span class="md-ellipsis">
+      List All Configs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hot-reload-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hot Reload Model
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protection-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Protection Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Protection Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable Protection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Disable Protection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-active-config-is-change-protected" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error: "Active config is change-protected"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-config-is-delete-protected" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error: "Config is delete-protected"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-null-value-in-column-embedding_dimensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error: "null value in column 'embedding_dimensions'"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hot-reload-shows-wrong-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hot Reload Shows Wrong Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vector-search-returns-wrong-results-after-config-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vector Search Returns Wrong Results After Config Change
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-model-download-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      Local Model Download Fails
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-issues-with-local-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Issues with Local Model
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Topics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Topics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual-api-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Manual API Calls
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Schema
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-protection-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Protection Implementation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Documentation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-006" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration 006
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Reference
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="embedding-configuration-guide">Embedding Configuration Guide</h1>
+<p>Complete guide to managing embedding model configurations, including protection mechanisms to prevent breaking changes.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#configuration-options">Configuration Options</a></li>
+<li><a href="#protection-system">Protection System</a></li>
+<li><a href="#common-workflows">Common Workflows</a></li>
+<li><a href="#cli-commands">CLI Commands</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>The Knowledge Graph system supports multiple embedding providers for vector similarity search:</p>
+<ul>
+<li><strong>OpenAI</strong> - API-based embeddings (text-embedding-3-small, 1536 dimensions)</li>
+<li><strong>Local</strong> - Self-hosted models via sentence-transformers (e.g., nomic-embed-text-v1.5, 768 dimensions)</li>
+</ul>
+<h3 id="why-configuration-protection-matters">Why Configuration Protection Matters</h3>
+<p><strong>Changing embedding dimensions breaks vector search across the entire system.</strong></p>
+<p>Example: Switching from 1536D (OpenAI) to 768D (nomic-embed) makes all existing concept embeddings incompatible, causing vector search to fail or return incorrect results.</p>
+<p>The protection system prevents accidental breaking changes while allowing deliberate reconfiguration through a safe workflow.</p>
+<hr />
+<h2 id="configuration-options">Configuration Options</h2>
+<h3 id="viewing-current-configuration">Viewing Current Configuration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Show active configuration (public endpoint)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>config
+</code></pre></div>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>🎯 Embedding Configuration
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>────────────────────────────────────────
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  Provider:   openai
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  Model:      text-embedding-3-small
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  Dimensions: 1536
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  Config ID: 1
+</code></pre></div></p>
+<h3 id="viewing-all-configurations">Viewing All Configurations</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># List all configs (including inactive ones)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
+</code></pre></div>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>📋 Embedding Configurations
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>────────────────────────────────────────
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  ✓ ACTIVE Config 1 🔒 🔐
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    Provider:   openai
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    Model:      text-embedding-3-small
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    Dimensions: 1536
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    Protection: delete-protected, change-protected
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    Updated:    10/22/2025, 9:06:23 AM
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    By:         system
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>  ○ Inactive Config 2
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    Provider:   local
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    Model:      nomic-ai/nomic-embed-text-v1.5
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    Dimensions: 768
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    Updated:    10/21/2025, 3:45:12 PM
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    By:         admin
+</code></pre></div></p>
+<p><strong>Icons:</strong>
+- ✓ ACTIVE - Currently active configuration
+- ○ Inactive - Historical configuration
+- 🔒 - Delete-protected (cannot be deleted)
+- 🔐 - Change-protected (cannot change provider/dimensions)</p>
+<hr />
+<h2 id="protection-system">Protection System</h2>
+<h3 id="protection-flags">Protection Flags</h3>
+<p><strong>Delete Protection (<code>delete_protected</code>)</strong>
+- Prevents accidental deletion of important configurations
+- Typically enabled on default/system configs
+- Must be explicitly removed before deletion</p>
+<p><strong>Change Protection (<code>change_protected</code>)</strong>
+- Prevents changing provider or embedding dimensions
+- Critical safety feature - dimension changes break vector search
+- Auto-enabled after successful hot reload
+- Must be explicitly removed before provider/dimension changes</p>
+<h3 id="default-protection">Default Protection</h3>
+<p>The system automatically protects:
+1. <strong>Default OpenAI config</strong> - Both delete and change protected (applied during migration 006)
+2. <strong>Active config after hot reload</strong> - Automatically change-protected to prevent immediate follow-up accidents</p>
+<hr />
+<h2 id="common-workflows">Common Workflows</h2>
+<h3 id="workflow-1-switch-from-openai-to-local-embeddings">Workflow 1: Switch from OpenAI to Local Embeddings</h3>
+<p><strong>Safe workflow to change embedding provider:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># 1. View current config</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># 2. Remove change protection from active config</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span><span class="m">1</span><span class="w"> </span>--change
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># 3. Create new local embedding configuration</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span>--precision<span class="w"> </span>float16<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>--memory<span class="w"> </span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">  </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">  </span>--batch-size<span class="w"> </span><span class="m">8</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1"># 4. Hot reload to apply changes (zero-downtime)</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="c1"># 5. Verify new config is active and auto-protected</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
+</code></pre></div>
+<p><strong>Expected result:</strong>
+- New config becomes active
+- Change protection automatically re-enabled on new config
+- Old config deactivated but preserved for rollback</p>
+<p><strong>Important Notes:</strong>
+- This changes embedding dimensions (1536→768), making existing embeddings incompatible
+- Consider clearing/re-ingesting your data after dimension changes
+- The hot reload happens with brief 2x memory usage (1-2 seconds)</p>
+<h3 id="workflow-2-switch-back-to-openai">Workflow 2: Switch Back to OpenAI</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># 1. Remove change protection from current local config</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span>&lt;active-id&gt;<span class="w"> </span>--change
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># 2. Switch back to OpenAI</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># 3. Hot reload</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># 4. Verify</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>config
+</code></pre></div>
+<h3 id="workflow-3-adjust-local-model-settings">Workflow 3: Adjust Local Model Settings</h3>
+<p><strong>If you just want to tune resource settings (not changing dimensions):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># View current config</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>config
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Adjust resource allocation (no protection needed if dimensions unchanged)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span>--memory<span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span>--threads<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--batch-size<span class="w"> </span><span class="m">16</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># Hot reload</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+</code></pre></div>
+<p><strong>Note:</strong> Resource changes (memory, threads, batch size) do NOT require removing change protection.</p>
+<h3 id="workflow-4-clean-up-old-configs">Workflow 4: Clean Up Old Configs</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># 1. List all configs</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># 2. Remove delete protection if needed</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span><span class="m">2</span><span class="w"> </span>--delete
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># 3. Delete the config</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>delete<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<p><strong>When prompted:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Delete embedding config 2? (yes/no): yes
+</code></pre></div></p>
+<hr />
+<h2 id="cli-commands">CLI Commands</h2>
+<h3 id="configuration-management">Configuration Management</h3>
+<h4 id="view-active-config">View Active Config</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>config
+</code></pre></div>
+<p>Returns public summary (provider, model, dimensions).</p>
+<h4 id="list-all-configs">List All Configs</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
+</code></pre></div>
+<p>Shows all configurations with protection status and active indicator.</p>
+<h4 id="set-configuration">Set Configuration</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<p><strong>Options:</strong>
+- <code>--provider &lt;provider&gt;</code> - Provider: <code>local</code> or <code>openai</code> (required)
+- <code>--model &lt;model&gt;</code> - Model name (required for local provider)
+- <code>--dimensions &lt;dims&gt;</code> - Embedding dimensions (auto-detected for known models)
+- <code>--precision &lt;precision&gt;</code> - Precision: <code>float16</code>, <code>float32</code> (local only)
+- <code>--device &lt;device&gt;</code> - Device: <code>cpu</code>, <code>cuda</code>, <code>mps</code> (local only)
+- <code>--memory &lt;mb&gt;</code> - Max memory in MB (local only)
+- <code>--threads &lt;n&gt;</code> - Number of threads (local only)
+- <code>--batch-size &lt;n&gt;</code> - Batch size (local only)</p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># OpenAI configuration</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Local configuration (full)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">  </span>--precision<span class="w"> </span>float16<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">  </span>--memory<span class="w"> </span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">  </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">  </span>--batch-size<span class="w"> </span><span class="m">8</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="c1"># Local configuration (minimal - uses defaults)</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span>
+</code></pre></div>
+<h4 id="hot-reload-model">Hot Reload Model</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+</code></pre></div>
+<p>Zero-downtime reload of embedding model from database configuration:
+1. Loads new config from database
+2. Initializes new model in parallel (old model still serves requests)
+3. Atomic swap to new model
+4. Auto-protects new active config (change protection)</p>
+<h3 id="protection-management">Protection Management</h3>
+<h4 id="enable-protection">Enable Protection</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>protect<span class="w"> </span>&lt;config-id&gt;<span class="w"> </span><span class="o">[</span>FLAGS<span class="o">]</span>
+</code></pre></div>
+<p><strong>Flags:</strong>
+- <code>--delete</code> - Enable delete protection
+- <code>--change</code> - Enable change protection
+- Both flags can be used together</p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Enable change protection only</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>protect<span class="w"> </span><span class="m">1</span><span class="w"> </span>--change
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Enable both protections</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>protect<span class="w"> </span><span class="m">1</span><span class="w"> </span>--delete<span class="w"> </span>--change
+</code></pre></div>
+<h4 id="disable-protection">Disable Protection</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span>&lt;config-id&gt;<span class="w"> </span><span class="o">[</span>FLAGS<span class="o">]</span>
+</code></pre></div>
+<p><strong>Flags:</strong>
+- <code>--delete</code> - Disable delete protection
+- <code>--change</code> - Disable change protection</p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Remove change protection (before switching providers)</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span><span class="m">1</span><span class="w"> </span>--change
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Remove both protections</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span><span class="m">1</span><span class="w"> </span>--delete<span class="w"> </span>--change
+</code></pre></div>
+<h4 id="delete-configuration">Delete Configuration</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>delete<span class="w"> </span>&lt;config-id&gt;
+</code></pre></div>
+<p>Prompts for confirmation. Fails if config is delete-protected.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>delete<span class="w"> </span><span class="m">2</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="c1"># Prompts: Delete embedding config 2? (yes/no):</span>
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="error-active-config-is-change-protected">Error: "Active config is change-protected"</h3>
+<p><strong>Full error:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>✗ Failed to update embedding configuration
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>Active config (ID 1) is change-protected. Changing provider or dimensions breaks
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>vector search. Remove protection first with: kg admin embedding unprotect --change 1
+</code></pre></div></p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Remove change protection first</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span><span class="m">1</span><span class="w"> </span>--change
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Then update configuration</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span>--model<span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="w"> </span>--dimensions<span class="w"> </span><span class="m">768</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># Reload to apply</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+</code></pre></div></p>
+<h3 id="error-config-is-delete-protected">Error: "Config is delete-protected"</h3>
+<p><strong>Full error:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>✗ Failed to delete configuration
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>Config is delete-protected. Remove protection first with: kg admin embedding unprotect --delete
+</code></pre></div></p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Remove delete protection first</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>unprotect<span class="w"> </span>&lt;config-id&gt;<span class="w"> </span>--delete
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Then delete</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>delete<span class="w"> </span>&lt;config-id&gt;
+</code></pre></div></p>
+<h3 id="error-null-value-in-column-embedding_dimensions">Error: "null value in column 'embedding_dimensions'"</h3>
+<p><strong>Cause:</strong> Missing required dimensions parameter.</p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Always specify dimensions for local provider</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span>
+</code></pre></div></p>
+<h3 id="hot-reload-shows-wrong-provider">Hot Reload Shows Wrong Provider</h3>
+<p><strong>Check:</strong>
+1. Did you run <code>kg admin embedding reload</code> after changing config?
+2. Is the new config actually active?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Verify active config</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Force reload</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># Check again</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>config
+</code></pre></div>
+<h3 id="vector-search-returns-wrong-results-after-config-change">Vector Search Returns Wrong Results After Config Change</h3>
+<p><strong>Cause:</strong> Changed embedding dimensions without re-indexing data.</p>
+<p><strong>Solution:</strong></p>
+<p>When you change embedding dimensions (e.g., 1536→768):
+1. All existing concept embeddings become incompatible
+2. You must re-ingest all ontologies to rebuild embeddings with new dimensions</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Option 1: Clear and re-ingest</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>document.txt
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="c1"># Option 2: Full database reset (nuclear option)</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>reset
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="c1"># Then re-ingest all data</span>
+</code></pre></div>
+<h3 id="local-model-download-fails">Local Model Download Fails</h3>
+<p><strong>Error:</strong> Model not found or download timeout.</p>
+<p><strong>Solution:</strong></p>
+<p>Ensure the model is available in HuggingFace:
+- Valid model: <code>nomic-ai/nomic-embed-text-v1.5</code>
+- Invalid: <code>nomic-embed-text</code> (wrong format)</p>
+<p>Check network access to HuggingFace from your server.</p>
+<h3 id="memory-issues-with-local-model">Memory Issues with Local Model</h3>
+<p><strong>Error:</strong> OOM (Out of Memory) during model load.</p>
+<p><strong>Solution:</strong></p>
+<p>Reduce memory allocation or use smaller precision:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">  </span>--precision<span class="w"> </span>float16<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Use float16 instead of float32</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="w">  </span>--memory<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="se">\ </span><span class="w">         </span><span class="c1"># Reduce from 512</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="w">  </span>--batch-size<span class="w"> </span><span class="m">4</span><span class="w">          </span><span class="c1"># Reduce from 8</span>
+</code></pre></div>
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Always use hot reload</strong> instead of restarting the API</li>
+<li>Zero downtime</li>
+<li>In-flight requests complete with old model</li>
+<li>
+<p>Auto-protection prevents follow-up accidents</p>
+</li>
+<li>
+<p><strong>Test configuration changes in non-production first</strong></p>
+</li>
+<li>Create snapshot before major changes: <code>./scripts/snapshot-db.sh</code></li>
+<li>
+<p>Verify vector search still works after dimension changes</p>
+</li>
+<li>
+<p><strong>Document your configurations</strong></p>
+</li>
+<li>Use meaningful <code>updated_by</code> values when using API directly</li>
+<li>
+<p>CLI uses "api" by default</p>
+</li>
+<li>
+<p><strong>Don't delete the default OpenAI config</strong></p>
+</li>
+<li>It's there for rollback purposes</li>
+<li>
+<p>Keep it delete-protected</p>
+</li>
+<li>
+<p><strong>Re-ingest data after dimension changes</strong></p>
+</li>
+<li>Changing dimensions (e.g., 1536→768) requires rebuilding all embeddings</li>
+<li>Plan for downtime during re-ingestion</li>
+</ol>
+<hr />
+<h2 id="advanced-topics">Advanced Topics</h2>
+<h3 id="manual-api-calls">Manual API Calls</h3>
+<p>If you need to use the API directly (not via CLI):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Get active config (public endpoint)</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>curl<span class="w"> </span>http://localhost:8000/embedding/config
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Get full config details (admin endpoint)</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>curl<span class="w"> </span>http://localhost:8000/admin/embedding/config
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1"># Update config (admin endpoint)</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/admin/embedding/config<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="s1">    &quot;provider&quot;: &quot;local&quot;,</span>
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="s1">    &quot;model_name&quot;: &quot;nomic-ai/nomic-embed-text-v1.5&quot;,</span>
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="s1">    &quot;embedding_dimensions&quot;: 768,</span>
+<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a><span class="s1">    &quot;precision&quot;: &quot;float16&quot;,</span>
+<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a><span class="s1">    &quot;device&quot;: &quot;cpu&quot;,</span>
+<a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a><span class="s1">    &quot;max_memory_mb&quot;: 512,</span>
+<a id="__codelineno-28-17" name="__codelineno-28-17" href="#__codelineno-28-17"></a><span class="s1">    &quot;num_threads&quot;: 4,</span>
+<a id="__codelineno-28-18" name="__codelineno-28-18" href="#__codelineno-28-18"></a><span class="s1">    &quot;batch_size&quot;: 8</span>
+<a id="__codelineno-28-19" name="__codelineno-28-19" href="#__codelineno-28-19"></a><span class="s1">  }&#39;</span>
+<a id="__codelineno-28-20" name="__codelineno-28-20" href="#__codelineno-28-20"></a>
+<a id="__codelineno-28-21" name="__codelineno-28-21" href="#__codelineno-28-21"></a><span class="c1"># Hot reload</span>
+<a id="__codelineno-28-22" name="__codelineno-28-22" href="#__codelineno-28-22"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/admin/embedding/config/reload
+<a id="__codelineno-28-23" name="__codelineno-28-23" href="#__codelineno-28-23"></a>
+<a id="__codelineno-28-24" name="__codelineno-28-24" href="#__codelineno-28-24"></a><span class="c1"># List all configs</span>
+<a id="__codelineno-28-25" name="__codelineno-28-25" href="#__codelineno-28-25"></a>curl<span class="w"> </span>http://localhost:8000/admin/embedding/configs
+<a id="__codelineno-28-26" name="__codelineno-28-26" href="#__codelineno-28-26"></a>
+<a id="__codelineno-28-27" name="__codelineno-28-27" href="#__codelineno-28-27"></a><span class="c1"># Set protection</span>
+<a id="__codelineno-28-28" name="__codelineno-28-28" href="#__codelineno-28-28"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/admin/embedding/config/1/protect?change_protected=true&quot;</span>
+<a id="__codelineno-28-29" name="__codelineno-28-29" href="#__codelineno-28-29"></a>
+<a id="__codelineno-28-30" name="__codelineno-28-30" href="#__codelineno-28-30"></a><span class="c1"># Delete config</span>
+<a id="__codelineno-28-31" name="__codelineno-28-31" href="#__codelineno-28-31"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8000/admin/embedding/config/2
+</code></pre></div>
+<h3 id="database-schema">Database Schema</h3>
+<p>Configurations are stored in <code>kg_api.embedding_config</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1">-- View all configs</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">provider</span><span class="p">,</span><span class="w"> </span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="n">embedding_dimensions</span><span class="p">,</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">       </span><span class="n">active</span><span class="p">,</span><span class="w"> </span><span class="n">delete_protected</span><span class="p">,</span><span class="w"> </span><span class="n">change_protected</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">embedding_config</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="c1">-- Check active config</span>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">embedding_config</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">TRUE</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="auto-protection-implementation">Auto-Protection Implementation</h3>
+<p>After <code>kg admin embedding reload</code>:
+1. Reload succeeds
+2. System queries for newly active config
+3. Automatically sets <code>change_protected = TRUE</code> on that config
+4. Logs: "🔒 Auto-protected config {id} after hot reload"</p>
+<p>This ensures safety immediately after a risky operation.</p>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><a href="../../01-getting-started/02-CLI_USAGE/">CLI Usage Guide</a> - General CLI commands</li>
+<li><a href="../../05-maintenance/02-DATABASE_MIGRATIONS/">Database Migrations</a> - Schema migration workflow</li>
+<li><a href="../01-AI_PROVIDERS/">AI Providers Guide</a> - AI provider configuration</li>
+<li><a href="../../04-security-and-access/01-AUTHENTICATION/">Authentication Guide</a> - API key management</li>
+</ul>
+<hr />
+<h2 id="migration-006">Migration 006</h2>
+<p>The protection system was introduced in migration 006:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Check if migration 006 is applied</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;SELECT version, name FROM public.schema_migrations WHERE version = 6&quot;</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="c1"># Apply pending migrations</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+</code></pre></div>
+<p>Migration 006 adds:
+- <code>delete_protected</code> column (default: false)
+- <code>change_protected</code> column (default: false)
+- Auto-protects default OpenAI config (both flags set to true)</p>
+<hr />
+<h2 id="quick-reference">Quick Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>View active config</td>
+<td><code>kg admin embedding config</code></td>
+</tr>
+<tr>
+<td>List all configs</td>
+<td><code>kg admin embedding list</code></td>
+</tr>
+<tr>
+<td>Switch to local</td>
+<td><code>kg admin embedding set --provider local --model "..." --dimensions 768</code></td>
+</tr>
+<tr>
+<td>Switch to OpenAI</td>
+<td><code>kg admin embedding set --provider openai</code></td>
+</tr>
+<tr>
+<td>Hot reload</td>
+<td><code>kg admin embedding reload</code></td>
+</tr>
+<tr>
+<td>Remove change lock</td>
+<td><code>kg admin embedding unprotect &lt;id&gt; --change</code></td>
+</tr>
+<tr>
+<td>Enable protection</td>
+<td><code>kg admin embedding protect &lt;id&gt; --change --delete</code></td>
+</tr>
+<tr>
+<td>Delete config</td>
+<td><code>kg admin embedding delete &lt;id&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Safe workflow for provider switch:</strong>
+1. <code>kg admin embedding unprotect &lt;id&gt; --change</code>
+2. <code>kg admin embedding set --provider ... --dimensions ...</code>
+3. <code>kg admin embedding reload</code>
+4. Verify with <code>kg admin embedding list</code></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

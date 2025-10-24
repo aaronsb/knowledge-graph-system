@@ -1,0 +1,4392 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../01-QUICKSTART/">
+      
+      
+        <link rel="next" href="../03-INGESTION/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>kg CLI Usage Guide - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kg-cli-usage-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              kg CLI Usage Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#command-structure-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Structure Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Command Structure Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#command-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Global Options
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command-naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Naming Convention
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-configurable-aliases-adr-029" class="md-nav__link">
+    <span class="md-ellipsis">
+      User-Configurable Aliases (ADR-029)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unix-verb-router-adr-029" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unix Verb Router (ADR-029)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unix Verb Router (ADR-029)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kg-ls-resource" class="md-nav__link">
+    <span class="md-ellipsis">
+      kg ls &lt;resource&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kg-cat-resource-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      kg cat &lt;resource&gt; [id]
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kg-rm-resource-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      kg rm &lt;resource&gt; &lt;id&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kg-stat-resource-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      kg stat &lt;resource&gt; [id]
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-health-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Health Command
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-config-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Config Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Config Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-kg-config-get-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 kg config get [key]
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-kg-config-set-key-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 kg config set &lt;key&gt; &lt;value&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-kg-config-delete-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 kg config delete &lt;key&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-kg-config-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 kg config list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-kg-config-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.5 kg config path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-kg-config-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.6 kg config init
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-kg-config-reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.7 kg config reset
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-kg-config-auto-approve-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.8 kg config auto-approve [value]
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29-kg-config-enable-mcp-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.9 kg config enable-mcp &lt;tool&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#210-kg-config-disable-mcp-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.10 kg config disable-mcp &lt;tool&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#211-kg-config-mcp-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.11 kg config mcp [tool]
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#212-kg-config-update-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.12 kg config update-secret
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-ingest-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Ingest Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Ingest Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-kg-ingest-file-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 kg ingest file &lt;path&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-kg-ingest-text-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 kg ingest text &lt;text&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-job-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Job Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Job Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-kg-job-status-job-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 kg job status &lt;job-id&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-kg-job-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 kg job list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-kg-job-list-pending" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 kg job list pending
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-kg-job-list-approved" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.4 kg job list approved
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-kg-job-list-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.5 kg job list done
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-kg-job-list-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.6 kg job list failed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-kg-job-list-cancelled" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.7 kg job list cancelled
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#48-kg-job-approve-job-id-or-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.8 kg job approve &lt;job-id-or-filter&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#49-kg-job-cancel-job-id-or-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.9 kg job cancel &lt;job-id-or-filter&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-search-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Search Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Search Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-kg-search-query-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 kg search query &lt;query&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-kg-search-details-concept-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 kg search details &lt;concept-id&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-kg-search-related-concept-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.3 kg search related &lt;concept-id&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-kg-search-connect-from-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.4 kg search connect &lt;from&gt; &lt;to&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-database-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Database Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Database Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-kg-database-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.1 kg database stats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-kg-database-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.2 kg database info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-kg-database-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.3 kg database health
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-ontology-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Ontology Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Ontology Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-kg-ontology-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      7.1 kg ontology list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-kg-ontology-info-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      7.2 kg ontology info &lt;name&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-kg-ontology-files-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      7.3 kg ontology files &lt;name&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-kg-ontology-delete-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      7.4 kg ontology delete &lt;name&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-admin-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Admin Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Admin Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-kg-admin-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.1 kg admin status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-kg-admin-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.2 kg admin backup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-kg-admin-list-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.3 kg admin list-backups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-kg-admin-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.4 kg admin restore
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85-kg-admin-reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.5 kg admin reset
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86-kg-admin-scheduler-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.6 kg admin scheduler status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#87-kg-admin-scheduler-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.7 kg admin scheduler cleanup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-authentication-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Authentication Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Authentication Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-kg-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.1 kg login
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-kg-logout" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.2 kg logout
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="kg-cli-usage-guide">kg CLI Usage Guide</h1>
+<blockquote>
+<p><strong>Purpose:</strong> Comprehensive guide to all CLI commands, usage patterns, and command-line interface design.</p>
+</blockquote>
+<h2 id="command-structure-overview">Command Structure Overview</h2>
+<p>The <code>kg</code> CLI provides two complementary command styles (ADR-029):</p>
+<ol>
+<li><strong>Domain-Noun Commands</strong> (Primary): <code>kg &lt;noun&gt; &lt;verb&gt;</code> - e.g., <code>kg job list</code>, <code>kg ontology delete "Name"</code></li>
+<li><strong>Unix-Verb Shortcuts</strong> (Secondary): <code>kg &lt;verb&gt; &lt;noun&gt;</code> - e.g., <code>kg ls job</code>, <code>kg rm ontology "Name"</code></li>
+</ol>
+<p>Both styles delegate to the same underlying commands and produce identical results.</p>
+<h3 id="command-syntax">Command Syntax</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg [global-options] &lt;command&gt; [subcommand] [options] [arguments]
+</code></pre></div>
+<h3 id="global-options">Global Options</h3>
+<ul>
+<li><code>--api-url &lt;url&gt;</code> - Override API base URL (default: http://localhost:8000)</li>
+<li><code>--client-id &lt;id&gt;</code> - Client ID for multi-tenancy (env: KG_CLIENT_ID)</li>
+<li><code>--api-key &lt;key&gt;</code> - API key for authentication (env: KG_API_KEY)</li>
+</ul>
+<h3 id="command-naming-convention">Command Naming Convention</h3>
+<p>Commands use <strong>singular</strong> names with optional <strong>aliases</strong> for convenience:</p>
+<ul>
+<li><code>kg job</code> (alias: <code>jobs</code>) - Manage ingestion jobs</li>
+<li><code>kg ontology</code> (alias: <code>onto</code>) - Manage ontologies</li>
+<li><code>kg database</code> (alias: <code>db</code>) - Database operations</li>
+<li><code>kg config</code> (alias: <code>cfg</code>) - Configuration management</li>
+</ul>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>job<span class="w"> </span>list<span class="w">          </span><span class="c1"># Singular (primary)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>list<span class="w">         </span><span class="c1"># Plural alias (backward compatible)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kg<span class="w"> </span>onto<span class="w"> </span>list<span class="w">         </span><span class="c1"># Short alias</span>
+</code></pre></div></p>
+<h3 id="user-configurable-aliases-adr-029">User-Configurable Aliases (ADR-029)</h3>
+<p>Users can define custom command aliases in their config:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>aliases.cat<span class="w"> </span><span class="s1">&#39;[&quot;bat&quot;]&#39;</span>
+</code></pre></div>
+<p>This allows <code>kg bat config</code> to work alongside <code>kg cat config</code> for users with shell conflicts.</p>
+<hr />
+<h2 id="unix-verb-router-adr-029">Unix Verb Router (ADR-029)</h2>
+<p>Unix-style shortcuts for common operations:</p>
+<h3 id="kg-ls-resource"><code>kg ls &lt;resource&gt;</code></h3>
+<p>List resources using Unix-familiar syntax.</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>ls<span class="w"> </span>job<span class="w">              </span><span class="c1"># → kg job list</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>ls<span class="w"> </span>ontology<span class="w">         </span><span class="c1"># → kg ontology list</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>kg<span class="w"> </span>ls<span class="w"> </span>backup<span class="w">           </span><span class="c1"># → kg admin list-backups</span>
+</code></pre></div></p>
+<h3 id="kg-cat-resource-id"><code>kg cat &lt;resource&gt; [id]</code></h3>
+<p>Display resource details (like Unix <code>cat</code>).</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>cat<span class="w"> </span>config<span class="w">          </span><span class="c1"># → kg config list (show all config)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kg<span class="w"> </span>cat<span class="w"> </span>config<span class="w"> </span>api_url<span class="w">  </span><span class="c1"># → kg config get api_url</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>kg<span class="w"> </span>cat<span class="w"> </span>job<span class="w">             </span><span class="c1"># → kg job list (show all jobs)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>kg<span class="w"> </span>cat<span class="w"> </span>job<span class="w"> </span>job_xyz<span class="w">     </span><span class="c1"># → kg job status job_xyz</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kg<span class="w"> </span>cat<span class="w"> </span>concept<span class="w"> </span>abc-123<span class="w"> </span><span class="c1"># → kg search details abc-123</span>
+</code></pre></div></p>
+<h3 id="kg-rm-resource-id"><code>kg rm &lt;resource&gt; &lt;id&gt;</code></h3>
+<p>Remove or delete resources.</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>rm<span class="w"> </span>job<span class="w"> </span>job_abc<span class="w">          </span><span class="c1"># → kg job cancel job_abc</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>rm<span class="w"> </span>ontology<span class="w"> </span><span class="s2">&quot;My Docs&quot;</span><span class="w">   </span><span class="c1"># → kg ontology delete &quot;My Docs&quot;</span>
+</code></pre></div></p>
+<h3 id="kg-stat-resource-id"><code>kg stat &lt;resource&gt; [id]</code></h3>
+<p>Show status or statistics.</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>stat<span class="w"> </span>database<span class="w">       </span><span class="c1"># → kg database stats</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>stat<span class="w"> </span>job<span class="w"> </span>job_abc<span class="w">    </span><span class="c1"># → kg job status job_abc</span>
+</code></pre></div></p>
+<hr />
+<h2 id="1-health-command">1. Health Command</h2>
+<p><strong>Command:</strong> <code>kg health</code></p>
+<p><strong>Purpose:</strong> Check API server health</p>
+<p><strong>States:</strong>
+- ✅ API healthy → display health info + API info
+- ❌ API unhealthy → error message, exit(1)</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg health
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  → GET /health
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  → GET /info
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  → Display results
+</code></pre></div></p>
+<hr />
+<h2 id="2-config-commands">2. Config Commands</h2>
+<p><strong>Command:</strong> <code>kg config &lt;subcommand&gt;</code> (alias: <code>cfg</code>)</p>
+<p><strong>Unix Shortcuts:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>cat<span class="w"> </span>config<span class="w">          </span><span class="c1"># List all config (→ kg config list)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>cat<span class="w"> </span>config<span class="w"> </span>api_url<span class="w">  </span><span class="c1"># Show specific key (→ kg config get api_url)</span>
+</code></pre></div></p>
+<h3 id="21-kg-config-get-key">2.1 <code>kg config get [key]</code></h3>
+<p><strong>Purpose:</strong> Get configuration value(s)</p>
+<p><strong>Options:</strong>
+- <code>--json</code> - Output as JSON</p>
+<p><strong>States:</strong>
+- No key → Show all config (formatted or JSON)
+- With key → Show specific key value
+- Key not found → Error, exit(1)</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg config get
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  → Load ~/.kg/config.json
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>  → Display all config
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kg config get username
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>  → Load config
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>  → Get &quot;username&quot; value
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>  → Display
+</code></pre></div></p>
+<h3 id="22-kg-config-set-key-value">2.2 <code>kg config set &lt;key&gt; &lt;value&gt;</code></h3>
+<p><strong>Purpose:</strong> Set configuration value</p>
+<p><strong>Options:</strong>
+- <code>--json</code> - Force parse value as JSON
+- <code>--string</code> - Force treat value as string (no JSON parsing)</p>
+<p><strong>Auto-Detection:</strong>
+- Values starting with <code>[</code> or <code>{</code> are automatically parsed as JSON
+- Values <code>true</code>/<code>false</code> are parsed as booleans
+- Numeric values are parsed as numbers
+- Other values are stored as strings</p>
+<p><strong>States:</strong>
+- Valid key/value → Set and confirm
+- Invalid JSON (with --json flag or auto-detected) → Error, exit(1)</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg config set username alice
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  → Load config
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  → Auto-detect: string value
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  → Set username = &quot;alice&quot;
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  → Save config
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  → Confirm
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>kg config set aliases.cat &#39;[&quot;bat&quot;]&#39;
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>  → Auto-detect: JSON array (starts with [)
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>  → Parse as JSON
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>  → Set aliases.cat = [&quot;bat&quot;]
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>  → Save config
+</code></pre></div></p>
+<h3 id="23-kg-config-delete-key">2.3 <code>kg config delete &lt;key&gt;</code></h3>
+<p><strong>Purpose:</strong> Delete configuration key</p>
+<p><strong>States:</strong>
+- Key exists → Delete and confirm
+- Key doesn't exist → Still succeeds (idempotent)</p>
+<h3 id="24-kg-config-list">2.4 <code>kg config list</code></h3>
+<p><strong>Purpose:</strong> List all configuration</p>
+<p><strong>Options:</strong>
+- <code>--json</code> - Output as JSON</p>
+<p><strong>States:</strong>
+- Has config → Display formatted list
+- Empty config → Display empty structure</p>
+<h3 id="25-kg-config-path">2.5 <code>kg config path</code></h3>
+<p><strong>Purpose:</strong> Show configuration file path</p>
+<p><strong>States:</strong>
+- Always succeeds → Display path</p>
+<h3 id="26-kg-config-init">2.6 <code>kg config init</code></h3>
+<p><strong>Purpose:</strong> Initialize configuration file with defaults</p>
+<p><strong>Options:</strong>
+- <code>-f, --force</code> - Overwrite existing</p>
+<p><strong>States:</strong>
+- No config → Create with defaults
+- Config exists, no --force → Warning, exit(0)
+- Config exists, with --force → Overwrite with defaults</p>
+<h3 id="27-kg-config-reset">2.7 <code>kg config reset</code></h3>
+<p><strong>Purpose:</strong> Reset configuration to defaults</p>
+<p><strong>Options:</strong>
+- <code>-y, --yes</code> - Skip confirmation</p>
+<p><strong>States:</strong>
+- With --yes → Reset immediately
+- Without --yes → Prompt for confirmation
+  - User confirms (y) → Reset
+  - User cancels (n/other) → Exit(0)</p>
+<h3 id="28-kg-config-auto-approve-value">2.8 <code>kg config auto-approve [value]</code></h3>
+<p><strong>Purpose:</strong> Enable/disable auto-approval of jobs (ADR-014)</p>
+<p><strong>States:</strong>
+- No value → Show current status
+- Value = true/on/yes/enable/enabled/1 → Enable auto-approve
+- Value = false/off/no/disable/disabled/0 → Disable auto-approve
+- Invalid value → Error, exit(1)</p>
+<h3 id="29-kg-config-enable-mcp-tool">2.9 <code>kg config enable-mcp &lt;tool&gt;</code></h3>
+<p><strong>Purpose:</strong> Enable an MCP tool</p>
+<h3 id="210-kg-config-disable-mcp-tool">2.10 <code>kg config disable-mcp &lt;tool&gt;</code></h3>
+<p><strong>Purpose:</strong> Disable an MCP tool</p>
+<h3 id="211-kg-config-mcp-tool">2.11 <code>kg config mcp [tool]</code></h3>
+<p><strong>Purpose:</strong> Show MCP tool configuration</p>
+<p><strong>Options:</strong>
+- <code>--json</code> - Output as JSON</p>
+<h3 id="212-kg-config-update-secret">2.12 <code>kg config update-secret</code></h3>
+<p><strong>Purpose:</strong> Authenticate and update API secret/key</p>
+<p><strong>Options:</strong>
+- <code>-u, --username &lt;username&gt;</code> - Username</p>
+<p><strong>States:</strong>
+- ⚠️ <strong>NOT IMPLEMENTED</strong> - Placeholder only</p>
+<hr />
+<h2 id="3-ingest-commands">3. Ingest Commands</h2>
+<p><strong>Command:</strong> <code>kg ingest &lt;subcommand&gt;</code></p>
+<h3 id="31-kg-ingest-file-path">3.1 <code>kg ingest file &lt;path&gt;</code></h3>
+<p><strong>Purpose:</strong> Ingest a document file</p>
+<p><strong>Options:</strong>
+- <code>-o, --ontology &lt;name&gt;</code> - <strong>REQUIRED</strong> - Ontology/collection name
+- <code>-f, --force</code> - Force re-ingestion even if duplicate (default: false)
+- <code>-y, --yes</code> - Auto-approve job, skip approval step (default: false)
+- <code>--filename &lt;name&gt;</code> - Override filename for tracking
+- <code>--target-words &lt;n&gt;</code> - Target words per chunk (default: 1000)
+- <code>--overlap-words &lt;n&gt;</code> - Overlap between chunks (default: 200)
+- <code>--no-wait</code> - Submit and exit (don't wait for completion)</p>
+<p><strong>States:</strong>
+1. File validation
+   - File not found → Error, exit(1)
+   - File exists → Continue</p>
+<ol>
+<li>Job submission</li>
+<li>Duplicate detected → Show duplicate info, exit(0)</li>
+<li>
+<p>New job → Submit job</p>
+</li>
+<li>
+<p>Wait behavior</p>
+</li>
+<li>With --wait (default) → Poll job with progress</li>
+<li>With --no-wait → Return immediately with job ID</li>
+</ol>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg ingest file doc.txt -o &quot;My Ontology&quot;
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  → Validate file exists
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  → POST /ingest (multipart/form-data)
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  → Check for duplicate
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    → If duplicate: Display info, exit
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    → If new: Continue
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>  → If --wait (default):
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>      → Poll job with progress spinner
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>      → Display final result
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>  → If --no-wait:
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>      → Display job ID and exit immediately
+</code></pre></div></p>
+<h3 id="32-kg-ingest-text-text">3.2 <code>kg ingest text &lt;text&gt;</code></h3>
+<p><strong>Purpose:</strong> Ingest raw text</p>
+<p><strong>Options:</strong>
+- <code>-o, --ontology &lt;name&gt;</code> - <strong>REQUIRED</strong>
+- <code>-f, --force</code> - Force re-ingestion
+- <code>-y, --yes</code> - Auto-approve job
+- <code>--filename &lt;name&gt;</code> - Filename for tracking (default: "text_input")
+- <code>--target-words &lt;n&gt;</code> - Target words per chunk (default: 1000)
+- <code>--no-wait</code> - Submit and exit</p>
+<p><strong>States:</strong>
+- Same as <code>kg ingest file</code> above</p>
+<hr />
+<h2 id="4-job-commands">4. Job Commands</h2>
+<p><strong>Command:</strong> <code>kg job &lt;subcommand&gt;</code> (alias: <code>jobs</code>)</p>
+<p><strong>Unix Shortcuts:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>cat<span class="w"> </span>job<span class="w">             </span><span class="c1"># List all jobs (→ kg job list)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kg<span class="w"> </span>cat<span class="w"> </span>job<span class="w"> </span>&lt;id&gt;<span class="w">        </span><span class="c1"># Show job status (→ kg job status &lt;id&gt;)</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kg<span class="w"> </span>ls<span class="w"> </span>job<span class="w">              </span><span class="c1"># List all jobs (→ kg job list)</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>kg<span class="w"> </span>stat<span class="w"> </span>job<span class="w"> </span>&lt;id&gt;<span class="w">       </span><span class="c1"># Show job status (→ kg job status &lt;id&gt;)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>kg<span class="w"> </span>rm<span class="w"> </span>job<span class="w"> </span>&lt;id&gt;<span class="w">         </span><span class="c1"># Cancel job (→ kg job cancel &lt;id&gt;)</span>
+</code></pre></div></p>
+<h3 id="41-kg-job-status-job-id">4.1 <code>kg job status &lt;job-id&gt;</code></h3>
+<p><strong>Purpose:</strong> Get job status</p>
+<p><strong>Options:</strong>
+- <code>-w, --watch</code> - Watch job until completion</p>
+<p><strong>States:</strong>
+- Job found, no --watch → Display status once
+- Job found, with --watch → Poll until completion
+- Job not found → Error, exit(1)</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg job status job_123 --watch
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  → GET /jobs/{job_id}
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  → Poll every 2s until status ∈ {completed, failed, cancelled}
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  → Display progress in real-time
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  → Display final result
+</code></pre></div></p>
+<h3 id="42-kg-job-list">4.2 <code>kg job list</code></h3>
+<p><strong>Purpose:</strong> List recent jobs</p>
+<p><strong>Options:</strong>
+- <code>-s, --status &lt;status&gt;</code> - Filter by status
+- <code>-c, --client &lt;client-id&gt;</code> - Filter by client ID
+- <code>-l, --limit &lt;n&gt;</code> - Maximum jobs to return (default: 20)</p>
+<p><strong>States:</strong>
+- No jobs → "No jobs found"
+- Has jobs → Display table</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg job list
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  → GET /jobs?limit=20
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  → Build table with columns:
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>      [Job ID, Client, Status, Ontology, Created, Progress]
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>  → Display table
+</code></pre></div></p>
+<h3 id="43-kg-job-list-pending">4.3 <code>kg job list pending</code></h3>
+<p><strong>Purpose:</strong> List jobs awaiting approval</p>
+<p><strong>Options:</strong>
+- <code>-c, --client &lt;client-id&gt;</code>
+- <code>-l, --limit &lt;n&gt;</code> (default: 20)</p>
+<h3 id="44-kg-job-list-approved">4.4 <code>kg job list approved</code></h3>
+<p><strong>Purpose:</strong> List approved jobs (queued or processing)</p>
+<h3 id="45-kg-job-list-done">4.5 <code>kg job list done</code></h3>
+<p><strong>Purpose:</strong> List completed jobs</p>
+<h3 id="46-kg-job-list-failed">4.6 <code>kg job list failed</code></h3>
+<p><strong>Purpose:</strong> List failed jobs</p>
+<h3 id="47-kg-job-list-cancelled">4.7 <code>kg job list cancelled</code></h3>
+<p><strong>Purpose:</strong> List cancelled jobs</p>
+<h3 id="48-kg-job-approve-job-id-or-filter">4.8 <code>kg job approve &lt;job-id-or-filter&gt;</code></h3>
+<p><strong>Purpose:</strong> Approve a job or all jobs matching filter</p>
+<p><strong>Options:</strong>
+- <code>-c, --client &lt;client-id&gt;</code> - Filter by client ID (for batch operations)</p>
+<p><strong>States:</strong>
+- Starts with "job_" → Single job approval
+  - Job found → Approve, display status
+  - Job not found → Error, exit(1)
+- Filter keyword (pending, awaiting, approved, etc.) → Batch approval
+  - Find jobs matching filter
+  - Approve each job
+  - Display summary (approved count, failed count)</p>
+<h3 id="49-kg-job-cancel-job-id-or-filter">4.9 <code>kg job cancel &lt;job-id-or-filter&gt;</code></h3>
+<p><strong>Purpose:</strong> Cancel a job or all jobs matching filter</p>
+<p><strong>Options:</strong>
+- <code>-c, --client &lt;client-id&gt;</code> - Filter by client ID</p>
+<p><strong>States:</strong>
+- Same pattern as approve above</p>
+<hr />
+<h2 id="5-search-commands">5. Search Commands</h2>
+<p><strong>Command:</strong> <code>kg search &lt;subcommand&gt;</code></p>
+<h3 id="51-kg-search-query-query">5.1 <code>kg search query &lt;query&gt;</code></h3>
+<p><strong>Purpose:</strong> Search for concepts using natural language</p>
+<p><strong>Arguments:</strong>
+- <code>&lt;query&gt;</code> - Search query text</p>
+<p><strong>Options:</strong>
+- <code>-l, --limit &lt;number&gt;</code> - Maximum results (default: 10)
+- <code>--min-similarity &lt;number&gt;</code> - Minimum similarity score 0.0-1.0 (default: 0.7)</p>
+<p><strong>States:</strong>
+- Results found → Display list with scores
+- No results → Display "Found 0 concepts"</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg search query &quot;recursive thinking&quot;
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  → POST /search/concepts
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>      { query: &quot;recursive thinking&quot;, limit: 10, min_similarity: 0.7 }
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>  → Display results with:
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>      - Concept label
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>      - ID
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>      - Similarity score (colored)
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>      - Documents
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>      - Evidence count
+</code></pre></div></p>
+<h3 id="52-kg-search-details-concept-id">5.2 <code>kg search details &lt;concept-id&gt;</code></h3>
+<p><strong>Purpose:</strong> Get detailed information about a concept</p>
+<p><strong>Arguments:</strong>
+- <code>&lt;concept-id&gt;</code> - Concept ID to retrieve</p>
+<p><strong>States:</strong>
+- Concept found → Display full details
+- Concept not found → Error, exit(1)</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg search details concept_abc123
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>  → GET /concepts/{concept_id}
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  → Display:
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>      - Label, ID, search terms
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>      - Evidence instances (quotes)
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>      - Relationships
+</code></pre></div></p>
+<h3 id="53-kg-search-related-concept-id">5.3 <code>kg search related &lt;concept-id&gt;</code></h3>
+<p><strong>Purpose:</strong> Find concepts related through graph traversal</p>
+<p><strong>Arguments:</strong>
+- <code>&lt;concept-id&gt;</code> - Starting concept ID</p>
+<p><strong>Options:</strong>
+- <code>-d, --depth &lt;number&gt;</code> - Maximum traversal depth 1-5 (default: 2)
+- <code>-t, --types &lt;types...&gt;</code> - Filter by relationship types</p>
+<p><strong>States:</strong>
+- Related concepts found → Display grouped by distance
+- No related concepts → Display "Found 0 concepts"</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg search related concept_abc123 --depth 3
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>  → POST /search/related
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>      { concept_id: &quot;concept_abc123&quot;, max_depth: 3 }
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>  → Display results grouped by distance:
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>      Distance 1:
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>        • Concept A (path: IMPLIES)
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>      Distance 2:
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>        • Concept B (path: IMPLIES → SUPPORTS)
+</code></pre></div></p>
+<h3 id="54-kg-search-connect-from-to">5.4 <code>kg search connect &lt;from&gt; &lt;to&gt;</code></h3>
+<p><strong>Purpose:</strong> Find shortest path between two concepts</p>
+<p><strong>Arguments:</strong>
+- <code>&lt;from&gt;</code> - Starting concept (ID or search phrase)
+- <code>&lt;to&gt;</code> - Target concept (ID or search phrase)</p>
+<p><strong>Options:</strong>
+- <code>--max-hops &lt;number&gt;</code> - Maximum path length (default: 5)</p>
+<p><strong>States:</strong>
+- Auto-detection:
+  - Contains <code>-</code> or <code>_</code> → Treat as concept ID
+  - Otherwise → Treat as natural language query
+- Both IDs → Use ID-based search (POST /search/connect)
+- At least one query → Use search-based (POST /search/connect-by-search)
+- Path found → Display all paths with hops
+- No path found → "No connection found within N hops"</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg search connect &quot;linear thinking&quot; &quot;recursive depth&quot;
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>  → Auto-detect: both are queries (no hyphens)
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>  → POST /search/connect-by-search
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>      { from_query: &quot;linear thinking&quot;, to_query: &quot;recursive depth&quot;, max_hops: 5 }
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>  → Match concepts
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>  → Find paths
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>  → Display paths with relationships
+</code></pre></div></p>
+<hr />
+<h2 id="6-database-commands">6. Database Commands</h2>
+<p><strong>Command:</strong> <code>kg database &lt;subcommand&gt;</code> (alias: <code>kg db</code>)</p>
+<h3 id="61-kg-database-stats">6.1 <code>kg database stats</code></h3>
+<p><strong>Purpose:</strong> Show database statistics</p>
+<p><strong>States:</strong>
+- Connected → Display stats
+  - Nodes (Concepts, Sources, Instances)
+  - Relationships (Total, By Type)
+- Not connected → Error, exit(1)</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg database stats
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>  → GET /database/stats
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>  → Display:
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>      Nodes:
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>        Concepts: 150
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>        Sources: 45
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>        Instances: 320
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>      Relationships:
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>        Total: 89
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>        By Type:
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>          IMPLIES: 30
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>          SUPPORTS: 25
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>          ...
+</code></pre></div></p>
+<h3 id="62-kg-database-info">6.2 <code>kg database info</code></h3>
+<p><strong>Purpose:</strong> Show database connection information</p>
+<p><strong>States:</strong>
+- Connected → Display connection details (URI, user, version, edition)
+- Not connected → Display error details</p>
+<h3 id="63-kg-database-health">6.3 <code>kg database health</code></h3>
+<p><strong>Purpose:</strong> Check database health and connectivity</p>
+<p><strong>States:</strong>
+- Healthy → Display "✓ HEALTHY"
+- Degraded → Display "⚠ DEGRADED" with warnings
+- Unhealthy → Display "✗ UNHEALTHY" with errors</p>
+<hr />
+<h2 id="7-ontology-commands">7. Ontology Commands</h2>
+<p><strong>Command:</strong> <code>kg ontology &lt;subcommand&gt;</code> (alias: <code>onto</code>)</p>
+<h3 id="71-kg-ontology-list">7.1 <code>kg ontology list</code></h3>
+<p><strong>Purpose:</strong> List all ontologies</p>
+<p><strong>States:</strong>
+- No ontologies → "⚠ No ontologies found"
+- Has ontologies → Display list with stats
+  - Files, Chunks, Concepts per ontology</p>
+<h3 id="72-kg-ontology-info-name">7.2 <code>kg ontology info &lt;name&gt;</code></h3>
+<p><strong>Purpose:</strong> Get detailed information about an ontology</p>
+<p><strong>Arguments:</strong>
+- <code>&lt;name&gt;</code> - Ontology name</p>
+<p><strong>States:</strong>
+- Ontology found → Display full info
+  - Statistics (files, chunks, concepts, evidence, relationships)
+  - File list
+- Ontology not found → Error, exit(1)</p>
+<h3 id="73-kg-ontology-files-name">7.3 <code>kg ontology files &lt;name&gt;</code></h3>
+<p><strong>Purpose:</strong> List files in an ontology</p>
+<p><strong>Arguments:</strong>
+- <code>&lt;name&gt;</code> - Ontology name</p>
+<p><strong>States:</strong>
+- Files found → Display list with counts (chunks, concepts per file)
+- No files → "No files found"</p>
+<h3 id="74-kg-ontology-delete-name">7.4 <code>kg ontology delete &lt;name&gt;</code></h3>
+<p><strong>Purpose:</strong> Delete an ontology and all its data</p>
+<p><strong>Arguments:</strong>
+- <code>&lt;name&gt;</code> - Ontology name</p>
+<p><strong>Options:</strong>
+- <code>-f, --force</code> - Skip confirmation and force deletion</p>
+<p><strong>States:</strong>
+- No --force → Display warning and require --force flag, exit(0)
+- With --force → Delete and display results
+  - Sources deleted count
+  - Orphaned concepts cleaned count</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg ontology delete &quot;Test Ontology&quot;
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>  → Display warning
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>  → Exit (requires --force)
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>kg ontology delete &quot;Test Ontology&quot; --force
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>  → DELETE /ontology/{name}?force=true
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>  → Display deletion results
+</code></pre></div></p>
+<hr />
+<h2 id="8-admin-commands">8. Admin Commands</h2>
+<p><strong>Command:</strong> <code>kg admin &lt;subcommand&gt;</code></p>
+<h3 id="81-kg-admin-status">8.1 <code>kg admin status</code></h3>
+<p><strong>Purpose:</strong> Show system status (Docker, database, environment)</p>
+<p><strong>States:</strong>
+- All components healthy → Display all green ✓
+- Some components unhealthy → Display mixed status</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg admin status
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>  → GET /admin/system-status
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>  → Display:
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>      Docker:
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>        ✓ PostgreSQL container running
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>      Database Connection:
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>        ✓ Connected to PostgreSQL + AGE
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>      Database Statistics:
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>        Concepts: 150, Sources: 45, ...
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>      Python Environment:
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>        ✓ Virtual environment exists
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>      Configuration:
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>        ✓ .env file exists
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>        ✓ ANTHROPIC_API_KEY: configured
+</code></pre></div></p>
+<h3 id="82-kg-admin-backup">8.2 <code>kg admin backup</code></h3>
+<p><strong>Purpose:</strong> Create a database backup</p>
+<p><strong>Options:</strong>
+- <code>--type &lt;type&gt;</code> - Backup type: "full" or "ontology"
+- <code>--ontology &lt;name&gt;</code> - Ontology name (required if type is ontology)
+- <code>--output &lt;filename&gt;</code> - Custom output filename</p>
+<p><strong>States:</strong>
+- Interactive mode (no options):
+  - Prompt: "1) Full database backup" or "2) Specific ontology backup"
+  - If ontology: Prompt for ontology name
+- Non-interactive mode:
+  - Validate options
+  - Download backup</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg admin backup --type full
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>  → POST /admin/backup
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>      { backup_type: &quot;full&quot; }
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>  → Download with progress bar
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>  → Save to configured backup directory
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>  → Display results (filename, path, size)
+</code></pre></div></p>
+<h3 id="83-kg-admin-list-backups">8.3 <code>kg admin list-backups</code></h3>
+<p><strong>Purpose:</strong> List available backup files from configured directory</p>
+<p><strong>States:</strong>
+- Backup dir doesn't exist → Display message
+- No backups → Display "No backups found"
+- Has backups → Display list (newest first)
+  - Filename, size, created date</p>
+<h3 id="84-kg-admin-restore">8.4 <code>kg admin restore</code></h3>
+<p><strong>Purpose:</strong> Restore a database backup (requires authentication)</p>
+<p><strong>Options:</strong>
+- <code>--file &lt;name&gt;</code> - Backup filename (from configured directory)
+- <code>--path &lt;path&gt;</code> - Custom backup file path
+- <code>--overwrite</code> - Overwrite existing data (default: false)
+- <code>--deps &lt;action&gt;</code> - Handle external dependencies: prune, stitch, defer (default: prune)</p>
+<p><strong>States:</strong>
+1. File selection:
+   - --path → Use custom path
+   - --file → Use configured directory + filename
+   - Neither → Interactive selection from configured directory</p>
+<ol>
+<li>File validation:</li>
+<li>File not found → Error, exit(1)</li>
+<li>
+<p>File exists → Continue</p>
+</li>
+<li>
+<p>Authentication:</p>
+</li>
+<li>Get username from config or prompt</li>
+<li>Prompt for password (hidden input)</li>
+<li>Username not configured → Error, exit(1)</li>
+<li>
+<p>No password → Error, exit(1)</p>
+</li>
+<li>
+<p>Upload backup:</p>
+</li>
+<li>Upload with progress bar</li>
+<li>Display backup stats if available</li>
+<li>
+<p>Display integrity warnings if any</p>
+</li>
+<li>
+<p>Restore job tracking (ADR-018):</p>
+</li>
+<li>Try SSE streaming for real-time progress</li>
+<li>Fall back to polling if SSE fails</li>
+<li>
+<p>Display multi-line progress bars for stages:</p>
+<ul>
+<li>Creating checkpoint backup</li>
+<li>Loading backup file</li>
+<li>Restoring concepts</li>
+<li>Restoring sources</li>
+<li>Restoring instances</li>
+<li>Restoring relationships</li>
+</ul>
+</li>
+<li>
+<p>Final status:</p>
+</li>
+<li>Completed → Display restore statistics</li>
+<li>Failed → Display error, check rollback</li>
+</ol>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kg admin restore --file backup_2024-10-09.json
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>  → Validate file exists
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>  → Prompt for authentication
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>  → POST /admin/restore (multipart/form-data)
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>      + username, password, overwrite, deps
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>  → Upload with progress
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>  → Get job_id
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>  → Track job with SSE (or polling fallback)
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>  → Display multi-line progress
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>  → Display final results
+</code></pre></div></p>
+<h3 id="85-kg-admin-reset">8.5 <code>kg admin reset</code></h3>
+<p><strong>Purpose:</strong> Reset database - DESTRUCTIVE (requires authentication)</p>
+<p><strong>Options:</strong>
+- <code>--no-logs</code> - Do not clear log files
+- <code>--no-checkpoints</code> - Do not clear checkpoint files</p>
+<p><strong>States:</strong>
+1. Confirmation:
+   - Prompt user to type "yes" to confirm
+   - User types "yes" → Continue
+   - User types anything else → Exit(0)</p>
+<ol>
+<li>Authentication:</li>
+<li>Get username from config</li>
+<li>Prompt for password</li>
+<li>
+<p>Validate inputs</p>
+</li>
+<li>
+<p>Reset operation:</p>
+</li>
+<li>Displays schema validation results</li>
+<li>Displays warnings if any</li>
+</ol>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kg admin reset
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>  → Display warnings
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>  → Prompt: Type &quot;yes&quot; to confirm
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>  → POST /admin/reset
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>      { username, password, confirm: true, clear_logs, clear_checkpoints }
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>  → Display schema validation
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>  → Display warnings
+</code></pre></div></p>
+<h3 id="86-kg-admin-scheduler-status">8.6 <code>kg admin scheduler status</code></h3>
+<p><strong>Purpose:</strong> Show job scheduler status and configuration</p>
+<p><strong>States:</strong>
+- Scheduler running → Display "✓ Running"
+- Scheduler not running → Display "✗ Not running"</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg admin scheduler status
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>  → GET /admin/scheduler/status
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>  → Display:
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>      Scheduler: ✓ Running
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>      Configuration:
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>        Cleanup Interval: 3600s (1.0h)
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>        Approval Timeout: 24h
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>        ...
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>      Job Statistics:
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>        awaiting_approval: 2
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>        completed: 50
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>        ...
+</code></pre></div></p>
+<h3 id="87-kg-admin-scheduler-cleanup">8.7 <code>kg admin scheduler cleanup</code></h3>
+<p><strong>Purpose:</strong> Manually trigger scheduler cleanup</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg admin scheduler cleanup
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>  → POST /admin/scheduler/cleanup
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>  → Display cleanup results
+</code></pre></div></p>
+<hr />
+<h2 id="9-authentication-commands">9. Authentication Commands</h2>
+<blockquote>
+<p><strong>Note:</strong> Detailed authentication documentation is in <a href="../../04-security-and-access/01-AUTHENTICATION/">01-AUTHENTICATION.md</a> (ADR-027)</p>
+</blockquote>
+<h3 id="91-kg-login">9.1 <code>kg login</code></h3>
+<p><strong>Command:</strong> <code>kg login [options]</code></p>
+<p><strong>Purpose:</strong> Authenticate with username and password</p>
+<p><strong>Options:</strong>
+- <code>-u, --username &lt;username&gt;</code> - Username for authentication</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg login
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>  → Prompt for username (if not provided)
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>  → Prompt for password (hidden input)
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>  → POST /auth/login
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>  → Save auth token to config
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>  → Display success message
+</code></pre></div></p>
+<h3 id="92-kg-logout">9.2 <code>kg logout</code></h3>
+<p><strong>Command:</strong> <code>kg logout [options]</code></p>
+<p><strong>Purpose:</strong> End authentication session</p>
+<p><strong>Options:</strong>
+- <code>-a, --all</code> - Clear all tokens (not just current)</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg logout
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>  → Remove auth token from config
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>  → Display success message
+</code></pre></div></p>
+<hr />
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

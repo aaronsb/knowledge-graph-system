@@ -1,0 +1,4257 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../01-BACKUP_RESTORE/">
+      
+      
+        <link rel="next" href="../../06-reference/01-SCHEMA_REFERENCE/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Database Migrations Guide - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#database-migrations-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Database Migrations Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Reference
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Migrations?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Why Migrations?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Problem
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fresh-database-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fresh Database Initialization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applying-migrations-to-existing-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      Applying Migrations to Existing Database
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-migration-on-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic Migration on Startup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration File Structure
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration File Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      Naming Convention
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Required Template
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-new-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating a New Migration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating a New Migration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-determine-next-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Determine Next Version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-create-migration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Create Migration File
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-test-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Test Migration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-verify-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Verify Schema Changes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-commit-to-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Commit to Git
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#team-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Team Workflow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Team Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#developer-a-create-and-apply-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Developer A: Create and Apply Migration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#developer-b-pull-and-apply" class="md-nav__link">
+    <span class="md-ellipsis">
+      Developer B: Pull and Apply
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-migration-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Migration Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Migration Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding a Table
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding a Column
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-an-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding an Index
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modifying-a-column-safe-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modifying a Column (Safe Pattern)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-seeddefault-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding Seed/Default Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-idempotent-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Idempotent Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-transactional-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Transactional Migrations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-record-every-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Record Every Migration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-test-on-both-fresh-and-existing-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Test on Both Fresh and Existing Databases
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-one-migration-one-logical-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. One Migration = One Logical Change
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#migration-fails-mid-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Fails Mid-Execution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-not-recorded" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Not Recorded
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-number-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version Number Conflicts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-current-migration-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Current Migration Status
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Topics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Topics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rollback-strategy-forward-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rollback Strategy (Forward-Only)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#large-data-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Large Data Migrations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renaming-tablescolumns-zero-downtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renaming Tables/Columns (Zero-Downtime)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postgresql-specific-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      PostgreSQL-Specific Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PostgreSQL-Specific Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-postgresql-is-perfect-for-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why PostgreSQL is Perfect for Migrations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-system-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration System Files
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration System Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-runner-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Runner Options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-with-existing-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration with Existing Tools
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration with Existing Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reset-database-triggers-fresh-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reset Database (Triggers Fresh Init)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backuprestore-includes-migration-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backup/Restore (Includes Migration State)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Documentation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#view-applied-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      View Applied Migrations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-pending-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Pending Migrations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apply-all-pending-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apply All Pending Migrations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-and-apply-a-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create and Apply a Migration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="database-migrations-guide">Database Migrations Guide</h1>
+<p><strong>ADR-040: Database Schema Migration Management</strong></p>
+<p>This guide explains how to safely evolve the database schema using the knowledge graph system's migration framework.</p>
+<hr />
+<h2 id="quick-reference">Quick Reference</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Apply all pending migrations</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>./scripts/migrate-db.sh
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Preview what would be applied (dry run)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>./scripts/migrate-db.sh<span class="w"> </span>--dry-run
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Apply without confirmation (for CI/CD)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Show SQL being executed</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>./scripts/migrate-db.sh<span class="w"> </span>-y<span class="w"> </span>--verbose
+</code></pre></div>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>The knowledge graph uses a <strong>migration-based schema management system</strong> that:</p>
+<p>✅ <strong>Tracks applied changes</strong> via <code>schema_migrations</code> table
+✅ <strong>Applies changes in order</strong> (001, 002, 003, ...)
+✅ <strong>Safe to re-run</strong> (idempotent operations)
+✅ <strong>Automatic rollback</strong> on failure (PostgreSQL transactional DDL)
+✅ <strong>Works on fresh AND existing databases</strong>
+✅ <strong>Zero external dependencies</strong> (just bash + Docker's psql)</p>
+<hr />
+<h2 id="why-migrations">Why Migrations?</h2>
+<h3 id="the-problem">The Problem</h3>
+<p><strong>Without migrations:</strong>
+- Schema changes added directly to <code>schema/00_baseline.sql</code>
+- Developers with existing databases must manually extract and run SQL snippets
+- No tracking of which changes were applied
+- Risk of applying changes out of order or duplicating them
+- Different results on fresh vs. existing databases</p>
+<p><strong>With migrations:</strong>
+- Each change is a numbered file: <code>002_add_feature_x.sql</code>
+- <code>./scripts/migrate-db.sh</code> applies pending changes automatically
+- <code>schema_migrations</code> table tracks what's applied
+- Migrations apply in correct order
+- Idempotent and transactional
+- <strong>Same experience for everyone</strong> (fresh or existing database)</p>
+<hr />
+<h2 id="how-it-works">How It Works</h2>
+<h3 id="fresh-database-initialization">Fresh Database Initialization</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>↓
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>PostgreSQL<span class="w"> </span>runs<span class="w"> </span>schema/00_baseline.sql<span class="w"> </span>automatically
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>↓
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Creates<span class="w"> </span>all<span class="w"> </span>tables,<span class="w"> </span>indexes,<span class="w"> </span>functions
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>↓
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Creates<span class="w"> </span>schema_migrations<span class="w"> </span>table
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>↓
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Records:<span class="w"> </span><span class="nv">version</span><span class="o">=</span><span class="m">1</span>,<span class="w"> </span><span class="nv">name</span><span class="o">=</span><span class="s1">&#39;baseline&#39;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>↓
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Database<span class="w"> </span>ready!
+</code></pre></div>
+<h3 id="applying-migrations-to-existing-database">Applying Migrations to Existing Database</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./scripts/migrate-db.sh
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>↓
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Checks<span class="w"> </span>schema_migrations<span class="w"> </span>table
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>↓
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Compares<span class="w"> </span>with<span class="w"> </span>schema/migrations/*.sql<span class="w"> </span>files
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>↓
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>Applies<span class="w"> </span>pending<span class="w"> </span>migrations<span class="w"> </span><span class="k">in</span><span class="w"> </span>order<span class="w"> </span><span class="o">(</span><span class="m">002</span>,<span class="w"> </span><span class="m">003</span>,<span class="w"> </span>...<span class="o">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>↓
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>Records<span class="w"> </span>each<span class="w"> </span>migration<span class="w"> </span><span class="k">in</span><span class="w"> </span>schema_migrations
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>↓
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>Database<span class="w"> </span>updated!
+</code></pre></div>
+<h3 id="automatic-migration-on-startup">Automatic Migration on Startup</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/start-db.sh
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>↓
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Starts<span class="w"> </span>PostgreSQL<span class="w"> </span>container
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>↓
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Automatically<span class="w"> </span>runs<span class="w"> </span>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>↓
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>Applies<span class="w"> </span>any<span class="w"> </span>pending<span class="w"> </span>migrations
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>↓
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>Shows<span class="w"> </span>current<span class="w"> </span>schema<span class="w"> </span>version
+</code></pre></div>
+<hr />
+<h2 id="migration-file-structure">Migration File Structure</h2>
+<h3 id="naming-convention">Naming Convention</h3>
+<p><strong>Format:</strong> <code>{version}_{description}.sql</code></p>
+<ul>
+<li><strong>Version:</strong> <code>001</code>, <code>002</code>, <code>003</code>, ... (zero-padded 3 digits, sequential)</li>
+<li><strong>Description:</strong> <code>snake_case</code>, descriptive</li>
+</ul>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>001_baseline.sql
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>002_add_query_cache.sql
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>003_add_user_preferences.sql
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>010_consolidate_auth_tables.sql
+</code></pre></div></p>
+<h3 id="required-template">Required Template</h3>
+<p>Every migration must follow this structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Migration: {version}_{description}</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">-- Description: Brief explanation</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1">-- ADR: Link to related ADR (if applicable)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">-- Date: YYYY-MM-DD</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1">-- ============================================================================</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1">-- Schema Changes</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1">-- ============================================================================</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">my_table</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="k">data</span><span class="w"> </span><span class="n">JSONB</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="p">);</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">idx_my_table_data</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="k">ON</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">my_table</span><span class="w"> </span><span class="k">USING</span><span class="w"> </span><span class="n">gin</span><span class="p">(</span><span class="k">data</span><span class="p">);</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="c1">-- ============================================================================</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="c1">-- Record Migration (REQUIRED)</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="c1">-- ============================================================================</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;add_my_feature&#39;</span><span class="p">)</span><span class="w">  </span><span class="c1">-- Update version and name!</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>⚠️ Important:</strong> Every migration MUST include the <code>INSERT INTO schema_migrations</code> statement, or it won't be tracked!</p>
+<hr />
+<h2 id="creating-a-new-migration">Creating a New Migration</h2>
+<h3 id="step-1-determine-next-version">Step 1: Determine Next Version</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ls<span class="w"> </span>schema/migrations/<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Output: 002_example_add_query_cache.sql</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Next version: 003</span>
+</code></pre></div>
+<h3 id="step-2-create-migration-file">Step 2: Create Migration File</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>schema/migrations/003_add_user_preferences.sql<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s">-- Migration: 003_add_user_preferences</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s">-- Description: Add user preference storage for UI customization</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s">-- Date: 2025-10-21</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s">BEGIN;</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s">-- ============================================================================</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="s">-- Add User Preferences Table</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="s">-- ============================================================================</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="s">CREATE TABLE IF NOT EXISTS kg_api.user_preferences (</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="s">    user_id INTEGER PRIMARY KEY REFERENCES kg_auth.users(id) ON DELETE CASCADE,</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="s">    theme VARCHAR(20) DEFAULT &#39;light&#39;,</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="s">    language VARCHAR(10) DEFAULT &#39;en&#39;,</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="s">    notifications_enabled BOOLEAN DEFAULT TRUE,</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="s">    preferences JSONB NOT NULL DEFAULT &#39;{}&#39;::jsonb,</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="s">    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="s">);</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="s">CREATE INDEX IF NOT EXISTS idx_user_prefs_updated</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="s">ON kg_api.user_preferences(updated_at DESC);</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="s">COMMENT ON TABLE kg_api.user_preferences IS &#39;User UI preferences and settings&#39;;</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="s">-- ============================================================================</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="s">-- Record Migration</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="s">-- ============================================================================</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="s">INSERT INTO public.schema_migrations (version, name)</span>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="s">VALUES (3, &#39;add_user_preferences&#39;)</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="s">ON CONFLICT (version) DO NOTHING;</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="s">COMMIT;</span>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="s">EOF</span>
+</code></pre></div>
+<h3 id="step-3-test-migration">Step 3: Test Migration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Preview what would happen (dry run)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>./scripts/migrate-db.sh<span class="w"> </span>--dry-run
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Output:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># Pending Migrations:</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1">#   → Migration 003 - add_user_preferences</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Apply migration</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># Verify it worked</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">  </span><span class="s2">&quot;SELECT * FROM public.schema_migrations ORDER BY version;&quot;</span>
+</code></pre></div>
+<h3 id="step-4-verify-schema-changes">Step 4: Verify Schema Changes</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check table was created</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="s2">&quot;\d kg_api.user_preferences&quot;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># Check indexes</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="s2">&quot;\di kg_api.*&quot;</span>
+</code></pre></div>
+<h3 id="step-5-commit-to-git">Step 5: Commit to Git</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>git<span class="w"> </span>add<span class="w"> </span>schema/migrations/003_add_user_preferences.sql
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add user preferences table (migration 003)&quot;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>git<span class="w"> </span>push
+</code></pre></div>
+<hr />
+<h2 id="team-workflow">Team Workflow</h2>
+<h3 id="developer-a-create-and-apply-migration">Developer A: Create and Apply Migration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Create migration</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>schema/migrations/003_add_cache.sql<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="s">-- Migration: 003_add_cache</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="s">-- ...</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="s">EOF</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Test locally</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Commit</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>git<span class="w"> </span>add<span class="w"> </span>schema/migrations/003_add_cache.sql
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add result caching&quot;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>git<span class="w"> </span>push
+</code></pre></div>
+<h3 id="developer-b-pull-and-apply">Developer B: Pull and Apply</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Pull changes</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>git<span class="w"> </span>pull
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Migrations apply automatically on next db start</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>./scripts/start-db.sh
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Or apply manually</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+</code></pre></div>
+<hr />
+<h2 id="common-migration-patterns">Common Migration Patterns</h2>
+<h3 id="adding-a-table">Adding a Table</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">query_cache</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="n">query_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="n">query_text</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="k">result</span><span class="w"> </span><span class="n">JSONB</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="p">);</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">idx_query_cache_expires</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="k">ON</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">query_cache</span><span class="p">(</span><span class="n">expires_at</span><span class="p">);</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;add_query_cache&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="adding-a-column">Adding a Column</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1">-- PostgreSQL 9.6+ syntax (preferred)</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">email_verified</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">;</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1">-- Or with DO block for older PostgreSQL</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="k">DO</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="k">BEGIN</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">table_schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;kg_auth&#39;</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">          </span><span class="k">AND</span><span class="w"> </span><span class="k">table_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;users&#39;</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">          </span><span class="k">AND</span><span class="w"> </span><span class="k">column_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;email_verified&#39;</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="k">THEN</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">        </span><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="w"> </span><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">email_verified</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">;</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="k">IF</span><span class="p">;</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="k">END</span><span class="w"> </span><span class="err">$$</span><span class="p">;</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">.</span><span class="n">email_verified</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Whether user email has been verified&#39;</span><span class="p">;</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;add_email_verification&#39;</span><span class="p">)</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="adding-an-index">Adding an Index</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">idx_jobs_created_at</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="k">ON</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ingestion_jobs</span><span class="p">(</span><span class="n">created_at</span><span class="w"> </span><span class="k">DESC</span><span class="p">);</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;add_jobs_created_index&#39;</span><span class="p">)</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="modifying-a-column-safe-pattern">Modifying a Column (Safe Pattern)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1">-- Add new column with desired type</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">status_new</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">);</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1">-- Copy data with transformation</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="k">SET</span><span class="w"> </span><span class="n">status_new</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">UPPER</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">status_new</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1">-- (Optional) Drop old column after code migration</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1">-- ALTER TABLE kg_api.jobs DROP COLUMN IF EXISTS status;</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="c1">-- ALTER TABLE kg_api.jobs RENAME COLUMN status_new TO status;</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;normalize_job_status&#39;</span><span class="p">)</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="adding-seeddefault-data">Adding Seed/Default Data</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1">-- Insert default configuration</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">system_config</span><span class="w"> </span><span class="p">(</span><span class="k">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="k">VALUES</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;max_upload_size_mb&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;100&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">),</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;enable_telemetry&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;false&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">)</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">key</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;add_default_config&#39;</span><span class="p">)</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-idempotent-operations">1. Idempotent Operations</h3>
+<p>Always use conditional statements to make migrations safe to re-run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1">-- ✅ Good: Safe to run multiple times</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">...;</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">...;</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">...;</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1">-- ❌ Bad: Fails if already exists</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="p">...;</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="p">...;</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="p">...;</span>
+</code></pre></div>
+<h3 id="2-transactional-migrations">2. Transactional Migrations</h3>
+<p><strong>ALWAYS</strong> wrap migrations in <code>BEGIN/COMMIT</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="c1">-- All schema changes here</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1">-- If ANY statement fails, PostgreSQL automatically rolls back EVERYTHING</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<p>PostgreSQL's <strong>transactional DDL</strong> ensures all-or-nothing execution. This is a unique PostgreSQL feature - MySQL doesn't have this!</p>
+<h3 id="3-record-every-migration">3. Record Every Migration</h3>
+<p>Every migration MUST include:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;descriptive_name&#39;</span><span class="p">)</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Why <code>ON CONFLICT DO NOTHING</code>?</strong> Makes the migration idempotent - safe to re-run even if already recorded.</p>
+<h3 id="4-test-on-both-fresh-and-existing-databases">4. Test on Both Fresh and Existing Databases</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Test on fresh database</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>docker-compose<span class="w"> </span>down<span class="w"> </span>-v<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1"># Test on existing database (with data)</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="c1"># (Use your development database)</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+</code></pre></div>
+<h3 id="5-one-migration-one-logical-change">5. One Migration = One Logical Change</h3>
+<p>Don't combine unrelated changes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1">-- ❌ Bad: Two unrelated features</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1">-- 002_add_cache_and_auth.sql</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1">-- ✅ Good: Separate migrations</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1">-- 002_add_query_cache.sql</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1">-- 003_add_oauth_provider.sql</span>
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="migration-fails-mid-execution">Migration Fails Mid-Execution</h3>
+<p><strong>What happens:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>→<span class="w"> </span>Applying<span class="w"> </span>migration<span class="w"> </span><span class="m">002</span><span class="w"> </span><span class="o">(</span>add_query_cache<span class="o">)</span>...
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>ERROR:<span class="w"> </span>syntax<span class="w"> </span>error<span class="w"> </span>at<span class="w"> </span>line<span class="w"> </span><span class="m">15</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>✗<span class="w"> </span>Migration<span class="w"> </span><span class="m">002</span><span class="w"> </span>failed<span class="w"> </span>-<span class="w"> </span>stopping
+</code></pre></div></p>
+<p><strong>PostgreSQL's transactional DDL automatically rolled back ALL changes.</strong></p>
+<p>Your database is in the <strong>same state as before the migration started</strong>.</p>
+<p><strong>To fix:</strong>
+1. Edit <code>schema/migrations/002_*.sql</code> to fix the error
+2. Run <code>./scripts/migrate-db.sh -y</code> again
+3. Migration will apply from scratch</p>
+<h3 id="migration-not-recorded">Migration Not Recorded</h3>
+<p><strong>Symptom:</strong> Migration runs but shows "⚠️ Warning: Migration not recorded in schema_migrations table"</p>
+<p><strong>Cause:</strong> Migration file is missing the <code>INSERT INTO schema_migrations</code> statement</p>
+<p><strong>Fix:</strong> Add this at the end of your migration (before <code>COMMIT</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;descriptive_name&#39;</span><span class="p">)</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="version-number-conflicts">Version Number Conflicts</h3>
+<p><strong>Scenario:</strong> Two developers create migration 003 in parallel</p>
+<p><strong>Solution:</strong>
+1. Last developer to push renames their migration to 004
+2. Update version in SQL: <code>VALUES (4, 'add_preferences')</code>
+3. Coordinate via git merge/rebase</p>
+<h3 id="check-current-migration-status">Check Current Migration Status</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># What&#39;s applied?</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span><span class="s2">&quot;SELECT * FROM public.schema_migrations ORDER BY version;&quot;</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="c1"># What&#39;s pending?</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>./scripts/migrate-db.sh<span class="w"> </span>--dry-run
+</code></pre></div>
+<hr />
+<h2 id="advanced-topics">Advanced Topics</h2>
+<h3 id="rollback-strategy-forward-only">Rollback Strategy (Forward-Only)</h3>
+<p>The current system is <strong>forward-only</strong> (no automatic rollback migrations).</p>
+<p><strong>To reverse a migration:</strong>
+1. Create a new migration that undoes the changes
+2. Example: Migration 003 added a table, migration 004 drops it</p>
+<p><strong>Why no automatic rollback?</strong>
+- Simpler implementation
+- Data loss risk (rollback may delete data)
+- Most production systems are forward-only
+- Can always create a new migration to reverse changes</p>
+<h3 id="large-data-migrations">Large Data Migrations</h3>
+<p>For migrations that modify lots of data:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="c1">-- Update in batches to avoid locking entire table</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="k">DO</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="k">DECLARE</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="w">    </span><span class="n">batch_size</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="w">    </span><span class="n">updated</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">;</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="k">BEGIN</span>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="w">    </span><span class="n">LOOP</span>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="w">        </span><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">concepts</span>
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a><span class="w">        </span><span class="k">SET</span><span class="w"> </span><span class="n">new_field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">old_field</span>
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="w">        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="w">            </span><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">concepts</span>
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a><span class="w">            </span><span class="k">WHERE</span><span class="w"> </span><span class="n">new_field</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="w">            </span><span class="k">LIMIT</span><span class="w"> </span><span class="n">batch_size</span>
+<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="w">        </span><span class="p">);</span>
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="w">        </span><span class="k">GET</span><span class="w"> </span><span class="k">DIAGNOSTICS</span><span class="w"> </span><span class="n">updated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">ROW_COUNT</span><span class="p">;</span>
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a><span class="w">        </span><span class="n">EXIT</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">updated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>
+<a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a><span class="w">        </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;Updated % rows&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">updated</span><span class="p">;</span>
+<a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="n">LOOP</span><span class="p">;</span>
+<a id="__codelineno-26-23" name="__codelineno-26-23" href="#__codelineno-26-23"></a><span class="k">END</span><span class="w"> </span><span class="err">$$</span><span class="p">;</span>
+<a id="__codelineno-26-24" name="__codelineno-26-24" href="#__codelineno-26-24"></a>
+<a id="__codelineno-26-25" name="__codelineno-26-25" href="#__codelineno-26-25"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-26-26" name="__codelineno-26-26" href="#__codelineno-26-26"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;backfill_new_field&#39;</span><span class="p">)</span>
+<a id="__codelineno-26-27" name="__codelineno-26-27" href="#__codelineno-26-27"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-26-28" name="__codelineno-26-28" href="#__codelineno-26-28"></a>
+<a id="__codelineno-26-29" name="__codelineno-26-29" href="#__codelineno-26-29"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="renaming-tablescolumns-zero-downtime">Renaming Tables/Columns (Zero-Downtime)</h3>
+<p><strong>Phase 1: Add new column, copy data</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1">-- Migration 002</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">email_address</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">;</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">email_address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">email_address</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;add_email_address&#39;</span><span class="p">);</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Phase 2: Update application to use new column</strong>
+(Deploy new code that uses <code>email_address</code>)</p>
+<p><strong>Phase 3: Drop old column</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1">-- Migration 003</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="k">DROP</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;remove_old_email&#39;</span><span class="p">);</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div></p>
+<hr />
+<h2 id="postgresql-specific-features">PostgreSQL-Specific Features</h2>
+<h3 id="why-postgresql-is-perfect-for-migrations">Why PostgreSQL is Perfect for Migrations</h3>
+<p><strong>1. Transactional DDL</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="p">(...);</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">posts</span><span class="w"> </span><span class="p">(...);</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1">-- If posts fails, users table is NOT created</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>2. IF NOT EXISTS Clauses</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">...;</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">...;</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">...;</span><span class="w">  </span><span class="c1">-- PostgreSQL 9.6+</span>
+</code></pre></div></p>
+<p><strong>3. DO Blocks (Anonymous PL/pgSQL)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="k">DO</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="k">BEGIN</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(...)</span><span class="w"> </span><span class="k">THEN</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">        </span><span class="c1">-- Conditional DDL</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="k">IF</span><span class="p">;</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="k">END</span><span class="w"> </span><span class="err">$$</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>4. Information Schema</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="k">table_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;users&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">column_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;email&#39;</span><span class="p">;</span>
+</code></pre></div></p>
+<hr />
+<h2 id="migration-system-files">Migration System Files</h2>
+<h3 id="key-files">Key Files</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>schema/
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>├── 00_baseline.sql                 # Base schema (includes schema_migrations table)
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>└── migrations/
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    ├── README.md                   # Detailed migration guide
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>    ├── 001_baseline.sql            # Reference snapshot
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>    ├── 002_example_add_query_cache.sql  # Example migration
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>    └── 003_your_feature.sql        # Your migrations
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>scripts/
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>└── migrate-db.sh                   # Migration runner (~200 lines)
+</code></pre></div>
+<h3 id="migration-runner-options">Migration Runner Options</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>./scripts/migrate-db.sh<span class="w">              </span><span class="c1"># Interactive (asks for confirmation)</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>./scripts/migrate-db.sh<span class="w"> </span>-y<span class="w">           </span><span class="c1"># Auto-confirm (for CI/CD)</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>./scripts/migrate-db.sh<span class="w"> </span>--dry-run<span class="w">    </span><span class="c1"># Preview only (no changes)</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>./scripts/migrate-db.sh<span class="w"> </span>-v<span class="w">           </span><span class="c1"># Verbose (show SQL)</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>./scripts/migrate-db.sh<span class="w"> </span>--help<span class="w">       </span><span class="c1"># Show usage</span>
+</code></pre></div>
+<hr />
+<h2 id="integration-with-existing-tools">Integration with Existing Tools</h2>
+<h3 id="reset-database-triggers-fresh-init">Reset Database (Triggers Fresh Init)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.reset<span class="w"> </span>--auto-confirm
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="c1"># OR</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>./scripts/teardown.sh<span class="w">  </span><span class="c1"># Choose option 2 (delete data)</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p><strong>What happens:</strong>
+1. Removes Docker volumes (deletes all data)
+2. Creates fresh volumes
+3. Runs <code>schema/00_baseline.sql</code> automatically
+4. Records migration version 1 (baseline)
+5. Ready to use!</p>
+<h3 id="backuprestore-includes-migration-state">Backup/Restore (Includes Migration State)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># Backup (includes schema_migrations table)</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>knowledge_graph<span class="w"> </span>&gt;<span class="w"> </span>backup.sql
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># Restore</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>&lt;<span class="w"> </span>backup.sql
+</code></pre></div>
+<p>The <code>schema_migrations</code> table is included in backups, so restored databases know which migrations are applied.</p>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><strong>ADR-040:</strong> Database Schema Migration Management (design decisions)</li>
+<li><strong>schema/migrations/README.md:</strong> Detailed migration reference (550+ lines)</li>
+<li><strong>ADR-024:</strong> Multi-Schema PostgreSQL Architecture</li>
+<li><strong>01-SCHEMA_REFERENCE.md:</strong> Complete schema documentation</li>
+</ul>
+<hr />
+<h2 id="quick-examples">Quick Examples</h2>
+<h3 id="view-applied-migrations">View Applied Migrations</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="w">  </span><span class="s2">&quot;SELECT version, name, applied_at FROM public.schema_migrations ORDER BY version;&quot;</span>
+</code></pre></div>
+<h3 id="check-pending-migrations">Check Pending Migrations</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>./scripts/migrate-db.sh<span class="w"> </span>--dry-run
+</code></pre></div>
+<h3 id="apply-all-pending-migrations">Apply All Pending Migrations</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+</code></pre></div>
+<h3 id="create-and-apply-a-migration">Create and Apply a Migration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># 1. Create file</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>schema/migrations/003_add_feature.sql<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="s">-- Migration: 003_add_feature</span>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="s">-- Description: Add feature X</span>
+<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="s">-- Date: 2025-10-21</span>
+<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>
+<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="s">BEGIN;</span>
+<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>
+<a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a><span class="s">CREATE TABLE IF NOT EXISTS kg_api.feature_x (</span>
+<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a><span class="s">    id SERIAL PRIMARY KEY,</span>
+<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a><span class="s">    data JSONB NOT NULL</span>
+<a id="__codelineno-40-12" name="__codelineno-40-12" href="#__codelineno-40-12"></a><span class="s">);</span>
+<a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a>
+<a id="__codelineno-40-14" name="__codelineno-40-14" href="#__codelineno-40-14"></a><span class="s">INSERT INTO public.schema_migrations (version, name)</span>
+<a id="__codelineno-40-15" name="__codelineno-40-15" href="#__codelineno-40-15"></a><span class="s">VALUES (3, &#39;add_feature&#39;)</span>
+<a id="__codelineno-40-16" name="__codelineno-40-16" href="#__codelineno-40-16"></a><span class="s">ON CONFLICT (version) DO NOTHING;</span>
+<a id="__codelineno-40-17" name="__codelineno-40-17" href="#__codelineno-40-17"></a>
+<a id="__codelineno-40-18" name="__codelineno-40-18" href="#__codelineno-40-18"></a><span class="s">COMMIT;</span>
+<a id="__codelineno-40-19" name="__codelineno-40-19" href="#__codelineno-40-19"></a><span class="s">EOF</span>
+<a id="__codelineno-40-20" name="__codelineno-40-20" href="#__codelineno-40-20"></a>
+<a id="__codelineno-40-21" name="__codelineno-40-21" href="#__codelineno-40-21"></a><span class="c1"># 2. Apply</span>
+<a id="__codelineno-40-22" name="__codelineno-40-22" href="#__codelineno-40-22"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-40-23" name="__codelineno-40-23" href="#__codelineno-40-23"></a>
+<a id="__codelineno-40-24" name="__codelineno-40-24" href="#__codelineno-40-24"></a><span class="c1"># 3. Commit</span>
+<a id="__codelineno-40-25" name="__codelineno-40-25" href="#__codelineno-40-25"></a>git<span class="w"> </span>add<span class="w"> </span>schema/migrations/003_add_feature.sql
+<a id="__codelineno-40-26" name="__codelineno-40-26" href="#__codelineno-40-26"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add feature X (migration 003)&quot;</span>
+</code></pre></div>
+<hr />
+<p><strong>Last Updated:</strong> 2025-10-20
+<strong>Current Schema Version:</strong> 001 (baseline) + any applied migrations</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

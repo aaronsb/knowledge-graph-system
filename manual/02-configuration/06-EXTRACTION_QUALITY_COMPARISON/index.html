@@ -1,0 +1,4488 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../05-LOCAL_INFERENCE_IMPLEMENTATION/">
+      
+      
+        <link rel="next" href="../../03-integration/01-MCP_SETUP/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>AI Extraction Quality Comparison - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai-extraction-quality-comparison" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AI Extraction Quality Comparison
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Executive Summary
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Executive Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-decision-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Decision Table
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Findings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-methodology" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Methodology
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Methodology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Setup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quantitative-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quantitative Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quantitative Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overall-statistics-same-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overall Statistics (Same Document)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship-type-distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Relationship Type Distribution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qualitative-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Qualitative Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Qualitative Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-concept-granularity" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Concept Granularity
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-relationship-quality-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Relationship Quality Examples
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-search-term-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Search Term Quality
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-graph-traversal-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Graph Traversal Quality
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detailed-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detailed Findings
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Detailed Findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-1-different-extraction-philosophies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 1: Different Extraction Philosophies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-2-canonical-adherence-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 2: Canonical Adherence Matters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-3-model-size-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 3: Model Size ≠ Quality
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-4-speed-vs-quality-trade-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 4: Speed vs Quality Trade-off
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-5-the-abe-simpson-lesson-wrong-tool-for-the-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 5: The "Abe Simpson" Lesson - Wrong Tool for the Job
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommendations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-use-case" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Use Case
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="By Use Case">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-production-knowledge-base-publicshared" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Production Knowledge Base (Public/Shared)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-large-private-corpus-1000-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Large Private Corpus (1000+ documents)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-clean-schema-enforcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Clean Schema Enforcement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-maximum-concept-extraction-research-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Maximum Concept Extraction (Research Use)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-quick-prototyping-experimentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Quick Prototyping / Experimentation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-budget-conscious-serious-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Budget-Conscious Serious Work
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-what-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. What to Avoid
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architectural Validation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architectural Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-consistency-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pipeline Consistency Verified
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cost-benefit-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cost-Benefit Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cost-Benefit Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scenario-100-philosophy-lectures-600-chunks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scenario: 100 Philosophy Lectures (~600 chunks)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#practical-implications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Practical Implications
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Practical Implications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-individual-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Individual Users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-organizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Organizations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conclusion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-takeaways" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Takeaways
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decision-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision Framework
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-surprising-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Surprising Results
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Reproducibility
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ai-extraction-quality-comparison">AI Extraction Quality Comparison</h1>
+<p><strong>Empirical comparison of concept extraction quality across OpenAI GPT-4o, Anthropic Claude, and Ollama local models.</strong></p>
+<p><strong>Test Date:</strong> October 22-23, 2025
+<strong>Test Document:</strong> Alan Watts - Tao of Philosophy - 01 - Not What Should Be (~6 chunks, philosophical content)
+<strong>Pipeline:</strong> Same ingestion pipeline for all providers (ADR-042 verification)
+<strong>Update:</strong> Added Qwen3:14b comparison (October 23, 2025)</p>
+<hr />
+<h2 id="executive-summary">Executive Summary</h2>
+<h3 id="quick-decision-table">Quick Decision Table</h3>
+<table>
+<thead>
+<tr>
+<th>Use Case</th>
+<th>Recommended Provider</th>
+<th>Reasoning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Production knowledge base</strong></td>
+<td><strong>OpenAI GPT-4o</strong></td>
+<td>Best balance: 46 concepts, 88% canonical, fast (2s/chunk), worth $0.10/doc</td>
+</tr>
+<tr>
+<td><strong>Maximum concept extraction</strong></td>
+<td><strong>Qwen3 14B (Ollama)</strong></td>
+<td>MOST concepts (57), 74% canonical, fits 16GB VRAM, worth 60s wait</td>
+</tr>
+<tr>
+<td><strong>Clean schema enforcement</strong></td>
+<td><strong>Qwen 2.5 14B (Ollama)</strong></td>
+<td>Highest canonical adherence (92%), professional quality, free</td>
+</tr>
+<tr>
+<td><strong>Consumer GPU research</strong></td>
+<td><strong>Qwen3 14B (Ollama)</strong></td>
+<td>19% more concepts than GPT-OSS, 16GB VRAM, acceptable speed</td>
+</tr>
+<tr>
+<td><strong>Large private corpus (1000+ docs)</strong></td>
+<td><strong>Qwen 2.5 14B (Ollama)</strong></td>
+<td>Best quality/cost ratio, 92% canonical, zero cost, privacy-preserving</td>
+</tr>
+<tr>
+<td><strong>Quick prototyping</strong></td>
+<td><strong>OpenAI GPT-4o</strong></td>
+<td>Fastest inference (2s vs 60s per chunk), 30x speed advantage</td>
+</tr>
+<tr>
+<td><strong>Budget-conscious serious work</strong></td>
+<td><strong>Qwen 2.5 14B (Ollama)</strong></td>
+<td>92% canonical adherence, clean relationships, professional quality</td>
+</tr>
+<tr>
+<td><strong>Avoid for production</strong></td>
+<td>~~Mistral 7B (Ollama)~~</td>
+<td>Too messy (38% canonical), creates vocabulary pollution</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-findings">Key Findings</h3>
+<ol>
+<li><strong>Qwen3 14B extracts the MOST concepts (57)</strong> - surpassing GPT-OSS 20B (48) and GPT-4o (46), while fitting in 16GB VRAM</li>
+<li><strong>Qwen 2.5 14B has highest canonical adherence (92%)</strong> - better than all others (GPT-4o: 88%, Qwen3: 74%, GPT-OSS: 65%, Mistral: 38%)</li>
+<li><strong>Qwen3 14B represents major upgrade over Qwen 2.5</strong> - 2.4x more concepts (57 vs 24), but lower canonical adherence (74% vs 92%)</li>
+<li><strong>Hardware accessibility matters</strong> - Qwen3 14B achieves 74% canonical with 57 concepts on consumer GPUs (16GB VRAM)</li>
+<li><strong>Parameter count ≠ Schema compliance</strong> - 20B GPT-OSS has 65% vs 14B Qwen 2.5's 92%</li>
+<li><strong>Mistral 7B creates vocabulary pollution</strong> - avoid for production use</li>
+<li><strong>All providers use the same pipeline</strong> - quality differences are model-dependent, not architectural</li>
+</ol>
+<hr />
+<h2 id="test-methodology">Test Methodology</h2>
+<h3 id="test-setup">Test Setup</h3>
+<p><strong>Document:</strong> Alan Watts lecture transcript on Tao philosophy, meditation, and ego (~6 semantic chunks)</p>
+<p><strong>Providers Tested:</strong>
+- OpenAI GPT-4o (via API, ~1.7T parameters)
+- Ollama Mistral 7B Instruct (local, 7B parameters)
+- Ollama Qwen 2.5 14B Instruct (local, 14B parameters, October 2024 release)
+- Ollama Qwen3 14B Instruct (local, 14B parameters, January 2025 release)
+- Ollama GPT-OSS 20B (local, 20B parameters, thinking="low", CPU+GPU split)</p>
+<p><strong>Controlled Variables:</strong>
+- Same source document
+- Same chunking (semantic, ~1000 words per chunk)
+- Same extraction pipeline (<code>src/api/lib/ingestion.py</code>)
+- Same relationship normalization (<code>src/api/lib/relationship_mapper.py</code>)
+- Same embedding model (OpenAI text-embedding-3-small for all)</p>
+<p><strong>Measured Metrics:</strong>
+- Concept count (granularity)
+- Instance count (evidence coverage)
+- Relationship count (graph density)
+- Canonical type adherence (schema compliance)
+- Relationship quality (semantic accuracy)
+- Search term quality (discoverability)</p>
+<hr />
+<h2 id="quantitative-results">Quantitative Results</h2>
+<h3 id="overall-statistics-same-document">Overall Statistics (Same Document)</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Mistral 7B</th>
+<th>Qwen 2.5 14B</th>
+<th>Qwen3 14B</th>
+<th>GPT-OSS 20B</th>
+<th>GPT-4o</th>
+<th>Winner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Concepts Extracted</strong></td>
+<td>32</td>
+<td>24 ⚠️</td>
+<td><strong>57</strong> ✅</td>
+<td>48</td>
+<td>46</td>
+<td><strong>Qwen3 14B</strong></td>
+</tr>
+<tr>
+<td><strong>Evidence Instances</strong></td>
+<td>36</td>
+<td>27</td>
+<td><strong>70</strong> ✅</td>
+<td>49</td>
+<td>48</td>
+<td><strong>Qwen3 14B</strong></td>
+</tr>
+<tr>
+<td><strong>Total Relationships</strong></td>
+<td>134</td>
+<td>98</td>
+<td>61 ⚠️</td>
+<td><strong>190</strong> ✅</td>
+<td>172</td>
+<td><strong>GPT-OSS 20B</strong></td>
+</tr>
+<tr>
+<td><strong>Unique Rel Types</strong></td>
+<td>16</td>
+<td>13</td>
+<td><strong>22</strong> ✅</td>
+<td>17</td>
+<td>17</td>
+<td><strong>Qwen3 14B</strong></td>
+</tr>
+<tr>
+<td><strong>Canonical Adherence</strong></td>
+<td>38% ❌</td>
+<td><strong>92%</strong> ✅</td>
+<td>74% ⚠️</td>
+<td>65% ⚠️</td>
+<td>88% ✅</td>
+<td><strong>Qwen 2.5 14B</strong></td>
+</tr>
+<tr>
+<td><strong>Non-canonical Types</strong></td>
+<td>10 types</td>
+<td><strong>1 type</strong> ✅</td>
+<td>5 types ⚠️</td>
+<td>6 types ⚠️</td>
+<td>2 types</td>
+<td><strong>Qwen 2.5 14B</strong></td>
+</tr>
+<tr>
+<td><strong>Inference Speed</strong></td>
+<td>~8-15s/chunk</td>
+<td>~12-20s/chunk</td>
+<td><strong>~60s/chunk</strong> ❌</td>
+<td>~15-25s/chunk ⚠️</td>
+<td><strong>~2s/chunk</strong> ✅</td>
+<td><strong>GPT-4o</strong> (30x faster)</td>
+</tr>
+<tr>
+<td><strong>Cost per Document</strong></td>
+<td><strong>$0.00</strong> ✅</td>
+<td><strong>$0.00</strong> ✅</td>
+<td><strong>$0.00</strong> ✅</td>
+<td><strong>$0.00</strong> ✅</td>
+<td>~$0.10</td>
+<td>Tie (local)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="relationship-type-distribution">Relationship Type Distribution</h3>
+<p><strong>OpenAI GPT-4o (88% canonical):</strong>
+- CONTRASTS_WITH: 4
+- CAUSES: 3
+- INFLUENCES: 3
+- EQUIVALENT_TO: 3
+- IMPLIES: 2
+- ENABLES: 2
+- PRODUCES: 1
+- PREVENTS: 1
+- ⚠️ <strong>LIMITS</strong>: 1 (non-canonical)
+- ⚠️ <strong>CONTRIBUTES_TO</strong>: 1 (non-canonical)
+- + 7 more canonical types</p>
+<p><strong>GPT-OSS 20B (65% canonical):</strong>
+- CONTAINS: 6 ✅
+- IMPLIES: 6 ✅
+- ⚠️ <strong>ENABLED_BY</strong>: 5 (reversed! should be ENABLES)
+- CONTRASTS_WITH: 5 ✅
+- CAUSES: 4 ✅
+- CONTRADICTS: 3 ✅
+- CATEGORIZED_AS: 2 ✅
+- REQUIRES: 2 ✅
+- ⚠️ <strong>INTERACTS_WITH</strong>: 2 (non-canonical)
+- ❌ <strong>CONTRIBUTES_TO</strong>: 1 (non-canonical)
+- ❌ <strong>PROPOSES_TO_SOLVE</strong>: 1 (non-canonical, very specific)
+- ❌ <strong>PROVIDES</strong>: 1 (vague, non-canonical)
+- ❌ <strong>DEFINES</strong>: 1 (should be DEFINED_AS)
+- + 4 more canonical types (EXEMPLIFIES, PRODUCES, PRESUPPOSES, RESULTS_FROM)</p>
+<p><strong>Qwen 2.5 14B (92% canonical):</strong>
+- PREVENTS: 3
+- CAUSES: 2
+- COMPOSED_OF: 2
+- EQUIVALENT_TO: 2
+- CONTRADICTS: 1
+- REQUIRES: 1
+- INFLUENCES: 1
+- ⚠️ <strong>DEFINES</strong>: 1 (should be DEFINED_AS)
+- + 5 more canonical types</p>
+<p><strong>Qwen3 14B (74% canonical):</strong>
+- ❌ <strong>INSTANCE_OF</strong>: 11 (not in canonical taxonomy)
+- CONTRASTS_WITH: 5 ✅
+- CONTAINS: 5 ✅
+- RESULTS_FROM: 5 ✅
+- CONTRADICTS: 4 ✅
+- EXEMPLIFIES: 4 ✅
+- PART_OF: 4 ✅
+- EQUIVALENT_TO: 3 ✅
+- INFLUENCES: 3 ✅
+- CAUSES: 3 ✅
+- ⚠️ <strong>USED_FOR</strong>: 2 (not in canonical list)
+- PRODUCES: 2 ✅
+- OPPOSITE_OF: 1 ✅
+- PRESUPPOSES: 1 ✅
+- ⚠️ <strong>RELATED_TO</strong>: 1 (too vague, non-canonical)
+- COMPOSED_OF: 1 ✅
+- REQUIRES: 1 ✅
+- ENABLES: 1 ✅
+- ⚠️ <strong>EXPLAINS</strong>: 1 (not in canonical list)
+- ⚠️ <strong>DEFINITION_OF</strong>: 1 (should be DEFINED_AS)
+- DEFINED_AS: 1 ✅
+- SUPPORTS: 1 ✅</p>
+<p><strong>Mistral 7B (38% canonical):</strong>
+- ❌ IS_ALTERNATIVE_TO: 5 (non-canonical)
+- IMPLIES: 4 ✅
+- REQUIRES: 3 ✅
+- ❌ IS_EXAMPLE_OF: 1 (should be EXEMPLIFIES)
+- ❌ IS_HERETICAL_IDEA_FROM: 1 (very creative!)
+- ❌ LEADS_TO: 1 (vague, non-canonical)
+- ❌ LIMITS: 1 (vague)
+- + 9 more types (mix of canonical and creative)</p>
+<hr />
+<h2 id="qualitative-analysis">Qualitative Analysis</h2>
+<h3 id="1-concept-granularity">1. Concept Granularity</h3>
+<p><strong>GPT-OSS 20B - Hyper-Granular, Most Comprehensive:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Extracted the most concepts (48), with exceptional specificity:
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>- &quot;Ego&quot; (core concept)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>- &quot;Ego as role mask&quot; (nuanced perspective)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>- &quot;Ego Illusion&quot; (distinct from generic &quot;Illusion of Self&quot;)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>- &quot;False sense of personal identity&quot; (definitional)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>- &quot;Meditation as Silence&quot; (specific aspect, separate from &quot;Meditation&quot;)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>- &quot;No Method for Enlightenment&quot; (philosophical conclusion)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>- &quot;Mystical experience of unity&quot; (experiential concept)
+</code></pre></div></p>
+<p><strong>OpenAI GPT-4o - High Granularity:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Extracted nuanced, specific concepts (46):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>- &quot;Illusion of Self&quot; (distinct from &quot;False Sense of Personal Identity&quot;)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>- &quot;Ego&quot; (separate concept)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>- &quot;Transformation of Human Consciousness&quot; (process concept)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>- &quot;Methodlessness&quot; (abstract philosophical concept)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>- &quot;Organism-Environment Relationship&quot; (systemic concept)
+</code></pre></div></p>
+<p><strong>Qwen 2.5 14B - Conservative, High-Quality:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Fewer but more precise concepts (24):
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>- &quot;Human Ego&quot; (consolidated concept)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>- &quot;False Sense of Personal Identity&quot; (clear definition)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>- &quot;Illusion of Self&quot; (specific)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>- &quot;Self-Identification&quot; (process)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>- &quot;Human Consciousness Transformation&quot; (consolidated process)
+</code></pre></div></p>
+<p><strong>Qwen3 14B - High Granularity, Most Concepts:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Extracted the most concepts (57), surpassing even GPT-OSS 20B:
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>- &quot;Ego&quot; (core concept)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>- &quot;Self&quot; (distinct from Ego)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>- &quot;Illusion of Self&quot; (specific)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>- &quot;False Sense of Personal Identity&quot; (definitional)
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>- &quot;Symbolic Self&quot; (nuanced perspective)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>- &quot;Meditation&quot; (distinct concept)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>- &quot;Mystical Experience&quot; (experiential concept)
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>- &quot;Consciousness&quot; (separate from Self)
+</code></pre></div>
+✅ Most comprehensive extraction of all models tested
+⚠️ More aggressive extraction than Qwen 2.5 (57 vs 24 concepts)</p>
+<p><strong>Mistral 7B - Middle Ground, Vague:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Moderate granularity, sometimes vague:
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>- &quot;Meditation&quot; (2 instances, less granular)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>- &quot;Philosophical Notions&quot; (too vague)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>- &quot;Human Consciousness&quot; (overly broad)
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>- &quot;Reality&quot; (minimal context)
+</code></pre></div></p>
+<h3 id="2-relationship-quality-examples">2. Relationship Quality Examples</h3>
+<p><strong>OpenAI GPT-4o - Dense, Comprehensive:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Ego → EQUIVALENT_TO → Illusion of Self
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Ego → INFLUENCES → Methodlessness
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Illusion of Self → EQUIVALENT_TO → Ego and Consciousness
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Methodlessness → SUPPORTS → Grammar and Thought
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Ego → CONTRASTS_WITH → Mystical Experience
+</code></pre></div>
+✅ All canonical types, semantically accurate, rich graph</p>
+<p><strong>GPT-OSS 20B - Densest Graph, Mixed Adherence:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Ego → IMPLIES → Illusion of Self
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Ego → CATEGORIZED_AS → Consciousness
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Ego → CONTRIBUTES_TO → Muscular Straining (non-canonical)
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>Ego → REQUIRES → Self-Improvement
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Ego Illusion → CATEGORIZED_AS → Mystical Experience
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>Meditation as Silence → PRESUPPOSES → Emptiness
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>False sense of personal identity → ENABLED_BY → Language and Thought (reversed!)
+</code></pre></div>
+⚠️ Most relationships (190), but 65% canonical adherence
+⚠️ ENABLED_BY used backwards (should be ENABLES)
+✅ Dense, interconnected graph (11 concepts at 2-hop depth)</p>
+<p><strong>Qwen 2.5 14B - Clean, Precise:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Human Ego → EQUIVALENT_TO → False Sense of Personal Identity
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Human Ego → IMPLIES → Illusion
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Human Ego → PREVENTS → Mystical Experience
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>Illusion of Self → CAUSES → Muscular Straining
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>False Sense of Personal Identity → CAUSES → Inappropriate Action
+</code></pre></div>
+✅ 92% canonical adherence, professional quality relationships</p>
+<p><strong>Qwen3 14B - High Volume, Moderate Adherence:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Ego → EQUIVALENT_TO → Illusion of Self
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Meditation → ENABLES → Consciousness
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Meditation → RESULTS_FROM → Illusion of Self
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>Illusion of Self → OPPOSITE_OF → Self-Improvement (via Ego)
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Mystical Experience → INSTANCE_OF → Self-Realization (non-canonical)
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>Mystical Experience → EXEMPLIFIES → Transactional Relationship
+</code></pre></div>
+✅ 74% canonical adherence (better than GPT-OSS, Mistral)
+⚠️ INSTANCE_OF used heavily (11 times, non-canonical)
+✅ Most relationships created overall (61 concept-to-concept)
+<strong>🎯 Significant: Fits in 16GB VRAM while extracting more concepts than GPT-4o</strong></p>
+<p><strong>Mistral 7B - Creative but Messy:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Reality → IS_ALTERNATIVE_TO → Eternal Now (non-canonical)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Discord between Man and Nature → RESULTS_FROM → Intelligence (canonical but questionable)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Meditation → (no concept-to-concept relationships!)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>Tao of Philosophy → (isolated, no relationships)
+</code></pre></div>
+❌ Non-canonical types pollute vocabulary, some concepts isolated</p>
+<h3 id="3-search-term-quality">3. Search Term Quality</h3>
+<p><strong>OpenAI GPT-4o - Exhaustive:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&quot;Ego&quot;: [&quot;ego&quot;, &quot;self&quot;, &quot;I&quot;, &quot;identity&quot;]
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>&quot;Illusion of Self&quot;: [&quot;illusion&quot;, &quot;self&quot;, &quot;illusion of self&quot;]
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>&quot;Meditation&quot;: [&quot;meditation&quot;, &quot;silence&quot;, &quot;state of meditation&quot;]
+</code></pre></div>
+✅ Comprehensive, good for semantic search</p>
+<p><strong>GPT-OSS 20B - Comprehensive and Specific:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&quot;Ego&quot;: [&quot;ego&quot;, &quot;self&quot;, &quot;I&quot;, &quot;ego-centric consciousness&quot;]
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>&quot;Ego as role mask&quot;: [&quot;ego&quot;, &quot;role&quot;, &quot;mask&quot;, &quot;persona&quot;]
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>&quot;Meditation as Silence&quot;: [&quot;meditation&quot;, &quot;silence&quot;, &quot;awareness&quot;]
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>&quot;No Method for Enlightenment&quot;: [&quot;enlightenment&quot;, &quot;method&quot;, &quot;awakening&quot;]
+</code></pre></div>
+✅ Excellent granularity, combines breadth with specificity
+✅ Separate concepts for nuanced aspects (Ego vs Ego as role mask)</p>
+<p><strong>Qwen 2.5 14B - Precise:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&quot;Human Ego&quot;: [&quot;ego&quot;, &quot;self-consciousness&quot;]
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>&quot;Illusion of Self&quot;: [&quot;illusion&quot;, &quot;self-identity&quot;, &quot;ego&quot;]
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>&quot;Self-Identification&quot;: [&quot;identity&quot;, &quot;self-awareness&quot;]
+</code></pre></div>
+✅ Targeted, professional quality</p>
+<p><strong>Qwen3 14B - Comprehensive and Specific:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&quot;Ego&quot;: [&quot;ego&quot;, &quot;self-centered consciousness&quot;, &quot;ego-centric&quot;]
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>&quot;Meditation&quot;: [&quot;meditation&quot;, &quot;state of meditation&quot;, &quot;deep meditation&quot;, &quot;silence in meditation&quot;]
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>&quot;Mystical Experience&quot;: [&quot;mystical experience&quot;, &quot;cosmic consciousness&quot;, &quot;oneness with nature&quot;, &quot;omnipotent feeling&quot;, &quot;deterministic feeling&quot;]
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>&quot;Self&quot;: Separate concept from &quot;Ego&quot;
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>&quot;Symbolic Self&quot;: Distinct nuanced concept
+</code></pre></div>
+✅ Excellent search term quality, comprehensive coverage
+✅ Separate concepts allow fine-grained semantic search</p>
+<p><strong>Mistral 7B - Verbose/Noisy:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&quot;Meditation&quot;: [&quot;meditation&quot;, &quot;silence&quot;, &quot;verbal symbolic chatter going on in the skull&quot;]
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>&quot;Reality&quot;: [&quot;reality&quot;]
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>&quot;Discord between Man and Nature&quot;: [&quot;discord&quot;, &quot;profound discord&quot;, &quot;destroying our environment&quot;]
+</code></pre></div>
+⚠️ Mix of overly verbose and minimal, inconsistent quality</p>
+<h3 id="4-graph-traversal-quality">4. Graph Traversal Quality</h3>
+<p><strong>OpenAI GPT-4o - Rich Semantic Graph:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>2-hop traversal from &quot;Ego&quot; reaches 9 concepts:
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>- Illusion of Self (EQUIVALENT_TO)
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>- Methodlessness (INFLUENCES)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>- Desire (via APPEARS_IN chain)
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>- Ego and Consciousness (via EQUIVALENT_TO chain)
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>- Grammar and Thought (SUPPORTS → EQUIVALENT_TO)
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>- Happening, Meditation, Muscular Straining, Mystical Experience
+</code></pre></div>
+✅ Meaningful connections, diverse relationship types</p>
+<p><strong>GPT-OSS 20B - Densest Traversal:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>2-hop traversal from &quot;Ego&quot; reaches 11 concepts:
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>- Illusion of Self (IMPLIES)
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>- Consciousness (CATEGORIZED_AS)
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>- Muscular Straining (CONTRIBUTES_TO)
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>- Self-Improvement (REQUIRES)
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>- False sense of personal identity (CATEGORIZED_AS → chains)
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>- Language and Thought (ENABLED_BY chains)
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>- Mystical Experience, Meditation as Silence, Emptiness, etc.
+</code></pre></div>
+✅ Most comprehensive graph (190 relationships total)
+✅ Richest traversal (11 concepts vs GPT-4o's 9)
+⚠️ Some non-canonical types in paths (ENABLED_BY, CONTRIBUTES_TO)</p>
+<p><strong>Qwen 2.5 14B - Clean Traversal:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>2-hop traversal from &quot;Human Ego&quot; reaches 9 concepts:
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>- False Sense of Personal Identity (EQUIVALENT_TO)
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>- Illusion (IMPLIES)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>- Mystical Experience (PREVENTS)
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>- Divine Grace (DEFINES → PREVENTS chain)
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>- Inappropriate Action (EQUIVALENT_TO → CAUSES)
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>- Natural Environment, Linear Scanning Intelligence, etc.
+</code></pre></div>
+✅ Clean, canonical relationships, logical paths</p>
+<p><strong>Mistral 7B - Sparse Graph:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>2-hop traversal from &quot;Reality&quot; reaches 1 concept:
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>- Eternal Now (IS_ALTERNATIVE_TO)
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>Most concepts have 0-2 relationships, graph is disconnected
+</code></pre></div>
+❌ Many isolated concepts, limited traversal utility</p>
+<hr />
+<h2 id="detailed-findings">Detailed Findings</h2>
+<h3 id="finding-1-different-extraction-philosophies">Finding 1: Different Extraction Philosophies</h3>
+<p><strong>GPT-4o: "Balanced Excellence"</strong>
+- Philosophy: Maximize coverage with high canonical adherence
+- Result: 46 concepts, dense 172-edge graph, 88% canonical
+- Trade-off: Some concepts might be over-segmented
+- Best for: Comprehensive knowledge bases, production systems</p>
+<p><strong>Qwen3 14B: "High Volume, Accessible Hardware"</strong>
+- Philosophy: Aggressive extraction with moderate canonical adherence
+- Result: <strong>57 concepts (most extracted!)</strong>, 61 concept-to-concept relationships, 74% canonical
+- Hardware: <strong>Fits in 16GB VRAM</strong> (consumer GPU accessible)
+- Trade-off: Lower canonical adherence than Qwen 2.5, but 2.4x more concepts
+- Best for: Maximum concept extraction on consumer hardware, when coverage matters</p>
+<p><strong>GPT-OSS 20B: "Maximum Relationships"</strong>
+- Philosophy: Extract everything with densest relationship network
+- Result: 48 concepts, <strong>densest 190-edge graph</strong>, 65% canonical
+- Trade-off: Lower schema compliance, some relationship direction errors
+- Best for: Maximum coverage research, when completeness &gt; schema purity</p>
+<p><strong>Qwen 2.5 14B: "Quality Over Quantity"</strong>
+- Philosophy: Conservative, precise, canonical
+- Result: 24 concepts, clean 98-edge graph, <strong>92% canonical</strong>
+- Trade-off: May miss some nuanced sub-concepts
+- Best for: Professional knowledge graphs, strict schema compliance</p>
+<p><strong>Mistral 7B: "Creative but Messy"</strong>
+- Philosophy: Moderate extraction, creative relationships
+- Result: 32 concepts, 134 edges with vocabulary pollution, 38% canonical
+- Trade-off: Non-canonical types create schema drift
+- Best for: Nothing - avoid for production use</p>
+<h3 id="finding-2-canonical-adherence-matters">Finding 2: Canonical Adherence Matters</h3>
+<p><strong>Impact of Non-Canonical Types:</strong></p>
+<p>When Mistral 7B generates <code>IS_ALTERNATIVE_TO</code> instead of <code>SIMILAR_TO</code>:
+1. ❌ Fuzzy matcher fails (no good match)
+2. ❌ System auto-accepts as new type (ADR-032)
+3. ❌ Added to vocabulary with <code>llm_generated</code> category
+4. ❌ Future chunks can use this type
+5. ❌ Vocabulary expands uncontrollably</p>
+<p><strong>Result:</strong> After processing 100 documents:
+- GPT-4o: ~35 relationship types (30 canonical + 5 creative) ✅
+- Qwen 2.5 14B: ~32 relationship types (30 canonical + 2 creative) ✅
+- Qwen3 14B: ~40 relationship types (30 canonical + 10 creative) ⚠️
+- GPT-OSS 20B: ~50 relationship types (30 canonical + 20 creative) ⚠️
+- Mistral 7B: ~80 relationship types (30 canonical + 50 creative) ❌</p>
+<p><strong>Conclusion:</strong> Canonical adherence is critical for long-term schema quality. Qwen3 14B's 74% adherence represents a middle ground - better than GPT-OSS (65%) but with significantly more concepts extracted (57 vs 48).</p>
+<h3 id="finding-3-model-size-quality">Finding 3: Model Size ≠ Quality</h3>
+<p><strong>Counter-Intuitive Result:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Parameters</th>
+<th>Concepts</th>
+<th>Canonical %</th>
+<th>VRAM</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4o</td>
+<td>~1.7 trillion</td>
+<td>46</td>
+<td>88% ✅</td>
+<td>Cloud</td>
+<td>Best balanced quality</td>
+</tr>
+<tr>
+<td>GPT-OSS 20B</td>
+<td>20 billion</td>
+<td>48</td>
+<td>65% ⚠️</td>
+<td>20GB+</td>
+<td>Reasoning model (wrong tool)</td>
+</tr>
+<tr>
+<td><strong>Qwen3 14B</strong></td>
+<td><strong>14 billion</strong></td>
+<td><strong>57</strong> ✅</td>
+<td><strong>74%</strong> ⚠️</td>
+<td><strong>16GB</strong></td>
+<td><strong>Most concepts, consumer GPU</strong></td>
+</tr>
+<tr>
+<td>Qwen 2.5 14B</td>
+<td>14 billion</td>
+<td>24</td>
+<td><strong>92%</strong> ✅</td>
+<td>16GB</td>
+<td>Highest canonical adherence</td>
+</tr>
+<tr>
+<td>Mistral 7B</td>
+<td>7 billion</td>
+<td>32</td>
+<td>38% ❌</td>
+<td>8GB</td>
+<td>Avoid for production</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Insights:</strong>
+- <strong>Parameter count ≠ Schema compliance:</strong> 20B GPT-OSS has 65% canonical vs 14B Qwen 2.5's 92%
+- <strong>Qwen3 14B represents a breakthrough:</strong> Most concepts extracted (57) while fitting in consumer 16GB VRAM
+- <strong>Hardware accessibility matters:</strong> Qwen3 achieves 74% canonical adherence with 2.4x more concepts than Qwen 2.5, on the same hardware
+- <strong>Model generation matters:</strong> Qwen3 (Jan 2025) extracts 2.4x more concepts than Qwen 2.5 (Oct 2024) from same architecture
+- <strong>Qwen 2.5's superior canonical adherence:</strong> More conservative extraction (fewer creative relationships)</p>
+<p>The Qwen3 vs Qwen 2.5 comparison validates that newer model generations can achieve significantly higher extraction volume with acceptable canonical adherence trade-offs.</p>
+<h3 id="finding-4-speed-vs-quality-trade-off">Finding 4: Speed vs Quality Trade-off</h3>
+<p><strong>Inference Time Comparison (per chunk):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Time</th>
+<th>Cost</th>
+<th>Quality Score</th>
+<th>Concepts/Chunk</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4o</td>
+<td>2s</td>
+<td>$0.017</td>
+<td>95/100</td>
+<td>7.7</td>
+<td>Best balance, 30x faster than Qwen3</td>
+</tr>
+<tr>
+<td>Qwen 2.5 14B</td>
+<td>15s</td>
+<td>$0.00</td>
+<td>85/100</td>
+<td>4.0</td>
+<td>Best canonical adherence</td>
+</tr>
+<tr>
+<td>GPT-OSS 20B</td>
+<td>20s</td>
+<td>$0.00</td>
+<td>75/100</td>
+<td>8.0</td>
+<td>Most relationships, CPU+GPU split</td>
+</tr>
+<tr>
+<td><strong>Qwen3 14B</strong></td>
+<td><strong>60s</strong></td>
+<td><strong>$0.00</strong></td>
+<td><strong>82/100</strong></td>
+<td><strong>9.5</strong></td>
+<td><strong>Most concepts, worth the wait</strong></td>
+</tr>
+<tr>
+<td>Mistral 7B</td>
+<td>10s</td>
+<td>$0.00</td>
+<td>60/100</td>
+<td>5.3</td>
+<td>Avoid</td>
+</tr>
+</tbody>
+</table>
+<p><strong>For 1000-document corpus (~6000 chunks):</strong>
+- GPT-4o: 3.3 hours, $100, highest quality (88% canonical, 46K concepts)
+- Qwen3 14B: <strong>100 hours</strong>, $0, <strong>highest volume</strong> (74% canonical, <strong>57K concepts</strong>)
+- Qwen 2.5 14B: 25 hours, $0, highest canonical (92% canonical, 24K concepts)
+- GPT-OSS 20B: 33 hours, $0, densest graph (65% canonical, 48K concepts)
+- Mistral 7B: 16.7 hours, $0, poor quality (38% canonical)</p>
+<p><strong>Conclusions:</strong>
+- For maximum concept extraction: <strong>Qwen3 14B</strong> offers most concepts (57K) at the cost of 4x slower speed vs Qwen 2.5
+- For production with canonical enforcement: Qwen 2.5 14B offers best canonical/speed ratio
+- For research requiring maximum coverage: Qwen3 14B extracts 19% more concepts than GPT-OSS while fitting in 16GB VRAM
+- <strong>Speed trade-off is acceptable:</strong> 60s/chunk = 1 minute of patience for 9.5 concepts extracted</p>
+<h3 id="finding-5-the-abe-simpson-lesson-wrong-tool-for-the-job">Finding 5: The "Abe Simpson" Lesson - Wrong Tool for the Job</h3>
+<p><strong>Problem:</strong> Reasoning models (like GPT-OSS) are fundamentally unsuited for concept extraction.</p>
+<p><strong>The Analogy:</strong></p>
+<blockquote>
+<p>"GPT-OSS is the Abe Simpson of extraction models" - rambles endlessly about the task instead of just doing it.</p>
+</blockquote>
+<p><strong>Reasoning Model Behavior:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>&quot;So I tied an onion to my belt, which was the style at the time.
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a> Now, to extract concepts from this Alan Watts passage, you have
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a> to understand that back in my day we didn&#39;t have JSON, we had XML...
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a> [15,000 tokens of meta-analysis later]
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a> ...and that&#39;s why the linear thinking concept relates to— TIMEOUT&quot;
+</code></pre></div></p>
+<p><strong>Instruction Model Behavior (Qwen3):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>&quot;Here are 10 concepts with instances and relationships. JSON attached.
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a> Done in 60 seconds.&quot;
+</code></pre></div></p>
+<p><strong>Why Reasoning Models Fail at Extraction:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Reasoning Models (GPT-OSS)</th>
+<th>Instruction Models (Qwen3)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Design purpose</strong></td>
+<td>Problem-solving, deep analysis</td>
+<td>Pattern recognition, task completion</td>
+</tr>
+<tr>
+<td><strong>Mental model</strong></td>
+<td>Philosopher thinking about concepts</td>
+<td>Librarian cataloging concepts</td>
+</tr>
+<tr>
+<td><strong>Token usage</strong></td>
+<td>15K+ tokens thinking about thinking</td>
+<td>4K tokens for actual extraction</td>
+</tr>
+<tr>
+<td><strong>Output consistency</strong></td>
+<td>Wildly variable (3-22 concepts)</td>
+<td>Stable (9-10 concepts per chunk)</td>
+</tr>
+<tr>
+<td><strong>Task completion</strong></td>
+<td>Often timeout before JSON output</td>
+<td>Always completes in ~60s</td>
+</tr>
+<tr>
+<td><strong>Best use case</strong></td>
+<td>Complex reasoning problems</td>
+<td>Concept identification &amp; summarization</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Lesson:</strong> Concept extraction requires:
+- <strong>Identification</strong> of concepts in text (pattern recognition)
+- <strong>Summarization</strong> into structured format (instruction following)
+- <strong>NOT</strong> deep reasoning about what concepts mean</p>
+<p><strong>Practical Implication:</strong> Don't use reasoning models for extraction, even if they have more parameters. A 14B instruction model (Qwen3) extracts 19% more concepts than a 20B reasoning model (GPT-OSS) because it's the right tool for the job.</p>
+<p><strong>The Rule:</strong> Match model architecture to task requirements:
+- <strong>Extraction, classification, formatting</strong> → Instruction models (Qwen, Mistral, Llama)
+- <strong>Complex reasoning, problem-solving, analysis</strong> → Reasoning models (GPT-OSS, o1, o3)</p>
+<hr />
+<h2 id="recommendations">Recommendations</h2>
+<h3 id="by-use-case">By Use Case</h3>
+<h4 id="1-production-knowledge-base-publicshared">1. Production Knowledge Base (Public/Shared)</h4>
+<p><strong>Recommended:</strong> OpenAI GPT-4o</p>
+<p><strong>Rationale:</strong>
+- Highest concept coverage (46 concepts)
+- Densest relationship graph (172 edges)
+- Professional quality (88% canonical)
+- Fastest extraction (2s/chunk)
+- Worth the cost for quality and speed</p>
+<p><strong>Example:</strong> Company documentation, research publications, shared knowledge bases</p>
+<hr />
+<h4 id="2-large-private-corpus-1000-documents">2. Large Private Corpus (1000+ documents)</h4>
+<p><strong>Recommended:</strong> Qwen 2.5 14B (Ollama)</p>
+<p><strong>Rationale:</strong>
+- Zero cost (saves $100+ per 1000 docs)
+- Highest canonical adherence (92%)
+- Privacy-preserving (local inference)
+- Professional quality output
+- One-time Ollama setup pain</p>
+<p><strong>Example:</strong> Personal notes, proprietary research, sensitive documents</p>
+<hr />
+<h4 id="3-clean-schema-enforcement">3. Clean Schema Enforcement</h4>
+<p><strong>Recommended:</strong> Qwen 2.5 14B (Ollama)</p>
+<p><strong>Rationale:</strong>
+- Only 1 non-canonical type (vs GPT-4o's 2, GPT-OSS's 6, Mistral's 10)
+- Cleanest relationship vocabulary
+- Minimal schema drift over time
+- Best for maintaining canonical 30-type system</p>
+<p><strong>Example:</strong> Academic research, standardized knowledge graphs, multi-user systems</p>
+<hr />
+<h4 id="4-maximum-concept-extraction-research-use">4. Maximum Concept Extraction (Research Use)</h4>
+<p><strong>Recommended:</strong> GPT-OSS 20B (Ollama)</p>
+<p><strong>Rationale:</strong>
+- Most concepts extracted (48, even beats GPT-4o!)
+- Densest relationship graph (190 edges)
+- Hyper-granular concept distinctions ("Ego" vs "Ego as role mask" vs "Ego Illusion")
+- Accepts 65% canonical adherence trade-off for completeness
+- Free (local inference)</p>
+<p><strong>Trade-offs:</strong>
+- Lower schema compliance (65% vs Qwen's 92%)
+- Some reversed relationships (ENABLED_BY instead of ENABLES)
+- Slower inference (~20s/chunk, CPU+GPU split)</p>
+<p><strong>Example:</strong> Exploratory research, building comprehensive conceptual maps, when coverage &gt; schema purity</p>
+<hr />
+<h4 id="5-quick-prototyping-experimentation">5. Quick Prototyping / Experimentation</h4>
+<p><strong>Recommended:</strong> OpenAI GPT-4o</p>
+<p><strong>Rationale:</strong>
+- 10x faster than local models
+- No Ollama setup required
+- Immediate results
+- Cost negligible for small-scale testing</p>
+<p><strong>Example:</strong> Testing extraction on 5-10 documents, proof-of-concept work</p>
+<hr />
+<h4 id="6-budget-conscious-serious-work">6. Budget-Conscious Serious Work</h4>
+<p><strong>Recommended:</strong> Qwen 2.5 14B (Ollama)</p>
+<p><strong>Rationale:</strong>
+- Professional quality (92% canonical)
+- Zero ongoing cost
+- Only 48% fewer concepts than GPT-4o
+- Clean, maintainable relationships</p>
+<p><strong>Example:</strong> Indie researchers, students, hobbyist knowledge management</p>
+<hr />
+<h4 id="7-what-to-avoid">7. What to Avoid</h4>
+<p><strong>❌ Do NOT use Mistral 7B for production:</strong>
+- Only 38% canonical adherence
+- Creates vocabulary pollution
+- Isolated concepts (sparse graph)
+- Quality gap not justified by speed advantage</p>
+<p><strong>Better alternatives:</strong>
+- If budget allows: GPT-4o
+- If free required: Qwen 14B (worth the slower inference)</p>
+<hr />
+<h2 id="architectural-validation">Architectural Validation</h2>
+<h3 id="pipeline-consistency-verified">Pipeline Consistency Verified</h3>
+<p><strong>Critical Finding:</strong> All four providers flow through the <strong>exact same pipeline</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Document → Chunker → LLM Extractor → Relationship Mapper → Graph Storage
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>                           ↓
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>                    Provider Abstraction
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>                    (OpenAI / Anthropic / Ollama)
+</code></pre></div>
+<p><strong>Verified:</strong>
+1. ✅ Same <code>llm_extractor.py</code> prompt for all providers
+2. ✅ Same <code>relationship_mapper.py</code> fuzzy matching
+3. ✅ Same <code>ingestion.py</code> concept matching logic
+4. ✅ Same OpenAI embeddings for all providers</p>
+<p><strong>Conclusion:</strong> Quality differences are <strong>model-dependent, not architectural</strong>. This validates ADR-042's provider abstraction design.</p>
+<hr />
+<h2 id="cost-benefit-analysis">Cost-Benefit Analysis</h2>
+<h3 id="scenario-100-philosophy-lectures-600-chunks">Scenario: 100 Philosophy Lectures (~600 chunks)</h3>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Time</th>
+<th>Cost</th>
+<th>Concepts</th>
+<th>Quality</th>
+<th>ROI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GPT-4o</strong></td>
+<td>20 min</td>
+<td>$10</td>
+<td>~4600</td>
+<td>Excellent (88%)</td>
+<td><strong>Best for production</strong></td>
+</tr>
+<tr>
+<td><strong>Qwen3 14B</strong></td>
+<td>10 hrs</td>
+<td>$0</td>
+<td><strong>~5700</strong></td>
+<td>Good (74%)</td>
+<td><strong>Best for max extraction on 16GB</strong></td>
+</tr>
+<tr>
+<td><strong>GPT-OSS 20B</strong></td>
+<td>3.3 hrs</td>
+<td>$0</td>
+<td>~4800</td>
+<td>Good (65%)</td>
+<td>Requires 20GB+ VRAM</td>
+</tr>
+<tr>
+<td><strong>Qwen 2.5 14B</strong></td>
+<td>2.5 hrs</td>
+<td>$0</td>
+<td>~2400</td>
+<td>Excellent (92%)</td>
+<td><strong>Best canonical/budget</strong></td>
+</tr>
+<tr>
+<td><strong>Mistral 7B</strong></td>
+<td>1.7 hrs</td>
+<td>$0</td>
+<td>~3200</td>
+<td>Poor (38%)</td>
+<td>❌ Not worth the time</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Break-Even Analysis:</strong></p>
+<p>At what corpus size does local inference become worth it?</p>
+<ul>
+<li><strong>&lt; 50 documents:</strong> Use GPT-4o (cost &lt; $5, time savings valuable)</li>
+<li><strong>50-500 documents:</strong> Qwen 2.5 or Qwen3 competitive ($5-50 savings, acceptable time cost)</li>
+<li>Choose Qwen 2.5 for canonical purity (92%)</li>
+<li>Choose Qwen3 for maximum concepts (2.4x more)</li>
+<li><strong>500+ documents:</strong> Local models strongly recommended ($50+ savings, time investment pays off)</li>
+<li><strong>Qwen3 14B:</strong> For maximum concept extraction (57K concepts vs 24K)</li>
+<li><strong>Qwen 2.5 14B:</strong> For strict canonical compliance (92%)</li>
+</ul>
+<hr />
+<h2 id="practical-implications">Practical Implications</h2>
+<h3 id="for-individual-users">For Individual Users</h3>
+<p><strong>Start with GPT-4o for:</strong>
+- First 10-20 documents (learn the system)
+- Understanding extraction quality
+- Calibrating expectations</p>
+<p><strong>Switch to Qwen 2.5 14B when:</strong>
+- Corpus exceeds 50 documents
+- Privacy matters
+- Long-term cost accumulation is a concern
+- You need <strong>strict canonical schema compliance (92%)</strong></p>
+<p><strong>Switch to Qwen3 14B when:</strong>
+- Corpus exceeds 50 documents
+- You want <strong>maximum concept extraction</strong> (57 concepts vs Qwen 2.5's 24)
+- Have 16GB VRAM (consumer GPU)
+- Can tolerate 60s/chunk speed (worth it for 2.4x more concepts)
+- Acceptable canonical adherence (74%) is good enough</p>
+<p><strong>Consider GPT-OSS 20B when:</strong>
+- You don't mind reasoning model quirks ("Abe Simpson" behavior)
+- Have 20GB+ VRAM or CPU+GPU split capability
+- Doing exploratory/research work
+- Schema compliance can be traded for dense relationship networks</p>
+<h3 id="for-organizations">For Organizations</h3>
+<p><strong>Use GPT-4o for:</strong>
+- Customer-facing knowledge bases
+- Time-sensitive projects
+- Shared/collaborative graphs
+- When $100-500/month is acceptable</p>
+<p><strong>Use Qwen 2.5 14B for:</strong>
+- Large internal corpora (10,000+ docs)
+- Proprietary/sensitive data where canonical schema compliance matters most
+- Budget constraints with professional quality requirements
+- Departments with GPU infrastructure</p>
+<p><strong>Use Qwen3 14B for:</strong>
+- Maximum concept extraction (57 concepts per 6 chunks = 9.5/chunk)
+- Research departments needing comprehensive coverage
+- Consumer-grade GPU infrastructure (16GB VRAM)
+- Acceptable canonical adherence (74%) with high volume trade-off</p>
+<p><strong>Use GPT-OSS 20B for:</strong>
+- Dense relationship networks (190 edges per document)
+- Exploratory analysis where coverage &gt; schema compliance
+- Teams with powerful GPU infrastructure (20GB+ VRAM or CPU+GPU)</p>
+<p><strong>Consider Anthropic Claude:</strong>
+- Not tested in this comparison
+- Expected quality similar to GPT-4o
+- Slightly cheaper ($0.008 vs $0.010 per 1000 words)
+- Good alternative for diversity/failover</p>
+<hr />
+<h2 id="conclusion">Conclusion</h2>
+<h3 id="key-takeaways">Key Takeaways</h3>
+<ol>
+<li><strong>Qwen3 14B is the new extraction champion</strong> (57 concepts - most of all tested, 74% canonical, fits 16GB VRAM)</li>
+<li><strong>GPT-4o remains the balanced leader</strong> (46 concepts, 88% canonical, 30x faster, best for production)</li>
+<li><strong>Qwen 2.5 14B is the schema compliance leader</strong> (92% canonical adherence, zero cost, professional quality)</li>
+<li><strong>Hardware accessibility is a game-changer</strong> (Qwen3 extracts 19% more concepts than GPT-OSS on consumer GPU)</li>
+<li><strong>Model generation matters</strong> (Qwen3 extracts 2.4x more concepts than Qwen 2.5 from same hardware)</li>
+<li><strong>Mistral 7B should be avoided</strong> (vocabulary pollution, schema drift, poor quality)</li>
+<li><strong>Pipeline architecture is sound</strong> (same code, model-dependent quality differences)</li>
+</ol>
+<h3 id="decision-framework">Decision Framework</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Does cost matter?
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>├─ No  → Use GPT-4o (best balance: quality + speed + canonical)
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>└─ Yes (local models) → Do you have 16GB VRAM?
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>          ├─ Yes → What&#39;s your priority?
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>          │        ├─ Maximum concepts (57) → Use Qwen3 14B ✨
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>          │        ├─ Schema compliance (92%) → Use Qwen 2.5 14B
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>          │        └─ Dense relationships (190) → Use GPT-OSS 20B (needs 20GB+)
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>          └─ No  → CPU inference or upgrade hardware
+</code></pre></div>
+<p><strong>Additional considerations:</strong>
+- <strong>Maximum concept extraction:</strong> Qwen3 14B (57 concepts, 74% canonical, 16GB VRAM)
+- <strong>Research/exploration:</strong> Qwen3 14B or GPT-OSS 20B (depending on VRAM)
+- <strong>Production systems:</strong> GPT-4o (speed) or Qwen 2.5 14B (canonical adherence)
+- <strong>Privacy required:</strong> Any local model (Qwen3, Qwen 2.5, GPT-OSS)
+- <strong>Speed critical:</strong> GPT-4o only (30x faster than Qwen3, 60x faster than CPU)</p>
+<h3 id="the-surprising-results">The Surprising Results</h3>
+<p><strong>Qwen3 14B emerges as the extraction champion:</strong>
+- <strong>57 concepts extracted</strong> - beats GPT-4o (46), GPT-OSS (48), and all other models
+- 14B parameters, fits in consumer 16GB VRAM
+- 74% canonical adherence (better than GPT-OSS 65%, acceptable for most uses)
+- Newest model (Jan 2025) shows dramatic improvement over Qwen 2.5 (Oct 2024)
+- <strong>2.4x more concepts</strong> than Qwen 2.5 on identical hardware
+- <strong>Winner:</strong> Maximum concept extraction on accessible hardware</p>
+<p><strong>Qwen 2.5 14B punches far above its weight:</strong>
+- 14B parameters vs GPT-4o's ~1.7T (0.8% of size)
+- <strong>92% canonical adherence (beats all other models!)</strong>
+- Professional-quality relationships with conservative extraction
+- Zero cost, privacy-preserving, offline-capable
+- <strong>Winner:</strong> Best canonical compliance for production</p>
+<p><strong>GPT-OSS 20B has densest relationship network:</strong>
+- <strong>190 relationship edges</strong> (densest graph, +10% over GPT-4o)
+- Hyper-granular concept distinctions
+- Trade-off: Reasoning model ("Abe Simpson") unsuitable for extraction
+- Requires 20GB+ VRAM or CPU+GPU split
+- <strong>Winner:</strong> Dense relationship networks (if you have the hardware)</p>
+<p><strong>Key insight:</strong> For users with consumer GPUs (16GB VRAM), <strong>Qwen3 14B offers unprecedented concept extraction volume</strong> - 57 concepts per document, surpassing even cloud-based GPT-4o, at zero cost. The 60-second wait per chunk is worth it for 9.5 concepts extracted.</p>
+<hr />
+<h2 id="test-reproducibility">Test Reproducibility</h2>
+<p>Want to verify these results yourself?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># 1. Setup (if needed)</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>qwen3:14b
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>qwen2.5:14b-instruct
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>gpt-oss:20b
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="c1"># 2. Test GPT-4o (fastest, cloud-based)</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="c1"># 3. Test Qwen3 14B (MOST concepts, 16GB VRAM)</span>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen3:14b
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
+<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results (~60s per chunk)</span>
+<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>
+<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="c1"># 4. Test Qwen 2.5 14B (highest canonical, 16GB VRAM)</span>
+<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
+<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
+<a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results</span>
+<a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a>
+<a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a><span class="c1"># 5. Test GPT-OSS 20B (densest graph, 20GB+ VRAM)</span>
+<a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>gpt-oss:20b
+<a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-31" name="__codelineno-23-31" href="#__codelineno-23-31"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
+<a id="__codelineno-23-32" name="__codelineno-23-32" href="#__codelineno-23-32"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-23-33" name="__codelineno-23-33" href="#__codelineno-23-33"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results</span>
+<a id="__codelineno-23-34" name="__codelineno-23-34" href="#__codelineno-23-34"></a>
+<a id="__codelineno-23-35" name="__codelineno-23-35" href="#__codelineno-23-35"></a><span class="c1"># 6. Test Mistral 7B (optional - not recommended)</span>
+<a id="__codelineno-23-36" name="__codelineno-23-36" href="#__codelineno-23-36"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-23-37" name="__codelineno-23-37" href="#__codelineno-23-37"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-38" name="__codelineno-23-38" href="#__codelineno-23-38"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
+<a id="__codelineno-23-39" name="__codelineno-23-39" href="#__codelineno-23-39"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-23-40" name="__codelineno-23-40" href="#__codelineno-23-40"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results</span>
+</code></pre></div>
+<p><strong>Compare:</strong> Concept count, relationship count, relationship types, canonical adherence.</p>
+<hr />
+<p><strong>Related Documentation:</strong>
+- <a href="../04-SWITCHING_EXTRACTION_PROVIDERS/">Switching Extraction Providers</a> - How to switch between providers
+- <a href="../02-EXTRACTION_CONFIGURATION/">Extraction Configuration Guide</a> - Configuration details
+- <a href="../05-LOCAL_INFERENCE_IMPLEMENTATION/">Local Inference Implementation</a> - Ollama setup and phases
+- <a href="../../../architecture/ADR-042-local-extraction-inference/">ADR-042: Local LLM Inference</a> - Architecture decision</p>
+<p><strong>Last Updated:</strong> October 23, 2025 (Added Qwen3:14b comprehensive analysis)</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

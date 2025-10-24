@@ -1,0 +1,4027 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../ADR-025-dynamic-relationship-vocabulary/">
+      
+      
+        <link rel="next" href="../ADR-027-user-management-api/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>ADR-026: Autonomous Vocabulary Curation and Ontology Management - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-026-autonomous-vocabulary-curation-and-ontology-management" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-026: Autonomous Vocabulary Curation and Ontology Management
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../manual/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../manual/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-curation-workflow-adr-025" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Curation Workflow (ADR-025)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scalability-challenges" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scalability Challenges
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research Context
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-llm-assisted-synonym-and-category-suggestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. LLM-Assisted Synonym and Category Suggestion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-formal-ontology-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Formal Ontology Versioning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-advanced-vocabulary-analytics-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Advanced Vocabulary Analytics Dashboard
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-llm-assisted-suggestions-2-3-weeks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: LLM-Assisted Suggestions (2-3 weeks)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-ontology-versioning-2-3-weeks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Ontology Versioning (2-3 weeks)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-analytics-dashboard-3-4-weeks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Analytics Dashboard (3-4 weeks)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benefits">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-curator-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Curator Efficiency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ontology-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Ontology Quality
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-strategic-insights" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Strategic Insights
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-system-intelligence" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. System Intelligence
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risks-and-mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Risks and Mitigations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Risks and Mitigations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#risk-1-llm-hallucination-in-suggestions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Risk 1: LLM Hallucination in Suggestions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#risk-2-version-explosion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Risk 2: Version Explosion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#risk-3-analytics-complexity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Risk 3: Analytics Complexity
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives Considered
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-fully-automated-vocabulary-no-curator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 1: Fully Automated Vocabulary (No Curator)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-manual-analytics-sql-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 2: Manual Analytics (SQL Queries)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-snapshot-based-versioning-not-immutable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 3: Snapshot-Based Versioning (Not Immutable)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Enhancements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Enhancements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-active-learning-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Active Learning Loop
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-cross-ontology-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Cross-Ontology Alignment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-natural-language-curation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 6: Natural Language Curation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-026-autonomous-vocabulary-curation-and-ontology-management">ADR-026: Autonomous Vocabulary Curation and Ontology Management</h1>
+<p><strong>Status:</strong> Proposed (Theoretical Enhancement)
+<strong>Date:</strong> 2025-10-10
+<strong>Deciders:</strong> System Architects
+<strong>Related:</strong> ADR-025 (Dynamic Relationship Vocabulary), ADR-024 (Multi-Schema PostgreSQL)</p>
+<h2 id="context">Context</h2>
+<p>ADR-025 establishes a curator-driven workflow for managing relationship vocabulary growth. While effective, the manual curation process has scalability limitations:</p>
+<h3 id="current-curation-workflow-adr-025">Current Curation Workflow (ADR-025)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Curator manually reviews skipped relationships</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>review
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Output: 127 occurrences of &quot;ENHANCES&quot; across 15 documents</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Curator manually decides: new type or synonym?</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>add<span class="w"> </span>ENHANCES<span class="w"> </span>--category<span class="w"> </span>augmentation<span class="w"> </span>--description<span class="w"> </span><span class="s2">&quot;...&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># OR</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>ENHANCES<span class="w"> </span>--maps-to<span class="w"> </span>SUPPORTS
+</code></pre></div>
+<h3 id="scalability-challenges">Scalability Challenges</h3>
+<ol>
+<li><strong>Manual Bottleneck:</strong></li>
+<li>Large ingestion jobs can produce 50+ unique relationship types</li>
+<li>Curator must review each one individually</li>
+<li>Decision fatigue on semantic similarity judgments</li>
+<li>
+<p>Slows down knowledge graph growth</p>
+</li>
+<li>
+<p><strong>Limited Semantic Analysis:</strong></p>
+</li>
+<li>Curator relies on intuition for synonym detection</li>
+<li>No formal similarity metrics between relationship types</li>
+<li>Risk of creating near-duplicate types (ENHANCES vs IMPROVES vs STRENGTHENS)</li>
+<li>
+<p>Inconsistent categorization across curators</p>
+</li>
+<li>
+<p><strong>Reactive Ontology Evolution:</strong></p>
+</li>
+<li>Vocabulary changes discovered post-ingestion</li>
+<li>No proactive trend analysis</li>
+<li>Missing strategic insights about domain evolution</li>
+<li>Ontology "drifts" rather than "evolves" purposefully</li>
+</ol>
+<h3 id="research-context">Research Context</h3>
+<ul>
+<li><strong>LLM-Assisted Schema Matching:</strong> Recent research demonstrates LLMs can identify semantic equivalence between schema elements with &gt;85% accuracy (GPT-4 on COMA++ benchmark)</li>
+<li><strong>Ontology Versioning Standards:</strong> Semantic Web community uses OWL versioning (owl:versionInfo, owl:priorVersion) for formal schema evolution tracking</li>
+<li><strong>Knowledge Discovery in Databases:</strong> Skipped relationships table represents a "schema change recommendation stream" amenable to data mining</li>
+</ul>
+<h2 id="decision">Decision</h2>
+<p><strong>Introduce three autonomous enhancements to vocabulary management, transforming the curator from operator to validator:</strong></p>
+<h3 id="1-llm-assisted-synonym-and-category-suggestion">1. LLM-Assisted Synonym and Category Suggestion</h3>
+<p><strong>Automated Analysis Pipeline:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">suggest_vocabulary_actions</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="sd">    LLM-powered analysis of skipped relationship types.</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="sd">        - Synonym confidence scores for existing types</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="sd">        - Suggested category if creating new type</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="sd">        - Semantic description proposal</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="sd">        - Decision recommendation (add vs alias)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="c1"># Retrieve context</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">skipped_instances</span> <span class="o">=</span> <span class="n">get_skipped_instances</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">)</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">existing_vocab</span> <span class="o">=</span> <span class="n">get_relationship_vocabulary</span><span class="p">()</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="c1"># Build LLM prompt</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="s2">    You are a knowledge graph ontology curator. Analyze whether the relationship type</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="s2">    &#39;</span><span class="si">{</span><span class="n">relationship_type</span><span class="si">}</span><span class="s2">&#39; should be:</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="s2">    1. Aliased to an existing type (synonym), OR</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="s2">    2. Added as a new distinct semantic relationship</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="s2">    EXISTING VOCABULARY:</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="s2">    </span><span class="si">{</span><span class="n">format_vocabulary_with_descriptions</span><span class="p">(</span><span class="n">existing_vocab</span><span class="p">)</span><span class="si">}</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="s2">    SKIPPED RELATIONSHIP EXAMPLES:</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="s2">    </span><span class="si">{</span><span class="n">format_skipped_examples</span><span class="p">(</span><span class="n">skipped_instances</span><span class="p">[:</span><span class="mi">10</span><span class="p">])</span><span class="si">}</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="s2">    For each existing type, provide:</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="s2">    - Semantic similarity score (0.0-1.0)</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="s2">    - Reasoning</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="s2">    If similarity &gt; 0.85: RECOMMEND aliasing to most similar type</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="s2">    If similarity &lt; 0.85: RECOMMEND new type with suggested category and description</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="s2">    Output JSON:</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="s2">    </span><span class="se">{{</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="s2">      &quot;recommendation&quot;: &quot;alias&quot; | &quot;new_type&quot;,</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="s2">      &quot;similar_types&quot;: [</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="s2">        </span><span class="se">{{</span><span class="s2">&quot;type&quot;: &quot;SUPPORTS&quot;, &quot;similarity&quot;: 0.78, &quot;reasoning&quot;: &quot;...&quot;</span><span class="se">}}</span><span class="s2">,</span>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="s2">        ...</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="s2">      ],</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="s2">      &quot;if_alias&quot;: </span><span class="se">{{</span><span class="s2">&quot;canonical_type&quot;: &quot;SUPPORTS&quot;, &quot;confidence&quot;: 0.92</span><span class="se">}}</span><span class="s2">,</span>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="s2">      &quot;if_new&quot;: </span><span class="se">{{</span>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="s2">        &quot;suggested_category&quot;: &quot;augmentation&quot;,</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="s2">        &quot;suggested_description&quot;: &quot;One concept improves another...&quot;,</span>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="s2">        &quot;confidence&quot;: 0.88</span>
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="s2">      </span><span class="se">}}</span>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="s2">    </span><span class="se">}}</span>
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm_client</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span>
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>        <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>        <span class="n">response_format</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;json_object&quot;</span><span class="p">}</span>
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>    <span class="p">)</span>
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>    <span class="k">return</span> <span class="n">parse_suggestion</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Enhanced Curator Workflow:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># LLM pre-analyzes and suggests actions</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>review<span class="w"> </span>--with-suggestions
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Output:</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># ┌─────────────┬────────────┬──────────────┬─────────────────────────────┐</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># │ Type        │ Count      │ Suggestion   │ Reasoning                   │</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># ├─────────────┼────────────┼──────────────┼─────────────────────────────┤</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># │ ENHANCES    │ 127        │ NEW TYPE     │ Distinct from SUPPORTS      │</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1"># │             │            │              │ (similarity: 0.72)          │</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># │             │            │              │ Category: augmentation      │</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># ├─────────────┼────────────┼──────────────┼─────────────────────────────┤</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="c1"># │ IMPROVES    │ 89         │ ALIAS        │ Synonym of ENHANCES         │</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># │             │            │ → ENHANCES   │ (similarity: 0.94)          │</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1"># ├─────────────┼────────────┼──────────────┼─────────────────────────────┤</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="c1"># │ VALIDATES   │ 56         │ ALIAS        │ Evidential relationship     │</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># │             │            │ → SUPPORTS   │ (similarity: 0.88)          │</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="c1"># └─────────────┴────────────┴──────────────┴─────────────────────────────┘</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1">#</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="c1"># Curator validation:</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="c1"># Press [A]pprove all | [R]eview individually | [C]ancel</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="c1"># One-click approval for high-confidence suggestions</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>approve-batch<span class="w"> </span>--confidence-threshold<span class="w"> </span><span class="m">0</span>.9
+</code></pre></div>
+<p><strong>Token Efficiency:</strong></p>
+<ul>
+<li>LLM analysis runs once per batch (not per concept)</li>
+<li>Embedding-based pre-filtering reduces LLM calls</li>
+<li>Results cached in <code>vocabulary_suggestions</code> table</li>
+<li>Cost: ~$0.05 per 100 relationship types analyzed</li>
+</ul>
+<h3 id="2-formal-ontology-versioning">2. Formal Ontology Versioning</h3>
+<p><strong>Immutable Version History:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">-- Ontology Version Registry</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ontology_versions</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">version_id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">version_number</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Semantic versioning: 1.2.3</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">created_by</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">change_summary</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="n">is_active</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="c1">-- Snapshot of vocabulary at this version</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="n">vocabulary_snapshot</span><span class="w"> </span><span class="n">JSONB</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="c1">-- Change metadata</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="n">types_added</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="n">types_aliased</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span><span class="w">  </span><span class="c1">-- [{&quot;IMPROVES&quot;: &quot;ENHANCES&quot;}, ...]</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="n">types_deprecated</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="c1">-- Compatibility</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="n">backward_compatible</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="p">,</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="n">migration_required</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="p">,</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">    </span><span class="k">UNIQUE</span><span class="p">(</span><span class="n">version_number</span><span class="p">)</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="p">);</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="c1">-- Concept Provenance (track which version created each concept)</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">concept_version_metadata</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">    </span><span class="n">concept_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">    </span><span class="n">created_in_version</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ontology_versions</span><span class="p">(</span><span class="n">version_id</span><span class="p">),</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">    </span><span class="n">last_modified_version</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ontology_versions</span><span class="p">(</span><span class="n">version_id</span><span class="p">)</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="p">);</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="c1">-- Historical Vocabulary View (time-travel queries)</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">vocabulary_at_version</span><span class="w"> </span><span class="k">AS</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="k">SELECT</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="w">    </span><span class="n">ov</span><span class="p">.</span><span class="n">version_number</span><span class="p">,</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">    </span><span class="n">ov</span><span class="p">.</span><span class="n">created_at</span><span class="p">,</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="w">    </span><span class="n">jsonb_array_elements</span><span class="p">(</span><span class="n">ov</span><span class="p">.</span><span class="n">vocabulary_snapshot</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">vocabulary_entry</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ontology_versions</span><span class="w"> </span><span class="n">ov</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Semantic Versioning Rules:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">increment_ontology_version</span><span class="p">(</span><span class="n">changes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="sd">    Semantic versioning for ontology changes.</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="sd">    MAJOR.MINOR.PATCH:</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="sd">    - MAJOR: Breaking changes (type removed, semantics fundamentally changed)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="sd">    - MINOR: New relationship types added (backward compatible)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="sd">    - PATCH: Aliases added, descriptions improved (no schema change)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">current_version</span> <span class="o">=</span> <span class="n">get_current_ontology_version</span><span class="p">()</span>  <span class="c1"># e.g., &quot;1.2.3&quot;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">major</span><span class="p">,</span> <span class="n">minor</span><span class="p">,</span> <span class="n">patch</span> <span class="o">=</span> <span class="n">parse_version</span><span class="p">(</span><span class="n">current_version</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">if</span> <span class="n">changes</span><span class="p">[</span><span class="s1">&#39;types_removed&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">changes</span><span class="p">[</span><span class="s1">&#39;semantics_changed&#39;</span><span class="p">]:</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="c1"># Breaking change</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">major</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.0.0&quot;</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="k">elif</span> <span class="n">changes</span><span class="p">[</span><span class="s1">&#39;types_added&#39;</span><span class="p">]:</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="c1"># New types (backward compatible)</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">major</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">minor</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.0&quot;</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>        <span class="c1"># Aliases or description updates only</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">major</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">minor</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">patch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p><strong>Automatic Version Creation:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">approve_vocabulary_change</span><span class="p">(</span><span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="sd">    Every vocabulary change triggers version increment.</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="c1"># Calculate version increment</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">new_version</span> <span class="o">=</span> <span class="n">increment_ontology_version</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="c1"># Create immutable snapshot</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">current_vocab</span> <span class="o">=</span> <span class="n">get_full_vocabulary</span><span class="p">()</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    <span class="n">version_record</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>        <span class="s1">&#39;version_number&#39;</span><span class="p">:</span> <span class="n">new_version</span><span class="p">,</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>        <span class="s1">&#39;created_by&#39;</span><span class="p">:</span> <span class="n">current_user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        <span class="s1">&#39;change_summary&#39;</span><span class="p">:</span> <span class="n">generate_change_summary</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">details</span><span class="p">),</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        <span class="s1">&#39;vocabulary_snapshot&#39;</span><span class="p">:</span> <span class="n">current_vocab</span><span class="p">,</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        <span class="s1">&#39;backward_compatible&#39;</span><span class="p">:</span> <span class="n">is_backward_compatible</span><span class="p">(</span><span class="n">action</span><span class="p">),</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>        <span class="s1">&#39;types_added&#39;</span><span class="p">:</span> <span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;new_types&#39;</span><span class="p">,</span> <span class="p">[]),</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>        <span class="s1">&#39;types_aliased&#39;</span><span class="p">:</span> <span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;aliases&#39;</span><span class="p">,</span> <span class="p">{}),</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>        <span class="s1">&#39;types_deprecated&#39;</span><span class="p">:</span> <span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deprecated&#39;</span><span class="p">,</span> <span class="p">[])</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>    <span class="p">}</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>        <span class="s2">&quot;INSERT INTO kg_api.ontology_versions (...) VALUES (...)&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>        <span class="n">version_record</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>    <span class="p">)</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="c1"># Audit trail</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>    <span class="k">await</span> <span class="n">log_version_change</span><span class="p">(</span><span class="n">new_version</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Time-Travel Queries:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Find</span><span class="w"> </span><span class="n">concepts</span><span class="w"> </span><span class="n">created</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="n">vocabulary</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">v1</span><span class="p">.</span><span class="m">2</span><span class="p">.</span><span class="n">x</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">created_in_version</span><span class="w"> </span><span class="k">STARTS</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="s">&#39;1.2&#39;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="err">--</span><span class="w"> </span><span class="n">Query</span><span class="w"> </span><span class="n">graph</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">it</span><span class="w"> </span><span class="n">existed</span><span class="w"> </span><span class="n">at</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="m">1</span><span class="p">.</span><span class="m">1</span><span class="p">.</span><span class="m">0</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="err">--</span><span class="w"> </span><span class="p">(</span><span class="n">using</span><span class="w"> </span><span class="n">vocabulary</span><span class="w"> </span><span class="n">snapshot</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">reinterpret</span><span class="w"> </span><span class="n">relationship</span><span class="w"> </span><span class="n">types</span><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">SELECT</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="n">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">vocabulary_at_version</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">version_number</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;1.1.0&#39;</span>
+</code></pre></div>
+<p><strong>Migration Support:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># When breaking change occurs (v1.x.x → v2.0.0)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>migrate<span class="w"> </span>--from-version<span class="w"> </span><span class="m">1</span>.5.2<span class="w"> </span>--to-version<span class="w"> </span><span class="m">2</span>.0.0
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Shows:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># BREAKING CHANGES:</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># - Type REMOVED: &quot;VALIDATES&quot; (use &quot;SUPPORTS&quot; instead)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># - Type SEMANTICS CHANGED: &quot;ENHANCES&quot; now requires confidence &gt; 0.8</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1">#</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="c1"># Migration will:</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># 1. Remap all VALIDATES edges → SUPPORTS</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># 2. Flag low-confidence ENHANCES edges for review</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1">#</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># Affected: 1,247 edges across 3 ontologies</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="c1"># Estimated time: 5 minutes</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="c1">#</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="c1"># Proceed? [Y/n]</span>
+</code></pre></div>
+<h3 id="3-advanced-vocabulary-analytics-dashboard">3. Advanced Vocabulary Analytics Dashboard</h3>
+<p><strong>Strategic Knowledge Discovery Interface:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">VocabularyAnalyticsDashboard</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">    Transform skipped_relationships from maintenance log into strategic insight tool.</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_emerging_relationship_trends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">):</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="sd">        Identify relationship types with accelerating occurrence.</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="s2">            WITH daily_counts AS (</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="s2">                SELECT</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="s2">                    relationship_type,</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="s2">                    DATE(first_seen) as date,</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="s2">                    SUM(occurrence_count) as daily_count</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="s2">                FROM kg_api.skipped_relationships</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="s2">                WHERE first_seen &gt; NOW() - INTERVAL &#39;</span><span class="si">{</span><span class="n">days</span><span class="si">}</span><span class="s2"> days&#39;</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="s2">                GROUP BY relationship_type, DATE(first_seen)</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="s2">            ),</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="s2">            growth_rates AS (</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="s2">                SELECT</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="s2">                    relationship_type,</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="s2">                    REGR_SLOPE(daily_count, EXTRACT(EPOCH FROM date)) as growth_rate,</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="s2">                    AVG(daily_count) as avg_daily_count</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="s2">                FROM daily_counts</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="s2">                GROUP BY relationship_type</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="s2">            )</span>
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="s2">            SELECT</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="s2">                relationship_type,</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="s2">                growth_rate,</span>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="s2">                avg_daily_count,</span>
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="s2">                growth_rate * avg_daily_count as trend_score</span>
+<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a><span class="s2">            FROM growth_rates</span>
+<a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a><span class="s2">            WHERE growth_rate &gt; 0</span>
+<a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a><span class="s2">            ORDER BY trend_score DESC</span>
+<a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a><span class="s2">            LIMIT 10</span>
+<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>
+<a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_relationship_cooccurrence_network</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a><span class="sd">        Which relationship types appear together in the same documents?</span>
+<a id="__codelineno-8-42" name="__codelineno-8-42" href="#__codelineno-8-42"></a><span class="sd">        Reveals semantic clusters.</span>
+<a id="__codelineno-8-43" name="__codelineno-8-43" href="#__codelineno-8-43"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-8-44" name="__codelineno-8-44" href="#__codelineno-8-44"></a>        <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a><span class="s2">            SELECT</span>
+<a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a><span class="s2">                a.relationship_type as type_a,</span>
+<a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a><span class="s2">                b.relationship_type as type_b,</span>
+<a id="__codelineno-8-48" name="__codelineno-8-48" href="#__codelineno-8-48"></a><span class="s2">                COUNT(DISTINCT a.job_id) as cooccurrence_count,</span>
+<a id="__codelineno-8-49" name="__codelineno-8-49" href="#__codelineno-8-49"></a><span class="s2">                CORR(a.occurrence_count, b.occurrence_count) as correlation</span>
+<a id="__codelineno-8-50" name="__codelineno-8-50" href="#__codelineno-8-50"></a><span class="s2">            FROM kg_api.skipped_relationships a</span>
+<a id="__codelineno-8-51" name="__codelineno-8-51" href="#__codelineno-8-51"></a><span class="s2">            JOIN kg_api.skipped_relationships b</span>
+<a id="__codelineno-8-52" name="__codelineno-8-52" href="#__codelineno-8-52"></a><span class="s2">                ON a.job_id = b.job_id</span>
+<a id="__codelineno-8-53" name="__codelineno-8-53" href="#__codelineno-8-53"></a><span class="s2">                AND a.relationship_type &lt; b.relationship_type</span>
+<a id="__codelineno-8-54" name="__codelineno-8-54" href="#__codelineno-8-54"></a><span class="s2">            GROUP BY a.relationship_type, b.relationship_type</span>
+<a id="__codelineno-8-55" name="__codelineno-8-55" href="#__codelineno-8-55"></a><span class="s2">            HAVING COUNT(DISTINCT a.job_id) &gt; 3</span>
+<a id="__codelineno-8-56" name="__codelineno-8-56" href="#__codelineno-8-56"></a><span class="s2">            ORDER BY cooccurrence_count DESC</span>
+<a id="__codelineno-8-57" name="__codelineno-8-57" href="#__codelineno-8-57"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-58" name="__codelineno-8-58" href="#__codelineno-8-58"></a>
+<a id="__codelineno-8-59" name="__codelineno-8-59" href="#__codelineno-8-59"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_ontology_vocabulary_fingerprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-8-60" name="__codelineno-8-60" href="#__codelineno-8-60"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-61" name="__codelineno-8-61" href="#__codelineno-8-61"></a><span class="sd">        What makes this ontology&#39;s vocabulary unique?</span>
+<a id="__codelineno-8-62" name="__codelineno-8-62" href="#__codelineno-8-62"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-8-63" name="__codelineno-8-63" href="#__codelineno-8-63"></a>        <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-64" name="__codelineno-8-64" href="#__codelineno-8-64"></a><span class="s2">            -- TF-IDF style scoring for relationship types per ontology</span>
+<a id="__codelineno-8-65" name="__codelineno-8-65" href="#__codelineno-8-65"></a><span class="s2">            WITH type_freq AS (</span>
+<a id="__codelineno-8-66" name="__codelineno-8-66" href="#__codelineno-8-66"></a><span class="s2">                SELECT</span>
+<a id="__codelineno-8-67" name="__codelineno-8-67" href="#__codelineno-8-67"></a><span class="s2">                    ontology,</span>
+<a id="__codelineno-8-68" name="__codelineno-8-68" href="#__codelineno-8-68"></a><span class="s2">                    relationship_type,</span>
+<a id="__codelineno-8-69" name="__codelineno-8-69" href="#__codelineno-8-69"></a><span class="s2">                    SUM(occurrence_count) as freq</span>
+<a id="__codelineno-8-70" name="__codelineno-8-70" href="#__codelineno-8-70"></a><span class="s2">                FROM kg_api.skipped_relationships</span>
+<a id="__codelineno-8-71" name="__codelineno-8-71" href="#__codelineno-8-71"></a><span class="s2">                GROUP BY ontology, relationship_type</span>
+<a id="__codelineno-8-72" name="__codelineno-8-72" href="#__codelineno-8-72"></a><span class="s2">            ),</span>
+<a id="__codelineno-8-73" name="__codelineno-8-73" href="#__codelineno-8-73"></a><span class="s2">            inverse_doc_freq AS (</span>
+<a id="__codelineno-8-74" name="__codelineno-8-74" href="#__codelineno-8-74"></a><span class="s2">                SELECT</span>
+<a id="__codelineno-8-75" name="__codelineno-8-75" href="#__codelineno-8-75"></a><span class="s2">                    relationship_type,</span>
+<a id="__codelineno-8-76" name="__codelineno-8-76" href="#__codelineno-8-76"></a><span class="s2">                    LOG(COUNT(DISTINCT ontology)) as idf</span>
+<a id="__codelineno-8-77" name="__codelineno-8-77" href="#__codelineno-8-77"></a><span class="s2">                FROM kg_api.skipped_relationships</span>
+<a id="__codelineno-8-78" name="__codelineno-8-78" href="#__codelineno-8-78"></a><span class="s2">                GROUP BY relationship_type</span>
+<a id="__codelineno-8-79" name="__codelineno-8-79" href="#__codelineno-8-79"></a><span class="s2">            )</span>
+<a id="__codelineno-8-80" name="__codelineno-8-80" href="#__codelineno-8-80"></a><span class="s2">            SELECT</span>
+<a id="__codelineno-8-81" name="__codelineno-8-81" href="#__codelineno-8-81"></a><span class="s2">                tf.relationship_type,</span>
+<a id="__codelineno-8-82" name="__codelineno-8-82" href="#__codelineno-8-82"></a><span class="s2">                tf.freq,</span>
+<a id="__codelineno-8-83" name="__codelineno-8-83" href="#__codelineno-8-83"></a><span class="s2">                idf.idf,</span>
+<a id="__codelineno-8-84" name="__codelineno-8-84" href="#__codelineno-8-84"></a><span class="s2">                tf.freq * idf.idf as distinctiveness_score</span>
+<a id="__codelineno-8-85" name="__codelineno-8-85" href="#__codelineno-8-85"></a><span class="s2">            FROM type_freq tf</span>
+<a id="__codelineno-8-86" name="__codelineno-8-86" href="#__codelineno-8-86"></a><span class="s2">            JOIN inverse_doc_freq idf ON tf.relationship_type = idf.relationship_type</span>
+<a id="__codelineno-8-87" name="__codelineno-8-87" href="#__codelineno-8-87"></a><span class="s2">            WHERE tf.ontology = &#39;</span><span class="si">{</span><span class="n">ontology</span><span class="si">}</span><span class="s2">&#39;</span>
+<a id="__codelineno-8-88" name="__codelineno-8-88" href="#__codelineno-8-88"></a><span class="s2">            ORDER BY distinctiveness_score DESC</span>
+<a id="__codelineno-8-89" name="__codelineno-8-89" href="#__codelineno-8-89"></a><span class="s2">            LIMIT 20</span>
+<a id="__codelineno-8-90" name="__codelineno-8-90" href="#__codelineno-8-90"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-91" name="__codelineno-8-91" href="#__codelineno-8-91"></a>
+<a id="__codelineno-8-92" name="__codelineno-8-92" href="#__codelineno-8-92"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">predict_vocabulary_growth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">months</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">):</span>
+<a id="__codelineno-8-93" name="__codelineno-8-93" href="#__codelineno-8-93"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-94" name="__codelineno-8-94" href="#__codelineno-8-94"></a><span class="sd">        Forecast vocabulary size and recommend pruning thresholds.</span>
+<a id="__codelineno-8-95" name="__codelineno-8-95" href="#__codelineno-8-95"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-8-96" name="__codelineno-8-96" href="#__codelineno-8-96"></a>        <span class="n">historical_growth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vocabulary_growth_history</span><span class="p">()</span>
+<a id="__codelineno-8-97" name="__codelineno-8-97" href="#__codelineno-8-97"></a>
+<a id="__codelineno-8-98" name="__codelineno-8-98" href="#__codelineno-8-98"></a>        <span class="c1"># Simple linear regression (upgrade to Prophet/ARIMA for production)</span>
+<a id="__codelineno-8-99" name="__codelineno-8-99" href="#__codelineno-8-99"></a>        <span class="n">slope</span> <span class="o">=</span> <span class="n">calculate_growth_rate</span><span class="p">(</span><span class="n">historical_growth</span><span class="p">)</span>
+<a id="__codelineno-8-100" name="__codelineno-8-100" href="#__codelineno-8-100"></a>        <span class="n">current_size</span> <span class="o">=</span> <span class="n">get_vocabulary_size</span><span class="p">()</span>
+<a id="__codelineno-8-101" name="__codelineno-8-101" href="#__codelineno-8-101"></a>
+<a id="__codelineno-8-102" name="__codelineno-8-102" href="#__codelineno-8-102"></a>        <span class="n">projected_size</span> <span class="o">=</span> <span class="n">current_size</span> <span class="o">+</span> <span class="p">(</span><span class="n">slope</span> <span class="o">*</span> <span class="n">months</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+<a id="__codelineno-8-103" name="__codelineno-8-103" href="#__codelineno-8-103"></a>
+<a id="__codelineno-8-104" name="__codelineno-8-104" href="#__codelineno-8-104"></a>        <span class="k">if</span> <span class="n">projected_size</span> <span class="o">&gt;</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]:</span>
+<a id="__codelineno-8-105" name="__codelineno-8-105" href="#__codelineno-8-105"></a>            <span class="n">pruning_needed</span> <span class="o">=</span> <span class="n">projected_size</span> <span class="o">-</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]</span>
+<a id="__codelineno-8-106" name="__codelineno-8-106" href="#__codelineno-8-106"></a>            <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-8-107" name="__codelineno-8-107" href="#__codelineno-8-107"></a>                <span class="s1">&#39;forecast&#39;</span><span class="p">:</span> <span class="n">projected_size</span><span class="p">,</span>
+<a id="__codelineno-8-108" name="__codelineno-8-108" href="#__codelineno-8-108"></a>                <span class="s1">&#39;action_required&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-8-109" name="__codelineno-8-109" href="#__codelineno-8-109"></a>                <span class="s1">&#39;pruning_recommendation&#39;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-8-110" name="__codelineno-8-110" href="#__codelineno-8-110"></a>                    <span class="s1">&#39;types_to_prune&#39;</span><span class="p">:</span> <span class="n">pruning_needed</span><span class="p">,</span>
+<a id="__codelineno-8-111" name="__codelineno-8-111" href="#__codelineno-8-111"></a>                    <span class="s1">&#39;suggested_candidates&#39;</span><span class="p">:</span> <span class="n">get_low_value_types</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="n">pruning_needed</span><span class="p">)</span>
+<a id="__codelineno-8-112" name="__codelineno-8-112" href="#__codelineno-8-112"></a>                <span class="p">}</span>
+<a id="__codelineno-8-113" name="__codelineno-8-113" href="#__codelineno-8-113"></a>            <span class="p">}</span>
+<a id="__codelineno-8-114" name="__codelineno-8-114" href="#__codelineno-8-114"></a>
+<a id="__codelineno-8-115" name="__codelineno-8-115" href="#__codelineno-8-115"></a>        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;forecast&#39;</span><span class="p">:</span> <span class="n">projected_size</span><span class="p">,</span> <span class="s1">&#39;action_required&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+</code></pre></div>
+<p><strong>Visualization Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Emerging relationship types (trending up)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>analytics<span class="w"> </span>trends<span class="w"> </span>--days<span class="w"> </span><span class="m">30</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Output (with sparkline):</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># ┌──────────────┬────────────┬─────────────────────────────────┐</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># │ Type         │ Growth Rate│ Trend (30 days)                 │</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># ├──────────────┼────────────┼─────────────────────────────────┤</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># │ OPTIMIZES    │ +340%      │ ▁▂▃▅▇█ (accelerating)          │</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1"># │ MONITORS     │ +180%      │ ▂▃▅▆▇█ (steady growth)         │</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># │ DELEGATES    │ +90%       │ ▃▄▅▆▆█ (recent spike)          │</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># └──────────────┴────────────┴─────────────────────────────────┘</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="c1"># Relationship co-occurrence network</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>analytics<span class="w"> </span>network<span class="w"> </span>--min-cooccurrence<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="c1"># Output (ASCII graph):</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="c1">#              ENHANCES ---- INTEGRATES</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="c1">#                 |              |</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="c1">#            OPTIMIZES ---- DELEGATES</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="c1">#                 |              |</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="c1">#              MONITORS ---- VALIDATES</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="c1">#</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="c1"># Cluster 1: Performance (OPTIMIZES, MONITORS)</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="c1"># Cluster 2: Integration (INTEGRATES, DELEGATES)</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="c1"># Cluster 3: Validation (VALIDATES, ENHANCES)</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="c1"># Ontology-specific vocabulary signature</span>
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>analytics<span class="w"> </span>fingerprint<span class="w"> </span><span class="s2">&quot;ML Systems&quot;</span>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="c1"># Output:</span>
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="c1"># Distinctive relationship types for &quot;ML Systems&quot;:</span>
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="c1"># 1. TRAINS_ON (87% unique to this ontology)</span>
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="c1"># 2. PREDICTS (76% unique)</span>
+<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a><span class="c1"># 3. OPTIMIZES (68% unique)</span>
+<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a><span class="c1">#</span>
+<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a><span class="c1"># Suggests: ML domain needs specialized vocabulary beyond core types</span>
+<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a>
+<a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a><span class="c1"># Vocabulary growth forecast</span>
+<a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>analytics<span class="w"> </span>forecast<span class="w"> </span>--months<span class="w"> </span><span class="m">6</span>
+<a id="__codelineno-9-40" name="__codelineno-9-40" href="#__codelineno-9-40"></a>
+<a id="__codelineno-9-41" name="__codelineno-9-41" href="#__codelineno-9-41"></a><span class="c1"># Output:</span>
+<a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a><span class="c1"># Current vocabulary: 87 active types</span>
+<a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a><span class="c1"># Projected (6 months): 142 types</span>
+<a id="__codelineno-9-44" name="__codelineno-9-44" href="#__codelineno-9-44"></a><span class="c1">#</span>
+<a id="__codelineno-9-45" name="__codelineno-9-45" href="#__codelineno-9-45"></a><span class="c1"># ⚠ EXCEEDS MAX LIMIT (100 types)</span>
+<a id="__codelineno-9-46" name="__codelineno-9-46" href="#__codelineno-9-46"></a><span class="c1"># Recommended action: Prune 42 low-value types</span>
+<a id="__codelineno-9-47" name="__codelineno-9-47" href="#__codelineno-9-47"></a><span class="c1"># Candidates: [list of least-used types with value scores]</span>
+</code></pre></div>
+<p><strong>Curator Dashboard UI (Future):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>╔═══════════════════════════════════════════════════════════════╗
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>║          VOCABULARY ANALYTICS DASHBOARD                       ║
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>╠═══════════════════════════════════════════════════════════════╣
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>║                                                               ║
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>║  📈 TRENDING TYPES (30 days)          🔗 CO-OCCURRENCE NET   ║
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>║  ┌─────────────────────────┐          ┌──────────────────┐   ║
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>║  │ OPTIMIZES    ▁▃▅▇█ +340%│          │    [Graph View]  │   ║
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>║  │ MONITORS     ▂▄▆▇█ +180%│          │                  │   ║
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>║  └─────────────────────────┘          └──────────────────┘   ║
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>║                                                               ║
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>║  🎯 ONTOLOGY FINGERPRINTS              📊 GROWTH FORECAST    ║
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>║  ┌─────────────────────────┐          ┌──────────────────┐   ║
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>║  │ ML Systems:             │          │ Current: 87      │   ║
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>║  │  - TRAINS_ON (87%)      │          │ +6mo: 142 ⚠     │   ║
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>║  │  - PREDICTS (76%)       │          │ Action: Prune 42 │   ║
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>║  └─────────────────────────┘          └──────────────────┘   ║
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>╚═══════════════════════════════════════════════════════════════╝
+</code></pre></div>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-llm-assisted-suggestions-2-3-weeks">Phase 1: LLM-Assisted Suggestions (2-3 weeks)</h3>
+<ol>
+<li>Create <code>vocabulary_suggestions</code> table for caching LLM analysis</li>
+<li>Implement <code>suggest_vocabulary_actions()</code> function</li>
+<li>Add <code>--with-suggestions</code> flag to <code>kg vocabulary review</code></li>
+<li>Build <code>approve-batch</code> command for high-confidence suggestions</li>
+<li>Test accuracy on historical skipped relationships</li>
+</ol>
+<h3 id="phase-2-ontology-versioning-2-3-weeks">Phase 2: Ontology Versioning (2-3 weeks)</h3>
+<ol>
+<li>Create <code>ontology_versions</code> and <code>concept_version_metadata</code> tables</li>
+<li>Implement semantic versioning logic</li>
+<li>Add version tracking to all vocabulary mutations</li>
+<li>Build time-travel query support</li>
+<li>Create migration tool for breaking changes</li>
+</ol>
+<h3 id="phase-3-analytics-dashboard-3-4-weeks">Phase 3: Analytics Dashboard (3-4 weeks)</h3>
+<ol>
+<li>Implement analytics queries (trends, cooccurrence, fingerprints)</li>
+<li>Build CLI visualization commands</li>
+<li>Create forecast models (linear regression → time series)</li>
+<li>Develop curator dashboard UI (web-based)</li>
+<li>Integrate with monitoring/alerting system</li>
+</ol>
+<h2 id="benefits">Benefits</h2>
+<h3 id="1-curator-efficiency">1. Curator Efficiency</h3>
+<ul>
+<li><strong>10x faster curation:</strong> LLM suggests actions, curator validates (not discovers)</li>
+<li><strong>Reduced cognitive load:</strong> Clear recommendations with confidence scores</li>
+<li><strong>Batch operations:</strong> Approve 50+ types in one command vs 50 individual decisions</li>
+</ul>
+<h3 id="2-ontology-quality">2. Ontology Quality</h3>
+<ul>
+<li><strong>Consistent categorization:</strong> LLM applies uniform semantic analysis</li>
+<li><strong>Fewer synonyms:</strong> Automated similarity detection prevents duplicates</li>
+<li><strong>Formal versioning:</strong> Clear evolution history, no "drift"</li>
+</ul>
+<h3 id="3-strategic-insights">3. Strategic Insights</h3>
+<ul>
+<li><strong>Proactive vocabulary planning:</strong> Forecasts prevent reactive scrambling</li>
+<li><strong>Domain discovery:</strong> Trending types reveal emerging concepts in corpus</li>
+<li><strong>Ontology profiling:</strong> Understand what makes each domain unique</li>
+</ul>
+<h3 id="4-system-intelligence">4. System Intelligence</h3>
+<ul>
+<li><strong>Self-improving:</strong> Analytics feed back into curation recommendations</li>
+<li><strong>Transparent evolution:</strong> Version history provides full audit trail</li>
+<li><strong>Migration safety:</strong> Breaking changes handled with formal process</li>
+</ul>
+<h2 id="metrics">Metrics</h2>
+<p><strong>Curation Speed:</strong>
+- Manual review time: 5 min/type (current) → 30 sec/type (with suggestions)
+- Batch approval: &lt;1 minute for 50 high-confidence suggestions</p>
+<p><strong>Accuracy:</strong>
+- LLM synonym detection: Target &gt;90% precision
+- Category suggestions: Target &gt;85% accuracy (vs curator ground truth)</p>
+<p><strong>Knowledge Discovery:</strong>
+- Trending types identified: 5-10 per month
+- Ontology fingerprints: 10-20 distinctive types per ontology
+- Growth forecast: ±15% accuracy over 6 months</p>
+<h2 id="risks-and-mitigations">Risks and Mitigations</h2>
+<h3 id="risk-1-llm-hallucination-in-suggestions">Risk 1: LLM Hallucination in Suggestions</h3>
+<p><strong>Risk:</strong> LLM suggests incorrect synonym mapping or category</p>
+<p><strong>Mitigation:</strong>
+- Curator ALWAYS validates (LLM is advisor, not decision-maker)
+- Confidence thresholds (only show suggestions &gt;0.8)
+- Audit trail tracks LLM suggestions vs curator decisions
+- Periodic accuracy review to retrain prompts</p>
+<h3 id="risk-2-version-explosion">Risk 2: Version Explosion</h3>
+<p><strong>Risk:</strong> Every minor change creates new version (table bloat)</p>
+<p><strong>Mitigation:</strong>
+- Batch changes into logical releases (weekly/monthly)
+- Compress patch versions (only major/minor versions get snapshots)
+- Archive old versions (&gt;1 year) to cold storage</p>
+<h3 id="risk-3-analytics-complexity">Risk 3: Analytics Complexity</h3>
+<p><strong>Risk:</strong> Too many metrics overwhelm curators</p>
+<p><strong>Mitigation:</strong>
+- Start with 3 key dashboards (trends, network, forecast)
+- Progressive disclosure (simple view by default, details on demand)
+- Contextual recommendations ("Try expanding vocabulary in emerging areas")</p>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="alternative-1-fully-automated-vocabulary-no-curator">Alternative 1: Fully Automated Vocabulary (No Curator)</h3>
+<p><strong>Rejected:</strong>
+- Removes human oversight of semantic quality
+- Risk of vocabulary explosion (LLM may over-create types)
+- Cannot handle domain-specific nuance
+- Violates "curator as validator" principle</p>
+<p><strong>Decision:</strong> Keep human in loop, use LLM as assistant</p>
+<h3 id="alternative-2-manual-analytics-sql-queries">Alternative 2: Manual Analytics (SQL Queries)</h3>
+<p><strong>Rejected:</strong>
+- Requires curator to write complex SQL
+- No predictive capabilities
+- Insights hidden in raw data</p>
+<p><strong>Decision:</strong> Pre-built analytics with visualization</p>
+<h3 id="alternative-3-snapshot-based-versioning-not-immutable">Alternative 3: Snapshot-Based Versioning (Not Immutable)</h3>
+<p><strong>Rejected:</strong>
+- Cannot do time-travel queries reliably
+- Version history can be accidentally modified
+- Breaks audit compliance</p>
+<p><strong>Decision:</strong> Immutable version records with JSONB snapshots</p>
+<h2 id="success-criteria">Success Criteria</h2>
+<p><strong>Phase 1 (LLM Suggestions):</strong>
+- [ ] 80% of suggestions accepted by curator (high trust)
+- [ ] &lt;30 seconds per relationship type review (vs 5 min manual)
+- [ ] Zero false positives in high-confidence (&gt;0.9) suggestions</p>
+<p><strong>Phase 2 (Versioning):</strong>
+- [ ] Every vocabulary change tracked in version history
+- [ ] Breaking changes flagged with migration path
+- [ ] Time-travel queries return correct historical vocabulary</p>
+<p><strong>Phase 3 (Analytics):</strong>
+- [ ] Trending types dashboard identifies 5+ actionable insights/month
+- [ ] Vocabulary growth forecast within ±15% accuracy
+- [ ] Curator uses dashboard weekly (tracked via usage logs)</p>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>LLM Schema Matching:</strong></li>
+<li>Gu et al. (2024): "GPT-4 for Schema Matching" - 87% accuracy on COMA++ benchmark</li>
+<li>
+<p>Li et al. (2023): "Large Language Models as Ontology Aligners"</p>
+</li>
+<li>
+<p><strong>Ontology Versioning:</strong></p>
+</li>
+<li>W3C OWL 2 Web Ontology Language: Versioning semantics</li>
+<li>Klein &amp; Fensel (2001): "Ontology Versioning and Change Detection on the Web"</li>
+<li>
+<p>Semantic Web Best Practices: owl:versionInfo, owl:priorVersion</p>
+</li>
+<li>
+<p><strong>Knowledge Discovery:</strong></p>
+</li>
+<li>Fayyad et al. (1996): "From Data Mining to Knowledge Discovery in Databases"</li>
+<li>
+<p>Codd (1993): "Providing OLAP to User-Analysts" - Dimensional analytics</p>
+</li>
+<li>
+<p><strong>Related ADRs:</strong></p>
+</li>
+<li>ADR-025: Dynamic Relationship Vocabulary Management</li>
+<li>ADR-024: Multi-Schema PostgreSQL Architecture</li>
+<li>ADR-014: Job Approval Workflow (human-in-loop pattern)</li>
+</ul>
+<h2 id="future-enhancements">Future Enhancements</h2>
+<h3 id="phase-4-active-learning-loop">Phase 4: Active Learning Loop</h3>
+<ul>
+<li>Track curator overrides of LLM suggestions</li>
+<li>Retrain suggestion model on curator feedback</li>
+<li>Personalized suggestions per curator (learn their preferences)</li>
+</ul>
+<h3 id="phase-5-cross-ontology-alignment">Phase 5: Cross-Ontology Alignment</h3>
+<ul>
+<li>Detect when different ontologies use different types for same concept</li>
+<li>Suggest canonical mappings across ontologies</li>
+<li>Enable federated graph queries</li>
+</ul>
+<h3 id="phase-6-natural-language-curation">Phase 6: Natural Language Curation</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Natural language interface for curators</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>curate<span class="w"> </span><span class="s2">&quot;Make OPTIMIZES a synonym of IMPROVES&quot;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># → System translates to: kg vocabulary alias OPTIMIZES --maps-to IMPROVES</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>curate<span class="w"> </span><span class="s2">&quot;Show me types related to performance&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1"># → System searches by semantic category and embeddings</span>
+</code></pre></div>
+<hr />
+<p><strong>Status:</strong> Proposed for discussion
+<strong>Next Steps:</strong>
+1. Review with knowledge graph team
+2. Pilot LLM suggestions on historical skipped_relationships
+3. Measure curator time savings
+4. Build versioning infrastructure
+5. Prototype analytics dashboard</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

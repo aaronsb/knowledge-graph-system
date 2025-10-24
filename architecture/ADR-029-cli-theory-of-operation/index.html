@@ -1,0 +1,3879 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../ADR-028-dynamic-rbac-system/">
+      
+      
+        <link rel="next" href="../ADR-030-concept-deduplication-validation/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-029-cli-theory-of-operation-hybrid-unixdomain-specific-design" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../manual/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../manual/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-primary-interface-noun-verb-domain-oriented" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Primary Interface: Noun → Verb (Domain-Oriented)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-convenience-layer-unix-verb-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Convenience Layer: Unix Verb Shortcuts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-command-router-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Command Router Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-command-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Command Naming Conventions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-universal-json-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Universal JSON Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-verb-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Verb Vocabulary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      Negative
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      Neutral
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before (Current)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-hybrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      After (Hybrid)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complex-operations-domain-specific" class="md-nav__link">
+    <span class="md-ellipsis">
+      Complex Operations (Domain-Specific)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Path
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-add-verb-router-non-breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Add Verb Router (Non-Breaking)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-singularize-resources-breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Singularize Resources (Breaking)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-add-useful-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Add Useful Aliases
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-deprecation-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Deprecation (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Checklist
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Checklist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-verb-router" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Verb Router
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-singularization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Singularization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Aliases
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-universal-json-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Universal JSON Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-documentation-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Documentation &amp; Testing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Enhancements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-029-cli-theory-of-operation-hybrid-unixdomain-specific-design">ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2025-10-12
+<strong>Supersedes:</strong> N/A - First formal CLI design specification</p>
+<h2 id="context">Context</h2>
+<p>The Knowledge Graph CLI (<code>kg</code>) has evolved organically, resulting in inconsistent command structures:</p>
+<p><strong>Current Issues:</strong>
+1. <strong>Inconsistent hierarchies</strong>: Some commands use hierarchical patterns (<code>kg ontology list</code>), others are flat
+2. <strong>Arbitrary aliases</strong>: <code>db</code>, <code>resource</code>, <code>role</code>, <code>perm</code> without clear rationale
+3. <strong>Mixed verbosity</strong>: Some commands are terse, others verbose
+4. <strong>No design philosophy</strong>: Commands added ad-hoc without architectural guidance</p>
+<p><strong>Design Tension:</strong>
+Users expect both Unix-style brevity (<code>ls</code>, <code>rm</code>, <code>stat</code>) AND domain-specific organization (<code>kg job approve</code>, <code>kg role assign</code>). How do we reconcile these competing needs?</p>
+<p><strong>Observation from Code Review:</strong></p>
+<blockquote>
+<p>"We're unintentionally building an operating system... maybe we need to use a well-known pattern?"</p>
+</blockquote>
+<p>This is true. The CLI is becoming a <strong>domain-specific shell</strong> for knowledge graph operations. We should embrace Unix/BusyBox patterns deliberately rather than accidentally.</p>
+<h2 id="decision">Decision</h2>
+<p>Implement a <strong>hybrid architecture</strong> with two command interfaces:</p>
+<h3 id="1-primary-interface-noun-verb-domain-oriented">1. Primary Interface: Noun → Verb (Domain-Oriented)</h3>
+<p><strong>Structure:</strong> <code>kg &lt;resource&gt; &lt;verb&gt; [args]</code></p>
+<p><strong>Rationale:</strong>
+- Groups operations by <strong>resource domain</strong> (jobs, ontologies, concepts)
+- Namespace isolation: <code>job.stat</code> vs <code>database.stat</code> can have different output schemas
+- Scales naturally for <strong>domain-specific verbs</strong>: <code>approve</code>, <code>assign</code>, <code>revoke</code>, <code>merge</code>
+- Enables contextual help: <code>kg job --help</code> shows all job operations</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>job<span class="w"> </span>list
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kg<span class="w"> </span>job<span class="w"> </span>stat<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kg<span class="w"> </span>job<span class="w"> </span>approve<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>kg<span class="w"> </span>job<span class="w"> </span>cancel<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>kg<span class="w"> </span>ontology<span class="w"> </span>list
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>kg<span class="w"> </span>ontology<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>kg<span class="w"> </span>role<span class="w"> </span>list
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>kg<span class="w"> </span>role<span class="w"> </span>assign<span class="w"> </span>&lt;user&gt;<span class="w"> </span>&lt;role&gt;
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>kg<span class="w"> </span>role<span class="w"> </span>revoke<span class="w"> </span>&lt;user&gt;<span class="w"> </span>&lt;role&gt;
+</code></pre></div></p>
+<h3 id="2-convenience-layer-unix-verb-shortcuts">2. Convenience Layer: Unix Verb Shortcuts</h3>
+<p><strong>Structure:</strong> <code>kg &lt;verb&gt; &lt;resource&gt; [args]</code></p>
+<p><strong>Rationale:</strong>
+- Unix muscle memory for common operations
+- Reduces typing for frequent commands
+- Familiar to users from <code>ls</code>, <code>rm</code>, <code>stat</code>, <code>cat</code>, etc.</p>
+<p><strong>Implementation:</strong> Verb shortcuts <strong>delegate</strong> to primary commands via a router</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># List operations</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>ls<span class="w"> </span>job<span class="w">           </span>→<span class="w"> </span>kg<span class="w"> </span>job<span class="w"> </span>list
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kg<span class="w"> </span>ls<span class="w"> </span>ontology<span class="w">      </span>→<span class="w"> </span>kg<span class="w"> </span>ontology<span class="w"> </span>list
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kg<span class="w"> </span>ls<span class="w"> </span>backup<span class="w">        </span>→<span class="w"> </span>kg<span class="w"> </span>admin<span class="w"> </span>backup<span class="w"> </span>list
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Status/Stats operations</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kg<span class="w"> </span>stat<span class="w"> </span>job<span class="w"> </span>&lt;id&gt;<span class="w">    </span>→<span class="w"> </span>kg<span class="w"> </span>job<span class="w"> </span>stat<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg<span class="w"> </span>stat<span class="w"> </span>database<span class="w">    </span>→<span class="w"> </span>kg<span class="w"> </span>database<span class="w"> </span>stats
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Remove operations</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kg<span class="w"> </span>rm<span class="w"> </span>job<span class="w"> </span>&lt;id&gt;<span class="w">      </span>→<span class="w"> </span>kg<span class="w"> </span>job<span class="w"> </span>cancel<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>kg<span class="w"> </span>rm<span class="w"> </span>ontology<span class="w"> </span>&lt;name&gt;<span class="w"> </span>→<span class="w"> </span>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1"># Show/Display operations</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>kg<span class="w"> </span>cat<span class="w"> </span>concept<span class="w"> </span>&lt;id&gt;<span class="w"> </span>→<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>kg<span class="w"> </span>cat<span class="w"> </span>config<span class="w"> </span>&lt;key&gt;<span class="w"> </span>→<span class="w"> </span>kg<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>&lt;key&gt;
+</code></pre></div></p>
+<h3 id="3-command-router-architecture">3. Command Router Architecture</h3>
+<p><strong>Clean separation</strong> between verb shortcuts and primary commands:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// client/src/cli/verb-router.ts</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">createVerbRouter</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">Command</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Command</span><span class="p">();</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="c1">// ls - Universal list operation</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nx">router</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="p">.</span><span class="nx">command</span><span class="p">(</span><span class="s1">&#39;ls&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="p">.</span><span class="nx">description</span><span class="p">(</span><span class="s1">&#39;List resources (Unix-style shortcut)&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="p">.</span><span class="nx">argument</span><span class="p">(</span><span class="s1">&#39;&lt;resource&gt;&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Resource type: job, ontology, backup, config, role, etc.&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="p">.</span><span class="nx">action</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">resource</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">,</span><span class="w"> </span><span class="nx">command</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">      </span><span class="c1">// Delegate to primary command</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">      </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">resource</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;job&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;jobs&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="nx">executeCommand</span><span class="p">([</span><span class="s1">&#39;job&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;list&#39;</span><span class="p">],</span><span class="w"> </span><span class="nx">command</span><span class="p">.</span><span class="nx">parent</span><span class="p">);</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;ontology&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;ontologies&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="nx">executeCommand</span><span class="p">([</span><span class="s1">&#39;ontology&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;list&#39;</span><span class="p">],</span><span class="w"> </span><span class="nx">command</span><span class="p">.</span><span class="nx">parent</span><span class="p">);</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;backup&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;backups&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="nx">executeCommand</span><span class="p">([</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;backup&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;list&#39;</span><span class="p">],</span><span class="w"> </span><span class="nx">command</span><span class="p">.</span><span class="nx">parent</span><span class="p">);</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">        </span><span class="c1">// ... more mappings</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">        </span><span class="nx">default</span><span class="o">:</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">          </span><span class="kt">console.error</span><span class="p">(</span><span class="sb">`Unknown resource: </span><span class="si">${</span><span class="nx">resource</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="w">          </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Try: kg ls --help&#39;</span><span class="p">);</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">          </span><span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="w">    </span><span class="p">});</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">  </span><span class="c1">// rm - Universal remove operation</span>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="w">  </span><span class="nx">router</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="w">    </span><span class="p">.</span><span class="nx">command</span><span class="p">(</span><span class="s1">&#39;rm&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="w">    </span><span class="p">.</span><span class="nx">description</span><span class="p">(</span><span class="s1">&#39;Remove/delete resources (Unix-style shortcut)&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="w">    </span><span class="p">.</span><span class="nx">argument</span><span class="p">(</span><span class="s1">&#39;&lt;resource&gt;&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Resource type&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">    </span><span class="p">.</span><span class="nx">argument</span><span class="p">(</span><span class="s1">&#39;&lt;id&gt;&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Resource identifier&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="w">    </span><span class="p">.</span><span class="nx">action</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">resource</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">,</span><span class="w"> </span><span class="nx">command</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="w">      </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">resource</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;job&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="nx">executeCommand</span><span class="p">([</span><span class="s1">&#39;job&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;cancel&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">],</span><span class="w"> </span><span class="nx">command</span><span class="p">.</span><span class="nx">parent</span><span class="p">);</span>
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;ontology&#39;</span><span class="o">:</span>
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="nx">executeCommand</span><span class="p">([</span><span class="s1">&#39;ontology&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">],</span><span class="w"> </span><span class="nx">command</span><span class="p">.</span><span class="nx">parent</span><span class="p">);</span>
+<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="w">        </span><span class="c1">// ... more mappings</span>
+<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">    </span><span class="p">});</span>
+<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>
+<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="w">  </span><span class="c1">// stat - Universal status operation</span>
+<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a><span class="w">  </span><span class="c1">// cat - Universal display operation</span>
+<a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a><span class="w">  </span><span class="c1">// ... more verbs</span>
+<a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a>
+<a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">router</span><span class="p">;</span>
+<a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Helper Function:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">function</span><span class="w"> </span><span class="nx">executeCommand</span><span class="p">(</span><span class="nx">args</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[],</span><span class="w"> </span><span class="nx">rootCommand</span><span class="o">:</span><span class="w"> </span><span class="kt">Command</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="c1">// Navigate command tree and execute</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">rootCommand</span><span class="p">;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">arg</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">args</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nx">cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">commands</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">name</span><span class="p">()</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">arg</span><span class="p">);</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">cmd</span><span class="p">)</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`Command not found: </span><span class="si">${</span><span class="nx">arg</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nx">cmd</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">args</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;user&#39;</span><span class="w"> </span><span class="p">});</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">}</span>
+</code></pre></div></p>
+<h3 id="4-command-naming-conventions">4. Command Naming Conventions</h3>
+<p><strong>Use singular nouns</strong> (shorter by default):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>job<span class="w">         </span>not<span class="w"> </span><span class="nb">jobs</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>ontology<span class="w">    </span>not<span class="w"> </span>ontologies
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>role<span class="w">        </span>not<span class="w"> </span>roles
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>permission<span class="w">  </span>not<span class="w"> </span>permissions
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>resource<span class="w">    </span>not<span class="w"> </span>resources
+</code></pre></div></p>
+<p><strong>Descriptions can be plural:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg job list         # &quot;List all jobs&quot;
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg role list        # &quot;List all roles&quot;
+</code></pre></div></p>
+<p><strong>Sensible aliases</strong> (5-6 chars max, well-known only):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>config<span class="w">      </span>→<span class="w"> </span>cfg<span class="w"> </span><span class="o">(</span><span class="m">3</span><span class="o">)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>database<span class="w">    </span>→<span class="w"> </span>db<span class="w"> </span><span class="o">(</span><span class="m">2</span><span class="o">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>ontology<span class="w">    </span>→<span class="w"> </span>onto<span class="w"> </span><span class="o">(</span><span class="m">4</span><span class="o">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>job<span class="w">         </span><span class="o">(</span>already<span class="w"> </span><span class="m">3</span><span class="o">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>permission<span class="w">  </span>→<span class="w"> </span>perm<span class="w"> </span><span class="o">(</span><span class="m">4</span><span class="o">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>resource<span class="w">    </span>→<span class="w"> </span>res<span class="w"> </span><span class="o">(</span><span class="m">3</span><span class="o">)</span>
+</code></pre></div></p>
+<h3 id="5-universal-json-mode">5. Universal JSON Mode</h3>
+<p><strong>Machine-Readable Interface:</strong> All commands support JSON input/output for automation.</p>
+<p><strong>Global Toggle:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Set JSON mode globally</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>output_format<span class="w"> </span>json
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Check current mode</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kg<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>output_format
+</code></pre></div></p>
+<p><strong>Per-Command Override:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Override to JSON for single command</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>job<span class="w"> </span>list<span class="w"> </span>--json
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Override to table when in JSON mode</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>job<span class="w"> </span>list<span class="w"> </span>--table
+</code></pre></div></p>
+<p><strong>Consistent Behavior:</strong>
+- <strong>ALL commands</strong> respect output mode
+- <strong>ALL output</strong> is valid JSON (no mixed formats)
+- <strong>ALL input</strong> accepts JSON where applicable</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Table mode (default)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>job<span class="w"> </span>list
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># ─────────────────────────────</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Job ID    Status    Progress</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># ─────────────────────────────</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># job-123   running   45%</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># job-456   completed 100%</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1"># JSON mode</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>kg<span class="w"> </span>job<span class="w"> </span>list<span class="w"> </span>--json
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># [</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="c1">#   {&quot;job_id&quot;: &quot;job-123&quot;, &quot;status&quot;: &quot;running&quot;, &quot;progress&quot;: 0.45},</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="c1">#   {&quot;job_id&quot;: &quot;job-456&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;progress&quot;: 1.0}</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="c1"># ]</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="c1"># Piping for automation</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>kg<span class="w"> </span>job<span class="w"> </span>list<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.[] | select(.status == &quot;failed&quot;)&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kg<span class="w"> </span>job<span class="w"> </span>cancel<span class="w"> </span>--json
+</code></pre></div></p>
+<p><strong>Architectural Insight: CLI as API Abstraction Layer</strong></p>
+<p>The JSON I/O mode transforms <code>kg</code> into a <strong>typed API abstraction</strong> that provides:</p>
+<ol>
+<li><strong>Safety Layer</strong></li>
+<li>Client-side validation before API calls</li>
+<li>Confirmation prompts for destructive operations (can be overridden with --force)</li>
+<li>
+<p>Schema validation (TypeScript types ensure correct data structures)</p>
+</li>
+<li>
+<p><strong>Protocol Versioning</strong></p>
+</li>
+<li>CLI handles API version differences transparently</li>
+<li>Backward compatibility for older scripts</li>
+<li>
+<p>Deprecation warnings without breaking existing automation</p>
+</li>
+<li>
+<p><strong>Offline Capabilities</strong> (future)</p>
+</li>
+<li>Local config operations without API calls</li>
+<li>Batch operations with optimistic execution</li>
+<li>
+<p>Queue commands when API is unreachable</p>
+</li>
+<li>
+<p><strong>Automation Interface</strong></p>
+</li>
+<li>Scripts/tools that can't use REST API directly</li>
+<li>CI/CD pipelines (no HTTP client needed)</li>
+<li>Shell scripts (simpler than curl + jq)</li>
+<li>Other CLIs (compose with Unix tools)</li>
+</ol>
+<p><strong>Example: CI/CD Pipeline</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Deploy ontology from CI/CD without REST client</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Safer than raw API calls - CLI validates before sending</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kg<span class="w"> </span>ontology<span class="w"> </span>create<span class="w"> </span>ai_models<span class="w"> </span>--json<span class="w"> </span>&lt;<span class="w"> </span>ontology.json
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># CLI handles retries, auth, error messages</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="k">if</span><span class="w"> </span>kg<span class="w"> </span>job<span class="w"> </span>list<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;.[] | select(.status == &quot;failed&quot;)&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Failed jobs detected&quot;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">  </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="k">fi</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="c1"># Confirmation prompts can be overridden for automation</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>kg<span class="w"> </span>database<span class="w"> </span>reset<span class="w"> </span>--force<span class="w"> </span>--yes
+</code></pre></div></p>
+<p><strong>Configuration Integration:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// client/src/lib/config.ts</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">KgConfig</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="c1">// ... existing fields</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nx">output_format</span><span class="o">?:</span><span class="w"> </span><span class="s1">&#39;table&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;json&#39;</span><span class="p">;</span><span class="w">  </span><span class="c1">// Default: &#39;table&#39;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">}</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1">// Usage in commands</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="kd">function</span><span class="w"> </span><span class="nx">getOutputFormat</span><span class="p">(</span><span class="nx">options</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;table&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;json&#39;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getConfig</span><span class="p">();</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">  </span><span class="c1">// 1. Command-line flag takes precedence</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">json</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">&#39;json&#39;</span><span class="p">;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">table</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">&#39;table&#39;</span><span class="p">;</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">  </span><span class="c1">// 2. Fall back to config</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">config</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;output_format&#39;</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;table&#39;</span><span class="p">;</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Implementation:</strong>
+- Add <code>--json</code> flag to ALL commands (Commander.js parent option)
+- Add <code>--table</code> flag to ALL commands (override JSON mode)
+- Refactor all output to check format before printing
+- Ensure error messages are also JSON in JSON mode</p>
+<h3 id="6-verb-vocabulary">6. Verb Vocabulary</h3>
+<p><strong>Unix-Inspired Verbs:</strong>
+- <code>ls</code> - List resources
+- <code>rm</code> - Remove/delete
+- <code>stat</code> - Status/statistics
+- <code>cat</code> - Display/show details
+- <code>mv</code> - Move/rename (future)
+- <code>cp</code> - Copy/duplicate (future)</p>
+<p><strong>Domain-Specific Verbs:</strong>
+- <code>approve</code> - Approve jobs, vocabulary
+- <code>cancel</code> - Cancel jobs
+- <code>assign</code> - Assign roles to users
+- <code>revoke</code> - Revoke permissions
+- <code>grant</code> - Grant permissions
+- <code>ingest</code> - Ingest documents
+- <code>search</code> - Search concepts
+- <code>connect</code> - Find connections</p>
+<h2 id="benefits">Benefits</h2>
+<ol>
+<li><strong>Best of Both Worlds</strong></li>
+<li>Power users: Use domain commands (<code>kg job approve &lt;id&gt;</code>)</li>
+<li>
+<p>Unix users: Use verb shortcuts (<code>kg ls job</code>)</p>
+</li>
+<li>
+<p><strong>Scalability</strong></p>
+</li>
+<li>Domain-specific operations don't need Unix analogs</li>
+<li>
+<p>Easy to add specialized verbs without polluting Unix verb namespace</p>
+</li>
+<li>
+<p><strong>Discoverability</strong></p>
+</li>
+<li><code>kg &lt;resource&gt; --help</code> shows all operations for that resource</li>
+<li><code>kg ls --help</code> shows all listable resources</li>
+<li>
+<p>Tab completion works naturally</p>
+</li>
+<li>
+<p><strong>Consistency</strong></p>
+</li>
+<li>All commands follow noun→verb structure</li>
+<li>Verb shortcuts are additive (don't break existing usage)</li>
+<li>
+<p>Clean separation via router pattern</p>
+</li>
+<li>
+<p><strong>Maintainability</strong></p>
+</li>
+<li>Router is single source of truth for verb mappings</li>
+<li>Primary commands remain unchanged</li>
+<li>
+<p>Easy to add/remove verb shortcuts</p>
+</li>
+<li>
+<p><strong>CLI as API Abstraction</strong> (JSON Mode)</p>
+</li>
+<li><strong>Safety layer</strong>: Client-side validation, confirmation prompts</li>
+<li><strong>Type safety</strong>: TypeScript ensures correct data structures</li>
+<li><strong>Protocol versioning</strong>: Handle API changes transparently</li>
+<li><strong>Automation-friendly</strong>: No HTTP client needed in scripts</li>
+<li><strong>Offline operations</strong>: Local config, batch processing (future)</li>
+<li><strong>Composability</strong>: Pipe between commands or integrate with Unix tools</li>
+</ol>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ul>
+<li>✅ Intuitive for both Unix and domain experts</li>
+<li>✅ Reduces typing without sacrificing clarity</li>
+<li>✅ Scales to complex domain operations</li>
+<li>✅ Clean, maintainable architecture</li>
+<li>✅ Universal JSON mode enables complete automation</li>
+<li>✅ Consistent interface for scripting/piping</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li>⚠️ Two ways to do the same thing (may confuse new users)</li>
+<li><em>Mitigation:</em> Documentation emphasizes primary commands, verb shortcuts as "convenience aliases"</li>
+<li>⚠️ Router adds indirection</li>
+<li><em>Mitigation:</em> Router is simple delegation, no business logic</li>
+<li>⚠️ Breaking change for existing users</li>
+<li><em>Mitigation:</em> Phase migration (add singulars as aliases first, deprecate plurals later)</li>
+<li>⚠️ JSON mode requires refactoring ALL commands</li>
+<li><em>Mitigation:</em> Implement incrementally, starting with high-value commands</li>
+</ul>
+<h3 id="neutral">Neutral</h3>
+<ul>
+<li>Router pattern adds ~100 lines of code</li>
+<li>Help text needs to explain both interfaces</li>
+<li>Tab completion needs to support both patterns</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="before-current">Before (Current)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>list<span class="w">                    </span><span class="c1"># Inconsistent plural</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kg<span class="w"> </span>job<span class="w"> </span>status<span class="w"> </span>&lt;id&gt;<span class="w">              </span><span class="c1"># Inconsistent with above</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">               </span><span class="c1"># Why not db stats?</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>kg<span class="w"> </span>ontology<span class="w"> </span>list<span class="w">                </span><span class="c1"># Verbose</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>kg<span class="w"> </span>config<span class="w"> </span>mcp<span class="w">                   </span><span class="c1"># Custom structure</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>resources<span class="w"> </span>list<span class="w">    </span><span class="c1"># Too deep</span>
+</code></pre></div>
+<h3 id="after-hybrid">After (Hybrid)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Primary interface (noun → verb)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>job<span class="w"> </span>list
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>kg<span class="w"> </span>job<span class="w"> </span>stat<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>kg<span class="w"> </span>ontology<span class="w"> </span>list
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>kg<span class="w"> </span>config<span class="w"> </span>mcp<span class="w"> </span>list
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>kg<span class="w"> </span>rbac<span class="w"> </span>resource<span class="w"> </span>list
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="c1"># Convenience shortcuts (verb → noun)</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>kg<span class="w"> </span>ls<span class="w"> </span>job
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>kg<span class="w"> </span>stat<span class="w"> </span>job<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>kg<span class="w"> </span>stat<span class="w"> </span>database
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>kg<span class="w"> </span>ls<span class="w"> </span>ontology
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>kg<span class="w"> </span>ls<span class="w"> </span>config
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>kg<span class="w"> </span>ls<span class="w"> </span>resource
+</code></pre></div>
+<h3 id="complex-operations-domain-specific">Complex Operations (Domain-Specific)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># These don&#39;t have Unix verb equivalents - and that&#39;s OK!</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kg<span class="w"> </span>job<span class="w"> </span>approve<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>kg<span class="w"> </span>role<span class="w"> </span>assign<span class="w"> </span>&lt;user&gt;<span class="w"> </span>&lt;role&gt;
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>kg<span class="w"> </span>permission<span class="w"> </span>grant<span class="w"> </span>&lt;role&gt;<span class="w"> </span>&lt;resource&gt;<span class="w"> </span>&lt;action&gt;
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>kg<span class="w"> </span>ontology<span class="w"> </span>merge<span class="w"> </span>&lt;source&gt;<span class="w"> </span>&lt;target&gt;
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span>&lt;from&gt;<span class="w"> </span>&lt;to&gt;
+</code></pre></div>
+<h2 id="migration-path">Migration Path</h2>
+<h3 id="phase-1-add-verb-router-non-breaking">Phase 1: Add Verb Router (Non-Breaking)</h3>
+<ul>
+<li>Implement verb router with delegation</li>
+<li>Add verb shortcuts alongside existing commands</li>
+<li>Both work simultaneously</li>
+</ul>
+<h3 id="phase-2-singularize-resources-breaking">Phase 2: Singularize Resources (Breaking)</h3>
+<ul>
+<li>Rename <code>jobs</code> → <code>job</code>, <code>roles</code> → <code>role</code>, etc.</li>
+<li>Add deprecation warnings for plural forms</li>
+<li>Update documentation</li>
+</ul>
+<h3 id="phase-3-add-useful-aliases">Phase 3: Add Useful Aliases</h3>
+<ul>
+<li><code>cfg</code>, <code>db</code>, <code>onto</code>, <code>perm</code>, <code>res</code></li>
+<li>Document recommended shortcuts</li>
+</ul>
+<h3 id="phase-4-deprecation-optional">Phase 4: Deprecation (Optional)</h3>
+<ul>
+<li>After 6 months, optionally remove plural commands</li>
+<li>Or keep both indefinitely (user preference)</li>
+</ul>
+<h2 id="implementation-checklist">Implementation Checklist</h2>
+<h3 id="phase-1-verb-router">Phase 1: Verb Router</h3>
+<ul>
+<li>[ ] Create <code>client/src/cli/verb-router.ts</code></li>
+<li>[ ] Implement <code>executeCommand()</code> helper</li>
+<li>[ ] Add <code>ls</code> verb with resource delegation</li>
+<li>[ ] Add <code>rm</code> verb with resource delegation</li>
+<li>[ ] Add <code>stat</code> verb with resource delegation</li>
+<li>[ ] Add <code>cat</code> verb with resource delegation</li>
+<li>[ ] Register verb router in main CLI</li>
+</ul>
+<h3 id="phase-2-singularization">Phase 2: Singularization</h3>
+<ul>
+<li>[ ] Rename <code>jobs</code> → <code>job</code></li>
+<li>[ ] Rename <code>roles</code> → <code>role</code></li>
+<li>[ ] Rename <code>permissions</code> → <code>permission</code></li>
+<li>[ ] Rename <code>resources</code> → <code>resource</code></li>
+<li>[ ] Update all references in codebase</li>
+</ul>
+<h3 id="phase-3-aliases">Phase 3: Aliases</h3>
+<ul>
+<li>[ ] Add <code>db</code> alias for <code>database</code></li>
+<li>[ ] Add <code>cfg</code> alias for <code>config</code></li>
+<li>[ ] Add <code>onto</code> alias for <code>ontology</code></li>
+<li>[ ] Add <code>perm</code> alias for <code>permission</code></li>
+<li>[ ] Add <code>res</code> alias for <code>resource</code></li>
+</ul>
+<h3 id="phase-4-universal-json-mode">Phase 4: Universal JSON Mode</h3>
+<ul>
+<li>[ ] Add <code>output_format</code> field to config schema</li>
+<li>[ ] Add <code>--json</code> global flag (Commander.js parent option)</li>
+<li>[ ] Add <code>--table</code> global flag (override JSON mode)</li>
+<li>[ ] Create <code>getOutputFormat()</code> utility</li>
+<li>[ ] Refactor ALL commands to check output format</li>
+<li>[ ] Ensure Table utility supports JSON output</li>
+<li>[ ] Ensure error messages are JSON in JSON mode</li>
+<li>[ ] Test JSON mode with piping/automation</li>
+</ul>
+<h3 id="phase-5-documentation-testing">Phase 5: Documentation &amp; Testing</h3>
+<ul>
+<li>[ ] Update help text to explain both interfaces</li>
+<li>[ ] Add tab completion for verb shortcuts</li>
+<li>[ ] Update user documentation</li>
+<li>[ ] Update QUICKSTART guide</li>
+<li>[ ] Write integration tests</li>
+<li>[ ] Test backwards compatibility</li>
+</ul>
+<h2 id="future-enhancements">Future Enhancements</h2>
+<ol>
+<li>
+<p><strong>Interactive Mode</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>ls
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1"># Interactive: &quot;What would you like to list?&quot;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Shows: jobs, ontologies, roles, backups, etc.</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Fuzzy Matching</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>ls<span class="w"> </span>ont<span class="w">   </span><span class="c1"># Matches &quot;ontology&quot;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>rm<span class="w"> </span>j<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="c1"># Matches &quot;job 123&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Shell Completion</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>ls<span class="w"> </span>&lt;TAB&gt;<span class="w">  </span><span class="c1"># Shows: job, ontology, backup, config, role, ...</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>job<span class="w"> </span>&lt;TAB&gt;<span class="w"> </span><span class="c1"># Shows: list, stat, approve, cancel</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Piping Support</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>ls<span class="w"> </span>job<span class="w"> </span>--format<span class="o">=</span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.[] | select(.status == &quot;failed&quot;)&#39;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h2 id="references">References</h2>
+<ul>
+<li>BusyBox Design: https://busybox.net/</li>
+<li>Git Command Design: https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain</li>
+<li>Kubectl Command Patterns: https://kubernetes.io/docs/reference/kubectl/</li>
+<li>Commander.js Documentation: https://github.com/tj/commander.js</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>By embracing a <strong>hybrid design</strong>, we get:
+- <strong>Organized complexity</strong> via noun→verb (domain operations)
+- <strong>Unix familiarity</strong> via verb shortcuts (common operations)
+- <strong>Clean architecture</strong> via router delegation (maintainable)</p>
+<p>This positions <code>kg</code> as a <strong>professional domain-specific shell</strong> rather than an ad-hoc collection of commands. The design scales from simple CRUD to complex workflows while remaining intuitive for both Unix users and domain experts.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

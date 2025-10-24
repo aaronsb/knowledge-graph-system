@@ -1,0 +1,3996 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../01-AUTHENTICATION/">
+      
+      
+        <link rel="next" href="../03-SECURITY/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>RBAC Operations Guide - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#rbac-operations-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              RBAC Operations Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of Contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built-in Roles
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a User
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-user-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      View User Details
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update User
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete User
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Role Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Role Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Roles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-role-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Show Role Details
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-custom-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Custom Role
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-a-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete a Role
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#permission-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Permission Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Permission Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Permissions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grant-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grant Permissions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revoke-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Revoke Permissions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-role-assignments" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Role Assignments
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Role Assignments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-users-role-assignments" class="md-nav__link">
+    <span class="md-ellipsis">
+      List User's Role Assignments
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assign-role-to-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      Assign Role to User
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-role-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove Role Assignment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#onboard-a-new-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      Onboard a New User
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-project-specific-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Project-Specific Role
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporary-access-time-limited" class="md-nav__link">
+    <span class="md-ellipsis">
+      Temporary Access (Time-Limited)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-user-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audit User Permissions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#role-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Role Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-management_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-management_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Permission Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#permission-denied-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      "Permission denied" errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cannot-delete-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cannot delete role
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-locked-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      User locked out
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-not-taking-effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      Permission not taking effect
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lost-admin-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lost admin access
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Reference
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="rbac-operations-guide">RBAC Operations Guide</h1>
+<p><strong>Role-Based Access Control (RBAC) - Administrative Operations</strong></p>
+<p>This guide covers day-to-day operations for managing users, roles, and permissions in the Knowledge Graph system.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#built-in-roles">Built-in Roles</a></li>
+<li><a href="#user-management">User Management</a></li>
+<li><a href="#role-management">Role Management</a></li>
+<li><a href="#permission-management">Permission Management</a></li>
+<li><a href="#user-role-assignments">User Role Assignments</a></li>
+<li><a href="#common-workflows">Common Workflows</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>The Knowledge Graph system implements a dynamic RBAC system (ADR-028) with:</p>
+<ul>
+<li><strong>Dynamic resource types</strong>: Register new resource types at runtime</li>
+<li><strong>Role hierarchy</strong>: Roles can inherit permissions from parent roles</li>
+<li><strong>Multi-level scoping</strong>: Global, instance-level, and filter-based permissions</li>
+<li><strong>Permission precedence</strong>: DENY → Instance → Filter → Global → Inherited</li>
+</ul>
+<p>All RBAC operations require admin authentication and are accessed via <code>kg admin rbac</code> commands.</p>
+<hr />
+<h2 id="built-in-roles">Built-in Roles</h2>
+<p>The system includes four built-in roles:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Description</th>
+<th>Default Permissions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read_only</code></td>
+<td>Read-only access to public resources</td>
+<td>Read concepts, search</td>
+</tr>
+<tr>
+<td><code>contributor</code></td>
+<td>Can create and modify content</td>
+<td>All read_only + create/update content</td>
+</tr>
+<tr>
+<td><code>curator</code></td>
+<td>Can approve and manage content</td>
+<td>All contributor + approve jobs, view RBAC</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>Full system access</td>
+<td>All curator + manage users, roles, permissions</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: Built-in roles cannot be deleted but can be modified with caution.</p>
+<hr />
+<h2 id="user-management">User Management</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<p>You must be logged in with admin role:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>admin
+</code></pre></div>
+<h3 id="create-a-user">Create a User</h3>
+<p><strong>Interactive (prompts for password):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor
+</code></pre></div></p>
+<p><strong>Non-interactive (with password):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;SecurePass123!&quot;</span>
+</code></pre></div></p>
+<h3 id="list-users">List Users</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># List all users</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Filter by role</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>admin
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Pagination</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--skip<span class="w"> </span><span class="m">10</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+</code></pre></div>
+<h3 id="view-user-details">View User Details</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
+</code></pre></div>
+<p>Example:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">3</span>
+</code></pre></div></p>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>User Details
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>ID:         3
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>Username:   alice
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Role:       contributor
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>Created:    10/12/2025, 12:00:00 AM
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>Last Login: 10/12/2025, 1:30:15 AM
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>Status:     Active
+</code></pre></div></p>
+<h3 id="update-user">Update User</h3>
+<p><strong>Change role:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--role<span class="w"> </span>curator
+</code></pre></div></p>
+<p><strong>Change password (interactive):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password
+</code></pre></div></p>
+<p><strong>Change password (non-interactive):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewSecurePass123!&quot;</span>
+</code></pre></div></p>
+<p><strong>Disable user:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--disable
+</code></pre></div></p>
+<p><strong>Enable user:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--enable
+</code></pre></div></p>
+<h3 id="delete-user">Delete User</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<p><strong>Note</strong>: Requires re-authentication challenge for safety. Cannot delete your own account.</p>
+<hr />
+<h2 id="role-management">Role Management</h2>
+<h3 id="list-roles">List Roles</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Active roles only</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>list
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Include inactive roles</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>list<span class="w"> </span>--all
+</code></pre></div>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Role Name            Display Name         Active  Builtin  Parent
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>admin                Administrator        ●       Yes      -
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>contributor          Contributor          ●       Yes      -
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>curator              Curator              ●       Yes      -
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>data_scientist       Data Scientist       ●       No       contributor
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>read_only            Read Only            ●       Yes      -
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>────────────────────────────────────────────────────────────
+</code></pre></div></p>
+<h3 id="show-role-details">Show Role Details</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>show<span class="w"> </span>data_scientist
+</code></pre></div>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Role: Data Scientist
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>ID: data_scientist
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>Description: Advanced analytics and data exploration
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>Status: Active
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>Builtin: No
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>Inherits from: contributor
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>Created: 10/12/2025, 12:30:00 AM
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>Permissions (3):
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>  ✓ read on concepts (global)
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>  ✓ read on vocabulary (global)
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>  ✓ write on concepts (filter)
+</code></pre></div></p>
+<h3 id="create-a-custom-role">Create a Custom Role</h3>
+<p><strong>Basic role:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;data_analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;Data Analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Analytics and reporting access&quot;</span>
+</code></pre></div></p>
+<p><strong>Role with inheritance:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;senior_analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;Senior Data Analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Advanced analytics with additional permissions&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span>-p<span class="w"> </span>data_analyst
+</code></pre></div></p>
+<h3 id="delete-a-role">Delete a Role</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>delete<span class="w"> </span>data_analyst
+</code></pre></div>
+<p><strong>Note</strong>:
+- Cannot delete built-in roles
+- Cannot delete roles with assigned users
+- Requires confirmation (use <code>--force</code> to skip)</p>
+<hr />
+<h2 id="permission-management">Permission Management</h2>
+<h3 id="list-permissions">List Permissions</h3>
+<p><strong>All permissions:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list
+</code></pre></div></p>
+<p><strong>Filter by role:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>data_scientist
+</code></pre></div></p>
+<p><strong>Filter by resource type:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--resource-type<span class="w"> </span>concepts
+</code></pre></div></p>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>Role              Action  Resource      Scope     Granted
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>admin             delete  resources     global    ✓
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>admin             read    resources     global    ✓
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>admin             write   resources     global    ✓
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>data_scientist    read    concepts      global    ✓
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>────────────────────────────────────────────────────────────
+</code></pre></div></p>
+<h3 id="grant-permissions">Grant Permissions</h3>
+<p><strong>Global permission:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">  </span>-t<span class="w"> </span>concepts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">  </span>-a<span class="w"> </span><span class="nb">read</span>
+</code></pre></div></p>
+<p><strong>Instance-scoped permission:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>-t<span class="w"> </span>ontology<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span>-a<span class="w"> </span>write<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">  </span>-s<span class="w"> </span>instance<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">  </span>--scope-id<span class="w"> </span><span class="s2">&quot;research-2024&quot;</span>
+</code></pre></div></p>
+<p><strong>Filter-scoped permission:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span>-t<span class="w"> </span>concepts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span>-a<span class="w"> </span>write<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">  </span>-s<span class="w"> </span>filter
+</code></pre></div></p>
+<p><strong>Explicit deny:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span>-r<span class="w"> </span>contributor<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span>-t<span class="w"> </span>users<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span>-a<span class="w"> </span>delete<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">  </span>--deny
+</code></pre></div></p>
+<h3 id="revoke-permissions">Revoke Permissions</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>revoke<span class="w"> </span>&lt;permission_id&gt;
+</code></pre></div>
+<p><strong>Note</strong>: Use <code>kg admin rbac permissions list</code> to find the permission ID.</p>
+<hr />
+<h2 id="user-role-assignments">User Role Assignments</h2>
+<p>The system supports dynamic role assignments beyond the primary role.</p>
+<h3 id="list-users-role-assignments">List User's Role Assignments</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span>&lt;user_id&gt;
+</code></pre></div>
+<p>Example:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span><span class="m">5</span>
+</code></pre></div></p>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>Role              Scope Type  Scope ID    Assigned          Expires
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>data_scientist    global      -           Oct 12, 12:00 AM  Never
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>curator           workspace   ws-001      Oct 12, 01:00 AM  Oct 13, 01:00 AM
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>────────────────────────────────────────────────────────────
+</code></pre></div></p>
+<h3 id="assign-role-to-user">Assign Role to User</h3>
+<p><strong>Global assignment:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist
+</code></pre></div></p>
+<p><strong>Scoped assignment:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">  </span>-r<span class="w"> </span>curator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">  </span>-s<span class="w"> </span>workspace<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">  </span>--scope-id<span class="w"> </span>ws-001
+</code></pre></div></p>
+<h3 id="remove-role-assignment">Remove Role Assignment</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>remove<span class="w"> </span>&lt;assignment_id&gt;
+</code></pre></div>
+<p><strong>Note</strong>: Use <code>kg admin rbac assign list &lt;user_id&gt;</code> to find the assignment ID.</p>
+<hr />
+<h2 id="common-workflows">Common Workflows</h2>
+<h3 id="onboard-a-new-user">Onboard a New User</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># 1. Create user account</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;TempPass123!&quot;</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># 2. Assign additional roles if needed</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span>&lt;alice_id&gt;<span class="w"> </span>-r<span class="w"> </span>data_scientist
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="c1"># 3. Send credentials to user (use secure channel)</span>
+<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Username: alice, Temporary password: TempPass123!&quot;</span>
+<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>
+<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a><span class="c1"># 4. User logs in and changes password</span>
+<a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="c1"># (User runs: kg login, then kg admin user update &lt;id&gt; --password)</span>
+</code></pre></div>
+<h3 id="create-a-project-specific-role">Create a Project-Specific Role</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># 1. Create the role with inheritance</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;ml_researcher&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;ML Researcher&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Machine learning research team&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="w">  </span>-p<span class="w"> </span>contributor
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="c1"># 2. Grant specific permissions</span>
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span>write
+<a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>vocabulary<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>-a<span class="w"> </span>approve
+<a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a>
+<a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a><span class="c1"># 3. Assign to team members</span>
+<a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span><span class="m">10</span><span class="w"> </span>-r<span class="w"> </span>ml_researcher
+<a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span><span class="m">11</span><span class="w"> </span>-r<span class="w"> </span>ml_researcher
+</code></pre></div>
+<h3 id="temporary-access-time-limited">Temporary Access (Time-Limited)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># Grant temporary curator access for code review</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="w">  </span>-r<span class="w"> </span>curator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="w">  </span>--expires<span class="w"> </span><span class="s2">&quot;2025-10-15T23:59:59Z&quot;</span>
+</code></pre></div>
+<p><strong>Note</strong>: The system will automatically revoke expired assignments.</p>
+<h3 id="audit-user-permissions">Audit User Permissions</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># 1. View user details</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="c1"># 2. List all role assignments</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a>
+<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="c1"># 3. Check specific role permissions</span>
+<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>show<span class="w"> </span>data_scientist
+<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a>
+<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a><span class="c1"># 4. Review all permissions for that role</span>
+<a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>data_scientist
+</code></pre></div>
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="role-design">Role Design</h3>
+<ol>
+<li>
+<p><strong>Use role hierarchy</strong>: Create specific roles that inherit from base roles
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>contributor<span class="w"> </span>→<span class="w"> </span>data_scientist<span class="w"> </span>→<span class="w"> </span>senior_data_scientist
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Principle of least privilege</strong>: Grant minimum necessary permissions
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Good: Specific permissions</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>analyst<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># Avoid: Overly broad permissions</span>
+<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>analyst<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span>write
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Use scoped permissions</strong>: Limit access to specific resources when possible
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Project-specific write access</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>dev<span class="w"> </span>-t<span class="w"> </span>ontology<span class="w"> </span>-a<span class="w"> </span>write<span class="w"> </span>-s<span class="w"> </span>instance<span class="w"> </span>--scope-id<span class="w"> </span><span class="s2">&quot;project-x&quot;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="user-management_1">User Management</h3>
+<ol>
+<li>
+<p><strong>Standardize usernames</strong>: Use consistent naming (e.g., <code>firstname.lastname</code>, <code>email_prefix</code>)</p>
+</li>
+<li>
+<p><strong>Require strong passwords</strong>: Use password validation (min 8 chars, uppercase, lowercase, digit, special char)</p>
+</li>
+<li>
+<p><strong>Regular audits</strong>: Periodically review user list and assignments
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>&gt;<span class="w"> </span>users_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.txt
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Disable instead of delete</strong>: Preserve audit trail by disabling inactive users
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;id&gt;<span class="w"> </span>--disable
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="permission-management_1">Permission Management</h3>
+<ol>
+<li>
+<p><strong>Document custom roles</strong>: Keep track of why custom roles were created</p>
+</li>
+<li>
+<p><strong>Test permissions</strong>: Create test users to verify permission behavior
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>test_analyst<span class="w"> </span>--role<span class="w"> </span>data_analyst<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;TestPass123!&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Use explicit denies sparingly</strong>: Only use when you need to override inherited permissions</p>
+</li>
+<li>
+<p><strong>Regular permission reviews</strong>: Audit permissions quarterly
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>&gt;<span class="w"> </span>permissions_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.txt
+</code></pre></div></p>
+</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="permission-denied-errors">"Permission denied" errors</h3>
+<p><strong>Symptom</strong>: User cannot perform an action</p>
+<p><strong>Diagnosis</strong>:
+1. Check user's primary role:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
+</code></pre></div></p>
+<ol>
+<li>
+<p>Check role assignments:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span>&lt;user_id&gt;
+</code></pre></div></p>
+</li>
+<li>
+<p>Check role permissions:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;
+</code></pre></div></p>
+</li>
+<li>
+<p>Check for explicit denies:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;✗&quot;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<p><strong>Solution</strong>: Grant missing permission or adjust role assignment</p>
+<h3 id="cannot-delete-role">Cannot delete role</h3>
+<p><strong>Symptom</strong>: Error when trying to delete a role</p>
+<p><strong>Common causes</strong>:
+- Role is builtin (cannot delete)
+- Role has assigned users (must remove assignments first)</p>
+<p><strong>Solution</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="c1"># 1. Find users with this role</span>
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="c1"># 2. Change their role or remove assignment</span>
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--role<span class="w"> </span>&lt;new_role&gt;
+<a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a><span class="c1"># OR</span>
+<a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>remove<span class="w"> </span>&lt;assignment_id&gt;
+<a id="__codelineno-50-8" name="__codelineno-50-8" href="#__codelineno-50-8"></a>
+<a id="__codelineno-50-9" name="__codelineno-50-9" href="#__codelineno-50-9"></a><span class="c1"># 3. Delete the role</span>
+<a id="__codelineno-50-10" name="__codelineno-50-10" href="#__codelineno-50-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>delete<span class="w"> </span>&lt;role_name&gt;
+</code></pre></div></p>
+<h3 id="user-locked-out">User locked out</h3>
+<p><strong>Symptom</strong>: User cannot login</p>
+<p><strong>Diagnosis</strong>:
+1. Check if user is disabled:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
+</code></pre></div></p>
+<ol>
+<li>Check if password was recently changed</li>
+</ol>
+<p><strong>Solution</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># Enable user</span>
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--enable
+<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
+<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># Reset password</span>
+<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewTempPass123!&quot;</span>
+</code></pre></div></p>
+<h3 id="permission-not-taking-effect">Permission not taking effect</h3>
+<p><strong>Symptom</strong>: Granted permission doesn't work</p>
+<p><strong>Common causes</strong>:
+- Permission precedence (explicit deny overrides)
+- Scope mismatch (global vs instance)
+- Resource type mismatch</p>
+<p><strong>Solution</strong>:
+1. Check permission precedence order: DENY → Instance → Filter → Global → Inherited
+2. Verify resource type spelling matches exactly
+3. Check if there's an explicit deny:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;✗&quot;</span>
+</code></pre></div></p>
+<h3 id="lost-admin-access">Lost admin access</h3>
+<p><strong>Symptom</strong>: No users have admin role</p>
+<p><strong>Recovery</strong>:
+1. Use the initialization script to reset admin account:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>./scripts/initialize-auth.sh
+</code></pre></div></p>
+<ol>
+<li>This will prompt to reset the admin password</li>
+<li>Login as admin and restore access</li>
+</ol>
+<hr />
+<h2 id="api-reference">API Reference</h2>
+<p>All RBAC operations are also available via REST API:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a><span class="c1"># Resources</span>
+<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>GET<span class="w">    </span>/api/rbac/resources
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a>POST<span class="w">   </span>/api/rbac/resources
+<a id="__codelineno-55-4" name="__codelineno-55-4" href="#__codelineno-55-4"></a>GET<span class="w">    </span>/api/rbac/resources/<span class="o">{</span>type<span class="o">}</span>
+<a id="__codelineno-55-5" name="__codelineno-55-5" href="#__codelineno-55-5"></a>DELETE<span class="w"> </span>/api/rbac/resources/<span class="o">{</span>type<span class="o">}</span>
+<a id="__codelineno-55-6" name="__codelineno-55-6" href="#__codelineno-55-6"></a>
+<a id="__codelineno-55-7" name="__codelineno-55-7" href="#__codelineno-55-7"></a><span class="c1"># Roles</span>
+<a id="__codelineno-55-8" name="__codelineno-55-8" href="#__codelineno-55-8"></a>GET<span class="w">    </span>/api/rbac/roles
+<a id="__codelineno-55-9" name="__codelineno-55-9" href="#__codelineno-55-9"></a>POST<span class="w">   </span>/api/rbac/roles
+<a id="__codelineno-55-10" name="__codelineno-55-10" href="#__codelineno-55-10"></a>GET<span class="w">    </span>/api/rbac/roles/<span class="o">{</span>name<span class="o">}</span>
+<a id="__codelineno-55-11" name="__codelineno-55-11" href="#__codelineno-55-11"></a>DELETE<span class="w"> </span>/api/rbac/roles/<span class="o">{</span>name<span class="o">}</span>
+<a id="__codelineno-55-12" name="__codelineno-55-12" href="#__codelineno-55-12"></a>
+<a id="__codelineno-55-13" name="__codelineno-55-13" href="#__codelineno-55-13"></a><span class="c1"># Permissions</span>
+<a id="__codelineno-55-14" name="__codelineno-55-14" href="#__codelineno-55-14"></a>GET<span class="w">    </span>/api/rbac/permissions
+<a id="__codelineno-55-15" name="__codelineno-55-15" href="#__codelineno-55-15"></a>POST<span class="w">   </span>/api/rbac/permissions
+<a id="__codelineno-55-16" name="__codelineno-55-16" href="#__codelineno-55-16"></a>DELETE<span class="w"> </span>/api/rbac/permissions/<span class="o">{</span>id<span class="o">}</span>
+<a id="__codelineno-55-17" name="__codelineno-55-17" href="#__codelineno-55-17"></a>
+<a id="__codelineno-55-18" name="__codelineno-55-18" href="#__codelineno-55-18"></a><span class="c1"># User Role Assignments</span>
+<a id="__codelineno-55-19" name="__codelineno-55-19" href="#__codelineno-55-19"></a>GET<span class="w">    </span>/api/rbac/user-roles/<span class="o">{</span>user_id<span class="o">}</span>
+<a id="__codelineno-55-20" name="__codelineno-55-20" href="#__codelineno-55-20"></a>POST<span class="w">   </span>/api/rbac/user-roles
+<a id="__codelineno-55-21" name="__codelineno-55-21" href="#__codelineno-55-21"></a>DELETE<span class="w"> </span>/api/rbac/user-roles/<span class="o">{</span>id<span class="o">}</span>
+<a id="__codelineno-55-22" name="__codelineno-55-22" href="#__codelineno-55-22"></a>
+<a id="__codelineno-55-23" name="__codelineno-55-23" href="#__codelineno-55-23"></a><span class="c1"># Permission Check</span>
+<a id="__codelineno-55-24" name="__codelineno-55-24" href="#__codelineno-55-24"></a>POST<span class="w">   </span>/api/rbac/check-permission
+</code></pre></div>
+<p>See API documentation at <code>http://localhost:8000/docs</code> for detailed schemas.</p>
+<hr />
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../../../architecture/ADR-028-dynamic-rbac-system/">ADR-028: Dynamic RBAC</a> - Architecture decision record</li>
+<li><a href="../../../architecture/ADR-027-user-management-api/">ADR-027: User Management API</a> - Authentication system</li>
+<li><a href="../01-AUTHENTICATION/">Authentication Guide</a> - Login and authentication flows</li>
+<li><a href="../api/">API Documentation</a> - REST API reference</li>
+</ul>
+<hr />
+<p><strong>Version</strong>: 1.0
+<strong>Last Updated</strong>: October 2025
+<strong>Maintainer</strong>: Knowledge Graph Team</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

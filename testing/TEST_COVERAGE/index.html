@@ -1,0 +1,4373 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../SCHEMA_MIGRATION_TEST_REPORT/">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Test Coverage Areas - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#test-coverage-areas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Test Coverage Areas
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../manual/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../manual/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Philosophy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-testing-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Testing Stack
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current Testing Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pythonfastapi-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      Python/FastAPI Backend
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescriptjest-cli-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      TypeScript/Jest CLI Client
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-smoke-tests-fast-sanity-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Smoke Tests (Fast Sanity Checks)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Smoke Tests (Fast Sanity Checks)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-infrastructure-connectivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ 1.1 Infrastructure Connectivity
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-functional-tests-core-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Functional Tests (Core Workflows)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Functional Tests (Core Workflows)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-ingestion-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ 2.1 Ingestion Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-job-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ 2.2 Job Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-graph-queries-pending-requires-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏳ 2.3 Graph Queries (Pending - Requires Database)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-database-operations-pending" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏳ 2.4 Database Operations (Pending)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-ontology-management-pending" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏳ 2.5 Ontology Management (Pending)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-cli-functional-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. CLI Functional Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. CLI Functional Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-health-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ 3.1 Health Command
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-other-cli-commands-pending" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⏳ 3.2 Other CLI Commands (Pending)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-mock-ai-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Mock AI Provider
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Mock AI Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-no-api-keys-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ 4.1 No API Keys Required
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-apache-age-migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Apache AGE Migration Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Apache AGE Migration Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Changes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-test-coverage-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Test Coverage Summary
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Test Coverage Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#functional-coverage-by-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      Functional Coverage by Feature
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coverage-metrics-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      Coverage Metrics (Python)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-test-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Test Organization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Running Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Running Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#python-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Python Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescript-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      TypeScript Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-cicd-integration-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. CI/CD Integration (Future)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. CI/CD Integration (Future)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#github-actions-suggested" class="md-nav__link">
+    <span class="md-ellipsis">
+      GitHub Actions (Suggested)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-future-test-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Future Test Areas
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Future Test Areas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI Coverage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance &amp; Scale
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Features
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Success Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-test-development-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Test Development Guidelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Test Development Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-new-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding New Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-functional-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writing Functional Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tests-fail-with-connection-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests Fail with "Connection Refused"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mock-provider-not-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mock Provider Not Working
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescript-tests-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      TypeScript Tests Timeout
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="test-coverage-areas">Test Coverage Areas</h1>
+<p>Functional test coverage map for the knowledge graph system. This document outlines what needs testing, expected behaviors, and acceptance criteria.</p>
+<hr />
+<h2 id="philosophy">Philosophy</h2>
+<p><strong>We test for functional correctness, not code coverage.</strong></p>
+<ul>
+<li>✅ Does the workflow work end-to-end?</li>
+<li>✅ Does data integrity remain intact?</li>
+<li>✅ Are edge cases handled gracefully?</li>
+<li>❌ NOT: Did we execute every line of code?</li>
+</ul>
+<p><strong>Non-deterministic acceptance:</strong>
+- LLM extraction varies between runs
+- Test ranges, not exact values
+- Validate structure and semantics, not specific outputs</p>
+<p><strong>Integration over mocking:</strong>
+- Tests run against real API server (no mocks)
+- Database tests use real PostgreSQL + Apache AGE
+- CLI tests execute actual commands
+- Coverage is a guide, not a chase metric</p>
+<hr />
+<h2 id="current-testing-stack">Current Testing Stack</h2>
+<h3 id="pythonfastapi-backend">Python/FastAPI Backend</h3>
+<p><strong>Framework:</strong> pytest 8.0+ with pytest-asyncio, httpx, pytest-cov
+<strong>Test Location:</strong> <code>tests/</code>
+<strong>Configuration:</strong> <code>pytest.ini</code></p>
+<p><strong>Key Features:</strong>
+- Mock AI provider (no API keys needed)
+- In-memory job queue for fast tests
+- Test markers: <code>smoke</code>, <code>integration</code>, <code>api</code>
+- Coverage reporting (HTML + terminal)</p>
+<p><strong>Run Tests:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># All tests</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pytest
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># By category</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>pytest<span class="w"> </span>-m<span class="w"> </span>smoke<span class="w">          </span><span class="c1"># Fast, no database (16 tests)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>pytest<span class="w"> </span>-m<span class="w"> </span>integration<span class="w">    </span><span class="c1"># Full workflows (35 tests)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pytest<span class="w"> </span>-m<span class="w"> </span>api<span class="w">           </span><span class="c1"># API endpoints (all tests)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># With coverage</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>src<span class="w"> </span>--cov-report<span class="o">=</span>html
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>open<span class="w"> </span>htmlcov/index.html
+</code></pre></div></p>
+<h3 id="typescriptjest-cli-client">TypeScript/Jest CLI Client</h3>
+<p><strong>Framework:</strong> Jest 29.7+ with ts-jest
+<strong>Test Location:</strong> <code>client/tests/</code>
+<strong>Configuration:</strong> <code>client/jest.config.js</code></p>
+<p><strong>Key Features:</strong>
+- Auto-starts API server for tests
+- Real integration (no mocks)
+- Global setup/teardown
+- TypeScript support</p>
+<p><strong>Run Tests:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>client
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Build first (required)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>npm<span class="w"> </span>run<span class="w"> </span>build
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Run tests</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>npm<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># With coverage</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>npm<span class="w"> </span>run<span class="w"> </span>test:coverage
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1"># Watch mode</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>npm<span class="w"> </span>run<span class="w"> </span>test:watch
+</code></pre></div></p>
+<hr />
+<h2 id="1-smoke-tests-fast-sanity-checks">1. Smoke Tests (Fast Sanity Checks)</h2>
+<h3 id="11-infrastructure-connectivity">✅ 1.1 Infrastructure Connectivity</h3>
+<p><strong>Status:</strong> IMPLEMENTED (16 tests passing)</p>
+<p><strong>Test:</strong> API Health Check
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># tests/api/test_health.py</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_health_endpoint_returns_200</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;API server is running and healthy&quot;&quot;&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/health&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span> <span class="o">==</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;healthy&quot;</span><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> API Status Endpoint
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># tests/api/test_root.py</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_root_endpoint_status_healthy</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Root endpoint returns service info and health&quot;&quot;&quot;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;healthy&quot;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="k">assert</span> <span class="s2">&quot;queue&quot;</span> <span class="ow">in</span> <span class="n">data</span>  <span class="c1"># Job queue operational</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> Mock AI Provider
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># tests/test_mock_provider.py (comprehensive test suite)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_mock_provider_deterministic</span><span class="p">():</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Mock provider gives same results for same input&quot;&quot;&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">provider</span> <span class="o">=</span> <span class="n">MockAIProvider</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;Test concept extraction&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">result1</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s2">&quot;test.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">result2</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s2">&quot;test.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="c1"># Same input = same output (deterministic)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="k">assert</span> <span class="n">result1</span> <span class="o">==</span> <span class="n">result2</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> Job Queue Operations
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># tests/api/test_jobs.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_jobs_list_empty</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Job listing works (in-memory queue)&quot;&quot;&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/jobs&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">(),</span> <span class="nb">list</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Expected Results:</strong>
+- ✅ All 16 smoke tests pass in &lt;1s
+- ✅ No database or LLM API keys required
+- ✅ Tests validate API structure and mock systems</p>
+<hr />
+<h2 id="2-functional-tests-core-workflows">2. Functional Tests (Core Workflows)</h2>
+<h3 id="21-ingestion-pipeline">✅ 2.1 Ingestion Pipeline</h3>
+<p><strong>Status:</strong> IMPLEMENTED (14 tests passing)</p>
+<p><strong>Test:</strong> Text Ingestion Workflow
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># tests/api/test_ingest.py</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_ingest_text_basic</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Submit text → job created → queued for processing&quot;&quot;&quot;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;This is a test document.&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="s2">&quot;test-ontology&quot;</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="p">}</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="k">assert</span> <span class="s2">&quot;job_id&quot;</span> <span class="ow">in</span> <span class="n">result</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;pending&quot;</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> File Upload Ingestion
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_ingest_file_upload</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Upload file → job created → content hashed&quot;&quot;&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">file_content</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;Test file content&quot;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">files</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;test.txt&quot;</span><span class="p">,</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">file_content</span><span class="p">),</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">)}</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="s2">&quot;test-upload&quot;</span><span class="p">}</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest&quot;</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="k">assert</span> <span class="s2">&quot;job_id&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="k">assert</span> <span class="s2">&quot;content_hash&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> Duplicate Detection
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_ingest_text_duplicate_detection</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Same content → duplicate detected&quot;&quot;&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;Unique test content&quot;</span><span class="p">,</span> <span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="s2">&quot;test-dup&quot;</span><span class="p">}</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="c1"># First submission</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">response1</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">job_id1</span> <span class="o">=</span> <span class="n">response1</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="c1"># Second submission (same content + ontology)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="n">response2</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="n">result2</span> <span class="o">=</span> <span class="n">response2</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="c1"># Should detect duplicate or return same job</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="k">assert</span> <span class="s2">&quot;job_id&quot;</span> <span class="ow">in</span> <span class="n">result2</span> <span class="ow">or</span> <span class="s2">&quot;duplicate&quot;</span> <span class="ow">in</span> <span class="n">result2</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> Auto-Approve Workflow (ADR-014)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_ingest_text_auto_approve</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;auto_approve=true skips manual approval step&quot;&quot;&quot;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;Auto-approve test&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="s2">&quot;test-auto&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>        <span class="s2">&quot;auto_approve&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="p">}</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>    <span class="k">assert</span> <span class="s2">&quot;auto&quot;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+</code></pre></div></p>
+<p><strong>Expected Results:</strong>
+- ✅ 14 ingestion tests pass
+- ✅ File upload and text ingestion both work
+- ✅ Duplicate detection operational
+- ✅ ADR-014 approval workflow validated</p>
+<hr />
+<h3 id="22-job-management">✅ 2.2 Job Management</h3>
+<p><strong>Status:</strong> IMPLEMENTED (13 tests passing)</p>
+<p><strong>Test:</strong> Job Lifecycle Workflow
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># tests/api/test_jobs.py</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_job_lifecycle_workflow</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="sd">    Full job lifecycle:</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="sd">    submit → pending → awaiting_approval → approve → processing → completed</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="c1"># 1. Submit job</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;Lifecycle test&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>        <span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="s2">&quot;test-lifecycle&quot;</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="p">})</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    <span class="n">job_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>    <span class="c1"># 2. Check initial status</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>    <span class="n">status_response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>    <span class="n">initial_status</span> <span class="o">=</span> <span class="n">status_response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>    <span class="k">assert</span> <span class="n">initial_status</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="s2">&quot;awaiting_approval&quot;</span><span class="p">]</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>    <span class="c1"># 3. Wait for awaiting_approval (polling simulation)</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>    <span class="c1"># ... wait logic ...</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>    <span class="c1"># 4. Approve job</span>
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>    <span class="n">approve_response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">/approve&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>    <span class="k">assert</span> <span class="n">approve_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a>
+<a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a>    <span class="c1"># 5. Verify transitions to approved/processing</span>
+<a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a>    <span class="n">final_response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a>    <span class="n">final_status</span> <span class="o">=</span> <span class="n">final_response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+<a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a>    <span class="k">assert</span> <span class="n">final_status</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="s2">&quot;processing&quot;</span><span class="p">,</span> <span class="s2">&quot;completed&quot;</span><span class="p">]</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> Job Filtering
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_jobs_list_with_status_filter</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter jobs by status&quot;&quot;&quot;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/jobs?status=completed&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">jobs</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="c1"># All returned jobs should have status=completed</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">job</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Test:</strong> Job Cancellation
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_cancel_job</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Cancel job before processing starts&quot;&quot;&quot;</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="c1"># Create job</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">job_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="c1"># Cancel</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="n">cancel_response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>    <span class="c1"># Should succeed or report already processing</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>    <span class="k">assert</span> <span class="n">cancel_response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">409</span><span class="p">]</span>
+</code></pre></div></p>
+<p><strong>Expected Results:</strong>
+- ✅ 13 job management tests pass
+- ✅ Full lifecycle tested (pending → approval → processing)
+- ✅ Job filtering and cancellation work
+- ✅ ADR-014 approval workflow validated</p>
+<hr />
+<h3 id="23-graph-queries-pending-requires-database">⏳ 2.3 Graph Queries (Pending - Requires Database)</h3>
+<p><strong>Status:</strong> PLACEHOLDER TESTS</p>
+<p><strong>Future Test:</strong> Semantic Search
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># tests/api/test_queries.py (to be implemented)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Requires PostgreSQL + Apache AGE&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_semantic_search</span><span class="p">(</span><span class="n">api_client</span><span class="p">,</span> <span class="n">age_client</span><span class="p">):</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Vector search finds similar concepts&quot;&quot;&quot;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="c1"># Setup: Ingest test documents</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="c1"># ...</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="c1"># Search</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/query/search&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>        <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;linear thinking patterns&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>        <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="s2">&quot;min_similarity&quot;</span><span class="p">:</span> <span class="mf">0.7</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="p">})</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>    <span class="k">assert</span> <span class="s2">&quot;results&quot;</span> <span class="ow">in</span> <span class="n">results</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</code></pre></div></p>
+<p><strong>Future Test:</strong> Concept Details
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Requires database with test data&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_concept_details</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get concept with instances and relationships&quot;&quot;&quot;</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/query/concept/test-concept-id&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="k">assert</span> <span class="s2">&quot;label&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    <span class="k">assert</span> <span class="s2">&quot;instances&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="k">assert</span> <span class="s2">&quot;relationships&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+</code></pre></div></p>
+<p><strong>Future Test:</strong> Path Finding
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Requires graph data&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_find_connection</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Find shortest path between concepts&quot;&quot;&quot;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/query/connect&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>        <span class="s2">&quot;from_id&quot;</span><span class="p">:</span> <span class="s2">&quot;concept-a&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>        <span class="s2">&quot;to_id&quot;</span><span class="p">:</span> <span class="s2">&quot;concept-b&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>        <span class="s2">&quot;max_hops&quot;</span><span class="p">:</span> <span class="mi">5</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="p">})</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>    <span class="k">assert</span> <span class="s2">&quot;paths&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+</code></pre></div></p>
+<p><strong>Expected Results (When Implemented):</strong>
+- Query endpoints work with Apache AGE
+- Vector search using PostgreSQL extensions
+- Graph traversal via AGE Cypher compatibility</p>
+<hr />
+<h3 id="24-database-operations-pending">⏳ 2.4 Database Operations (Pending)</h3>
+<p><strong>Status:</strong> PLACEHOLDER TESTS</p>
+<p><strong>Future Test:</strong> Database Statistics
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># tests/api/test_database.py (to be implemented)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Requires PostgreSQL + AGE&quot;</span><span class="p">)</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_database_stats</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get node/relationship counts&quot;&quot;&quot;</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/database/stats&quot;</span><span class="p">)</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    <span class="k">assert</span> <span class="s2">&quot;nodes&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>    <span class="k">assert</span> <span class="s2">&quot;relationships&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">][</span><span class="s2">&quot;concepts&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+</code></pre></div></p>
+<p><strong>Future Test:</strong> Database Health Check
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Requires database connection&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_database_health</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check PostgreSQL + AGE extension availability&quot;&quot;&quot;</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/database/health&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="k">assert</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;checks&quot;</span><span class="p">][</span><span class="s2">&quot;age_extension&quot;</span><span class="p">][</span><span class="s2">&quot;installed&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span>
+</code></pre></div></p>
+<hr />
+<h3 id="25-ontology-management-pending">⏳ 2.5 Ontology Management (Pending)</h3>
+<p><strong>Status:</strong> PLACEHOLDER TESTS</p>
+<p><strong>Future Test:</strong> List Ontologies
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># tests/api/test_ontology.py (to be implemented)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">&quot;Requires database with ontologies&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_ontology_list</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;List all ontologies with concept counts&quot;&quot;&quot;</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/ontology/&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="k">assert</span> <span class="s2">&quot;ontologies&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>    <span class="k">assert</span> <span class="s2">&quot;count&quot;</span> <span class="ow">in</span> <span class="n">data</span>
+</code></pre></div></p>
+<hr />
+<h2 id="3-cli-functional-tests">3. CLI Functional Tests</h2>
+<h3 id="31-health-command">✅ 3.1 Health Command</h3>
+<p><strong>Status:</strong> IMPLEMENTED (2 tests passing)</p>
+<p><strong>Test:</strong> CLI Health Check
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1">// client/tests/cli/health.test.ts</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;kg health&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;should return healthy status&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">stdout</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">execAsync</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">KG_CLI</span><span class="si">}</span><span class="sb"> health`</span><span class="p">);</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">stdout</span><span class="p">).</span><span class="nx">toContain</span><span class="p">(</span><span class="s1">&#39;healthy&#39;</span><span class="p">);</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">  </span><span class="p">});</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;should exit with code 0 on success&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">      </span><span class="k">await</span><span class="w"> </span><span class="nx">execAsync</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">KG_CLI</span><span class="si">}</span><span class="sb"> health`</span><span class="p">);</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span><span class="w">  </span><span class="c1">// No error = success</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="w">      </span><span class="nx">fail</span><span class="p">(</span><span class="sb">`Command failed: </span><span class="si">${</span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="w">  </span><span class="p">});</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="p">});</span>
+</code></pre></div></p>
+<p><strong>Expected Results:</strong>
+- ✅ 2 CLI tests pass
+- ✅ API server auto-starts for tests
+- ✅ Real integration testing (no mocks)</p>
+<hr />
+<h3 id="32-other-cli-commands-pending">⏳ 3.2 Other CLI Commands (Pending)</h3>
+<p><strong>Future Tests:</strong>
+- [ ] <code>kg jobs list</code> - List jobs with filtering
+- [ ] <code>kg jobs status &lt;id&gt;</code> - Check job status
+- [ ] <code>kg jobs approve &lt;id&gt;</code> - Approve job
+- [ ] <code>kg ingest &lt;file&gt;</code> - Upload file
+- [ ] <code>kg ingest text</code> - Submit text
+- [ ] <code>kg search &lt;query&gt;</code> - Semantic search
+- [ ] <code>kg concept &lt;id&gt;</code> - Concept details
+- [ ] <code>kg connect &lt;from&gt; &lt;to&gt;</code> - Find paths
+- [ ] <code>kg ontology list</code> - List ontologies
+- [ ] <code>kg database stats</code> - Database info</p>
+<hr />
+<h2 id="4-mock-ai-provider">4. Mock AI Provider</h2>
+<h3 id="41-no-api-keys-required">✅ 4.1 No API Keys Required</h3>
+<p><strong>Location:</strong> <code>src/api/lib/mock_ai_provider.py</code></p>
+<p><strong>Features:</strong>
+- <strong>Deterministic responses</strong> - Hash-based embeddings
+- <strong>Configurable modes</strong> - default, simple, complex, empty
+- <strong>1536-dim vectors</strong> - Compatible with OpenAI embeddings
+- <strong>No costs</strong> - Perfect for CI/CD</p>
+<p><strong>Configuration:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># In .env or pytest.ini</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nv">AI_PROVIDER</span><span class="o">=</span>mock
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="nv">MOCK_MODE</span><span class="o">=</span>default
+</code></pre></div></p>
+<p><strong>Modes:</strong>
+- <code>default</code> - Standard concept extraction (3-5 concepts per chunk)
+- <code>simple</code> - Minimal concepts (1-2 per chunk)
+- <code>complex</code> - Rich concept graph (5-7 per chunk)
+- <code>empty</code> - No concepts extracted</p>
+<p><strong>Test:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># tests/test_mock_provider.py</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_mock_provider_modes</span><span class="p">():</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Different modes produce different concept counts&quot;&quot;&quot;</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">simple</span> <span class="o">=</span> <span class="n">MockAIProvider</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">complex_provider</span> <span class="o">=</span> <span class="n">MockAIProvider</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;complex&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>    <span class="n">simple_result</span> <span class="o">=</span> <span class="n">simple</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="s2">&quot;Test text&quot;</span><span class="p">,</span> <span class="s2">&quot;test.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>    <span class="n">complex_result</span> <span class="o">=</span> <span class="n">complex_provider</span><span class="o">.</span><span class="n">extract_concepts</span><span class="p">(</span><span class="s2">&quot;Test text&quot;</span><span class="p">,</span> <span class="s2">&quot;test.txt&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="c1"># Complex mode extracts more concepts</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">complex_result</span><span class="p">[</span><span class="s2">&quot;concepts&quot;</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">simple_result</span><span class="p">[</span><span class="s2">&quot;concepts&quot;</span><span class="p">])</span>
+</code></pre></div></p>
+<hr />
+<h2 id="5-apache-age-migration-notes">5. Apache AGE Migration Notes</h2>
+<h3 id="database-changes">Database Changes</h3>
+<p><strong>Previous:</strong> Neo4j Community Edition 4.x
+<strong>Current:</strong> PostgreSQL 16 + Apache AGE 1.5.0</p>
+<p><strong>Why Apache AGE:</strong>
+- Open-source graph database
+- PostgreSQL compatibility
+- Better licensing for production
+- SQL + openCypher hybrid queries</p>
+<p><strong>Migration Impact on Tests:</strong>
+- ✅ Mock provider unchanged (no database dependency)
+- ✅ Smoke tests unchanged (API-level validation)
+- ⏳ Integration tests need AGE database running
+- ⏳ Query tests pending AGE Cypher compatibility verification</p>
+<p><strong>openCypher Compatibility:</strong>
+- AGE implements the openCypher standard (open-source graph query language)
+- Some Neo4j proprietary Cypher extensions not available
+- Vector search via PostgreSQL extensions (pgvector)
+- Relationship syntax slightly different</p>
+<p><strong>Test Database Setup:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Start PostgreSQL + AGE via Docker</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Verify AGE extension</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;SELECT extname FROM pg_extension WHERE extname = &#39;age&#39;;&quot;</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="c1"># Run integration tests</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>pytest<span class="w"> </span>-m<span class="w"> </span>integration
+</code></pre></div></p>
+<p><strong>Graph Schema (Unchanged from Neo4j):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Nodes</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">,</span><span class="w"> </span><span class="n">label</span><span class="p">,</span><span class="w"> </span><span class="n">embedding</span><span class="p">,</span><span class="w"> </span><span class="n">search_terms</span><span class="p">})</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="k">CREATE</span><span class="w"> </span><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span><span class="n">source_id</span><span class="p">,</span><span class="w"> </span><span class="n">document</span><span class="p">,</span><span class="w"> </span><span class="n">paragraph</span><span class="p">,</span><span class="w"> </span><span class="n">full_text</span><span class="p">})</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="k">CREATE</span><span class="w"> </span><span class="p">(:</span><span class="n">Instance</span><span class="w"> </span><span class="p">{</span><span class="n">instance_id</span><span class="p">,</span><span class="w"> </span><span class="n">quote</span><span class="p">})</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="err">--</span><span class="w"> </span><span class="n">Relationships</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="p">(:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS_IN</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="p">)</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="p">(:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">EVIDENCED_BY</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Instance</span><span class="p">)</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="p">(:</span><span class="n">Instance</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">FROM_SOURCE</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="p">)</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="p">(:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">IMPLIES</span><span class="p">|</span><span class="n">SUPPORTS</span><span class="p">|</span><span class="n">CONTRADICTS</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Concept</span><span class="p">)</span>
+</code></pre></div></p>
+<hr />
+<h2 id="6-test-coverage-summary">6. Test Coverage Summary</h2>
+<h3 id="current-status">Current Status</h3>
+<p><strong>Python/FastAPI:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Total Tests: 51
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>- Smoke: 16 (passing) ✅
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>- Integration: 35 (passing) ✅
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>Code Coverage: 28-31% (functional coverage complete)
+</code></pre></div></p>
+<p><strong>TypeScript/Jest:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Total Tests: 2
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>- CLI health: 2 (passing) ✅
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>Code Coverage: TBD
+</code></pre></div></p>
+<h3 id="functional-coverage-by-feature">Functional Coverage by Feature</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API Health</td>
+<td>4 Python + 2 TS</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td>API Status</td>
+<td>5 Python</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td>Job Management</td>
+<td>13 Python</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td>Ingestion</td>
+<td>14 Python</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td>Mock AI Provider</td>
+<td>Comprehensive</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td>Semantic Search</td>
+<td>Placeholder</td>
+<td>⏳ Needs DB</td>
+</tr>
+<tr>
+<td>Concept Details</td>
+<td>Placeholder</td>
+<td>⏳ Needs DB</td>
+</tr>
+<tr>
+<td>Graph Traversal</td>
+<td>Placeholder</td>
+<td>⏳ Needs DB</td>
+</tr>
+<tr>
+<td>Path Finding</td>
+<td>Placeholder</td>
+<td>⏳ Needs DB</td>
+</tr>
+<tr>
+<td>Ontology Mgmt</td>
+<td>Placeholder</td>
+<td>⏳ Needs DB</td>
+</tr>
+<tr>
+<td>Database Stats</td>
+<td>Placeholder</td>
+<td>⏳ Needs DB</td>
+</tr>
+</tbody>
+</table>
+<h3 id="coverage-metrics-python">Coverage Metrics (Python)</h3>
+<p><strong>High Coverage (Tested Modules):</strong>
+- <code>src/api/routes/jobs.py</code> - 95%
+- <code>src/api/services/job_analysis.py</code> - 92%
+- <code>src/api/main.py</code> - 86%
+- <code>src/api/routes/ingest.py</code> - 85%
+- <code>src/api/services/job_queue.py</code> - 82%</p>
+<p><strong>Low Coverage (Needs Database):</strong>
+- <code>src/api/routes/queries.py</code> - 18%
+- <code>src/api/routes/database.py</code> - 17%
+- <code>src/api/routes/ontology.py</code> - 21%
+- <code>src/api/lib/age_client.py</code> - 14%</p>
+<p><strong>Overall:</strong> 28-31% (expected given database-dependent features not yet tested)</p>
+<hr />
+<h2 id="7-test-organization">7. Test Organization</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>tests/                          # Python/pytest tests
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>├── conftest.py                 # Shared fixtures
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>├── README.md                   # Testing guide
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>├── api/                        # API endpoint tests
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>│   ├── __init__.py
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>│   ├── test_health.py          # 4 smoke tests ✅
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>│   ├── test_root.py            # 5 smoke tests ✅
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>│   ├── test_jobs.py            # 13 integration tests ✅
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>│   ├── test_ingest.py          # 14 integration tests ✅
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>│   └── test_ontology.py        # Placeholders (skip)
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>└── test_mock_provider.py       # Mock provider tests ✅
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>client/tests/                   # TypeScript/Jest tests
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>├── setup.ts                    # Global configuration
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>├── globalSetup.ts              # Start API server
+<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>├── globalTeardown.ts           # Stop API server
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>├── helpers/
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>│   └── api-server.ts           # Server management
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>└── cli/
+<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>    └── health.test.ts          # 2 tests ✅
+</code></pre></div>
+<hr />
+<h2 id="8-running-tests">8. Running Tests</h2>
+<h3 id="python-tests">Python Tests</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># From project root</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># All tests</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>pytest<span class="w"> </span>-v
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># By category</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>pytest<span class="w"> </span>-m<span class="w"> </span>smoke<span class="w">          </span><span class="c1"># Fast tests (16 passing)</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>pytest<span class="w"> </span>-m<span class="w"> </span>integration<span class="w">    </span><span class="c1"># Full workflows (35 passing)</span>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>pytest<span class="w"> </span>-m<span class="w"> </span>api<span class="w">           </span><span class="c1"># All API tests (51 passing)</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>
+<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># By file</span>
+<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>pytest<span class="w"> </span>tests/api/test_jobs.py<span class="w"> </span>-v
+<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>pytest<span class="w"> </span>tests/api/test_ingest.py<span class="w"> </span>-v
+<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>
+<a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a><span class="c1"># With coverage</span>
+<a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>src<span class="w"> </span>--cov-report<span class="o">=</span>html
+<a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a>open<span class="w"> </span>htmlcov/index.html
+</code></pre></div>
+<h3 id="typescript-tests">TypeScript Tests</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># From client/</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>npm<span class="w"> </span>run<span class="w"> </span>build<span class="w">            </span><span class="c1"># Required before tests</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># All tests</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>npm<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1"># Specific pattern</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>npm<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--<span class="w"> </span>--testPathPattern<span class="o">=</span>health
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="c1"># With coverage</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>npm<span class="w"> </span>run<span class="w"> </span>test:coverage
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>open<span class="w"> </span>coverage/lcov-report/index.html
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a>
+<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a><span class="c1"># Watch mode (dev)</span>
+<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a>npm<span class="w"> </span>run<span class="w"> </span>test:watch
+</code></pre></div>
+<hr />
+<h2 id="9-cicd-integration-future">9. CI/CD Integration (Future)</h2>
+<h3 id="github-actions-suggested">GitHub Actions (Suggested)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Tests</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">pull_request</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="nt">jobs</span><span class="p">:</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="w">  </span><span class="nt">test-python</span><span class="p">:</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="w">    </span><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a><span class="w">      </span><span class="nt">postgres</span><span class="p">:</span>
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apache/age:PG16</span>
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a><span class="w">          </span><span class="nt">POSTGRES_DB</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">knowledge_graph_test</span>
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a><span class="w">          </span><span class="nt">POSTGRES_USER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a><span class="w">          </span><span class="nt">POSTGRES_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a><span class="w">        </span><span class="nt">ports</span><span class="p">:</span>
+<a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432:5432</span>
+<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="w">        </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a><span class="w">          </span><span class="no">--health-cmd pg_isready</span>
+<a id="__codelineno-29-19" name="__codelineno-29-19" href="#__codelineno-29-19"></a><span class="w">          </span><span class="no">--health-interval 10s</span>
+<a id="__codelineno-29-20" name="__codelineno-29-20" href="#__codelineno-29-20"></a><span class="w">          </span><span class="no">--health-timeout 5s</span>
+<a id="__codelineno-29-21" name="__codelineno-29-21" href="#__codelineno-29-21"></a><span class="w">          </span><span class="no">--health-retries 5</span>
+<a id="__codelineno-29-22" name="__codelineno-29-22" href="#__codelineno-29-22"></a>
+<a id="__codelineno-29-23" name="__codelineno-29-23" href="#__codelineno-29-23"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<a id="__codelineno-29-24" name="__codelineno-29-24" href="#__codelineno-29-24"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
+<a id="__codelineno-29-25" name="__codelineno-29-25" href="#__codelineno-29-25"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
+<a id="__codelineno-29-26" name="__codelineno-29-26" href="#__codelineno-29-26"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<a id="__codelineno-29-27" name="__codelineno-29-27" href="#__codelineno-29-27"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.11&#39;</span>
+<a id="__codelineno-29-28" name="__codelineno-29-28" href="#__codelineno-29-28"></a>
+<a id="__codelineno-29-29" name="__codelineno-29-29" href="#__codelineno-29-29"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
+<a id="__codelineno-29-30" name="__codelineno-29-30" href="#__codelineno-29-30"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -r requirements.txt</span>
+<a id="__codelineno-29-31" name="__codelineno-29-31" href="#__codelineno-29-31"></a>
+<a id="__codelineno-29-32" name="__codelineno-29-32" href="#__codelineno-29-32"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run smoke tests</span>
+<a id="__codelineno-29-33" name="__codelineno-29-33" href="#__codelineno-29-33"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m smoke -v</span>
+<a id="__codelineno-29-34" name="__codelineno-29-34" href="#__codelineno-29-34"></a>
+<a id="__codelineno-29-35" name="__codelineno-29-35" href="#__codelineno-29-35"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run integration tests</span>
+<a id="__codelineno-29-36" name="__codelineno-29-36" href="#__codelineno-29-36"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m integration -v</span>
+<a id="__codelineno-29-37" name="__codelineno-29-37" href="#__codelineno-29-37"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-29-38" name="__codelineno-29-38" href="#__codelineno-29-38"></a><span class="w">          </span><span class="nt">AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
+<a id="__codelineno-29-39" name="__codelineno-29-39" href="#__codelineno-29-39"></a><span class="w">          </span><span class="nt">POSTGRES_HOST</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<a id="__codelineno-29-40" name="__codelineno-29-40" href="#__codelineno-29-40"></a><span class="w">          </span><span class="nt">POSTGRES_PORT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432</span>
+<a id="__codelineno-29-41" name="__codelineno-29-41" href="#__codelineno-29-41"></a>
+<a id="__codelineno-29-42" name="__codelineno-29-42" href="#__codelineno-29-42"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload coverage</span>
+<a id="__codelineno-29-43" name="__codelineno-29-43" href="#__codelineno-29-43"></a><span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">codecov/codecov-action@v3</span>
+<a id="__codelineno-29-44" name="__codelineno-29-44" href="#__codelineno-29-44"></a>
+<a id="__codelineno-29-45" name="__codelineno-29-45" href="#__codelineno-29-45"></a><span class="w">  </span><span class="nt">test-typescript</span><span class="p">:</span>
+<a id="__codelineno-29-46" name="__codelineno-29-46" href="#__codelineno-29-46"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<a id="__codelineno-29-47" name="__codelineno-29-47" href="#__codelineno-29-47"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<a id="__codelineno-29-48" name="__codelineno-29-48" href="#__codelineno-29-48"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
+<a id="__codelineno-29-49" name="__codelineno-29-49" href="#__codelineno-29-49"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-node@v3</span>
+<a id="__codelineno-29-50" name="__codelineno-29-50" href="#__codelineno-29-50"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<a id="__codelineno-29-51" name="__codelineno-29-51" href="#__codelineno-29-51"></a><span class="w">          </span><span class="nt">node-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;18&#39;</span>
+<a id="__codelineno-29-52" name="__codelineno-29-52" href="#__codelineno-29-52"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
+<a id="__codelineno-29-53" name="__codelineno-29-53" href="#__codelineno-29-53"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<a id="__codelineno-29-54" name="__codelineno-29-54" href="#__codelineno-29-54"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.11&#39;</span>
+<a id="__codelineno-29-55" name="__codelineno-29-55" href="#__codelineno-29-55"></a>
+<a id="__codelineno-29-56" name="__codelineno-29-56" href="#__codelineno-29-56"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install Python dependencies</span>
+<a id="__codelineno-29-57" name="__codelineno-29-57" href="#__codelineno-29-57"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -r requirements.txt</span>
+<a id="__codelineno-29-58" name="__codelineno-29-58" href="#__codelineno-29-58"></a>
+<a id="__codelineno-29-59" name="__codelineno-29-59" href="#__codelineno-29-59"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install Node dependencies</span>
+<a id="__codelineno-29-60" name="__codelineno-29-60" href="#__codelineno-29-60"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd client &amp;&amp; npm install</span>
+<a id="__codelineno-29-61" name="__codelineno-29-61" href="#__codelineno-29-61"></a>
+<a id="__codelineno-29-62" name="__codelineno-29-62" href="#__codelineno-29-62"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build CLI</span>
+<a id="__codelineno-29-63" name="__codelineno-29-63" href="#__codelineno-29-63"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd client &amp;&amp; npm run build</span>
+<a id="__codelineno-29-64" name="__codelineno-29-64" href="#__codelineno-29-64"></a>
+<a id="__codelineno-29-65" name="__codelineno-29-65" href="#__codelineno-29-65"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run CLI tests</span>
+<a id="__codelineno-29-66" name="__codelineno-29-66" href="#__codelineno-29-66"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd client &amp;&amp; npm test</span>
+<a id="__codelineno-29-67" name="__codelineno-29-67" href="#__codelineno-29-67"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-29-68" name="__codelineno-29-68" href="#__codelineno-29-68"></a><span class="w">          </span><span class="nt">AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
+</code></pre></div>
+<hr />
+<h2 id="10-future-test-areas">10. Future Test Areas</h2>
+<p><strong>Not yet covered:</strong></p>
+<h3 id="database-integration-tests">Database Integration Tests</h3>
+<ul>
+<li>[ ] Full ingestion workflow with Apache AGE</li>
+<li>[ ] Vector search accuracy (pgvector)</li>
+<li>[ ] Graph traversal performance</li>
+<li>[ ] Concept matching via embeddings</li>
+<li>[ ] Ontology isolation verification</li>
+</ul>
+<h3 id="cli-coverage">CLI Coverage</h3>
+<ul>
+<li>[ ] All CLI commands (jobs, search, concept, etc.)</li>
+<li>[ ] Error handling and user feedback</li>
+<li>[ ] Argument parsing edge cases</li>
+<li>[ ] Output formatting validation</li>
+</ul>
+<h3 id="performance-scale">Performance &amp; Scale</h3>
+<ul>
+<li>[ ] Large document ingestion (1000+ paragraphs)</li>
+<li>[ ] Concurrent job processing</li>
+<li>[ ] Query latency benchmarks</li>
+<li>[ ] Database connection pooling</li>
+</ul>
+<h3 id="advanced-features">Advanced Features</h3>
+<ul>
+<li>[ ] MCP server integration (Phase 2)</li>
+<li>[ ] Multi-tenant job isolation</li>
+<li>[ ] Backup/restore workflows</li>
+<li>[ ] Admin operations testing</li>
+</ul>
+<hr />
+<h2 id="11-success-criteria">11. Success Criteria</h2>
+<p><strong>Test suite is successful when:</strong>
+- ✅ All smoke tests pass consistently (&lt;1s runtime)
+- ✅ Integration tests validate key workflows
+- ✅ No LLM API keys required for testing
+- ✅ CI passes reliably (&lt; 5% flaky failures)
+- ✅ New features include functional tests
+- ✅ Test execution time &lt; 5 minutes (smoke + integration)</p>
+<p><strong>Individual test is successful when:</strong>
+- ✅ Functional correctness demonstrated
+- ✅ Real integration (not mocked services)
+- ✅ Edge cases handled gracefully
+- ✅ Error messages are actionable</p>
+<hr />
+<h2 id="12-test-development-guidelines">12. Test Development Guidelines</h2>
+<h3 id="adding-new-tests">Adding New Tests</h3>
+<ol>
+<li><strong>Determine category:</strong></li>
+<li><code>smoke</code> → Fast, no DB, structural validation</li>
+<li><code>integration</code> → Full workflow, requires services</li>
+<li>
+<p><code>api</code> → API endpoint functional tests</p>
+</li>
+<li>
+<p><strong>Mark appropriately:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_endpoint</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Clear description of what we&#39;re testing&quot;&quot;&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Follow naming:</strong></p>
+</li>
+<li>Python: <code>test_&lt;feature&gt;_&lt;scenario&gt;.py</code></li>
+<li>
+<p>TypeScript: <code>&lt;command&gt;.test.ts</code></p>
+</li>
+<li>
+<p><strong>Document intent:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="sd">Tests for: kg health</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="sd">Endpoint: GET /health</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="sd">Purpose: Validate API health check</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="sd">&quot;&quot;&quot;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="writing-functional-tests">Writing Functional Tests</h3>
+<p>Focus on <strong>user workflows</strong>, not code paths:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># ✅ Good - tests user workflow</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_submit_and_approve_job</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;User submits job, waits for analysis, approves, monitors completion&quot;&quot;&quot;</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="c1"># 1. Submit</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    <span class="n">job_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>    <span class="c1"># 2. Wait for analysis</span>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>    <span class="c1"># ... polling logic ...</span>
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>
+<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>    <span class="c1"># 3. Approve</span>
+<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a>    <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">/approve&quot;</span><span class="p">)</span>
+<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a>
+<a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a>    <span class="c1"># 4. Verify</span>
+<a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a>    <span class="n">status</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-32-16" name="__codelineno-32-16" href="#__codelineno-32-16"></a>    <span class="k">assert</span> <span class="n">status</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="s2">&quot;processing&quot;</span><span class="p">,</span> <span class="s2">&quot;completed&quot;</span><span class="p">]</span>
+<a id="__codelineno-32-17" name="__codelineno-32-17" href="#__codelineno-32-17"></a>
+<a id="__codelineno-32-18" name="__codelineno-32-18" href="#__codelineno-32-18"></a><span class="c1"># ❌ Avoid - testing implementation</span>
+<a id="__codelineno-32-19" name="__codelineno-32-19" href="#__codelineno-32-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_internal_queue_state</span><span class="p">():</span>
+<a id="__codelineno-32-20" name="__codelineno-32-20" href="#__codelineno-32-20"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check internal data structures&quot;&quot;&quot;</span>
+<a id="__codelineno-32-21" name="__codelineno-32-21" href="#__codelineno-32-21"></a>    <span class="c1"># Too coupled to implementation</span>
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="tests-fail-with-connection-refused">Tests Fail with "Connection Refused"</h3>
+<p><strong>Problem:</strong> API server or database not running</p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Check API</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>curl<span class="w"> </span>http://localhost:8000/health
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="c1"># Check PostgreSQL</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="c1"># Start services</span>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div></p>
+<h3 id="mock-provider-not-working">Mock Provider Not Working</h3>
+<p><strong>Problem:</strong> Tests calling real APIs</p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Verify env</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>grep<span class="w"> </span>AI_PROVIDER<span class="w"> </span>.env
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="c1"># Should be: AI_PROVIDER=mock</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="c1"># Or check pytest.ini:</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="c1"># env = AI_PROVIDER=mock</span>
+</code></pre></div></p>
+<h3 id="typescript-tests-timeout">TypeScript Tests Timeout</h3>
+<p><strong>Problem:</strong> API server slow to start</p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Check Python venv</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>src.api.main:app<span class="w"> </span>--version
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="c1"># Increase timeout in jest.config.js</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>testTimeout:<span class="w"> </span><span class="m">60000</span>
+</code></pre></div></p>
+<hr />
+<p><strong>Last Updated:</strong> 2025-10-08
+<strong>Test Framework:</strong> pytest 8.0+, Jest 29.7+
+<strong>Database:</strong> PostgreSQL 16 + Apache AGE 1.5.0
+<strong>Mock Provider:</strong> Deterministic hash-based (no API keys needed)
+<strong>Philosophy:</strong> Functional coverage &gt; Line coverage</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
