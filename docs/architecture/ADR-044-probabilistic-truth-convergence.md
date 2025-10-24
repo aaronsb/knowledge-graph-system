@@ -288,6 +288,321 @@ It previously used Neo4j but migrated in October 2025 per ADR-016."
 
 **Key insight:** Agent provides interpretive context, but the **grounding_strength calculation is pure mathematics** - no agent needed for the core filtering mechanism.
 
+### Bounded Rationality: Query Depth Constraints
+
+**The Frame Problem:** When calculating grounding strength, where do we stop recursive evaluation?
+
+**Herbert Simon's bounded rationality:** Agents (human or computational) cannot optimize globally due to:
+- Computational limits (time, memory, processing power)
+- Incomplete information (can't know everything)
+- Cognitive/architectural constraints (must decide with partial knowledge)
+
+**Direct parallel:** Just as humans can't consider every consequence before stepping (microorganisms harmed, butterfly effects, infinite causal chains), our system can't recursively evaluate grounding strength through the entire graph.
+
+#### The Recursive Depth Explosion
+
+**Depth 0 (Trivial):** Return concept without considering any edges
+```
+Complexity: O(1)
+Information: None (just the concept label)
+```
+
+**Depth 1 (Current Design):** Calculate grounding_strength from direct edges only
+```
+grounding_strength = support_weight / total_weight
+
+Complexity: O(|incoming_edges|)
+Information: Direct evidence from adjacent concepts
+Decision: Pragmatic - bounded computation, sufficient signal
+```
+
+**Depth 2 (Recursive):** Weight edges by grounding_strength of source concepts
+```
+# Edge weight influenced by source concept's grounding
+weighted_support = sum(
+    edge.confidence * source_concept.grounding_strength
+    for edge in SUPPORTS edges
+)
+
+Complexity: O(|edges| × |edges_per_adjacent_concept|)
+Information: Evidence + quality of evidence sources
+Problems:
+  - Must calculate grounding for N adjacent concepts first
+  - Each adjacent concept may have M edges to evaluate
+  - N × M quickly becomes large
+```
+
+**Depth 3+ (Unbounded):** Recursively evaluate grounding of supporting concepts
+```
+Complexity: O(|edges|^depth) - exponential explosion
+Problems:
+  ✗ Cycles: A supports B supports C supports A → infinite recursion
+  ✗ Branching: Each concept has multiple supports, tree explodes
+  ✗ Termination: When to stop? Need global knowledge (Gödelian barrier)
+  ✗ Query latency: Milliseconds → seconds → minutes → timeout
+```
+
+**Example explosion:**
+```
+Depth 1: Concept has 10 edges → 10 evaluations
+Depth 2: Each edge source has 10 edges → 10 × 10 = 100 evaluations
+Depth 3: Each depth-2 concept has 10 edges → 10 × 10 × 10 = 1,000 evaluations
+Depth 4: → 10,000 evaluations
+Depth 5: → 100,000 evaluations (likely timeout)
+```
+
+**Your analogy:** "Imagine if I had to consider what I would harm with every step I took."
+- Depth 1: "Is the ground stable?" (local, practical)
+- Depth 2: "Are the molecules in the ground stable?" (getting theoretical)
+- Depth 3: "Are the quarks in those molecules stable?" (absurd for walking)
+- Depth ∞: Complete knowledge of all consequences (impossible, Gödelian)
+
+#### OpenCypher Query Depth Rules
+
+**Rule 1: Default to Depth 1 (Direct Edges Only)**
+
+All grounding_strength calculations use direct SUPPORTS/CONTRADICTS edges:
+
+```cypher
+// Standard grounding calculation: depth=1
+MATCH (c:Concept)
+OPTIONAL MATCH (c)<-[s:SUPPORTS]-()
+OPTIONAL MATCH (c)<-[d:CONTRADICTS]-()
+WITH c,
+     reduce(sum = 0.0, e IN collect(s) | sum + coalesce(e.confidence, 0.8)) as support_weight,
+     reduce(sum = 0.0, e IN collect(d) | sum + coalesce(e.confidence, 0.8)) as contradict_weight
+WITH c,
+     support_weight,
+     contradict_weight,
+     CASE
+       WHEN support_weight + contradict_weight > 0
+       THEN support_weight / (support_weight + contradict_weight)
+       ELSE 1.0
+     END as grounding_strength
+RETURN c, grounding_strength
+```
+
+**Rationale:**
+- O(|edges|) complexity - scales linearly
+- Query completes in milliseconds even with thousands of concepts
+- Sufficient signal: direct evidence is strongest signal
+- Bounded computation: doesn't require graph-wide traversal
+
+**Rule 2: Maximum Traversal Depth = 3 Hops (For Path Queries)**
+
+When finding paths between concepts (not grounding calculation), limit traversal:
+
+```cypher
+// Path finding: max depth 3
+MATCH path = (c1:Concept)-[*1..3]-(c2:Concept)
+WHERE c1.concept_id = $source_id
+  AND c2.concept_id = $target_id
+RETURN path
+LIMIT 10
+
+// NOT THIS (unbounded):
+MATCH path = (c1:Concept)-[*]-(c2:Concept)  // ✗ Can explode to entire graph
+```
+
+**Rationale:**
+- Depth 3 allows: A → B → C → D (sufficient for most conceptual relationships)
+- Beyond depth 3: relationship is too indirect to be meaningful
+- Prevents graph-wide traversal (could hit thousands of nodes)
+
+**Rule 3: Use LIMIT Aggressively**
+
+Always limit result sets to prevent runaway queries:
+
+```cypher
+// Good: limited result set
+MATCH (c:Concept)
+WHERE grounding_strength >= 0.20
+RETURN c
+LIMIT 1000  // Maximum 1000 concepts returned
+
+// Bad: unbounded
+MATCH (c:Concept)
+RETURN c  // ✗ Could return millions of nodes
+```
+
+**Rationale:**
+- Even O(n) queries become expensive with large n
+- Application layer pagination (1000 per page) prevents memory exhaustion
+- User can't process 10,000+ results anyway (cognitive bounded rationality)
+
+**Rule 4: Avoid Recursive CTEs for Grounding**
+
+Do NOT use recursive common table expressions for grounding calculations:
+
+```cypher
+// ✗ AVOID: Recursive grounding (depth=N, unbounded)
+WITH $concept_id as root_id
+CALL {
+  WITH root_id
+  MATCH (c:Concept {concept_id: root_id})
+  OPTIONAL MATCH (c)<-[s:SUPPORTS]-(source:Concept)
+  // Recursively calculate source grounding... → UNBOUNDED
+  RETURN c, grounding
+}
+RETURN c, grounding
+```
+
+**Why avoid:**
+- Triggers exponential traversal (O(edges^depth))
+- Cycle detection adds complexity and overhead
+- Termination conditions hard to define correctly
+- Query optimizer can't predict runtime
+
+**Alternative:** If recursive grounding is truly needed (rare), implement iteratively:
+```python
+# Python application layer: iterative depth-limited grounding
+def calculate_recursive_grounding(concept_id, max_depth=2):
+    """Calculate grounding with limited recursion."""
+    visited = set()
+
+    def recurse(cid, depth):
+        if depth > max_depth or cid in visited:
+            return 1.0  # Default grounding
+        visited.add(cid)
+
+        # Calculate depth-1 grounding via query
+        direct_grounding = query_direct_grounding(cid)
+
+        if depth == max_depth:
+            return direct_grounding
+
+        # Weight by source concept grounding (depth+1)
+        support_sources = query_support_sources(cid)
+        weighted_support = sum(
+            edge.confidence * recurse(source.id, depth + 1)
+            for source in support_sources
+        )
+
+        # Similar for contradictions...
+        return weighted_support / total_weight
+
+    return recurse(concept_id, depth=0)
+```
+
+**Rule 5: Cycle Detection Required for Depth > 1**
+
+If implementing recursive queries, MUST track visited nodes:
+
+```cypher
+// Depth 2 with cycle prevention
+WITH $concept_id as root_id
+MATCH (c:Concept {concept_id: root_id})<-[s:SUPPORTS]-(source:Concept)
+WHERE source.concept_id <> root_id  // Prevent immediate cycle
+OPTIONAL MATCH (source)<-[s2:SUPPORTS]-(source2:Concept)
+WHERE source2.concept_id NOT IN [root_id, source.concept_id]  // Prevent cycles
+WITH c, source, collect(s2) as source_edges
+// ... calculate weighted grounding ...
+```
+
+**Rationale:**
+- Graph has cycles: A supports B supports A (common in knowledge graphs)
+- Without cycle detection: infinite recursion or exponential duplication
+- Cycle tracking overhead: O(visited_nodes) memory per query
+- Trade-off: correctness vs complexity
+
+#### Complexity Analysis Summary
+
+| Depth | Complexity | Query Time (1000 concepts) | Use Case |
+|-------|-----------|---------------------------|----------|
+| 0 | O(1) | <1ms | Concept lookup only |
+| 1 | O(E) | 10-50ms | **Default: grounding_strength** |
+| 2 | O(E × E_adj) | 100-500ms | Advanced: weighted grounding |
+| 3 | O(E³) | 1-10 seconds | Rare: deep path analysis |
+| 4+ | O(E^depth) | 10+ seconds → timeout | **Avoid: computationally infeasible** |
+
+Where:
+- E = average edges per concept (~10-50 in typical knowledge graphs)
+- E_adj = average edges per adjacent concept
+
+**Practical implications:**
+- Depth 1 (current design): Handles 1M+ concepts with subsecond queries
+- Depth 2 (future): Requires caching or async processing
+- Depth 3+: Only for offline analysis, not real-time queries
+
+#### Design Decision: Depth=1 as Pragmatic Optimum
+
+**Why depth=1 is sufficient:**
+
+✅ **Direct edges carry strongest signal:**
+- Evidence instances directly reference this concept
+- Confidence scores reflect extraction quality
+- SUPPORTS/CONTRADICTS edges explicitly created by LLM
+
+✅ **Higher depths add noise, not signal:**
+- Depth 2: "Concepts that support concepts that support this concept"
+- Information dilution: indirect relationships are weaker
+- Transitive support isn't necessarily meaningful
+
+✅ **Computational feasibility:**
+- O(edges) scales to millions of concepts
+- Query completes in <100ms for typical graphs
+- No cycle detection needed
+
+✅ **Aligns with human cognition:**
+- Humans evaluate claims based on direct evidence
+- We don't recursively validate the validator's validator's validator
+- **Bounded rationality:** Direct evidence is practical decision-making basis
+
+**Sutton's bitter lesson applied:**
+- ✅ Computational method: Simple depth=1 force vector summing
+- ✅ Scales with compute: More edges = better signal (doesn't require deeper reasoning)
+- ❌ Human-like reasoning: Recursive "how credible is my source?" requires complex logic
+
+**Trade-off acknowledged:**
+- Lose: Ability to weight edges by source concept quality
+- Gain: Practical, scalable, real-time grounding calculations
+- Future: Can add depth=2 as optional enhancement (cached, async)
+
+#### Future: Depth=2 as Optional Enhancement
+
+If depth=1 proves insufficient (rare), consider depth=2 with strict constraints:
+
+```cypher
+// Depth-2 grounding (optional, future)
+// Step 1: Calculate depth-1 grounding for all concepts (cached)
+// Step 2: Use cached values to weight edges
+
+MATCH (c:Concept {concept_id: $concept_id})
+OPTIONAL MATCH (c)<-[s:SUPPORTS]-(source:Concept)
+OPTIONAL MATCH (c)<-[d:CONTRADICTS]-(contra:Concept)
+
+// Use pre-cached grounding_strength from depth-1 calculation
+WITH c,
+     collect({
+       edge: s,
+       source_grounding: source.grounding_strength_cached
+     }) as support_edges,
+     collect({
+       edge: d,
+       source_grounding: contra.grounding_strength_cached
+     }) as contradict_edges
+
+// Weight edges by source concept grounding
+WITH c,
+     reduce(sum = 0.0, item IN support_edges |
+       sum + coalesce(item.edge.confidence, 0.8) * coalesce(item.source_grounding, 1.0)
+     ) as weighted_support,
+     reduce(sum = 0.0, item IN contradict_edges |
+       sum + coalesce(item.edge.confidence, 0.8) * coalesce(item.source_grounding, 1.0)
+     ) as weighted_contradict
+
+RETURN c,
+       weighted_support / (weighted_support + weighted_contradict) as grounding_strength_depth2
+```
+
+**Requirements for depth=2:**
+- Must cache depth-1 grounding_strength for all concepts (materialized view)
+- Cache invalidation on edge changes (complexity overhead)
+- A/B test vs depth=1 to verify improvement justifies cost
+- Only enable if depth=1 demonstrably insufficient
+
+**Expected outcome:** Depth=1 will be sufficient for 95%+ of use cases.
+
 ### Automatic Reversibility Through Continuous Calculation
 
 **Scenario:** New evidence reverses the grounding strength
