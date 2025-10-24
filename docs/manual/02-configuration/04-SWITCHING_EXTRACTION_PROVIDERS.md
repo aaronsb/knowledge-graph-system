@@ -2,7 +2,7 @@
 
 **A simple guide to switching between OpenAI, Anthropic, and Ollama (local) for concept extraction**
 
-> **📊 Before switching:** See [Extraction Quality Comparison](./EXTRACTION_QUALITY_COMPARISON.md) for empirical comparison of extraction quality, canonical adherence, and cost-benefit analysis across providers.
+> **📊 Before switching:** See [Extraction Quality Comparison](./06-EXTRACTION_QUALITY_COMPARISON.md) for empirical comparison of extraction quality, canonical adherence, and cost-benefit analysis across providers.
 
 ---
 
@@ -485,8 +485,8 @@ kg admin extraction set --provider ollama --model mistral:7b-instruct
 ---
 
 **Related Guides:**
-- Full extraction config details: `docs/guides/EXTRACTION_CONFIGURATION.md`
-- Local inference implementation: `docs/guides/LOCAL_INFERENCE_IMPLEMENTATION.md`
+- Full extraction config details: `docs/guides/02-EXTRACTION_CONFIGURATION.md`
+- Local inference implementation: `docs/guides/05-LOCAL_INFERENCE_IMPLEMENTATION.md`
 - Ollama architecture: `docs/architecture/ADR-042-local-extraction-inference.md`
 
 **Last Updated:** 2025-10-22

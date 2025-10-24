@@ -303,7 +303,7 @@ After initial setup, schema changes are managed via **migrations** (ADR-040).
 ./scripts/migrate-db.sh --dry-run
 ```
 
-**See:** `docs/guides/DATABASE_MIGRATIONS.md` for complete migration guide
+**See:** `docs/guides/02-DATABASE_MIGRATIONS.md` for complete migration guide
 
 ### Verify Seeded Data
 
@@ -355,7 +355,7 @@ docker exec -i knowledge-graph-postgres psql -U admin -d knowledge_graph < backu
 
 3. **Or use migration system:**
 - Schema changes now managed via numbered migrations
-- See `docs/guides/DATABASE_MIGRATIONS.md`
+- See `docs/guides/02-DATABASE_MIGRATIONS.md`
 - Migration system automatically applies changes in order
 
 ## Schema Version History
@@ -376,7 +376,7 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
   "SELECT * FROM public.schema_migrations ORDER BY version;"
 ```
 
-**For migration history:** See `schema/migrations/` directory and `docs/guides/DATABASE_MIGRATIONS.md`
+**For migration history:** See `schema/migrations/` directory and `docs/guides/02-DATABASE_MIGRATIONS.md`
 
 ## Troubleshooting
 

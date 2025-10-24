@@ -452,4 +452,4 @@ python -m src.admin.check_integrity --ontology "My Ontology" --repair
 
 - [ADR-011: Separation of CLI and Admin Tooling](ARCHITECTURE_DECISIONS.md#adr-011)
 - [Architecture Overview](ARCHITECTURE.md)
-- [Quickstart Guide](QUICKSTART.md)
+- [Quickstart Guide](01-QUICKSTART.md)

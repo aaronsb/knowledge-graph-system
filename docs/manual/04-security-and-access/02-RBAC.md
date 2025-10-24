@@ -620,9 +620,9 @@ See API documentation at `http://localhost:8000/docs` for detailed schemas.
 
 ## See Also
 
-- [ADR-028: Dynamic RBAC](../architecture/ADR-028-dynamic-rbac.md) - Architecture decision record
-- [ADR-027: User Management API](../architecture/ADR-027-user-management-api.md) - Authentication system
-- [Authentication Guide](../guides/AUTHENTICATION.md) - Login and authentication flows
+- [ADR-028: Dynamic RBAC](../../architecture/ADR-028-dynamic-rbac.md) - Architecture decision record
+- [ADR-027: User Management API](../../architecture/ADR-027-user-management-api.md) - Authentication system
+- [Authentication Guide](../04-security-and-access/01-AUTHENTICATION.md) - Login and authentication flows
 - [API Documentation](../api/) - REST API reference
 
 ---

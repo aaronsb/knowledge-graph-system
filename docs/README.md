@@ -56,7 +56,7 @@ Images, diagrams, and other media assets.
 6. Reference [MCP_SETUP.md](manual/03-integration/01-MCP_SETUP.md) for service account configuration
 
 ### Developers
-1. Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md)
+1. Read [ARCHITECTURE_OVERVIEW.md](architecture/ARCHITECTURE_OVERVIEW.md)
 2. Review [ADR-016](architecture/ADR-016-apache-age-migration.md) for current database architecture
 3. Learn about [DATABASE_MIGRATIONS.md](manual/05-maintenance/02-DATABASE_MIGRATIONS.md) for schema evolution (ADR-040)
 4. Reference [SCHEMA_REFERENCE.md](manual/06-reference/01-SCHEMA_REFERENCE.md) for complete schema documentation

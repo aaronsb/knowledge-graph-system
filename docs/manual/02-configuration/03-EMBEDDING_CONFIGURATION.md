@@ -548,10 +548,10 @@ This ensures safety immediately after a risky operation.
 
 ## Related Documentation
 
-- [CLI Usage Guide](CLI_USAGE.md) - General CLI commands
-- [Database Migrations](DATABASE_MIGRATIONS.md) - Schema migration workflow
-- [AI Providers Guide](AI_PROVIDERS.md) - AI provider configuration
-- [Authentication Guide](AUTHENTICATION.md) - API key management
+- [CLI Usage Guide](02-CLI_USAGE.md) - General CLI commands
+- [Database Migrations](02-DATABASE_MIGRATIONS.md) - Schema migration workflow
+- [AI Providers Guide](01-AI_PROVIDERS.md) - AI provider configuration
+- [Authentication Guide](01-AUTHENTICATION.md) - API key management
 
 ---
 

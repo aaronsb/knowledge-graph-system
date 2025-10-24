@@ -702,18 +702,18 @@ ag_catalog.system_api_keys
 
 ## Architecture References
 
-- **[ADR-031](../architecture/ADR-031-encrypted-api-keys.md)** - Encrypted API key storage design
-- **[ADR-027](../architecture/ADR-027-user-management-api.md)** - Authentication system
-- **[ADR-028](../architecture/ADR-028-rbac.md)** - Role-based access control
-- **[AUTHENTICATION.md](AUTHENTICATION.md)** - User authentication guide
+- **[ADR-031](../../architecture/ADR-031-encrypted-api-keys.md)** - Encrypted API key storage design
+- **[ADR-027](../../architecture/ADR-027-user-management-api.md)** - Authentication system
+- **[ADR-028](../../architecture/ADR-028-rbac.md)** - Role-based access control
+- **[01-AUTHENTICATION.md](01-AUTHENTICATION.md)** - User authentication guide
 
 ---
 
 ## Related Guides
 
-- **[QUICKSTART.md](QUICKSTART.md)** - Initial system setup
-- **[AI_PROVIDERS.md](AI_PROVIDERS.md)** - Configure LLM providers
-- **[BACKUP_RESTORE.md](BACKUP_RESTORE.md)** - Database backup security
+- **[01-QUICKSTART.md](01-QUICKSTART.md)** - Initial system setup
+- **[01-AI_PROVIDERS.md](01-AI_PROVIDERS.md)** - Configure LLM providers
+- **[01-BACKUP_RESTORE.md](01-BACKUP_RESTORE.md)** - Database backup security
 
 ---
 

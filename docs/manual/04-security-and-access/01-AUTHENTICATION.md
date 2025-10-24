@@ -603,6 +603,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES=60  # Token lifetime (default: 60)
 
 ## Next Steps
 
-- [QUICKSTART.md](QUICKSTART.md) - System overview
-- [ADR-027](../architecture/ADR-027-user-management-api.md) - Architecture decisions
+- [01-QUICKSTART.md](01-QUICKSTART.md) - System overview
+- [ADR-027](../../architecture/ADR-027-user-management-api.md) - Architecture decisions
 - [OpenAPI Docs](http://localhost:8000/docs) - Interactive API documentation
