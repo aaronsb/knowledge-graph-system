@@ -1,0 +1,70 @@
+site_name: Knowledge Graph System
+site_description: Multi-dimensional knowledge extraction system using Apache AGE
+site_author: Knowledge Graph System Contributors
+repo_url: https://github.com/aaronsb/knowledge-graph-system
+repo_name: aaronsb/knowledge-graph-system
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+  - awesome-pages
+
+nav:
+  - Home: README.md
+  - Manual:
+    - manual/
+  - Architecture:
+    - architecture/
+  - Development:
+    - development/
+  - Testing:
+    - testing/
+
+# Build settings
+docs_dir: .
+site_dir: site
+
+# Don't include these in the built site
+exclude_docs: |
+  site/
