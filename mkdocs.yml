@@ -39,9 +39,6 @@ theme:
   icon:
     logo: material/graph-outline
 
-  # Custom CSS
-  custom_dir: docs/overrides
-
 markdown_extensions:
   - admonition
   - pymdownx.details
