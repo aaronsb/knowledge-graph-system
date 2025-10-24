@@ -60,6 +60,7 @@ All ADRs follow a consistent format:
 | [ADR-041](ADR-041-ai-extraction-config.md) | AI Extraction Provider Configuration | Proposed | Database-first configuration for LLM provider/model selection with hot-reload capability and unified management interface |
 | [ADR-042](ADR-042-local-extraction-inference.md) | Local LLM Inference for Concept Extraction | Accepted | Ollama integration for local extraction with GPU acceleration, eliminating cloud API dependency and enabling air-gapped deployment |
 | [ADR-043](ADR-043-single-node-resource-management.md) | Single-Node Resource Management for Local Inference | Accepted | Dynamic device selection with intelligent CPU fallback for embeddings when VRAM contention detected (~100ms penalty, prevents silent failures) |
+| [ADR-044](ADR-044-probabilistic-truth-convergence.md) | Probabilistic Truth Convergence | Proposed | Non-destructive contradiction resolution via statistical edge analysis (≥80% threshold) with agent-based introspection and reversible marking - inspired by Darwin-Gödel machines and evolutionary epistemology |
 
 ## How to Use This Index
 
