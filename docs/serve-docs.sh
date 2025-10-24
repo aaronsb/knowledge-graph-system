@@ -30,7 +30,7 @@ echo ""
 echo -e "${CYAN}This will:${NC}"
 echo -e "  • Create a Python virtual environment (if needed)"
 echo -e "  • Install MkDocs and Material theme"
-echo -e "  • Start a local server at ${YELLOW}http://127.0.0.1:8000${NC}"
+echo -e "  • Start a local server at ${YELLOW}http://127.0.0.1:8001${NC}"
 echo -e "  • Auto-reload when you save changes"
 echo ""
 echo -e "${CYAN}Location:${NC} $PROJECT_ROOT"
@@ -81,9 +81,9 @@ echo -e "${GREEN}═════════════════════
 echo -e "${GREEN}  Server starting...${NC}"
 echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
 echo ""
-echo -e "${BLUE}➜ Local:${NC}    ${CYAN}http://127.0.0.1:8000${NC}"
+echo -e "${BLUE}➜ Local:${NC}    ${CYAN}http://127.0.0.1:8001${NC}"
 echo -e "${YELLOW}➜ Press Ctrl+C to stop${NC}"
 echo ""
 
 cd "$PROJECT_ROOT"
-mkdocs serve
+mkdocs serve --dev-addr 127.0.0.1:8001
