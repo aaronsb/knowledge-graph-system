@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'mkdocs.yml'
       - '.github/workflows/publish-docs.yml'
   workflow_dispatch:
 
