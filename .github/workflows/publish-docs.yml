@@ -32,7 +32,6 @@ jobs:
 
       - name: Build and deploy to gh-pages
         run: |
-          cd docs
           mkdocs gh-deploy --force --clean --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
