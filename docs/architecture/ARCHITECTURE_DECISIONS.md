@@ -31,7 +31,7 @@ All ADRs follow a consistent format:
 | [ADR-012](ADR-012-api-server-architecture.md) | API Server Architecture | Accepted | FastAPI intermediary layer for scalable Neo4j access with job queue and deduplication |
 | [ADR-013](ADR-013-unified-typescript-client.md) | Unified TypeScript Client | Accepted | Single TypeScript client serves as both CLI and MCP server with shared codebase |
 | [ADR-014](ADR-014-job-approval-workflow.md) | Job Approval Workflow | Accepted | Pre-ingestion analysis with cost/time estimates requiring user approval before processing |
-| ADR-015 | Smart Chunking Strategy | Planned | Semantic boundary detection for optimal chunk sizes, preserving context integrity |
+| [ADR-015](ADR-015-backup-restore-streaming.md) | Backup/Restore Streaming | Accepted | Streaming backup and restore for large graph databases |
 | [ADR-016](ADR-016-apache-age-migration.md) | Apache AGE Migration | Accepted | Migration from Neo4j to Apache AGE (PostgreSQL graph extension) for open-source licensing |
 | [ADR-017](ADR-017-sensitive-auth-verification.md) | Client-Initiated Token Revocation | Proposed | Time-bound elevated tokens with client-initiated revocation for destructive operations |
 | [ADR-018](ADR-018-server-sent-events-streaming.md) | Server-Sent Events Streaming | Proposed | Real-time progress streaming via SSE for job status and future real-time features |

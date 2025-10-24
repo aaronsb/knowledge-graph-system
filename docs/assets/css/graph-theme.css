@@ -1,0 +1,264 @@
+/* Graph-themed styling for Knowledge Graph System docs */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+    /* Light Mode - Clean tech aesthetic */
+    --md-primary-fg-color: #546E7A;
+    --md-primary-fg-color--light: #CFD8DC;
+    --md-primary-fg-color--dark: #37474F;
+    --md-accent-fg-color: #FF6E40;
+
+    /* Custom colors - Graph inspired */
+    --graph-bg-light: #FAFAFA;
+    --graph-text-dark: #263238;
+    --graph-border: #90A4AE;
+    --graph-node-1: #E3F2FD; /* Light Blue */
+    --graph-node-2: #F3E5F5; /* Light Purple */
+    --graph-node-3: #E8F5E9; /* Light Green */
+    --graph-node-4: #FFF3E0; /* Light Orange */
+    --graph-code-bg: #F5F5F5;
+
+    /* Wide layout */
+    --md-content-width: 95%;
+    --md-content-max-width: 2000px;
+}
+
+[data-md-color-scheme="default"] {
+    --md-default-fg-color: var(--graph-text-dark);
+    --md-default-bg-color: var(--graph-bg-light);
+
+    --md-text-font: "Roboto Mono", monospace;
+    --md-code-font: "Roboto Mono", monospace;
+    font-family: "Roboto Mono", monospace;
+}
+
+[data-md-color-scheme="slate"] {
+    /* Dark mode - Graph nodes in darkness */
+    --md-primary-fg-color: #5C6BC0;
+    --md-primary-fg-color--light: #7986CB;
+    --md-primary-fg-color--dark: #3F51B5;
+    --md-default-fg-color: #ECEFF1;
+    --md-default-bg-color: #1E1E2E;
+
+    --graph-border: #5C6BC0;
+    --graph-text-dark: #ECEFF1;
+    --graph-node-1: #1A237E; /* Dark Blue */
+    --graph-node-2: #4A148C; /* Dark Purple */
+    --graph-node-3: #1B5E20; /* Dark Green */
+    --graph-node-4: #E65100; /* Dark Orange */
+    --graph-code-bg: #2D2D3A;
+}
+
+/* Typography */
+body,
+.md-typeset,
+.md-nav,
+.md-tabs,
+.md-header__title,
+.md-footer {
+    font-family: "Roboto Mono", monospace;
+    line-height: 1.6;
+}
+
+/* Wide content layout */
+.md-grid {
+    max-width: var(--md-content-max-width);
+    width: var(--md-content-width);
+}
+
+.md-content__inner {
+    margin: 0 auto;
+    padding-top: 1.2rem;
+}
+
+/* Headers with graph-node styling */
+.md-typeset h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--graph-text-dark);
+    border-bottom: 3px solid var(--graph-border);
+    padding-bottom: 0.5em;
+    margin-top: 1em;
+}
+
+.md-typeset h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(90deg, var(--graph-node-1) 0%, transparent 100%);
+    border-left: 4px solid var(--graph-border);
+    margin-top: 1.5em;
+    color: var(--graph-text-dark);
+}
+
+.md-typeset h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    border-left: 3px solid var(--graph-node-2);
+    padding-left: 0.75rem;
+    margin-top: 1.25em;
+    color: var(--graph-text-dark);
+}
+
+.md-typeset h4 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--md-primary-fg-color);
+    margin-top: 1em;
+}
+
+/* Code blocks */
+.md-typeset pre {
+    background-color: var(--graph-code-bg);
+    border-left: 3px solid var(--md-accent-fg-color);
+    border-radius: 2px;
+    padding: 1rem;
+}
+
+.md-typeset code {
+    font-family: "Roboto Mono", monospace;
+    background-color: var(--graph-code-bg);
+    padding: 0.2em 0.4em;
+    border-radius: 2px;
+}
+
+/* Tables */
+.md-typeset table:not([class]) {
+    border-collapse: collapse;
+    border: 1px solid var(--graph-border);
+    font-size: 0.9em;
+}
+
+.md-typeset table:not([class]) th {
+    background-color: var(--graph-node-4);
+    border: 1px solid var(--graph-border);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.md-typeset table:not([class]) td {
+    border: 1px solid var(--graph-border);
+    padding: 0.75rem;
+}
+
+.md-typeset table:not([class]) tr:nth-child(even) {
+    background-color: var(--graph-node-1);
+}
+
+/* Admonitions - Node-style callouts */
+.md-typeset .admonition {
+    border-left: 4px solid;
+    border-radius: 2px;
+    padding: 0.8rem 1rem;
+    margin: 1em 0;
+}
+
+.md-typeset .admonition.note {
+    background-color: var(--graph-node-1);
+    border-color: #2196F3;
+}
+
+.md-typeset .admonition.warning {
+    background-color: var(--graph-node-4);
+    border-color: #FF9800;
+}
+
+.md-typeset .admonition.tip {
+    background-color: var(--graph-node-3);
+    border-color: #4CAF50;
+}
+
+.md-typeset .admonition.danger {
+    background-color: #FFEBEE;
+    border-color: #F44336;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.danger {
+    background-color: #4A1A1A;
+}
+
+/* Links */
+.md-typeset a {
+    color: var(--md-accent-fg-color);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--md-accent-fg-color);
+}
+
+.md-typeset a:hover {
+    border-bottom-style: solid;
+}
+
+/* Blockquotes */
+.md-typeset blockquote {
+    border-left: 4px solid var(--graph-border);
+    background-color: var(--graph-node-2);
+    padding: 1rem 1.5rem;
+    margin: 1.5em 0;
+    font-style: italic;
+}
+
+/* Navigation */
+.md-nav {
+    font-size: 0.85rem;
+}
+
+.md-nav__item--active > .md-nav__link {
+    font-weight: 600;
+    color: var(--md-accent-fg-color);
+}
+
+/* Tabs */
+.md-tabs {
+    background-color: var(--md-primary-fg-color);
+    border-bottom: 2px solid var(--graph-border);
+}
+
+/* Search */
+.md-search__form {
+    background-color: var(--graph-node-1);
+    border: 1px solid var(--graph-border);
+}
+
+/* Footer */
+.md-footer {
+    border-top: 2px solid var(--graph-border);
+}
+
+/* Lists */
+.md-typeset ul li::marker {
+    color: var(--md-accent-fg-color);
+}
+
+/* Dark mode specific adjustments */
+[data-md-color-scheme="slate"] .md-typeset a {
+    color: #64B5F6;
+    border-bottom-color: #64B5F6;
+}
+
+[data-md-color-scheme="slate"] .md-nav__item--active > .md-nav__link {
+    color: #64B5F6;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1,
+[data-md-color-scheme="slate"] .md-typeset h2,
+[data-md-color-scheme="slate"] .md-typeset h3 {
+    color: var(--md-default-fg-color);
+}
+
+/* Print styles */
+@media print {
+    body {
+        background-color: white;
+        color: black;
+        font-size: 11pt;
+    }
+
+    .md-header,
+    .md-tabs,
+    .md-sidebar,
+    .md-footer {
+        display: none;
+    }
+}
