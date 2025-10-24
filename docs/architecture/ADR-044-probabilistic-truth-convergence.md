@@ -161,15 +161,17 @@ Beyond the philosophical and evolutionary metaphors, this approach is grounded i
 
 ## Decision
 
-### Implement Non-Destructive, Probabilistic Truth Convergence
+### Implement Query-Time Grounding Strength Calculation
 
-**Core Principle:** Truth emerges from statistical preponderance of evidence, not absolute certainty.
+**Core Principle:** Truth emerges from statistical preponderance of evidence, calculated dynamically at query time, not stored as static labels.
 
-### Mechanism: Edge Weight Analysis with Statistical Thresholds
+**Key insight:** Rather than marking concepts as "IRRELEVANT" (static, binary, query-exclusion problem), we calculate a continuous **grounding_strength** score (0.0-1.0) based on current edge weights whenever the concept is queried.
 
-**1. Track Contradiction Metrics per Concept**
+### Mechanism: Dynamic Grounding Strength Computation
 
-For any concept node, calculate weighted contradiction ratio using edge confidence scores:
+**1. Calculate Grounding Strength (Query-Time)**
+
+For any concept node, calculate grounding strength using edge confidence scores:
 
 ```python
 # Sum confidence scores (force magnitude), not just count edges
@@ -177,8 +179,35 @@ support_weight = sum(confidence for edge in incoming SUPPORTS relationships)
 contradict_weight = sum(confidence for edge in incoming CONTRADICTS relationships)
 total_weight = support_weight + contradict_weight
 
-contradiction_ratio = contradict_weight / total_weight if total_weight > 0 else 0
+# Grounding strength = proportion of support vs total evidence
+grounding_strength = support_weight / total_weight if total_weight > 0 else 1.0
+# Default 1.0 = no contradictions = assume well-grounded
 ```
+
+**Why grounding_strength, not "irrelevant" marking:**
+
+**Problems with static marking:**
+- ❌ **Query paradox:** If we exclude marked concepts, how do we find them to re-evaluate?
+- ❌ **Stale state:** Marking freezes a point-in-time decision, but edges keep accumulating
+- ❌ **Binary thinking:** Concept is either relevant or not - but truth is continuous
+- ❌ **Computational waste:** Agent introspection needed every mark/unmark operation
+
+**Advantages of dynamic calculation:**
+- ✅ **Always current:** Reflects latest edge weights at query time
+- ✅ **Continuous score:** 0.0 (contradicted) to 1.0 (supported), not binary
+- ✅ **Query-time filtering:** `WHERE grounding_strength >= 0.20` (adjustable threshold)
+- ✅ **Always findable:** Lower threshold to find weakly-grounded concepts
+- ✅ **Self-updating:** New edges automatically affect score
+- ✅ **Pure mathematics:** No agent needed for score calculation
+
+**Example showing grounding_strength:**
+
+| Edges | Support Weight | Contradict Weight | Grounding Strength | Interpretation |
+|-------|----------------|-------------------|-------------------|----------------|
+| 12 S, 47 C | 10.2 | 33.84 | 10.2/44.04 = **0.232** | Weakly grounded (23%) |
+| 47 S, 12 C | 33.84 | 10.2 | 33.84/44.04 = **0.768** | Well grounded (77%) |
+| 50 S, 5 C | 42.0 | 4.2 | 42.0/46.2 = **0.909** | Strongly grounded (91%) |
+| 5 S, 50 C | 4.2 | 42.0 | 4.2/46.2 = **0.091** | Contradicted (9%) |
 
 **Why weighted, not counted:**
 
@@ -187,106 +216,136 @@ Edges have **direction** (FROM → TO) and **magnitude** (confidence: 0.0-1.0). 
 - **Binary counting** (wrong): 47 contradictions = 47.0 total force
 - **Weighted summing** (correct): 47 contradictions with avg confidence 0.72 = 33.84 total force
 
-**Example showing the difference:**
-
-| Approach | SUPPORTS | CONTRADICTS | Ratio | Triggers 0.80? |
-|----------|----------|-------------|-------|----------------|
-| Count edges | 12 | 47 | 47/59 = **0.797** | ❌ Just below |
-| Sum confidence | 10.2 | 33.84 | 33.84/44.04 = **0.768** | ❌ More clearly below |
-| Sum confidence (higher) | 10.2 | 38.0 | 38.0/48.2 = **0.788** | ❌ Still below |
-| Sum confidence (strong contradictions) | 10.2 | 42.5 | 42.5/52.7 = **0.806** | ✅ Exceeds threshold |
-
 Weighted approach is more statistically sound:
 - Gives continuous variable (suitable for normal distribution)
 - Weak contradictions (confidence < 0.6) don't overwhelm strong supports
 - Strong contradictions (confidence > 0.9) appropriately dominate
 - Aligns with information-theoretic grounding (confidence = information content)
 
-**2. Apply Statistical Threshold (Three Sigma Rule)**
+**2. Query-Time Filtering with Adjustable Threshold**
 
-When `contradiction_ratio ≥ 0.80` (80th percentile):
-- Concept has **overwhelming contradictory evidence**
-- Trigger **introspection agent** for evaluation
+Default queries filter by minimum grounding strength:
 
-**Why 80%?**
+```cypher
+WHERE grounding_strength >= 0.20  // Default: exclude concepts with <20% support
+```
+
+**Why 20% (0.20) threshold?**
+- Inverse of 80% contradiction ratio (1.0 - 0.80 = 0.20)
 - Corresponds to ~1.28σ in normal distribution
 - Represents clear statistical signal while avoiding noise
 - Requires 4:1 ratio of contradictions to supports (strong evidence shift)
+- **Adjustable per query:** Can lower to 0.10 or raise to 0.50 based on needs
 
-**3. Agent-Based Introspection**
+**3. Optional Agent-Based Context (For LLM Queries)**
 
-When threshold triggered:
+When presenting weakly-grounded concepts to LLMs, optionally include agent-generated context:
 
 ```
 Agent retrieves:
-  - Highly contradicted concept
+  - Weakly-grounded concept (grounding_strength < 0.20)
   - All adjacent CONTRADICTS edges
   - All adjacent SUPPORTS edges
   - Evidence text from all instances
   - Source documents and dates
 
-Agent reasons:
+Agent provides context:
   "Given evidence that:
    - Neo4j mentioned in 12 documents (2025-10-01 to 2025-10-08)
    - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-01-24)
    - ADR-016 states migration occurred 2025-10-09
    - Current codebase uses age_client.py, not neo4j_client.py
 
-   Recommendation: Mark 'System uses Neo4j' as IRRELEVANT
-   Reasoning: Temporal evidence + codebase verification + explicit ADR
+   Context: 'System uses Neo4j' has grounding_strength of 0.232 (23% support)
+   Interpretation: Temporal evidence + codebase verification suggests this
+   represents historical state, not current architecture.
    Confidence: 0.95"
 ```
 
-**4. Non-Destructive Marking**
+**Agent's new role:**
+- ❌ Does NOT mark concepts as irrelevant
+- ❌ Does NOT modify graph structure
+- ✅ Provides explanatory context for weakly-grounded concepts
+- ✅ Helps LLMs synthesize accurate responses
+- ✅ Optional enhancement - queries work without agent
 
-If agent confidence ≥ 0.90:
-- Add `status: IRRELEVANT` property to concept node
-- Add `marked_irrelevant_date: timestamp`
-- Add `marked_irrelevant_reason: string` (agent's reasoning)
-- **Do NOT delete node**
-- **Do NOT delete edges**
-- **Do NOT delete evidence**
+**LLM query pattern with agent context:**
 
-**Effect on queries:**
-- Default queries exclude `status: IRRELEVANT` concepts
-- Historical queries can include them with flag: `include_irrelevant=true`
-- Provenance preserved for audit
+```
+Presupposition: The following concepts have weak grounding in evidence:
 
-### Reversibility: Truth Can Shift Back
+Concept: "System uses Neo4j"
+- Grounding strength: 0.232 (23% support, 77% contradiction)
+- Context: Represents historical state (pre-2025-10-09 migration)
+- Current alternative: "System uses Apache AGE + PostgreSQL" (grounding: 0.901)
 
-**Scenario:** New evidence reverses the contradiction direction
+Given this context, synthesize the best possible true statement about:
+"What database does the system use?"
+
+Expected response: "The system currently uses Apache AGE + PostgreSQL.
+It previously used Neo4j but migrated in October 2025 per ADR-016."
+```
+
+**Key insight:** Agent provides interpretive context, but the **grounding_strength calculation is pure mathematics** - no agent needed for the core filtering mechanism.
+
+### Automatic Reversibility Through Continuous Calculation
+
+**Scenario:** New evidence reverses the grounding strength
 
 **Example:**
-1. System marks "Neo4j" as IRRELEVANT (80% contradictions)
+1. "System uses Neo4j" has `grounding_strength = 0.232` (weakly grounded)
 2. Later, 50 new documents describe "Neo4j cluster for HA" (future architecture)
-3. New SUPPORTS edges overwhelm old CONTRADICTS edges
-4. Recalculated ratio: `contradiction_ratio = 0.15` (now only 15% contradictions)
+3. New SUPPORTS edges shift the balance
+4. Recalculated: `grounding_strength = 0.851` (now well-grounded)
 
-**Trigger re-evaluation when:**
-- Concept marked IRRELEVANT
-- New edges added
-- Recalculated `contradiction_ratio < 0.30` (reversed threshold)
-- Agent introspection with new evidence
+**Automatic behavior:**
+- ✅ **No manual re-evaluation needed** - grounding_strength recalculates at every query
+- ✅ **No state management** - no marking/unmarking operations
+- ✅ **Always current** - reflects latest edge weights immediately
+- ✅ **No cascading updates** - each concept's score is independent
 
-**If agent confidence ≥ 0.90 to unmark:**
-- Remove `status: IRRELEVANT`
-- Add `status: REINSTATED`
-- Add `reinstated_date: timestamp`
-- Add `reinstated_reason: string`
+**Query behavior changes automatically:**
 
-**Cascading re-evaluation:**
-- When concept reinstated, queue adjacent IRRELEVANT concepts for re-evaluation
-- Process at lower priority (not urgent)
-- Allows graph to "heal" if truth shifts
+```cypher
+// When grounding_strength was 0.232 (below 0.20 threshold)
+WHERE grounding_strength >= 0.20
+// Concept excluded from results
+
+// After new evidence, grounding_strength becomes 0.851
+WHERE grounding_strength >= 0.20
+// Concept now included in results - automatically!
+```
+
+**Historical queries still work:**
+
+```cypher
+// View all concepts regardless of grounding
+WHERE grounding_strength >= 0.0  // Include everything
+
+// View only weakly-grounded concepts (for analysis)
+WHERE grounding_strength < 0.20  // Show contradicted concepts
+
+// View grounding strength evolution (if we add temporal tracking)
+RETURN c.label,
+       grounding_strength_current,
+       grounding_strength_30_days_ago,
+       grounding_strength_delta
+```
+
+**No state management needed:**
+- No IRRELEVANT → REINSTATED transitions
+- No dated markers (marked_irrelevant_date, reinstated_date)
+- No agent reasoning stored
+- Just pure mathematical calculation from current edge weights
 
 ## Implementation
 
 ### Phase 1: Detection & Metrics (Immediate)
 
-**1. Contradiction Analysis Query:**
+**1. Grounding Strength Query (Standard Pattern):**
 
 ```cypher
-// Find concepts with high weighted contradiction ratios
+// Calculate grounding_strength for all concepts
 MATCH (c:Concept)
 OPTIONAL MATCH (c)<-[s:SUPPORTS]-()
 OPTIONAL MATCH (c)<-[d:CONTRADICTS]-()
@@ -305,64 +364,78 @@ WITH c,
      contradict_weight,
      support_count,
      contradict_count,
-     support_weight + contradict_weight as total_weight
-WHERE total_weight > 3.0  // Minimum weight for statistical significance (not count)
-WITH c,
-     support_weight,
-     contradict_weight,
-     support_count,
-     contradict_count,
-     total_weight,
-     CASE WHEN total_weight > 0
-          THEN contradict_weight / total_weight
-          ELSE 0.0
-     END as contradiction_ratio
-WHERE contradiction_ratio >= 0.80
+     support_weight + contradict_weight as total_weight,
+     CASE
+       WHEN support_weight + contradict_weight > 0
+       THEN support_weight / (support_weight + contradict_weight)
+       ELSE 1.0  // No contradictions = assume well-grounded
+     END as grounding_strength
+WHERE total_weight > 3.0  // Minimum weight for statistical significance
+  AND grounding_strength >= 0.20  // Default threshold: 20% support minimum
 RETURN c.label,
        c.concept_id,
        support_count,
        contradict_count,
        round(support_weight * 100) / 100 as support_weight,
        round(contradict_weight * 100) / 100 as contradict_weight,
-       round(contradiction_ratio * 1000) / 1000 as contradiction_ratio
-ORDER BY contradiction_ratio DESC, contradict_weight DESC
+       round(grounding_strength * 1000) / 1000 as grounding_strength
+ORDER BY grounding_strength ASC, contradict_weight DESC
 ```
 
-**Key differences from naive counting:**
+**Key features:**
 - Uses `reduce()` to sum edge confidence scores, not `count()`
 - Falls back to 0.8 if confidence missing (backward compatibility)
 - Minimum weight threshold (3.0) instead of minimum count (5)
-- Orders by `contradict_weight` (total force) not `contradict_count`
+- `grounding_strength` = support_weight / total_weight (continuous 0.0-1.0)
+- Adjustable threshold: change 0.20 to query different confidence levels
 
-**2. Add concept properties:**
+**2. Find weakly-grounded concepts (for analysis):**
+
 ```cypher
-(:Concept {
-  status: "ACTIVE" | "IRRELEVANT" | "REINSTATED",
-  marked_irrelevant_date: timestamp,
-  marked_irrelevant_reason: text,
-  marked_irrelevant_confidence: float,
-  reinstated_date: timestamp,
-  reinstated_reason: text
-})
+// Find concepts with low grounding (potential contradictions)
+MATCH (c:Concept)
+OPTIONAL MATCH (c)<-[s:SUPPORTS]-()
+OPTIONAL MATCH (c)<-[d:CONTRADICTS]-()
+WITH c,
+     reduce(sum = 0.0, e IN collect(s) | sum + coalesce(e.confidence, 0.8)) as support_weight,
+     reduce(sum = 0.0, e IN collect(d) | sum + coalesce(e.confidence, 0.8)) as contradict_weight
+WITH c,
+     support_weight,
+     contradict_weight,
+     CASE
+       WHEN support_weight + contradict_weight > 0
+       THEN support_weight / (support_weight + contradict_weight)
+       ELSE 1.0
+     END as grounding_strength
+WHERE grounding_strength < 0.20  // Weakly grounded
+  AND support_weight + contradict_weight > 3.0  // Minimum significance
+RETURN c.label,
+       grounding_strength,
+       support_weight,
+       contradict_weight
+ORDER BY grounding_strength ASC
 ```
 
-**3. API endpoints:**
-- `GET /admin/contradictions` - List high-contradiction concepts
-- `POST /admin/introspect/{concept_id}` - Trigger agent evaluation
-- `POST /admin/mark-irrelevant/{concept_id}` - Manual override
-- `POST /admin/reinstate/{concept_id}` - Manual reinstatement
+**3. No concept properties needed:**
 
-### Phase 2: Agent Introspection (Near-term)
+Concepts remain unchanged - no status field, no marking dates. Grounding strength is computed purely from edges at query time.
 
-**Introspection Agent prompt:**
+**4. API endpoints:**
+- `GET /admin/grounding-analysis` - List weakly-grounded concepts
+- `POST /admin/agent-context/{concept_id}` - Generate agent interpretation (optional)
+- `GET /concepts?min_grounding=0.20` - Query with custom threshold
+
+### Phase 2: Agent Context Generation (Optional Enhancement)
+
+**Context Generation Agent prompt:**
 
 ```
-You are analyzing a concept in a knowledge graph that has contradictory evidence.
+You are providing interpretive context for a weakly-grounded concept in a knowledge graph.
 
 Concept: {label}
-Support edges: {support_count}
-Contradict edges: {contradict_count}
-Contradiction ratio: {contradiction_ratio}
+Grounding strength: {grounding_strength} ({percent}% support)
+Support weight: {support_weight} (from {support_count} edges)
+Contradict weight: {contradict_weight} (from {contradict_count} edges)
 
 Evidence supporting this concept:
 {formatted_support_evidence}
@@ -374,15 +447,16 @@ Source documents:
 {document_list_with_dates}
 
 Your task:
-1. Analyze the temporal pattern (are contradictions newer?)
-2. Assess evidence quality (are contradictions more specific/authoritative?)
-3. Consider scope (is this historical vs current state?)
-4. Recommend: MARK_IRRELEVANT or KEEP_ACTIVE
+1. Analyze the temporal pattern (is this historical vs current?)
+2. Assess evidence quality (which evidence is more authoritative?)
+3. Identify the most likely alternative concept (higher grounding)
+4. Provide context that helps an LLM synthesize accurate responses
 
 Provide:
-- Decision: MARK_IRRELEVANT | KEEP_ACTIVE
+- Interpretation: 2-3 sentence explanation grounded in evidence
+- Alternative concept: {concept_label} (grounding: {grounding_strength})
+- Temporal context: "Historical" | "Current" | "Future" | "Context-dependent"
 - Confidence: 0.0-1.0
-- Reasoning: 2-3 sentence explanation grounded in evidence
 
 Format response as JSON.
 ```
@@ -393,19 +467,37 @@ Format response as JSON.
 - Max tokens: 500
 - Retrieves up to 50 evidence instances per concept
 
-### Phase 3: Automated Resolution (Future)
+**Key difference from marking approach:**
+- Agent does NOT make binary decisions (mark/don't mark)
+- Agent provides interpretive context for LLMs to use
+- Agent output is optional enhancement, not required for filtering
+- Grounding strength calculation happens independently of agent
 
-**Background job scheduler:**
-- Run contradiction analysis daily
-- Queue concepts with `contradiction_ratio ≥ 0.80` for introspection
-- Batch process with rate limiting (avoid API cost spikes)
-- Log all decisions for audit
+### Phase 3: Performance Optimization (Future)
+
+**Caching grounding_strength:**
+
+For performance, optionally cache grounding_strength calculations:
+
+```cypher
+// Materialized view pattern (recalculated periodically)
+(:Concept {
+  grounding_strength_cached: 0.768,
+  grounding_cache_date: "2025-01-24T10:30:00Z",
+  grounding_cache_ttl: 3600  // seconds
+})
+```
+
+**Cache invalidation:**
+- Invalidate when new SUPPORTS or CONTRADICTS edges added to concept
+- Or use TTL (time-to-live) approach: recalculate every N seconds
+- Trade-off: staleness vs query performance
 
 **Monitoring metrics:**
-- Concepts marked irrelevant per day
-- Concepts reinstated per day
-- Average contradiction ratio over time
-- Agent decision confidence distribution
+- Average grounding_strength across all concepts
+- Distribution of grounding_strength (histogram)
+- Concepts with grounding < 0.20 (count trending over time)
+- Query performance with/without caching
 
 ## Examples
 
@@ -414,98 +506,107 @@ Format response as JSON.
 **Initial state (2025-10-08):**
 ```
 (:Concept {label: "System uses Neo4j"})
-  ← SUPPORTS ← (12 evidence instances from docs)
-  ← SUPPORTS ← (Architecture overview)
-  ← SUPPORTS ← (Setup scripts)
+  ← SUPPORTS ← (12 evidence instances from docs, avg confidence 0.85)
+
+Grounding calculation:
+  support_weight: 12 × 0.85 = 10.2
+  contradict_weight: 0
+  grounding_strength: 10.2 / 10.2 = 1.00 (fully supported)
 ```
 
 **After ingestion (2025-01-24):**
 ```
 (:Concept {label: "System uses Neo4j"})
-  ← SUPPORTS ← (12 evidence instances from old docs)
-  ← CONTRADICTS ← (47 evidence instances from new docs)
-  ← CONTRADICTS ← (ADR-016: Migration decision)
-  ← CONTRADICTS ← (age_client.py in codebase)
-  ← CONTRADICTS ← (README.md: "Apache AGE + PostgreSQL")
+  ← SUPPORTS ← (12 evidence instances from old docs, avg confidence 0.85)
+  ← CONTRADICTS ← (47 evidence instances from new docs, avg confidence 0.72)
 
-Metrics:
-  support_edges: 12
-  contradict_edges: 47
-  contradiction_ratio: 47/59 = 0.797 ≈ 0.80 ✓ THRESHOLD TRIGGERED
+Grounding calculation:
+  support_weight: 12 × 0.85 = 10.2
+  contradict_weight: 47 × 0.72 = 33.84
+  total_weight: 44.04
+  grounding_strength: 10.2 / 44.04 = 0.232 (23% support, 77% contradiction)
 ```
 
-**Agent introspection:**
+**Optional agent context:**
 ```json
 {
-  "decision": "MARK_IRRELEVANT",
-  "confidence": 0.95,
-  "reasoning": "Temporal analysis shows Neo4j references end 2025-10-08. ADR-016 explicitly documents migration to Apache AGE on 2025-10-09. Current codebase (age_client.py) and all recent documentation reference Apache AGE. Neo4j represents historical state, not current architecture."
+  "interpretation": "Temporal analysis shows Neo4j references end 2025-10-08. ADR-016 explicitly documents migration to Apache AGE on 2025-10-09. Current codebase (age_client.py) and all recent documentation reference Apache AGE. Neo4j represents historical state, not current architecture.",
+  "alternative_concept": "System uses Apache AGE + PostgreSQL",
+  "alternative_grounding": 0.901,
+  "temporal_context": "Historical",
+  "confidence": 0.95
 }
 ```
 
-**Result:**
-```
-(:Concept {
-  label: "System uses Neo4j",
-  status: "IRRELEVANT",
-  marked_irrelevant_date: "2025-01-24T10:30:00Z",
-  marked_irrelevant_reason: "Temporal analysis shows...",
-  marked_irrelevant_confidence: 0.95
-})
-```
-
-**Query behavior:**
+**Query behavior (automatic):**
 ```cypher
-// Default query (excludes irrelevant)
+// Default query (grounding >= 0.20)
 MATCH (c:Concept)
-WHERE c.status <> 'IRRELEVANT' OR c.status IS NULL
+// ... calculate grounding_strength ...
+WHERE grounding_strength >= 0.20
 RETURN c
+// "System uses Neo4j" has grounding 0.232 → INCLUDED (just above threshold)
 
-// Historical query (includes all)
+// Stricter query (grounding >= 0.50)
 MATCH (c:Concept)
+// ... calculate grounding_strength ...
+WHERE grounding_strength >= 0.50
 RETURN c
+// "System uses Neo4j" has grounding 0.232 → EXCLUDED
+
+// Find weakly-grounded concepts
+WHERE grounding_strength < 0.30
+// "System uses Neo4j" appears here for investigation
 ```
 
-### Example 2: Threshold-Based Confidence Reversal
+**No concept modification needed** - grounding_strength calculated dynamically at query time.
 
-**Scenario:** Documentation incorrectly states threshold is 0.75
+### Example 2: Multiple Thresholds for Different Use Cases
 
-**Initial state:**
+**Scenario:** Query with different grounding thresholds
+
+**Concept states:**
 ```
-(:Concept {label: "Similarity threshold is 0.75"})
-  ← SUPPORTS ← (Introduction doc: "≥0.75 cosine")
-  ← SUPPORTS ← (Research notes: "0.75 default")
-```
-
-**After verification:**
-```
-(:Concept {label: "Similarity threshold is 0.85"})
-  ← SUPPORTS ← (age_client.py: threshold=0.85)
-  ← SUPPORTS ← (ingestion.py: "≥ 0.85")
-  ← SUPPORTS ← (ADR-030: "Match threshold: 80% similarity")
-  ← CONTRADICTS → "Similarity threshold is 0.75"
-
-Metrics for "0.75" concept:
-  support_edges: 2
-  contradict_edges: 3 (from code + docs)
-  contradiction_ratio: 3/5 = 0.60  (below 0.80 threshold)
+"Similarity threshold is 0.85" → grounding: 0.90 (code + docs)
+"Similarity threshold is 0.75" → grounding: 0.35 (old docs)
+"Similarity threshold is 0.80" → grounding: 0.28 (mixed references)
 ```
 
-**No automatic action** (ratio too low), but manual introspection available.
+**Query behaviors:**
 
-**Manual resolution:**
-- Developer runs: `kg admin introspect similarity-threshold-0-75`
-- Agent analyzes: code is authoritative source
-- Decision: MARK_IRRELEVANT (confidence: 0.92)
+```cypher
+// High-confidence query (production use)
+WHERE grounding_strength >= 0.80
+→ Returns: "Similarity threshold is 0.85" only
 
-### Example 3: Reversibility - Future Architecture Change
+// Medium-confidence query (general use)
+WHERE grounding_strength >= 0.50
+→ Returns: "Similarity threshold is 0.85" only
 
-**Current state:**
+// Low-confidence query (include uncertain)
+WHERE grounding_strength >= 0.20
+→ Returns: All three concepts (investigation mode)
+
+// Find contradictory concepts (analysis)
+WHERE grounding_strength < 0.40
+→ Returns: "0.75" and "0.80" concepts (needs investigation)
 ```
-(:Concept {
-  label: "System uses Neo4j",
-  status: "IRRELEVANT"
-})
+
+**LLM receives context:**
+```
+High-grounding concept: "Similarity threshold is 0.85" (grounding: 0.90)
+Weakly-grounded alternatives: "0.75" (grounding: 0.35), "0.80" (grounding: 0.28)
+
+Synthesize response: "What is the similarity threshold?"
+Expected: "The system uses 0.85 as the similarity threshold (verified in code)."
+```
+
+### Example 3: Automatic Reversibility - Future Architecture Change
+
+**Current state (2025-01-24):**
+```
+"System uses Neo4j" → grounding: 0.232 (weakly grounded)
+"System uses Apache AGE" → grounding: 0.901 (well grounded)
 ```
 
 **Future ingestion (2026-06-01):**
@@ -513,65 +614,82 @@ Metrics for "0.75" concept:
 - Architecture docs: "PostgreSQL + AGE for single-region, Neo4j for geo-distributed"
 - Deployment guides: "Neo4j cluster configuration"
 
-**Edge changes:**
+**Automatic recalculation:**
 ```
-(:Concept {label: "System uses Neo4j"})
-  ← SUPPORTS ← (35 new evidence instances about Neo4j cluster)
-  ← CONTRADICTS ← (12 old "replaced by AGE" statements)
-
-Recalculated:
-  support_edges: 47 (12 old + 35 new)
-  contradict_edges: 47 (same)
-  contradiction_ratio: 47/94 = 0.50  (dropped from 0.80)
+"System uses Neo4j"
+  support_weight: 10.2 (old) + 29.75 (new) = 39.95
+  contradict_weight: 33.84 (unchanged)
+  grounding_strength: 39.95 / 73.79 = 0.541 (54% support - improved!)
 ```
 
-**Automatic re-evaluation triggered:**
-- `contradiction_ratio < 0.30`? No (it's 0.50)
-- Manual introspection available
-- Developer decides: Context matters - both are true (AGE for single-region, Neo4j for multi-region)
+**Query behavior automatically changes:**
+```cypher
+// Before: grounding was 0.232
+WHERE grounding_strength >= 0.50
+→ Excluded
 
-**Solution:**
-- Refine concept: "System uses Neo4j" → split into two concepts
-  - "System uses Neo4j for geo-distributed deployment"
-  - "System uses Apache AGE for single-region deployment"
-- Both ACTIVE, no contradiction
+// After: grounding is 0.541
+WHERE grounding_strength >= 0.50
+→ Included (automatically, no manual intervention!)
+```
+
+**Developer investigates:**
+- Runs: `kg admin grounding-analysis`
+- Finds: Both "Neo4j" (0.541) and "Apache AGE" (0.901) have good grounding
+- Realizes: Context matters - both are true in different scenarios
+
+**Solution (concept refinement):**
+- Split concept: "System uses Neo4j" → two more specific concepts
+  - "System uses Neo4j for geo-distributed deployment" (grounding: 0.89)
+  - "System uses Apache AGE for single-region deployment" (grounding: 0.92)
+- Both well-grounded, no contradiction, clearer semantics
 
 ## Consequences
 
 ### Positive
 
-✅ **Non-destructive:** Historical information preserved
-✅ **Reversible:** Truth can shift as evidence accumulates
-✅ **Statistical:** Grounded in quantitative evidence, not arbitrary rules
-✅ **Transparent:** Agent reasoning logged and auditable
-✅ **Scalable:** Automated detection, human oversight for edge cases
-✅ **Philosophically sound:** Acknowledges Gödelian incompleteness
-✅ **Query-time filtering:** Default queries exclude noise, historians can include it
+✅ **Always current:** Grounding strength reflects latest edge weights at every query
+✅ **No state management:** No marking/unmarking, no status fields, no timestamps
+✅ **Automatic reversibility:** Truth shifts automatically as evidence accumulates
+✅ **No query paradox:** Lowering threshold always finds weakly-grounded concepts
+✅ **Continuous scores:** 0.0-1.0 range, not binary relevant/irrelevant
+✅ **Adjustable filtering:** Different queries use different thresholds (0.20, 0.50, 0.80)
+✅ **Pure mathematics:** Core mechanism requires no agent or human intervention
+✅ **Statistical soundness:** Grounded in force vector summing (confidence weights)
+✅ **Non-destructive:** All concepts preserved, filtering happens at query time
+✅ **Philosophically sound:** Acknowledges Gödelian incompleteness through continuous probability
+✅ **Performance:** Can cache grounding_strength for frequently-queried concepts (optional)
+✅ **No cascading updates:** Each concept's score is independent
 
 ### Negative
 
-⚠️ **Agent costs:** Each introspection = 1 LLM API call (~$0.01-0.05)
-⚠️ **Threshold tuning:** 80% may need domain-specific adjustment
-⚠️ **Cascade complexity:** Reinstating one concept may trigger many re-evaluations
-⚠️ **Edge case ambiguity:** What if contradiction_ratio = 0.79? (just below threshold)
-⚠️ **Temporal bias:** System favors newer information by default
+⚠️ **Query overhead:** Must calculate grounding_strength for each concept (mitigated by caching)
+⚠️ **Threshold selection:** Default 0.20 may not suit all domains or queries
+⚠️ **No explicit marking:** Concepts don't have "this is wrong" labels (feature, not bug)
+⚠️ **Agent context optional:** LLMs don't get interpretive context unless explicitly requested
+⚠️ **Temporal information lost:** Can't track "when did grounding drop below threshold?"
 
 ### Trade-offs
 
-**Precision vs Recall:**
-- High threshold (0.90): Few false positives, miss some true contradictions
-- Low threshold (0.70): Catch more contradictions, risk marking valid concepts irrelevant
-- **Current choice (0.80):** Balance point
+**Computation vs Storage:**
+- **Query-time calculation:** No storage overhead, always current, but adds query latency
+- **Cached grounding:** Faster queries, but cache invalidation complexity
+- **Current choice:** Query-time (prefer correctness over speed initially)
 
-**Automation vs Control:**
-- Fully automated: Fast, scales, but may make mistakes
-- Manual approval: Accurate, but doesn't scale
-- **Hybrid approach:** Automated detection + agent recommendation + optional human override
+**Threshold Flexibility vs Consistency:**
+- **Adjustable thresholds:** Different queries use different confidence levels (flexible)
+- **Fixed threshold:** All queries use same standard (consistent)
+- **Current choice:** Adjustable per query (0.20 default, user can override)
 
-**Deletion vs Marking:**
-- Delete: Clean graph, but catastrophic if wrong
-- Mark irrelevant: Cluttered graph, but reversible
-- **Current choice:** Mark (reversibility > cleanliness)
+**Pure Math vs Agent Context:**
+- **Pure math:** Fast, deterministic, no API costs, but no interpretation
+- **With agent:** Interpretive context for LLMs, but API costs and latency
+- **Current choice:** Pure math by default, agent context optional enhancement
+
+**Continuous Scores vs Binary Labels:**
+- **Continuous (0.0-1.0):** Nuanced, flexible filtering, but harder to understand at a glance
+- **Binary (relevant/irrelevant):** Simple, clear, but loses information about degree of grounding
+- **Current choice:** Continuous (preserves information, enables flexible querying)
 
 ## Alternatives Considered
 
@@ -610,6 +728,44 @@ Recalculated:
 - Mathematically elegant but complex to implement
 - Requires prior probability estimates
 - May revisit in Phase 3 if edge-count approach proves insufficient
+
+### 5. Static IRRELEVANT Marking (Rejected)
+
+**Approach:** Mark concepts as IRRELEVANT when contradiction ratio ≥ 0.80, exclude from default queries
+
+**Implementation:**
+```cypher
+(:Concept {
+  status: "IRRELEVANT",
+  marked_date: timestamp,
+  marked_reason: text
+})
+
+// Queries
+WHERE c.status <> 'IRRELEVANT' OR c.status IS NULL
+```
+
+**Why rejected:**
+
+❌ **Query paradox:** If we exclude IRRELEVANT concepts from queries, how do we find them to re-evaluate when new evidence arrives?
+
+❌ **Stale state:** Marking freezes a point-in-time decision, but edges continue to accumulate. A concept marked IRRELEVANT yesterday might become relevant today.
+
+❌ **State management complexity:** Need to track marked_date, marked_reason, reinstated_date, reinstated_reason - significant bookkeeping overhead.
+
+❌ **Cascading updates:** When reinstating a concept, must trigger re-evaluation of adjacent concepts - complex dependency management.
+
+❌ **Binary thinking:** Either RELEVANT or IRRELEVANT - loses nuance. What about concepts with 40% support? 60% support?
+
+❌ **Agent dependency:** Requires agent introspection for every mark/unmark operation - API costs and latency.
+
+**Dynamic grounding_strength solves all these problems:**
+- ✅ Always findable (just lower threshold)
+- ✅ Always current (recalculated at query time)
+- ✅ No state management (no bookkeeping)
+- ✅ No cascading (independent scores)
+- ✅ Continuous spectrum (0.0-1.0)
+- ✅ Pure mathematics (no agent required)
 
 ## Related Decisions
 
