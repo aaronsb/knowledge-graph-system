@@ -55,14 +55,10 @@ plugins:
 
 nav:
   - Home: README.md
-  - Manual:
-    - manual/
-  - Architecture:
-    - architecture/
-  - Development:
-    - development/
-  - Testing:
-    - testing/
+  - Manual: manual/
+  - Architecture: architecture/
+  - Development: development/
+  - Testing: testing/
 
 # Build settings
 docs_dir: docs

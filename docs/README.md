@@ -4,61 +4,24 @@ This directory contains all documentation for the Knowledge Graph System, organi
 
 ## Directory Structure
 
+### 📚 `manual/`
+Complete user manual organized into numbered sections for natural reading order.
+
+- **01-getting-started/** - Quickstart, CLI usage, ingestion basics
+- **02-configuration/** - AI providers, extraction, embeddings
+- **03-integration/** - MCP setup, vocabulary management
+- **04-security-and-access/** - Authentication, RBAC, security
+- **05-maintenance/** - Backup/restore, migrations
+- **06-reference/** - Schema, concepts, examples, query patterns
+
+See `manual/README.md` for detailed navigation.
+
 ### 📐 `architecture/`
 Architecture decisions, design documents, and ADRs (Architectural Decision Records).
 
-- **ARCHITECTURE.md** - System architecture overview
-- **ARCHITECTURE_DECISIONS.md** - Consolidated architecture decisions
-- **ADR-012-api-server-architecture.md** - FastAPI REST server design
-- **ADR-013-unified-typescript-client.md** - TypeScript client consolidation
-- **ADR-014-job-approval-workflow.md** - Job approval and queue management
-- **ADR-015-backup-restore-streaming.md** - Database backup/restore strategy
-- **ADR-016-apache-age-migration.md** - Apache AGE migration (Neo4j → PostgreSQL + AGE)
-- **ADR-027-user-management-api.md** - User authentication and session management
-- **ADR-028-dynamic-rbac.md** - Dynamic Role-Based Access Control system
-- **ADR-031-encrypted-api-key-storage.md** - Encrypted API key storage with Fernet encryption
-
-### 🧪 `testing/`
-Test coverage specifications and testing documentation.
-
-- **TEST_COVERAGE.md** - Comprehensive test coverage plan and philosophy
-
-### 🔌 `api/`
-API documentation and query pattern references.
-
-- **CYPHER_PATTERNS.md** - AGE Cypher query patterns and compatibility notes
-- **OPENCYPHER_QUERIES.md** - openCypher query examples and patterns for Apache AGE
-
-### 📚 `guides/`
-User and developer guides for getting started and working with the system.
-
-- **QUICKSTART.md** - Quick start guide for new users
-- **AI_PROVIDERS.md** - AI provider configuration (OpenAI, Anthropic)
-- **EXTRACTION_CONFIGURATION.md** - AI extraction configuration details (ADR-041)
-- **EXTRACTION_QUALITY_COMPARISON.md** - Empirical quality comparison across providers
-- **SWITCHING_EXTRACTION_PROVIDERS.md** - How to switch between OpenAI, Anthropic, and Ollama
-- **LOCAL_INFERENCE_IMPLEMENTATION.md** - Ollama local inference implementation phases (ADR-042)
-- **EMBEDDING_CONFIGURATION.md** - AI embedding configuration details (ADR-039)
-- **AUTHENTICATION.md** - Login, logout, and session management
-- **PASSWORD_RECOVERY.md** - Password reset and account recovery procedures
-- **RBAC.md** - Role-Based Access Control operations and user management
-- **SECURITY.md** - Security infrastructure and encrypted API key management
-- **MCP_SETUP.md** - MCP server setup for Claude Desktop integration
-- **BACKUP_RESTORE.md** - Backup and restore operations guide
-- **DATABASE_MIGRATIONS.md** - Database schema migration management (ADR-040)
-- **SCHEMA_REFERENCE.md** - PostgreSQL schema reference and documentation
-- **INGESTION.md** - Document ingestion workflow and configuration
-- **VOCABULARY_CONSOLIDATION.md** - Edge vocabulary consolidation with AITL (ADR-032)
-- **EXAMPLES.md** - Usage examples and common patterns
-- **USE_CASES.md** - Real-world workflow catalog (index to use_cases/ directory)
-- **use_cases/** - Individual use case guides (GitHub history analysis, etc.)
-
-### 📖 `reference/`
-Conceptual documentation and terminology reference.
-
-- **CONCEPT.md** - Core concept definitions
-- **CONCEPTS_AND_TERMINOLOGY.md** - System terminology and glossary
-- **ENRICHMENT_JOURNEY.md** - How the graph learns from multiple perspectives
+- **ARCHITECTURE_DECISIONS.md** - Consolidated architecture decisions index
+- **ARCHITECTURE_OVERVIEW.md** - System architecture overview
+- **ADR-###-*.md** - Individual architecture decision records
 
 ### 🔨 `development/`
 Development journals, learnings, and internal notes.
@@ -66,34 +29,39 @@ Development journals, learnings, and internal notes.
 - **DEV_JOURNAL_chunked_ingestion.md** - Chunked ingestion development journal
 - **LEARNED_KNOWLEDGE_MCP.md** - MCP integration learnings
 
+### 🧪 `testing/`
+Test coverage specifications and testing documentation.
+
+- **TEST_COVERAGE.md** - Comprehensive test coverage plan and philosophy
+
 ### 🖼️ `media/`
 Images, diagrams, and other media assets.
 
 ## Quick Navigation
 
 ### New Users
-1. Start with [QUICKSTART.md](guides/QUICKSTART.md)
-2. Learn about [AI Providers](guides/AI_PROVIDERS.md)
-3. Read [INGESTION.md](guides/INGESTION.md) for document ingestion workflow
-4. See [VOCABULARY_CONSOLIDATION.md](guides/VOCABULARY_CONSOLIDATION.md) for managing edge vocabulary growth
-5. See [ENRICHMENT_JOURNEY.md](reference/ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
-6. Review [Examples](guides/EXAMPLES.md) and [Use Cases](guides/USE_CASES.md)
+1. Start with [QUICKSTART.md](manual/01-getting-started/01-QUICKSTART.md)
+2. Learn about [AI Providers](manual/02-configuration/01-AI_PROVIDERS.md)
+3. Read [INGESTION.md](manual/01-getting-started/03-INGESTION.md) for document ingestion workflow
+4. See [VOCABULARY_CONSOLIDATION.md](manual/03-integration/02-VOCABULARY_CONSOLIDATION.md) for managing edge vocabulary growth
+5. See [ENRICHMENT_JOURNEY.md](manual/06-reference/07-ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
+6. Review [Examples](manual/06-reference/03-EXAMPLES.md) and [Use Cases](manual/06-reference/02-USE_CASES.md)
 
 ### Administrators
-1. Read [AUTHENTICATION.md](guides/AUTHENTICATION.md) for login and session management
-2. **Important:** Keep [PASSWORD_RECOVERY.md](guides/PASSWORD_RECOVERY.md) handy for account recovery
-3. Review [RBAC.md](guides/RBAC.md) for user and permission management
-4. **Important:** Read [SECURITY.md](guides/SECURITY.md) for encrypted API key management and security infrastructure
-5. Learn about [BACKUP_RESTORE.md](guides/BACKUP_RESTORE.md) for data protection
-6. Reference [MCP_SETUP.md](guides/MCP_SETUP.md) for service account configuration
+1. Read [AUTHENTICATION.md](manual/04-security-and-access/01-AUTHENTICATION.md) for login and session management
+2. **Important:** Keep [PASSWORD_RECOVERY.md](manual/04-security-and-access/04-PASSWORD_RECOVERY.md) handy for account recovery
+3. Review [RBAC.md](manual/04-security-and-access/02-RBAC.md) for user and permission management
+4. **Important:** Read [SECURITY.md](manual/04-security-and-access/03-SECURITY.md) for encrypted API key management and security infrastructure
+5. Learn about [BACKUP_RESTORE.md](manual/05-maintenance/01-BACKUP_RESTORE.md) for data protection
+6. Reference [MCP_SETUP.md](manual/03-integration/01-MCP_SETUP.md) for service account configuration
 
 ### Developers
 1. Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md)
 2. Review [ADR-016](architecture/ADR-016-apache-age-migration.md) for current database architecture
-3. Learn about [DATABASE_MIGRATIONS.md](guides/DATABASE_MIGRATIONS.md) for schema evolution (ADR-040)
-4. Reference [SCHEMA_REFERENCE.md](guides/SCHEMA_REFERENCE.md) for complete schema documentation
+3. Learn about [DATABASE_MIGRATIONS.md](manual/05-maintenance/02-DATABASE_MIGRATIONS.md) for schema evolution (ADR-040)
+4. Reference [SCHEMA_REFERENCE.md](manual/06-reference/01-SCHEMA_REFERENCE.md) for complete schema documentation
 5. Check [TEST_COVERAGE.md](testing/TEST_COVERAGE.md) for testing guidelines
-6. Reference [CYPHER_PATTERNS.md](api/CYPHER_PATTERNS.md) for query development
+6. Reference [CYPHER_PATTERNS.md](manual/06-reference/09-CYPHER_PATTERNS.md) for query development
 
 ### Contributors
 1. Read architecture decisions in `architecture/`
