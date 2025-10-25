@@ -47,24 +47,24 @@ The Darwin Gödel Machine relaxes this requirement: Instead of theoretical proof
 | Darwin Gödel Machine | Our Truth Convergence System |
 |---------------------|------------------------------|
 | Modifies its own code | Modifies knowledge representation |
-| Empirical validation via coding benchmarks | Empirical validation via edge count analysis |
-| Fitness = performance on tasks | Fitness = `1 - contradiction_ratio` |
-| Keeps changes that improve benchmark scores | Keeps concepts with low contradiction ratios |
-| Rejects changes that hurt performance | Marks concepts with ≥80% contradictions as IRRELEVANT |
-| Reversible (can revert bad changes) | Reversible (can reinstate concepts if evidence shifts) |
+| Empirical validation via coding benchmarks | Empirical validation via edge weight analysis |
+| Fitness = performance on tasks | Fitness = `grounding_strength` (0.0-1.0) |
+| Keeps changes that improve benchmark scores | Queries filter by grounding_strength threshold |
+| Rejects changes that hurt performance | Filters concepts with grounding_strength < 0.20 from default queries |
+| Reversible (can revert bad changes) | Reversible (grounding recalculates as evidence shifts) |
 
 **In our context:**
 - **External system = Real world:** Documents, code, architecture decisions provide empirical evidence
-- **Fitness function = Contradiction ratio:** Concepts with ≥80% contradictions empirically fail fitness test
-- **Evolutionary selection:** High-contradiction concepts marked IRRELEVANT (removed from active query set)
+- **Fitness function = grounding_strength:** Concepts with grounding_strength < 0.20 empirically fail fitness test
+- **Evolutionary selection:** Low-grounding concepts filtered from default query results (grounding_strength < 0.20)
 - **Self-modification:** Graph structure evolves based on statistical evidence, not programmer assertions
-- **Empirical validation:** No attempt to "prove" a concept is wrong - just measure contradiction preponderance
+- **Empirical validation:** No attempt to "prove" a concept is wrong - just measure support/contradict weight balance
 
 **Key quote from DGM paper:**
 > "The DGM relaxes the Gödel Machine's impractical requirement of theoretically proving that a change will improve the system, instead requiring empirical evidence from experiments."
 
 **Our application:**
-> We relax the requirement of formally proving a concept is "false," instead requiring empirical evidence (contradiction ratio ≥80%) that the concept conflicts with observed reality.
+> We relax the requirement of formally proving a concept is "false," instead requiring empirical evidence (grounding_strength < 0.20, i.e., <20% support) that the concept conflicts with observed reality.
 
 **Critical differences:**
 - Darwin-Gödel machines modify their *own code* (meta-learning)
@@ -87,23 +87,23 @@ We have, essentially, **an ecology of concepts that compete for grounding suppor
 
 **Evolutionary competition:**
 - **"System uses Neo4j"** and **"System uses Apache AGE"** compete for the same ecological niche
-- Initially, Neo4j concept has strong support (12 SUPPORTS edges) - it's dominant
+- Initially, Neo4j concept has strong support (12 SUPPORTS edges) - it's dominant (grounding_strength = 1.0)
 - Apache AGE concept emerges with contradictory evidence (47 CONTRADICTS edges against Neo4j)
-- Neo4j concept's fitness drops: `contradiction_ratio = 0.80` → fails survival threshold
-- Apache AGE concept becomes dominant in the ecosystem
+- Neo4j concept's fitness drops: `grounding_strength = 0.232` (23% support) → falls below survival threshold
+- Apache AGE concept becomes dominant in the ecosystem (grounding_strength = 0.901)
 
 **Natural selection mechanism:**
-- Fitness function = contradiction ratio
-- Selection pressure = 80% threshold (three sigma)
-- Survival = concepts with low contradiction ratios remain ACTIVE
-- Extinction = concepts with high contradiction ratios marked IRRELEVANT
+- Fitness function = grounding_strength (continuous 0.0-1.0)
+- Selection pressure = 0.20 threshold (20% minimum support)
+- Survival = concepts with grounding_strength ≥ 0.20 appear in default query results
+- Filtering = concepts with grounding_strength < 0.20 excluded from default queries (but still findable)
 
 **Key insight:** We're not programming truth - we're letting truth emerge from competitive evolutionary pressure based on evidence accumulation.
 
 **Unlike biological evolution:**
-- "Extinct" concepts aren't deleted (reversible marking)
-- Can be "resurrected" if environment changes (Neo4j might return for multi-region architecture)
-- Fitness is recalculated continuously as new evidence arrives
+- "Filtered" concepts aren't deleted (non-destructive filtering)
+- Can reappear in results if environment changes (Neo4j might return for multi-region architecture)
+- Fitness is recalculated continuously at every query - always reflects current evidence
 
 This is **conceptual Darwinism** - ideas survive based on their fit with observable reality, not programmer assertions.
 
@@ -111,19 +111,19 @@ This is **conceptual Darwinism** - ideas survive based on their fit with observa
 
 Beyond the philosophical and evolutionary metaphors, this approach is grounded in established information theory and statistical practice. When we measure contradiction ratios, we're not arbitrarily choosing metrics - we're quantifying uncertainty reduction and signal detection in a way that has deep connections to Shannon's information theory and Bayesian reasoning.
 
-**Entropy reduction as truth convergence:** In information-theoretic terms, high contradiction represents high entropy - significant uncertainty about whether a concept reflects reality. When "System uses Neo4j" has 12 SUPPORTS and 47 CONTRADICTS edges, the system is in a high-entropy state: query results are uncertain, and users receive conflicting information. Marking the Neo4j concept as IRRELEVANT reduces entropy by collapsing the uncertainty - the system now confidently presents "System uses Apache AGE" as the dominant truth. This isn't arbitrary pruning; it's entropy minimization based on empirical evidence.
+**Entropy reduction as truth convergence:** In information-theoretic terms, high contradiction represents high entropy - significant uncertainty about whether a concept reflects reality. When "System uses Neo4j" has 12 SUPPORTS and 47 CONTRADICTS edges, the system is in a high-entropy state: query results are uncertain, and users receive conflicting information. Filtering the Neo4j concept (grounding_strength = 0.232 < 0.20 threshold) from default queries reduces entropy by collapsing the uncertainty - the system now confidently presents "System uses Apache AGE" as the dominant truth. This isn't arbitrary pruning; it's entropy minimization based on empirical evidence.
 
-**Bayesian updating through edge accumulation:** Each ingested document provides new evidence in the form of SUPPORTS or CONTRADICTS edges. The graph effectively performs continuous Bayesian updating without explicit probability calculations. When the contradiction ratio reaches 0.80, we have strong posterior evidence (4:1 ratio) that the concept conflicts with observable reality. This threshold choice - the 80th percentile corresponding to approximately 1.28 standard deviations - isn't pulled from thin air. It represents a standard confidence level used across statistical practice, from quality control to hypothesis testing. We're asking: "Is the evidence preponderance strong enough to warrant action?" At 4:1 contradictions-to-supports, the answer becomes statistically compelling.
+**Bayesian updating through edge accumulation:** Each ingested document provides new evidence in the form of SUPPORTS or CONTRADICTS edges. The graph effectively performs continuous Bayesian updating without explicit probability calculations. When grounding_strength drops to 0.20, we have strong posterior evidence (4:1 ratio of contradictions-to-supports) that the concept conflicts with observable reality. This threshold choice - corresponding to approximately 1.28 standard deviations - isn't pulled from thin air. It represents a standard confidence level used across statistical practice, from quality control to hypothesis testing. We're asking: "Is the evidence preponderance strong enough to warrant filtering?" At 4:1 contradictions-to-supports, the answer becomes statistically compelling.
 
-**Signal-to-noise as fitness:** The contradiction ratio can be understood as an inverse signal-to-noise ratio. A concept with low contradictions (high support) has strong signal relative to noise. A concept with high contradictions (low support) has poor signal-to-noise and should be filtered from query results. This isn't subjective judgment - it's quantifiable information quality measurement. The fitness function `fitness = 1 - contradiction_ratio` directly measures how well a concept's signal stands above the noise of contradictory evidence.
+**Signal-to-noise as fitness:** The grounding_strength can be understood as a signal-to-noise ratio. A concept with low contradictions (high support) has strong signal relative to noise (grounding_strength → 1.0). A concept with high contradictions (low support) has poor signal-to-noise (grounding_strength → 0.0) and should be filtered from query results. This isn't subjective judgment - it's quantifiable information quality measurement. The fitness function `grounding_strength = support_weight / total_weight` directly measures how well a concept's signal stands above the noise of contradictory evidence.
 
-**Mutual information and concept relationships:** CONTRADICTS edges aren't just negative relationships - they carry information about concept incompatibility. High mutual information between "System uses Neo4j" and "System uses Apache AGE" (through strong CONTRADICTS edges) tells us these concepts occupy the same semantic niche and cannot both be true. The agent introspection process uses this mutual information to reason about which concept better fits the evidence landscape, performing a form of information-theoretic model selection.
+**Mutual information and concept relationships:** CONTRADICTS edges aren't just negative relationships - they carry information about concept incompatibility. High mutual information between "System uses Neo4j" and "System uses Apache AGE" (through strong CONTRADICTS edges) tells us these concepts occupy the same semantic niche and cannot both be true. The optional agent context uses this mutual information to reason about which concept better fits the evidence landscape, performing a form of information-theoretic model selection.
 
-**Kolmogorov complexity and Occam's razor:** Maintaining contradictory concepts in the active query set increases the system's Kolmogorov complexity - the minimal description length needed to represent the knowledge state. When we mark one concept IRRELEVANT based on overwhelming evidence, we're applying Occam's razor: the simpler explanation (one true state: Apache AGE) is preferred over the complex explanation (both might be true, context-dependent). This principle, formalized by Kolmogorov, isn't just philosophical - it's a practical heuristic for avoiding overfitting to noisy data.
+**Kolmogorov complexity and Occam's razor:** Maintaining contradictory concepts in query results increases the system's Kolmogorov complexity - the minimal description length needed to represent the knowledge state. When we filter one concept based on low grounding_strength (< 0.20), we're applying Occam's razor: the simpler explanation (one true state: Apache AGE) is preferred over the complex explanation (both might be true, context-dependent). This principle, formalized by Kolmogorov, isn't just philosophical - it's a practical heuristic for avoiding overfitting to noisy data.
 
-**Why this isn't ad-hoc:** Contrast this with typical RAG systems that use similarity thresholds like 0.7 or 0.75 with little justification beyond "it worked in our tests." Our 80% contradiction threshold is defensible because it corresponds to established statistical practice (1.28σ), requires strong evidence ratio (4:1), and can be empirically validated through A/B testing. Could it be 75% or 85% for specific domains? Certainly - and that would be domain-specific tuning within a theoretically sound framework, not arbitrary parameter fiddling.
+**Why this isn't ad-hoc:** Contrast this with typical RAG systems that use similarity thresholds like 0.7 or 0.75 with little justification beyond "it worked in our tests." Our 0.20 grounding_strength threshold is defensible because it corresponds to established statistical practice (1.28σ), requires strong evidence ratio (4:1 contradictions-to-supports), and can be empirically validated through A/B testing. Could it be 0.15 or 0.30 for specific domains? Certainly - and that would be domain-specific tuning within a theoretically sound framework, not arbitrary parameter fiddling.
 
-**Reversibility as epistemic humility:** The non-destructive marking approach acknowledges a fundamental information-theoretic reality: we're operating under incomplete information. Gödel proved that no system can be both complete and consistent; we're adding the practical corollary that no knowledge graph can be both comprehensive and correct. Evidence arrival is path-dependent and temporally ordered. Deleting concepts assumes certainty we cannot have; marking them IRRELEVANT acknowledges we're making the best decision given current evidence, while remaining open to future evidence that shifts the balance. This is information-theoretically sound: we preserve information (historical concepts) while reducing query entropy (excluding irrelevant concepts by default).
+**Reversibility as epistemic humility:** The non-destructive query-time filtering approach acknowledges a fundamental information-theoretic reality: we're operating under incomplete information. Gödel proved that no system can be both complete and consistent; we're adding the practical corollary that no knowledge graph can be both comprehensive and correct. Evidence arrival is path-dependent and temporally ordered. Deleting concepts assumes certainty we cannot have; filtering them from default queries acknowledges we're making the best decision given current evidence, while remaining open to future evidence that shifts the balance. This is information-theoretically sound: we preserve information (all concepts remain in graph) while reducing query entropy (filtering low-grounding concepts from default results).
 
 ### Current System Behavior
 
@@ -183,6 +183,7 @@ total_weight = support_weight + contradict_weight
 grounding_strength = support_weight / total_weight if total_weight > 0 else 1.0
 # Default 1.0 = no contradictions = assume well-grounded
 ```
+
 
 **Why grounding_strength, not "irrelevant" marking:**
 
@@ -1141,63 +1142,87 @@ When contradictions persist even after introspection:
 
 ### Test Scenarios
 
-**1. Simple Contradiction (Neo4j example)**
+**1. Dynamic Grounding Calculation (Neo4j example)**
 - Ingest 12 Neo4j references → concept created
-- Ingest 47 Apache AGE references → contradictions accumulate
-- Verify: `contradiction_ratio ≥ 0.80` triggers introspection
-- Verify: Agent marks Neo4j as IRRELEVANT
-- Verify: Default queries exclude it
+- Calculate grounding_strength: verify `grounding_strength ≈ 1.0` (fully supported, no contradictions)
+- Ingest 47 Apache AGE references with CONTRADICTS edges
+- Recalculate grounding_strength: verify `grounding_strength ≈ 0.232` (23% support, 77% contradiction)
+- Verify: grounding_strength calculation uses weighted sums, not edge counts
+- Verify: total_weight = support_weight + contradict_weight ≈ 44.04
 
-**2. Partial Contradiction (Below Threshold)**
-- Ingest concept with 60% contradictions
-- Verify: No automatic action
-- Verify: Manual introspection available
-- Verify: Agent can still recommend action
+**2. Query Threshold Filtering (Default threshold = 0.20)**
+- Query with default threshold (min_grounding=0.20)
+- Verify: Neo4j concept INCLUDED (grounding 0.232 > 0.20 threshold)
+- Query with stricter threshold (min_grounding=0.30)
+- Verify: Neo4j concept EXCLUDED (grounding 0.232 < 0.30 threshold)
+- Query with lenient threshold (min_grounding=0.10)
+- Verify: Neo4j concept INCLUDED (grounding 0.232 > 0.10 threshold)
 
-**3. Reversal (Reinstatement)**
-- Mark concept IRRELEVANT (80% contradictions)
-- Ingest new SUPPORTS edges
-- Recalculate: `contradiction_ratio < 0.30`
-- Verify: Agent reinstates concept
-- Verify: Cascading re-evaluation queued
+**3. Automatic Reversal (No Manual Intervention)**
+- Initial state: Neo4j concept has grounding_strength = 0.232
+- Ingest 40 new documents with SUPPORTS edges for Neo4j (future architecture change)
+- Recalculate grounding_strength: verify `grounding_strength ≈ 0.541` (54% support)
+- Query with threshold (min_grounding=0.50)
+- Verify: Neo4j concept now INCLUDED (automatic, no marking/unmarking needed)
+- Verify: No agent interaction required for reversal
 
-**4. Historical Query**
-- Mark concept IRRELEVANT
-- Query with `include_irrelevant=false` (default)
-- Verify: Concept excluded
-- Query with `include_irrelevant=true`
-- Verify: Concept included with status marker
+**4. Weakly-Grounded Concept Analysis**
+- Query for concepts with grounding_strength < 0.30
+- Verify: Returns concepts that may need investigation
+- Verify: Concepts remain in graph (non-destructive)
+- Optional: Generate agent context for interpretation
+- Verify: Agent provides context but doesn't modify graph structure
+
+**5. Performance Testing**
+- Run grounding_strength calculation on 1000 concepts
+- Verify: Query completes in <100ms (depth=1 complexity)
+- Measure: Average grounding_strength across all concepts
+- Verify: Distribution histogram shows reasonable spread (not all 1.0 or 0.0)
+
+**6. Edge Confidence Weighting**
+- Create concept with 10 SUPPORTS edges (confidence 0.9 each) = 9.0 weight
+- Create concept with 50 CONTRADICTS edges (confidence 0.2 each) = 10.0 weight
+- Calculate grounding_strength: verify ≈ 0.474 (9.0 / 19.0)
+- Verify: High-confidence supports outweigh low-confidence contradictions
+- Verify: Weighted approach prevents count-based gaming
 
 ### Metrics to Track
 
-- **Contradiction detection rate:** Concepts flagged per week
-- **Agent decision accuracy:** Manual review of 10% sample
-- **Reinstatement frequency:** How often truth reverses?
-- **Query impact:** Performance with/without irrelevant filtering
+- **Grounding distribution:** Histogram of grounding_strength values (0.0-1.0)
+- **Query performance:** Average calculation time for grounding_strength (target: <50ms)
+- **Threshold effectiveness:** % of concepts filtered at different thresholds (0.10, 0.20, 0.30, 0.50)
+- **Reversal frequency:** How often grounding_strength crosses thresholds over time
+- **Edge weight distribution:** Average confidence scores for SUPPORTS vs CONTRADICTS edges
+- **Cache hit rate:** If caching implemented (Phase 3), track cache effectiveness
 
 ## Implementation Status
 
-- [ ] Phase 1: Detection & Metrics
-  - [ ] Add contradiction analysis query
-  - [ ] Add concept status properties
-  - [ ] Add admin API endpoints
-  - [ ] Add manual introspection endpoint
-- [ ] Phase 2: Agent Introspection
-  - [ ] Build introspection agent prompt
-  - [ ] Implement agent API integration
-  - [ ] Add decision logging
-  - [ ] Add manual override capability
-- [ ] Phase 3: Automation
-  - [ ] Build background scheduler
-  - [ ] Implement automated contradiction detection
-  - [ ] Add reinstatement triggers
-  - [ ] Build monitoring dashboard
+- [ ] Phase 1: Core Grounding Calculation
+  - [ ] Implement Cypher query pattern for dynamic grounding_strength calculation
+  - [ ] Add `min_grounding` parameter to query API endpoints
+  - [ ] Implement weighted edge confidence summing (not counting)
+  - [ ] Add grounding_strength to concept query responses
+  - [ ] Add admin endpoint: `GET /admin/grounding-analysis` (list weakly-grounded concepts)
+  - [ ] Validate grounding_strength calculation with test scenarios
+- [ ] Phase 2: Agent Context Generation (Optional Enhancement)
+  - [ ] Build agent context generation prompt
+  - [ ] Implement `POST /admin/agent-context/{concept_id}` endpoint
+  - [ ] Add temporal analysis logic (historical vs current)
+  - [ ] Add alternative concept suggestion (higher grounding)
+  - [ ] Integrate agent context into LLM query patterns
+- [ ] Phase 3: Performance Optimization (Future)
+  - [ ] Implement optional caching strategy (materialized grounding_strength)
+  - [ ] Add cache invalidation on edge changes
+  - [ ] Build monitoring dashboard for grounding distribution
+  - [ ] A/B test cached vs real-time calculation performance
+  - [ ] Add grounding_strength trend tracking (temporal analysis)
 
 **Next Steps:**
-1. Implement contradiction analysis query (immediate)
-2. Test with Neo4j → Apache AGE example
-3. Gather metrics on contradiction frequency in production graph
-4. Refine threshold based on real-world data
+1. Implement depth=1 grounding_strength Cypher query (immediate)
+2. Test with Neo4j → Apache AGE example (verify 0.232 grounding)
+3. Add `min_grounding` parameter to search endpoints
+4. Gather metrics on grounding distribution in production graph
+5. Refine default threshold (0.20) based on real-world data
 
 ---
 
