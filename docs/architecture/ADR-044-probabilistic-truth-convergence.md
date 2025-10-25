@@ -1,7 +1,7 @@
 # ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
 
 **Status:** Proposed
-**Date:** 2025-01-24
+**Date:** 2025-10-24
 **Authors:** System Architecture Team
 **Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds)
 
