@@ -9,7 +9,7 @@
 
 ### The Problem of Contradictory Truth
 
-During documentation maintenance (2025-01-24), a practical contradiction was discovered in the knowledge graph:
+During documentation maintenance (2025-10-24), a practical contradiction was discovered in the knowledge graph:
 
 **Initial state:**
 - Concept: "System uses Neo4j"
