@@ -85,7 +85,7 @@ export function formatSearchResults(result: SearchResponse): string {
     output += `\n💡 **Hint:** ${result.below_threshold_count} additional concept(s) available at ${thresholdPercent}% threshold\n`;
   }
 
-  output += '\n--- Grounding Strength (ADR-044) ---\n';
+  output += '\n--- Grounding Strength ---\n';
   output += 'Higher grounding (>0.7) indicates well-supported concepts.\n';
   output += 'Negative grounding suggests the document presents this as a problem or outdated approach.\n';
 
@@ -125,7 +125,7 @@ export function formatConceptDetails(concept: ConceptDetailsResponse): string {
 
   if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
     output += '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-    output += '\n--- Grounding Strength (ADR-044) ---\n';
+    output += '\n--- Grounding Strength ---\n';
     output += `Score: ${concept.grounding_strength.toFixed(3)} (${(concept.grounding_strength * 100).toFixed(0)}%)\n`;
     output += 'Meaning: Grounding measures probabilistic truth convergence based on SUPPORTS vs CONTRADICTS relationships.\n';
     output += 'Higher values (>0.7) indicate reliable concepts. Lower values (<0.3) suggest historical/incorrect information.\n';
