@@ -524,6 +524,141 @@ def delete_job(self, job_id: str) -> bool:
         return True
 ```
 
+### Job Resumption After Interruption
+
+**Problem:** API restarts, crashes, or hot reloads can interrupt jobs mid-processing, leaving them orphaned with status `processing` but no active worker.
+
+**Solution:** Database-based checkpointing with automatic resume on startup.
+
+#### Checkpoint Strategy (Database-Based)
+
+After each chunk is processed, save resume state in `job_data`:
+
+```python
+# After processing chunk i
+job_queue.update_job(job_id, {
+    "progress": {
+        "resume_from_chunk": i,  # Last completed chunk
+        "chunks_processed": i,
+        "chunks_total": total,
+        ...
+    },
+    "job_data": {
+        **job_data,
+        "resume_from_chunk": i,
+        "stats": {
+            "concepts_created": stats.concepts_created,
+            "relationships_created": stats.relationships_created,
+            ...
+        },
+        "recent_concept_ids": recent_ids[-50:]  # Context for next chunk
+    }
+})
+```
+
+**Why database vs filesystem:**
+- ✅ All data in one place (no file management)
+- ✅ Transactional updates with job status
+- ✅ Works with both PostgreSQL and SQLite queues
+- ✅ Easy to query and monitor
+- ✅ Minimal storage overhead (~2-5KB per job)
+- ⚠️ Could migrate to filesystem if job_data becomes too large
+
+#### Resume Flow
+
+**On ingestion worker start:**
+```python
+# Check if this is a resumed job
+resume_from_chunk = job_data.get("resume_from_chunk", 0)
+is_resuming = resume_from_chunk > 0
+
+if is_resuming:
+    logger.info(f"🔄 Resuming from chunk {resume_from_chunk + 1}/{total}")
+    # Load saved stats
+    stats.concepts_created = saved_stats["concepts_created"]
+    stats.relationships_created = saved_stats["relationships_created"]
+    ...
+    recent_concept_ids = job_data["recent_concept_ids"]
+
+# Process chunks (skip already-completed)
+for i, chunk in enumerate(chunks, 1):
+    if i <= resume_from_chunk:
+        logger.debug(f"⏭️  Skipping chunk {i} (already processed)")
+        continue
+
+    # Process chunk normally...
+    process_chunk(...)
+
+    # Save checkpoint
+    update_job_with_checkpoint(...)
+```
+
+**On API startup (`main.py`):**
+```python
+# Resume interrupted jobs
+processing_jobs = queue.list_jobs(status="processing", limit=500)
+
+for job in processing_jobs:
+    chunks_total = job["progress"]["chunks_total"]
+    chunks_processed = job["progress"]["resume_from_chunk"]
+
+    if chunks_processed < chunks_total:
+        # Interrupted mid-processing - reset to approved
+        queue.update_job(job_id, {"status": "approved"})
+        logger.info(f"🔄 Queued for resume: {job_id} (chunk {chunks_processed + 1}/{chunks_total})")
+    else:
+        # Finished all chunks but didn't mark complete
+        queue.update_job(job_id, {"status": "completed"})
+
+# Start all approved jobs (includes resumed ones)
+approved_jobs = queue.list_jobs(status="approved", limit=500)
+for job in approved_jobs:
+    queue.execute_job_async(job["job_id"])
+```
+
+#### Benefits
+
+1. **Zero data loss**: Chunks already processed aren't re-done
+2. **No duplicate concepts**: Stats preserved, relationships maintained
+3. **Context preserved**: Recent concept IDs for semantic continuity
+4. **Automatic recovery**: No manual intervention needed
+5. **Progress visibility**: Resume point shown in job status
+6. **Minimal overhead**: ~2-5KB per checkpoint
+
+#### Example Scenario
+
+```
+1. User submits large document (125 chunks)
+2. Job processes chunks 1-47 successfully
+3. API crashes (deployment, restart, crash)
+   → Job status: "processing", resume_from_chunk: 47
+4. API restarts, detects interrupted job
+   → Resets to "approved", triggers execution
+5. Worker loads job, finds resume_from_chunk: 47
+   → Skips chunks 1-47, resumes from chunk 48
+6. Continues with saved stats (1,240 concepts, 3,876 relationships)
+7. Completes chunks 48-125 normally
+8. Marks job "completed" with final stats
+```
+
+#### Alternative Approaches Considered
+
+**Option 1: Filesystem checkpoints**
+- Use existing `src/api/lib/checkpoint.py` (already implemented but unused)
+- Store chunks + progress in `.checkpoints/` directory
+- ❌ File management complexity
+- ❌ Orphaned files on incomplete cleanup
+- ✅ Could handle very large job_data if needed
+
+**Option 3: Stateless resume**
+- Re-chunk document on resume (deterministic)
+- Skip chunks by checking if concepts exist
+- ❌ Extra LLM calls to check existence
+- ❌ Non-deterministic if chunking algorithm changes
+- ✅ No storage overhead
+
+**Decision:** Use Option 2 (database) for simplicity. Can migrate to Option 1 if storage becomes an issue.
+
 ## Consequences
 
 ### Positive
