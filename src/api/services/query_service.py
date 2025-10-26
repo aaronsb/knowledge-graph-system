@@ -148,35 +148,32 @@ class QueryService:
 
         Query flow:
         1. Find all variable-length paths up to max_hops
-        2. Filter to only Concept-to-Concept paths (exclude metadata nodes)
-        3. Return the path itself (nodes and relationships as AGE vertex/edge objects)
-        4. Sort by length (shortest first)
-        5. Limit to 5 paths for performance
+        2. Return the path itself (nodes and relationships as AGE vertex/edge objects)
+        3. Sort by length (shortest first)
+        4. Limit to 10 paths for performance (filtered to 5 in Python)
 
-        Note: AGE doesn't support Neo4j's shortestPath() function, map projection,
-        or property access in list comprehensions. We return the path and extract
-        properties in Python.
+        Note: AGE doesn't support Neo4j's shortestPath(), all() predicate, or
+        advanced list comprehensions. We fetch paths and filter metadata nodes
+        (Source, Instance) in Python post-processing.
 
-        **Filtering Logic:**
-        The `all()` clause ensures all intermediate nodes are Concepts, excluding:
-        - Source nodes (document metadata)
-        - Instance nodes (evidence quotes)
-        This prevents paths like: Concept → Source → Concept (metadata traversal)
-        and only allows semantic relationships: Concept → Concept
+        **Metadata Filtering:**
+        Python code filters out paths containing non-Concept nodes:
+        - Source nodes (document metadata via APPEARS_IN)
+        - Instance nodes (evidence quotes via EVIDENCED_BY)
+        This ensures paths show only semantic relationships: Concept → Concept
 
         Args:
             max_hops: Maximum path length (1-10)
 
         Returns:
-            Cypher query string
+            Cypher query string (returns extra paths for post-filtering)
         """
         return f"""
             MATCH path = (from:Concept {{concept_id: $from_id}})-[*1..{max_hops}]-(to:Concept {{concept_id: $to_id}})
-            WHERE all(node IN nodes(path) WHERE 'Concept' IN labels(node))
             WITH path, length(path) as hops
             RETURN nodes(path) as path_nodes, relationships(path) as path_rels, hops
             ORDER BY hops ASC
-            LIMIT 5
+            LIMIT 10
         """
 
     @staticmethod

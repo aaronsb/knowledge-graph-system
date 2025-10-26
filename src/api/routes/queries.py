@@ -460,13 +460,27 @@ async def find_connection(request: FindConnectionRequest):
             # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
 
             nodes = []
+            has_metadata_node = False  # Flag to skip paths with Source/Instance nodes
+
             for node in record['path_nodes']:
                 if isinstance(node, dict):
                     props = node.get('properties', {})
+                    concept_id = props.get('concept_id', '')
+                    label = props.get('label', '')
+
+                    # Check if this is a metadata node (Source or Instance)
+                    # Metadata nodes lack concept_id and label properties
+                    if not concept_id or not label:
+                        has_metadata_node = True
+
                     nodes.append(PathNode(
-                        id=props.get('concept_id', ''),
-                        label=props.get('label', '')
+                        id=concept_id,
+                        label=label
                     ))
+
+            # Skip paths that go through Source or Instance nodes
+            if has_metadata_node:
+                continue
 
             # Relationship type is in the 'label' field of AGE edge object
             rel_types = []
@@ -480,6 +494,8 @@ async def find_connection(request: FindConnectionRequest):
                 hops=record['hops']
             ))
 
+        # Limit to 5 paths after filtering
+        paths = paths[:5]
 
         return FindConnectionResponse(
             from_id=request.from_id,
@@ -619,13 +635,27 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
             # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
 
             nodes = []
+            has_metadata_node = False  # Flag to skip paths with Source/Instance nodes
+
             for node in record['path_nodes']:
                 if isinstance(node, dict):
                     props = node.get('properties', {})
+                    concept_id = props.get('concept_id', '')
+                    label = props.get('label', '')
+
+                    # Check if this is a metadata node (Source or Instance)
+                    # Metadata nodes lack concept_id and label properties
+                    if not concept_id or not label:
+                        has_metadata_node = True
+
                     nodes.append(PathNode(
-                        id=props.get('concept_id', ''),
-                        label=props.get('label', '')
+                        id=concept_id,
+                        label=label
                     ))
+
+            # Skip paths that go through Source or Instance nodes
+            if has_metadata_node:
+                continue
 
             # Relationship type is in the 'label' field of AGE edge object
             rel_types = []
@@ -639,6 +669,8 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                 hops=record['hops']
             ))
 
+        # Limit to 5 paths after filtering
+        paths = paths[:5]
 
         return FindConnectionBySearchResponse(
             from_query=request.from_query,
