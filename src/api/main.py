@@ -30,6 +30,9 @@ from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .workers.ingestion_worker import run_ingestion_worker
 from .workers.restore_worker import run_restore_worker
 from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, embedding, extraction
+from .services.embedding_worker import get_embedding_worker
+from .lib.age_client import AGEClient
+from .lib.ai_providers import get_provider
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -166,6 +169,36 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️  API key validation failed: {e}")
         logger.info("   System will continue without validated keys")
+
+    # ADR-045: Initialize EmbeddingWorker and perform cold start if needed
+    try:
+        logger.info("🔧 Initializing EmbeddingWorker...")
+        age_client = AGEClient()
+        ai_provider = get_provider()
+
+        # Initialize singleton
+        embedding_worker = get_embedding_worker(age_client, ai_provider)
+
+        if embedding_worker:
+            # Perform cold start initialization for builtin vocabulary types
+            logger.info("🌡️  Checking builtin vocabulary embeddings (cold start)...")
+            cold_start_result = await embedding_worker.initialize_builtin_embeddings()
+
+            if cold_start_result.target_count > 0:
+                logger.info(
+                    f"✅ Cold start complete: {cold_start_result.processed_count}/{cold_start_result.target_count} "
+                    f"builtin types initialized in {cold_start_result.duration_ms}ms"
+                )
+                if cold_start_result.failed_count > 0:
+                    logger.warning(f"⚠️  {cold_start_result.failed_count} types failed during cold start")
+            else:
+                logger.info("✓  Builtin vocabulary embeddings already initialized")
+        else:
+            logger.warning("⚠️  EmbeddingWorker initialization failed - embedding features may be limited")
+
+    except Exception as e:
+        logger.warning(f"⚠️  EmbeddingWorker initialization failed: {e}")
+        logger.info("   System will continue without embedding worker (manual initialization may be needed)")
 
     logger.info("🎉 API ready!")
     logger.info(f"📚 Docs: http://localhost:8000/docs")

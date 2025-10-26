@@ -1730,7 +1730,7 @@ class AGEClient:
         finally:
             self.pool.putconn(conn)
 
-    async def execute_query(self, query: str) -> List[Dict]:
+    async def execute_query(self, query: str, params: tuple = None) -> List[Dict]:
         """
         Execute a raw PostgreSQL query and return results as list of dicts.
 
@@ -1738,14 +1738,22 @@ class AGEClient:
         to query statistics tables directly with SQL (not Cypher).
 
         Args:
-            query: Raw PostgreSQL query string
+            query: Raw PostgreSQL query string (use %s for parameters)
+            params: Optional tuple of parameters for query placeholders
 
         Returns:
             List of row dictionaries
 
         Example:
+            >>> # Simple query
             >>> results = await client.execute_query(
             ...     "SELECT * FROM kg_api.relationship_vocabulary LIMIT 5"
+            ... )
+            >>>
+            >>> # Parameterized query
+            >>> results = await client.execute_query(
+            ...     "SELECT * FROM kg_api.relationship_vocabulary WHERE relationship_type = %s",
+            ...     ("IMPLIES",)
             ... )
             >>> for row in results:
             ...     print(row['relationship_type'])
@@ -1753,10 +1761,19 @@ class AGEClient:
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                cur.execute(query)
-                results = cur.fetchall()
-                # Convert RealDictRow to regular dict
-                return [dict(row) for row in results]
+                if params:
+                    cur.execute(query, params)
+                else:
+                    cur.execute(query)
+
+                # Check if query returns results (SELECT, RETURNING) or not (INSERT, UPDATE without RETURNING)
+                if cur.description is not None:
+                    results = cur.fetchall()
+                    # Convert RealDictRow to regular dict
+                    return [dict(row) for row in results]
+                else:
+                    # Query doesn't return results (INSERT, UPDATE, DELETE without RETURNING)
+                    return []
         finally:
             conn.commit()
             self.pool.putconn(conn)
