@@ -11,6 +11,8 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { createClientFromEnv } from './api/client.js';
 import {
@@ -29,9 +31,22 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      prompts: {},
     },
   }
 );
+
+/**
+ * Knowledge Graph Server - Exploration Guide
+ *
+ * This system transforms documents into semantic concept graphs. Explore by:
+ * 1. search_concepts - Find entry points (returns grounding + evidence samples)
+ * 2. get_concept_details - See ALL evidence (even contradicted concepts are valuable!)
+ * 3. find_connection_by_search - Trace problem→solution paths, discover narratives
+ * 4. find_related_concepts - Explore neighborhoods and clusters
+ *
+ * Grounding strength (-1.0 to 1.0) shows concept reliability. Negative = contradicted/problem.
+ */
 
 // Get API client instance
 const client = createClientFromEnv();
@@ -50,15 +65,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // ========== Search & Query Tools ==========
       {
         name: 'search_concepts',
-        description: `Search for concepts using semantic similarity. This is your ENTRY POINT into the knowledge graph.
-
-WORKFLOW PATTERN:
-1. Use this to find initial concepts (returns grounding strength + evidence samples)
-2. Then explore deeper with get_concept_details (see all evidence, even if contradicted)
-3. Discover connections with find_connection_by_search (find paths between concepts)
-4. Explore neighborhoods with find_related_concepts (graph traversal)
-
-Best practices: Use 2-3 word descriptive phrases (e.g., "linear thinking patterns"). Results include grounding strength (reliability score) and sample evidence quotes. Lower threshold (0.5-0.6) for broader exploration.`,
+        description: `Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: get_concept_details (all evidence), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -87,15 +94,7 @@ Best practices: Use 2-3 word descriptive phrases (e.g., "linear thinking pattern
       },
       {
         name: 'get_concept_details',
-        description: `Retrieve ALL evidence and relationships for a concept. Use this to see the complete picture - ALL quoted text from source documents, source paragraphs, and semantic relationships.
-
-WHY USE THIS:
-- See ALL evidence instances (not just samples from search results)
-- Get exact quotes and source locations (document + paragraph numbers)
-- Understand relationships to other concepts (SUPPORTS, CONTRADICTS, ENABLES, etc.)
-- IMPORTANT: Contradicted concepts (negative grounding) are VALUABLE - they show what the document presents as problems or outdated approaches
-
-Returns: Full evidence list (even if contradicted), grounding strength, relationships with confidence scores.`,
+        description: `Retrieve ALL evidence (quoted text) and relationships for a concept. Use to see the complete picture: ALL quotes, source locations, SUPPORTS/CONTRADICTS relationships. Contradicted concepts (negative grounding) are VALUABLE - show problems/outdated approaches.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -114,15 +113,7 @@ Returns: Full evidence list (even if contradicted), grounding strength, relation
       },
       {
         name: 'find_related_concepts',
-        description: `Explore the concept neighborhood through graph traversal. Discovers what concepts are connected and how (SUPPORTS, CONTRADICTS, ENABLES, etc.).
-
-USE THIS TO:
-- Explore "what's near this concept?" (breadth-first search)
-- Discover concept clusters and themes
-- Find supporting/contradicting evidence chains
-- Map the local knowledge structure
-
-Returns concepts grouped by distance (hops) with relationship paths. Use depth=1-2 for immediate neighbors, 3-4 for broader exploration.`,
+        description: `Explore concept neighborhood. Discovers what's connected and how (SUPPORTS, CONTRADICTS, ENABLES). Returns concepts grouped by distance. Use depth=1-2 for neighbors, 3-4 for broader exploration.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -169,15 +160,7 @@ Returns concepts grouped by distance (hops) with relationship paths. Use depth=1
       },
       {
         name: 'find_connection_by_search',
-        description: `Discover HOW concepts connect through semantic paths. This is powerful for understanding relationships and narratives.
-
-WHEN TO USE:
-- "How does X relate to Y?" - Find conceptual bridges
-- Trace problem → solution chains (e.g., "configuration issues" → "proposed solution")
-- Discover intermediate concepts that connect ideas
-- See grounding strength along paths (which steps are well-supported vs contradicted)
-
-Returns: Up to 5 shortest paths with grounding + evidence at each step. Shows the NARRATIVE flow through the knowledge graph. Use 2-3 word phrases (e.g., "licensing issues", "AGE benefits").`,
+        description: `Discover HOW concepts connect. Find paths between ideas, trace problem→solution chains, see grounding+evidence at each step. Returns narrative flow through the graph. Use 2-3 word phrases (e.g., "licensing issues", "AGE benefits").`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -457,6 +440,81 @@ function segmentPath(path: any): any {
     segments,
   };
 }
+
+/**
+ * Prompt Handlers - Provide exploration guidance
+ */
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: [
+      {
+        name: 'explore-graph',
+        description: 'Learn how to explore the knowledge graph effectively',
+      },
+    ],
+  };
+});
+
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name } = request.params;
+
+  if (name === 'explore-graph') {
+    return {
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `How should I explore this knowledge graph?`,
+          },
+        },
+        {
+          role: 'assistant',
+          content: {
+            type: 'text',
+            text: `# Knowledge Graph Exploration Guide
+
+This system transforms documents into semantic concept graphs with grounding strength (reliability scores) and evidence (quoted text).
+
+## Exploration Workflow:
+
+1. **search_concepts** - Your entry point. Find concepts by semantic similarity.
+   - Returns: Grounding strength + sample evidence
+   - Use 2-3 word phrases (e.g., "configuration management", "licensing issues")
+
+2. **get_concept_details** - See the complete picture for any concept.
+   - Returns: ALL quoted evidence + relationships
+   - IMPORTANT: Contradicted concepts (negative grounding) are VALUABLE - they show problems/outdated approaches
+
+3. **find_connection_by_search** - Discover HOW concepts connect.
+   - Trace problem→solution chains
+   - See grounding + evidence at each step in the path
+   - Reveals narrative flow through ideas
+
+4. **find_related_concepts** - Explore neighborhoods.
+   - Find what's nearby in the concept graph
+   - Discover clusters and themes
+   - Use depth=1-2 for neighbors, 3-4 for broader exploration
+
+## Grounding Strength (-1.0 to 1.0):
+- **Positive (>0.7)**: Well-supported, reliable concept
+- **Moderate (0.3-0.7)**: Mixed evidence, use with caution
+- **Negative (<0)**: Contradicted or presented as a problem
+- **Contradicted (-1.0)**: Often the most interesting - shows pain points!
+
+## Pro Tips:
+- Don't just search - explore connections and evidence
+- Contradicted concepts reveal problems that need solutions
+- Use retrieval hints in responses to dig deeper
+- Follow relationship chains (SUPPORTS, CONTRADICTS, ENABLES)`,
+          },
+        },
+      ],
+    };
+  }
+
+  throw new Error(`Unknown prompt: ${name}`);
+});
 
 /**
  * Tool Call Handler
