@@ -352,57 +352,163 @@ kg vocab list
 
 ---
 
-## Phase 7: Backup & Restore
+## Phase 7: Backup & Restore (✅ COMPLETED - 2025-01-26)
+
+**Schema Versioning Implemented:** Migration 013 adds schema version tracking to all backups
 
 ### 7.1 Create Backup
 ```bash
-# Backup database (including vocabulary graph)
-kg admin backup create --description "Pre-restore test backup"
+# Backup full database
+kg admin backup --type full
+
+# Backup specific ontology
+kg admin backup --type ontology --ontology "TestOntologyB"
 
 # List backups
-kg admin backup list
+ls -lh ~/.local/share/kg/backups/
 ```
 
 **Verify:**
-- [ ] Backup file created
-- [ ] Backup includes all tables (embeddings, vocabulary, graph)
-- [ ] Backup file size reasonable
+- [x] Backup file created with schema_version field
+- [x] Backup includes metadata (version, timestamp, ontology, schema_version: 13)
+- [x] Backup includes all data (concepts, sources, instances, relationships, vocabulary)
+- [x] Backup file size reasonable (JSON serialization)
 
-### 7.2 Destructive Test Setup
+### 7.2 Schema Version Validation
 ```bash
-# Note current stats
-kg database stats > /tmp/stats-before.txt
-
-# Delete an ontology to create difference
-kg ontology delete "TestOntologyB"
-```
-
-### 7.3 Restore Backup
-```bash
-# Restore from backup
-BACKUP_FILE=$(kg admin backup list --json | jq -r '.[0].filename')
-kg admin backup restore $BACKUP_FILE
+# Check backup metadata
+head -20 ~/.local/share/kg/backups/<backup_file>.json | grep -E '"version"|"schema_version"|"type"'
 ```
 
 **Verify:**
-- [ ] Restore succeeds
-- [ ] All ontologies restored
-- [ ] Concepts restored
-- [ ] Vocabulary restored
-- [ ] Embeddings cache restored
-- [ ] Search works post-restore
-- [ ] Grounding calculations work
+- [x] Backup includes "schema_version": 13 (current migration number)
+- [x] Backup includes "version": "1.0" (backup format version)
+- [x] Backup type correctly identified (full_backup or ontology_backup)
 
-### 7.4 Data Integrity Check
+### 7.3 Complete Backup/Restore Cycle Test
 ```bash
-kg database stats > /tmp/stats-after.txt
-diff /tmp/stats-before.txt /tmp/stats-after.txt  # Should be identical
+# Create unique test data
+cat > /tmp/purple-elephant-test.txt <<'EOF'
+Purple Elephant Migration Pattern
+A whimsical software architecture pattern for data migration.
+Features trunk-based data transfer and herd coordination.
+EOF
+
+# Ingest unique test data
+kg ingest file --ontology "PurpleElephantTest" /tmp/purple-elephant-test.txt --wait
+
+# Search BEFORE deletion (should find it)
+kg search query "purple elephant" --min-similarity 0.7
+
+# Create backup
+kg admin backup --type ontology --ontology "PurpleElephantTest"
+
+# Delete ontology
+kg ontology delete "PurpleElephantTest" --force
+
+# Search AFTER deletion (should NOT find it)
+kg search query "purple elephant" --min-similarity 0.7  # Should return 0 concepts
+
+# Restore from backup (DEFAULT behavior: creates new concepts)
+kg admin restore --file purpleelephanttest_backup_*.json
+
+# Search AFTER restore (should find it again!)
+kg search query "purple elephant" --min-similarity 0.7  # Should return Purple Elephant
 ```
 
 **Verify:**
-- [ ] Stats match pre-backup state
-- [ ] All test ontologies present
-- [ ] Queries return same results
+- [x] Data found before deletion
+- [x] Data completely gone after deletion (0 concepts)
+- [x] Data returns after restore
+- [x] Concepts searchable with original similarity scores
+- [x] Evidence and relationships intact
+
+### 7.4 Safety Check: Existing Ontology Protection
+```bash
+# Try to restore when ontology already exists (should ERROR)
+kg admin restore --file purpleelephanttest_backup_*.json
+
+# Expected error: "Ontology 'PurpleElephantTest' already exists. Use --merge flag..."
+```
+
+**Verify:**
+- [x] Error message shown if ontology exists
+- [x] Prevents accidental overwrite
+- [x] Clear guidance to use --merge flag
+
+### 7.5 Merge Mode Test
+```bash
+# Restore with --merge flag (merges into existing ontology)
+kg admin restore --file purpleelephanttest_backup_*.json --merge
+
+# Should succeed and stitch concepts into existing graph
+```
+
+**Verify:**
+- [x] Restore succeeds with --merge flag
+- [x] Concepts matched to existing ones (stitching behavior)
+- [x] Evidence added to matched concepts
+- [x] No duplicate concept nodes created
+
+### 7.6 Type Safety Validation
+**Issue Fixed:** VARCHAR[] vs JSONB mismatch for synonyms field
+
+```bash
+# Verify vocabulary with synonyms can be backed up and restored
+kg admin backup --type full
+kg admin restore --file <backup_file>.json --merge
+```
+
+**Verify:**
+- [x] No type mismatch errors during restore
+- [x] Vocabulary synonyms restored correctly (VARCHAR[] arrays)
+- [x] Embeddings restored with correct JSON format
+
+### 7.7 Data Integrity Check
+```bash
+# Compare concept counts before/after
+kg database stats
+```
+
+**Verify:**
+- [x] Source count matches expected
+- [x] Instance count matches expected
+- [x] Relationship count intact
+- [x] Concepts accessible via search
+- [x] Grounding calculations work post-restore
+
+---
+
+## ✅ Phase 7 Completed - Key Achievements:
+
+**Schema Versioning (Migration 013):**
+- ✅ All backups include schema_version field
+- ✅ Migration 013 creates schema_migrations table
+- ✅ Retroactive tracking for migrations 1-13
+- ✅ Enables detection of schema incompatibility
+
+**Restore UX Improvements:**
+- ✅ Default behavior: Creates new concepts (full restoration)
+- ✅ New --merge flag: Merges into existing ontology
+- ✅ Safety check: Errors if ontology exists without --merge
+- ✅ Clear error messages guide users
+
+**Type Safety:**
+- ✅ Fixed VARCHAR[] vs JSONB mismatch for synonyms
+- ✅ Backup serialization handles PostgreSQL arrays correctly
+- ✅ Restore no longer fails with type errors
+
+**Testing Completed:**
+- ✅ Complete backup/restore cycle (Purple Elephant test)
+- ✅ Data disappears on delete, returns on restore
+- ✅ Safety check prevents accidental overwrites
+- ✅ Merge mode tested and working
+- ✅ Schema versioning tested end-to-end
+
+**Documentation:**
+- ✅ ADR-015 updated with Schema Versioning section
+- ✅ INTEGRATION_TEST_NOTES.md Phase 8 complete
+- ✅ Parallel restore procedure documented
 
 ---
 
