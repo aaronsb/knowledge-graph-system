@@ -504,38 +504,58 @@ async def generate_embeddings(request: GenerateEmbeddingsRequest):
         }
     """
     try:
-        client = AGEClient()
-        provider = get_provider()
+        from src.api.services.embedding_worker import get_embedding_worker
+        from src.api.lib.age_client import AGEClient
+        from src.api.lib.ai_providers import get_provider
 
-        try:
-            # Generate embeddings using AGEClient method
-            results = client.generate_vocabulary_embeddings(
-                ai_provider=provider,
-                force_regenerate=request.force_regenerate,
-                only_missing=request.only_missing
+        # Get embedding worker instance
+        embedding_worker = get_embedding_worker(
+            db_client=AGEClient(),
+            ai_provider=get_provider()
+        )
+
+        if embedding_worker is None:
+            raise HTTPException(
+                status_code=500,
+                detail="EmbeddingWorker not initialized"
             )
 
-            # Construct success message
-            if request.force_regenerate:
-                mode = "ALL vocabulary types (force regenerate)"
-            elif request.only_missing:
-                mode = "vocabulary types WITHOUT embeddings"
-            else:
-                mode = "active vocabulary types"
-
-            message = f"Generated embeddings for {mode}: {results['generated']} generated, {results['skipped']} skipped, {results['failed']} failed"
-
-            return GenerateEmbeddingsResponse(
-                success=results['failed'] == 0,
-                generated=results['generated'],
-                skipped=results['skipped'],
-                failed=results['failed'],
-                message=message
+        # Use unified EmbeddingWorker
+        # Note: We use regenerate_all_embeddings() instead of initialize_builtin_embeddings()
+        # because initialize_builtin_embeddings() checks cold start status and skips if already done.
+        # The user explicitly requested to generate embeddings, so we should do it.
+        if request.force_regenerate:
+            # Force regenerate ALL embeddings (including those that already exist)
+            result = await embedding_worker.regenerate_all_embeddings(
+                only_missing=False,
+                only_stale=False
             )
+            mode = "ALL vocabulary types (force regenerate)"
+        else:
+            # Default: only generate missing embeddings (no cold start check)
+            result = await embedding_worker.regenerate_all_embeddings(
+                only_missing=True,
+                only_stale=False
+            )
+            mode = "vocabulary types WITHOUT embeddings"
 
-        finally:
-            client.close()
+        generated = result.processed_count
+        failed = result.failed_count
+        # Calculate skipped from target, processed, and failed
+        skipped = result.target_count - result.processed_count - result.failed_count
 
+        message = f"Generated embeddings for {mode}: {generated} generated, {skipped} skipped, {failed} failed"
+
+        return GenerateEmbeddingsResponse(
+            success=failed == 0,
+            generated=generated,
+            skipped=skipped,
+            failed=failed,
+            message=message
+        )
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to generate embeddings: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to generate embeddings: {str(e)}")

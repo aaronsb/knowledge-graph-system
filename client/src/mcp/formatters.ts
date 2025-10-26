@@ -180,7 +180,7 @@ export function formatConnectionPaths(result: FindConnectionBySearchResponse): s
     output += '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
   });
 
-  output += '\n--- Grounding Strength (ADR-044) ---\n';
+  output += '\n--- Grounding Strength ---\n';
   output += 'Interpretation: Higher grounding (>0.7) indicates well-supported concepts.\n';
   output += 'Negative grounding suggests the document presents this as a problem or outdated approach.\n';
 

@@ -296,7 +296,14 @@ export const vocabularyCommand = new Command('vocabulary')
           console.log(colors.ui.title('🔄 Generating Vocabulary Embeddings'));
           console.log(separator());
           console.log(`\n  ${colors.ui.key('Mode:')} ${modeDescription}`);
-          console.log('\n' + colors.status.dim('  Generating embeddings via OpenAI API...'));
+
+          // Fetch active embedding config to show correct provider
+          const embeddingConfig = await client.getEmbeddingConfig();
+          const providerName = embeddingConfig.provider === 'openai' ? 'OpenAI' :
+                               embeddingConfig.provider === 'local' ? 'local embeddings' :
+                               embeddingConfig.provider;
+          const modelInfo = embeddingConfig.model ? ` (${embeddingConfig.model})` : '';
+          console.log('\n' + colors.status.dim(`  Generating embeddings via ${providerName}${modelInfo}...`));
 
           const result = await client.generateVocabularyEmbeddings(
             forceRegenerate,
