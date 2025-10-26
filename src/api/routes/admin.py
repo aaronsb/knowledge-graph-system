@@ -273,6 +273,39 @@ async def restore_backup(
             f"Relationships: {stats.get('relationships', 0)}"
         )
 
+        # Safety check: If ontology backup and target ontology exists, require --merge flag
+        with open(temp_path, 'r') as f:
+            import json
+            backup_data = json.load(f)
+            backup_type = backup_data.get("type", "")
+            backup_ontology = backup_data.get("ontology")
+
+            if backup_type == "ontology_backup" and backup_ontology and overwrite:
+                # Safety check: If ontology exists and user didn't specify --merge, error
+                try:
+                    # Use ontology list API to check existence
+                    from src.api.routes.ontology import list_ontologies
+
+                    ontologies_result = await list_ontologies()
+
+                    existing_ontologies = [ont.ontology for ont in ontologies_result.ontologies]
+                    logger.info(f"Existing ontologies: {existing_ontologies}")
+
+                    if backup_ontology in existing_ontologies:
+                        # Ontology exists - require --merge flag
+                        temp_path.unlink()
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail=f"Ontology '{backup_ontology}' already exists. Use --merge flag to merge into existing ontology, or delete the existing ontology first."
+                        )
+                except HTTPException:
+                    # Re-raise HTTP exceptions (like 409)
+                    raise
+                except Exception as e:
+                    logger.error(f"Error checking ontology existence: {e}", exc_info=True)
+                    # Don't fail restore if ontology check fails - just proceed
+                    logger.warning(f"Proceeding with restore despite ontology check failure")
+
         # Queue restore job
         job_queue = get_job_queue()
         if job_queue is None:

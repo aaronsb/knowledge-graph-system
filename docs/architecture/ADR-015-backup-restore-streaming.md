@@ -660,3 +660,215 @@ kg config set backup_dir /path/to/backups
 ```
 
 This ADR formalizes using that configured directory as the authoritative backup location.
+
+## Schema Versioning & Evolution Strategy
+
+**Status:** Accepted  
+**Date Added:** 2025-10-26  
+**Problem Discovered:** Integration testing revealed backup/restore fails when schema changes between backup creation and restore
+
+### Problem Statement
+
+When database schema evolves (e.g., `synonyms` column changed from `jsonb` to `varchar[]`), restoring old backups fails with type mismatch errors:
+
+```
+column "synonyms" is of type character varying[] but expression is of type jsonb
+```
+
+This breaks the backup/restore contract: backups should remain restorable even as the system evolves.
+
+### Decision: Schema-Versioned Backups
+
+Add `schema_version` to backup format based on last applied migration:
+
+```json
+{
+  "version": "1.0",
+  "schema_version": 12,  // ← Last migration number (012_add_embedding_worker_support.sql)
+  "type": "full_backup",
+  "timestamp": "2025-10-26T21:15:24Z",
+  ...
+}
+```
+
+**Migration Numbering:**
+- Schema version = migration file number (001, 002, ..., 012)
+- Backups include the schema they were created with
+- Restore checks compatibility and provides migration path
+
+### Restore Compatibility Strategy
+
+#### Case 1: Exact Match (schema_version == current)
+```
+Backup: schema_version=12
+Database: current migration=012
+→ Direct restore ✅
+```
+
+#### Case 2: Newer Database (schema_version < current)
+```
+Backup: schema_version=10
+Database: current migration=012
+→ Two options:
+   A) Apply type conversions during restore (if supported)
+   B) Restore to parallel instance at v10, migrate to v12, re-backup
+```
+
+#### Case 3: Older Database (schema_version > current)
+```
+Backup: schema_version=12
+Database: current migration=010
+→ Error: "Backup requires schema v12, database is v10. Apply migrations first."
+```
+
+### Type Conversion Layer
+
+For common schema changes, restore can auto-convert:
+
+```python
+# Example: synonyms field evolution
+# Migration 008: synonyms was JSONB
+# Migration 012: synonyms is VARCHAR[]
+
+if backup_schema_version <= 8 and current_schema >= 12:
+    # Convert JSONB null to VARCHAR[] NULL
+    if synonyms_value is None or synonyms_value == 'null':
+        synonyms_value = None  # PostgreSQL NULL
+    elif isinstance(synonyms_value, list):
+        synonyms_value = synonyms_value  # Already array format
+```
+
+Supported conversions tracked in `schema/MIGRATION_COMPATIBILITY.md`
+
+### Parallel Restore Procedure (For Major Schema Gaps)
+
+When backup schema is significantly older than current (>5 migrations):
+
+1. **Clone system at backup schema version:**
+   ```bash
+   # Check out git tag matching backup schema
+   git clone https://github.com/org/knowledge-graph-system backup-restore-temp
+   cd backup-restore-temp
+   git checkout schema-v10  # Tag for migration 010
+   
+   # Start temporary instance
+   docker-compose up -d
+   scripts/start-api.sh
+   ```
+
+2. **Restore backup to old version:**
+   ```bash
+   kg admin restore --file old_backup_schema_v10.json
+   ```
+
+3. **Apply migrations to evolve schema:**
+   ```bash
+   scripts/migrate-db.sh  # Applies 011, 012, ... to current
+   ```
+
+4. **Create new backup at current schema:**
+   ```bash
+   kg admin backup --type full
+   # Produces: full_backup_20251026_schema_v12.json
+   ```
+
+5. **Restore to production:**
+   ```bash
+   # In production system
+   kg admin restore --file full_backup_20251026_schema_v12.json
+   ```
+
+6. **Cleanup temporary instance:**
+   ```bash
+   docker-compose down -v
+   ```
+
+### Implementation Requirements
+
+1. **Backup Export (serialization.py):**
+   ```python
+   def get_current_schema_version() -> int:
+       """Get last applied migration number from database"""
+       # Query kg_api.schema_migrations table
+       # Return max(version) or parse schema/migrations/*.sql
+   
+   def export_full_backup(client: AGEClient) -> Dict:
+       return {
+           "version": "1.0",
+           "schema_version": get_current_schema_version(),  # ← Added
+           "type": "full_backup",
+           ...
+       }
+   ```
+
+2. **Backup Restore (restore_worker.py):**
+   ```python
+   def check_schema_compatibility(backup: Dict) -> tuple[bool, str]:
+       """Check if backup can be restored to current schema"""
+       backup_schema = backup.get("schema_version")
+       current_schema = get_current_schema_version()
+       
+       if backup_schema == current_schema:
+           return True, "Exact match"
+       elif backup_schema < current_schema:
+           # Check if auto-conversion supported
+           if has_conversion_path(backup_schema, current_schema):
+               return True, f"Auto-converting from v{backup_schema} to v{current_schema}"
+           else:
+               return False, f"Use parallel restore procedure (backup=v{backup_schema}, current=v{current_schema})"
+       else:
+           return False, f"Backup requires schema v{backup_schema}, database is v{current_schema}. Apply migrations first."
+   ```
+
+3. **Schema Migration Tracking:**
+   ```sql
+   -- Add to next migration
+   CREATE TABLE IF NOT EXISTS kg_api.schema_migrations (
+       version INTEGER PRIMARY KEY,
+       applied_at TIMESTAMP DEFAULT NOW(),
+       description TEXT
+   );
+   
+   INSERT INTO kg_api.schema_migrations (version, description)
+   VALUES (13, 'Add schema versioning to backups');
+   ```
+
+### Benefits
+
+1. **Safe Evolution:** Schema can evolve without breaking old backups
+2. **Clear Error Messages:** Users know exactly why restore failed
+3. **Migration Path:** Documented procedure for old backups
+4. **Compatibility Matrix:** Track which versions can auto-convert
+5. **Git-Tagged Versions:** Each schema version has a git tag for parallel restore
+
+### Consequences
+
+**Positive:**
+- ✅ Backups remain valid across schema evolution
+- ✅ Clear restore procedures for all scenarios
+- ✅ Automatic conversion for simple changes
+- ✅ Parallel restore for complex migrations
+
+**Negative:**
+- ⚠️ Requires maintaining conversion logic for schema changes
+- ⚠️ Parallel restore is manual and time-consuming
+- ⚠️ Must tag git releases with schema versions
+
+**Neutral:**
+- Schema evolution must document conversion requirements
+- Major schema changes should be infrequent
+
+### Next Steps
+
+1. Create `src/api/lib/serialization.py` with schema_version support
+2. Add `schema_migrations` table in next migration
+3. Document type conversions in `schema/MIGRATION_COMPATIBILITY.md`
+4. Tag current release as `schema-v12`
+5. Test backup/restore across schema versions
+
+### Related Issues
+
+- **Current Bug:** Restoring backups fails due to `synonyms` type mismatch (JSONB → VARCHAR[])
+- **Integration Testing:** Discovered during Phase 8 (Backup & Restore) testing
+- **Workaround:** Must use database at same schema version to restore old backups
+

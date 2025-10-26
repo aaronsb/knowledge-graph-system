@@ -757,7 +757,7 @@ const restoreCommand = new Command('restore')
   .description('Restore a database backup (requires authentication)')
   .option('--file <name>', 'Backup filename (from configured directory)')
   .option('--path <path>', 'Custom backup file path (overrides configured directory)')
-  .option('--overwrite', 'Overwrite existing data', false)
+  .option('--merge', 'Merge into existing ontology if it exists (default: error if ontology exists)', false)
   .option('--deps <action>', 'How to handle external dependencies: prune, stitch, defer', 'prune')
   .action(async (options) => {
     try {
@@ -871,7 +871,7 @@ const restoreCommand = new Command('restore')
           backupFilePath,
           username,
           password,
-          options.overwrite,
+          !options.merge,  // Invert: merge=false means overwrite=true (create new concepts)
           options.deps,
           (uploaded: number, total: number, percent: number) => {
             const uploadedMB = (uploaded / (1024 * 1024)).toFixed(2);
