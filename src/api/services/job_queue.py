@@ -738,8 +738,8 @@ class PostgreSQLJobQueue(JobQueue):
                         # Map 'error' to 'error_message' column
                         set_clauses.append("error_message = %s")
                         params.append(value)
-                    elif key in ['progress', 'result', 'analysis']:
-                        # JSONB fields
+                    elif key in ['progress', 'result', 'analysis', 'job_data']:
+                        # JSONB fields (added job_data for checkpoint support)
                         set_clauses.append(f"{key} = %s::jsonb")
                         params.append(json.dumps(value) if value else None)
                     elif key in ['status', 'processing_mode', 'approved_by']:

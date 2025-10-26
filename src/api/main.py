@@ -146,17 +146,26 @@ async def startup_event():
     logger.info("✅ Workers registered: ingestion, restore")
 
     # Resume interrupted jobs (jobs that were processing when server stopped)
+    # Note: SQLite queue uses "processing", PostgreSQL queue uses "running"
     try:
+        # Check both "processing" (SQLite) and "running" (PostgreSQL) statuses
         processing_jobs = queue.list_jobs(status="processing", limit=500)
-        approved_jobs = queue.list_jobs(status="approved", limit=500)
+        running_jobs = queue.list_jobs(status="running", limit=500)
+        interrupted_jobs = processing_jobs + running_jobs
 
         resumed_count = 0
-        for job in processing_jobs:
+        for job in interrupted_jobs:
             job_id = job["job_id"]
-            chunks_total = job.get("progress", {}).get("chunks_total", 0)
-            chunks_processed = job.get("progress", {}).get("resume_from_chunk", 0)
+            progress = job.get("progress") or {}  # Handle NULL progress
+            chunks_total = progress.get("chunks_total", 0)
+            chunks_processed = progress.get("resume_from_chunk", 0)
 
-            if chunks_processed < chunks_total:
+            if chunks_total == 0:
+                # Job was interrupted before processing started - reset to approved to start fresh
+                queue.update_job(job_id, {"status": "approved"})
+                logger.info(f"🔄 Queued interrupted job (never started): {job_id}")
+                resumed_count += 1
+            elif chunks_processed < chunks_total:
                 # Job was interrupted mid-processing - reset to approved for resume
                 queue.update_job(job_id, {"status": "approved"})
                 logger.info(f"🔄 Queued interrupted job for resume: {job_id} (chunk {chunks_processed + 1}/{chunks_total})")
