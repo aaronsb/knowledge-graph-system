@@ -13,6 +13,12 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { createClientFromEnv } from './api/client.js';
+import {
+  formatSearchResults,
+  formatConceptDetails,
+  formatConnectionPaths,
+  formatRelatedConcepts,
+} from './mcp/formatters.js';
 
 // Create server instance
 const server = new Server(
@@ -44,7 +50,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // ========== Search & Query Tools ==========
       {
         name: 'search_concepts',
-        description: 'Search for concepts using semantic similarity with vector embeddings. Uses 2-3 word descriptive phrases for best results. Returns concepts ranked by similarity score with smart threshold hints. Supports pagination with offset parameter.',
+        description: `Search for concepts using semantic similarity. This is your ENTRY POINT into the knowledge graph.
+
+WORKFLOW PATTERN:
+1. Use this to find initial concepts (returns grounding strength + evidence samples)
+2. Then explore deeper with get_concept_details (see all evidence, even if contradicted)
+3. Discover connections with find_connection_by_search (find paths between concepts)
+4. Explore neighborhoods with find_related_concepts (graph traversal)
+
+Best practices: Use 2-3 word descriptive phrases (e.g., "linear thinking patterns"). Results include grounding strength (reliability score) and sample evidence quotes. Lower threshold (0.5-0.6) for broader exploration.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -73,7 +87,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'get_concept_details',
-        description: 'Get detailed information about a specific concept including evidence instances (quoted text from documents), source references, and semantic relationships to other concepts. Includes grounding_strength (ADR-044) by default - a probabilistic truth score (0.0-1.0) measuring support vs contradiction based on incoming relationship semantics. Higher grounding = more reliable concept.',
+        description: `Retrieve ALL evidence and relationships for a concept. Use this to see the complete picture - ALL quoted text from source documents, source paragraphs, and semantic relationships.
+
+WHY USE THIS:
+- See ALL evidence instances (not just samples from search results)
+- Get exact quotes and source locations (document + paragraph numbers)
+- Understand relationships to other concepts (SUPPORTS, CONTRADICTS, ENABLES, etc.)
+- IMPORTANT: Contradicted concepts (negative grounding) are VALUABLE - they show what the document presents as problems or outdated approaches
+
+Returns: Full evidence list (even if contradicted), grounding strength, relationships with confidence scores.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -92,7 +114,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'find_related_concepts',
-        description: 'Find concepts related through graph traversal using breadth-first search. Explores outgoing relationships level by level and groups results by distance from starting concept.',
+        description: `Explore the concept neighborhood through graph traversal. Discovers what concepts are connected and how (SUPPORTS, CONTRADICTS, ENABLES, etc.).
+
+USE THIS TO:
+- Explore "what's near this concept?" (breadth-first search)
+- Discover concept clusters and themes
+- Find supporting/contradicting evidence chains
+- Map the local knowledge structure
+
+Returns concepts grouped by distance (hops) with relationship paths. Use depth=1-2 for immediate neighbors, 3-4 for broader exploration.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -139,7 +169,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'find_connection_by_search',
-        description: 'Find shortest paths between concepts using semantic phrase matching. Matches query phrases to concepts via vector embeddings, then finds paths. Use specific 2-3 word phrases (e.g., "licensing issues" not "licensing").',
+        description: `Discover HOW concepts connect through semantic paths. This is powerful for understanding relationships and narratives.
+
+WHEN TO USE:
+- "How does X relate to Y?" - Find conceptual bridges
+- Trace problem → solution chains (e.g., "configuration issues" → "proposed solution")
+- Discover intermediate concepts that connect ideas
+- See grounding strength along paths (which steps are well-supported vs contradicted)
+
+Returns: Up to 5 shortest paths with grounding + evidence at each step. Shows the NARRATIVE flow through the knowledge graph. Use 2-3 word phrases (e.g., "licensing issues", "AGE benefits").`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -445,22 +483,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           limit,
           min_similarity,
           offset,
+          include_grounding: true,  // Automatic grounding for AI agents
+          include_evidence: true,   // Include sample evidence quotes
         });
 
-        // Format response to match old server style with metadata
-        const formattedResult = {
-          query,
-          threshold: min_similarity,
-          limit,
-          offset,
-          resultsCount: result.count || 0,
-          concepts: result.results || [],
-          belowThreshold: result.below_threshold_count || 0,
-          suggestedThreshold: result.suggested_threshold,
-        };
+        const formattedText = formatSearchResults(result);
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(formattedResult, null, 2) }],
+          content: [{ type: 'text', text: formattedText }],
         };
       }
 
@@ -471,20 +501,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           includeGrounding
         );
 
-        // Add explanatory note about grounding if present (educate AI agents)
-        let responseText = JSON.stringify(result, null, 2);
-        if (result.grounding_strength !== undefined && result.grounding_strength !== null) {
-          const groundingNote = `\n\n--- Grounding Strength (ADR-044) ---\nScore: ${result.grounding_strength.toFixed(3)} (${(result.grounding_strength * 100).toFixed(0)}%)\nInterpretation: ${
-            result.grounding_strength >= 0.7 ? 'Strong - Well-supported by evidence' :
-            result.grounding_strength >= 0.3 ? 'Moderate - Mixed evidence, use with caution' :
-            result.grounding_strength >= 0 ? 'Weak - More contradictions than support' :
-            'Contradicted - Evidence suggests concept is incorrect or outdated'
-          }\nMeaning: Grounding measures probabilistic truth convergence based on SUPPORTS vs CONTRADICTS relationships.\nHigher values (>0.7) indicate reliable concepts. Lower values (<0.3) suggest historical/incorrect information.\n`;
-          responseText = JSON.stringify(result, null, 2) + groundingNote;
-        }
+        const formattedText = formatConceptDetails(result);
 
         return {
-          content: [{ type: 'text', text: responseText }],
+          content: [{ type: 'text', text: formattedText }],
         };
       }
 
@@ -494,8 +514,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           max_depth: toolArgs.max_depth as number || 2,
           relationship_types: toolArgs.relationship_types as string[] | undefined,
         });
+
+        const formattedText = formatRelatedConcepts(result);
+
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          content: [{ type: 'text', text: formattedText }],
         };
       }
 
@@ -522,15 +545,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           to_query: toolArgs.to_query as string,
           max_hops: toolArgs.max_hops as number || 5,
           threshold: toolArgs.threshold as number || 0.5,
+          include_grounding: true,  // Automatic grounding for AI agents
+          include_evidence: true,   // Include sample evidence quotes
         });
 
-        // Segment long paths for readability
-        if (result.paths && result.paths.length > 0) {
-          result.paths = result.paths.map(segmentPath);
-        }
+        const formattedText = formatConnectionPaths(result);
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          content: [{ type: 'text', text: formattedText }],
         };
       }
 

@@ -36,6 +36,7 @@ const queryCommand = new Command('query')
       .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0)', '0.7')
       .option('--show-evidence', 'Show sample evidence quotes from source text')
       .option('--no-grounding', 'Disable grounding strength calculation (faster)')
+      .option('--json', 'Output raw JSON instead of formatted text')
       .action(async (query, options) => {
         try {
           const client = createClientFromEnv();
@@ -49,6 +50,12 @@ const queryCommand = new Command('query')
             include_evidence: includeEvidence,
             include_grounding: includeGrounding
           });
+
+          // JSON output mode
+          if (options.json) {
+            console.log(JSON.stringify(result, null, 2));
+            return;
+          }
 
           console.log('\n' + separator());
           console.log(colors.ui.title(`🔍 Searching for: ${query}`));
@@ -101,11 +108,18 @@ const detailsCommand = new Command('details')
       .showHelpAfterError()
       .argument('<concept-id>', 'Concept ID to retrieve')
       .option('--no-grounding', 'Disable grounding strength calculation (faster)')
+      .option('--json', 'Output raw JSON instead of formatted text')
       .action(async (conceptId, options) => {
         try {
           const client = createClientFromEnv();
           const includeGrounding = options.grounding !== false; // Default: true
           const concept = await client.getConceptDetails(conceptId, includeGrounding);
+
+          // JSON output mode
+          if (options.json) {
+            console.log(JSON.stringify(concept, null, 2));
+            return;
+          }
 
           console.log('\n' + separator());
           console.log(colors.ui.title(`📊 Concept Details: ${concept.label}`));
@@ -151,6 +165,7 @@ const relatedCommand = new Command('related')
       .argument('<concept-id>', 'Starting concept ID')
       .option('-d, --depth <number>', 'Maximum traversal depth (1-5)', '2')
       .option('-t, --types <types...>', 'Filter by relationship types')
+      .option('--json', 'Output raw JSON instead of formatted text')
       .action(async (conceptId, options) => {
         try {
           const client = createClientFromEnv();
@@ -159,6 +174,12 @@ const relatedCommand = new Command('related')
             max_depth: parseInt(options.depth),
             relationship_types: options.types
           });
+
+          // JSON output mode
+          if (options.json) {
+            console.log(JSON.stringify(result, null, 2));
+            return;
+          }
 
           console.log('\n' + separator());
           console.log(colors.ui.title(`🔗 Related Concepts from: ${conceptId}`));
@@ -195,6 +216,7 @@ const connectCommand = new Command('connect')
       .option('--min-similarity <number>', 'Semantic similarity threshold for phrase matching (default 50% - lower for broader matches)', '0.5')
       .option('--show-evidence', 'Show sample evidence quotes for each concept in paths')
       .option('--no-grounding', 'Disable grounding strength calculation (faster)')
+      .option('--json', 'Output raw JSON instead of formatted text')
       .addHelpText('after', `
 Examples:
   $ kg search connect concept-id-123 concept-id-456
@@ -249,6 +271,12 @@ Notes:
             if (result.to_concept) {
               toLabel = `${result.to_concept.label} (matched: "${to}")`;
             }
+          }
+
+          // JSON output mode
+          if (options.json) {
+            console.log(JSON.stringify(result, null, 2));
+            return;
           }
 
           console.log('\n' + separator());
