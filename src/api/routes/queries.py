@@ -127,12 +127,42 @@ async def search_concepts(request: SearchRequest):
                 )
                 evidence_count = evidence_query['evidence_count'] if evidence_query else 0
 
+                # Calculate grounding strength if requested (default: true)
+                grounding_strength = None
+                if request.include_grounding:
+                    try:
+                        grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+                # Fetch sample evidence instances if requested
+                sample_evidence = None
+                if request.include_evidence:
+                    evidence_instances_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                        f"ORDER BY s.document, s.paragraph "
+                        f"LIMIT 3"  # Sample first 3 instances
+                    )
+                    if evidence_instances_query:
+                        sample_evidence = [
+                            ConceptInstance(
+                                quote=e['quote'],
+                                document=e['document'],
+                                paragraph=e['paragraph'],
+                                source_id=e['source_id']
+                            )
+                            for e in evidence_instances_query
+                        ]
+
                 results.append(ConceptSearchResult(
                     concept_id=concept_id,
                     label=match['label'],
                     score=match['similarity'],
                     documents=documents,
-                    evidence_count=evidence_count
+                    evidence_count=evidence_count,
+                    grounding_strength=grounding_strength,
+                    sample_evidence=sample_evidence
                 ))
 
             # If few results found, check for additional concepts below threshold
@@ -176,12 +206,42 @@ async def search_concepts(request: SearchRequest):
                     )
                     top_evidence_count = top_evidence_query['evidence_count'] if top_evidence_query else 0
 
+                    # Calculate grounding for top match if requested
+                    top_grounding = None
+                    if request.include_grounding:
+                        try:
+                            top_grounding = client.calculate_grounding_strength_semantic(top_concept_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate grounding for top match {top_concept_id}: {e}")
+
+                    # Fetch sample evidence for top match if requested
+                    top_sample_evidence = None
+                    if request.include_evidence:
+                        top_evidence_instances_query = client._execute_cypher(
+                            f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"ORDER BY s.document, s.paragraph "
+                            f"LIMIT 3"
+                        )
+                        if top_evidence_instances_query:
+                            top_sample_evidence = [
+                                ConceptInstance(
+                                    quote=e['quote'],
+                                    document=e['document'],
+                                    paragraph=e['paragraph'],
+                                    source_id=e['source_id']
+                                )
+                                for e in top_evidence_instances_query
+                            ]
+
                     top_match = ConceptSearchResult(
                         concept_id=top_concept_id,
                         label=top_match_data['label'],
                         score=top_match_data['similarity'],
                         documents=top_documents,
-                        evidence_count=top_evidence_count
+                        evidence_count=top_evidence_count,
+                        grounding_strength=top_grounding,
+                        sample_evidence=top_sample_evidence
                     )
 
             return SearchResponse(
@@ -473,9 +533,39 @@ async def find_connection(request: FindConnectionRequest):
                     if not concept_id or not label:
                         has_metadata_node = True
 
+                    # Calculate grounding strength if requested (default: true)
+                    grounding_strength = None
+                    if request.include_grounding and concept_id:
+                        try:
+                            grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+                    # Fetch sample evidence if requested
+                    sample_evidence = None
+                    if request.include_evidence and concept_id:
+                        evidence_query = client._execute_cypher(
+                            f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"ORDER BY s.document, s.paragraph "
+                            f"LIMIT 3"
+                        )
+                        if evidence_query:
+                            sample_evidence = [
+                                ConceptInstance(
+                                    quote=e['quote'],
+                                    document=e['document'],
+                                    paragraph=e['paragraph'],
+                                    source_id=e['source_id']
+                                )
+                                for e in evidence_query
+                            ]
+
                     nodes.append(PathNode(
                         id=concept_id,
-                        label=label
+                        label=label,
+                        grounding_strength=grounding_strength,
+                        sample_evidence=sample_evidence
                     ))
 
             # Skip paths that go through Source or Instance nodes
@@ -648,9 +738,39 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                     if not concept_id or not label:
                         has_metadata_node = True
 
+                    # Calculate grounding strength if requested (default: true)
+                    grounding_strength = None
+                    if request.include_grounding and concept_id:
+                        try:
+                            grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+                    # Fetch sample evidence if requested
+                    sample_evidence = None
+                    if request.include_evidence and concept_id:
+                        evidence_query = client._execute_cypher(
+                            f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"ORDER BY s.document, s.paragraph "
+                            f"LIMIT 3"
+                        )
+                        if evidence_query:
+                            sample_evidence = [
+                                ConceptInstance(
+                                    quote=e['quote'],
+                                    document=e['document'],
+                                    paragraph=e['paragraph'],
+                                    source_id=e['source_id']
+                                )
+                                for e in evidence_query
+                            ]
+
                     nodes.append(PathNode(
                         id=concept_id,
-                        label=label
+                        label=label,
+                        grounding_strength=grounding_strength,
+                        sample_evidence=sample_evidence
                     ))
 
             # Skip paths that go through Source or Instance nodes
