@@ -55,10 +55,12 @@ const detailsCommand = new Command('details')
       .description('Get detailed information about a concept')
       .showHelpAfterError()
       .argument('<concept-id>', 'Concept ID to retrieve')
-      .action(async (conceptId) => {
+      .option('--no-grounding', 'Disable grounding strength calculation (faster)')
+      .action(async (conceptId, options) => {
         try {
           const client = createClientFromEnv();
-          const concept = await client.getConceptDetails(conceptId);
+          const includeGrounding = options.grounding !== false; // Default: true
+          const concept = await client.getConceptDetails(conceptId, includeGrounding);
 
           console.log('\n' + separator());
           console.log(colors.ui.title(`📊 Concept Details: ${concept.label}`));
@@ -66,6 +68,28 @@ const detailsCommand = new Command('details')
           console.log(`\n${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
           console.log(`${colors.ui.key('Search Terms:')} ${colors.concept.searchTerms(concept.search_terms.join(', '))}`);
           console.log(`${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
+
+          // Display grounding strength if available (ADR-044)
+          if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
+            const groundingPercent = (concept.grounding_strength * 100).toFixed(0);
+            const groundingValue = concept.grounding_strength.toFixed(3);
+
+            // Color based on grounding strength
+            let groundingDisplay;
+            if (concept.grounding_strength >= 0.7) {
+              groundingDisplay = colors.status.success(`✓ Strong (${groundingValue}, ${groundingPercent}%)`);
+            } else if (concept.grounding_strength >= 0.3) {
+              groundingDisplay = colors.status.warning(`⚡ Moderate (${groundingValue}, ${groundingPercent}%)`);
+            } else if (concept.grounding_strength >= 0) {
+              groundingDisplay = colors.status.dim(`◯ Weak (${groundingValue}, ${groundingPercent}%)`);
+            } else if (concept.grounding_strength >= -0.3) {
+              groundingDisplay = colors.status.warning(`⚠ Negative (${groundingValue}, ${groundingPercent}%)`);
+            } else {
+              groundingDisplay = colors.status.error(`✗ Contradicted (${groundingValue}, ${groundingPercent}%)`);
+            }
+
+            console.log(`${colors.ui.key('Grounding:')} ${groundingDisplay}`);
+          }
 
           console.log('\n' + colors.ui.header(`Evidence (${concept.instances.length} instances)`));
           console.log(separator(80, '─'));

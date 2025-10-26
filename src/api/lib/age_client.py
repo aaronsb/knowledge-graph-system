@@ -1821,32 +1821,57 @@ class AGEClient:
                     return 0.0
 
                 # Step 2: Get all incoming relationships to this concept
-                # Build the Cypher query with proper AGE parameter syntax
-                cypher_query = f"""
-                    SELECT DISTINCT
-                        (rel_type #>> '{{}}')::text as relationship_type,
-                        (confidence #>> '{{}}')::float as confidence,
-                        rv.embedding
-                    FROM ag_catalog.cypher('knowledge_graph', $$
-                        MATCH (c:Concept {{concept_id: '{concept_id}'}})<-[r]-(source)
-                        RETURN type(r) as rel_type, r.confidence as confidence
-                    $$) as (rel_type agtype, confidence agtype)
-                    LEFT JOIN kg_api.relationship_vocabulary rv
-                        ON (rel_type #>> '{{}}')::text = rv.relationship_type
-                    WHERE rv.embedding IS NOT NULL
+                # Use _execute_cypher() to avoid agtype parsing issues
+                cypher_edges_query = f"""
+                    MATCH (c:Concept {{concept_id: '{concept_id}'}})<-[r]-(source)
+                    RETURN type(r) as rel_type, r.confidence as confidence
                 """
 
-                # Add type filters if specified
+                edge_results = self._execute_cypher(cypher_edges_query)
+
+                if not edge_results:
+                    # No incoming edges = neutral grounding
+                    return 0.0
+
+                # Step 2b: Get embeddings for these edge types from vocabulary
+                # Build list of unique relationship types
+                rel_types = set(edge['rel_type'] for edge in edge_results)
+
+                # Apply type filters
                 if include_types:
-                    types_list = ','.join([f"'{t}'" for t in include_types])
-                    cypher_query += f" AND rv.relationship_type IN ({types_list})"
-
+                    rel_types = rel_types & set(include_types)
                 if exclude_types:
-                    types_list = ','.join([f"'{t}'" for t in exclude_types])
-                    cypher_query += f" AND rv.relationship_type NOT IN ({types_list})"
+                    rel_types = rel_types - set(exclude_types)
 
-                cur.execute(cypher_query)
-                edges = cur.fetchall()
+                if not rel_types:
+                    return 0.0
+
+                # Query vocabulary for embeddings
+                types_list = ','.join([f"'{t}'" for t in rel_types])
+                vocab_query = f"""
+                    SELECT relationship_type, embedding
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type IN ({types_list})
+                      AND embedding IS NOT NULL
+                """
+
+                cur.execute(vocab_query)
+                vocab_embeddings = {row['relationship_type']: row['embedding']
+                                   for row in cur.fetchall()}
+
+                # Join edge results with embeddings in Python
+                edges = []
+                for edge in edge_results:
+                    rel_type = edge['rel_type']
+                    if rel_type in vocab_embeddings:
+                        # Default confidence to 1.0 if None
+                        confidence = edge.get('confidence') or 1.0
+                        edges.append({
+                            'relationship_type': rel_type,
+                            'confidence': float(confidence),
+                            'embedding': vocab_embeddings[rel_type]
+                        })
+
 
                 if not edges:
                     # No incoming edges = neutral grounding

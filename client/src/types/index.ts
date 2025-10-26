@@ -167,6 +167,7 @@ export interface ConceptDetailsResponse {
   documents: string[];
   instances: ConceptInstance[];
   relationships: ConceptRelationship[];
+  grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
 }
 
 export interface RelatedConceptsRequest {
