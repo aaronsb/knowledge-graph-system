@@ -148,13 +148,21 @@ class QueryService:
 
         Query flow:
         1. Find all variable-length paths up to max_hops
-        2. Return the path itself (nodes and relationships as AGE vertex/edge objects)
-        3. Sort by length (shortest first)
-        4. Limit to 5 paths for performance
+        2. Filter to only Concept-to-Concept paths (exclude metadata nodes)
+        3. Return the path itself (nodes and relationships as AGE vertex/edge objects)
+        4. Sort by length (shortest first)
+        5. Limit to 5 paths for performance
 
         Note: AGE doesn't support Neo4j's shortestPath() function, map projection,
         or property access in list comprehensions. We return the path and extract
         properties in Python.
+
+        **Filtering Logic:**
+        The `all()` clause ensures all intermediate nodes are Concepts, excluding:
+        - Source nodes (document metadata)
+        - Instance nodes (evidence quotes)
+        This prevents paths like: Concept → Source → Concept (metadata traversal)
+        and only allows semantic relationships: Concept → Concept
 
         Args:
             max_hops: Maximum path length (1-10)
@@ -164,6 +172,7 @@ class QueryService:
         """
         return f"""
             MATCH path = (from:Concept {{concept_id: $from_id}})-[*1..{max_hops}]-(to:Concept {{concept_id: $to_id}})
+            WHERE all(node IN nodes(path) WHERE 'Concept' IN labels(node))
             WITH path, length(path) as hops
             RETURN nodes(path) as path_nodes, relationships(path) as path_rels, hops
             ORDER BY hops ASC
