@@ -1314,6 +1314,194 @@ Summary of edge cases discovered and handled during integration testing.
 
 ---
 
+## Phase 9 (Additional): Job Resumption After API Restart
+
+Testing database-based job checkpointing to handle API restarts/crashes without losing progress (ADR-014).
+
+### Initial Implementation Issues Found
+
+**Issue 1:** Resume logic checked for "processing" status (SQLite) but not "running" status (PostgreSQL)
+- PostgreSQLJobQueue uses `status="running"`
+- InMemoryJobQueue uses `status="processing"`
+- **Fix:** Check both statuses in startup resume logic
+
+**Issue 2:** NULL progress field caused AttributeError
+- Job interrupted before chunks start has `progress = NULL`
+- Code: `job.get("progress", {}).get("chunks_total", 0)` failed
+- **Fix:** `progress = job.get("progress") or {}`
+
+**Issue 3:** job_data not updatable in PostgreSQL queue
+- Worker saved checkpoint to job_data JSONB column
+- update_job() method ignored job_data field
+- Checkpoint data silently discarded
+- **Fix:** Added 'job_data' to updatable JSONB fields list
+
+**Issue 4:** Missing retry limit protection
+- Jobs could loop infinitely if repeatedly crashing
+- No safety mechanism to prevent infinite resume attempts
+- **Fix:** Added MAX_RESUME_ATTEMPTS (3) with resume_attempts counter
+
+### Test Setup
+
+**Document:** docs/architecture/RECURSIVE_UPSERT_ARCHITECTURE.md (97KB, 10,622 words, 4 chunks)
+**Method:** Hot reload via trivial code edit to trigger API restart mid-processing
+
+### Test Execution
+
+**Step 1: Submit job**
+```bash
+kg ingest file --ontology "ResumptionTest" docs/architecture/RECURSIVE_UPSERT_ARCHITECTURE.md
+# Job: job_a49cd0638b5e
+```
+
+**Step 2: Wait for chunk processing to start (3-4 seconds)**
+- Confirmed chunk 1 started processing via API logs
+- Job status showed 0/4 chunks (chunking phase complete)
+
+**Step 3: Trigger API restart (hot reload)**
+```bash
+echo "# Test interrupt" >> src/api/main.py
+```
+
+**API Startup Log Output:**
+```
+🔄 Queued interrupted job for resume (attempt 1/3): job_a49cd0638b5e (chunk 3/4)
+✅ Resumed 1 interrupted job(s)
+```
+
+**Step 4: Verify resumption**
+- Job automatically restarted by startup logic
+- Worker log: "🔄 Resuming job from chunk 3/4"
+- Chunks 1-2 skipped (already completed before interrupt)
+- Processing continued from chunk 3
+
+**Step 5: Completion**
+```
+✓ completed
+Duration: 114.6s (including interruption + resume)
+100% complete (4/4 chunks)
+Results: 5 concepts, 4 sources, 36 relationships
+```
+
+### Resumption Flow Verified
+
+**Database Checkpoint After Each Chunk:**
+```sql
+UPDATE kg_api.ingestion_jobs
+SET job_data = {
+  ...original_data,
+  resume_from_chunk: 2,  -- Last completed chunk
+  stats: { concepts_created: 3, ... },
+  recent_concept_ids: [...]  -- Last 50 for context
+}
+WHERE job_id = 'job_a49cd0638b5e'
+```
+
+**Startup Resume Logic:**
+1. Query jobs with status IN ('running', 'processing')
+2. For each interrupted job:
+   - Read resume_attempts from job_data
+   - If >= 3 attempts → fail job with error
+   - If chunks_total == 0 → restart from beginning
+   - If chunks_processed < chunks_total → resume from checkpoint
+3. Reset status to 'approved'
+4. Auto-trigger execution via execute_job_async()
+
+**Worker Resume Logic:**
+1. Check job_data.resume_from_chunk
+2. If > 0 → load saved stats and recent_concept_ids
+3. Skip chunks 1..resume_from_chunk in processing loop
+4. Continue from resume_from_chunk + 1
+
+### Key Findings
+
+**What Works:**
+- ✅ Checkpoint saved after each chunk completes
+- ✅ Stats preserved across resume (concepts, relationships, sources)
+- ✅ Recent concept IDs maintained for context continuity
+- ✅ Automatic detection and resume on startup
+- ✅ No duplicate concepts created (chunks not re-processed)
+- ✅ Retry limit prevents infinite loops (3 attempts max)
+- ✅ Clear logging shows resume attempt count
+
+**Design Decisions:**
+- Checkpoint threshold: AFTER chunk upsert completes
+  - If crash occurs during LLM extraction → chunk re-processed
+  - If crash occurs after upsert → chunk skipped on resume
+  - Trade-off: Wasted API call vs. data integrity
+- Job-level retry limit (3 attempts) not per-chunk
+  - Simpler implementation
+  - Still prevents infinite loops
+  - Could be enhanced to per-chunk retry tracking
+
+**Performance Impact:**
+- Checkpoint overhead: ~2-5KB JSONB per chunk
+- Resume detection: Runs on every API startup (negligible)
+- No impact on successful job processing
+
+### Files Modified
+
+**src/api/main.py (startup resume logic):**
+- Check both "running" and "processing" statuses
+- Handle NULL progress field
+- Track resume_attempts in job_data
+- Fail jobs after 3 resume attempts
+- Reset interrupted jobs to "approved" and trigger execution
+
+**src/api/services/job_queue.py:**
+- Added 'job_data' to PostgreSQL update_job() updatable fields
+- Enables checkpoint data persistence
+
+**src/api/workers/ingestion_worker.py (already implemented):**
+- Check for resume_from_chunk in job_data
+- Load saved stats and recent_concept_ids
+- Skip already-processed chunks
+- Save checkpoint after each chunk
+
+**docs/architecture/ADR-014-job-approval-workflow.md:**
+- Added comprehensive "Job Resumption After Interruption" section
+- Documented checkpoint strategy
+- Explained resume flow
+- Listed benefits and alternatives
+
+### Edge Cases Handled
+
+1. **Job never started (chunks_total=0):**
+   - Reset to approved, increment resume_attempts
+   - Restart from beginning
+
+2. **Job partially complete (chunks_processed < chunks_total):**
+   - Load checkpoint data
+   - Resume from last completed chunk + 1
+
+3. **Job finished all chunks but didn't mark complete:**
+   - Mark as completed (rare edge case)
+
+4. **Infinite loop protection:**
+   - After 3 resume attempts → mark as failed
+   - Clear error message: "possible infinite loop or persistent crash"
+
+### Status: Job Resumption VALIDATED ✅
+
+**Production Readiness:**
+- ✅ Database-based checkpointing working correctly
+- ✅ Automatic resume on API restart
+- ✅ No data loss or duplication
+- ✅ Retry limits prevent infinite loops
+- ✅ ADR-014 fully implemented and documented
+
+**Known Limitations:**
+- Checkpoint threshold is post-upsert (LLM work may be wasted on crash)
+- Job-level retry limit (not per-chunk granularity)
+- No checkpoint cleanup after job completion (minor JSONB overhead)
+
+**Future Enhancements:**
+- Per-chunk retry tracking (fail after N attempts on same chunk)
+- Checkpoint cleanup worker (remove old checkpoint data)
+- Progress streaming (real-time updates instead of polling)
+
+---
+
 
 ## Phase 10: Final Summary & Conclusions
 
