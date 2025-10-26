@@ -69,6 +69,7 @@ async def list_jobs(
         description="Filter by client ID (ADR-014: view specific user's jobs)"
     ),
     limit: int = Query(50, ge=1, le=500, description="Maximum jobs to return"),
+    offset: int = Query(0, ge=0, description="Number of jobs to skip (for pagination)"),
     current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
@@ -87,7 +88,7 @@ async def list_jobs(
     - `GET /jobs?status=completed&limit=100` - Last 100 completed jobs
     """
     queue = get_job_queue()
-    jobs = queue.list_jobs(status=status, client_id=client_id, limit=limit)
+    jobs = queue.list_jobs(status=status, client_id=client_id, limit=limit, offset=offset)
 
     # Phase 2: Enforce ownership filtering based on current_user.client_id
     # For now, allow viewing all jobs (no filtering enforcement)

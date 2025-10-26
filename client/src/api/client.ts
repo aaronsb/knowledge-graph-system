@@ -239,9 +239,10 @@ export class KnowledgeGraphClient {
   async listJobs(
     status?: string,
     clientId?: string,
-    limit: number = 50
+    limit: number = 50,
+    offset: number = 0
   ): Promise<JobStatus[]> {
-    const params: any = { limit };
+    const params: any = { limit, offset };
     if (status) {
       params.status = status;
     }
