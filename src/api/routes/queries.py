@@ -203,7 +203,10 @@ async def search_concepts(request: SearchRequest):
 
 
 @router.get("/concept/{concept_id}", response_model=ConceptDetailsResponse)
-async def get_concept_details(concept_id: str):
+async def get_concept_details(
+    concept_id: str,
+    include_grounding: bool = False
+):
     """
     Get detailed information about a specific concept including all evidence and relationships.
 
@@ -303,13 +306,22 @@ async def get_concept_details(concept_id: str):
         # Extract properties from AGE vertex structure: {id, label, properties: {...}}
         props = concept.get('properties', {})
 
+        # Calculate grounding strength if requested (ADR-044)
+        grounding_strength = None
+        if include_grounding:
+            try:
+                grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+            except Exception as e:
+                logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
         return ConceptDetailsResponse(
             concept_id=props.get('concept_id', ''),
             label=props.get('label', ''),
             search_terms=props.get('search_terms', []),
             documents=documents,
             instances=instances,
-            relationships=relationships
+            relationships=relationships,
+            grounding_strength=grounding_strength
         )
 
     except HTTPException:

@@ -1730,6 +1730,194 @@ class AGEClient:
         finally:
             self.pool.putconn(conn)
 
+    def calculate_grounding_strength_semantic(
+        self,
+        concept_id: str,
+        include_types: Optional[List[str]] = None,
+        exclude_types: Optional[List[str]] = None
+    ) -> float:
+        """
+        Calculate grounding strength using embedding-based edge semantics (ADR-044).
+
+        Uses semantic similarity to prototypical edge types (SUPPORTS, CONTRADICTS)
+        instead of hard-coded polarity. This scales to dynamic vocabulary without
+        manual classification.
+
+        Algorithm:
+        1. Get embeddings for SUPPORTS and CONTRADICTS prototypes
+        2. For each incoming edge to concept:
+           - Get edge type embedding
+           - Calculate similarity to both prototypes
+           - Classify as supporting (higher SUPPORTS similarity) or contradicting
+           - Weight by edge confidence and semantic similarity
+        3. Calculate grounding_strength = (support - contradict) / (support + contradict)
+
+        Args:
+            concept_id: Target concept to calculate grounding for
+            include_types: Optional list of relationship types to include
+            exclude_types: Optional list of relationship types to exclude
+
+        Returns:
+            Grounding strength float in range [-1.0, 1.0]:
+            - 1.0 = Maximally grounded (strong support, no contradiction)
+            - 0.0 = Neutral (balanced support/contradiction or no edges)
+            - -1.0 = Maximally ungrounded (strong contradiction, no support)
+
+        Example:
+            >>> client = AGEClient()
+            >>> grounding = client.calculate_grounding_strength_semantic("concept-123")
+            >>> print(f"Grounding: {grounding:.2f}")
+            Grounding: 0.75  # Strongly grounded
+
+        References:
+            - ADR-044: Probabilistic Truth Convergence
+            - ADR-045: Unified Embedding Generation
+        """
+        import numpy as np
+
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                # Step 1: Get prototype embeddings for SUPPORTS and CONTRADICTS
+                cur.execute("""
+                    SELECT relationship_type, embedding
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type IN ('SUPPORTS', 'CONTRADICTS')
+                      AND embedding IS NOT NULL
+                """)
+                prototypes = cur.fetchall()
+
+                if len(prototypes) < 2:
+                    logger.warning(f"Missing prototype embeddings (need SUPPORTS and CONTRADICTS)")
+                    return 0.0
+
+                # Parse prototype embeddings
+                supports_emb = None
+                contradicts_emb = None
+
+                for proto in prototypes:
+                    emb_json = proto['embedding']
+                    if isinstance(emb_json, str):
+                        emb_array = np.array(json.loads(emb_json), dtype=float)
+                    elif isinstance(emb_json, list):
+                        emb_array = np.array(emb_json, dtype=float)
+                    elif isinstance(emb_json, dict):
+                        # JSONB might be returned as dict
+                        emb_array = np.array(list(emb_json.values()), dtype=float)
+                    else:
+                        try:
+                            emb_array = np.array(list(emb_json), dtype=float)
+                        except:
+                            logger.warning(f"Could not parse prototype embedding for {proto['relationship_type']}")
+                            continue
+
+                    if proto['relationship_type'] == 'SUPPORTS':
+                        supports_emb = emb_array
+                    elif proto['relationship_type'] == 'CONTRADICTS':
+                        contradicts_emb = emb_array
+
+                if supports_emb is None or contradicts_emb is None:
+                    logger.warning("Failed to parse prototype embeddings")
+                    return 0.0
+
+                # Step 2: Get all incoming relationships to this concept
+                # Build the Cypher query with proper AGE parameter syntax
+                cypher_query = f"""
+                    SELECT DISTINCT
+                        (rel_type #>> '{{}}')::text as relationship_type,
+                        (confidence #>> '{{}}')::float as confidence,
+                        rv.embedding
+                    FROM ag_catalog.cypher('knowledge_graph', $$
+                        MATCH (c:Concept {{concept_id: '{concept_id}'}})<-[r]-(source)
+                        RETURN type(r) as rel_type, r.confidence as confidence
+                    $$) as (rel_type agtype, confidence agtype)
+                    LEFT JOIN kg_api.relationship_vocabulary rv
+                        ON (rel_type #>> '{{}}')::text = rv.relationship_type
+                    WHERE rv.embedding IS NOT NULL
+                """
+
+                # Add type filters if specified
+                if include_types:
+                    types_list = ','.join([f"'{t}'" for t in include_types])
+                    cypher_query += f" AND rv.relationship_type IN ({types_list})"
+
+                if exclude_types:
+                    types_list = ','.join([f"'{t}'" for t in exclude_types])
+                    cypher_query += f" AND rv.relationship_type NOT IN ({types_list})"
+
+                cur.execute(cypher_query)
+                edges = cur.fetchall()
+
+                if not edges:
+                    # No incoming edges = neutral grounding
+                    return 0.0
+
+                # Step 3: Calculate weighted support and contradiction scores
+                support_weight = 0.0
+                contradict_weight = 0.0
+
+                for edge in edges:
+                    # Parse edge embedding from JSONB
+                    emb_json = edge['embedding']
+                    if isinstance(emb_json, str):
+                        edge_emb = np.array(json.loads(emb_json), dtype=float)
+                    elif isinstance(emb_json, list):
+                        edge_emb = np.array(emb_json, dtype=float)
+                    elif isinstance(emb_json, dict):
+                        # JSONB might be returned as dict, not list
+                        edge_emb = np.array(list(emb_json.values()), dtype=float)
+                    else:
+                        # Try to convert to list
+                        try:
+                            edge_emb = np.array(list(emb_json), dtype=float)
+                        except:
+                            logger.warning(f"Could not parse embedding for {edge.get('relationship_type')}")
+                            continue
+
+                    # Get confidence (default to 1.0 if not set)
+                    confidence_str = edge.get('confidence')
+                    if confidence_str:
+                        # Parse agtype confidence
+                        if isinstance(confidence_str, dict):
+                            confidence = float(confidence_str.get('confidence', 1.0))
+                        else:
+                            confidence = float(confidence_str)
+                    else:
+                        confidence = 1.0
+
+                    # Calculate semantic similarity to prototypes (cosine similarity)
+                    support_sim = np.dot(edge_emb, supports_emb) / (
+                        np.linalg.norm(edge_emb) * np.linalg.norm(supports_emb)
+                    )
+                    contradict_sim = np.dot(edge_emb, contradicts_emb) / (
+                        np.linalg.norm(edge_emb) * np.linalg.norm(contradicts_emb)
+                    )
+
+                    # Classify edge as supporting or contradicting based on higher similarity
+                    if support_sim > contradict_sim:
+                        # Edge is more semantically similar to SUPPORTS
+                        support_weight += confidence * float(support_sim)
+                    else:
+                        # Edge is more semantically similar to CONTRADICTS
+                        contradict_weight += confidence * float(contradict_sim)
+
+                # Step 4: Calculate final grounding strength
+                total_weight = support_weight + contradict_weight
+
+                if total_weight == 0:
+                    return 0.0
+
+                # Normalize to [-1.0, 1.0] range
+                grounding_strength = (support_weight - contradict_weight) / total_weight
+
+                return float(grounding_strength)
+
+        except Exception as e:
+            logger.error(f"Error calculating grounding strength for {concept_id}: {e}")
+            return 0.0
+        finally:
+            self.pool.putconn(conn)
+
     async def execute_query(self, query: str, params: tuple = None) -> List[Dict]:
         """
         Execute a raw PostgreSQL query and return results as list of dicts.

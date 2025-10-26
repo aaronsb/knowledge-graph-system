@@ -24,6 +24,7 @@ class ConceptSearchResult(BaseModel):
     score: float = Field(..., description="Similarity score (0.0-1.0)")
     documents: List[str] = Field(..., description="Documents where concept appears")
     evidence_count: int = Field(..., description="Number of evidence instances")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
 
 
 class SearchResponse(BaseModel):
@@ -80,6 +81,7 @@ class ConceptDetailsResponse(BaseModel):
     documents: List[str] = Field(..., description="Documents where concept appears")
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-044)")
 
 
 # Related Concepts Models
