@@ -117,17 +117,37 @@ def run_ingestion_worker(
                 "stats": {}
             }
 
-        # Initialize stats
-        stats = ChunkedIngestionStats()
-        recent_concept_ids = []
+        # Check for resume: if job was interrupted, job_data may have chunks and resume point
+        resume_from_chunk = job_data.get("resume_from_chunk", 0)
+        is_resuming = resume_from_chunk > 0
 
-        # Update progress: chunking complete
+        if is_resuming:
+            logger.info(f"🔄 Resuming job from chunk {resume_from_chunk + 1}/{len(chunks)}")
+            # Load saved stats from previous run
+            saved_stats = job_data.get("stats", {})
+            stats = ChunkedIngestionStats()
+            stats.concepts_created = saved_stats.get("concepts_created", 0)
+            stats.concepts_linked = saved_stats.get("concepts_linked", 0)
+            stats.sources_created = saved_stats.get("sources_created", 0)
+            stats.instances_created = saved_stats.get("instances_created", 0)
+            stats.relationships_created = saved_stats.get("relationships_created", 0)
+            stats.llm_calls = saved_stats.get("llm_calls", 0)
+            stats.embedding_calls = saved_stats.get("embedding_calls", 0)
+            recent_concept_ids = job_data.get("recent_concept_ids", [])
+        else:
+            logger.info(f"📊 Starting fresh ingestion: {len(chunks)} chunks")
+            # Initialize stats
+            stats = ChunkedIngestionStats()
+            recent_concept_ids = []
+
+        # Update progress: chunking complete (or resuming)
         job_queue.update_job(job_id, {
             "progress": {
-                "stage": "chunking_complete",
+                "stage": "chunking_complete" if not is_resuming else "resuming",
                 "chunks_total": len(chunks),
-                "chunks_processed": 0,
-                "percent": 0
+                "chunks_processed": resume_from_chunk,
+                "percent": int((resume_from_chunk / len(chunks)) * 100) if is_resuming else 0,
+                "resume_from_chunk": resume_from_chunk
             }
         })
 
@@ -147,8 +167,13 @@ def run_ingestion_worker(
         else:
             logger.info(f"ℹ️  Found {len(existing_concepts)} existing concepts in '{ontology}' for context")
 
-        # Process each chunk
+        # Process each chunk (resume from checkpoint if needed)
         for i, chunk in enumerate(chunks, 1):
+            # Skip already-processed chunks on resume
+            if i <= resume_from_chunk:
+                logger.debug(f"⏭️  Skipping chunk {i} (already processed)")
+                continue
+
             # Process chunk
             recent_concept_ids = process_chunk(
                 chunk=chunk,
@@ -162,7 +187,7 @@ def run_ingestion_worker(
                 verbose=False  # Suppress detailed output in background
             )
 
-            # Update progress with detailed stats
+            # Update progress with detailed stats AND save resume checkpoint
             percent = int((i / len(chunks)) * 100)
             job_queue.update_job(job_id, {
                 "progress": {
@@ -171,11 +196,19 @@ def run_ingestion_worker(
                     "chunks_processed": i,
                     "percent": percent,
                     "current_chunk": i,
+                    "resume_from_chunk": i,  # Save checkpoint after each chunk
                     "concepts_created": stats.concepts_created,
                     "concepts_linked": stats.concepts_linked,  # Hit rate: existing concepts reused
                     "sources_created": stats.sources_created,
                     "instances_created": stats.instances_created,
                     "relationships_created": stats.relationships_created
+                },
+                # Save stats and context for resume
+                "job_data": {
+                    **job_data,
+                    "resume_from_chunk": i,
+                    "stats": stats.to_dict(),
+                    "recent_concept_ids": recent_concept_ids[-50:]  # Keep last 50 for context
                 }
             })
 

@@ -145,6 +145,39 @@ async def startup_event():
     queue.register_worker("restore", run_restore_worker)
     logger.info("✅ Workers registered: ingestion, restore")
 
+    # Resume interrupted jobs (jobs that were processing when server stopped)
+    try:
+        processing_jobs = queue.list_jobs(status="processing", limit=500)
+        approved_jobs = queue.list_jobs(status="approved", limit=500)
+
+        resumed_count = 0
+        for job in processing_jobs:
+            job_id = job["job_id"]
+            chunks_total = job.get("progress", {}).get("chunks_total", 0)
+            chunks_processed = job.get("progress", {}).get("resume_from_chunk", 0)
+
+            if chunks_processed < chunks_total:
+                # Job was interrupted mid-processing - reset to approved for resume
+                queue.update_job(job_id, {"status": "approved"})
+                logger.info(f"🔄 Queued interrupted job for resume: {job_id} (chunk {chunks_processed + 1}/{chunks_total})")
+                resumed_count += 1
+            else:
+                # Job finished all chunks but didn't mark complete - mark it now
+                queue.update_job(job_id, {"status": "completed"})
+                logger.info(f"✅ Marked completed job: {job_id}")
+
+        # Trigger execution for all approved jobs (includes both pre-existing and newly-resumed)
+        all_approved = queue.list_jobs(status="approved", limit=500)
+        for job in all_approved:
+            queue.execute_job_async(job["job_id"])
+            logger.debug(f"▶️  Started approved job: {job['job_id']}")
+
+        if resumed_count > 0:
+            logger.info(f"✅ Resumed {resumed_count} interrupted job(s)")
+
+    except Exception as e:
+        logger.error(f"⚠️  Failed to resume interrupted jobs: {e}", exc_info=True)
+
     # ADR-014: Initialize and start job scheduler
     scheduler = init_job_scheduler()
     scheduler.start()
