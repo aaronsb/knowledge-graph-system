@@ -73,13 +73,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'get_concept_details',
-        description: 'Get detailed information about a specific concept including evidence instances (quoted text from documents), source references, and semantic relationships to other concepts.',
+        description: 'Get detailed information about a specific concept including evidence instances (quoted text from documents), source references, and semantic relationships to other concepts. Includes grounding_strength (ADR-044) by default - a probabilistic truth score (0.0-1.0) measuring support vs contradiction based on incoming relationship semantics. Higher grounding = more reliable concept.',
         inputSchema: {
           type: 'object',
           properties: {
             concept_id: {
               type: 'string',
               description: 'The unique concept identifier (from search results or graph traversal)',
+            },
+            include_grounding: {
+              type: 'boolean',
+              description: 'Include grounding_strength calculation (ADR-044: probabilistic truth convergence). Default: true. Set to false only for faster queries when grounding not needed.',
+              default: true,
             },
           },
           required: ['concept_id'],
@@ -460,9 +465,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'get_concept_details': {
-        const result = await client.getConceptDetails(toolArgs.concept_id as string);
+        const includeGrounding = toolArgs.include_grounding !== false; // Default: true (ADR-044)
+        const result = await client.getConceptDetails(
+          toolArgs.concept_id as string,
+          includeGrounding
+        );
+
+        // Add explanatory note about grounding if present (educate AI agents)
+        let responseText = JSON.stringify(result, null, 2);
+        if (result.grounding_strength !== undefined && result.grounding_strength !== null) {
+          const groundingNote = `\n\n--- Grounding Strength (ADR-044) ---\nScore: ${result.grounding_strength.toFixed(3)} (${(result.grounding_strength * 100).toFixed(0)}%)\nInterpretation: ${
+            result.grounding_strength >= 0.7 ? 'Strong - Well-supported by evidence' :
+            result.grounding_strength >= 0.3 ? 'Moderate - Mixed evidence, use with caution' :
+            result.grounding_strength >= 0 ? 'Weak - More contradictions than support' :
+            'Contradicted - Evidence suggests concept is incorrect or outdated'
+          }\nMeaning: Grounding measures probabilistic truth convergence based on SUPPORTS vs CONTRADICTS relationships.\nHigher values (>0.7) indicate reliable concepts. Lower values (<0.3) suggest historical/incorrect information.\n`;
+          responseText = JSON.stringify(result, null, 2) + groundingNote;
+        }
+
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          content: [{ type: 'text', text: responseText }],
         };
       }
 
