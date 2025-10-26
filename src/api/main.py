@@ -160,15 +160,37 @@ async def startup_event():
             chunks_total = progress.get("chunks_total", 0)
             chunks_processed = progress.get("resume_from_chunk", 0)
 
+            # Safety: Track resume attempts to prevent infinite loops
+            job_data = job.get("job_data") or {}
+            resume_attempts = job_data.get("resume_attempts", 0)
+            MAX_RESUME_ATTEMPTS = 3
+
+            if resume_attempts >= MAX_RESUME_ATTEMPTS:
+                # Too many resume attempts - mark as failed
+                queue.update_job(job_id, {
+                    "status": "failed",
+                    "error": f"Job failed after {resume_attempts} resume attempts (possible infinite loop or persistent crash)"
+                })
+                logger.error(f"❌ Job failed after {resume_attempts} resume attempts: {job_id}")
+                continue
+
             if chunks_total == 0:
                 # Job was interrupted before processing started - reset to approved to start fresh
-                queue.update_job(job_id, {"status": "approved"})
-                logger.info(f"🔄 Queued interrupted job (never started): {job_id}")
+                updated_job_data = {**job_data, "resume_attempts": resume_attempts + 1}
+                queue.update_job(job_id, {
+                    "status": "approved",
+                    "job_data": updated_job_data
+                })
+                logger.info(f"🔄 Queued interrupted job (never started, attempt {resume_attempts + 1}/{MAX_RESUME_ATTEMPTS}): {job_id}")
                 resumed_count += 1
             elif chunks_processed < chunks_total:
                 # Job was interrupted mid-processing - reset to approved for resume
-                queue.update_job(job_id, {"status": "approved"})
-                logger.info(f"🔄 Queued interrupted job for resume: {job_id} (chunk {chunks_processed + 1}/{chunks_total})")
+                updated_job_data = {**job_data, "resume_attempts": resume_attempts + 1}
+                queue.update_job(job_id, {
+                    "status": "approved",
+                    "job_data": updated_job_data
+                })
+                logger.info(f"🔄 Queued interrupted job for resume (attempt {resume_attempts + 1}/{MAX_RESUME_ATTEMPTS}): {job_id} (chunk {chunks_processed + 1}/{chunks_total})")
                 resumed_count += 1
             else:
                 # Job finished all chunks but didn't mark complete - mark it now
