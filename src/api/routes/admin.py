@@ -372,6 +372,13 @@ async def reset_database(request: ResetRequest):
     - Removes all data volumes
     - Restarts with a clean database
     - Re-initializes AGE schema
+    - Applies all database migrations
+
+    ⚠️ **CRITICAL**: After reset completes, you MUST restart the API server:
+    ```bash
+    ./scripts/stop-api.sh && ./scripts/start-api.sh
+    ```
+    This clears stale database connections. Without restart, API queries will fail.
 
     **Authentication required**: Must provide username and password.
     (Currently placeholder - will be validated in Phase 2)

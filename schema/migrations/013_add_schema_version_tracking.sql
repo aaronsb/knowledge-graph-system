@@ -42,3 +42,13 @@ COMMENT ON COLUMN kg_api.schema_migrations.description IS
 
 COMMENT ON COLUMN kg_api.schema_migrations.applied_at IS
 'When this migration was applied to the database';
+
+-- ============================================================================
+-- Record Migration in public.schema_migrations
+-- ============================================================================
+-- Note: This migration creates kg_api.schema_migrations (for backup/restore)
+-- but must also record itself in public.schema_migrations (for migration tracking)
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (13, 'add_schema_version_tracking')
+ON CONFLICT (version) DO NOTHING;

@@ -1037,6 +1037,8 @@ const resetCommand = new Command('reset')
       }
 
       console.log('\n' + colors.status.success('✅ Database is now empty and ready for fresh data'));
+      console.log('\n' + colors.status.warning('⚠️  IMPORTANT: Restart the API server to clear stale connections:'));
+      console.log(colors.status.dim('   ./scripts/stop-api.sh && ./scripts/start-api.sh'));
       console.log('\n' + separator() + '\n');
 
     } catch (error: any) {

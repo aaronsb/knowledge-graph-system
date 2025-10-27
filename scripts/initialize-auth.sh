@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Trap errors for debugging
+trap 'echo "ERROR at line $LINENO: Command exited with status $?" >&2' ERR
+
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -375,20 +378,36 @@ if [[ $PROVIDER_CHOICE =~ ^[12]$ ]]; then
     read -s -p "Enter ${PROVIDER_DISPLAY} API key: " API_KEY
     echo ""
 
+    # Debug: Confirm we got the key
+    echo -e "${YELLOW}[DEBUG] API key length: ${#API_KEY}${NC}" >&2
+    echo -e "${YELLOW}[DEBUG] Provider: $PROVIDER_NAME${NC}" >&2
+
     if [ -z "$API_KEY" ]; then
         echo -e "${YELLOW}⚠${NC}  No API key provided, skipping AI configuration"
     else
         echo -e "${BLUE}→${NC} Validating and storing ${PROVIDER_DISPLAY} API key..."
+        echo -e "${YELLOW}[DEBUG] About to run Python script...${NC}" >&2
 
-        # Store API key via Python script
-        STORE_RESULT=$($PYTHON << EOF 2>&1
+        # Store API key via Python script (pass key via environment to avoid heredoc escaping issues)
+        # Temporarily disable 'set -e' so Python errors don't kill the script
+        set +e
+        STORE_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" API_KEY_TO_STORE="$API_KEY" PROVIDER_NAME_TO_STORE="$PROVIDER_NAME" $PYTHON << 'EOF' 2>&1
 import sys
-sys.path.insert(0, "$PROJECT_ROOT")
+import os
+sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
 
 from src.api.lib.age_client import AGEClient
 from src.api.lib.encrypted_keys import EncryptedKeyStore
 
 try:
+    # Get values from environment (to avoid bash heredoc escaping issues)
+    provider = os.getenv("PROVIDER_NAME_TO_STORE")
+    api_key = os.getenv("API_KEY_TO_STORE")
+
+    if not provider or not api_key:
+        print("ERROR:Missing provider or API key")
+        sys.exit(1)
+
     # Connect to database
     client = AGEClient()
     conn = client.pool.getconn()
@@ -398,19 +417,34 @@ try:
         key_store = EncryptedKeyStore(conn)
 
         # Store the key (this also validates it)
-        key_store.store_key("$PROVIDER_NAME", "$API_KEY")
+        key_store.store_key(provider, api_key)
 
         # Mark as valid
-        key_store.update_validation_status("$PROVIDER_NAME", "valid")
+        key_store.update_validation_status(provider, "valid")
 
         print("SUCCESS")
     finally:
         client.pool.putconn(conn)
 except Exception as e:
     print(f"ERROR:{e}")
+    import traceback
+    traceback.print_exc()
     sys.exit(1)
 EOF
 )
+        # Re-enable 'set -e'
+        set -e
+
+        echo -e "${YELLOW}[DEBUG] Python script completed${NC}" >&2
+
+        # Debug: Show what we got back
+        if [ -z "$STORE_RESULT" ]; then
+            echo -e "${RED}✗${NC} Python script produced no output (possible crash)"
+            echo -e "${YELLOW}   Check that venv is activated and dependencies are installed${NC}"
+        else
+            echo -e "${YELLOW}[DEBUG] Store result:${NC}" >&2
+            echo "$STORE_RESULT" >&2
+        fi
 
         if echo "$STORE_RESULT" | grep -q "^SUCCESS"; then
             echo -e "${GREEN}✓${NC} ${PROVIDER_DISPLAY} API key stored and validated"
@@ -418,18 +452,23 @@ EOF
             # Initialize AI extraction configuration
             echo -e "${BLUE}→${NC} Initializing AI extraction configuration..."
 
-            CONFIG_RESULT=$($PYTHON << EOF 2>&1
+            set +e
+            CONFIG_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" PROVIDER_NAME_CONFIG="$PROVIDER_NAME" DEFAULT_MODEL_CONFIG="$DEFAULT_MODEL" $PYTHON << 'EOF' 2>&1
 import sys
-sys.path.insert(0, "$PROJECT_ROOT")
+import os
+sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
 
 from src.api.lib.ai_extraction_config import save_extraction_config
 
+provider = os.getenv("PROVIDER_NAME_CONFIG")
+model = os.getenv("DEFAULT_MODEL_CONFIG")
+
 config = {
-    "provider": "$PROVIDER_NAME",
-    "model_name": "$DEFAULT_MODEL",
+    "provider": provider,
+    "model_name": model,
     "supports_vision": True,
     "supports_json_mode": True,
-    "max_tokens": 16384 if "$PROVIDER_NAME" == "openai" else 8192
+    "max_tokens": 16384 if provider == "openai" else 8192
 }
 
 try:
@@ -441,9 +480,12 @@ try:
         sys.exit(1)
 except Exception as e:
     print(f"ERROR:{e}")
+    import traceback
+    traceback.print_exc()
     sys.exit(1)
 EOF
 )
+            set -e
 
             if echo "$CONFIG_RESULT" | grep -q "^SUCCESS"; then
                 echo -e "${GREEN}✓${NC} AI extraction configured: $PROVIDER_DISPLAY / $DEFAULT_MODEL"
@@ -463,6 +505,44 @@ else
     echo -e "${YELLOW}   Configure later via:${NC}"
     echo -e "${YELLOW}   - POST /admin/keys/{provider}${NC}"
     echo -e "${YELLOW}   - POST /admin/extraction/config${NC}"
+fi
+
+# Embedding Provider Selection (ADR-039)
+echo ""
+echo -e "${BOLD}Embedding Provider Configuration${NC}"
+echo -e "${YELLOW}Select embedding provider for concept similarity (ADR-039)${NC}"
+echo ""
+echo "Available providers:"
+echo "  1) OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
+echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
+echo "  3) Skip (keep default)"
+echo ""
+read -p "Choice [1-3]: " -n 1 -r EMBEDDING_CHOICE
+echo ""
+echo ""
+
+if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then
+    if [ "$EMBEDDING_CHOICE" = "1" ]; then
+        EMBEDDING_PROVIDER="openai"
+        EMBEDDING_DISPLAY="OpenAI (text-embedding-3-small)"
+    else
+        EMBEDDING_PROVIDER="local"
+        EMBEDDING_DISPLAY="Nomic (nomic-embed-text-v1.5)"
+    fi
+
+    echo -e "${BLUE}→${NC} Activating ${EMBEDDING_DISPLAY}..."
+
+    # Use kg CLI to activate the embedding provider (handles deactivation of old config)
+    set +e
+    if kg admin embedding activate --provider "$EMBEDDING_PROVIDER" > /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} ${EMBEDDING_DISPLAY} activated"
+    else
+        echo -e "${YELLOW}⚠${NC}  Failed to activate embedding provider"
+        echo -e "${YELLOW}   You can activate later via: kg admin embedding activate --provider $EMBEDDING_PROVIDER${NC}"
+    fi
+    set -e
+else
+    echo -e "${YELLOW}⚠${NC}  Keeping default embedding provider (OpenAI)"
 fi
 
 # Success message
@@ -490,7 +570,13 @@ echo -e "  • Admin password is hashed with bcrypt (rounds=12)"
 echo -e "  • JWT tokens expire after 60 minutes by default"
 echo ""
 echo -e "${YELLOW}Configuration:${NC}"
+if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then
+    echo -e "  • Embedding provider: ${GREEN}${EMBEDDING_DISPLAY}${NC}"
+else
+    echo -e "  • Embedding provider: ${GREEN}OpenAI (default)${NC}"
+fi
 echo -e "  • AI provider configuration: ${BOLD}POST /admin/extraction/config${NC}"
 echo -e "  • API key management: ${BOLD}GET/POST/DELETE /admin/keys/{provider}${NC}"
 echo -e "  • View key status: ${BOLD}GET /admin/keys${NC}"
+echo -e "  • Switch embedding provider: ${BOLD}kg admin embedding activate --provider <provider>${NC}"
 echo ""
