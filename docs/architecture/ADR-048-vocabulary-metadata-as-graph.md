@@ -1,9 +1,21 @@
 # ADR-048: Vocabulary Metadata as First-Class Graph
 
-**Status:** Proposed
+**Status:** In Progress - Phase 3.1 Complete ✅
 **Date:** 2025-10-27
 **Deciders:** System Architects
 **Related:** ADR-047 (Probabilistic Categorization), ADR-032 (Vocabulary Expansion), ADR-046 (Grounding-Aware Management)
+
+**Implementation Status:**
+- ✅ **Phase 1 Complete** - GraphQueryFacade, query linter, CI integration
+- ✅ **Phase 2 Complete** - Critical path migrations (restore worker, health checks)
+- ✅ **Phase 3.1 Complete** - Vocabulary graph nodes created (migration 014)
+  - 30 :VocabType nodes created
+  - 10 :VocabCategory nodes created
+  - 30 -[:IN_CATEGORY]-> relationships
+  - Idempotent migration verified
+  - SQL tables preserved for backward compatibility
+- ⏸️ **Phase 3.2 Pending** - Migrate vocabulary queries to use graph
+- ⏸️ **Phase 3.3 Optional** - SQL table deprecation (future work)
 
 ## Context
 
@@ -388,10 +400,10 @@ CREATE (v)-[:IN_CATEGORY]->(computed_category)
 
 ### Phase 3: Vocabulary Graph Migration (Week 4-6)
 
-**3.1 Parallel Schema**
-- [ ] Create VocabType, VocabCategory nodes (parallel to SQL)
-- [ ] Sync SQL → Graph on vocab changes
-- [ ] Verify data consistency
+**3.1 Parallel Schema** ✅ **COMPLETE (2025-10-27)**
+- [x] Create VocabType, VocabCategory nodes (parallel to SQL) - Migration 014
+- [ ] Sync SQL → Graph on vocab changes - Optional future enhancement
+- [x] Verify data consistency - tests/test_phase3_vocabulary_graph.py
 
 **3.2 Migrate Queries**
 - [ ] Update `kg vocab list` to query graph
@@ -582,5 +594,5 @@ Together, these eliminate the SQL simulation and make vocabulary truly part of t
 ---
 
 **Last Updated:** 2025-10-27
-**Status:** Proposed (pending review)
-**Implementation:** Starts after ADR-047 accepted
+**Status:** In Progress - Phase 3.1 Complete ✅
+**Implementation:** Phase 1-2 complete (PR #65, #70), Phase 3.1 complete (migration 014), Phase 3.2-3.3 future work
