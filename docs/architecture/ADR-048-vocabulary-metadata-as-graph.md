@@ -14,14 +14,30 @@
   - 30 -[:IN_CATEGORY]-> relationships
   - Idempotent migration verified
   - SQL tables preserved for backward compatibility
-- ✅ **Phase 3.2 Complete** - Vocabulary queries migrated to use graph
+- ✅ **Phase 3.2 Complete** - Vocabulary READ queries migrated to use graph
   - get_vocabulary_size() queries :VocabType nodes
   - get_all_edge_types() lists :VocabType names
   - get_edge_type_info() traverses -[:IN_CATEGORY]-> relationships
   - get_category_distribution() counts per :VocabCategory
-  - kg vocab list now queries graph exclusively
-  - SQL table no longer queried for vocabulary operations
-- ⏸️ **Phase 3.3 Optional** - SQL table deprecation (future work)
+  - kg vocab list now queries graph exclusively (read-only operations)
+  - **Remaining SQL usage**: Write operations, embeddings, scoring (see Phase 3.3)
+- ⏸️ **Phase 3.3 Optional** - Complete migration & SQL deprecation (future work)
+  - **Scope**: 25+ SQL queries across 4 files still use relationship_vocabulary table
+  - **Write Operations** (age_client.py):
+    - add_edge_type_to_vocabulary() - INSERT new types
+    - update_edge_type_in_vocabulary() - UPDATE metadata
+    - merge_edge_types() - Merge & deprecate types
+    - increment_edge_type_usage() - UPDATE usage counts
+  - **Embedding Operations** (embedding_worker.py):
+    - get_vocab_types_needing_embeddings() - Query stale/missing
+    - store_vocab_embedding() - UPDATE embedding data
+    - validate_vocab_embeddings() - Check freshness
+  - **Scoring Operations** (vocabulary_scoring.py):
+    - compute_category_scores() - Similarity scoring
+    - assign_categories() - Category assignment
+    - find_similar_types() - Embedding-based similarity
+  - **Estimated effort**: ~10-15 methods, similar complexity to Phase 3.2
+  - **Risk**: Higher - involves write operations, data consistency critical
 
 ## Context
 
@@ -411,14 +427,21 @@ CREATE (v)-[:IN_CATEGORY]->(computed_category)
 - [ ] Sync SQL → Graph on vocab changes - Optional future enhancement
 - [x] Verify data consistency - tests/test_phase3_vocabulary_graph.py
 
-**3.2 Migrate Queries**
-- [ ] Update `kg vocab list` to query graph
-- [ ] Update `kg vocab find-synonyms` to query graph
-- [ ] Update `kg vocab merge` to rewire graph edges
-- [ ] Update `kg vocab refresh-categories` to update graph
+**3.2 Migrate Queries** ✅ **COMPLETE (2025-10-27)**
+- [x] Update `kg vocab list` to query graph - get_all_edge_types(), get_vocabulary_size()
+- [x] Update vocab info queries - get_edge_type_info(), get_category_distribution()
+- [x] Verify read queries work correctly - All tests pass
+- [x] Handle AGE boolean string storage ('t'/'f' vs true/false)
+- [ ] Update `kg vocab find-synonyms` to query graph - **Phase 3.3**
+- [ ] Update `kg vocab merge` to rewire graph edges - **Phase 3.3**
+- [ ] Update `kg vocab refresh-categories` to update graph - **Phase 3.3**
 
-**3.3 Deprecate SQL Tables**
-- [ ] Verify all queries use graph
+**3.3 Complete Migration & SQL Deprecation** ⏸️ **FUTURE WORK**
+- [ ] Migrate write operations to graph (add_edge_type, update_edge_type, merge_edge_types)
+- [ ] Migrate embedding operations to :VocabType properties
+- [ ] Migrate scoring operations to graph queries
+- [ ] Verify all 25+ SQL queries replaced with graph equivalents
+- [ ] Add graph-based usage count tracking
 - [ ] Backup SQL tables
 - [ ] Drop SQL vocabulary tables (optional)
 
