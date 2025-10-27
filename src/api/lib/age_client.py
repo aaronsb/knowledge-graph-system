@@ -77,6 +77,9 @@ class AGEClient:
                 f"Cannot connect to PostgreSQL at {self.host}:{self.port}: {e}"
             )
 
+        # Lazy-loaded facade for namespace-safe queries (ADR-048)
+        self._facade = None
+
     def _setup_age(self, conn):
         """Load AGE extension and set search path."""
         with conn.cursor() as cur:
@@ -1871,3 +1874,35 @@ class AGEClient:
         finally:
             conn.commit()
             self.pool.putconn(conn)
+
+    @property
+    def facade(self):
+        """
+        Get namespace-safe query facade (ADR-048).
+
+        Lazy-loads GraphQueryFacade on first access.
+
+        Returns:
+            GraphQueryFacade instance
+
+        Example:
+            # Namespace-safe concept query
+            concepts = client.facade.match_concepts(
+                where="c.label =~ '(?i).*recursive.*'",
+                limit=10
+            )
+
+            # Namespace-safe vocabulary query
+            vocab_types = client.facade.match_vocab_types(
+                where="v.is_active = true"
+            )
+
+            # Get audit stats
+            stats = client.facade.get_audit_stats()
+            logger.info(f"Safety ratio: {stats['safety_ratio']:.1%}")
+        """
+        if self._facade is None:
+            from src.api.lib.query_facade import GraphQueryFacade
+            self._facade = GraphQueryFacade(self)
+
+        return self._facade

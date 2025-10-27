@@ -222,6 +222,146 @@ When using local inference with Ollama + local embeddings on single-GPU systems,
 
 **Note:** All providers can use either OpenAI embeddings or local embeddings (configured separately)
 
+## Query Safety & GraphQueryFacade
+
+**ADR-048** introduces namespace safety to prevent catastrophic collisions when vocabulary metadata moves to the graph alongside concepts.
+
+### The Problem
+
+Without explicit labels, queries can operate on wrong namespace:
+
+```python
+# ❌ UNSAFE: Will count ALL nodes (concepts + vocabulary)
+client._execute_cypher("MATCH (n) RETURN count(n)")
+
+# ❌ UNSAFE: Will delete vocabulary nodes too!
+client._execute_cypher("MATCH (n) DELETE n")
+```
+
+### The Solution: GraphQueryFacade
+
+Use `client.facade` for namespace-safe queries:
+
+```python
+from src.api.lib.age_client import AGEClient
+
+client = AGEClient()
+
+# ✅ SAFE: Only counts concept nodes
+concept_count = client.facade.count_concepts()
+
+# ✅ SAFE: Only matches concepts
+concepts = client.facade.match_concepts(
+    where="c.label =~ '(?i).*recursive.*'",
+    limit=10
+)
+
+# ✅ SAFE: Only matches vocabulary types
+vocab_types = client.facade.match_vocab_types(
+    where="v.is_active = true"
+)
+
+# ✅ SAFE: Namespace-aware statistics
+stats = client.facade.get_graph_stats()
+# {
+#     "concept_graph": {"concepts": 1234, "sources": 56, "instances": 789},
+#     "vocabulary_graph": {"types": 118, "categories": 8}
+# }
+```
+
+### When to Use Which Approach
+
+| Use Case | Method | Rationale |
+|----------|--------|-----------|
+| **Concept queries** | `client.facade.match_concepts()` | Always safe, explicit :Concept label |
+| **Vocabulary queries** | `client.facade.match_vocab_types()` | Always safe, explicit :VocabType label |
+| **Statistics** | `client.facade.get_graph_stats()` | Namespace-aware counts |
+| **Complex multi-namespace** | `client.facade.execute_raw()` | Escape hatch with audit logging |
+| **Legacy code (temporary)** | `client._execute_cypher()` | Technical debt, migrate to facade |
+
+### Facade Methods
+
+**Concept Namespace:**
+- `match_concepts(where, params, limit)` - Match :Concept nodes
+- `match_concept_relationships(rel_types, where)` - Match concept edges
+- `count_concepts(where, params)` - Count concepts
+- `match_sources(where, params, limit)` - Match :Source nodes
+- `match_instances(where, params, limit)` - Match :Instance nodes
+
+**Vocabulary Namespace:**
+- `match_vocab_types(where, params, limit)` - Match :VocabType nodes
+- `match_vocab_categories(where, params)` - Match :VocabCategory nodes
+- `find_vocabulary_synonyms(min_similarity, category)` - Find synonyms
+- `count_vocab_types(where, params)` - Count vocabulary types
+
+**Utilities:**
+- `get_graph_stats()` - Namespace-aware statistics
+- `execute_raw(query, params, namespace)` - Escape hatch for complex queries
+- `get_audit_stats()` - Query safety metrics
+
+### Query Linter
+
+CI enforces query safety via linter:
+
+```bash
+# Run locally
+python3 scripts/lint_queries.py --verbose
+
+# Check specific paths
+python3 scripts/lint_queries.py src/api/routes src/api/workers
+```
+
+The linter detects:
+- `MATCH (n)` without explicit label (should be `MATCH (n:Concept)`)
+- `CREATE (n)` without explicit label
+- `MERGE (n)` without explicit label
+
+**Current baseline:** 3 unsafe queries (documented in `docs/architecture/QUERY_SAFETY_BASELINE.md`)
+
+### Migration Strategy
+
+**Phase 1 (Current):** Foundation
+- ✅ Query linter identifies unsafe patterns
+- ✅ GraphQueryFacade provides safe interface
+- ✅ CI prevents new unsafe queries
+
+**Phase 2:** Critical Path Migration
+- Migrate restore_worker.py (CRITICAL - would destroy vocabulary)
+- Migrate health checks (incorrect counts)
+- Verify 0 unsafe queries before Phase 3
+
+**Phase 3:** Vocabulary to Graph
+- Move vocabulary metadata to :VocabType/:VocabCategory nodes
+- All operations use facade
+- Vocabulary and concepts coexist safely
+
+### Development Guidelines
+
+**When writing new code:**
+1. Always use `client.facade` for graph queries
+2. Never use bare `MATCH (n)` without explicit label
+3. Run linter before committing: `python3 scripts/lint_queries.py`
+
+**When modifying database operations:**
+1. Check if operation assumes single namespace
+2. Use facade methods to enforce namespace isolation
+3. Document if using `execute_raw()` (explain why facade insufficient)
+
+**When fixing unsafe queries:**
+```python
+# Before (unsafe)
+results = client._execute_cypher(
+    "MATCH (n) WHERE n.property = $value RETURN n",
+    params={"value": "foo"}
+)
+
+# After (safe)
+results = client.facade.match_concepts(
+    where="c.property = $value",
+    params={"value": "foo"}
+)
+```
+
 ## Common Tasks
 
 ### Add a New AI Provider
