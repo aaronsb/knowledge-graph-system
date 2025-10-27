@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-044-probabilistic-truth-convergence/">
+        <link rel="prev" href="../FUZZY_MATCHING_ANALYSIS/">
       
       
-        <link rel="next" href="../ADR-045-unified-embedding-generation/">
+        <link rel="next" href="../QUERY_SAFETY_BASELINE/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Migration Plan: ADR-045/046 Implementation - Knowledge Graph System</title>
+        <title>Phase 3 Implementation Plan: Vocabulary as Graph Nodes - Knowledge Graph System</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#migration-plan-adr-045046-implementation" class="md-skip">
+        <a href="#phase-3-implementation-plan-vocabulary-as-graph-nodes" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Migration Plan: ADR-045/046 Implementation
+              Phase 3 Implementation Plan: Vocabulary as Graph Nodes
             
           </span>
         </div>
@@ -2672,32 +2672,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Migration Plan: ADR-045/046 Implementation
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -2708,287 +2686,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-files-created" class="md-nav__link">
-    <span class="md-ellipsis">
-      Migration Files Created
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-order" class="md-nav__link">
-    <span class="md-ellipsis">
-      Implementation Order
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Order">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-schema-migrations-current" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 1: Schema Migrations (Current)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-python-implementation-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 2: Python Implementation (Next)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-grounding-strength-calculation-after-phase-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 3: Grounding Strength Calculation (After Phase 2)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-enhanced-vocabulary-scorer-after-phase-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 4: Enhanced Vocabulary Scorer (After Phase 3)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#data-migration-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      Data Migration Requirements
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Data Migration Requirements">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cold-start-initialize-builtin-embeddings" class="md-nav__link">
-    <span class="md-ellipsis">
-      Cold Start: Initialize Builtin Embeddings
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#grounding-metrics-initial-calculation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Grounding Metrics: Initial Calculation
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rollback-procedures" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rollback Procedures
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Rollback Procedures">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rollback-phase-1-schema-migrations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rollback Phase 1 (Schema Migrations)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rollback-phase-2-4-python-implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rollback Phase 2-4 (Python Implementation)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      Testing Strategy
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Strategy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pre-migration-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Pre-Migration Testing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#post-migration-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Post-Migration Testing
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#success-criteria" class="md-nav__link">
-    <span class="md-ellipsis">
-      Success Criteria
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Success Criteria">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-complete-when" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 1 Complete When:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-complete-when" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 2 Complete When:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-complete-when" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 3 Complete When:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-complete-when" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 4 Complete When:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#risk-mitigation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Risk Mitigation
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Risk Mitigation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#high-risk-areas" class="md-nav__link">
-    <span class="md-ellipsis">
-      High-Risk Areas
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#timeline-estimate" class="md-nav__link">
-    <span class="md-ellipsis">
-      Timeline Estimate
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#approval-required-before-phase-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Approval Required Before Phase 2
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3228,10 +2925,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../PHASE_3_IMPLEMENTATION_PLAN/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Implementation Plan: Vocabulary as Graph Nodes
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3242,6 +2961,164 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#current-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current State
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current State">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Exists
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-doesnt-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Doesn't Exist
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3 Goals
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Steps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-schema-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Create Schema Migration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-add-graphqueryfacade-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Add GraphQueryFacade Methods
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-update-ageclient-with-graph-native-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Update AGEClient with Graph-Native Methods
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-feature-flag-for-gradual-rollout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Add Feature Flag for Gradual Rollout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-testing-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Testing Plan
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rollback-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rollback Plan
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Files
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3625,410 +3502,286 @@
   
 
 
-<h1 id="migration-plan-adr-045046-implementation">Migration Plan: ADR-045/046 Implementation</h1>
-<p><strong>Date:</strong> 2025-10-25
-<strong>Branch:</strong> <code>refactor/embedding-grounding-system</code>
-<strong>Risk Level:</strong> HIGH (affects core vocabulary and embedding infrastructure)</p>
-<h2 id="overview">Overview</h2>
-<p>This migration plan implements the ADR-044/045/046 trio for embedding-based grounding and vocabulary management. The implementation is methodical to minimize risk of breaking the production system.</p>
-<h2 id="migration-files-created">Migration Files Created</h2>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>ADR</th>
-<th>Purpose</th>
-<th>Risk Level</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>011_add_grounding_metrics.sql</code></td>
-<td>ADR-046</td>
-<td>Add grounding contribution metrics to vocabulary table</td>
-<td>LOW</td>
-</tr>
-<tr>
-<td><code>012_add_embedding_worker_support.sql</code></td>
-<td>ADR-045</td>
-<td>Add embedding generation infrastructure</td>
-<td>MEDIUM</td>
-</tr>
-</tbody>
-</table>
-<h2 id="implementation-order">Implementation Order</h2>
-<h3 id="phase-1-schema-migrations-current">Phase 1: Schema Migrations (Current)</h3>
-<p><strong>Status:</strong> Planning complete, migrations written
-<strong>Risk:</strong> LOW - Additive changes only, no breaking modifications</p>
-<ol>
-<li><strong>Apply Migration 011:</strong> Grounding Metrics
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./scripts/migrate-db.sh
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Applies: 011_add_grounding_metrics.sql</span>
-</code></pre></div></li>
-</ol>
-<p><strong>Changes:</strong>
-   - Adds columns to <code>relationship_vocabulary</code>: <code>grounding_contribution</code>, <code>last_grounding_calculated</code>, <code>avg_confidence</code>, <code>semantic_diversity</code>
-   - Creates <code>synonym_clusters</code> table for tracking detected synonyms
-   - Creates indexes for grounding queries
-   - Creates placeholder functions (implemented later in Python)</p>
-<p><strong>Validation:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">-- Verify new columns exist</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="err">\</span><span class="n">d</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">-- Verify synonym_clusters table</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="err">\</span><span class="n">d</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">synonym_clusters</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1">-- Check migration recorded</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="k">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">11</span><span class="p">;</span>
-</code></pre></div></p>
-<ol>
-<li><strong>Apply Migration 012:</strong> Embedding Worker Support
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./scripts/migrate-db.sh
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Applies: 012_add_embedding_worker_support.sql</span>
-</code></pre></div></li>
-</ol>
-<p><strong>Changes:</strong>
-   - Creates <code>embedding_generation_jobs</code> table for job tracking
-   - Creates <code>system_initialization_status</code> table for cold start tracking
-   - Adds <code>embedding_quality_score</code> and <code>embedding_validation_status</code> columns to vocabulary
-   - Creates helper views: <code>v_builtin_types_missing_embeddings</code>, <code>v_types_needing_embedding_regeneration</code>
-   - Creates helper functions: <code>mark_embeddings_stale_for_model()</code>, <code>validate_embedding()</code>
-   - Creates trigger: <code>trigger_validate_vocabulary_embedding</code> for automatic validation</p>
-<p><strong>Validation:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">-- Verify tables</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="err">\</span><span class="n">d</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">embedding_generation_jobs</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="err">\</span><span class="n">d</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">system_initialization_status</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1">-- Verify views</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">v_builtin_types_missing_embeddings</span><span class="p">;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1">-- Should return ~30 (builtin types without embeddings)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1">-- Check migration recorded</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="k">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="p">;</span>
-</code></pre></div></p>
-<h3 id="phase-2-python-implementation-next">Phase 2: Python Implementation (Next)</h3>
-<p><strong>Status:</strong> Not started
-<strong>Risk:</strong> MEDIUM - New service that could affect ingestion pipeline</p>
-<ol>
-<li><strong>Implement EmbeddingWorker Service</strong></li>
-<li>File: <code>src/api/services/embedding_worker.py</code></li>
-<li>Dependencies: <code>age_client.py</code>, <code>ai_providers.py</code></li>
-<li>Key methods:<ul>
-<li><code>initialize_builtin_embeddings()</code> - Cold start</li>
-<li><code>generate_vocabulary_embedding()</code> - Single type</li>
-<li><code>batch_generate_embeddings()</code> - Bulk operation</li>
-<li><code>validate_embedding()</code> - Quality checks</li>
+<h1 id="phase-3-implementation-plan-vocabulary-as-graph-nodes">Phase 3 Implementation Plan: Vocabulary as Graph Nodes</h1>
+<p><strong>Status:</strong> In Progress
+<strong>Date:</strong> 2025-10-27
+<strong>Branch:</strong> <code>feature/phase3-vocabulary-as-graph</code>
+<strong>Related:</strong> ADR-048, ADR-047</p>
+<h2 id="current-state">Current State</h2>
+<h3 id="what-exists">What Exists</h3>
+<ul>
+<li>✅ SQL tables in <code>kg_api</code> schema</li>
+<li><code>relationship_vocabulary</code> (139 types: 30 builtin + 109 custom)</li>
+<li><code>vocabulary_history</code>, <code>vocabulary_config</code>, <code>synonym_clusters</code>, etc.</li>
+<li>✅ Phase 1: GraphQueryFacade (namespace safety)</li>
+<li>✅ Phase 2: All unsafe queries fixed (0 unsafe queries)</li>
+<li>✅ Categories assigned to all types (causation, semantic, composition, etc.)</li>
 </ul>
-</li>
-</ol>
-<p><strong>Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Start API in test mode</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./scripts/start-api.sh
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Test cold start initialization</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>curl<span class="w"> </span>http://localhost:8000/admin/embeddings/initialize
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Verify embeddings generated</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span>--with-embeddings
+<h3 id="what-doesnt-exist">What Doesn't Exist</h3>
+<ul>
+<li>❌ :VocabType nodes in graph</li>
+<li>❌ :VocabCategory nodes in graph</li>
+<li>❌ Graph relationships: -[:IN_CATEGORY]-&gt;, -[:SIMILAR_TO]-&gt;, -[:HAS_SEED]-&gt;</li>
+</ul>
+<h2 id="phase-3-goals">Phase 3 Goals</h2>
+<p>Migrate vocabulary from SQL to graph while maintaining backward compatibility.</p>
+<p><strong>Strategy:</strong> Parallel SQL/graph approach
+1. Create graph nodes alongside existing SQL
+2. Keep both in sync during transition
+3. Update queries incrementally
+4. Eventually deprecate SQL (optional)</p>
+<h2 id="implementation-steps">Implementation Steps</h2>
+<h3 id="step-1-create-schema-migration">Step 1: Create Schema Migration</h3>
+<p><strong>File:</strong> <code>schema/migrations/014_vocabulary_as_graph.sql</code></p>
+<p><strong>Create Node Initialization Function:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">-- Function to create :VocabType and :VocabCategory nodes from SQL data</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">sync_vocabulary_to_graph</span><span class="p">()</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">RETURNS</span><span class="w"> </span><span class="n">void</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">DECLARE</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">vocab_row</span><span class="w"> </span><span class="n">RECORD</span><span class="p">;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="n">category_row</span><span class="w"> </span><span class="n">RECORD</span><span class="p">;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="k">BEGIN</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="c1">-- Create :VocabCategory nodes (one per unique category)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="k">FOR</span><span class="w"> </span><span class="n">category_row</span><span class="w"> </span><span class="k">IN</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">type_count</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">is_active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">        </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">category</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="n">LOOP</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">        </span><span class="c1">-- Create or update category node</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cypher</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">            </span><span class="n">MERGE</span><span class="w"> </span><span class="p">(</span><span class="k">c</span><span class="p">:</span><span class="n">VocabCategory</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">            </span><span class="k">SET</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">type_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">                </span><span class="k">c</span><span class="p">.</span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">        </span><span class="err">$$</span><span class="p">,</span><span class="w"> </span><span class="nb">array</span><span class="p">[</span><span class="n">category_row</span><span class="p">.</span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">category_row</span><span class="p">.</span><span class="n">type_count</span><span class="p">]::</span><span class="nb">text</span><span class="p">[]);</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="n">LOOP</span><span class="p">;</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span><span class="c1">-- Create :VocabType nodes (one per vocabulary type)</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">    </span><span class="k">FOR</span><span class="w"> </span><span class="n">vocab_row</span><span class="w"> </span><span class="k">IN</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">        </span><span class="k">SELECT</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">            </span><span class="n">relationship_type</span><span class="p">,</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">            </span><span class="n">category</span><span class="p">,</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">            </span><span class="n">edge_count</span><span class="p">,</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">            </span><span class="n">is_active</span><span class="p">,</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">            </span><span class="n">is_builtin</span><span class="p">,</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">            </span><span class="n">embedding</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">    </span><span class="n">LOOP</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">        </span><span class="c1">-- Create or update vocab type node</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cypher</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">            </span><span class="n">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">            </span><span class="k">SET</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">edge_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">                </span><span class="n">v</span><span class="p">.</span><span class="n">is_active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="w">                </span><span class="n">v</span><span class="p">.</span><span class="n">is_builtin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">4</span><span class="p">,</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">                </span><span class="n">v</span><span class="p">.</span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">        </span><span class="err">$$</span><span class="p">,</span><span class="w"> </span><span class="nb">array</span><span class="p">[</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">            </span><span class="n">vocab_row</span><span class="p">.</span><span class="n">relationship_type</span><span class="p">,</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">            </span><span class="n">vocab_row</span><span class="p">.</span><span class="n">edge_count</span><span class="p">::</span><span class="nb">text</span><span class="p">,</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">            </span><span class="n">vocab_row</span><span class="p">.</span><span class="n">is_active</span><span class="p">::</span><span class="nb">text</span><span class="p">,</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">            </span><span class="n">vocab_row</span><span class="p">.</span><span class="n">is_builtin</span><span class="p">::</span><span class="nb">text</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="w">        </span><span class="p">]::</span><span class="nb">text</span><span class="p">[]);</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">        </span><span class="c1">-- Create -[:IN_CATEGORY]-&gt; relationship</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cypher</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">            </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="w">            </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="k">c</span><span class="p">:</span><span class="n">VocabCategory</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">            </span><span class="n">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">-</span><span class="p">[:</span><span class="n">IN_CATEGORY</span><span class="p">]</span><span class="o">-&gt;</span><span class="p">(</span><span class="k">c</span><span class="p">)</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a><span class="w">        </span><span class="err">$$</span><span class="p">,</span><span class="w"> </span><span class="nb">array</span><span class="p">[</span><span class="n">vocab_row</span><span class="p">.</span><span class="n">relationship_type</span><span class="p">,</span><span class="w"> </span><span class="n">vocab_row</span><span class="p">.</span><span class="n">category</span><span class="p">]::</span><span class="nb">text</span><span class="p">[]);</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="n">LOOP</span><span class="p">;</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="k">END</span><span class="p">;</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">plpgsql</span><span class="p">;</span>
 </code></pre></div></p>
-<ol>
-<li><strong>Integrate EmbeddingWorker into Startup</strong></li>
-<li>File: <code>src/api/main.py</code></li>
-<li>Add startup event handler</li>
-<li>Call <code>embedding_worker.initialize_builtin_embeddings()</code> if needed</li>
-</ol>
-<p><strong>Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Restart API and check logs</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/api_*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;embedding&quot;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Should see: &quot;Cold start: Generated embeddings for 30 builtin types&quot;</span>
+<p><strong>Add Trigger for Auto-Sync:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">-- Trigger function to sync changes to graph</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">sync_vocabulary_change_to_graph</span><span class="p">()</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">RETURNS</span><span class="w"> </span><span class="k">TRIGGER</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">BEGIN</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="k">IF</span><span class="w"> </span><span class="n">TG_OP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;INSERT&#39;</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">TG_OP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;UPDATE&#39;</span><span class="w"> </span><span class="k">THEN</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">        </span><span class="c1">-- Update :VocabType node</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cypher</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">            </span><span class="n">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">            </span><span class="k">SET</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">edge_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">                </span><span class="n">v</span><span class="p">.</span><span class="n">is_active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">                </span><span class="n">v</span><span class="p">.</span><span class="n">is_builtin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">4</span><span class="p">,</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">                </span><span class="n">v</span><span class="p">.</span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">        </span><span class="err">$$</span><span class="p">,</span><span class="w"> </span><span class="nb">array</span><span class="p">[</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">            </span><span class="k">NEW</span><span class="p">.</span><span class="n">relationship_type</span><span class="p">,</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">            </span><span class="k">NEW</span><span class="p">.</span><span class="n">edge_count</span><span class="p">::</span><span class="nb">text</span><span class="p">,</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">            </span><span class="k">NEW</span><span class="p">.</span><span class="n">is_active</span><span class="p">::</span><span class="nb">text</span><span class="p">,</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">            </span><span class="k">NEW</span><span class="p">.</span><span class="n">is_builtin</span><span class="p">::</span><span class="nb">text</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">        </span><span class="p">]::</span><span class="nb">text</span><span class="p">[]);</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">        </span><span class="c1">-- Update -[:IN_CATEGORY]-&gt; relationship</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cypher</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">            </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">            </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="k">c</span><span class="p">:</span><span class="n">VocabCategory</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">            </span><span class="n">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">-</span><span class="p">[:</span><span class="n">IN_CATEGORY</span><span class="p">]</span><span class="o">-&gt;</span><span class="p">(</span><span class="k">c</span><span class="p">)</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">        </span><span class="err">$$</span><span class="p">,</span><span class="w"> </span><span class="nb">array</span><span class="p">[</span><span class="k">NEW</span><span class="p">.</span><span class="n">relationship_type</span><span class="p">,</span><span class="w"> </span><span class="k">NEW</span><span class="p">.</span><span class="n">category</span><span class="p">]::</span><span class="nb">text</span><span class="p">[]);</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">        </span><span class="k">RETURN</span><span class="w"> </span><span class="k">NEW</span><span class="p">;</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">    </span><span class="k">ELSIF</span><span class="w"> </span><span class="n">TG_OP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;DELETE&#39;</span><span class="w"> </span><span class="k">THEN</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">        </span><span class="c1">-- Mark node as inactive instead of deleting</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cypher</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">            </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="w"> </span><span class="err">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="err">}</span><span class="p">)</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">            </span><span class="k">SET</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">is_active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">                </span><span class="n">v</span><span class="p">.</span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">        </span><span class="err">$$</span><span class="p">,</span><span class="w"> </span><span class="nb">array</span><span class="p">[</span><span class="k">OLD</span><span class="p">.</span><span class="n">relationship_type</span><span class="p">]::</span><span class="nb">text</span><span class="p">[]);</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">        </span><span class="k">RETURN</span><span class="w"> </span><span class="k">OLD</span><span class="p">;</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="k">IF</span><span class="p">;</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="k">END</span><span class="p">;</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">plpgsql</span><span class="p">;</span>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="c1">-- Attach trigger</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TRIGGER</span><span class="w"> </span><span class="n">vocabulary_sync_trigger</span>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="k">AFTER</span><span class="w"> </span><span class="k">INSERT</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="k">FOR</span><span class="w"> </span><span class="k">EACH</span><span class="w"> </span><span class="k">ROW</span><span class="w"> </span><span class="k">EXECUTE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">sync_vocabulary_change_to_graph</span><span class="p">();</span>
 </code></pre></div></p>
-<h3 id="phase-3-grounding-strength-calculation-after-phase-2">Phase 3: Grounding Strength Calculation (After Phase 2)</h3>
-<p><strong>Status:</strong> Not started
-<strong>Risk:</strong> MEDIUM - New calculation logic in query paths
-<strong>Depends on:</strong> Phase 2 (requires embeddings for all vocabulary)</p>
-<ol>
-<li><strong>Implement Grounding Calculation in AGEClient</strong></li>
-<li>File: <code>src/api/lib/age_client.py</code></li>
-<li>New method: <code>calculate_grounding_strength_semantic(concept_id: str) -&gt; float</code></li>
-<li>Uses embedding similarity to SUPPORTS/CONTRADICTS prototypes</li>
-</ol>
-<p><strong>Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Unit test</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">client</span> <span class="o">=</span> <span class="n">AGEClient</span><span class="p">()</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">grounding</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">calculate_grounding_strength_semantic</span><span class="p">(</span><span class="s2">&quot;concept-123&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">grounding</span> <span class="o">&lt;=</span> <span class="mf">1.0</span>
-</code></pre></div></p>
-<ol>
-<li><strong>Update API Models</strong></li>
-<li>File: <code>src/api/models/queries.py</code></li>
-<li>Add <code>grounding_strength</code> field to <code>ConceptDetailsResponse</code></li>
-<li>
-<p>Add <code>grounding_strength</code> field to <code>ConceptSearchResult</code> (optional)</p>
-</li>
-<li>
-<p><strong>Update API Routes</strong></p>
-</li>
-<li>File: <code>src/api/routes/queries.py</code></li>
-<li>Update <code>/query/concepts/{concept_id}</code> to include grounding</li>
-<li>Add query parameter <code>include_grounding</code> for search endpoints</li>
-</ol>
-<p><strong>Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Test concept details with grounding</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>curl<span class="w"> </span>http://localhost:8000/query/concepts/concept-123
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Should include: &quot;grounding_strength&quot;: 0.75</span>
-</code></pre></div></p>
-<h3 id="phase-4-enhanced-vocabulary-scorer-after-phase-3">Phase 4: Enhanced Vocabulary Scorer (After Phase 3)</h3>
-<p><strong>Status:</strong> Not started
-<strong>Risk:</strong> LOW - New admin functionality, doesn't affect ingestion</p>
-<ol>
-<li><strong>Implement Enhanced VocabularyScorer</strong></li>
-<li>File: <code>src/api/lib/vocabulary_manager.py</code></li>
-<li>Update <code>EdgeTypeScore</code> dataclass with new metrics</li>
-<li>Implement <code>calculate_grounding_contribution()</code></li>
-<li>Implement <code>detect_synonym_clusters()</code></li>
-<li>Implement <code>get_extraction_vocabulary()</code> for dynamic curation</li>
-</ol>
-<p><strong>Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Test grounding contribution calculation</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>analyze<span class="w"> </span>--calculate-grounding
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Test synonym detection</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>synonyms<span class="w"> </span>detect<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.85
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Test curated extraction vocabulary</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>extract-list<span class="w"> </span>--limit<span class="w"> </span><span class="m">50</span>
-</code></pre></div></p>
-<ol>
-<li><strong>Update Merge System</strong></li>
-<li>File: <code>src/api/lib/age_client.py</code></li>
-<li>Update <code>merge_edge_types()</code> to handle embeddings</li>
-<li>Ensure target type has embedding before merge</li>
-<li>Store deprecated embedding for rollback</li>
-</ol>
-<p><strong>Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Test merge with embedding preservation</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>SUPPORTED_BY<span class="w"> </span>SUPPORTS<span class="w"> </span>--reason<span class="w"> </span><span class="s2">&quot;Inverse synonym&quot;</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Verify embedding transferred</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>details<span class="w"> </span>SUPPORTS
-</code></pre></div></p>
-<h2 id="data-migration-requirements">Data Migration Requirements</h2>
-<h3 id="cold-start-initialize-builtin-embeddings">Cold Start: Initialize Builtin Embeddings</h3>
-<p><strong>Timing:</strong> After Phase 2 implementation
-<strong>Method:</strong> Automatic on API startup
-<strong>Duration:</strong> ~30 seconds (30 types × 1 second each)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Triggered automatically by startup event in main.py</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Or manually via admin endpoint:</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">POST</span> <span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">embeddings</span><span class="o">/</span><span class="n">initialize</span>
+<h3 id="step-2-add-graphqueryfacade-methods">Step 2: Add GraphQueryFacade Methods</h3>
+<p><strong>File:</strong> <code>src/api/lib/query_facade.py</code></p>
+<p>Add methods for vocabulary namespace:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">match_vocab_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;SAFE: Always includes :VocabType label.&quot;&quot;&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;MATCH (v:VocabType)&quot;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="k">if</span> <span class="n">where</span><span class="p">:</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; WHERE </span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">query</span> <span class="o">+=</span> <span class="s2">&quot; RETURN v&quot;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_log_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;vocabulary&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="k">def</span><span class="w"> </span><span class="nf">match_vocab_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;SAFE: Always includes :VocabCategory label.&quot;&quot;&quot;</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;MATCH (c:VocabCategory)&quot;</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="k">if</span> <span class="n">where</span><span class="p">:</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; WHERE </span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">query</span> <span class="o">+=</span> <span class="s2">&quot; RETURN c&quot;</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_log_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;vocabulary&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="k">def</span><span class="w"> </span><span class="nf">find_vocabulary_synonyms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;SAFE: Explicit :VocabType and :VocabCategory labels.&quot;&quot;&quot;</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="s2">        MATCH (v1:VocabType)-[:IN_CATEGORY]-&gt;(c:VocabCategory {name: $category})</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="s2">        MATCH (v2:VocabType)-[:IN_CATEGORY]-&gt;(c)</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="s2">        MATCH (v1)-[s:SIMILAR_TO]-&gt;(v2)</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="s2">        WHERE s.similarity &gt; $threshold</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="s2">        RETURN v1, v2, s.similarity</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_log_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="n">category</span><span class="p">,</span> <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="n">threshold</span><span class="p">},</span> <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;vocabulary&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="n">category</span><span class="p">,</span> <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="n">threshold</span><span class="p">})</span>
 </code></pre></div>
-<p><strong>Expected Results:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;job_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid-here&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">&quot;job_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cold_start&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">&quot;target_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;completed&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span><span class="nt">&quot;processed_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="nt">&quot;failed_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">  </span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">28450</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="p">}</span>
-</code></pre></div></p>
-<h3 id="grounding-metrics-initial-calculation">Grounding Metrics: Initial Calculation</h3>
-<p><strong>Timing:</strong> After Phase 3 implementation
-<strong>Method:</strong> Manual trigger via admin endpoint
-<strong>Duration:</strong> Variable (depends on graph size)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Calculate grounding contribution for all active types</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>POST<span class="w"> </span>/admin/vocabulary/calculate-grounding
+<h3 id="step-3-update-ageclient-with-graph-native-methods">Step 3: Update AGEClient with Graph-Native Methods</h3>
+<p><strong>File:</strong> <code>src/api/lib/age_client.py</code></p>
+<p>Add new methods that use graph instead of SQL:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_vocabulary_from_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get all vocabulary types from graph (namespace-aware).&quot;&quot;&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s2">        MATCH (v:VocabType)-[:IN_CATEGORY]-&gt;(c:VocabCategory)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s2">        RETURN v.name as relationship_type,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s2">               c.name as category,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s2">               v.edge_count as edge_count,</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s2">               v.is_active as is_active,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s2">               v.is_builtin as is_builtin</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s2">        ORDER BY v.name</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">facade</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;vocabulary&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_vocabulary_size_from_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get vocabulary size from graph (namespace-aware).&quot;&quot;&quot;</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="s2">        MATCH (v:VocabType)</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="s2">        WHERE v.is_active = true</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="s2">        RETURN count(v) as size</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">facade</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s2">&quot;vocabulary&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="mi">0</span>
 </code></pre></div>
-<p><strong>Expected Results:</strong>
-- <code>grounding_contribution</code> populated for all active types
-- <code>last_grounding_calculated</code> timestamp set
-- <code>synonym_clusters</code> table populated with detected clusters</p>
-<h2 id="rollback-procedures">Rollback Procedures</h2>
-<h3 id="rollback-phase-1-schema-migrations">Rollback Phase 1 (Schema Migrations)</h3>
-<p>If migrations cause issues, rollback is <strong>NOT RECOMMENDED</strong> because:
-- Migrations are additive (new columns, tables, indexes)
-- No existing functionality broken
-- Rolling back loses new data</p>
-<p><strong>If absolutely necessary:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Manual rollback (no automated script)</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>BEGIN<span class="p">;</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>--<span class="w"> </span>Remove<span class="w"> </span>migration<span class="w"> </span><span class="m">012</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>DROP<span class="w"> </span>TRIGGER<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>trigger_validate_vocabulary_embedding<span class="w"> </span>ON<span class="w"> </span>kg_api.relationship_vocabulary<span class="p">;</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>DROP<span class="w"> </span>FUNCTION<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.auto_validate_vocabulary_embedding<span class="o">()</span><span class="p">;</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>DROP<span class="w"> </span>FUNCTION<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.validate_embedding<span class="o">(</span>JSONB,<span class="w"> </span>INTEGER<span class="o">)</span><span class="p">;</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>DROP<span class="w"> </span>FUNCTION<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.mark_embeddings_stale_for_model<span class="o">(</span>VARCHAR<span class="o">)</span><span class="p">;</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>DROP<span class="w"> </span>VIEW<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.v_types_needing_embedding_regeneration<span class="p">;</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>DROP<span class="w"> </span>VIEW<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.v_builtin_types_missing_embeddings<span class="p">;</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>ALTER<span class="w"> </span>TABLE<span class="w"> </span>kg_api.relationship_vocabulary<span class="w"> </span>DROP<span class="w"> </span>COLUMN<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>embedding_validation_status<span class="p">;</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>ALTER<span class="w"> </span>TABLE<span class="w"> </span>kg_api.relationship_vocabulary<span class="w"> </span>DROP<span class="w"> </span>COLUMN<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>embedding_quality_score<span class="p">;</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>DROP<span class="w"> </span>TABLE<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.system_initialization_status<span class="p">;</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>DROP<span class="w"> </span>TABLE<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.embedding_generation_jobs<span class="p">;</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>DELETE<span class="w"> </span>FROM<span class="w"> </span>public.schema_migrations<span class="w"> </span>WHERE<span class="w"> </span><span class="nv">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12</span><span class="p">;</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>--<span class="w"> </span>Remove<span class="w"> </span>migration<span class="w"> </span><span class="m">011</span>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>DROP<span class="w"> </span>FUNCTION<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.calculate_type_grounding_contribution<span class="o">(</span>VARCHAR<span class="o">)</span><span class="p">;</span>
-<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>DROP<span class="w"> </span>INDEX<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.idx_synonym_clusters_merge_recommended<span class="p">;</span>
-<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>DROP<span class="w"> </span>INDEX<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.idx_synonym_clusters_active<span class="p">;</span>
-<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>DROP<span class="w"> </span>TABLE<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.synonym_clusters<span class="p">;</span>
-<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>DROP<span class="w"> </span>INDEX<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.idx_vocab_grounding_staleness<span class="p">;</span>
-<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>DROP<span class="w"> </span>INDEX<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>kg_api.idx_vocab_grounding_contribution<span class="p">;</span>
-<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>ALTER<span class="w"> </span>TABLE<span class="w"> </span>kg_api.relationship_vocabulary<span class="w"> </span>DROP<span class="w"> </span>COLUMN<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>semantic_diversity<span class="p">;</span>
-<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>ALTER<span class="w"> </span>TABLE<span class="w"> </span>kg_api.relationship_vocabulary<span class="w"> </span>DROP<span class="w"> </span>COLUMN<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>avg_confidence<span class="p">;</span>
-<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>ALTER<span class="w"> </span>TABLE<span class="w"> </span>kg_api.relationship_vocabulary<span class="w"> </span>DROP<span class="w"> </span>COLUMN<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>last_grounding_calculated<span class="p">;</span>
-<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>ALTER<span class="w"> </span>TABLE<span class="w"> </span>kg_api.relationship_vocabulary<span class="w"> </span>DROP<span class="w"> </span>COLUMN<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>grounding_contribution<span class="p">;</span>
-<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>DELETE<span class="w"> </span>FROM<span class="w"> </span>public.schema_migrations<span class="w"> </span>WHERE<span class="w"> </span><span class="nv">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">11</span><span class="p">;</span>
-<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a>
-<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a>COMMIT<span class="p">;</span>
+<h3 id="step-4-add-feature-flag-for-gradual-rollout">Step 4: Add Feature Flag for Gradual Rollout</h3>
+<p><strong>File:</strong> <code>.env</code> (add configuration)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Phase 3: Vocabulary as Graph (ADR-048)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nv">USE_VOCABULARY_GRAPH</span><span class="o">=</span><span class="nb">false</span><span class="w">  </span><span class="c1"># Start with SQL, flip to true after testing</span>
+</code></pre></div>
+<p><strong>File:</strong> <code>src/api/lib/age_client.py</code> (add dual-mode support)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_vocabulary_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get vocabulary size (supports SQL and graph modes).&quot;&quot;&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;USE_VOCABULARY_GRAPH&#39;</span><span class="p">,</span> <span class="s1">&#39;false&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;true&#39;</span><span class="p">:</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vocabulary_size_from_graph</span><span class="p">()</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_vocabulary_size_from_sql</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="step-5-testing-plan">Step 5: Testing Plan</h3>
+<p><strong>Unit Tests:</strong>
+- Test graph node creation from SQL data
+- Test trigger sync (INSERT, UPDATE, DELETE)
+- Test GraphQueryFacade vocabulary methods
+- Test AGEClient dual-mode (SQL vs graph)</p>
+<p><strong>Integration Tests:</strong>
+1. Initialize vocabulary graph from SQL
+2. Verify node counts match SQL counts
+3. Test sync: update SQL, verify graph updates
+4. Test category relationships
+5. Flip feature flag, verify queries work</p>
+<p><strong>Verification Commands:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Check node counts</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s2">SELECT * FROM ag_catalog.cypher(&#39;knowledge_graph&#39;, \$\$</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s2">    MATCH (v:VocabType)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s2">    RETURN count(v) as vocab_count</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s2">\$\$) AS (vocab_count integer)&quot;</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Check categories</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s2">SELECT * FROM ag_catalog.cypher(&#39;knowledge_graph&#39;, \$\$</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="s2">    MATCH (c:VocabCategory)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s2">    RETURN c.name as category, c.type_count as count</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="s2">\$\$) AS (category text, count integer)&quot;</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1"># Verify relationships</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="s2">SELECT * FROM ag_catalog.cypher(&#39;knowledge_graph&#39;, \$\$</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="s2">    MATCH (v:VocabType)-[:IN_CATEGORY]-&gt;(c:VocabCategory)</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="s2">    RETURN v.name, c.name</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="s2">    LIMIT 10</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="s2">\$\$) AS (vocab_type text, category text)&quot;</span>
 </code></pre></div></p>
-<h3 id="rollback-phase-2-4-python-implementation">Rollback Phase 2-4 (Python Implementation)</h3>
-<p><strong>Simpler approach:</strong> Revert to main branch
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Stop API</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./scripts/stop-api.sh
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Switch back to main</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>git<span class="w"> </span>checkout<span class="w"> </span>main
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>./scripts/start-api.sh
-</code></pre></div></p>
-<p><strong>Note:</strong> Schema changes remain in database but are unused by main branch code.</p>
-<h2 id="testing-strategy">Testing Strategy</h2>
-<h3 id="pre-migration-testing">Pre-Migration Testing</h3>
-<ol>
-<li>
-<p><strong>Backup Database:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Create backup before migrations</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>&gt;<span class="w"> </span>backup_pre_migration.sql
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Verify Current State:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
-</code></pre></div></p>
-</li>
-</ol>
-<h3 id="post-migration-testing">Post-Migration Testing</h3>
-<ol>
-<li>
-<p><strong>Schema Validation:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Run migration</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Verify schema</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\d kg_api.relationship_vocabulary&quot;</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Functional Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Test existing functionality still works</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;test query&quot;</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1"># Test new views (should work even before Python implementation)</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">  </span><span class="s2">&quot;SELECT COUNT(*) FROM kg_api.v_builtin_types_missing_embeddings;&quot;</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Integration Testing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Test full ingestion pipeline</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;Migration Test&quot;</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Migration Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>ingest_source/watts_lecture_1.txt
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1"># Verify no errors in logs</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/api_*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span>error
-</code></pre></div></p>
-</li>
-</ol>
 <h2 id="success-criteria">Success Criteria</h2>
-<h3 id="phase-1-complete-when">Phase 1 Complete When:</h3>
 <ul>
-<li>✅ Migrations 011 and 012 applied successfully</li>
-<li>✅ Schema validation passes</li>
-<li>✅ Existing ingestion pipeline works</li>
-<li>✅ No errors in API logs</li>
-<li>✅ Database backup created</li>
+<li>[ ] All 139 vocabulary types exist as :VocabType nodes</li>
+<li>[ ] All 8 categories exist as :VocabCategory nodes</li>
+<li>[ ] All types connected to categories via -[:IN_CATEGORY]-&gt;</li>
+<li>[ ] SQL changes automatically sync to graph (trigger works)</li>
+<li>[ ] GraphQueryFacade methods work correctly</li>
+<li>[ ] Feature flag allows switching between SQL/graph</li>
+<li>[ ] All existing tests pass</li>
+<li>[ ] Linter shows 0 unsafe queries</li>
 </ul>
-<h3 id="phase-2-complete-when">Phase 2 Complete When:</h3>
+<h2 id="rollback-plan">Rollback Plan</h2>
+<p>If issues occur:
+1. Set <code>USE_VOCABULARY_GRAPH=false</code> (revert to SQL)
+2. All code still works (dual-mode support)
+3. Fix issues in graph layer
+4. Re-test and flip flag again</p>
+<h2 id="timeline">Timeline</h2>
 <ul>
-<li>✅ EmbeddingWorker service implemented</li>
-<li>✅ Cold start initializes 30 builtin embeddings</li>
-<li>✅ <code>kg vocab list</code> shows all types have embeddings</li>
-<li>✅ Admin endpoints functional</li>
-<li>✅ Unit tests pass</li>
+<li><strong>Day 1:</strong> Create migration + sync function</li>
+<li><strong>Day 2:</strong> Add GraphQueryFacade methods + AGEClient support</li>
+<li><strong>Day 3:</strong> Testing + verification</li>
+<li><strong>Day 4:</strong> PR review + merge</li>
 </ul>
-<h3 id="phase-3-complete-when">Phase 3 Complete When:</h3>
+<h2 id="related-files">Related Files</h2>
 <ul>
-<li>✅ Grounding strength calculation works</li>
-<li>✅ API returns grounding_strength in responses</li>
-<li>✅ MCP tools expose grounding data</li>
-<li>✅ Integration tests pass</li>
+<li><code>schema/migrations/014_vocabulary_as_graph.sql</code> (NEW)</li>
+<li><code>src/api/lib/query_facade.py</code> (UPDATE)</li>
+<li><code>src/api/lib/age_client.py</code> (UPDATE)</li>
+<li><code>docs/architecture/QUERY_SAFETY_BASELINE.md</code> (UPDATE with new baseline)</li>
+<li><code>.env.example</code> (ADD feature flag)</li>
 </ul>
-<h3 id="phase-4-complete-when">Phase 4 Complete When:</h3>
-<ul>
-<li>✅ Enhanced vocabulary scorer operational</li>
-<li>✅ Synonym detection works</li>
-<li>✅ Merge system handles embeddings</li>
-<li>✅ Dynamic vocabulary curation functional</li>
-</ul>
-<h2 id="risk-mitigation">Risk Mitigation</h2>
-<h3 id="high-risk-areas">High-Risk Areas</h3>
-<ol>
-<li><strong>Embedding Generation During Ingestion</strong></li>
-<li><strong>Risk:</strong> EmbeddingWorker integration could break ingestion</li>
-<li><strong>Mitigation:</strong> Extensive testing with sample documents before production use</li>
-<li>
-<p><strong>Fallback:</strong> Keep existing <code>generate_embedding()</code> calls as backup</p>
-</li>
-<li>
-<p><strong>Database Performance</strong></p>
-</li>
-<li><strong>Risk:</strong> New indexes and triggers could slow operations</li>
-<li><strong>Mitigation:</strong> Monitor query performance before/after</li>
-<li>
-<p><strong>Fallback:</strong> Drop problematic indexes if needed</p>
-</li>
-<li>
-<p><strong>Model Changes</strong></p>
-</li>
-<li><strong>Risk:</strong> Changing embedding model invalidates all embeddings</li>
-<li><strong>Mitigation:</strong> <code>mark_embeddings_stale_for_model()</code> function tracks this</li>
-<li><strong>Fallback:</strong> Regeneration job system handles bulk updates</li>
-</ol>
-<h2 id="timeline-estimate">Timeline Estimate</h2>
-<ul>
-<li><strong>Phase 1 (Schema):</strong> 1-2 hours (including testing)</li>
-<li><strong>Phase 2 (EmbeddingWorker):</strong> 8-12 hours (implementation + testing)</li>
-<li><strong>Phase 3 (Grounding):</strong> 8-12 hours (implementation + testing)</li>
-<li><strong>Phase 4 (Vocabulary):</strong> 12-16 hours (implementation + testing)</li>
-</ul>
-<p><strong>Total:</strong> 29-42 hours over 1-2 weeks</p>
-<h2 id="approval-required-before-phase-2">Approval Required Before Phase 2</h2>
-<p>Before proceeding to Phase 2 implementation:
-- [ ] Review migration files (011, 012)
-- [ ] Test migrations on development database
-- [ ] Verify backup procedures
-- [ ] Confirm no production impact from schema changes
-- [ ] Get explicit approval to proceed with Python implementation</p>
 <hr />
-<p><strong>Next Steps:</strong></p>
-<ol>
-<li>Review this migration plan</li>
-<li>Apply migrations 011 and 012 to development database</li>
-<li>Test schema changes thoroughly</li>
-<li>Get approval before Phase 2 implementation</li>
-</ol>
+<p><strong>Last Updated:</strong> 2025-10-27
+<strong>Status:</strong> Planning Complete - Ready for Implementation</p>
 
 
 
