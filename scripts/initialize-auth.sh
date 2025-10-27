@@ -145,8 +145,8 @@ if [ "$GENERATE_SECRET" = true ]; then
     # Update or create .env file
     if [ -f "$PROJECT_ROOT/.env" ]; then
         if grep -q "^JWT_SECRET_KEY=" "$PROJECT_ROOT/.env"; then
-            # Update existing
-            sed -i "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=$JWT_SECRET/" "$PROJECT_ROOT/.env"
+            # Update existing (cross-platform sed)
+            sed "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=$JWT_SECRET/" "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp" && mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
         else
             # Append new
             echo "JWT_SECRET_KEY=$JWT_SECRET" >> "$PROJECT_ROOT/.env"
@@ -192,8 +192,8 @@ if [ "$GENERATE_ENCRYPTION_KEY" = true ]; then
     # Update or create .env file
     if [ -f "$PROJECT_ROOT/.env" ]; then
         if grep -q "^ENCRYPTION_KEY=" "$PROJECT_ROOT/.env"; then
-            # Update existing
-            sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=$ENCRYPTION_KEY|" "$PROJECT_ROOT/.env"
+            # Update existing (cross-platform sed)
+            sed "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=$ENCRYPTION_KEY|" "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp" && mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
         else
             # Append new
             echo "" >> "$PROJECT_ROOT/.env"
