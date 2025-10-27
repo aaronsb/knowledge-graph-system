@@ -1,9 +1,16 @@
 # ADR-047: Probabilistic Vocabulary Categorization
 
-**Status:** Proposed
+**Status:** Implemented ✅
 **Date:** 2025-10-26
+**Implementation Date:** 2025-10-27
 **Deciders:** System Architects
 **Related:** ADR-044 (Probabilistic Truth Convergence), ADR-025 (Dynamic Relationship Vocabulary), ADR-022 (Semantic Relationship Taxonomy)
+
+**Implementation:**
+- Migration 015: Schema fields for category scoring
+- VocabularyCategorizer class: Core categorization logic
+- Tested with builtin types (100% accuracy on seed types)
+- Ready for LLM-generated type categorization
 
 ## Context
 
