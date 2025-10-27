@@ -1,0 +1,16 @@
+{
+  "repositories": [
+    {
+      "name": "knowledge-graph-system",
+      "path": "../../..",
+      "ontology": "KG System Development",
+      "last_commit": null,
+      "last_pr": null,
+      "github_repo": "aaronsb/knowledge-graph-system",
+      "enabled": true
+    }
+  ],
+  "output_dir": "output",
+  "commit_limit": null,
+  "pr_limit": null
+}
