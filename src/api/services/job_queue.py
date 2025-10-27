@@ -61,7 +61,8 @@ class JobQueue(ABC):
     def list_jobs(
         self,
         status: Optional[str] = None,
-        limit: int = 50
+        limit: int = 50,
+        offset: int = 0
     ) -> List[Dict]:
         """List jobs, optionally filtered by status"""
         pass
@@ -378,7 +379,8 @@ class InMemoryJobQueue(JobQueue):
         self,
         status: Optional[str] = None,
         client_id: Optional[str] = None,
-        limit: int = 50
+        limit: int = 50,
+        offset: int = 0
     ) -> List[Dict]:
         """List jobs from DB, optionally filtered by status and/or client_id"""
         conditions = []
@@ -393,8 +395,9 @@ class InMemoryJobQueue(JobQueue):
             params.append(client_id)
 
         where_clause = " AND ".join(conditions) if conditions else "1=1"
-        query = f"SELECT * FROM jobs WHERE {where_clause} ORDER BY created_at DESC LIMIT ?"
+        query = f"SELECT * FROM jobs WHERE {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
         params.append(limit)
+        params.append(offset)
 
         cursor = self.db.execute(query, tuple(params))
         return [self._row_to_dict(row) for row in cursor.fetchall()]
@@ -735,8 +738,8 @@ class PostgreSQLJobQueue(JobQueue):
                         # Map 'error' to 'error_message' column
                         set_clauses.append("error_message = %s")
                         params.append(value)
-                    elif key in ['progress', 'result', 'analysis']:
-                        # JSONB fields
+                    elif key in ['progress', 'result', 'analysis', 'job_data']:
+                        # JSONB fields (added job_data for checkpoint support)
                         set_clauses.append(f"{key} = %s::jsonb")
                         params.append(json.dumps(value) if value else None)
                     elif key in ['status', 'processing_mode', 'approved_by']:
@@ -790,7 +793,8 @@ class PostgreSQLJobQueue(JobQueue):
         self,
         status: Optional[str] = None,
         client_id: Optional[str] = None,
-        limit: int = 50
+        limit: int = 50,
+        offset: int = 0
     ) -> List[Dict]:
         """List jobs from PostgreSQL, optionally filtered"""
         conn = self._get_connection()
@@ -809,6 +813,7 @@ class PostgreSQLJobQueue(JobQueue):
 
                 where_clause = " AND ".join(conditions) if conditions else "1=1"
                 params.append(limit)
+                params.append(offset)
 
                 cur.execute(f"""
                     SELECT
@@ -820,7 +825,7 @@ class PostgreSQLJobQueue(JobQueue):
                     FROM kg_api.ingestion_jobs
                     WHERE {where_clause}
                     ORDER BY created_at DESC
-                    LIMIT %s
+                    LIMIT %s OFFSET %s
                 """, params)
 
                 jobs = []

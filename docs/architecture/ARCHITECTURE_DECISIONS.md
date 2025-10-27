@@ -60,7 +60,9 @@ All ADRs follow a consistent format:
 | [ADR-041](ADR-041-ai-extraction-config.md) | AI Extraction Provider Configuration | Proposed | Database-first configuration for LLM provider/model selection with hot-reload capability and unified management interface |
 | [ADR-042](ADR-042-local-extraction-inference.md) | Local LLM Inference for Concept Extraction | Accepted | Ollama integration for local extraction with GPU acceleration, eliminating cloud API dependency and enabling air-gapped deployment |
 | [ADR-043](ADR-043-single-node-resource-management.md) | Single-Node Resource Management for Local Inference | Accepted | Dynamic device selection with intelligent CPU fallback for embeddings when VRAM contention detected (~100ms penalty, prevents silent failures) |
-| [ADR-044](ADR-044-probabilistic-truth-convergence.md) | Probabilistic Truth Convergence | Proposed | Non-destructive contradiction resolution via statistical edge analysis (≥80% threshold) with agent-based introspection and reversible marking - inspired by Darwin-Gödel machines and evolutionary epistemology |
+| [ADR-044](ADR-044-probabilistic-truth-convergence.md) | Probabilistic Truth Convergence | Proposed | Embedding-based grounding strength calculation using semantic similarity to prototypical edge types (SUPPORTS/CONTRADICTS) - no hard-coded polarity, scales with vocabulary expansion. **Requires ADR-045** |
+| [ADR-045](ADR-045-unified-embedding-generation.md) | Unified Embedding Generation System | Proposed | Centralized EmbeddingWorker for all embedding generation (concepts, vocabulary, cold start, model migration) - enables ADR-044 grounding and supports ADR-032 vocabulary expansion |
+| [ADR-046](ADR-046-grounding-aware-vocabulary-management.md) | Grounding-Aware Vocabulary Management | Proposed | Enhanced VocabularyScorer with grounding contribution metrics; embedding-based synonym detection; dynamic LLM prompt curation (40-50 types instead of 200); sliding window lifecycle management |
 
 ## How to Use This Index
 
@@ -134,6 +136,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-10-23
+**Last Updated:** 2025-01-25
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.

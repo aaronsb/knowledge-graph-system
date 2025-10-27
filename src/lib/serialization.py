@@ -27,14 +27,71 @@ class BackupFormat:
     ONTOLOGY_BACKUP = "ontology_backup"
 
     @staticmethod
-    def create_metadata(backup_type: str, ontology: Optional[str] = None) -> Dict[str, Any]:
-        """Create backup metadata"""
-        return {
+    def get_schema_version(client: AGEClient) -> int:
+        """
+        Get current database schema version (last applied migration number)
+
+        Queries kg_api.schema_migrations table to find the highest migration
+        version that has been applied. This version is included in backups to
+        track schema compatibility across backup/restore cycles.
+
+        Returns:
+            Schema version number (e.g., 13 for migration 013_*.sql)
+        """
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                # Check if schema_migrations table exists
+                cur.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables
+                        WHERE table_schema = 'kg_api'
+                        AND table_name = 'schema_migrations'
+                    )
+                """)
+                table_exists = cur.fetchone()[0]
+
+                if not table_exists:
+                    # Table doesn't exist yet, return 12 (last migration before this one)
+                    return 12
+
+                # Get highest version from schema_migrations
+                cur.execute("""
+                    SELECT COALESCE(MAX(version), 12)
+                    FROM kg_api.schema_migrations
+                """)
+                version = cur.fetchone()[0]
+                return int(version)
+
+        finally:
+            conn.commit()
+            client.pool.putconn(conn)
+
+    @staticmethod
+    def create_metadata(backup_type: str, ontology: Optional[str] = None, client: AGEClient = None) -> Dict[str, Any]:
+        """
+        Create backup metadata with schema versioning
+
+        Args:
+            backup_type: Type of backup (full_backup or ontology_backup)
+            ontology: Optional ontology name
+            client: AGEClient instance (needed for schema version)
+
+        Returns:
+            Metadata dictionary with version, schema_version, type, timestamp, ontology
+        """
+        metadata = {
             "version": BackupFormat.VERSION,
             "type": backup_type,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "ontology": ontology
         }
+
+        # Add schema version if client provided (ADR-015: Schema Versioning)
+        if client:
+            metadata["schema_version"] = BackupFormat.get_schema_version(client)
+
+        return metadata
 
 
 class DataExporter:
@@ -283,16 +340,18 @@ class DataExporter:
 
                 vocabulary = []
                 for row in results:
-                    # Convert row to dict and handle JSON fields
+                    # Convert row to dict and handle type conversions
                     entry = dict(row)
 
-                    # Parse JSONB fields
+                    # Handle synonyms field (VARCHAR[] array, not JSONB)
+                    # PostgreSQL returns arrays as Python lists
                     if entry.get('synonyms'):
-                        try:
-                            entry['synonyms'] = json.loads(entry['synonyms']) if isinstance(entry['synonyms'], str) else entry['synonyms']
-                        except (json.JSONDecodeError, TypeError):
-                            entry['synonyms'] = []
+                        # Already a list from psycopg2, keep as-is
+                        entry['synonyms'] = list(entry['synonyms']) if entry['synonyms'] else None
+                    else:
+                        entry['synonyms'] = None
 
+                    # Handle embedding field (JSONB)
                     if entry.get('embedding'):
                         try:
                             entry['embedding'] = json.loads(entry['embedding']) if isinstance(entry['embedding'], str) else entry['embedding']
@@ -391,7 +450,7 @@ class DataExporter:
         DataExporter._log_vocabulary_summary(relationships, vocabulary)
 
         return {
-            **BackupFormat.create_metadata(BackupFormat.FULL_BACKUP),
+            **BackupFormat.create_metadata(BackupFormat.FULL_BACKUP, client=client),  # Fixed: pass client for schema_version
             "statistics": {
                 "concepts": len(concepts),
                 "sources": len(sources),
@@ -443,7 +502,7 @@ class DataExporter:
         DataExporter._log_vocabulary_summary(relationships, vocabulary)
 
         return {
-            **BackupFormat.create_metadata(BackupFormat.ONTOLOGY_BACKUP, ontology),
+            **BackupFormat.create_metadata(BackupFormat.ONTOLOGY_BACKUP, ontology, client=client),  # Fixed: pass client for schema_version
             "statistics": {
                 "concepts": len(concepts),
                 "sources": len(sources),
@@ -544,8 +603,11 @@ class DataImporter:
                             percent = (current / total_vocab) * 100
                             progress_callback("vocabulary", current, total_vocab, percent)
 
-                        # Convert JSON fields back to JSONB strings
-                        synonyms_json = json.dumps(entry.get('synonyms')) if entry.get('synonyms') else None
+                        # Prepare field values
+                        # synonyms: VARCHAR[] array (not JSONB)
+                        synonyms_array = entry.get('synonyms') if entry.get('synonyms') else None
+
+                        # embedding: JSONB field
                         embedding_json = json.dumps(entry.get('embedding')) if entry.get('embedding') else None
 
                         # Insert or update vocabulary entry
@@ -554,7 +616,7 @@ class DataImporter:
                                 (relationship_type, description, category, added_by, added_at,
                                  usage_count, is_active, is_builtin, synonyms, deprecation_reason,
                                  embedding_model, embedding_generated_at, embedding)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s::jsonb)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                             ON CONFLICT (relationship_type) DO UPDATE SET
                                 description = EXCLUDED.description,
                                 category = EXCLUDED.category,
@@ -577,7 +639,7 @@ class DataImporter:
                             entry.get('usage_count', 0),
                             entry.get('is_active', True),
                             entry.get('is_builtin', False),
-                            synonyms_json,
+                            synonyms_array,  # Fixed: VARCHAR[] array, not JSONB
                             entry.get('deprecation_reason'),
                             entry.get('embedding_model'),
                             entry.get('embedding_generated_at'),

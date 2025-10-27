@@ -1,11 +1,25 @@
 # ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
 
 **Status:** Proposed
-**Date:** 2025-10-24
+**Date:** 2025-10-24 (Updated: 2025-10-25)
 **Authors:** System Architecture Team
-**Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds)
+**Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), **ADR-045 (Unified Embedding Generation - DEPENDENCY)**, ADR-046 (Grounding-Aware Vocabulary Management)
 
 ## Context
+
+### The ADR-044/045/046 Trio
+
+This ADR is part of a three-part system for truth convergence in the knowledge graph:
+
+| ADR | Focus | Purpose |
+|-----|-------|---------|
+| **ADR-044** | **Theory** | Probabilistic truth convergence through grounding strength |
+| **ADR-045** | **Storage** | Unified embedding generation infrastructure |
+| **ADR-046** | **Management** | Vocabulary lifecycle with grounding awareness |
+
+**Implementation Order:** ADR-045 → ADR-044 → ADR-046
+
+---
 
 ### The Problem of Contradictory Truth
 
@@ -165,7 +179,47 @@ Beyond the philosophical and evolutionary metaphors, this approach is grounded i
 
 **Core Principle:** Truth emerges from statistical preponderance of evidence, calculated dynamically at query time, not stored as static labels.
 
+**Update 2025-01-25:** This ADR now depends on **ADR-045 (Unified Embedding Generation)**, which must be implemented first to enable embedding-based grounding calculation.
+
 **Key insight:** Rather than marking concepts as "IRRELEVANT" (static, binary, query-exclusion problem), we calculate a continuous **grounding_strength** score (0.0-1.0) based on current edge weights whenever the concept is queried.
+
+### Refined Approach: Embedding-Based Edge Semantics (2025-01-25)
+
+**Discovery:** During implementation planning, we found that **binary polarity classification (positive/negative) is too reductive** for the 64 edge types in production (30 builtin + 34 LLM-generated).
+
+**Key findings:**
+1. System has **8 semantic categories** of relationships (evidential, logical, causal, structural, similarity, temporal, functional, meta)
+2. LLM dynamically creates new edge types (34 types with 100% embedding coverage)
+3. Builtin types lack embeddings (0/30 have embeddings - solved by ADR-045)
+4. Hard-coding edge polarity doesn't scale with vocabulary expansion (ADR-032)
+
+**Solution: Embedding-based semantic similarity instead of hard-coded polarity**
+
+Rather than manually classifying each edge type as "positive" or "negative" for grounding, we use **semantic similarity in embedding space** to prototypical edge types:
+
+```python
+# For each incoming edge, calculate similarity to prototypes
+support_similarity = cosine_similarity(edge_embedding, SUPPORTS_embedding)
+contradict_similarity = cosine_similarity(edge_embedding, CONTRADICTS_embedding)
+
+# Weight by confidence and semantic similarity
+if support_similarity > contradict_similarity:
+    support_weight += edge.confidence * support_similarity
+else:
+    contradict_weight += edge.confidence * contradict_similarity
+```
+
+**Advantages over binary polarity:**
+- ✅ Works with **any edge type** (even brand new LLM-generated ones)
+- ✅ **No manual classification** needed
+- ✅ **Continuous spectrum** (ENHANCES vs SUPPORTS vs FOUNDATION_FOR weighted differently)
+- ✅ **Future-proof** for vocabulary expansion
+- ✅ **Semantically nuanced** (embedding space captures meaning)
+
+**Prerequisites (ADR-045):**
+1. All vocabulary types must have embeddings
+2. Unified embedding generation system for cold start
+3. Ability to regenerate embeddings when model changes
 
 ### Mechanism: Dynamic Grounding Strength Computation
 
@@ -1197,34 +1251,45 @@ When contradictions persist even after introspection:
 
 ## Implementation Status
 
-- [ ] Phase 1: Core Grounding Calculation
-  - [ ] Implement Cypher query pattern for dynamic grounding_strength calculation
+**BLOCKED:** Requires ADR-045 (Unified Embedding Generation) to be implemented first.
+
+**ADR-045 Prerequisites:**
+- [ ] Phase 1: Implement EmbeddingWorker service
+- [ ] Phase 2: Initialize embeddings for 30 builtin types
+- [ ] Phase 3: Verify all vocabulary types have embeddings
+
+**Once ADR-045 Complete:**
+- [ ] Phase 1: Embedding-Based Grounding Calculation
+  - [ ] Implement `calculate_grounding_strength_semantic()` in AGEClient
+  - [ ] Use embedding similarity instead of hard-coded polarity
   - [ ] Add `min_grounding` parameter to query API endpoints
-  - [ ] Implement weighted edge confidence summing (not counting)
   - [ ] Add grounding_strength to concept query responses
   - [ ] Add admin endpoint: `GET /admin/grounding-analysis` (list weakly-grounded concepts)
-  - [ ] Validate grounding_strength calculation with test scenarios
-- [ ] Phase 2: Agent Context Generation (Optional Enhancement)
+  - [ ] Validate with production edge types (SUPPORTS, ENABLES, etc.)
+- [ ] Phase 2: API Integration
+  - [ ] Update ConceptDetailsResponse model with grounding_strength field
+  - [ ] Update concept details endpoint to calculate grounding
+  - [ ] Update search endpoint to optionally include grounding
+  - [ ] Update TypeScript types and MCP tools
+- [ ] Phase 3: Agent Context Generation (Optional Enhancement)
   - [ ] Build agent context generation prompt
   - [ ] Implement `POST /admin/agent-context/{concept_id}` endpoint
   - [ ] Add temporal analysis logic (historical vs current)
   - [ ] Add alternative concept suggestion (higher grounding)
-  - [ ] Integrate agent context into LLM query patterns
-- [ ] Phase 3: Performance Optimization (Future)
+- [ ] Phase 4: Performance Optimization (Future)
   - [ ] Implement optional caching strategy (materialized grounding_strength)
   - [ ] Add cache invalidation on edge changes
   - [ ] Build monitoring dashboard for grounding distribution
-  - [ ] A/B test cached vs real-time calculation performance
   - [ ] Add grounding_strength trend tracking (temporal analysis)
 
 **Next Steps:**
-1. Implement depth=1 grounding_strength Cypher query (immediate)
-2. Test with Neo4j → Apache AGE example (verify 0.232 grounding)
-3. Add `min_grounding` parameter to search endpoints
-4. Gather metrics on grounding distribution in production graph
-5. Refine default threshold (0.20) based on real-world data
+1. **Implement ADR-045 first** (unified embedding generation)
+2. Initialize embeddings for builtin vocabulary types
+3. Implement embedding-based grounding calculation
+4. Test with production edge types (SUPPORTS, ENABLES, ENHANCES, etc.)
+5. Gather metrics on grounding distribution in production graph
 
 ---
 
-**Last Updated:** 2025-01-24
-**Next Review:** After Phase 1 implementation
+**Last Updated:** 2025-01-25 (Added ADR-045 dependency and embedding-based approach)
+**Next Review:** After ADR-045 implementation

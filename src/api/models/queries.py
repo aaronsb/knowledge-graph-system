@@ -15,6 +15,8 @@ class SearchRequest(BaseModel):
     limit: int = Field(10, description="Maximum number of results to return", ge=1, le=100)
     min_similarity: float = Field(0.7, description="Minimum similarity score (0.0-1.0, default 70%)", ge=0.0, le=1.0)
     offset: int = Field(0, description="Number of results to skip for pagination (default: 0)", ge=0)
+    include_evidence: bool = Field(False, description="Include sample evidence instances (quotes from source text) for each concept")
+    include_grounding: bool = Field(True, description="Include grounding strength (ADR-044: probabilistic truth score) for each concept")
 
 
 class ConceptSearchResult(BaseModel):
@@ -24,6 +26,8 @@ class ConceptSearchResult(BaseModel):
     score: float = Field(..., description="Similarity score (0.0-1.0)")
     documents: List[str] = Field(..., description="Documents where concept appears")
     evidence_count: int = Field(..., description="Number of evidence instances")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
+    sample_evidence: Optional[List['ConceptInstance']] = Field(None, description="Sample evidence instances (quotes from source text) when include_evidence=true")
 
 
 class SearchResponse(BaseModel):
@@ -80,6 +84,7 @@ class ConceptDetailsResponse(BaseModel):
     documents: List[str] = Field(..., description="Documents where concept appears")
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-044)")
 
 
 # Related Concepts Models
@@ -123,12 +128,16 @@ class FindConnectionRequest(BaseModel):
     from_id: str = Field(..., description="Starting concept ID (exact match required)")
     to_id: str = Field(..., description="Target concept ID (exact match required)")
     max_hops: int = Field(5, description="Maximum path length to search (1-10 hops)", ge=1, le=10)
+    include_evidence: bool = Field(False, description="Include sample evidence instances for each concept in paths")
+    include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-044)")
 
 
 class PathNode(BaseModel):
     """Node in a connection path"""
     id: str = Field(..., description="Concept ID")
     label: str = Field(..., description="Concept label")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
+    sample_evidence: Optional[List['ConceptInstance']] = Field(None, description="Sample evidence instances when include_evidence=true")
 
 
 class ConnectionPath(BaseModel):
@@ -164,6 +173,8 @@ class FindConnectionBySearchRequest(BaseModel):
     to_query: str = Field(..., description="Semantic phrase for target concept (use specific 2-3 word phrases)", min_length=1)
     max_hops: int = Field(5, description="Maximum path length to search", ge=1, le=10)
     threshold: float = Field(0.5, description="Minimum similarity threshold (default 50% - lower for broader matches)", ge=0.0, le=1.0)
+    include_evidence: bool = Field(False, description="Include sample evidence instances for each concept in paths")
+    include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-044)")
 
 
 class FindConnectionBySearchResponse(BaseModel):

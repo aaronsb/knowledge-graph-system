@@ -125,6 +125,8 @@ export interface SearchRequest {
   limit?: number;
   min_similarity?: number;
   offset?: number; // Pagination offset
+  include_evidence?: boolean; // Include sample evidence instances (quotes from source text)
+  include_grounding?: boolean; // Include grounding strength (ADR-044: probabilistic truth score)
 }
 
 export interface ConceptSearchResult {
@@ -133,6 +135,8 @@ export interface ConceptSearchResult {
   score: number;
   documents: string[];
   evidence_count: number;
+  grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }
 
 export interface SearchResponse {
@@ -167,6 +171,7 @@ export interface ConceptDetailsResponse {
   documents: string[];
   instances: ConceptInstance[];
   relationships: ConceptRelationship[];
+  grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
 }
 
 export interface RelatedConceptsRequest {
@@ -193,11 +198,15 @@ export interface FindConnectionRequest {
   from_id: string;
   to_id: string;
   max_hops?: number;
+  include_evidence?: boolean; // Include sample evidence instances for each concept in paths
+  include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-044)
 }
 
 export interface PathNode {
   id: string;
   label: string;
+  grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }
 
 export interface ConnectionPath {
@@ -219,6 +228,8 @@ export interface FindConnectionBySearchRequest {
   to_query: string;
   max_hops?: number;
   threshold?: number;
+  include_evidence?: boolean; // Include sample evidence instances for each concept in paths
+  include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-044)
 }
 
 export interface FindConnectionBySearchResponse {

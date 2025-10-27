@@ -1611,126 +1611,220 @@ class AGEClient:
         """
         return self.store_embedding(relationship_type, embedding, embedding_model)
 
-    def generate_vocabulary_embeddings(
+    def calculate_grounding_strength_semantic(
         self,
-        ai_provider,
-        force_regenerate: bool = False,
-        only_missing: bool = True
-    ) -> Dict[str, int]:
+        concept_id: str,
+        include_types: Optional[List[str]] = None,
+        exclude_types: Optional[List[str]] = None
+    ) -> float:
         """
-        Bulk generate/regenerate embeddings for vocabulary types.
+        Calculate grounding strength using embedding-based edge semantics (ADR-044).
 
-        Useful for:
-        - Fixing missing embeddings after database issues
-        - Regenerating embeddings after model changes
-        - Updating embeddings after vocabulary merges
+        Uses semantic similarity to prototypical edge types (SUPPORTS, CONTRADICTS)
+        instead of hard-coded polarity. This scales to dynamic vocabulary without
+        manual classification.
+
+        Algorithm:
+        1. Get embeddings for SUPPORTS and CONTRADICTS prototypes
+        2. For each incoming edge to concept:
+           - Get edge type embedding
+           - Calculate similarity to both prototypes
+           - Classify as supporting (higher SUPPORTS similarity) or contradicting
+           - Weight by edge confidence and semantic similarity
+        3. Calculate grounding_strength = (support - contradict) / (support + contradict)
 
         Args:
-            ai_provider: AI provider instance for embedding generation
-            force_regenerate: Regenerate all embeddings (default: False)
-            only_missing: Only generate for types without embeddings (default: True, ignored if force_regenerate=True)
+            concept_id: Target concept to calculate grounding for
+            include_types: Optional list of relationship types to include
+            exclude_types: Optional list of relationship types to exclude
 
         Returns:
-            Dict with counts: {"generated": N, "skipped": M, "failed": K}
+            Grounding strength float in range [-1.0, 1.0]:
+            - 1.0 = Maximally grounded (strong support, no contradiction)
+            - 0.0 = Neutral (balanced support/contradiction or no edges)
+            - -1.0 = Maximally ungrounded (strong contradiction, no support)
 
         Example:
-            >>> from src.api.lib.ai_providers import get_provider
-            >>> provider = get_provider()
-            >>> result = client.generate_vocabulary_embeddings(provider, only_missing=True)
-            >>> print(f"Generated {result['generated']} embeddings")
+            >>> client = AGEClient()
+            >>> grounding = client.calculate_grounding_strength_semantic("concept-123")
+            >>> print(f"Grounding: {grounding:.2f}")
+            Grounding: 0.75  # Strongly grounded
+
+        References:
+            - ADR-044: Probabilistic Truth Convergence
+            - ADR-045: Unified Embedding Generation
         """
+        import numpy as np
+
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                # Get vocabulary types to process
-                if force_regenerate:
-                    # Regenerate ALL embeddings
-                    cur.execute("""
-                        SELECT relationship_type
-                        FROM kg_api.relationship_vocabulary
-                        WHERE is_active = TRUE
-                        ORDER BY relationship_type
-                    """)
-                    logger.info("Generating embeddings for ALL vocabulary types (force_regenerate=True)")
-                elif only_missing:
-                    # Only types without embeddings
-                    cur.execute("""
-                        SELECT relationship_type
-                        FROM kg_api.relationship_vocabulary
-                        WHERE is_active = TRUE AND embedding IS NULL
-                        ORDER BY relationship_type
-                    """)
-                    logger.info("Generating embeddings for vocabulary types WITHOUT embeddings")
-                else:
-                    # All active types (might skip some if they already have embeddings)
-                    cur.execute("""
-                        SELECT relationship_type
-                        FROM kg_api.relationship_vocabulary
-                        WHERE is_active = TRUE
-                        ORDER BY relationship_type
-                    """)
-                    logger.info("Generating embeddings for active vocabulary types")
+                # Step 1: Get prototype embeddings for SUPPORTS and CONTRADICTS
+                cur.execute("""
+                    SELECT relationship_type, embedding
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type IN ('SUPPORTS', 'CONTRADICTS')
+                      AND embedding IS NOT NULL
+                """)
+                prototypes = cur.fetchall()
 
-                types_to_process = [row['relationship_type'] for row in cur.fetchall()]
-                total = len(types_to_process)
+                if len(prototypes) < 2:
+                    logger.warning(f"Missing prototype embeddings (need SUPPORTS and CONTRADICTS)")
+                    return 0.0
 
-                if total == 0:
-                    logger.info("No vocabulary types to process")
-                    return {"generated": 0, "skipped": 0, "failed": 0}
+                # Parse prototype embeddings
+                supports_emb = None
+                contradicts_emb = None
 
-                logger.info(f"Processing {total} vocabulary types...")
+                for proto in prototypes:
+                    emb_json = proto['embedding']
+                    if isinstance(emb_json, str):
+                        emb_array = np.array(json.loads(emb_json), dtype=float)
+                    elif isinstance(emb_json, list):
+                        emb_array = np.array(emb_json, dtype=float)
+                    elif isinstance(emb_json, dict):
+                        # JSONB might be returned as dict
+                        emb_array = np.array(list(emb_json.values()), dtype=float)
+                    else:
+                        try:
+                            emb_array = np.array(list(emb_json), dtype=float)
+                        except:
+                            logger.warning(f"Could not parse prototype embedding for {proto['relationship_type']}")
+                            continue
 
-                generated = 0
-                skipped = 0
-                failed = 0
+                    if proto['relationship_type'] == 'SUPPORTS':
+                        supports_emb = emb_array
+                    elif proto['relationship_type'] == 'CONTRADICTS':
+                        contradicts_emb = emb_array
 
-                for idx, rel_type in enumerate(types_to_process, 1):
-                    try:
-                        # Convert edge type to descriptive text (same logic as add_edge_type and SynonymDetector)
-                        descriptive_text = f"relationship: {rel_type.lower().replace('_', ' ')}"
+                if supports_emb is None or contradicts_emb is None:
+                    logger.warning("Failed to parse prototype embeddings")
+                    return 0.0
 
-                        # Generate embedding
-                        embedding_response = ai_provider.generate_embedding(descriptive_text)
-                        embedding = embedding_response["embedding"]
-                        model = embedding_response.get("model", "text-embedding-ada-002")
+                # Step 2: Get all incoming relationships to this concept
+                # Use _execute_cypher() to avoid agtype parsing issues
+                cypher_edges_query = f"""
+                    MATCH (c:Concept {{concept_id: '{concept_id}'}})<-[r]-(source)
+                    RETURN type(r) as rel_type, r.confidence as confidence
+                """
 
-                        # Store embedding
-                        embedding_json = json.dumps(embedding)
-                        cur.execute("""
-                            UPDATE kg_api.relationship_vocabulary
-                            SET embedding = %s::jsonb,
-                                embedding_model = %s,
-                                embedding_generated_at = NOW()
-                            WHERE relationship_type = %s
-                        """, (embedding_json, model, rel_type))
+                edge_results = self._execute_cypher(cypher_edges_query)
 
-                        generated += 1
+                if not edge_results:
+                    # No incoming edges = neutral grounding
+                    return 0.0
 
-                        # Log progress every 10 types
-                        if idx % 10 == 0:
-                            logger.info(f"  Progress: {idx}/{total} ({(idx/total)*100:.0f}%)")
+                # Step 2b: Get embeddings for these edge types from vocabulary
+                # Build list of unique relationship types
+                rel_types = set(edge['rel_type'] for edge in edge_results)
 
-                    except Exception as e:
-                        failed += 1
-                        logger.error(f"Failed to generate embedding for '{rel_type}': {e}")
+                # Apply type filters
+                if include_types:
+                    rel_types = rel_types & set(include_types)
+                if exclude_types:
+                    rel_types = rel_types - set(exclude_types)
 
-                # Commit all changes
-                conn.commit()
+                if not rel_types:
+                    return 0.0
 
-                logger.info(f"Bulk embedding generation complete: {generated} generated, {skipped} skipped, {failed} failed")
-                return {
-                    "generated": generated,
-                    "skipped": skipped,
-                    "failed": failed
-                }
+                # Query vocabulary for embeddings
+                types_list = ','.join([f"'{t}'" for t in rel_types])
+                vocab_query = f"""
+                    SELECT relationship_type, embedding
+                    FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type IN ({types_list})
+                      AND embedding IS NOT NULL
+                """
+
+                cur.execute(vocab_query)
+                vocab_embeddings = {row['relationship_type']: row['embedding']
+                                   for row in cur.fetchall()}
+
+                # Join edge results with embeddings in Python
+                edges = []
+                for edge in edge_results:
+                    rel_type = edge['rel_type']
+                    if rel_type in vocab_embeddings:
+                        # Default confidence to 1.0 if None
+                        confidence = edge.get('confidence') or 1.0
+                        edges.append({
+                            'relationship_type': rel_type,
+                            'confidence': float(confidence),
+                            'embedding': vocab_embeddings[rel_type]
+                        })
+
+
+                if not edges:
+                    # No incoming edges = neutral grounding
+                    return 0.0
+
+                # Step 3: Calculate weighted support and contradiction scores
+                support_weight = 0.0
+                contradict_weight = 0.0
+
+                for edge in edges:
+                    # Parse edge embedding from JSONB
+                    emb_json = edge['embedding']
+                    if isinstance(emb_json, str):
+                        edge_emb = np.array(json.loads(emb_json), dtype=float)
+                    elif isinstance(emb_json, list):
+                        edge_emb = np.array(emb_json, dtype=float)
+                    elif isinstance(emb_json, dict):
+                        # JSONB might be returned as dict, not list
+                        edge_emb = np.array(list(emb_json.values()), dtype=float)
+                    else:
+                        # Try to convert to list
+                        try:
+                            edge_emb = np.array(list(emb_json), dtype=float)
+                        except:
+                            logger.warning(f"Could not parse embedding for {edge.get('relationship_type')}")
+                            continue
+
+                    # Get confidence (default to 1.0 if not set)
+                    confidence_str = edge.get('confidence')
+                    if confidence_str:
+                        # Parse agtype confidence
+                        if isinstance(confidence_str, dict):
+                            confidence = float(confidence_str.get('confidence', 1.0))
+                        else:
+                            confidence = float(confidence_str)
+                    else:
+                        confidence = 1.0
+
+                    # Calculate semantic similarity to prototypes (cosine similarity)
+                    support_sim = np.dot(edge_emb, supports_emb) / (
+                        np.linalg.norm(edge_emb) * np.linalg.norm(supports_emb)
+                    )
+                    contradict_sim = np.dot(edge_emb, contradicts_emb) / (
+                        np.linalg.norm(edge_emb) * np.linalg.norm(contradicts_emb)
+                    )
+
+                    # Classify edge as supporting or contradicting based on higher similarity
+                    if support_sim > contradict_sim:
+                        # Edge is more semantically similar to SUPPORTS
+                        support_weight += confidence * float(support_sim)
+                    else:
+                        # Edge is more semantically similar to CONTRADICTS
+                        contradict_weight += confidence * float(contradict_sim)
+
+                # Step 4: Calculate final grounding strength
+                total_weight = support_weight + contradict_weight
+
+                if total_weight == 0:
+                    return 0.0
+
+                # Normalize to [-1.0, 1.0] range
+                grounding_strength = (support_weight - contradict_weight) / total_weight
+
+                return float(grounding_strength)
 
         except Exception as e:
-            conn.rollback()
-            raise Exception(f"Bulk embedding generation failed: {e}")
+            logger.error(f"Error calculating grounding strength for {concept_id}: {e}")
+            return 0.0
         finally:
             self.pool.putconn(conn)
 
-    async def execute_query(self, query: str) -> List[Dict]:
+    async def execute_query(self, query: str, params: tuple = None) -> List[Dict]:
         """
         Execute a raw PostgreSQL query and return results as list of dicts.
 
@@ -1738,14 +1832,22 @@ class AGEClient:
         to query statistics tables directly with SQL (not Cypher).
 
         Args:
-            query: Raw PostgreSQL query string
+            query: Raw PostgreSQL query string (use %s for parameters)
+            params: Optional tuple of parameters for query placeholders
 
         Returns:
             List of row dictionaries
 
         Example:
+            >>> # Simple query
             >>> results = await client.execute_query(
             ...     "SELECT * FROM kg_api.relationship_vocabulary LIMIT 5"
+            ... )
+            >>>
+            >>> # Parameterized query
+            >>> results = await client.execute_query(
+            ...     "SELECT * FROM kg_api.relationship_vocabulary WHERE relationship_type = %s",
+            ...     ("IMPLIES",)
             ... )
             >>> for row in results:
             ...     print(row['relationship_type'])
@@ -1753,10 +1855,19 @@ class AGEClient:
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                cur.execute(query)
-                results = cur.fetchall()
-                # Convert RealDictRow to regular dict
-                return [dict(row) for row in results]
+                if params:
+                    cur.execute(query, params)
+                else:
+                    cur.execute(query)
+
+                # Check if query returns results (SELECT, RETURNING) or not (INSERT, UPDATE without RETURNING)
+                if cur.description is not None:
+                    results = cur.fetchall()
+                    # Convert RealDictRow to regular dict
+                    return [dict(row) for row in results]
+                else:
+                    # Query doesn't return results (INSERT, UPDATE, DELETE without RETURNING)
+                    return []
         finally:
             conn.commit()
             self.pool.putconn(conn)

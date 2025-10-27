@@ -127,12 +127,42 @@ async def search_concepts(request: SearchRequest):
                 )
                 evidence_count = evidence_query['evidence_count'] if evidence_query else 0
 
+                # Calculate grounding strength if requested (default: true)
+                grounding_strength = None
+                if request.include_grounding:
+                    try:
+                        grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+                # Fetch sample evidence instances if requested
+                sample_evidence = None
+                if request.include_evidence:
+                    evidence_instances_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                        f"ORDER BY s.document, s.paragraph "
+                        f"LIMIT 3"  # Sample first 3 instances
+                    )
+                    if evidence_instances_query:
+                        sample_evidence = [
+                            ConceptInstance(
+                                quote=e['quote'],
+                                document=e['document'],
+                                paragraph=e['paragraph'],
+                                source_id=e['source_id']
+                            )
+                            for e in evidence_instances_query
+                        ]
+
                 results.append(ConceptSearchResult(
                     concept_id=concept_id,
                     label=match['label'],
                     score=match['similarity'],
                     documents=documents,
-                    evidence_count=evidence_count
+                    evidence_count=evidence_count,
+                    grounding_strength=grounding_strength,
+                    sample_evidence=sample_evidence
                 ))
 
             # If few results found, check for additional concepts below threshold
@@ -176,12 +206,42 @@ async def search_concepts(request: SearchRequest):
                     )
                     top_evidence_count = top_evidence_query['evidence_count'] if top_evidence_query else 0
 
+                    # Calculate grounding for top match if requested
+                    top_grounding = None
+                    if request.include_grounding:
+                        try:
+                            top_grounding = client.calculate_grounding_strength_semantic(top_concept_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate grounding for top match {top_concept_id}: {e}")
+
+                    # Fetch sample evidence for top match if requested
+                    top_sample_evidence = None
+                    if request.include_evidence:
+                        top_evidence_instances_query = client._execute_cypher(
+                            f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"ORDER BY s.document, s.paragraph "
+                            f"LIMIT 3"
+                        )
+                        if top_evidence_instances_query:
+                            top_sample_evidence = [
+                                ConceptInstance(
+                                    quote=e['quote'],
+                                    document=e['document'],
+                                    paragraph=e['paragraph'],
+                                    source_id=e['source_id']
+                                )
+                                for e in top_evidence_instances_query
+                            ]
+
                     top_match = ConceptSearchResult(
                         concept_id=top_concept_id,
                         label=top_match_data['label'],
                         score=top_match_data['similarity'],
                         documents=top_documents,
-                        evidence_count=top_evidence_count
+                        evidence_count=top_evidence_count,
+                        grounding_strength=top_grounding,
+                        sample_evidence=top_sample_evidence
                     )
 
             return SearchResponse(
@@ -203,7 +263,10 @@ async def search_concepts(request: SearchRequest):
 
 
 @router.get("/concept/{concept_id}", response_model=ConceptDetailsResponse)
-async def get_concept_details(concept_id: str):
+async def get_concept_details(
+    concept_id: str,
+    include_grounding: bool = False
+):
     """
     Get detailed information about a specific concept including all evidence and relationships.
 
@@ -303,13 +366,22 @@ async def get_concept_details(concept_id: str):
         # Extract properties from AGE vertex structure: {id, label, properties: {...}}
         props = concept.get('properties', {})
 
+        # Calculate grounding strength if requested (ADR-044)
+        grounding_strength = None
+        if include_grounding:
+            try:
+                grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+            except Exception as e:
+                logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
         return ConceptDetailsResponse(
             concept_id=props.get('concept_id', ''),
             label=props.get('label', ''),
             search_terms=props.get('search_terms', []),
             documents=documents,
             instances=instances,
-            relationships=relationships
+            relationships=relationships,
+            grounding_strength=grounding_strength
         )
 
     except HTTPException:
@@ -448,13 +520,57 @@ async def find_connection(request: FindConnectionRequest):
             # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
 
             nodes = []
+            has_metadata_node = False  # Flag to skip paths with Source/Instance nodes
+
             for node in record['path_nodes']:
                 if isinstance(node, dict):
                     props = node.get('properties', {})
+                    concept_id = props.get('concept_id', '')
+                    label = props.get('label', '')
+
+                    # Check if this is a metadata node (Source or Instance)
+                    # Metadata nodes lack concept_id and label properties
+                    if not concept_id or not label:
+                        has_metadata_node = True
+
+                    # Calculate grounding strength if requested (default: true)
+                    grounding_strength = None
+                    if request.include_grounding and concept_id:
+                        try:
+                            grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+                    # Fetch sample evidence if requested
+                    sample_evidence = None
+                    if request.include_evidence and concept_id:
+                        evidence_query = client._execute_cypher(
+                            f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"ORDER BY s.document, s.paragraph "
+                            f"LIMIT 3"
+                        )
+                        if evidence_query:
+                            sample_evidence = [
+                                ConceptInstance(
+                                    quote=e['quote'],
+                                    document=e['document'],
+                                    paragraph=e['paragraph'],
+                                    source_id=e['source_id']
+                                )
+                                for e in evidence_query
+                            ]
+
                     nodes.append(PathNode(
-                        id=props.get('concept_id', ''),
-                        label=props.get('label', '')
+                        id=concept_id,
+                        label=label,
+                        grounding_strength=grounding_strength,
+                        sample_evidence=sample_evidence
                     ))
+
+            # Skip paths that go through Source or Instance nodes
+            if has_metadata_node:
+                continue
 
             # Relationship type is in the 'label' field of AGE edge object
             rel_types = []
@@ -468,6 +584,8 @@ async def find_connection(request: FindConnectionRequest):
                 hops=record['hops']
             ))
 
+        # Limit to 5 paths after filtering
+        paths = paths[:5]
 
         return FindConnectionResponse(
             from_id=request.from_id,
@@ -607,13 +725,57 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
             # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
 
             nodes = []
+            has_metadata_node = False  # Flag to skip paths with Source/Instance nodes
+
             for node in record['path_nodes']:
                 if isinstance(node, dict):
                     props = node.get('properties', {})
+                    concept_id = props.get('concept_id', '')
+                    label = props.get('label', '')
+
+                    # Check if this is a metadata node (Source or Instance)
+                    # Metadata nodes lack concept_id and label properties
+                    if not concept_id or not label:
+                        has_metadata_node = True
+
+                    # Calculate grounding strength if requested (default: true)
+                    grounding_strength = None
+                    if request.include_grounding and concept_id:
+                        try:
+                            grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+                    # Fetch sample evidence if requested
+                    sample_evidence = None
+                    if request.include_evidence and concept_id:
+                        evidence_query = client._execute_cypher(
+                            f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"ORDER BY s.document, s.paragraph "
+                            f"LIMIT 3"
+                        )
+                        if evidence_query:
+                            sample_evidence = [
+                                ConceptInstance(
+                                    quote=e['quote'],
+                                    document=e['document'],
+                                    paragraph=e['paragraph'],
+                                    source_id=e['source_id']
+                                )
+                                for e in evidence_query
+                            ]
+
                     nodes.append(PathNode(
-                        id=props.get('concept_id', ''),
-                        label=props.get('label', '')
+                        id=concept_id,
+                        label=label,
+                        grounding_strength=grounding_strength,
+                        sample_evidence=sample_evidence
                     ))
+
+            # Skip paths that go through Source or Instance nodes
+            if has_metadata_node:
+                continue
 
             # Relationship type is in the 'label' field of AGE edge object
             rel_types = []
@@ -627,6 +789,8 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                 hops=record['hops']
             ))
 
+        # Limit to 5 paths after filtering
+        paths = paths[:5]
 
         return FindConnectionBySearchResponse(
             from_query=request.from_query,

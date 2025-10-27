@@ -219,9 +219,14 @@ async def reload_embedding_model():
     """
     try:
         from ..lib.embedding_model_manager import reload_embedding_model_manager
+        from ..services.embedding_worker import reset_embedding_worker
 
         # Hot reload the model manager
         manager = await reload_embedding_model_manager()
+
+        # Reset EmbeddingWorker singleton so it picks up the new provider
+        reset_embedding_worker()
+        logger.info("🔄 Reset EmbeddingWorker singleton to pick up new provider")
 
         # Get new configuration summary
         summary = get_embedding_config_summary()

@@ -56,7 +56,7 @@ def run_restore_worker(
     """
     temp_file = Path(job_data["temp_file"])
     temp_file_id = job_data["temp_file_id"]
-    overwrite = job_data.get("overwrite", False)
+    overwrite = job_data.get("overwrite", True)  # Default: create new concepts (full restore)
     handle_external_deps = job_data.get("handle_external_deps", "prune")
     backup_stats = job_data.get("backup_stats", {})
 

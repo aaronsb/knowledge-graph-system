@@ -239,9 +239,10 @@ export class KnowledgeGraphClient {
   async listJobs(
     status?: string,
     clientId?: string,
-    limit: number = 50
+    limit: number = 50,
+    offset: number = 0
   ): Promise<JobStatus[]> {
-    const params: any = { limit };
+    const params: any = { limit, offset };
     if (status) {
       params.status = status;
     }
@@ -323,8 +324,13 @@ export class KnowledgeGraphClient {
   /**
    * Get detailed information about a concept
    */
-  async getConceptDetails(conceptId: string): Promise<ConceptDetailsResponse> {
-    const response = await this.client.get(`/query/concept/${conceptId}`);
+  async getConceptDetails(
+    conceptId: string,
+    includeGrounding: boolean = false
+  ): Promise<ConceptDetailsResponse> {
+    const response = await this.client.get(`/query/concept/${conceptId}`, {
+      params: { include_grounding: includeGrounding }
+    });
     return response.data;
   }
 

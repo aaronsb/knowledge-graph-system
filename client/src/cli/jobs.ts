@@ -68,9 +68,9 @@ jobCommand
   });
 
 // Helper function to display jobs list using Table utility
-async function displayJobsList(status?: string, clientId?: string, limit: number = 20, fullId: boolean = false) {
+async function displayJobsList(status?: string, clientId?: string, limit: number = 20, fullId: boolean = false, offset: number = 0) {
   const client = createClientFromEnv();
-  const jobs = await client.listJobs(status, clientId, limit);
+  const jobs = await client.listJobs(status, clientId, limit, offset);
 
   if (jobs.length === 0) {
     console.log(colors.status.dim('\nNo jobs found\n'));
@@ -151,12 +151,15 @@ const listCommand = new Command('list')
   .description('List recent jobs (optionally filtered)')
   .option('-s, --status <status>', 'Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)')
   .option('-c, --client <client-id>', 'Filter by client ID (view specific user\'s jobs)')
-  .option('-l, --limit <n>', 'Maximum jobs to return', '20')
+  .option('-l, --limit <n>', 'Maximum jobs to return (max: 500)', '100')
+  .option('-o, --offset <n>', 'Number of jobs to skip (for pagination)', '0')
   .option('--full-id', 'Show full job IDs (no truncation)', false)
   .showHelpAfterError()
   .action(async (options) => {
     try {
-      await displayJobsList(options.status, options.client, parseInt(options.limit), options.fullId);
+      const limit = parseInt(options.limit);
+      const offset = parseInt(options.offset);
+      await displayJobsList(options.status, options.client, limit, options.fullId, offset);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
