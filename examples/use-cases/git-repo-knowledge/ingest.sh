@@ -130,13 +130,15 @@ for repo in */ ; do
 
         # Get new commits
         new_commits=()
-        for commit_file in *.md 2>/dev/null; do
+        shopt -s nullglob  # Handle case when no .md files exist
+        for commit_file in *.md; do
             [ -f "$commit_file" ] || continue
 
             if ! is_ingested "$commit_file" "$INGESTED_COMMITS"; then
                 new_commits+=("$commit_file")
             fi
         done
+        shopt -u nullglob
 
         if [ ${#new_commits[@]} -eq 0 ]; then
             echo "  No new commits to ingest"
@@ -222,7 +224,8 @@ for repo in */ ; do
         cd "$repo"
 
         new_prs=0
-        for pr_file in pr-*.md 2>/dev/null; do
+        shopt -s nullglob  # Handle case when no .md files exist
+        for pr_file in pr-*.md; do
             [ -f "$pr_file" ] || continue
 
             if ! is_ingested "$pr_file" "$INGESTED_PRS"; then
@@ -242,6 +245,7 @@ for repo in */ ; do
                 ((new_prs++))
             fi
         done
+        shopt -u nullglob
 
         if [ $new_prs -eq 0 ]; then
             echo "  No new PRs to ingest"
