@@ -116,6 +116,31 @@ docker logs knowledge-graph-postgres
 tail -f logs/api_*.log
 ```
 
+### Resetting Database (Clean State)
+
+When you need to completely wipe and reinitialize the database:
+
+```bash
+# 1. Reset database (DESTRUCTIVE - requires live man switch confirmation)
+#    This wipes all data and runs migrations
+kg admin reset
+
+# 2. **CRITICAL**: Restart API server to clear stale connections
+./scripts/stop-api.sh && ./scripts/start-api.sh
+
+# 3. Initialize authentication and secrets
+./scripts/initialize-auth.sh
+
+# 4. Verify embedding configurations exist
+kg admin embedding list
+#    Should show: OpenAI (active), Nomic (inactive)
+
+# 5. System is now ready for fresh data
+kg ingest file -o "My Ontology" document.txt
+```
+
+**Important:** Step 2 (API restart) is **required** after database reset. The API server maintains connection pools that become stale after the database is recreated. Without restart, queries will fail with "relation does not exist" errors even though the tables exist in the new database.
+
 ### Making Changes
 
 **When modifying AI extraction:**
