@@ -1,0 +1,79 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  query-safety:
+    name: Query Safety Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run query safety linter
+        run: |
+          python3 scripts/lint_queries.py src/api
+
+      - name: Report results
+        if: failure()
+        run: |
+          echo "❌ Query safety linter found unsafe patterns"
+          echo "See ADR-048: Vocabulary Metadata as First-Class Graph"
+          echo "Run locally: python3 scripts/lint_queries.py --verbose"
+          exit 1
+
+  python-syntax:
+    name: Python Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check Python syntax
+        run: |
+          python3 -m py_compile $(find src/api scripts -name "*.py")
+
+  typescript-build:
+    name: TypeScript Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Build TypeScript client
+        working-directory: ./client
+        run: npm run build
+
+      - name: Check for build artifacts
+        run: |
+          if [ ! -f "client/dist/index.js" ]; then
+            echo "❌ Build failed - client/dist/index.js not found"
+            exit 1
+          fi
+          echo "✅ TypeScript client built successfully"
