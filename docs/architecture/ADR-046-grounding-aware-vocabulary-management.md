@@ -1,7 +1,7 @@
 # ADR-046: Grounding-Aware Vocabulary Management
 
 **Status:** Proposed
-**Date:** 2025-01-25
+**Date:** 2025-10-25
 **Authors:** System Architecture Team
 **Related:** ADR-032 (Automatic Edge Vocabulary Expansion), ADR-044 (Probabilistic Truth Convergence), ADR-045 (Unified Embedding Generation)
 
@@ -42,7 +42,7 @@ SUBSTANTIATES, CONFIRMS, VERIFIES, ATTESTS, ... (200 types)
 **Problem 2: Synonym Explosion**
 
 ```sql
--- Production data (2025-01-25):
+-- Production data (2025-10-25):
 SUPPORTS (38 edges) [B]           -- Builtin
 SUPPORTED_BY (1 edge)             -- LLM-created inverse
 ENHANCES (1 edge)                 -- LLM-created near-synonym
@@ -1092,5 +1092,5 @@ ADR-046 (Management) ← This ADR
 
 ---
 
-**Last Updated:** 2025-01-25
+**Last Updated:** 2025-10-25
 **Next Review:** After ADR-044/045 implementation

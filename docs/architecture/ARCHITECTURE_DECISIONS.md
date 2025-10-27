@@ -136,6 +136,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-01-25
+**Last Updated:** 2025-10-25
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.

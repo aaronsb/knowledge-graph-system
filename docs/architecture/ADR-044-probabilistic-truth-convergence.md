@@ -179,11 +179,11 @@ Beyond the philosophical and evolutionary metaphors, this approach is grounded i
 
 **Core Principle:** Truth emerges from statistical preponderance of evidence, calculated dynamically at query time, not stored as static labels.
 
-**Update 2025-01-25:** This ADR now depends on **ADR-045 (Unified Embedding Generation)**, which must be implemented first to enable embedding-based grounding calculation.
+**Update 2025-10-25:** This ADR now depends on **ADR-045 (Unified Embedding Generation)**, which must be implemented first to enable embedding-based grounding calculation.
 
 **Key insight:** Rather than marking concepts as "IRRELEVANT" (static, binary, query-exclusion problem), we calculate a continuous **grounding_strength** score (0.0-1.0) based on current edge weights whenever the concept is queried.
 
-### Refined Approach: Embedding-Based Edge Semantics (2025-01-25)
+### Refined Approach: Embedding-Based Edge Semantics (2025-10-25)
 
 **Discovery:** During implementation planning, we found that **binary polarity classification (positive/negative) is too reductive** for the 64 edge types in production (30 builtin + 34 LLM-generated).
 
@@ -307,7 +307,7 @@ Agent retrieves:
 Agent provides context:
   "Given evidence that:
    - Neo4j mentioned in 12 documents (2025-10-01 to 2025-10-08)
-   - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-01-24)
+   - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-10-24)
    - ADR-016 states migration occurred 2025-10-09
    - Current codebase uses age_client.py, not neo4j_client.py
 
@@ -853,7 +853,7 @@ For performance, optionally cache grounding_strength calculations:
 // Materialized view pattern (recalculated periodically)
 (:Concept {
   grounding_strength_cached: 0.768,
-  grounding_cache_date: "2025-01-24T10:30:00Z",
+  grounding_cache_date: "2025-10-24T10:30:00Z",
   grounding_cache_ttl: 3600  // seconds
 })
 ```
@@ -884,7 +884,7 @@ Grounding calculation:
   grounding_strength: 10.2 / 10.2 = 1.00 (fully supported)
 ```
 
-**After ingestion (2025-01-24):**
+**After ingestion (2025-10-24):**
 ```
 (:Concept {label: "System uses Neo4j"})
   ← SUPPORTS ← (12 evidence instances from old docs, avg confidence 0.85)
@@ -973,7 +973,7 @@ Expected: "The system uses 0.85 as the similarity threshold (verified in code)."
 
 ### Example 3: Automatic Reversibility - Future Architecture Change
 
-**Current state (2025-01-24):**
+**Current state (2025-10-24):**
 ```
 "System uses Neo4j" → grounding: 0.232 (weakly grounded)
 "System uses Apache AGE" → grounding: 0.901 (well grounded)
@@ -1188,7 +1188,7 @@ When contradictions persist even after introspection:
 - **Evolutionary Epistemology:** Campbell, Donald T. "Evolutionary Epistemology" (1974)
 - **Statistical Significance (Three Sigma Rule):** https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
 - **Bayesian Belief Networks:** Pearl, Judea. "Probabilistic Reasoning in Intelligent Systems" (1988)
-- **Neo4j → Apache AGE example:** This conversation (2025-01-24)
+- **Neo4j → Apache AGE example:** This conversation (2025-10-24)
 - **Project page:** https://sakana.ai/dgm/
 - **Code repository:** https://github.com/jennyzzt/dgm
 
@@ -1291,5 +1291,5 @@ When contradictions persist even after introspection:
 
 ---
 
-**Last Updated:** 2025-01-25 (Added ADR-045 dependency and embedding-based approach)
+**Last Updated:** 2025-10-25 (Added ADR-045 dependency and embedding-based approach)
 **Next Review:** After ADR-045 implementation

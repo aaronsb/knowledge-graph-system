@@ -1,7 +1,7 @@
 # ADR-045: Unified Embedding Generation System
 
 **Status:** Proposed
-**Date:** 2025-01-25
+**Date:** 2025-10-25
 **Authors:** System Architecture Team
 **Related:** ADR-044 (Probabilistic Truth Convergence), ADR-046 (Grounding-Aware Vocabulary Management), ADR-039 (Embedding Configuration), ADR-032 (Vocabulary Expansion)
 
@@ -32,7 +32,7 @@ Embedding generation currently occurs in multiple disconnected locations:
 3. **Builtin type embeddings** - **Not generated at all** (0/30 have embeddings)
 4. **Model migration** - No unified way to regenerate all embeddings when model changes
 
-**Current state analysis (2025-01-25):**
+**Current state analysis (2025-10-25):**
 ```sql
 SELECT is_builtin, COUNT(*) as total,
        SUM(CASE WHEN embedding IS NOT NULL THEN 1 ELSE 0 END) as with_embeddings
@@ -575,5 +575,5 @@ def calculate_grounding_strength_semantic(concept_id: str):
 
 ---
 
-**Last Updated:** 2025-01-25
+**Last Updated:** 2025-10-25
 **Next Review:** After Phase 1 implementation
