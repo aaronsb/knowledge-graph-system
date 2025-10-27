@@ -1213,6 +1213,7 @@ class AGEClient:
                    v.is_active as is_active,
                    v.is_builtin as is_builtin,
                    v.usage_count as usage_count,
+                   v.direction_semantics as direction_semantics,
                    c.name as category
             """
             result = self._execute_cypher(query, {"type_name": relationship_type}, fetch_one=True)
@@ -1232,6 +1233,7 @@ class AGEClient:
                 'is_builtin': str(result.get('is_builtin', 'f')) == 't',
                 'usage_count': usage_count,
                 'category': str(result['category']) if result.get('category') else None,
+                'direction_semantics': str(result['direction_semantics']) if result.get('direction_semantics') else None,  # ADR-049
                 # Fields not yet migrated to graph (Phase 3.3)
                 'description': None,
                 'added_by': None,

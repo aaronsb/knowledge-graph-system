@@ -65,6 +65,8 @@ class EdgeTypeInfo(BaseModel):
     category_confidence: Optional[float] = None  # 0.0-1.0
     category_scores: Optional[Dict[str, float]] = None  # Full category breakdown
     category_ambiguous: Optional[bool] = None  # True if runner-up > 0.70
+    # ADR-049: LLM-determined direction semantics
+    direction_semantics: Optional[str] = None  # 'outward', 'inward', 'bidirectional', or None
 
 
 class AddEdgeTypeRequest(BaseModel):
