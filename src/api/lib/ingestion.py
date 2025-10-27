@@ -216,7 +216,8 @@ def process_chunk(
         extraction_response = extract_concepts(
             text=chunk.text,
             source_id=source_id,
-            existing_concepts=existing_concepts
+            existing_concepts=existing_concepts,
+            age_client=age_client  # ADR-049: Pass client for dynamic direction examples
         )
         extraction = extraction_response["result"]
         extraction_tokens = extraction_response.get("tokens", 0)
