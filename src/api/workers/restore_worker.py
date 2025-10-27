@@ -219,20 +219,29 @@ def _create_checkpoint_backup(client: AGEClient, job_id: str) -> Path:
 
 def _clear_database(client: AGEClient, job_id: str) -> None:
     """
-    Clear all graph data from the database.
+    Clear concept graph data from the database.
 
     Used when restoring a full backup to ensure clean slate.
-    Deletes all nodes and relationships in the knowledge_graph.
+    Deletes concept graph nodes (Concept, Source, Instance) and their relationships.
+
+    Note (ADR-048): Preserves vocabulary metadata (VocabType, VocabCategory) nodes.
+    These live in a separate namespace and should not be cleared during restore.
     """
-    logger.info(f"[{job_id}] Clearing all graph data")
+    logger.info(f"[{job_id}] Clearing concept graph data")
 
-    # Delete all relationships first
-    client._execute_cypher("MATCH (n)-[r]-() DELETE r")
+    # Delete concept relationships first
+    # Note: Only delete relationships connected to concept graph nodes
+    client._execute_cypher("MATCH (c:Concept)-[r]-() DELETE r")
+    client._execute_cypher("MATCH (s:Source)-[r]-() DELETE r")
+    client._execute_cypher("MATCH (i:Instance)-[r]-() DELETE r")
 
-    # Delete all nodes
-    client._execute_cypher("MATCH (n) DELETE n")
+    # Delete concept graph nodes
+    # Note: Vocabulary nodes (:VocabType, :VocabCategory) are preserved
+    client._execute_cypher("MATCH (c:Concept) DELETE c")
+    client._execute_cypher("MATCH (s:Source) DELETE s")
+    client._execute_cypher("MATCH (i:Instance) DELETE i")
 
-    logger.info(f"[{job_id}] Database cleared successfully")
+    logger.info(f"[{job_id}] Concept graph cleared successfully (vocabulary preserved)")
 
 
 def _execute_restore(

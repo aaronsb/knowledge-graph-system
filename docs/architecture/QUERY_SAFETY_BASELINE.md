@@ -2,13 +2,49 @@
 
 **Date:** 2025-10-27
 **ADR:** ADR-048 (Vocabulary Metadata as First-Class Graph)
-**Phase:** Phase 1 - Foundation
+**Phase:** Phase 2 - Critical Path Migration ✅ COMPLETE
 
 ## Summary
 
-Initial query safety audit identified **3 unsafe queries** in the codebase. All are intentionally label-free operations that must be fixed before Phase 3 (moving vocabulary to graph).
+~~Initial query safety audit identified **3 unsafe queries** in the codebase.~~ **All unsafe queries have been fixed!**
 
-## Findings
+**Phase 1 (Complete):** Identified 3 unsafe queries that would cause catastrophic failures in Phase 3
+**Phase 2 (Complete):** Fixed all 3 unsafe queries with namespace-aware alternatives
+**Current Status:** ✅ **0 unsafe queries** - Ready for Phase 3
+
+## Phase 2 Fixes (2025-10-27)
+
+All 3 unsafe queries have been migrated to namespace-aware alternatives:
+
+### Fix 1: Database Health Check ✅
+**File:** `src/api/routes/database.py:195`
+**Before:** `MATCH (n) RETURN count(n)` (counted ALL nodes)
+**After:** `client.facade.count_concepts()` (namespace-aware)
+**Impact:** Health check now returns correct concept count, won't be affected by vocabulary nodes
+
+### Fix 2: Restore Worker - Delete Relationships ✅
+**File:** `src/api/workers/restore_worker.py:230`
+**Before:** `MATCH (n)-[r]-() DELETE r` (deleted ALL relationships)
+**After:** Explicit deletion by namespace:
+```python
+client._execute_cypher("MATCH (c:Concept)-[r]-() DELETE r")
+client._execute_cypher("MATCH (s:Source)-[r]-() DELETE r")
+client._execute_cypher("MATCH (i:Instance)-[r]-() DELETE r")
+```
+**Impact:** Restore preserves vocabulary metadata, only clears concept graph
+
+### Fix 3: Restore Worker - Delete Nodes ✅
+**File:** `src/api/workers/restore_worker.py:233`
+**Before:** `MATCH (n) DELETE n` (deleted ALL nodes)
+**After:** Explicit deletion by namespace:
+```python
+client._execute_cypher("MATCH (c:Concept) DELETE c")
+client._execute_cypher("MATCH (s:Source) DELETE s")
+client._execute_cypher("MATCH (i:Instance) DELETE i")
+```
+**Impact:** Vocabulary nodes (:VocabType, :VocabCategory) are preserved during restore
+
+## Original Findings (Phase 1)
 
 ### 1. Health Check Node Count
 **File:** `src/api/routes/database.py:195`
@@ -100,20 +136,37 @@ This audit validates ADR-048's core thesis:
 
 The restore worker assumes it owns the entire graph. Once vocabulary metadata lives in the graph, this assumption breaks. GraphQueryFacade enforces namespace awareness to prevent this class of bugs.
 
-## Next Steps
+## Phase Completion Status
 
+### Phase 1: Foundation ✅
 1. ✅ Create query linter (`scripts/lint_queries.py`)
-2. ⏳ Add linter to CI workflow
-3. ⏳ Create GraphQueryFacade with safe abstractions
-4. ⏳ Migrate critical paths (restore_worker, health checks)
-5. ⏳ Re-run linter and verify 0 errors before Phase 3
+2. ✅ Add linter to CI workflow
+3. ✅ Create GraphQueryFacade with safe abstractions
+4. ✅ Document baseline technical debt
+
+### Phase 2: Critical Path Migration ✅
+1. ✅ Fix restore_worker.py (CRITICAL - would destroy vocabulary)
+2. ✅ Fix database.py health check (incorrect counts)
+3. ✅ Re-run linter and verify 0 errors
+4. ✅ Test fixes with live system
+
+### Phase 3: Vocabulary to Graph (Ready)
+- All blocking issues resolved
+- Namespace safety infrastructure complete
+- Safe to proceed with vocabulary migration
 
 ## Metrics
 
+### Before Phase 2
 - **Total unsafe queries:** 3
 - **Critical severity:** 2 (restore worker)
 - **High severity:** 1 (health check)
-- **Technical debt:** Must fix before ADR-048 Phase 3
+
+### After Phase 2 ✅
+- **Total unsafe queries:** 0 🎉
+- **Critical severity:** 0
+- **High severity:** 0
+- **System status:** Ready for Phase 3
 
 ---
 
