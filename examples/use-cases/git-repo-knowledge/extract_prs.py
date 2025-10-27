@@ -188,26 +188,6 @@ class PRExtractor:
                 ""
             ])
 
-        # Add metadata section
-        doc.extend([
-            "## Metadata",
-            "",
-            f"- **PR Number:** #{number}",
-            f"- **Author:** @{author}",
-            f"- **State:** {state}" + (" (merged)" if merged else ""),
-            f"- **Created:** {created}",
-            f"- **Updated:** {updated}",
-        ])
-
-        if merged_at:
-            doc.append(f"- **Merged:** {merged_at}")
-
-        doc.extend([
-            f"- **Repository:** {repo_config['name']}",
-            f"- **URL:** {url}",
-            ""
-        ])
-
         # Add labels if any
         if pr.get("labels"):
             doc.extend([
@@ -219,13 +199,17 @@ class PRExtractor:
             doc.append("")
 
         # Add stats
+        stats = []
         if "commits" in pr:
-            doc.append(f"**Commits:** {pr.get('commits', 0)}")
+            stats.append(f"**Commits:** {pr.get('commits', 0)}")
         if "changedFiles" in pr:
-            doc.append(f"**Files Changed:** {pr.get('changedFiles', 0)}")
+            stats.append(f"**Files Changed:** {pr.get('changedFiles', 0)}")
         if "additions" in pr and "deletions" in pr:
-            doc.append(f"**Additions:** +{pr.get('additions', 0)}, **Deletions:** -{pr.get('deletions', 0)}")
-        doc.append("")
+            stats.append(f"**Changes:** +{pr.get('additions', 0)}/-{pr.get('deletions', 0)}")
+
+        if stats:
+            doc.extend(stats)
+            doc.append("")
 
         return '\n'.join(doc)
 

@@ -40,52 +40,29 @@ kg search connect "JWT authentication commit" "ADR-028 RBAC system"
 
 ## Quick Start
 
-### Option 1: Complete Workflow (Recommended)
-
-The `run.sh` script handles everything automatically:
+Simply run the script - it handles everything with confirmation prompts:
 
 ```bash
 cd examples/use-cases/git-repo-knowledge
-
-# Complete workflow: setup venv, extract, ingest, query
 ./run.sh
 ```
 
 **What it does:**
-1. Creates Python virtual environment (`venv/`)
-2. Installs dependencies (`gitpython`)
-3. Extracts last 30 commits
-4. Extracts last 10 PRs (if `gh` is authenticated)
-5. Batches and ingests into knowledge graph
-6. Cleans up output files (keeps pointers)
-7. Shows database statistics
+1. Sets up Python virtual environment (first run only)
+2. Installs dependencies automatically
+3. Extracts new commits (from beginning on first run)
+4. Extracts new PRs (if gh CLI is authenticated)
+5. Shows summary of what was extracted
+6. **Asks for confirmation** before ingesting
+7. **Asks for confirmation** before cleaning up files
+8. Shows knowledge graph statistics
 
-**First run:** Processes last 30 commits + 10 PRs
-**Subsequent runs:** Only processes new items (idempotent)
+**Completely idempotent:**
+- First run: Extracts first 30 commits + first 10 PRs (oldest first)
+- Subsequent runs: Only extracts NEW items since last run
+- State tracked in `config.json` (last_commit, last_pr pointers)
 
-### Option 2: Step-by-Step
-
-For more control, run individual scripts:
-
-```bash
-# 1. Setup (run.sh does this automatically)
-python3 -m venv venv
-venv/bin/pip install -r requirements.txt
-
-# 2. Extract commits
-venv/bin/python extract_commits.py --limit 30
-
-# 3. Extract PRs (requires gh CLI authenticated)
-gh auth login  # First time only
-venv/bin/python extract_prs.py --limit 10
-
-# 4. Ingest and cleanup
-./ingest.sh --clean
-
-# 5. Query
-kg search query "migration to Apache AGE"
-kg database stats
-```
+**Zero configuration needed** - just run it!
 
 ## Incremental Updates
 

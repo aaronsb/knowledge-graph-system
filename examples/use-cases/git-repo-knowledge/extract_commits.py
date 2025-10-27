@@ -75,11 +75,19 @@ class CommitExtractor:
             commits = list(repo.iter_commits(f"{last_commit_hash}..HEAD"))
             commits.reverse()  # Oldest first
         else:
-            # Get all commits (or limited number)
-            print(f"  Extracting all commits...")
+            # Get commits from the BEGINNING (oldest first)
+            print(f"  Extracting commits from the beginning...")
             max_count = limit if limit else self.config.get("commit_limit")
-            commits = list(repo.iter_commits(max_count=max_count))
-            commits.reverse()  # Oldest first
+
+            # Get all commits, then take the oldest N
+            all_commits = list(repo.iter_commits())
+            all_commits.reverse()  # Now oldest first
+
+            # Take only the first N commits
+            if max_count:
+                commits = all_commits[:max_count]
+            else:
+                commits = all_commits
 
         print(f"  Found {len(commits)} commits to process")
         return commits
@@ -136,17 +144,6 @@ class CommitExtractor:
                 body,
                 ""
             ])
-
-        doc.extend([
-            "## Metadata",
-            "",
-            f"- **Commit Hash:** `{commit_hash}`",
-            f"- **Short Hash:** `{short_hash}`",
-            f"- **Author:** {author} <{email}>",
-            f"- **Date:** {date} {time}",
-            f"- **Repository:** {repo_config['name']}",
-            ""
-        ])
 
         return '\n'.join(doc)
 

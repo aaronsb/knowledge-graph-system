@@ -84,8 +84,8 @@ fi
 echo -e "${GREEN}✓ Prerequisites checked${NC}"
 echo ""
 
-# Step 1: Extract commits
-echo -e "${BLUE}Step 1: Extracting commits...${NC}"
+# Step 1: Extract commits (from the beginning)
+echo -e "${BLUE}Step 1: Extracting commits from the beginning...${NC}"
 "$PYTHON" extract_commits.py --limit 30
 
 commit_count=$(find output/commits -name "*.md" 2>/dev/null | wc -l || echo "0")
@@ -132,20 +132,42 @@ if [ $commit_count -gt 0 ]; then
     echo ""
 fi
 
-read -p "Press Enter to continue with ingestion (or Ctrl+C to abort)..."
+read -p "Ingest these documents into the knowledge graph? (y/N): " -n 1 -r
 echo ""
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Ingestion skipped.${NC}"
+    echo ""
+    echo "Documents are ready in output/ directory."
+    echo "Run './ingest.sh' when ready to ingest."
+    exit 0
+fi
 
 # Step 4: Ingest
+echo ""
 echo -e "${BLUE}Step 4: Ingesting into knowledge graph...${NC}"
 echo ""
-./ingest.sh --clean
+./ingest.sh
 
 echo ""
 echo -e "${GREEN}✓ Ingestion complete${NC}"
 echo ""
 
-# Step 5: Show statistics
-echo -e "${BLUE}Step 5: Knowledge graph statistics${NC}"
+# Step 5: Cleanup prompt
+echo ""
+read -p "Clean up output files? (keeps state pointers) (y/N): " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Removing output files...${NC}"
+    rm -rf output
+    echo -e "${GREEN}✓ Output files removed${NC}"
+    echo "  State pointers preserved. Next run will only process new items."
+else
+    echo "Output files kept in output/ directory."
+fi
+echo ""
+
+# Step 6: Show statistics
+echo -e "${BLUE}Knowledge Graph Statistics${NC}"
 echo ""
 
 # Get ontology name from config
@@ -168,11 +190,6 @@ echo "  kg search query \"grounding system\""
 echo "  kg search query \"authentication\""
 echo "  kg search connect \"commit message concept\" \"ADR document\""
 echo ""
-echo "Run this script again anytime - it's idempotent!"
+echo "Run ./run.sh again anytime - it's idempotent!"
 echo "Only new commits/PRs will be processed."
-echo ""
-echo "Commands:"
-echo "  ./run.sh              # Extract and ingest new items"
-echo "  ./clean.sh            # Clean output files (keep pointers)"
-echo "  ./clean.sh --reset    # Reset everything, start fresh"
 echo ""
