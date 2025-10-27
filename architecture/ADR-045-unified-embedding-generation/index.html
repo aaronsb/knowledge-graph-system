@@ -3563,7 +3563,7 @@
 
 <h1 id="adr-045-unified-embedding-generation-system">ADR-045: Unified Embedding Generation System</h1>
 <p><strong>Status:</strong> Proposed
-<strong>Date:</strong> 2025-01-25
+<strong>Date:</strong> 2025-10-25
 <strong>Authors:</strong> System Architecture Team
 <strong>Related:</strong> ADR-044 (Probabilistic Truth Convergence), ADR-046 (Grounding-Aware Vocabulary Management), ADR-039 (Embedding Configuration), ADR-032 (Vocabulary Expansion)</p>
 <h2 id="context">Context</h2>
@@ -3606,7 +3606,7 @@
 <li><strong>Builtin type embeddings</strong> - <strong>Not generated at all</strong> (0/30 have embeddings)</li>
 <li><strong>Model migration</strong> - No unified way to regenerate all embeddings when model changes</li>
 </ol>
-<p><strong>Current state analysis (2025-01-25):</strong>
+<p><strong>Current state analysis (2025-10-25):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">is_builtin</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">total</span><span class="p">,</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">       </span><span class="k">SUM</span><span class="p">(</span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">embedding</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">END</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">with_embeddings</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
@@ -4078,7 +4078,7 @@
 4. Update ingestion pipeline to use worker
 5. Add admin verification endpoint</p>
 <hr />
-<p><strong>Last Updated:</strong> 2025-01-25
+<p><strong>Last Updated:</strong> 2025-10-25
 <strong>Next Review:</strong> After Phase 1 implementation</p>
 
 

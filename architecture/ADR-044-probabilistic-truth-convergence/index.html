@@ -2800,9 +2800,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#refined-approach-embedding-based-edge-semantics-2025-01-25" class="md-nav__link">
+  <a href="#refined-approach-embedding-based-edge-semantics-2025-10-25" class="md-nav__link">
     <span class="md-ellipsis">
-      Refined Approach: Embedding-Based Edge Semantics (2025-01-25)
+      Refined Approach: Embedding-Based Edge Semantics (2025-10-25)
     </span>
   </a>
   
@@ -3944,9 +3944,9 @@
 <h2 id="decision">Decision</h2>
 <h3 id="implement-query-time-grounding-strength-calculation">Implement Query-Time Grounding Strength Calculation</h3>
 <p><strong>Core Principle:</strong> Truth emerges from statistical preponderance of evidence, calculated dynamically at query time, not stored as static labels.</p>
-<p><strong>Update 2025-01-25:</strong> This ADR now depends on <strong>ADR-045 (Unified Embedding Generation)</strong>, which must be implemented first to enable embedding-based grounding calculation.</p>
+<p><strong>Update 2025-10-25:</strong> This ADR now depends on <strong>ADR-045 (Unified Embedding Generation)</strong>, which must be implemented first to enable embedding-based grounding calculation.</p>
 <p><strong>Key insight:</strong> Rather than marking concepts as "IRRELEVANT" (static, binary, query-exclusion problem), we calculate a continuous <strong>grounding_strength</strong> score (0.0-1.0) based on current edge weights whenever the concept is queried.</p>
-<h3 id="refined-approach-embedding-based-edge-semantics-2025-01-25">Refined Approach: Embedding-Based Edge Semantics (2025-01-25)</h3>
+<h3 id="refined-approach-embedding-based-edge-semantics-2025-10-25">Refined Approach: Embedding-Based Edge Semantics (2025-10-25)</h3>
 <p><strong>Discovery:</strong> During implementation planning, we found that <strong>binary polarity classification (positive/negative) is too reductive</strong> for the 64 edge types in production (30 builtin + 34 LLM-generated).</p>
 <p><strong>Key findings:</strong>
 1. System has <strong>8 semantic categories</strong> of relationships (evidential, logical, causal, structural, similarity, temporal, functional, meta)
@@ -4075,7 +4075,7 @@
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>Agent provides context:
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  &quot;Given evidence that:
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>   - Neo4j mentioned in 12 documents (2025-10-01 to 2025-10-08)
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>   - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-01-24)
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>   - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-10-24)
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>   - ADR-016 states migration occurred 2025-10-09
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>   - Current codebase uses age_client.py, not neo4j_client.py
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
@@ -4555,7 +4555,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1">// Materialized view pattern (recalculated periodically)</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="n">grounding_strength_cached</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">768</span><span class="p">,</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="n">grounding_cache_date</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2025-01-24T10:30:00Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="n">grounding_cache_date</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2025-10-24T10:30:00Z&quot;</span><span class="p">,</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span><span class="n">grounding_cache_ttl</span><span class="p">:</span><span class="w"> </span><span class="m">3600</span><span class="w">  </span><span class="c1">// seconds</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="p">})</span>
 </code></pre></div>
@@ -4579,7 +4579,7 @@
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>  contradict_weight: 0
 <a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>  grounding_strength: 10.2 / 10.2 = 1.00 (fully supported)
 </code></pre></div></p>
-<p><strong>After ingestion (2025-01-24):</strong>
+<p><strong>After ingestion (2025-10-24):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>  ← SUPPORTS ← (12 evidence instances from old docs, avg confidence 0.85)
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>  ← CONTRADICTS ← (47 evidence instances from new docs, avg confidence 0.72)
@@ -4651,7 +4651,7 @@
 <a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>Expected: &quot;The system uses 0.85 as the similarity threshold (verified in code).&quot;
 </code></pre></div></p>
 <h3 id="example-3-automatic-reversibility-future-architecture-change">Example 3: Automatic Reversibility - Future Architecture Change</h3>
-<p><strong>Current state (2025-01-24):</strong>
+<p><strong>Current state (2025-10-24):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>&quot;System uses Neo4j&quot; → grounding: 0.232 (weakly grounded)
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>&quot;System uses Apache AGE&quot; → grounding: 0.901 (well grounded)
 </code></pre></div></p>
@@ -4811,7 +4811,7 @@ Future: detect contradictions across ontologies
 <li><strong>Evolutionary Epistemology:</strong> Campbell, Donald T. "Evolutionary Epistemology" (1974)</li>
 <li><strong>Statistical Significance (Three Sigma Rule):</strong> https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule</li>
 <li><strong>Bayesian Belief Networks:</strong> Pearl, Judea. "Probabilistic Reasoning in Intelligent Systems" (1988)</li>
-<li><strong>Neo4j → Apache AGE example:</strong> This conversation (2025-01-24)</li>
+<li><strong>Neo4j → Apache AGE example:</strong> This conversation (2025-10-24)</li>
 <li><strong>Project page:</strong> https://sakana.ai/dgm/</li>
 <li><strong>Code repository:</strong> https://github.com/jennyzzt/dgm</li>
 </ul>
@@ -4900,7 +4900,7 @@ Future: detect contradictions across ontologies
 4. Test with production edge types (SUPPORTS, ENABLES, ENHANCES, etc.)
 5. Gather metrics on grounding distribution in production graph</p>
 <hr />
-<p><strong>Last Updated:</strong> 2025-01-25 (Added ADR-045 dependency and embedding-based approach)
+<p><strong>Last Updated:</strong> 2025-10-25 (Added ADR-045 dependency and embedding-based approach)
 <strong>Next Review:</strong> After ADR-045 implementation</p>
 
 
