@@ -465,6 +465,79 @@ else
     echo -e "${YELLOW}   - POST /admin/extraction/config${NC}"
 fi
 
+# Embedding Provider Selection (ADR-039)
+echo ""
+echo -e "${BOLD}Embedding Provider Configuration${NC}"
+echo -e "${YELLOW}Select embedding provider for concept similarity (ADR-039)${NC}"
+echo ""
+echo "Available providers:"
+echo "  1) OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
+echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
+echo "  3) Skip (keep default)"
+echo ""
+read -p "Choice [1-3]: " -n 1 -r EMBEDDING_CHOICE
+echo ""
+echo ""
+
+if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then
+    if [ "$EMBEDDING_CHOICE" = "1" ]; then
+        EMBEDDING_PROVIDER="openai"
+        EMBEDDING_DISPLAY="OpenAI (text-embedding-3-small)"
+    else
+        EMBEDDING_PROVIDER="local"
+        EMBEDDING_DISPLAY="Nomic (nomic-embed-text-v1.5)"
+    fi
+
+    echo -e "${BLUE}→${NC} Activating ${EMBEDDING_DISPLAY}..."
+
+    # Activate the selected embedding config via Python
+    ACTIVATE_RESULT=$($PYTHON << EOF 2>&1
+import sys
+sys.path.insert(0, "$PROJECT_ROOT")
+
+from src.api.lib.age_client import AGEClient
+
+try:
+    client = AGEClient()
+    conn = client.pool.getconn()
+
+    try:
+        with conn.cursor() as cur:
+            # Deactivate all configs
+            cur.execute("UPDATE kg_api.embedding_config SET active = FALSE")
+
+            # Activate selected provider
+            cur.execute("""
+                UPDATE kg_api.embedding_config
+                SET active = TRUE
+                WHERE provider = %s
+            """, ("$EMBEDDING_PROVIDER",))
+
+            if cur.rowcount == 0:
+                print("ERROR:No embedding config found for provider $EMBEDDING_PROVIDER")
+                sys.exit(1)
+
+        conn.commit()
+        print("SUCCESS")
+    finally:
+        client.pool.putconn(conn)
+except Exception as e:
+    print(f"ERROR:{e}")
+    sys.exit(1)
+EOF
+)
+
+    if echo "$ACTIVATE_RESULT" | grep -q "^SUCCESS"; then
+        echo -e "${GREEN}✓${NC} ${EMBEDDING_DISPLAY} activated"
+    else
+        ERROR_MSG=$(echo "$ACTIVATE_RESULT" | grep "^ERROR:" | cut -d: -f2-)
+        echo -e "${YELLOW}⚠${NC}  Failed to activate embedding provider: $ERROR_MSG"
+        echo -e "${YELLOW}   You can activate later via: kg admin embedding activate --provider $EMBEDDING_PROVIDER${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠${NC}  Keeping default embedding provider (OpenAI)"
+fi
+
 # Success message
 echo ""
 echo -e "${GREEN}${BOLD}╔════════════════════════════════════════════════════════════╗${NC}"
@@ -490,7 +563,13 @@ echo -e "  • Admin password is hashed with bcrypt (rounds=12)"
 echo -e "  • JWT tokens expire after 60 minutes by default"
 echo ""
 echo -e "${YELLOW}Configuration:${NC}"
+if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then
+    echo -e "  • Embedding provider: ${GREEN}${EMBEDDING_DISPLAY}${NC}"
+else
+    echo -e "  • Embedding provider: ${GREEN}OpenAI (default)${NC}"
+fi
 echo -e "  • AI provider configuration: ${BOLD}POST /admin/extraction/config${NC}"
 echo -e "  • API key management: ${BOLD}GET/POST/DELETE /admin/keys/{provider}${NC}"
 echo -e "  • View key status: ${BOLD}GET /admin/keys${NC}"
+echo -e "  • Switch embedding provider: ${BOLD}kg admin embedding activate --provider <provider>${NC}"
 echo ""
