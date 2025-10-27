@@ -64,15 +64,19 @@ echo "=============================="
 # Check venv
 if [ ! -d "venv" ]; then
     echo -e "${YELLOW}⚠ Virtual environment not found${NC}"
-    echo -e "${YELLOW}  Creating venv and installing dependencies...${NC}"
+    echo -e "${YELLOW}  Creating venv...${NC}"
     python3 -m venv venv
     source venv/bin/activate
     pip install --upgrade pip
-    pip install -r requirements.txt
     echo -e "${GREEN}✓ Virtual environment created${NC}"
 else
     source venv/bin/activate
 fi
+
+# Always ensure dependencies are up to date
+echo -e "${YELLOW}Installing/updating dependencies...${NC}"
+pip install -q -r requirements.txt
+echo -e "${GREEN}✓ Dependencies ready${NC}"
 
 # Check PostgreSQL
 if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
@@ -81,8 +85,6 @@ if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
     docker-compose up -d
     sleep 5
 fi
-
-source venv/bin/activate
 
 # Show reload status if enabled
 if [ "$RELOAD" = "--reload" ]; then
