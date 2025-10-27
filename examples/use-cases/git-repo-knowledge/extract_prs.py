@@ -104,7 +104,7 @@ class PRExtractor:
             "--repo", github_repo_name,
             "--state", "all",
             "--limit", str(max_prs * 2),  # Fetch extra to account for already-processed
-            "--json", "number,title,state,author,createdAt,updatedAt,mergedAt,merged,body,url,labels,commits,additions,deletions,changedFiles"
+            "--json", "number,title,state,author,createdAt,updatedAt,mergedAt,mergedBy,body,url,labels,commits,additions,deletions,changedFiles"
         ]
 
         try:
@@ -143,10 +143,11 @@ class PRExtractor:
         title = pr["title"]
         author = pr["author"]["login"]
         state = pr["state"]
-        merged = pr.get("merged", False)
         created = pr["createdAt"]
         updated = pr["updatedAt"]
         merged_at = pr.get("mergedAt")
+        merged = bool(merged_at)  # Derive from mergedAt
+        merged_by = pr.get("mergedBy", {}).get("login") if pr.get("mergedBy") else None
         body = pr.get("body", "").strip()
         url = pr["url"]
 
@@ -165,6 +166,8 @@ class PRExtractor:
 
         if merged_at:
             frontmatter.append(f"merged_at: {merged_at}")
+        if merged_by:
+            frontmatter.append(f"merged_by: {merged_by}")
 
         frontmatter.extend([
             f"repository: {repo_config['name']}",
