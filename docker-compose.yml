@@ -24,9 +24,10 @@ services:
       # Data persistence (includes postgresql.auto.conf with ALTER SYSTEM settings)
       - postgres_data:/var/lib/postgresql/data
 
-      # Initialization scripts (run on first startup)
-      # Using consolidated baseline schema (v2.0.0)
-      - ./schema/00_baseline.sql:/docker-entrypoint-initdb.d/00_baseline.sql
+      # Initialization script (run on first startup only)
+      # Note: AGE image provides 00-create-extension-age.sql (runs first)
+      # Consolidated baseline schema (v2.0.0) - runs after AGE extension
+      - ./schema/00_baseline.sql:/docker-entrypoint-initdb.d/10-baseline.sql
 
       # Optional: Import directory for bulk data loads
       - postgres_import:/import

@@ -56,10 +56,13 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 - `client/install.sh` - Installs `kg` command globally
 
 ### Management Scripts
+- `scripts/start-database.sh` - Start PostgreSQL + AGE (auto-applies migrations)
+- `scripts/stop-database.sh` - Stop database container
 - `scripts/start-api.sh` - Start FastAPI server
 - `scripts/stop-api.sh` - Stop API server
-- `scripts/configure-ai.sh` - AI provider configuration
+- `scripts/initialize-auth.sh` - Initialize admin user, JWT secrets, API keys
 - `scripts/migrate-db.sh` - Apply database schema migrations
+- `scripts/configure-ai.sh` - AI provider configuration (legacy)
 - `client/install.sh` - Install kg CLI globally
 
 ### Documentation
@@ -72,39 +75,49 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 
 ## Development Workflow
 
-### Initial Setup
+### Initial Setup (First Time)
 
 ```bash
-# Clone and initialize
+# 1. Clone repository
 git clone <repo>
 cd knowledge-graph-system
 
-# Start PostgreSQL + AGE
-docker-compose up -d
-
-# Create Python venv and install API dependencies
+# 2. Create Python venv and install API dependencies
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Configure AI provider
-./scripts/configure-ai.sh
-
-# Start API server
-./scripts/start-api.sh
-
-# Install kg CLI globally
+# 3. Install kg CLI globally
 cd client && ./install.sh && cd ..
+
+# 4. Start database (applies baseline schema + all migrations automatically)
+./scripts/start-database.sh
+
+# 5. Start API server
+./scripts/start-api.sh -y
+
+# 6. Initialize authentication (interactive: sets admin password, JWT secrets, API keys)
+./scripts/initialize-auth.sh
+
+# 7. Verify system is ready
+kg database stats
+kg admin embedding list  # Should show: OpenAI or Nomic (active)
+
+# 8. Start ingesting data
+kg ingest file -o "My Ontology" document.txt
 ```
 
 ### Daily Development
 
 ```bash
+# Activate Python venv (if not already activated)
+source venv/bin/activate
+
 # Start database (if not running)
-docker-compose up -d
+./scripts/start-database.sh
 
 # Start API server (if not running)
-./scripts/start-api.sh
+./scripts/start-api.sh -y
 
 # Use kg CLI for operations
 kg database stats
@@ -112,34 +125,57 @@ kg search query "recursive depth"
 kg ingest file -o "My Ontology" document.txt
 
 # Check logs
-docker logs knowledge-graph-postgres
-tail -f logs/api_*.log
+docker logs -f knowledge-graph-postgres  # Database logs
+tail -f logs/api_*.log                   # API server logs
+
+# Stop services
+./scripts/stop-api.sh       # Stop API server
+./scripts/stop-database.sh  # Stop database (data persists)
 ```
 
 ### Resetting Database (Clean State)
 
 When you need to completely wipe and reinitialize the database:
 
+**Option 1: Using kg CLI (requires API running)**
 ```bash
-# 1. Reset database (DESTRUCTIVE - requires live man switch confirmation)
-#    This wipes all data and runs migrations
+# 1. Reset database (DESTRUCTIVE - requires "live man switch" confirmation)
+#    This wipes all data, runs baseline schema + migrations
 kg admin reset
 
 # 2. **CRITICAL**: Restart API server to clear stale connections
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/stop-api.sh && ./scripts/start-api.sh -y
 
-# 3. Initialize authentication and secrets
+# 3. Re-initialize authentication and secrets
 ./scripts/initialize-auth.sh
 
-# 4. Verify embedding configurations exist
-kg admin embedding list
-#    Should show: OpenAI (active), Nomic (inactive)
-
-# 5. System is now ready for fresh data
+# 4. System is now ready for fresh data
 kg ingest file -o "My Ontology" document.txt
 ```
 
-**Important:** Step 2 (API restart) is **required** after database reset. The API server maintains connection pools that become stale after the database is recreated. Without restart, queries will fail with "relation does not exist" errors even though the tables exist in the new database.
+**Option 2: Manual reset (without kg CLI)**
+```bash
+# 1. Stop all services
+./scripts/stop-api.sh
+./scripts/stop-database.sh
+
+# 2. Wipe database volume
+docker-compose down -v
+
+# 3. Start fresh (applies baseline + migrations)
+./scripts/start-database.sh
+
+# 4. Start API server
+./scripts/start-api.sh -y
+
+# 5. Initialize authentication
+./scripts/initialize-auth.sh
+
+# 6. System is now ready
+kg database stats
+```
+
+**Important:** Always restart the API server after database reset to clear stale connection pools. The API server maintains connection pools that become stale after the database is recreated. Without restart, queries will fail with "relation does not exist" errors even though the tables exist in the new database.
 
 ### Making Changes
 
