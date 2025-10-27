@@ -1129,20 +1129,23 @@ class AGEClient:
             >>> client = AGEClient()
             >>> size = client.get_vocabulary_size()
             >>> print(f"Vocabulary size: {size}")
+
+        Note:
+            ADR-048 Phase 3.2: Migrated to query graph (:VocabType nodes)
         """
-        conn = self.pool.getconn()
         try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT COUNT(*) 
-                    FROM kg_api.relationship_vocabulary 
-                    WHERE is_active = TRUE
-                """)
-                result = cur.fetchone()
-                return result[0] if result else 0
-        finally:
-            conn.commit()
-            self.pool.putconn(conn)
+            query = """
+            MATCH (v:VocabType)
+            WHERE v.is_active = 't'
+            RETURN count(v) as total
+            """
+            result = self._execute_cypher(query, fetch_one=True)
+            if result and 'total' in result:
+                return int(str(result['total']))
+            return 0
+        except Exception as e:
+            logger.error(f"Failed to get vocabulary size from graph: {e}")
+            return 0
 
     def get_all_edge_types(self, include_inactive: bool = False) -> List[str]:
         """
@@ -1158,27 +1161,30 @@ class AGEClient:
             >>> client = AGEClient()
             >>> types = client.get_all_edge_types()
             >>> print(f"Active types: {len(types)}")
+
+        Note:
+            ADR-048 Phase 3.2: Migrated to query graph (:VocabType nodes)
         """
-        conn = self.pool.getconn()
         try:
-            with conn.cursor() as cur:
-                if include_inactive:
-                    cur.execute("""
-                        SELECT relationship_type 
-                        FROM kg_api.relationship_vocabulary 
-                        ORDER BY relationship_type
-                    """)
-                else:
-                    cur.execute("""
-                        SELECT relationship_type 
-                        FROM kg_api.relationship_vocabulary 
-                        WHERE is_active = TRUE
-                        ORDER BY relationship_type
-                    """)
-                return [row[0] for row in cur.fetchall()]
-        finally:
-            conn.commit()
-            self.pool.putconn(conn)
+            if include_inactive:
+                query = """
+                MATCH (v:VocabType)
+                RETURN v.name as name
+                ORDER BY v.name
+                """
+            else:
+                query = """
+                MATCH (v:VocabType)
+                WHERE v.is_active = 't'
+                RETURN v.name as name
+                ORDER BY v.name
+                """
+
+            results = self._execute_cypher(query)
+            return [str(row['name']) for row in results]
+        except Exception as e:
+            logger.error(f"Failed to get edge types from graph: {e}")
+            return []
 
     def get_edge_type_info(self, relationship_type: str) -> Optional[Dict[str, Any]]:
         """
@@ -1193,45 +1199,65 @@ class AGEClient:
         Example:
             >>> info = client.get_edge_type_info("IMPLIES")
             >>> print(f"Category: {info['category']}, Builtin: {info['is_builtin']}")
+
+        Note:
+            ADR-048 Phase 3.2: Migrated to query graph (:VocabType nodes)
+            Some metadata fields (description, added_by, etc.) not yet in graph
         """
-        conn = self.pool.getconn()
         try:
-            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                cur.execute("""
-                    SELECT relationship_type, description, category, added_by,
-                           added_at, usage_count, is_active, is_builtin,
-                           synonyms, deprecation_reason, embedding_model,
-                           embedding_generated_at
-                    FROM kg_api.relationship_vocabulary
-                    WHERE relationship_type = %s
-                """, (relationship_type,))
-                result = cur.fetchone()
+            # Query VocabType node and category relationship
+            query = """
+            MATCH (v:VocabType {name: $type_name})
+            OPTIONAL MATCH (v)-[:IN_CATEGORY]->(c:VocabCategory)
+            RETURN v.name as relationship_type,
+                   v.is_active as is_active,
+                   v.is_builtin as is_builtin,
+                   v.usage_count as usage_count,
+                   c.name as category
+            """
+            result = self._execute_cypher(query, {"type_name": relationship_type}, fetch_one=True)
 
-                if not result:
-                    return None
+            if not result:
+                return None
 
-                # Convert to dict
-                info = dict(result)
+            # Build info dict from graph data
+            # Note: AGE stores PostgreSQL booleans as strings 't'/'f'
+            info = {
+                'relationship_type': str(result['relationship_type']),
+                'is_active': str(result.get('is_active', 't')) == 't',
+                'is_builtin': str(result.get('is_builtin', 'f')) == 't',
+                'usage_count': int(str(result.get('usage_count', 0))),
+                'category': str(result['category']) if result.get('category') else None,
+                # Fields not yet migrated to graph (Phase 3.3)
+                'description': None,
+                'added_by': None,
+                'added_at': None,
+                'synonyms': None,
+                'deprecation_reason': None,
+                'embedding_model': None,
+                'embedding_generated_at': None,
+            }
 
-                # Query graph for actual edge count
-                try:
-                    count_query = f"""
-                    MATCH ()-[r:{relationship_type}]->()
-                    RETURN count(r) as edge_count
-                    """
-                    edge_result = self._execute_cypher(count_query, fetch_one=True)
-                    if edge_result:
-                        info['edge_count'] = int(str(edge_result.get('edge_count', 0)))
-                    else:
-                        info['edge_count'] = 0
-                except Exception as e:
-                    logger.warning(f"Failed to count edges for {relationship_type}: {e}")
+            # Query graph for actual edge count
+            try:
+                count_query = f"""
+                MATCH ()-[r:{relationship_type}]->()
+                RETURN count(r) as edge_count
+                """
+                edge_result = self._execute_cypher(count_query, fetch_one=True)
+                if edge_result:
+                    info['edge_count'] = int(str(edge_result.get('edge_count', 0)))
+                else:
                     info['edge_count'] = 0
+            except Exception as e:
+                logger.warning(f"Failed to count edges for {relationship_type}: {e}")
+                info['edge_count'] = 0
 
-                return info
-        finally:
-            conn.commit()
-            self.pool.putconn(conn)
+            return info
+
+        except Exception as e:
+            logger.error(f"Failed to get edge type info from graph: {e}")
+            return None
 
     def add_edge_type(
         self,
@@ -1457,21 +1483,22 @@ class AGEClient:
             >>> distribution = client.get_category_distribution()
             >>> for category, count in distribution.items():
             ...     print(f"{category}: {count}")
+
+        Note:
+            ADR-048 Phase 3.2: Migrated to query graph (:VocabType -> :VocabCategory)
         """
-        conn = self.pool.getconn()
         try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT category, COUNT(*) as count
-                    FROM kg_api.relationship_vocabulary
-                    WHERE is_active = TRUE
-                    GROUP BY category
-                    ORDER BY count DESC, category
-                """)
-                return {row[0]: row[1] for row in cur.fetchall()}
-        finally:
-            conn.commit()
-            self.pool.putconn(conn)
+            query = """
+            MATCH (v:VocabType)-[:IN_CATEGORY]->(c:VocabCategory)
+            WHERE v.is_active = 't'
+            RETURN c.name as category, count(v) as count
+            ORDER BY count DESC, category
+            """
+            results = self._execute_cypher(query)
+            return {str(row['category']): int(str(row['count'])) for row in results}
+        except Exception as e:
+            logger.error(f"Failed to get category distribution from graph: {e}")
+            return {}
 
     def store_embedding(
         self,
