@@ -1296,6 +1296,7 @@ class AGEClient:
         description: Optional[str] = None,
         added_by: str = "system",
         is_builtin: bool = False,
+        direction_semantics: Optional[str] = None,
         ai_provider = None,
         auto_categorize: bool = True
     ) -> bool:
@@ -1309,12 +1310,16 @@ class AGEClient:
         ADR-047: If category is "llm_generated" and auto_categorize is True, will compute
         proper semantic category after generating embedding using probabilistic categorization.
 
+        ADR-049: LLM determines direction_semantics based on frame of reference when creating
+        new relationship types. Direction can be updated on first use if NULL.
+
         Args:
             relationship_type: Relationship type name (e.g., "AUTHORED_BY")
             category: Semantic category (or "llm_generated" for auto-categorization)
             description: Optional description
             added_by: Who added the type (username or "system")
             is_builtin: Whether this is a protected builtin type
+            direction_semantics: Direction ("outward", "inward", "bidirectional", or None for LLM to decide)
             ai_provider: Optional AI provider for embedding generation (auto-generation if provided)
             auto_categorize: If True and category="llm_generated", compute proper category (ADR-047)
 
@@ -1325,20 +1330,21 @@ class AGEClient:
             >>> success = client.add_edge_type("AUTHORED_BY", "llm_generated",
             ...                                 "LLM-generated relationship type",
             ...                                 "llm_extractor",
+            ...                                 direction_semantics="outward",
             ...                                 ai_provider=provider,
             ...                                 auto_categorize=True)
         """
         conn = self.pool.getconn()
         try:
             with conn.cursor() as cur:
-                # Add to vocabulary table
+                # Add to vocabulary table (ADR-049: include direction_semantics)
                 cur.execute("""
                     INSERT INTO kg_api.relationship_vocabulary
-                        (relationship_type, description, category, added_by, is_builtin, is_active)
-                    VALUES (%s, %s, %s, %s, %s, TRUE)
+                        (relationship_type, description, category, added_by, is_builtin, is_active, direction_semantics)
+                    VALUES (%s, %s, %s, %s, %s, TRUE, %s)
                     ON CONFLICT (relationship_type) DO NOTHING
                     RETURNING relationship_type
-                """, (relationship_type, description, category, added_by, is_builtin))
+                """, (relationship_type, description, category, added_by, is_builtin, direction_semantics))
                 result = cur.fetchone()
                 was_added = result is not None
 
@@ -1417,19 +1423,21 @@ class AGEClient:
                         # Don't fail the entire operation if embedding generation fails
                         logger.warning(f"Failed to generate embedding for '{relationship_type}': {e}")
 
-                # Create :VocabType node in graph (ADR-048 Phase 3.3)
+                # Create :VocabType node in graph (ADR-048 Phase 3.3 + ADR-049)
                 # Creates both node and :IN_CATEGORY relationship
                 if was_added:
                     try:
                         # Use MERGE to be idempotent (in case of partial failures)
                         # Phase 3.3: Create :IN_CATEGORY relationship to :VocabCategory node
+                        # ADR-049: Add direction_semantics property
                         vocab_query = """
                             MERGE (v:VocabType {name: $name})
                             SET v.description = $description,
                                 v.is_builtin = $is_builtin,
                                 v.is_active = 't',
                                 v.added_by = $added_by,
-                                v.usage_count = 0
+                                v.usage_count = 0,
+                                v.direction_semantics = $direction_semantics
                             WITH v
                             MERGE (c:VocabCategory {name: $category})
                             MERGE (v)-[:IN_CATEGORY]->(c)
@@ -1440,10 +1448,12 @@ class AGEClient:
                             "category": category,
                             "description": description or "",
                             "is_builtin": 't' if is_builtin else 'f',
-                            "added_by": added_by
+                            "added_by": added_by,
+                            "direction_semantics": direction_semantics
                         }
                         self._execute_cypher(vocab_query, params)
-                        logger.debug(f"Created :VocabType node with :IN_CATEGORY->{category} for '{relationship_type}'")
+                        direction_info = f", direction={direction_semantics}" if direction_semantics else ""
+                        logger.debug(f"Created :VocabType node with :IN_CATEGORY->{category}{direction_info} for '{relationship_type}'")
                     except Exception as e:
                         logger.warning(f"Failed to create :VocabType node for '{relationship_type}': {e}")
                         # Don't fail the entire operation - table row was created successfully

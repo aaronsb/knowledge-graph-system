@@ -27,10 +27,34 @@ For each instance, provide:
 - concept_id: The concept this instance evidences
 - quote: The exact quote from the text
 
-For relationships between concepts, provide:
-- from_concept_id: Source concept (use actual ID from existing concepts if referencing them)
-- to_concept_id: Target concept (use actual ID from existing concepts if referencing them)
-- relationship_type: One of [{relationship_types}]
+For relationships between concepts, you must determine DIRECTION SEMANTICS based on frame of reference:
+
+**OUTWARD (from → to):** The "from" concept ACTS on the "to" concept
+  Examples:
+  - "Meditation ENABLES enlightenment" → from=meditation (actor), to=enlightenment (target), direction="outward"
+  - "Ego PREVENTS awareness" → from=ego (blocker), to=awareness (blocked), direction="outward"
+  - "Wheel PART_OF car" → from=wheel (component), to=car (whole), direction="outward"
+
+**INWARD (from ← to):** The "from" concept RECEIVES/RESULTS from the "to" concept
+  Examples:
+  - "Suffering RESULTS_FROM attachment" → from=suffering (result), to=attachment (cause), direction="inward"
+  - "Temperature MEASURED_BY thermometer" → from=temperature (measured), to=thermometer (measurer), direction="inward"
+
+**BIDIRECTIONAL:** Symmetric relationship (both directions equivalent)
+  Examples:
+  - "Ego SIMILAR_TO self-identity" → direction="bidirectional"
+  - "Apple COMPETES_WITH Microsoft" → direction="bidirectional"
+
+**Key Principle:** Consider which concept is the SUBJECT of the sentence:
+- Active voice: "A enables B" → A is actor (outward)
+- Passive voice: "A is caused by B" → A is receiver (inward)
+- Mutual: "A competes with B" = "B competes with A" → bidirectional
+
+For each relationship, provide:
+- from_concept_id: The subject concept (use actual ID from existing concepts if referencing them)
+- to_concept_id: The object concept (use actual ID from existing concepts if referencing them)
+- relationship_type: One of [{relationship_types}] or a clear new type
+- direction_semantics: One of ["outward", "inward", "bidirectional"]
 - confidence: A score from 0.0 to 1.0 indicating confidence in the relationship
 
 IMPORTANT: When creating relationships to existing concepts, use their actual concept_id from the list below.
@@ -59,6 +83,7 @@ Return your response as a JSON object with this structure:
       "from_concept_id": "concept_001",
       "to_concept_id": "concept_002",
       "relationship_type": "IMPLIES",
+      "direction_semantics": "outward",
       "confidence": 0.9
     }}
   ]

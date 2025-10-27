@@ -376,9 +376,15 @@ def process_chunk(
             llm_to_id = rel["to_concept_id"]
             llm_rel_type = rel["relationship_type"]
             confidence = rel.get("confidence", 1.0)  # Default to 1.0 if missing
+            direction_semantics = rel.get("direction_semantics", "outward")  # ADR-049: LLM-determined direction
         except (KeyError, TypeError) as e:
             logger.warning(f"  ⚠ Skipping invalid relationship structure: {e}")
             continue
+
+        # Validate direction_semantics (ADR-049)
+        if direction_semantics not in ["outward", "inward", "bidirectional"]:
+            logger.warning(f"  ⚠ Invalid direction_semantics '{direction_semantics}' for {llm_rel_type}, defaulting to 'outward'")
+            direction_semantics = "outward"
 
         # Normalize relationship type using Porter Stemmer Enhanced Hybrid Matcher
         # Pass AGEClient so it can query existing edge types from graph
@@ -404,9 +410,10 @@ def process_chunk(
                     description=f"LLM-generated relationship type from ingestion",
                     added_by="llm_extractor",
                     is_builtin=False,
+                    direction_semantics=direction_semantics,  # ADR-049: Store LLM's direction decision
                     ai_provider=provider  # Pass provider for automatic embedding generation
                 )
-                logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (embedding generated)")
+                logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (direction: {direction_semantics}, embedding generated)")
             except Exception as e:
                 # If adding fails (e.g., already exists from another worker), continue anyway
                 logger.debug(f"  Note: Edge type '{canonical_type}' may already exist: {e}")
