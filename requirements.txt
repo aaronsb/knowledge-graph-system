@@ -6,6 +6,7 @@ numpy>=1.24.0  # Required for learned knowledge similarity calculations & vector
 sentence-transformers>=2.3.0  # Local embedding models for ADR-039 (nomic-embed-text, BGE)
 einops>=0.8.0  # Required by nomic-embed-text model architecture
 mistune>=3.0.0  # Markdown parsing for preprocessing (ADR-023)
+nltk>=3.8.0  # Natural language processing for relationship mapping (stemming)
 
 # API Server (Phase 1)
 fastapi>=0.109.0
