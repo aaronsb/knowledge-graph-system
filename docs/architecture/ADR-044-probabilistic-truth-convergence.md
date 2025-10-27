@@ -1,7 +1,7 @@
 # ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
 
 **Status:** Proposed
-**Date:** 2025-01-24 (Updated: 2025-01-25)
+**Date:** 2025-10-24 (Updated: 2025-10-25)
 **Authors:** System Architecture Team
 **Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), **ADR-045 (Unified Embedding Generation - DEPENDENCY)**, ADR-046 (Grounding-Aware Vocabulary Management)
 
@@ -23,7 +23,7 @@ This ADR is part of a three-part system for truth convergence in the knowledge g
 
 ### The Problem of Contradictory Truth
 
-During documentation maintenance (2025-01-24), a practical contradiction was discovered in the knowledge graph:
+During documentation maintenance (2025-10-24), a practical contradiction was discovered in the knowledge graph:
 
 **Initial state:**
 - Concept: "System uses Neo4j"
