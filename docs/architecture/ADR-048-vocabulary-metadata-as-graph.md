@@ -1,6 +1,6 @@
 # ADR-048: Vocabulary Metadata as First-Class Graph
 
-**Status:** In Progress - Phase 3.1 Complete ✅
+**Status:** In Progress - Phase 3.2 Complete ✅
 **Date:** 2025-10-27
 **Deciders:** System Architects
 **Related:** ADR-047 (Probabilistic Categorization), ADR-032 (Vocabulary Expansion), ADR-046 (Grounding-Aware Management)
@@ -14,7 +14,13 @@
   - 30 -[:IN_CATEGORY]-> relationships
   - Idempotent migration verified
   - SQL tables preserved for backward compatibility
-- ⏸️ **Phase 3.2 Pending** - Migrate vocabulary queries to use graph
+- ✅ **Phase 3.2 Complete** - Vocabulary queries migrated to use graph
+  - get_vocabulary_size() queries :VocabType nodes
+  - get_all_edge_types() lists :VocabType names
+  - get_edge_type_info() traverses -[:IN_CATEGORY]-> relationships
+  - get_category_distribution() counts per :VocabCategory
+  - kg vocab list now queries graph exclusively
+  - SQL table no longer queried for vocabulary operations
 - ⏸️ **Phase 3.3 Optional** - SQL table deprecation (future work)
 
 ## Context
@@ -594,5 +600,5 @@ Together, these eliminate the SQL simulation and make vocabulary truly part of t
 ---
 
 **Last Updated:** 2025-10-27
-**Status:** In Progress - Phase 3.1 Complete ✅
-**Implementation:** Phase 1-2 complete (PR #65, #70), Phase 3.1 complete (migration 014), Phase 3.2-3.3 future work
+**Status:** In Progress - Phase 3.2 Complete ✅
+**Implementation:** Phase 1-2 complete (PR #65, #70), Phase 3.1-3.2 complete (PR #71), Phase 3.3 future work
