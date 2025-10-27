@@ -1678,6 +1678,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3444,6 +3448,52 @@
   
   
     <li class="md-nav__item">
+      <a href="../ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-047: Probabilistic Vocabulary Categorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-048: Vocabulary Metadata as First-Class Graph
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -4011,8 +4061,11 @@
 - Not in blacklist (profanity, reserved terms)
 - Not reverse form (<code>_BY</code> suffix rejected)</p>
 <h5 id="category-classification-for-new-edge-types">Category Classification for New Edge Types</h5>
+<blockquote>
+<p><strong>Note:</strong> Category classification is now handled by <strong>ADR-047: Probabilistic Vocabulary Categorization</strong> using embedding similarity to seed types with satisficing (max similarity). The approach below is superseded.</p>
+</blockquote>
 <p><strong>Two-Tier Vocabulary Structure:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># High-level categories (8 protected groups from ADR-022)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># High-level categories (8 protected groups from ADR-022, refined in ADR-047)</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">RELATIONSHIP_CATEGORIES</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s2">&quot;logical_truth&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;IMPLIES&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTRADICTS&quot;</span><span class="p">,</span> <span class="s2">&quot;PRESUPPOSES&quot;</span><span class="p">,</span> <span class="s2">&quot;EQUIVALENT_TO&quot;</span><span class="p">],</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="s2">&quot;causal&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;CAUSES&quot;</span><span class="p">,</span> <span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;PREVENTS&quot;</span><span class="p">,</span> <span class="s2">&quot;INFLUENCES&quot;</span><span class="p">,</span> <span class="s2">&quot;RESULTS_FROM&quot;</span><span class="p">],</span>
@@ -5732,6 +5785,8 @@
 <li><strong>ADR-022:</strong> 30-Type Semantically Sparse Taxonomy (current static system)</li>
 <li><strong>ADR-025:</strong> Dynamic Relationship Vocabulary (skip-and-approve workflow)</li>
 <li><strong>ADR-026:</strong> Autonomous Vocabulary Curation (LLM-assisted suggestions)</li>
+<li><strong>ADR-047:</strong> Probabilistic Vocabulary Categorization (embedding-based category assignment)</li>
+<li><strong>ADR-046:</strong> Grounding-Aware Vocabulary Management (synonym detection, compaction workflow)</li>
 <li><strong>ADR-014:</strong> Job Approval Workflow (HITL pattern)</li>
 <li><strong>ADR-021:</strong> Live Man Switch (human oversight principles)</li>
 </ul>

@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-031-encrypted-api-key-storage/">
+        <link rel="prev" href="../ADR-046-grounding-aware-vocabulary-management/">
       
       
-        <link rel="next" href="../ADR-032-automatic-edge-vocabulary-expansion/">
+        <link rel="next" href="../ADR-048-vocabulary-metadata-as-graph/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>ADR-032 Implementation Quick Reference - Knowledge Graph System</title>
+        <title>ADR-047: Probabilistic Vocabulary Categorization - Knowledge Graph System</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-032-implementation-quick-reference" class="md-skip">
+        <a href="#adr-047-probabilistic-vocabulary-categorization" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-032 Implementation Quick Reference
+              ADR-047: Probabilistic Vocabulary Categorization
             
           </span>
         </div>
@@ -2346,32 +2346,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    ADR-032 Implementation Quick Reference
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -2382,185 +2360,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#critical-implementation-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Critical Implementation Details
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Critical Implementation Details">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-sliding-windows" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Sliding Windows
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-confidence-thresholds" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Confidence Thresholds
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-value-score-formula" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Value Score Formula
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-aggressiveness-zones" class="md-nav__link">
-    <span class="md-ellipsis">
-      4. Aggressiveness Zones
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-merge-vs-prune-decision-tree" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Merge vs Prune Decision Tree
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-bezier-curve-profiles" class="md-nav__link">
-    <span class="md-ellipsis">
-      6. Bezier Curve Profiles
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-protected-sets" class="md-nav__link">
-    <span class="md-ellipsis">
-      7. Protected Sets
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#8-auto-expansion-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      8. Auto-Expansion Validation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#9-database-tables-minimal-additions" class="md-nav__link">
-    <span class="md-ellipsis">
-      9. Database Tables (Minimal Additions)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#10-configuration-keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      10. Configuration Keys
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#11-key-module-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      11. Key Module Dependencies
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#12-testing-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      12. Testing Checklist
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#13-implementation-order-from-todo" class="md-nav__link">
-    <span class="md-ellipsis">
-      13. Implementation Order (from TODO)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#14-critical-dont-forget-items" class="md-nav__link">
-    <span class="md-ellipsis">
-      14. Critical "Don't Forget" Items
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#15-performance-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      15. Performance Considerations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#16-common-pitfalls-to-avoid" class="md-nav__link">
-    <span class="md-ellipsis">
-      16. Common Pitfalls to Avoid
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2938,10 +2737,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-047: Probabilistic Vocabulary Categorization
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2952,6 +2773,335 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Problem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-fundamental-constraint" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Fundamental Constraint
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failed-approach-fixed-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failed Approach: Fixed Classification
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Principle
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#satisficing-strategy-herbert-simon" class="md-nav__link">
+    <span class="md-ellipsis">
+      Satisficing Strategy (Herbert Simon)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#confidence-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      Confidence Thresholds
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ambiguity-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ambiguity Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecological-pruning-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ecological Pruning Workflow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      Negative
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      Neutral
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-0-seed-validation-optional-week-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 0: Seed Validation (Optional, Week 1)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-foundation-week-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Foundation (Week 1)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-batch-categorization-week-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Batch Categorization (Week 1)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-cli-integration-week-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: CLI Integration (Week 1)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-validation-week-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Validation (Week 2)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-orphan-detection-week-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Orphan Detection (Week 2)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives Considered
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-manual-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 1: Manual Classification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-llm-auto-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 2: LLM Auto-Classification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-hybrid-embeddings-llm-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 3: Hybrid (Embeddings + LLM validation)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-4-multi-category-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 4: Multi-Category Assignment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-categorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Categorization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3473,245 +3623,431 @@
   
 
 
-<h1 id="adr-032-implementation-quick-reference">ADR-032 Implementation Quick Reference</h1>
-<p><strong>Status:</strong> Implementation Guide
-<strong>Date:</strong> 2025-10-15
-<strong>Related:</strong> ADR-032-automatic-edge-vocabulary-expansion.md</p>
-<h2 id="critical-implementation-details">Critical Implementation Details</h2>
-<h3 id="1-sliding-windows">1. Sliding Windows</h3>
-<p><strong>Edge Types:</strong>
-- MIN: 30 (protected core, never prune)
-- MAX: 90 (soft limit, trigger optimization)
-- HARD: 200 (block expansion, force curator)</p>
-<p><strong>Categories:</strong>
-- MIN: 8 (protected core)
-- MAX: 15 (hard limit)
-- MERGE_THRESHOLD: 12 (start flagging merge opportunities)</p>
-<h3 id="2-confidence-thresholds">2. Confidence Thresholds</h3>
-<p><strong>Category Classification:</strong>
-- <code>&gt;= 0.3</code>: Assign to existing category (good fit)
-- <code>&lt; 0.3</code>: Propose new category (poor fit to all)</p>
-<p><strong>Synonym Detection:</strong>
-- <code>&gt;= 0.90</code>: High similarity, suggest merge
-- <code>0.70-0.89</code>: Moderate similarity, flag for review
-- <code>&lt; 0.70</code>: Not synonyms</p>
-<p><strong>AITL Decisions:</strong>
-- <code>&gt;= 0.7</code>: Execute AI decision
-- <code>&lt; 0.7</code>: Fallback to HITL (low confidence)</p>
-<h3 id="3-value-score-formula">3. Value Score Formula</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">value_score</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">edge_count</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">+</span>                    <span class="c1"># Base: how many edges exist</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="p">(</span><span class="n">avg_traversal</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span>       <span class="c1"># Usage: how often queried</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="p">(</span><span class="n">bridge_count</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.3</span> <span class="o">+</span>         <span class="c1"># Structural: connects subgraphs</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">trend_14d</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span>               <span class="c1"># Momentum: growing usage</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+<h1 id="adr-047-probabilistic-vocabulary-categorization">ADR-047: Probabilistic Vocabulary Categorization</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2025-10-26
+<strong>Deciders:</strong> System Architects
+<strong>Related:</strong> ADR-044 (Probabilistic Truth Convergence), ADR-025 (Dynamic Relationship Vocabulary), ADR-022 (Semantic Relationship Taxonomy)</p>
+<h2 id="context">Context</h2>
+<p>The relationship vocabulary system currently has two classification approaches:</p>
+<p><strong>Builtin Types (30 types):</strong> Hand-assigned semantic categories
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>CAUSES        → causation
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>COMPOSED_OF   → composition
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>IMPLIES       → logical
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>SUPPORTS      → evidential
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>...
+</code></pre></div></p>
+<p><strong>LLM-Generated Types (88+ types):</strong> Generic "llm_generated" category
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ENHANCES      → llm_generated  ❌ Not semantically useful
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>INTEGRATES    → llm_generated  ❌ Can&#39;t distinguish from ENHANCES
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>CONFIGURES    → llm_generated  ❌ Lost semantic information
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>...
+</code></pre></div></p>
+<h3 id="the-problem">The Problem</h3>
+<p>Without meaningful categories, the system cannot:
+- <strong>Match relationships semantically</strong> during extraction (Is "improves" similar to "enhances"?)
+- <strong>Filter graph traversals</strong> by relationship type (Show me all causal relationships)
+- <strong>Explain relationships</strong> to users (What kind of relationship is CONFIGURES?)
+- <strong>Detect category drift</strong> (Are we generating too many causal vs structural types?)</p>
+<h3 id="the-fundamental-constraint">The Fundamental Constraint</h3>
+<p>The core challenge is <strong>distilling unbounded semantic space into bounded knowledge</strong>:</p>
+<blockquote>
+<p>We are essentially distilling a bunch of relationships that mean infinite things possibly, and satisficing it into a structure with bounded knowledge (our vocabulary).</p>
+</blockquote>
+<p>LLMs can generate unlimited relationship variants (ENHANCES, AUGMENTS, STRENGTHENS, AMPLIFIES, BOOSTS...), but humans need a <strong>bounded, semantically meaningful vocabulary</strong> to understand and work with the graph. We can't enumerate all possible relationships, but we can satisfice them into 8 interpretable categories using our 30 hand-validated seed types as anchors.</p>
+<p>This is fundamentally a <strong>lossy compression</strong> problem: preserve semantic utility while discarding infinite variation.</p>
+<h3 id="failed-approach-fixed-classification">Failed Approach: Fixed Classification</h3>
+<p><strong>Attempt 1:</strong> Manually classify all 88 types
+- <strong>Problem:</strong> Subjective, time-consuming, doesn't scale
+- <strong>Result:</strong> Abandoned - too much manual work</p>
+<p><strong>Attempt 2:</strong> LLM auto-classification
+- <strong>Problem:</strong> Adds LLM dependency, inconsistent, needs validation
+- <strong>Result:</strong> Violates principle of avoiding LLM for metadata</p>
+<h2 id="decision">Decision</h2>
+<p>Implement <strong>probabilistic category assignment</strong> using embedding similarity - the same pattern that succeeded with grounding strength (ADR-044).</p>
+<h3 id="core-principle">Core Principle</h3>
+<blockquote>
+<p>Categories emerge from semantic similarity to seed types, not fixed assignments.</p>
+</blockquote>
+<p>Just as grounding scores emerge from SUPPORTS/CONTRADICTS relationships, categories emerge from similarity to the 30 builtin "seed" types.</p>
+<h3 id="architecture">Architecture</h3>
+<p><strong>1. Seed Types (30 Builtin Types)</strong></p>
+<p>These are the ground truth for each category:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">CATEGORY_SEEDS</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s1">&#39;causation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CAUSES&#39;</span><span class="p">,</span> <span class="s1">&#39;ENABLES&#39;</span><span class="p">,</span> <span class="s1">&#39;PREVENTS&#39;</span><span class="p">,</span> <span class="s1">&#39;INFLUENCES&#39;</span><span class="p">,</span> <span class="s1">&#39;RESULTS_FROM&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="s1">&#39;composition&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;PART_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTAINS&#39;</span><span class="p">,</span> <span class="s1">&#39;COMPOSED_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;SUBSET_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;INSTANCE_OF&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="s1">&#39;logical&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;IMPLIES&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTRADICTS&#39;</span><span class="p">,</span> <span class="s1">&#39;PRESUPPOSES&#39;</span><span class="p">,</span> <span class="s1">&#39;EQUIVALENT_TO&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="s1">&#39;evidential&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;SUPPORTS&#39;</span><span class="p">,</span> <span class="s1">&#39;REFUTES&#39;</span><span class="p">,</span> <span class="s1">&#39;EXEMPLIFIES&#39;</span><span class="p">,</span> <span class="s1">&#39;MEASURED_BY&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="s1">&#39;semantic&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;SIMILAR_TO&#39;</span><span class="p">,</span> <span class="s1">&#39;ANALOGOUS_TO&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTRASTS_WITH&#39;</span><span class="p">,</span> <span class="s1">&#39;OPPOSITE_OF&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="s1">&#39;temporal&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;PRECEDES&#39;</span><span class="p">,</span> <span class="s1">&#39;CONCURRENT_WITH&#39;</span><span class="p">,</span> <span class="s1">&#39;EVOLVES_INTO&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="s1">&#39;dependency&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;DEPENDS_ON&#39;</span><span class="p">,</span> <span class="s1">&#39;REQUIRES&#39;</span><span class="p">,</span> <span class="s1">&#39;CONSUMES&#39;</span><span class="p">,</span> <span class="s1">&#39;PRODUCES&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="s1">&#39;derivation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;DERIVED_FROM&#39;</span><span class="p">,</span> <span class="s1">&#39;GENERATED_BY&#39;</span><span class="p">,</span> <span class="s1">&#39;BASED_ON&#39;</span><span class="p">]</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">}</span>
 </code></pre></div>
-<p><strong>Bridge Detection:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Low-activation node connecting to high-activation nodes</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">c_from</span><span class="o">.</span><span class="n">access_count</span> <span class="o">&lt;</span> <span class="mi">10</span>      <span class="c1"># Source rarely accessed</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">c_to</span><span class="o">.</span><span class="n">access_count</span> <span class="o">&gt;</span> <span class="mi">100</span>       <span class="c1"># Destination frequently accessed</span>
-</code></pre></div></p>
-<h3 id="4-aggressiveness-zones">4. Aggressiveness Zones</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Position = (current_size - MIN) / (MAX - MIN)  # 0.0 to 1.0
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Aggressiveness = CURVE.get_y_for_x(Position)
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Zones:
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  0.0-0.2: monitor  (just watch, no action)
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  0.2-0.5: watch    (flag opportunities)
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  0.5-0.7: merge    (prefer synonym merging)
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  0.7-0.9: mixed    (merge + prune zero-edge)
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  0.9-1.0: emergency (aggressive batch pruning)
+<p><strong>2. Category Assignment via Embedding Similarity</strong></p>
+<p>For each LLM-generated type:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">compute_category_scores</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="sd">    Compute similarity to each category&#39;s seed types.</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="sd">    Returns dict like:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="sd">    {</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="sd">        &#39;causation&#39;: 0.85,    # ENHANCES is very similar to ENABLES</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="sd">        &#39;composition&#39;: 0.45,  # Less similar to CONTAINS</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="sd">        &#39;logical&#39;: 0.23,      # Not similar to IMPLIES</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="sd">        ...</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="sd">    }</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">type_embedding</span> <span class="o">=</span> <span class="n">get_embedding</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="n">category_scores</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="k">for</span> <span class="n">category</span><span class="p">,</span> <span class="n">seed_types</span> <span class="ow">in</span> <span class="n">CATEGORY_SEEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        <span class="c1"># Compute similarity to all seeds in this category</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>        <span class="n">similarities</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>            <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">type_embedding</span><span class="p">,</span> <span class="n">get_embedding</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>            <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">seed_types</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>        <span class="p">]</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>        <span class="c1"># Category score = max similarity to any seed</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>        <span class="n">category_scores</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="k">return</span> <span class="n">category_scores</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="c1"># Example:</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="n">scores</span> <span class="o">=</span> <span class="n">compute_category_scores</span><span class="p">(</span><span class="s2">&quot;ENHANCES&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="c1"># =&gt; {&#39;causation&#39;: 0.85, &#39;composition&#39;: 0.45, &#39;logical&#39;: 0.23, ...}</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="n">assigned_category</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="n">confidence</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">assigned_category</span><span class="p">]</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="c1"># =&gt; category=&#39;causation&#39;, confidence=0.85</span>
 </code></pre></div>
-<h3 id="5-merge-vs-prune-decision-tree">5. Merge vs Prune Decision Tree</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Need to reduce vocabulary?
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  ├─ Check synonyms (similarity &gt;= 0.90)
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  │  ├─ Found? → MERGE (preserves edges)
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  │  └─ Not found? → Continue
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  │
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  ├─ Check zero-edge types (edge_count == 0)
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  │  ├─ Found? → PRUNE (safe, no data loss)
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  │  └─ Not found? → Continue
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  │
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  └─ Last resort → PRUNE low-value types (lossy)
+<h3 id="satisficing-strategy-herbert-simon">Satisficing Strategy (Herbert Simon)</h3>
+<p>This algorithm uses <strong>satisficing</strong> (accept "good enough" vs. optimal):</p>
+<p><strong>Why <code>max()</code> instead of <code>mean()</code>:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Example: ENHANCES vs causation seeds</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">similarities</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="s1">&#39;ENABLES&#39;</span><span class="p">:</span>    <span class="mf">0.87</span><span class="p">,</span>  <span class="c1"># Very similar! (same polarity)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="s1">&#39;CAUSES&#39;</span><span class="p">:</span>     <span class="mf">0.72</span><span class="p">,</span>  <span class="c1"># Similar</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s1">&#39;PREVENTS&#39;</span><span class="p">:</span>   <span class="mf">0.12</span><span class="p">,</span>  <span class="c1"># Opposite polarity (but still causal!)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="s1">&#39;INFLUENCES&#39;</span><span class="p">:</span> <span class="mf">0.65</span>   <span class="c1"># Similar</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">max</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span>  <span class="o">=</span> <span class="mf">0.87</span>  <span class="err">✓</span> <span class="n">Satisficing</span><span class="p">:</span> <span class="s2">&quot;Found one good match!&quot;</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">mean</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.59</span>  <span class="err">✗</span> <span class="n">Optimizing</span><span class="p">:</span> <span class="n">Wrongly</span> <span class="n">penalized</span> <span class="n">by</span> <span class="n">PREVENTS</span>
 </code></pre></div>
-<p><strong>Batching:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">target_reduction</span> <span class="o">=</span> <span class="p">(</span><span class="n">current_size</span> <span class="o">-</span> <span class="n">MAX</span><span class="p">)</span> <span class="o">+</span> <span class="n">buffer</span>  <span class="c1"># buffer = 5</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Remove MORE than minimum to avoid immediate re-trigger</span>
-</code></pre></div></p>
-<h3 id="6-bezier-curve-profiles">6. Bezier Curve Profiles</h3>
-<p><strong>Default: "aggressive"</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">CubicBezier</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># Stays passive until 75 types, then sharp acceleration</span>
-</code></pre></div></p>
-<p><strong>Other profiles:</strong>
-- <code>linear</code>: (0.0, 0.0, 1.0, 1.0) - constant rate
-- <code>gentle</code>: (0.5, 0.5, 0.5, 0.5) - very gradual
-- <code>exponential</code>: (0.7, 0.0, 0.84, 0.0) - explosive near limit
-- <code>ease-in-out</code>: (0.42, 0.0, 0.58, 1.0) - smooth S-curve</p>
-<h3 id="7-protected-sets">7. Protected Sets</h3>
-<p><strong>Protected Edge Types:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">is_builtin</span> <span class="o">==</span> <span class="n">TRUE</span>  <span class="c1"># 30 core types from ADR-022</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Can be merged into, but never deleted</span>
-</code></pre></div></p>
-<p><strong>Protected Categories:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">BUILTIN_CATEGORIES</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="s2">&quot;logical_truth&quot;</span><span class="p">,</span> <span class="s2">&quot;causal&quot;</span><span class="p">,</span> <span class="s2">&quot;structural&quot;</span><span class="p">,</span> <span class="s2">&quot;evidential&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="s2">&quot;similarity&quot;</span><span class="p">,</span> <span class="s2">&quot;temporal&quot;</span><span class="p">,</span> <span class="s2">&quot;functional&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">]</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Can be merged into, but never deleted</span>
-</code></pre></div></p>
-<h3 id="8-auto-expansion-validation">8. Auto-Expansion Validation</h3>
-<p><strong>Allowed:</strong>
-- Uppercase alphanumeric + underscores
-- Length: 3-50 characters
-- Not in blacklist</p>
-<p><strong>Rejected:</strong>
-- Ends with <code>_BY</code> (reversed relationship)
-- Contains profanity/reserved terms
-- Malformed (lowercase, special chars)</p>
-<h3 id="9-database-tables-minimal-additions">9. Database Tables (Minimal Additions)</h3>
-<p><strong>Already Exists:</strong>
-- <code>kg_api.relationship_vocabulary</code> ✓
-- <code>kg_api.skipped_relationships</code> ✓
-- <code>kg_api.vocabulary_audit</code> ✓</p>
-<p><strong>Need to Add:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">-- History tracking</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">kg_api</span><span class="p">.</span><span class="n">vocabulary_history</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="n">relationship_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="n">action</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;added&#39;, &#39;merged&#39;, &#39;pruned&#39;, &#39;restored&#39;</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="n">performed_by</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="n">performed_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="n">snapshot</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="n">merge_target</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="p">)</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1">-- Category proposals</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">kg_api</span><span class="p">.</span><span class="n">category_proposals</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">    </span><span class="n">proposed_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">    </span><span class="n">trigger_edge_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">    </span><span class="n">confidence_scores</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">    </span><span class="n">llm_reasoning</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="n">status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;pending&#39;, &#39;approved&#39;, &#39;rejected&#39;</span>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span>
-<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="p">)</span>
-<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
-<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1">-- Pruning recommendations (HITL/AITL)</span>
-<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="n">kg_api</span><span class="p">.</span><span class="n">pruning_recommendations</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="w">    </span><span class="n">recommendation_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;merge&#39;, &#39;prune&#39;, &#39;mixed&#39;</span>
-<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="w">    </span><span class="n">targets</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Array of types/pairs</span>
-<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="w">    </span><span class="n">aggressiveness</span><span class="w"> </span><span class="nb">FLOAT</span><span class="p">,</span>
-<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="w">    </span><span class="n">reasoning</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
-<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="w">    </span><span class="n">status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;pending&#39;, &#39;approved&#39;, &#39;rejected&#39;</span>
-<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span>
-<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="p">)</span>
-</code></pre></div></p>
-<h3 id="10-configuration-keys">10. Configuration Keys</h3>
-<p><strong>Environment Variables:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">VOCAB_AGGRESSIVENESS</span><span class="o">=</span>aggressive<span class="w">        </span><span class="c1"># Bezier profile</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nv">VOCAB_PRUNING_MODE</span><span class="o">=</span>aitl<span class="w">                </span><span class="c1"># naive|hitl|aitl</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nv">VOCAB_MIN</span><span class="o">=</span><span class="m">30</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nv">VOCAB_MAX</span><span class="o">=</span><span class="m">90</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nv">VOCAB_HARD_LIMIT</span><span class="o">=</span><span class="m">200</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="nv">CATEGORY_MAX</span><span class="o">=</span><span class="m">15</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="nv">AITL_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.7
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="nv">AITL_REASONING_MODEL</span><span class="o">=</span>claude-3-5-sonnet-20241022
-</code></pre></div></p>
-<h3 id="11-key-module-dependencies">11. Key Module Dependencies</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>aggressiveness_curve.py       # Pure math, no dependencies
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    ↓
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>vocabulary_scoring.py         # Needs: DB queries (edge_usage_stats)
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    ↓
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>category_classifier.py        # Needs: embeddings API
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    ↓
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>synonym_detector.py           # Needs: embeddings API
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    ↓
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>pruning_strategies.py         # Needs: all above + LLM (AITL mode)
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    ↓
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>vocabulary_manager.py         # Orchestrates everything
-</code></pre></div>
-<h3 id="12-testing-checklist">12. Testing Checklist</h3>
-<p><strong>Unit Tests:</strong>
-- [ ] Bezier curves: all profiles, boundary conditions
-- [ ] Value scoring: each component (edges, traversals, bridge, trend)
-- [ ] Category classifier: good fit (&gt;0.3), poor fit (&lt;0.3), edge cases
-- [ ] Synonym detector: high similarity (&gt;0.9), moderate, low
-- [ ] Pruning strategies: merge preference, zero-edge pruning, last resort</p>
-<p><strong>Integration Tests:</strong>
-- [ ] Vocabulary manager: auto-expansion → classification → pruning
-- [ ] Database operations: insert, update, history tracking
-- [ ] End-to-end: ingest → expand → trigger → optimize → approve</p>
-<p><strong>Edge Cases:</strong>
-- [ ] Vocabulary at exactly MAX (90 types)
-- [ ] All categories at maximum (15 categories)
-- [ ] No merge candidates available
-- [ ] All types have edges (can't safe-prune)
-- [ ] AITL confidence exactly at threshold (0.7)
-- [ ] Bezier position at 0.0, 0.5, 1.0</p>
-<h3 id="13-implementation-order-from-todo">13. Implementation Order (from TODO)</h3>
-<p><strong>Phase 1: Worker Modules (Isolated)</strong>
-1. aggressiveness_curve.py + tests
-2. vocabulary_scoring.py + tests
-3. category_classifier.py + tests
-4. synonym_detector.py + tests
-5. pruning_strategies.py + tests</p>
-<p><strong>Phase 2: Orchestration</strong>
-6. vocabulary_manager.py + tests</p>
-<p><strong>Phase 3: Integration</strong>
-7. Update schema (minimal)
-8. Modify age_client.py (upsert hook)
-9. Add API routes
-10. Add CLI commands</p>
-<p><strong>Phase 4: Configuration &amp; E2E</strong>
-11. Environment variables
-12. End-to-end tests</p>
-<h3 id="14-critical-dont-forget-items">14. Critical "Don't Forget" Items</h3>
+<p>Categories contain <strong>opposing polarities</strong> (ENABLES vs PREVENTS are both causal). Max satisfices: "Is this semantically similar to ANY seed? Yes? Good enough!"</p>
+<h3 id="confidence-thresholds">Confidence Thresholds</h3>
+<p>Accept "good enough" based on confidence:</p>
 <ul>
-<li>[ ] <strong>Batching:</strong> Always add buffer (5) when pruning to reduce re-triggers</li>
-<li>[ ] <strong>Merge First:</strong> Check synonyms before pruning anything with edges</li>
-<li>[ ] <strong>High Bar:</strong> New categories need &lt; 0.3 confidence for ALL existing</li>
-<li>[ ] <strong>Bridge Preservation:</strong> Low-value type with high bridge_count = KEEP</li>
-<li>[ ] <strong>Fallback Category:</strong> If new category rejected, assign to closest existing</li>
-<li>[ ] <strong>Audit Trail:</strong> Log every action to vocabulary_history</li>
-<li>[ ] <strong>Rollback Support:</strong> Store snapshot in JSONB before any destructive action</li>
-<li>[ ] <strong>Protected Core:</strong> is_builtin = TRUE immune to automatic pruning</li>
-<li>[ ] <strong>Category Limits:</strong> 8 min (protected), 15 max (hard stop)</li>
-<li>[ ] <strong>Edge Type Limits:</strong> 30 min (protected), 90 soft, 200 hard</li>
+<li><strong>High (≥ 70%):</strong> Auto-categorize confidently</li>
+<li><strong>Medium (50-69%):</strong> Auto-categorize with warning</li>
+<li><strong>Low (&lt; 50%):</strong> Flag for curator review (possible new seed needed)</li>
 </ul>
-<h3 id="15-performance-considerations">15. Performance Considerations</h3>
-<p><strong>Embedding Calls:</strong>
-- Cache embeddings for existing types (avoid re-computing)
-- Batch embedding generation when possible
-- Category classification: avg of 4-5 types per category = ~40 embeddings</p>
-<p><strong>Database Queries:</strong>
-- Value scoring: needs edge_usage_stats + concept_access_stats joins
-- Bridge detection: potentially expensive (access_count filters on large tables)
-- Consider materialized views for hot paths</p>
-<p><strong>LLM Calls (AITL mode):</strong>
-- ~500-1000 tokens per decision
-- Cost: ~$0.01 per decision (Claude Sonnet)
-- Only triggered when vocabulary exceeds limit (infrequent)</p>
-<h3 id="16-common-pitfalls-to-avoid">16. Common Pitfalls to Avoid</h3>
-<p>❌ <strong>Don't:</strong> Prune based on age/time (graph value is structural)
-❌ <strong>Don't:</strong> Use hardcoded if/else thresholds (use Bezier curves)
-❌ <strong>Don't:</strong> Delete protected types (is_builtin = TRUE)
-❌ <strong>Don't:</strong> Create categories above limit (check before proposing)
-❌ <strong>Don't:</strong> Merge without snapshot (need rollback capability)
-❌ <strong>Don't:</strong> Ignore confidence thresholds (prevents bad decisions)</p>
-<p>✅ <strong>Do:</strong> Batch optimizations (reduce invocations)
-✅ <strong>Do:</strong> Prefer merging over pruning (preserves data)
-✅ <strong>Do:</strong> Log all actions to history (auditability)
-✅ <strong>Do:</strong> Check bridge importance (structural value)
-✅ <strong>Do:</strong> Use embeddings for similarity (not string matching)
-✅ <strong>Do:</strong> Respect aggressiveness curve (smooth, predictable)</p>
+<h3 id="ambiguity-detection">Ambiguity Detection</h3>
+<p>When runner-up score is close to winner (&gt; 0.70), flag as multi-category candidate:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">primary</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">runner_up_score</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">if</span> <span class="n">runner_up_score</span> <span class="o">&gt;</span> <span class="mf">0.70</span><span class="p">:</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Ambiguous: </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> could be </span><span class="si">{</span><span class="n">primary</span><span class="si">}</span><span class="s2"> OR </span><span class="si">{</span><span class="n">runner_up_category</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="c1"># Store category_ambiguous: true for future multi-category support</span>
+</code></pre></div>
+<p><strong>3. Storage Schema</strong></p>
+<p>Update <code>relationship_vocabulary</code> table:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">relationship_vocabulary</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_source</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;computed&#39;</span><span class="p">,</span><span class="w">  </span><span class="c1">-- &#39;builtin&#39; or &#39;computed&#39; (no overrides)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_confidence</span><span class="w"> </span><span class="nb">FLOAT</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 0.0 to 1.0</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_scores</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Full score breakdown</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_ambiguous</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">;</span><span class="w">  </span><span class="c1">-- True if runner-up &gt; 0.70</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_relationship_category</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">relationship_vocabulary</span><span class="p">(</span><span class="n">category</span><span class="p">);</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_category_confidence</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">relationship_vocabulary</span><span class="p">(</span><span class="n">category_confidence</span><span class="p">);</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">-- Example row:</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1">-- type: ENHANCES</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">-- category: causation</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1">-- category_source: computed</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1">-- category_confidence: 0.85</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1">-- category_scores: {&quot;causation&quot;: 0.85, &quot;composition&quot;: 0.45, &quot;logical&quot;: 0.23, ...}</span>
+</code></pre></div>
+<p><strong>4. Cache and Refresh</strong></p>
+<p>Category assignments are cached but can be recomputed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Compute once on vocabulary insert</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">INSERT</span> <span class="n">INTO</span> <span class="n">relationship_vocabulary</span> <span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">category_source</span><span class="p">,</span> <span class="n">category_confidence</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">VALUES</span> <span class="p">(</span><span class="s1">&#39;ENHANCES&#39;</span><span class="p">,</span> <span class="s1">&#39;causation&#39;</span><span class="p">,</span> <span class="s1">&#39;computed&#39;</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">);</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Recompute on demand</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">kg</span> <span class="n">vocab</span> <span class="n">refresh</span><span class="o">-</span><span class="n">categories</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Recalculates all &#39;computed&#39; categories based on current embeddings</span>
+</code></pre></div>
+<p><strong>When to refresh categories:</strong></p>
+<ol>
+<li>
+<p><strong>After vocabulary merges</strong> (vocabulary topology changes):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>STRENGTHENS<span class="w"> </span>ENHANCES<span class="w">  </span><span class="c1"># Consolidate synonyms</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w">          </span><span class="c1"># Recalculate with cleaner landscape</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>After embedding model changes</strong> (semantic space shifts):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--model<span class="w"> </span>nomic-embed-text
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>regenerate<span class="w"> </span>--vocabulary
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w">  </span><span class="c1"># Automatically triggered</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>After seed adjustments</strong> (category definitions change):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># If CATEGORY_SEEDS updated in code</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w">  </span><span class="c1"># Recalculate with new seeds</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="cli-integration">CLI Integration</h3>
+<p><strong>Display categories with confidence:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>$<span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>list
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>TYPE<span class="w">          </span>CATEGORY<span class="w">    </span>EDGES<span class="w">  </span>STATUS<span class="w">  </span>CONFIDENCE
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>CAUSES<span class="w">        </span>causation<span class="w">      </span><span class="m">91</span><span class="w">  </span>✓<span class="w">       </span><span class="nb">builtin</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>ENHANCES<span class="w">      </span>causation<span class="w">      </span><span class="m">28</span><span class="w">  </span>✓<span class="w">       </span><span class="m">85</span>%
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>INTEGRATES<span class="w">    </span>composition<span class="w">    </span><span class="m">15</span><span class="w">  </span>✓<span class="w">       </span><span class="m">78</span>%
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>CONFIGURES<span class="w">    </span>dependency<span class="w">      </span><span class="m">3</span><span class="w">  </span>✓<span class="w">       </span><span class="m">72</span>%
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>MYSTERIOUS<span class="w">    </span>causation<span class="w">       </span><span class="m">1</span><span class="w">  </span>✓<span class="w">       </span><span class="m">45</span>%<span class="w">  </span>⚠<span class="w"> </span>low<span class="w"> </span>confidence
+</code></pre></div>
+<p><strong>Show category breakdown:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>$<span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>ENHANCES
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>Similarity<span class="w"> </span>to<span class="w"> </span>category<span class="w"> </span>seeds:
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>causation:<span class="w">    </span><span class="m">0</span>.85<span class="w">  </span>███████████████████<span class="w">  </span><span class="o">(</span>closest:<span class="w"> </span>ENABLES<span class="w"> </span><span class="m">0</span>.87<span class="o">)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>composition:<span class="w">  </span><span class="m">0</span>.45<span class="w">  </span>█████████
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>dependency:<span class="w">   </span><span class="m">0</span>.38<span class="w">  </span>████████
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span>semantic:<span class="w">     </span><span class="m">0</span>.31<span class="w">  </span>██████
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">  </span>logical:<span class="w">      </span><span class="m">0</span>.23<span class="w">  </span>█████
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">  </span>evidential:<span class="w">   </span><span class="m">0</span>.19<span class="w">  </span>████
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">  </span>temporal:<span class="w">     </span><span class="m">0</span>.12<span class="w">  </span>██
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">  </span>derivation:<span class="w">   </span><span class="m">0</span>.08<span class="w">  </span>██
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>Assigned:<span class="w"> </span>causation<span class="w"> </span><span class="o">(</span><span class="m">85</span>%<span class="w"> </span>confidence<span class="o">)</span>
+</code></pre></div>
+<h3 id="ecological-pruning-workflow">Ecological Pruning Workflow</h3>
+<p>Categories enable <strong>ecological vocabulary management</strong> without curator overrides.</p>
+<p><strong>Core Philosophy:</strong></p>
+<blockquote>
+<p>The graph is timeless. Vocabulary is part of the graph.
+Curators observe current state, prune weak connections, let strong ones emerge.</p>
+</blockquote>
+<p><strong>Vocabulary State (Timeless):</strong>
+- Types exist, connected to concepts via edges
+- Edge count reflects usage (connection strength)
+- Category confidence reflects cluster fit
+- Strong types accumulate edges, weak types remain sparse</p>
+<p><strong>Integrated Workflow with ADR-032 (Pruning) and ADR-046 (Synonym Detection):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># 1. OBSERVE current state</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># ENHANCES:     causation, 87% confidence, 47 edges</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># STRENGTHENS:  causation, 86% confidence, 12 edges</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># SUPPORTS:     evidential, 91% confidence, 38 edges</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1"># MYSTERIOUS:   causation, 45% confidence, 1 edge</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="c1"># 2. FIND pruning candidates (ADR-047 categories reveal)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>kg<span class="w"> </span>vocab<span class="w"> </span>find-synonyms<span class="w"> </span>--category<span class="w"> </span>causation<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.85
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="c1"># ENHANCES ↔ STRENGTHENS: 0.89 similarity (same category)</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>kg<span class="w"> </span>vocab<span class="w"> </span>prune-candidates
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="c1"># MYSTERIOUS: orphan (confidence &lt; 50%, edge_count = 1)</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="c1"># 3. MERGE synonyms (ADR-046)</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>STRENGTHENS<span class="w"> </span>ENHANCES
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="c1"># ENHANCES now has 59 edges (47 + 12)</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="c1"># Result: 88 → 87 types</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="c1"># 4. REFRESH categories (ADR-047)</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="c1"># Recomputes with cleaner vocabulary topology</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a><span class="c1"># ENHANCES confidence may shift (embedding landscape changed)</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="c1"># 5. DEPRECATE weak types (ADR-032)</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>kg<span class="w"> </span>vocab<span class="w"> </span>deprecate<span class="w"> </span>MYSTERIOUS
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a><span class="c1"># Result: 87 → 86 types</span>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a><span class="c1"># 6. OBSERVE new state</span>
+<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
+<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a><span class="c1"># ENHANCES: 59 edges (stronger)</span>
+<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a><span class="c1"># Fewer types, denser connections</span>
+<a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a><span class="c1"># System converging on strong vocabulary</span>
+</code></pre></div>
+<p><strong>What Categories Reveal:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Insight</th>
+<th>Action</th>
+<th>ADR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Orphans</strong> (confidence &lt; 50%, low edges)</td>
+<td>Deprecate weak types</td>
+<td>ADR-032</td>
+</tr>
+<tr>
+<td><strong>Synonyms</strong> (same category, similarity &gt; 0.85)</td>
+<td>Merge redundant types</td>
+<td>ADR-046</td>
+</tr>
+<tr>
+<td><strong>Imbalances</strong> (40 causation, 3 temporal)</td>
+<td>Need better seed diversity</td>
+<td>ADR-047</td>
+</tr>
+<tr>
+<td><strong>Bridges</strong> (ambiguous, runner-up &gt; 0.70)</td>
+<td>Keep valuable connectors</td>
+<td>ADR-047</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why No Curator Overrides:</strong></p>
+<p>Categories are <strong>computed from current embeddings and seeds</strong>:
+- Override = frozen state that doesn't evolve with system
+- Model upgrades → embeddings change → override blocks benefits
+- Vocabulary merges → topology changes → override becomes stale
+- Better: Curators adjust seeds/topology, categories recompute</p>
+<p><strong>Emergent Signal:</strong>
+After compaction, strong types accumulate more edges (reinforcement). System naturally converges on fewer, stronger vocabulary through graph dynamics, not temporal metrics.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<p><strong>1. No LLM Required</strong>
+- Uses embeddings we already generate
+- Fast, deterministic, reproducible</p>
+<p><strong>2. Scales Automatically</strong>
+- New LLM types get categorized immediately
+- No manual classification backlog</p>
+<p><strong>3. Semantic Accuracy</strong>
+- ENHANCES → causation (similar to ENABLES)
+- INTEGRATES_WITH → composition (similar to COMPOSED_OF)
+- Reflects actual semantic relationships</p>
+<p><strong>4. Confidence Scores</strong>
+- Know when categorization is uncertain
+- Low confidence → might need new category seed</p>
+<p><strong>5. Follows Grounding Pattern</strong>
+- Probabilistic (scores not binary)
+- Evidence-based (similarity to seeds)
+- Query-time or cached (flexible)
+- Transparent (show the math)</p>
+<h3 id="negative">Negative</h3>
+<p><strong>1. Embedding Model Changes</strong>
+- Requires embedding model consistency within a deployment
+- Changing models triggers automatic recalculation:
+  - <code>kg admin embedding regenerate --vocabulary</code> → <code>kg vocab refresh-categories</code> (automatic)
+  - Categories recompute with new embeddings
+  - Current state reflects current model (timeless)</p>
+<p><strong>2. Seed Type Quality</strong>
+- Categories only as good as seed types
+- Poorly chosen seeds = poor categorization</p>
+<p><strong>3. Ambiguous Types</strong>
+- Some types genuinely span multiple categories
+- Need threshold for "low confidence" warning</p>
+<p><strong>4. Initial Computation</strong>
+- 88 types × 30 seeds = 2,640 similarity calculations
+- Amortized via caching</p>
+<h3 id="neutral">Neutral</h3>
+<p><strong>1. Category Evolution</strong>
+- Categories recompute when vocabulary topology changes (merges, model changes)
+- Current state always reflects current embeddings and seeds
+- No historical tracking needed (graph is timeless)</p>
+<p><strong>2. New Categories</strong>
+- System can detect "orphan" types (low scores across all categories)
+- Signals need for new category seed or vocabulary pruning</p>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-0-seed-validation-optional-week-1">Phase 0: Seed Validation (Optional, Week 1)</h3>
+<ul>
+<li>[ ] Compute pairwise similarity of seeds within each category</li>
+<li>[ ] Ensure seeds cluster (intra-category similarity &gt; 0.65)</li>
+<li>[ ] Flag seeds that are outliers or better fit in different categories</li>
+<li>[ ] Document seed validation results</li>
+</ul>
+<h3 id="phase-1-foundation-week-1">Phase 1: Foundation (Week 1)</h3>
+<ul>
+<li>[ ] Add schema columns (category_source, category_confidence, category_scores, category_ambiguous)</li>
+<li>[ ] Add indexes (idx_relationship_category, idx_category_confidence)</li>
+<li>[ ] Implement <code>compute_category_scores()</code> function with satisficing (max similarity)</li>
+<li>[ ] Add category assignment to vocabulary insert logic</li>
+</ul>
+<h3 id="phase-2-batch-categorization-week-1">Phase 2: Batch Categorization (Week 1)</h3>
+<ul>
+<li>[ ] Compute categories for existing 88 llm_generated types</li>
+<li>[ ] Store scores in database</li>
+<li>[ ] Verify accuracy on sample types</li>
+<li>[ ] Identify ambiguous types (runner-up &gt; 0.70)</li>
+</ul>
+<h3 id="phase-3-cli-integration-week-1">Phase 3: CLI Integration (Week 1)</h3>
+<ul>
+<li>[ ] Update <code>kg vocab list</code> to show confidence and ambiguous flag</li>
+<li>[ ] Add <code>kg vocab category-scores &lt;TYPE&gt;</code> command</li>
+<li>[ ] Add <code>kg vocab refresh-categories</code> command</li>
+<li>[ ] Add <code>kg vocab prune-candidates</code> command</li>
+<li>[ ] Add <code>kg vocab find-synonyms</code> command</li>
+</ul>
+<h3 id="phase-4-validation-week-2">Phase 4: Validation (Week 2)</h3>
+<ul>
+<li>[ ] Compare computed categories to manual review</li>
+<li>[ ] Identify low-confidence types (&lt; 50%)</li>
+<li>[ ] Determine if new category seeds needed</li>
+<li>[ ] Test merge → refresh workflow</li>
+</ul>
+<h3 id="phase-5-orphan-detection-week-2">Phase 5: Orphan Detection (Week 2)</h3>
+<ul>
+<li>[ ] Implement <code>kg vocab find-orphans</code> command</li>
+<li>[ ] Definition: types with max_score &lt; 50% across all categories</li>
+<li>[ ] Output recommendations (new seed? deprecate? merge?)</li>
+<li>[ ] Integrate with ecological pruning workflow</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="alternative-1-manual-classification">Alternative 1: Manual Classification</h3>
+<p><strong>Rejected:</strong> Doesn't scale, subjective, high maintenance</p>
+<h3 id="alternative-2-llm-auto-classification">Alternative 2: LLM Auto-Classification</h3>
+<p><strong>Rejected:</strong> Adds LLM dependency for metadata (anti-pattern)</p>
+<h3 id="alternative-3-hybrid-embeddings-llm-validation">Alternative 3: Hybrid (Embeddings + LLM validation)</h3>
+<p><strong>Rejected:</strong> Unnecessary complexity, embeddings alone sufficient</p>
+<h3 id="alternative-4-multi-category-assignment">Alternative 4: Multi-Category Assignment</h3>
+<p>Allow types to have multiple categories (e.g., ENHANCES = 85% causal, 45% compositional)</p>
+<p><strong>Deferred:</strong> Start with single category (highest score), add multi-category if needed</p>
+<h2 id="success-criteria">Success Criteria</h2>
+<ol>
+<li><strong>All llm_generated types get meaningful categories</strong> (not generic "llm_generated")</li>
+<li><strong>Category confidence ≥ 70%</strong> for 80% of types</li>
+<li><strong>No LLM calls</strong> for category assignment</li>
+<li><strong>Performance targets:</strong></li>
+<li>Single type categorization: &lt; 50ms (on vocab insert)</li>
+<li>Batch refresh (all 118 types): &lt; 1s</li>
+<li>Category-scores CLI output: &lt; 100ms</li>
+<li><strong>User can understand</strong> why a type got its category (<code>kg vocab category-scores</code>)</li>
+<li><strong>Vocabulary convergence:</strong> Strong types accumulate edges, weak types remain sparse (observable from current state)</li>
+</ol>
+<h2 id="example-categorization">Example Categorization</h2>
+<p>Based on embedding similarity to seeds:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>ENHANCES       → causation    (87% - very similar to ENABLES)
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>INTEGRATES     → composition  (82% - similar to COMPOSED_OF)
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>CONFIGURES     → dependency   (79% - similar to REQUIRES)
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>VALIDATES      → evidential   (91% - very similar to SUPPORTS)
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>EVOLVES_TO     → temporal     (88% - similar to EVOLVES_INTO)
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>DEFINES        → semantic     (76% - similar to DEFINES)
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>ADDRESSES      → causation    (73% - similar to CAUSES)
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>BUILDS_ON      → composition  (68% - similar to PART_OF)
+</code></pre></div>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>ADR-044:</strong> Probabilistic Truth Convergence (pattern we're following)</li>
+<li><strong>ADR-032:</strong> Automatic Edge Vocabulary Expansion (pruning weak types)</li>
+<li><strong>ADR-046:</strong> Grounding-Aware Vocabulary Management (synonym detection via embeddings)</li>
+<li><strong>ADR-025:</strong> Dynamic Relationship Vocabulary (allows new types)</li>
+<li><strong>ADR-022:</strong> Semantic Relationship Taxonomy (defined the 8 categories)</li>
+</ul>
 <hr />
-<p><strong>Quick Reference URLs:</strong>
-- Full ADR: <code>docs/architecture/ADR-032-automatic-edge-vocabulary-expansion.md</code>
-- ADR-022 (30-type taxonomy): <code>docs/architecture/ADR-022-semantic-relationship-taxonomy.md</code>
-- Constants: <code>src/api/constants.py</code> (RELATIONSHIP_CATEGORIES)
-- Bezier visualization: https://cubic-bezier.com (for testing control points)</p>
+<p><strong>This ADR continues the evolution from fixed → probabilistic systems:</strong>
+1. Fixed relationships (5 types) → Dynamic vocabulary (ADR-025)
+2. Fixed truth → Probabilistic grounding (ADR-044)
+3. Fixed categories → Probabilistic categorization (ADR-047) ✨</p>
 
 
 

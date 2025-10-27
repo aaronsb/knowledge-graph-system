@@ -16,7 +16,7 @@
         <link rel="prev" href="../ADR-045-unified-embedding-generation/">
       
       
-        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
+        <link rel="next" href="../ADR-047-probabilistic-vocabulary-categorization/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -1678,6 +1678,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3044,10 +3048,65 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-047: Probabilistic Vocabulary Categorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-048: Vocabulary Metadata as First-Class Graph
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -4509,10 +4568,19 @@
 2. Extend <code>EdgeTypeScore</code> with grounding metrics
 3. Implement grounding contribution calculation
 4. Update synonym detection to use embeddings
-5. Test with production vocabulary (64 types)</p>
+5. Integrate with ADR-047 category-based synonym detection
+6. Test with production vocabulary (64 types)</p>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>ADR-044:</strong> Probabilistic Truth Convergence (grounding strength calculation)</li>
+<li><strong>ADR-045:</strong> Unified Embedding Generation (embeddings for all vocabulary types)</li>
+<li><strong>ADR-032:</strong> Automatic Edge Vocabulary Expansion (pruning weak types)</li>
+<li><strong>ADR-047:</strong> Probabilistic Vocabulary Categorization (category-based synonym detection)</li>
+<li><strong>ADR-022:</strong> Semantic Relationship Taxonomy (8 categories)</li>
+</ul>
 <hr />
-<p><strong>Last Updated:</strong> 2025-10-25
-<strong>Next Review:</strong> After ADR-044/045 implementation</p>
+<p><strong>Last Updated:</strong> 2025-10-27
+<strong>Next Review:</strong> After ADR-044/045/047 implementation</p>
 
 
 
