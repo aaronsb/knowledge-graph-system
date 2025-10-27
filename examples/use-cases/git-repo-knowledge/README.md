@@ -9,7 +9,7 @@ This use case demonstrates how to build a knowledge graph from your development 
 1. **Extracts commit messages** with metadata (hash, author, date, time)
 2. **Extracts GitHub pull requests** with descriptions and metadata
 3. **Converts to markdown files** with frontmatter
-4. **Ingests into knowledge graph** with consistent ontology naming
+4. **Ingests via directory batching** - efficient parallel job processing
 5. **Conceptifies the content** - commit/PR messages become concepts with relationships
 6. **Grounds the knowledge** - grounding system identifies contradictions and evolution
 
