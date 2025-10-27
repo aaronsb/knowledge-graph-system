@@ -40,53 +40,50 @@ kg search connect "JWT authentication commit" "ADR-028 RBAC system"
 
 ## Quick Start
 
-### 1. Configure Repository
+### Option 1: Complete Workflow (Recommended)
 
-Edit `config.json` to point to your git repository:
-
-```json
-{
-  "repositories": [
-    {
-      "name": "knowledge-graph-system",
-      "path": "/home/aaron/Projects/ai/knowledge-graph-system",
-      "ontology": "KG System Development",
-      "last_commit": null,
-      "last_pr": null,
-      "github_repo": "aaronsb/knowledge-graph-system"
-    }
-  ]
-}
-```
-
-### 2. Extract Commits and PRs
+The `run.sh` script handles everything automatically:
 
 ```bash
-# Extract all commit messages to markdown
-python extract_commits.py
+cd examples/use-cases/git-repo-knowledge
 
-# Extract GitHub pull requests to markdown
-python extract_prs.py
+# Complete workflow: setup venv, extract, ingest, query
+./run.sh
 ```
 
-This creates markdown files in `output/commits/` and `output/prs/`.
+**What it does:**
+1. Creates Python virtual environment (`venv/`)
+2. Installs dependencies (`gitpython`)
+3. Extracts last 30 commits
+4. Extracts last 10 PRs (if `gh` is authenticated)
+5. Batches and ingests into knowledge graph
+6. Cleans up output files (keeps pointers)
+7. Shows database statistics
 
-### 3. Ingest into Knowledge Graph
+**First run:** Processes last 30 commits + 10 PRs
+**Subsequent runs:** Only processes new items (idempotent)
+
+### Option 2: Step-by-Step
+
+For more control, run individual scripts:
 
 ```bash
-# Ingest all commits and PRs
-./ingest.sh
-```
+# 1. Setup (run.sh does this automatically)
+python3 -m venv venv
+venv/bin/pip install -r requirements.txt
 
-This ingests all markdown files into the knowledge graph with the configured ontology name.
+# 2. Extract commits
+venv/bin/python extract_commits.py --limit 30
 
-### 4. Query the Knowledge Graph
+# 3. Extract PRs (requires gh CLI authenticated)
+gh auth login  # First time only
+venv/bin/python extract_prs.py --limit 10
 
-```bash
-# Search for concepts from commits
+# 4. Ingest and cleanup
+./ingest.sh --clean
+
+# 5. Query
 kg search query "migration to Apache AGE"
-
-# View grounding scores
 kg database stats
 ```
 
@@ -206,23 +203,32 @@ Generate release notes by querying commits and PRs in a date range with semantic
 
 ## Requirements
 
+**Automatically handled by `run.sh`:**
 - Python 3.11+
-- `gitpython` library: `pip install gitpython`
-- `PyGithub` library: `pip install PyGithub`
-- GitHub personal access token (for PR extraction)
-- Knowledge graph system running
+- Virtual environment (`venv/`)
+- `gitpython` library (auto-installed)
+
+**Manual prerequisites:**
+- `kg` CLI - Install from `client/` directory
+- `jq` - JSON processor (`sudo apt install jq` or `brew install jq`)
+- Knowledge graph system API running (`http://localhost:8000`)
+
+**Optional (for PR extraction):**
+- `gh` CLI - GitHub command-line tool
+- Authentication: `gh auth login` (first time only)
 
 ## Configuration
 
-### GitHub Token
+### GitHub Authentication
 
-For PR extraction, set your GitHub token:
+For PR extraction, authenticate gh CLI once:
 
 ```bash
-export GITHUB_TOKEN="ghp_your_token_here"
+gh auth login
+# Follow the interactive prompts
 ```
 
-Or add to `.env` file in repository root.
+The `run.sh` script will automatically detect if gh is available and authenticated.
 
 ### Repository Path
 

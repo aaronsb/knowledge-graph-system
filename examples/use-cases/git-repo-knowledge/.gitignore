@@ -4,6 +4,12 @@ output/
 # State tracking
 .ingest_state.json
 
+# Python virtual environment
+venv/
+
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
