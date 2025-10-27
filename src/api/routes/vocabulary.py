@@ -50,6 +50,11 @@ from ..models.vocabulary import (
     GenerateEmbeddingsRequest,
     GenerateEmbeddingsResponse,
 
+    # Category Scoring (ADR-047)
+    CategoryScoresResponse,
+    RefreshCategoriesRequest,
+    RefreshCategoriesResponse,
+
     # AITL Consolidation
     ConsolidateVocabularyRequest,
     ConsolidateVocabularyResponse,
@@ -221,7 +226,12 @@ async def list_edge_types(
                     edge_count=info.get("edge_count"),
                     avg_traversal=info.get("avg_traversal"),
                     last_used=info.get("last_used"),
-                    value_score=info.get("value_score")
+                    value_score=info.get("value_score"),
+                    # ADR-047: Category scoring fields
+                    category_source=info.get("category_source"),
+                    category_confidence=info.get("category_confidence"),
+                    category_scores=info.get("category_scores"),
+                    category_ambiguous=info.get("category_ambiguous")
                 ))
 
             return EdgeTypeListResponse(
@@ -559,3 +569,157 @@ async def generate_embeddings(request: GenerateEmbeddingsRequest):
     except Exception as e:
         logger.error(f"Failed to generate embeddings: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to generate embeddings: {str(e)}")
+
+
+@router.get("/category-scores/{relationship_type}", response_model=CategoryScoresResponse)
+async def get_category_scores(relationship_type: str):
+    """
+    Get category similarity scores for a relationship type (ADR-047).
+
+    Returns detailed breakdown of semantic similarity to all 8 categories:
+    - causation, composition, logical, evidential
+    - semantic, temporal, dependency, derivation
+
+    Uses embedding similarity to 30 builtin seed types to compute scores.
+    Confidence = max(similarity to any seed in category).
+
+    Args:
+        relationship_type: Edge type to analyze (e.g., "ENHANCES")
+
+    Returns:
+        CategoryScoresResponse with:
+        - Primary category assignment
+        - Confidence score (0.0-1.0)
+        - Full score breakdown for all categories
+        - Ambiguity flag if runner-up > 0.70
+
+    Example:
+        GET /vocabulary/category-scores/ENHANCES
+        {
+            "relationship_type": "ENHANCES",
+            "category": "causation",
+            "confidence": 0.85,
+            "scores": {
+                "causation": 0.85,
+                "composition": 0.45,
+                ...
+            },
+            "ambiguous": false
+        }
+    """
+    try:
+        from src.api.lib.age_client import AGEClient
+        from src.api.lib.vocabulary_categorizer import VocabularyCategorizer
+
+        db_client = AGEClient()
+        categorizer = VocabularyCategorizer(db_client)
+
+        # Compute category scores
+        assignment = await categorizer.assign_category(relationship_type, store=False)
+
+        return CategoryScoresResponse(
+            relationship_type=assignment.relationship_type,
+            category=assignment.category,
+            confidence=assignment.confidence,
+            scores=assignment.scores,
+            ambiguous=assignment.ambiguous,
+            runner_up_category=assignment.runner_up_category,
+            runner_up_score=assignment.runner_up_score
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to compute category scores: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to compute category scores: {str(e)}")
+
+
+@router.post("/refresh-categories", response_model=RefreshCategoriesResponse)
+async def refresh_categories(request: RefreshCategoriesRequest):
+    """
+    Refresh category assignments for vocabulary types (ADR-047).
+
+    Recomputes probabilistic category assignments based on current embeddings.
+    Useful after:
+    - Vocabulary merges (topology changed)
+    - Embedding model changes (semantic space shifted)
+    - Seed type adjustments (category definitions updated)
+
+    Args:
+        request: Configuration for refresh operation
+            - only_computed: If True, only refresh types with category_source='computed'
+                           If False, refresh all types (including builtins)
+
+    Returns:
+        RefreshCategoriesResponse with counts and detailed assignments
+
+    Example:
+        POST /vocabulary/refresh-categories
+        {
+            "only_computed": true
+        }
+
+        Response:
+        {
+            "success": true,
+            "refreshed_count": 88,
+            "skipped_count": 0,
+            "failed_count": 0,
+            "assignments": [
+                {
+                    "relationship_type": "ENHANCES",
+                    "category": "causation",
+                    "confidence": 0.85,
+                    "scores": {...},
+                    "ambiguous": false
+                },
+                ...
+            ],
+            "message": "Refreshed 88 category assignments"
+        }
+    """
+    try:
+        from src.api.lib.age_client import AGEClient
+        from src.api.lib.vocabulary_categorizer import VocabularyCategorizer
+
+        db_client = AGEClient()
+        categorizer = VocabularyCategorizer(db_client)
+
+        # Refresh categories
+        assignments = await categorizer.refresh_all_categories(
+            only_computed=request.only_computed
+        )
+
+        # Convert to response format
+        category_responses = []
+        for assignment in assignments:
+            category_responses.append(
+                CategoryScoresResponse(
+                    relationship_type=assignment.relationship_type,
+                    category=assignment.category,
+                    confidence=assignment.confidence,
+                    scores=assignment.scores,
+                    ambiguous=assignment.ambiguous,
+                    runner_up_category=assignment.runner_up_category,
+                    runner_up_score=assignment.runner_up_score
+                )
+            )
+
+        refreshed_count = len(assignments)
+        skipped_count = 0  # Could add logic to track skipped
+        failed_count = 0  # Could add logic to track failures
+
+        message = f"Refreshed {refreshed_count} category assignment{'s' if refreshed_count != 1 else ''}"
+
+        return RefreshCategoriesResponse(
+            success=True,
+            refreshed_count=refreshed_count,
+            skipped_count=skipped_count,
+            failed_count=failed_count,
+            assignments=category_responses,
+            message=message
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to refresh categories: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to refresh categories: {str(e)}")

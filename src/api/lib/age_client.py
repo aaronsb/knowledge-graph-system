@@ -1238,6 +1238,32 @@ class AGEClient:
                 'embedding_generated_at': None,
             }
 
+            # Fetch ADR-047 category scoring fields from SQL (not yet in graph)
+            try:
+                conn = self.pool.getconn()
+                try:
+                    with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                        cur.execute("""
+                            SELECT category_source, category_confidence,
+                                   category_scores, category_ambiguous
+                            FROM kg_api.relationship_vocabulary
+                            WHERE relationship_type = %s
+                        """, (relationship_type,))
+                        sql_result = cur.fetchone()
+                        if sql_result:
+                            info['category_source'] = sql_result.get('category_source')
+                            info['category_confidence'] = sql_result.get('category_confidence')
+                            info['category_scores'] = sql_result.get('category_scores')
+                            info['category_ambiguous'] = sql_result.get('category_ambiguous')
+                finally:
+                    self.pool.putconn(conn)
+            except Exception as e:
+                logger.warning(f"Failed to fetch category scoring fields for {relationship_type}: {e}")
+                info['category_source'] = None
+                info['category_confidence'] = None
+                info['category_scores'] = None
+                info['category_ambiguous'] = None
+
             # Query graph for actual edge count
             try:
                 count_query = f"""

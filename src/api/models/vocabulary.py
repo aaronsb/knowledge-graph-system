@@ -60,6 +60,11 @@ class EdgeTypeInfo(BaseModel):
     avg_traversal: Optional[float] = None
     last_used: Optional[datetime] = None
     value_score: Optional[float] = None
+    # ADR-047: Probabilistic category assignment
+    category_source: Optional[str] = None  # 'builtin' or 'computed'
+    category_confidence: Optional[float] = None  # 0.0-1.0
+    category_scores: Optional[Dict[str, float]] = None  # Full category breakdown
+    category_ambiguous: Optional[bool] = None  # True if runner-up > 0.70
 
 
 class AddEdgeTypeRequest(BaseModel):
@@ -346,4 +351,37 @@ class ConsolidateVocabularyResponse(BaseModel):
     auto_executed: List[MergeResultInfo]
     needs_review: List[ReviewInfo]
     rejected: List[RejectionInfo]
+    message: str
+
+
+# =============================================================================
+# Category Scoring (ADR-047)
+# =============================================================================
+
+class CategoryScoresResponse(BaseModel):
+    """Category similarity scores for a relationship type"""
+    relationship_type: str
+    category: str
+    confidence: float
+    scores: Dict[str, float]  # category -> similarity score
+    ambiguous: bool
+    runner_up_category: Optional[str] = None
+    runner_up_score: Optional[float] = None
+
+
+class RefreshCategoriesRequest(BaseModel):
+    """Request to refresh category assignments"""
+    only_computed: bool = Field(
+        default=True,
+        description="Only refresh types with category_source='computed'"
+    )
+
+
+class RefreshCategoriesResponse(BaseModel):
+    """Result of category refresh operation"""
+    success: bool
+    refreshed_count: int
+    skipped_count: int
+    failed_count: int
+    assignments: List[CategoryScoresResponse]
     message: str
