@@ -34,6 +34,16 @@ Without meaningful categories, the system cannot:
 - **Explain relationships** to users (What kind of relationship is CONFIGURES?)
 - **Detect category drift** (Are we generating too many causal vs structural types?)
 
+### The Fundamental Constraint
+
+The core challenge is **distilling unbounded semantic space into bounded knowledge**:
+
+> We are essentially distilling a bunch of relationships that mean infinite things possibly, and satisficing it into a structure with bounded knowledge (our vocabulary).
+
+LLMs can generate unlimited relationship variants (ENHANCES, AUGMENTS, STRENGTHENS, AMPLIFIES, BOOSTS...), but humans need a **bounded, semantically meaningful vocabulary** to understand and work with the graph. We can't enumerate all possible relationships, but we can satisfice them into 8 interpretable categories using our 30 hand-validated seed types as anchors.
+
+This is fundamentally a **lossy compression** problem: preserve semantic utility while discarding infinite variation.
+
 ### Failed Approach: Fixed Classification
 
 **Attempt 1:** Manually classify all 88 types
@@ -113,15 +123,60 @@ confidence = scores[assigned_category]
 # => category='causation', confidence=0.85
 ```
 
+### Satisficing Strategy (Herbert Simon)
+
+This algorithm uses **satisficing** (accept "good enough" vs. optimal):
+
+**Why `max()` instead of `mean()`:**
+
+```python
+# Example: ENHANCES vs causation seeds
+similarities = {
+    'ENABLES':    0.87,  # Very similar! (same polarity)
+    'CAUSES':     0.72,  # Similar
+    'PREVENTS':   0.12,  # Opposite polarity (but still causal!)
+    'INFLUENCES': 0.65   # Similar
+}
+
+max(similarities)  = 0.87  ✓ Satisficing: "Found one good match!"
+mean(similarities) = 0.59  ✗ Optimizing: Wrongly penalized by PREVENTS
+```
+
+Categories contain **opposing polarities** (ENABLES vs PREVENTS are both causal). Max satisfices: "Is this semantically similar to ANY seed? Yes? Good enough!"
+
+### Confidence Thresholds
+
+Accept "good enough" based on confidence:
+
+- **High (≥ 70%):** Auto-categorize confidently
+- **Medium (50-69%):** Auto-categorize with warning
+- **Low (< 50%):** Flag for curator review (possible new seed needed)
+
+### Ambiguity Detection
+
+When runner-up score is close to winner (> 0.70), flag as multi-category candidate:
+
+```python
+primary = max(scores, key=scores.get)
+runner_up_score = sorted(scores.values(), reverse=True)[1]
+
+if runner_up_score > 0.70:
+    logger.info(f"Ambiguous: {type} could be {primary} OR {runner_up_category}")
+    # Store category_ambiguous: true for future multi-category support
+```
+
 **3. Storage Schema**
 
 Update `relationship_vocabulary` table:
 
 ```sql
 ALTER TABLE relationship_vocabulary
-ADD COLUMN category_source VARCHAR(20) DEFAULT 'llm_generated',  -- 'builtin' or 'computed'
+ADD COLUMN category_source VARCHAR(20) DEFAULT 'llm_generated',  -- 'builtin', 'computed', or 'curator'
 ADD COLUMN category_confidence FLOAT,  -- 0.0 to 1.0
-ADD COLUMN category_scores JSONB;  -- Full score breakdown
+ADD COLUMN category_scores JSONB,  -- Full score breakdown
+ADD COLUMN category_ambiguous BOOLEAN DEFAULT false;  -- True if runner-up > 0.70
+
+CREATE INDEX idx_relationship_category ON relationship_vocabulary(category);
 
 -- Example row:
 -- type: ENHANCES
