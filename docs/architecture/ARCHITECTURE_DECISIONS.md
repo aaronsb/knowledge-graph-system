@@ -64,6 +64,7 @@ All ADRs follow a consistent format:
 | [ADR-045](ADR-045-unified-embedding-generation.md) | Unified Embedding Generation System | Proposed | Centralized EmbeddingWorker for all embedding generation (concepts, vocabulary, cold start, model migration) - enables ADR-044 grounding and supports ADR-032 vocabulary expansion |
 | [ADR-046](ADR-046-grounding-aware-vocabulary-management.md) | Grounding-Aware Vocabulary Management | Proposed | Enhanced VocabularyScorer with grounding contribution metrics; embedding-based synonym detection; dynamic LLM prompt curation (40-50 types instead of 200); sliding window lifecycle management |
 | [ADR-047](ADR-047-probabilistic-vocabulary-categorization.md) | Probabilistic Vocabulary Categorization | Proposed | Embedding-based category assignment for LLM-generated relationship types using semantic similarity to 30 seed types - no manual classification, categories emerge from similarity scores |
+| [ADR-048](ADR-048-vocabulary-metadata-as-graph.md) | Vocabulary Metadata as First-Class Graph | Proposed | Move vocabulary metadata from SQL tables to Apache AGE graph nodes with namespace safety layer (GraphQueryFacade) - vocabulary becomes part of timeless graph, operations become graph-native traversals |
 
 ## How to Use This Index
 
