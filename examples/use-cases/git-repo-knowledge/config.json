@@ -4,8 +4,8 @@
       "name": "knowledge-graph-system",
       "path": "../../..",
       "ontology": "KG System Development",
-      "last_commit": "954195069b5048a1687c64865983632b7e5ac039",
-      "last_pr": null,
+      "last_commit": "0cdfacc2951ba4ecac905904d5b1b4b1052b6941",
+      "last_pr": 57,
       "github_repo": "aaronsb/knowledge-graph-system",
       "enabled": true
     }

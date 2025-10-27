@@ -115,7 +115,7 @@ class PRExtractor:
             return []
 
         # Filter to new PRs only
-        prs = [pr for pr in all_prs if pr["number"] > last_pr]
+        prs = [pr for pr in all_prs if pr["number"] > (last_pr or 0)]
 
         # Sort by number (oldest first)
         prs.sort(key=lambda x: x["number"])
