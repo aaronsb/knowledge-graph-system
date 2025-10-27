@@ -208,12 +208,12 @@ class GraphQueryFacade:
         if where:
             query += f" WHERE {where}"
 
-        query += " RETURN count(c) as count"
+        query += " RETURN count(c) as node_count"
 
         self.audit.log_query(query, namespace="concept", params=params)
         result = self.db._execute_cypher(query, params, fetch_one=True)
 
-        return result.get("count", 0) if result else 0
+        return result.get("node_count", 0) if result else 0
 
     # -------------------------------------------------------------------------
     # VOCABULARY NAMESPACE (Metadata graph)
@@ -348,12 +348,12 @@ class GraphQueryFacade:
         if where:
             query += f" WHERE {where}"
 
-        query += " RETURN count(v) as count"
+        query += " RETURN count(v) as node_count"
 
         self.audit.log_query(query, namespace="vocabulary", params=params)
         result = self.db._execute_cypher(query, params, fetch_one=True)
 
-        return result.get("count", 0) if result else 0
+        return result.get("node_count", 0) if result else 0
 
     # -------------------------------------------------------------------------
     # SOURCE & INSTANCE NAMESPACE
@@ -464,10 +464,10 @@ class GraphQueryFacade:
 
     def _count_label(self, label: str) -> int:
         """Helper to count nodes by label."""
-        query = f"MATCH (n:{label}) RETURN count(n) as count"
+        query = f"MATCH (n:{label}) RETURN count(n) as node_count"
         self.audit.log_query(query, namespace="internal", params={})
         result = self.db._execute_cypher(query, fetch_one=True)
-        return result.get("count", 0) if result else 0
+        return result.get("node_count", 0) if result else 0
 
     # -------------------------------------------------------------------------
     # ESCAPE HATCH (For complex queries requiring raw Cypher)
