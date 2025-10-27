@@ -100,10 +100,12 @@ def upsert_relationship(from_id, to_id, rel_type, confidence):
 
 ##### Category Classification for New Edge Types
 
+> **Note:** Category classification is now handled by **ADR-047: Probabilistic Vocabulary Categorization** using embedding similarity to seed types with satisficing (max similarity). The approach below is superseded.
+
 **Two-Tier Vocabulary Structure:**
 
 ```python
-# High-level categories (8 protected groups from ADR-022)
+# High-level categories (8 protected groups from ADR-022, refined in ADR-047)
 RELATIONSHIP_CATEGORIES = {
     "logical_truth": ["IMPLIES", "CONTRADICTS", "PRESUPPOSES", "EQUIVALENT_TO"],
     "causal": ["CAUSES", "ENABLES", "PREVENTS", "INFLUENCES", "RESULTS_FROM"],
@@ -1927,6 +1929,8 @@ aggressiveness = curve.get_y_for_x(position)
 - **ADR-022:** 30-Type Semantically Sparse Taxonomy (current static system)
 - **ADR-025:** Dynamic Relationship Vocabulary (skip-and-approve workflow)
 - **ADR-026:** Autonomous Vocabulary Curation (LLM-assisted suggestions)
+- **ADR-047:** Probabilistic Vocabulary Categorization (embedding-based category assignment)
+- **ADR-046:** Grounding-Aware Vocabulary Management (synonym detection, compaction workflow)
 - **ADR-014:** Job Approval Workflow (HITL pattern)
 - **ADR-021:** Live Man Switch (human oversight principles)
 
