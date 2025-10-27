@@ -63,6 +63,7 @@ All ADRs follow a consistent format:
 | [ADR-044](ADR-044-probabilistic-truth-convergence.md) | Probabilistic Truth Convergence | Proposed | Embedding-based grounding strength calculation using semantic similarity to prototypical edge types (SUPPORTS/CONTRADICTS) - no hard-coded polarity, scales with vocabulary expansion. **Requires ADR-045** |
 | [ADR-045](ADR-045-unified-embedding-generation.md) | Unified Embedding Generation System | Proposed | Centralized EmbeddingWorker for all embedding generation (concepts, vocabulary, cold start, model migration) - enables ADR-044 grounding and supports ADR-032 vocabulary expansion |
 | [ADR-046](ADR-046-grounding-aware-vocabulary-management.md) | Grounding-Aware Vocabulary Management | Proposed | Enhanced VocabularyScorer with grounding contribution metrics; embedding-based synonym detection; dynamic LLM prompt curation (40-50 types instead of 200); sliding window lifecycle management |
+| [ADR-047](ADR-047-probabilistic-vocabulary-categorization.md) | Probabilistic Vocabulary Categorization | Proposed | Embedding-based category assignment for LLM-generated relationship types using semantic similarity to 30 seed types - no manual classification, categories emerge from similarity scores |
 
 ## How to Use This Index
 
