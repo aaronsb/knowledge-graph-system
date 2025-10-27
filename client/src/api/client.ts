@@ -584,6 +584,30 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Regenerate embeddings for concept nodes in the graph
+   */
+  async regenerateConceptEmbeddings(params: {
+    only_missing?: boolean;
+    ontology?: string;
+    limit?: number;
+  }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params.only_missing) {
+      queryParams.append('only_missing', 'true');
+    }
+    if (params.ontology) {
+      queryParams.append('ontology', params.ontology);
+    }
+    if (params.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+
+    const url = `/admin/regenerate-concept-embeddings${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await this.client.post(url);
+    return response.data;
+  }
+
   // ========== RBAC Methods (ADR-028) ==========
 
   /**
@@ -802,6 +826,24 @@ export class KnowledgeGraphClient {
     reason?: string;
   }): Promise<any> {
     const response = await this.client.post('/vocabulary/merge', request);
+    return response.data;
+  }
+
+  /**
+   * Get category similarity scores for a relationship type (ADR-047)
+   */
+  async getCategoryScores(relationshipType: string): Promise<any> {
+    const response = await this.client.get(`/vocabulary/category-scores/${encodeURIComponent(relationshipType)}`);
+    return response.data;
+  }
+
+  /**
+   * Refresh category assignments for vocabulary types (ADR-047)
+   */
+  async refreshCategories(onlyComputed: boolean = true): Promise<any> {
+    const response = await this.client.post('/vocabulary/refresh-categories', {
+      only_computed: onlyComputed
+    });
     return response.data;
   }
 

@@ -820,3 +820,69 @@ async def delete_api_key(provider: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error deleting API key"
         )
+
+
+@router.post("/regenerate-concept-embeddings")
+async def regenerate_concept_embeddings(
+    only_missing: bool = False,
+    ontology: Optional[str] = None,
+    limit: Optional[int] = None
+):
+    """
+    Regenerate embeddings for concept nodes in the graph.
+
+    Useful after changing embedding models to update all concept embeddings
+    to the new model/dimensions.
+
+    Args:
+        only_missing: Only generate for concepts without embeddings
+        ontology: Limit to specific ontology (optional)
+        limit: Maximum number of concepts to process (for testing)
+
+    Returns:
+        Job result with statistics
+    """
+    try:
+        from ..services.embedding_worker import get_embedding_worker
+        from ..lib.ai_providers import get_embedding_provider
+
+        # Get embedding worker (reinitialize if needed after hot reload)
+        worker = get_embedding_worker()
+        if worker is None:
+            # Initialize with current EMBEDDING provider (not extraction provider!)
+            age_client = AGEClient()
+            embedding_provider = get_embedding_provider()
+            worker = get_embedding_worker(age_client, embedding_provider)
+
+            if worker is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Embedding worker not initialized"
+                )
+
+        logger.info(f"Starting concept embedding regeneration (only_missing={only_missing}, ontology={ontology}, limit={limit})")
+
+        result = await worker.regenerate_concept_embeddings(
+            only_missing=only_missing,
+            ontology=ontology,
+            limit=limit
+        )
+
+        return {
+            "success": True,
+            "job_id": result.job_id,
+            "target_count": result.target_count,
+            "processed_count": result.processed_count,
+            "failed_count": result.failed_count,
+            "duration_ms": result.duration_ms,
+            "embedding_model": result.embedding_model,
+            "embedding_provider": result.embedding_provider,
+            "errors": result.errors if result.errors else []
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to regenerate concept embeddings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to regenerate concept embeddings: {str(e)}"
+        )

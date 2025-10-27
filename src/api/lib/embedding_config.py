@@ -531,11 +531,36 @@ def activate_embedding_config(config_id: int, updated_by: str = "api", force_dim
                     WHERE id = %s
                 """, (config_id,))
 
+                # Mark all vocabulary embeddings as stale (model changed)
+                # This triggers regeneration workflow via embedding_worker
+                if active_row:  # Only if there was a previous config
+                    cur.execute("""
+                        UPDATE kg_api.relationship_vocabulary
+                        SET embedding_validation_status = 'stale'
+                        WHERE embedding IS NOT NULL
+                          AND embedding_validation_status != 'stale'
+                    """)
+                    stale_count = cur.rowcount
+                    logger.warning(f"⚠️  Marked {stale_count} vocabulary embeddings as stale")
+
                 # Commit transaction
                 cur.execute("COMMIT")
 
                 logger.info(f"✅ Activated config {config_id}: {target_provider} / {target_model}")
                 logger.info(f"🔒 Protected config {config_id} (delete + change protection)")
+
+                # Warn about concept embeddings (in graph, not tracked by staleness)
+                if active_row:
+                    logger.warning("")
+                    logger.warning("⚠️  EMBEDDING MODEL CHANGED - ACTION REQUIRED:")
+                    logger.warning("   1. Regenerate vocabulary embeddings:")
+                    logger.warning("      kg vocab generate-embeddings --stale")
+                    logger.warning("")
+                    logger.warning("   2. Regenerate concept embeddings:")
+                    logger.warning("      kg admin regenerate-embeddings --concepts")
+                    logger.warning("")
+                    logger.warning("   Without regeneration, vector search will produce incorrect results.")
+
                 return (True, "")
 
         except Exception as e:

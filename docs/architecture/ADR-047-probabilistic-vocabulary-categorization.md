@@ -1,9 +1,20 @@
 # ADR-047: Probabilistic Vocabulary Categorization
 
-**Status:** Proposed
+**Status:** Implemented ✅ - Fully Integrated
 **Date:** 2025-10-26
+**Implementation Date:** 2025-10-27
+**Integration Date:** 2025-10-27
 **Deciders:** System Architects
-**Related:** ADR-044 (Probabilistic Truth Convergence), ADR-025 (Dynamic Relationship Vocabulary), ADR-022 (Semantic Relationship Taxonomy)
+**Related:** ADR-044 (Probabilistic Truth Convergence), ADR-025 (Dynamic Relationship Vocabulary), ADR-022 (Semantic Relationship Taxonomy), ADR-048 (Vocabulary Metadata as Graph)
+
+**Implementation:**
+- Migration 015: Schema fields for category scoring
+- VocabularyCategorizer class: Core categorization logic
+- Integrated into ingestion pipeline: add_edge_type() auto-categorizes new types
+- Integrated into graph updates: VocabularyCategorizer updates :IN_CATEGORY relationships
+- CLI commands: kg vocab refresh-categories (default: all types), kg vocab category-scores
+- Embedding worker: Unified embedding generation for vocabulary and concepts
+- Result: All 47 types properly categorized (30 builtin + 17 custom) with confidence scores
 
 ## Context
 

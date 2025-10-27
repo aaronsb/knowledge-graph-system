@@ -1145,10 +1145,87 @@ const schedulerCommand = new Command('scheduler')
   .addCommand(schedulerStatusCommand)
   .addCommand(schedulerCleanupCommand);
 
+// ========== Concept Embedding Regeneration Command ==========
+
+const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
+  .description('Regenerate embeddings for concept nodes in the graph')
+  .option('--concepts', 'Regenerate concept embeddings (default if no options)', true)
+  .option('--only-missing', 'Only generate for concepts without embeddings', false)
+  .option('--ontology <name>', 'Limit to specific ontology')
+  .option('--limit <n>', 'Maximum number of concepts to process (for testing)', parseInt)
+  .action(async (options) => {
+    try {
+      const client = createClientFromEnv();
+
+      console.log(colors.separator());
+      console.log(colors.ui.title('🔄 Regenerating Concept Embeddings'));
+      console.log(colors.separator());
+
+      const params: any = {
+        only_missing: options.onlyMissing || false
+      };
+
+      if (options.ontology) {
+        params.ontology = options.ontology;
+      }
+
+      if (options.limit) {
+        params.limit = options.limit;
+      }
+
+      console.log();
+      console.log(colors.status.info('Starting regeneration...'));
+      if (options.ontology) {
+        console.log(colors.status.dim(`  Ontology: ${options.ontology}`));
+      }
+      if (options.onlyMissing) {
+        console.log(colors.status.dim('  Mode: Only missing embeddings'));
+      }
+      if (options.limit) {
+        console.log(colors.status.dim(`  Limit: ${options.limit} concepts`));
+      }
+      console.log();
+
+      const result = await client.regenerateConceptEmbeddings(params);
+
+      console.log(colors.separator());
+      console.log(colors.status.success('✓ Regeneration completed'));
+      console.log(`  ${colors.stats.label('Processed:')} ${colors.stats.value(result.processed_count.toString())} / ${result.target_count}`);
+
+      if (result.failed_count > 0) {
+        console.log(`  ${colors.status.error('Failed:')} ${result.failed_count}`);
+      }
+
+      console.log(`  ${colors.status.dim('Duration:')} ${result.duration_ms}ms`);
+      console.log(`  ${colors.status.dim('Model:')} ${result.embedding_provider}/${result.embedding_model}`);
+
+      if (result.errors && result.errors.length > 0) {
+        console.log();
+        console.log(colors.status.error('Errors:'));
+        result.errors.slice(0, 5).forEach((err: string) => {
+          console.log(colors.status.dim(`  ${err}`));
+        });
+        if (result.errors.length > 5) {
+          console.log(colors.status.dim(`  ... and ${result.errors.length - 5} more`));
+        }
+      }
+
+      console.log(colors.separator());
+      console.log();
+
+    } catch (error: any) {
+      console.error();
+      console.error(colors.status.error('✗ Failed to regenerate embeddings'));
+      console.error(colors.status.dim(`  ${error.message || error}`));
+      console.error();
+      process.exit(1);
+    }
+  });
+
 // ========== Main Admin Command ==========
 
 export const adminCommand = new Command('admin')
-  .description('System administration (status, backup, restore, reset, scheduler, user, rbac, embedding, extraction, keys)')
+  .description('System administration (status, backup, restore, reset, scheduler, user, rbac, embedding, extraction, keys, regenerate-embeddings)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(statusCommand)
@@ -1156,7 +1233,8 @@ export const adminCommand = new Command('admin')
   .addCommand(listBackupsCommand)
   .addCommand(restoreCommand)
   .addCommand(resetCommand)
-  .addCommand(schedulerCommand);
+  .addCommand(schedulerCommand)
+  .addCommand(regenerateEmbeddingsCommand);
 
 // ADR-027: Register user management commands
 registerAuthAdminCommand(adminCommand);
@@ -1181,4 +1259,4 @@ adminCommand.addCommand(extractionCommand);
 adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
-[statusCommand, backupCommand, listBackupsCommand, restoreCommand, resetCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand].forEach(configureColoredHelp);
+[statusCommand, backupCommand, listBackupsCommand, restoreCommand, resetCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand, regenerateEmbeddingsCommand].forEach(configureColoredHelp);

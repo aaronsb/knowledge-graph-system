@@ -1205,7 +1205,7 @@ class AGEClient:
             Some metadata fields (description, added_by, etc.) not yet in graph
         """
         try:
-            # Query VocabType node and category relationship
+            # Query VocabType node and category via relationship (Phase 3.3)
             query = """
             MATCH (v:VocabType {name: $type_name})
             OPTIONAL MATCH (v)-[:IN_CATEGORY]->(c:VocabCategory)
@@ -1213,6 +1213,7 @@ class AGEClient:
                    v.is_active as is_active,
                    v.is_builtin as is_builtin,
                    v.usage_count as usage_count,
+                   v.direction_semantics as direction_semantics,
                    c.name as category
             """
             result = self._execute_cypher(query, {"type_name": relationship_type}, fetch_one=True)
@@ -1222,12 +1223,17 @@ class AGEClient:
 
             # Build info dict from graph data
             # Note: AGE stores PostgreSQL booleans as strings 't'/'f'
+            # Handle missing/None values gracefully for usage_count
+            usage_count_val = result.get('usage_count', 0)
+            usage_count = 0 if usage_count_val is None else int(str(usage_count_val))
+
             info = {
                 'relationship_type': str(result['relationship_type']),
                 'is_active': str(result.get('is_active', 't')) == 't',
                 'is_builtin': str(result.get('is_builtin', 'f')) == 't',
-                'usage_count': int(str(result.get('usage_count', 0))),
+                'usage_count': usage_count,
                 'category': str(result['category']) if result.get('category') else None,
+                'direction_semantics': str(result['direction_semantics']) if result.get('direction_semantics') else None,  # ADR-049
                 # Fields not yet migrated to graph (Phase 3.3)
                 'description': None,
                 'added_by': None,
@@ -1237,6 +1243,32 @@ class AGEClient:
                 'embedding_model': None,
                 'embedding_generated_at': None,
             }
+
+            # Fetch ADR-047 category scoring fields from SQL (not yet in graph)
+            try:
+                conn = self.pool.getconn()
+                try:
+                    with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                        cur.execute("""
+                            SELECT category_source, category_confidence,
+                                   category_scores, category_ambiguous
+                            FROM kg_api.relationship_vocabulary
+                            WHERE relationship_type = %s
+                        """, (relationship_type,))
+                        sql_result = cur.fetchone()
+                        if sql_result:
+                            info['category_source'] = sql_result.get('category_source')
+                            info['category_confidence'] = sql_result.get('category_confidence')
+                            info['category_scores'] = sql_result.get('category_scores')
+                            info['category_ambiguous'] = sql_result.get('category_ambiguous')
+                finally:
+                    self.pool.putconn(conn)
+            except Exception as e:
+                logger.warning(f"Failed to fetch category scoring fields for {relationship_type}: {e}")
+                info['category_source'] = None
+                info['category_confidence'] = None
+                info['category_scores'] = None
+                info['category_ambiguous'] = None
 
             # Query graph for actual edge count
             try:
@@ -1266,41 +1298,61 @@ class AGEClient:
         description: Optional[str] = None,
         added_by: str = "system",
         is_builtin: bool = False,
-        ai_provider = None
+        direction_semantics: Optional[str] = None,
+        ai_provider = None,
+        auto_categorize: bool = True
     ) -> bool:
         """
         Add a new relationship type to vocabulary with automatic embedding generation.
 
+        Creates both:
+        1. Row in kg_api.relationship_vocabulary table
+        2. :VocabType node in the graph (ADR-048 Phase 3.2)
+
+        ADR-047: If category is "llm_generated" and auto_categorize is True, will compute
+        proper semantic category after generating embedding using probabilistic categorization.
+
+        ADR-049: LLM determines direction_semantics based on frame of reference when creating
+        new relationship types. Direction can be updated on first use if NULL.
+
         Args:
             relationship_type: Relationship type name (e.g., "AUTHORED_BY")
-            category: Semantic category
+            category: Semantic category (or "llm_generated" for auto-categorization)
             description: Optional description
             added_by: Who added the type (username or "system")
             is_builtin: Whether this is a protected builtin type
+            direction_semantics: Direction ("outward", "inward", "bidirectional", or None for LLM to decide)
             ai_provider: Optional AI provider for embedding generation (auto-generation if provided)
+            auto_categorize: If True and category="llm_generated", compute proper category (ADR-047)
 
         Returns:
             True if added successfully, False if already exists
 
         Example:
-            >>> success = client.add_edge_type("AUTHORED_BY", "authorship",
-            ...                                 "Indicates authorship", "admin",
-            ...                                 ai_provider=provider)
+            >>> success = client.add_edge_type("AUTHORED_BY", "llm_generated",
+            ...                                 "LLM-generated relationship type",
+            ...                                 "llm_extractor",
+            ...                                 direction_semantics="outward",
+            ...                                 ai_provider=provider,
+            ...                                 auto_categorize=True)
         """
         conn = self.pool.getconn()
         try:
             with conn.cursor() as cur:
+                # Add to vocabulary table (ADR-049: include direction_semantics)
                 cur.execute("""
                     INSERT INTO kg_api.relationship_vocabulary
-                        (relationship_type, description, category, added_by, is_builtin, is_active)
-                    VALUES (%s, %s, %s, %s, %s, TRUE)
+                        (relationship_type, description, category, added_by, is_builtin, is_active, direction_semantics)
+                    VALUES (%s, %s, %s, %s, %s, TRUE, %s)
                     ON CONFLICT (relationship_type) DO NOTHING
                     RETURNING relationship_type
-                """, (relationship_type, description, category, added_by, is_builtin))
+                """, (relationship_type, description, category, added_by, is_builtin, direction_semantics))
                 result = cur.fetchone()
                 was_added = result is not None
 
                 # Generate and store embedding if AI provider available and type was just added
+                embedding_json = None
+                model = None
                 if was_added and ai_provider is not None:
                     try:
                         # Convert edge type to descriptive text (same logic as SynonymDetector)
@@ -1311,7 +1363,7 @@ class AGEClient:
                         embedding = embedding_response["embedding"]
                         model = embedding_response.get("model", "text-embedding-ada-002")
 
-                        # Store embedding
+                        # Store embedding in table
                         embedding_json = json.dumps(embedding)
                         cur.execute("""
                             UPDATE kg_api.relationship_vocabulary
@@ -1322,9 +1374,91 @@ class AGEClient:
                         """, (embedding_json, model, relationship_type))
 
                         logger.debug(f"Generated embedding for vocabulary type '{relationship_type}' ({len(embedding)} dims)")
+
+                        # ADR-047: Auto-categorize LLM-generated types
+                        if auto_categorize and category == "llm_generated":
+                            try:
+                                import asyncio
+                                from src.api.lib.vocabulary_categorizer import VocabularyCategorizer
+
+                                # Create categorizer and compute category
+                                categorizer = VocabularyCategorizer(self, ai_provider)
+
+                                # Run async categorization in sync context
+                                try:
+                                    loop = asyncio.get_event_loop()
+                                except RuntimeError:
+                                    loop = asyncio.new_event_loop()
+                                    asyncio.set_event_loop(loop)
+
+                                assignment = loop.run_until_complete(
+                                    categorizer.assign_category(relationship_type, store=False)
+                                )
+
+                                # Update category in database
+                                category = assignment.category
+                                cur.execute("""
+                                    UPDATE kg_api.relationship_vocabulary
+                                    SET category = %s,
+                                        category_source = 'computed',
+                                        category_confidence = %s,
+                                        category_scores = %s::jsonb,
+                                        category_ambiguous = %s
+                                    WHERE relationship_type = %s
+                                """, (
+                                    category,
+                                    assignment.confidence,
+                                    json.dumps(assignment.scores),
+                                    assignment.ambiguous,
+                                    relationship_type
+                                ))
+
+                                logger.info(
+                                    f"  🎯 Auto-categorized '{relationship_type}' → {category} "
+                                    f"(confidence: {assignment.confidence:.0%})"
+                                )
+                            except Exception as e:
+                                logger.warning(f"Failed to auto-categorize '{relationship_type}': {e}")
+                                # Keep category as "llm_generated" if categorization fails
+
                     except Exception as e:
                         # Don't fail the entire operation if embedding generation fails
                         logger.warning(f"Failed to generate embedding for '{relationship_type}': {e}")
+
+                # Create :VocabType node in graph (ADR-048 Phase 3.3 + ADR-049)
+                # Creates both node and :IN_CATEGORY relationship
+                if was_added:
+                    try:
+                        # Use MERGE to be idempotent (in case of partial failures)
+                        # Phase 3.3: Create :IN_CATEGORY relationship to :VocabCategory node
+                        # ADR-049: Add direction_semantics property
+                        vocab_query = """
+                            MERGE (v:VocabType {name: $name})
+                            SET v.description = $description,
+                                v.is_builtin = $is_builtin,
+                                v.is_active = 't',
+                                v.added_by = $added_by,
+                                v.usage_count = 0,
+                                v.direction_semantics = $direction_semantics
+                            WITH v
+                            MERGE (c:VocabCategory {name: $category})
+                            MERGE (v)-[:IN_CATEGORY]->(c)
+                            RETURN v.name as name
+                        """
+                        params = {
+                            "name": relationship_type,
+                            "category": category,
+                            "description": description or "",
+                            "is_builtin": 't' if is_builtin else 'f',
+                            "added_by": added_by,
+                            "direction_semantics": direction_semantics
+                        }
+                        self._execute_cypher(vocab_query, params)
+                        direction_info = f", direction={direction_semantics}" if direction_semantics else ""
+                        logger.debug(f"Created :VocabType node with :IN_CATEGORY->{category}{direction_info} for '{relationship_type}'")
+                    except Exception as e:
+                        logger.warning(f"Failed to create :VocabType node for '{relationship_type}': {e}")
+                        # Don't fail the entire operation - table row was created successfully
 
                 return was_added
         finally:
@@ -1485,17 +1619,19 @@ class AGEClient:
             ...     print(f"{category}: {count}")
 
         Note:
-            ADR-048 Phase 3.2: Migrated to query graph (:VocabType -> :VocabCategory)
+            ADR-048 Phase 3.3: Queries :IN_CATEGORY relationships to :VocabCategory nodes
         """
         try:
+            # Phase 3.3: Query via :IN_CATEGORY relationships
             query = """
             MATCH (v:VocabType)-[:IN_CATEGORY]->(c:VocabCategory)
             WHERE v.is_active = 't'
-            RETURN c.name as category, count(v) as count
-            ORDER BY count DESC, category
+            WITH c.name as category, count(v) as type_count
+            RETURN category, type_count
+            ORDER BY type_count DESC
             """
             results = self._execute_cypher(query)
-            return {str(row['category']): int(str(row['count'])) for row in results}
+            return {str(row['category']): int(str(row['type_count'])) for row in results}
         except Exception as e:
             logger.error(f"Failed to get category distribution from graph: {e}")
             return {}

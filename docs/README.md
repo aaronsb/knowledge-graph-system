@@ -44,8 +44,9 @@ Images, diagrams, and other media assets.
 2. Learn about [AI Providers](manual/02-configuration/01-AI_PROVIDERS.md)
 3. Read [INGESTION.md](manual/01-getting-started/03-INGESTION.md) for document ingestion workflow
 4. See [VOCABULARY_CONSOLIDATION.md](manual/03-integration/02-VOCABULARY_CONSOLIDATION.md) for managing edge vocabulary growth
-5. See [ENRICHMENT_JOURNEY.md](manual/06-reference/07-ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
-6. Review [Examples](manual/06-reference/03-EXAMPLES.md) and [Use Cases](manual/06-reference/02-USE_CASES.md)
+5. Read [VOCABULARY_CATEGORIES.md](guides/VOCABULARY_CATEGORIES.md) for understanding category scores and confidence levels
+6. See [ENRICHMENT_JOURNEY.md](manual/06-reference/07-ENRICHMENT_JOURNEY.md) for a real example of multi-perspective learning
+7. Review [Examples](manual/06-reference/03-EXAMPLES.md) and [Use Cases](manual/06-reference/02-USE_CASES.md)
 
 ### Administrators
 1. Read [AUTHENTICATION.md](manual/04-security-and-access/01-AUTHENTICATION.md) for login and session management

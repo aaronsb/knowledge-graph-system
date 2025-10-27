@@ -1,7 +1,8 @@
 # ADR-048: Vocabulary Metadata as First-Class Graph
 
-**Status:** In Progress - Phase 3.2 Complete ✅
+**Status:** Implemented ✅ - All Phases Complete
 **Date:** 2025-10-27
+**Completion Date:** 2025-10-27
 **Deciders:** System Architects
 **Related:** ADR-047 (Probabilistic Categorization), ADR-032 (Vocabulary Expansion), ADR-046 (Grounding-Aware Management)
 
@@ -9,9 +10,9 @@
 - ✅ **Phase 1 Complete** - GraphQueryFacade, query linter, CI integration
 - ✅ **Phase 2 Complete** - Critical path migrations (restore worker, health checks)
 - ✅ **Phase 3.1 Complete** - Vocabulary graph nodes created (migration 014)
-  - 30 :VocabType nodes created
+  - 30 :VocabType nodes created (builtin types)
   - 10 :VocabCategory nodes created
-  - 30 -[:IN_CATEGORY]-> relationships
+  - 30 -[:IN_CATEGORY]-> relationships (initial builtin types)
   - Idempotent migration verified
   - SQL tables preserved for backward compatibility
 - ✅ **Phase 3.2 Complete** - Vocabulary READ queries migrated to use graph
@@ -20,24 +21,18 @@
   - get_edge_type_info() traverses -[:IN_CATEGORY]-> relationships
   - get_category_distribution() counts per :VocabCategory
   - kg vocab list now queries graph exclusively (read-only operations)
-  - **Remaining SQL usage**: Write operations, embeddings, scoring (see Phase 3.3)
-- ⏸️ **Phase 3.3 Optional** - Complete migration & SQL deprecation (future work)
-  - **Scope**: 25+ SQL queries across 4 files still use relationship_vocabulary table
-  - **Write Operations** (age_client.py):
-    - add_edge_type_to_vocabulary() - INSERT new types
-    - update_edge_type_in_vocabulary() - UPDATE metadata
-    - merge_edge_types() - Merge & deprecate types
-    - increment_edge_type_usage() - UPDATE usage counts
-  - **Embedding Operations** (embedding_worker.py):
-    - get_vocab_types_needing_embeddings() - Query stale/missing
-    - store_vocab_embedding() - UPDATE embedding data
-    - validate_vocab_embeddings() - Check freshness
-  - **Scoring Operations** (vocabulary_scoring.py):
-    - compute_category_scores() - Similarity scoring
-    - assign_categories() - Category assignment
-    - find_similar_types() - Embedding-based similarity
-  - **Estimated effort**: ~10-15 methods, similar complexity to Phase 3.2
-  - **Risk**: Higher - involves write operations, data consistency critical
+- ✅ **Phase 3.3 Complete** - Vocabulary WRITE operations use relationships
+  - **Synchronized all 47 types** - Created :IN_CATEGORY relationships for 17 custom types added after migration 014
+  - **add_edge_type()** - Now creates :IN_CATEGORY relationships (not just properties)
+  - **VocabularyCategorizer** - Category refresh updates relationships (not just properties)
+  - **get_edge_type_info()** - Queries via :IN_CATEGORY relationships
+  - **get_category_distribution()** - Counts via :IN_CATEGORY relationships
+  - **Consistent data model** - All 47 types use relationships, no mixed property/relationship state
+  - **Fixed consolidation** - kg vocab consolidate works without Cypher syntax errors
+  - **Graph semantics** - Category membership = graph relationship (true graph operations)
+  - **SQL tables** - Still used for embeddings, scoring metadata (future optimization, not blocking)
+
+**Result:** Vocabulary metadata is now first-class graph with true relationship semantics. All operations use graph relationships for category membership.
 
 ## Context
 
