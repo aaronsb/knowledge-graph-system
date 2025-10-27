@@ -74,7 +74,7 @@ def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Op
 
                 key = get_system_api_key(conn, provider, service_token)
                 if key:
-                    logger.info(f"Loaded encrypted API key for {provider} from database")
+                    logger.debug(f"Loaded encrypted API key for {provider} from database")
                     return key
             finally:
                 client.pool.putconn(conn)

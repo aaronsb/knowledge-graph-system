@@ -1,9 +1,6 @@
 # Output files
 output/
 
-# State tracking
-.ingest_state.json
-
 # Python virtual environment
 venv/
 

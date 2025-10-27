@@ -78,7 +78,7 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
                 }
 
                 logger.debug(f"✅ Loaded AI extraction config: {config['provider']} / {config.get('model_name', 'N/A')}")
-                logger.info(f"🔍 Config thinking_mode from database: {config.get('thinking_mode', 'NOT_SET')}")
+                logger.debug(f"🔍 Config thinking_mode from database: {config.get('thinking_mode', 'NOT_SET')}")
                 return config
 
         finally:
