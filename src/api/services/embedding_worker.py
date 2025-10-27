@@ -24,6 +24,8 @@ from datetime import datetime
 from uuid import uuid4
 import logging
 import json
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +105,19 @@ class EmbeddingWorker:
         self.db = db_client
         self.provider = ai_provider
         self.provider_name = ai_provider.__class__.__name__.replace("Provider", "").lower()
+
+        # Resource management: Queue local embeddings to prevent GPU contention
+        # Cloud providers (OpenAI) can handle concurrency natively
+        from src.api.lib.ai_providers import LocalEmbeddingProvider
+        if isinstance(ai_provider, LocalEmbeddingProvider):
+            # Single-worker executor = automatic FIFO queue
+            # Multiple concurrent calls will be serialized
+            self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="local-embed")
+            logger.info("🔒 Local embedding queue initialized (max_workers=1)")
+        else:
+            # Cloud providers: no queue needed, native concurrency
+            self._executor = None
+            logger.debug(f"☁️  Cloud embedding provider ({self.provider_name}): native concurrency")
 
     async def initialize_builtin_embeddings(self) -> EmbeddingJobResult:
         """
@@ -195,6 +210,81 @@ class EmbeddingWorker:
 
         return result
 
+    def _generate_embedding_internal(self, text: str) -> Dict[str, Any]:
+        """
+        Internal method that actually calls the provider.
+
+        This is the only method that directly touches self.provider.generate_embedding().
+        All public methods route through here for consistency.
+        """
+        try:
+            embedding_response = self.provider.generate_embedding(text)
+            embedding = embedding_response["embedding"]
+            model = embedding_response.get("model", "unknown")
+            tokens = embedding_response.get("tokens", 0)
+
+            logger.debug(
+                f"Generated {len(embedding)}D concept embedding "
+                f"using {self.provider_name}/{model} ({tokens} tokens)"
+            )
+
+            return {
+                "embedding": embedding,
+                "model": model,
+                "provider": self.provider_name,
+                "dimensions": len(embedding),
+                "tokens": tokens
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to generate concept embedding: {e}")
+            raise
+
+    def generate_concept_embedding(self, text: str) -> Dict[str, Any]:
+        """
+        Generate embedding for a concept node (ingestion pipeline).
+
+        Resource management:
+        - Local embeddings: Queued via ThreadPoolExecutor (1 worker = serialized)
+        - Cloud embeddings: Direct call (native concurrency)
+
+        From caller perspective: Simple blocking call, complexity hidden.
+
+        Args:
+            text: Text to embed (typically concept label + search terms)
+
+        Returns:
+            Dictionary with embedding data: {embedding, model, provider, dimensions, tokens}
+
+        Example:
+            >>> worker = get_embedding_worker()
+            >>> result = worker.generate_concept_embedding("recursive depth")
+            >>> print(f"Generated {len(result['embedding'])}D embedding")
+        """
+        if self._executor:
+            # Local provider: Submit to queue and wait for result
+            # If multiple jobs call simultaneously, they're serialized automatically
+            future = self._executor.submit(self._generate_embedding_internal, text)
+            return future.result()  # Blocks until done
+        else:
+            # Cloud provider: Direct call (can handle concurrency)
+            return self._generate_embedding_internal(text)
+
+    async def generate_concept_embedding_async(self, text: str) -> Dict[str, Any]:
+        """
+        Async version of generate_concept_embedding (future use).
+
+        Args:
+            text: Text to embed
+
+        Returns:
+            Dictionary with embedding data: {embedding, model, provider, dimensions, tokens}
+        """
+        # Run in thread pool to avoid blocking event loop
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.generate_concept_embedding, text)
+
     async def generate_vocabulary_embedding(
         self,
         relationship_type: str,
@@ -204,6 +294,7 @@ class EmbeddingWorker:
         Generate embedding for a single vocabulary type.
 
         Called when adding new vocabulary types or regenerating individual embeddings.
+        Uses the same queueing system as concept embeddings (local providers serialized).
 
         Args:
             relationship_type: The relationship type to generate embedding for
@@ -225,11 +316,13 @@ class EmbeddingWorker:
         # Generate descriptive text for embedding
         descriptive_text = self._create_descriptive_text(relationship_type, description)
 
-        # Generate embedding via AI provider
+        # Generate embedding via unified method (handles queueing for local providers)
         try:
-            embedding_response = self.provider.generate_embedding(descriptive_text)
-            embedding = embedding_response["embedding"]
-            model = embedding_response.get("model", "unknown")
+            # Use generate_concept_embedding which handles queueing
+            embedding_result = self.generate_concept_embedding(descriptive_text)
+
+            embedding = embedding_result["embedding"]
+            model = embedding_result.get("model", "unknown")
 
             # Store embedding in database
             await self._store_vocabulary_embedding(
@@ -255,6 +348,76 @@ class EmbeddingWorker:
             logger.error(f"Failed to generate embedding for {relationship_type}: {e}")
             raise
 
+    async def regenerate_concept_embeddings(
+        self,
+        only_missing: bool = False,
+        ontology: Optional[str] = None,
+        limit: Optional[int] = None
+    ) -> EmbeddingJobResult:
+        """
+        Regenerate embeddings for concept nodes in the graph.
+
+        Uses the unified embedding worker which handles queueing for local providers.
+        Concepts are processed one at a time to avoid resource contention.
+
+        Useful for:
+        - Model migrations (changed embedding model)
+        - Bulk regeneration after embedding config changes
+        - Fixing missing/corrupted embeddings
+
+        Args:
+            only_missing: Only generate for concepts without embeddings
+            ontology: Limit to specific ontology (optional)
+            limit: Maximum number of concepts to process (for testing)
+
+        Returns:
+            EmbeddingJobResult with processing statistics
+        """
+        job_id = str(uuid4())
+        start_time = datetime.now()
+
+        logger.info(
+            f"[{job_id}] Starting concept embedding regeneration "
+            f"(only_missing={only_missing}, ontology={ontology}, limit={limit})"
+        )
+
+        # Get target concepts
+        target_concepts = await self._get_concepts_for_regeneration(
+            only_missing=only_missing,
+            ontology=ontology,
+            limit=limit
+        )
+
+        if not target_concepts:
+            logger.info(f"[{job_id}] No concepts need regeneration")
+            return EmbeddingJobResult(
+                job_id=job_id,
+                job_type="concept_regeneration",
+                target_count=0,
+                processed_count=0,
+                failed_count=0,
+                duration_ms=0,
+                embedding_model=self.provider.model_name if hasattr(self.provider, 'model_name') else "unknown",
+                embedding_provider=self.provider_name
+            )
+
+        # Process concepts (uses queueing automatically for local providers)
+        result = await self._batch_regenerate_concept_embeddings(
+            job_id=job_id,
+            concepts=target_concepts
+        )
+
+        # Calculate duration
+        end_time = datetime.now()
+        duration_ms = int((end_time - start_time).total_seconds() * 1000)
+
+        logger.info(
+            f"[{job_id}] Concept regeneration complete: {result.processed_count}/{result.target_count} "
+            f"concepts processed in {duration_ms}ms"
+        )
+
+        return result
+
     async def regenerate_all_embeddings(
         self,
         only_missing: bool = False,
@@ -262,6 +425,8 @@ class EmbeddingWorker:
     ) -> EmbeddingJobResult:
         """
         Regenerate embeddings for all vocabulary types.
+
+        Uses the unified embedding worker which handles queueing for local providers.
 
         Useful for:
         - Model migrations (changed embedding model)
@@ -431,6 +596,147 @@ class EmbeddingWorker:
         """
         results = await self.db.execute_query(query)
         return [row["relationship_type"] for row in results]
+
+    async def _get_concepts_for_regeneration(
+        self,
+        only_missing: bool = False,
+        ontology: Optional[str] = None,
+        limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get concepts from the graph for embedding regeneration.
+
+        Returns:
+            List of dicts with keys: concept_id, label
+        """
+        # Build MATCH clause based on ontology filter
+        if ontology:
+            # Filter by ontology: match concepts that appear in sources with the ontology document name
+            match_clause = "MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})"
+            params = {"ontology": ontology}
+        else:
+            # All concepts
+            match_clause = "MATCH (c:Concept)"
+            params = {}
+
+        # Build WHERE clause for additional filters
+        where_clauses = []
+        if only_missing:
+            where_clauses.append("c.embedding IS NULL")
+
+        where_clause = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+
+        # Build LIMIT clause
+        limit_clause = f"LIMIT {limit}" if limit else ""
+
+        # Build full query
+        query = f"""
+            {match_clause}
+            {where_clause}
+            RETURN DISTINCT c.concept_id AS concept_id, c.label AS label
+            ORDER BY c.label
+            {limit_clause}
+        """
+
+        # Execute via AGE client (run in thread pool to avoid blocking)
+        import asyncio
+        loop = asyncio.get_event_loop()
+        results = await loop.run_in_executor(None, self.db._execute_cypher, query, params)
+
+        return [{"concept_id": row["concept_id"], "label": row["label"]} for row in results]
+
+    async def _batch_regenerate_concept_embeddings(
+        self,
+        job_id: str,
+        concepts: List[Dict[str, Any]]
+    ) -> EmbeddingJobResult:
+        """
+        Regenerate embeddings for a batch of concepts.
+
+        Uses generate_concept_embedding() which handles queueing for local providers.
+        """
+        start_time = datetime.now()
+        processed = 0
+        failed = 0
+        errors = []
+
+        total = len(concepts)
+        logger.info(f"[{job_id}] Regenerating embeddings for {total} concepts using {self.provider_name}")
+
+        for i, concept in enumerate(concepts, 1):
+            concept_id = concept["concept_id"]
+            label = concept["label"]
+
+            try:
+                # Generate embedding (queued for local providers)
+                embedding_result = self.generate_concept_embedding(label)
+                embedding = embedding_result["embedding"]
+                model = embedding_result.get("model", "unknown")
+
+                # Log first few to verify regeneration
+                if i <= 3:
+                    logger.info(
+                        f"[{job_id}] Sample {i}: '{label[:50]}' → {len(embedding)}D embedding "
+                        f"using {model} (first values: {embedding[:3]})"
+                    )
+
+                # Update concept in graph
+                await self._update_concept_embedding(
+                    concept_id=concept_id,
+                    embedding=embedding,
+                    model=model
+                )
+
+                processed += 1
+
+                if i % 100 == 0 or i == total:
+                    logger.info(f"[{job_id}] Progress: {i}/{total} ({(i/total)*100:.1f}%)")
+
+            except Exception as e:
+                failed += 1
+                error_msg = f"{concept_id} ({label}): {str(e)}"
+                errors.append(error_msg)
+                logger.error(f"[{job_id}] Failed to regenerate embedding for {concept_id}: {e}")
+
+        end_time = datetime.now()
+        duration_ms = int((end_time - start_time).total_seconds() * 1000)
+
+        return EmbeddingJobResult(
+            job_id=job_id,
+            job_type="concept_regeneration",
+            target_count=total,
+            processed_count=processed,
+            failed_count=failed,
+            duration_ms=duration_ms,
+            embedding_model=self.provider.model_name if hasattr(self.provider, 'model_name') else "unknown",
+            embedding_provider=self.provider_name,
+            errors=errors
+        )
+
+    async def _update_concept_embedding(
+        self,
+        concept_id: str,
+        embedding: List[float],
+        model: str
+    ) -> None:
+        """Update embedding for a concept node in the graph"""
+        query = """
+            MATCH (c:Concept {concept_id: $concept_id})
+            SET c.embedding = $embedding,
+                c.embedding_model = $model
+            RETURN c.concept_id
+        """
+
+        params = {
+            "concept_id": concept_id,
+            "embedding": embedding,
+            "model": model
+        }
+
+        # Execute via AGE client (run in thread pool to avoid blocking)
+        import asyncio
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.db._execute_cypher, query, params)
 
     async def _get_vocabulary_description(self, relationship_type: str) -> Optional[str]:
         """Get description for a vocabulary type"""

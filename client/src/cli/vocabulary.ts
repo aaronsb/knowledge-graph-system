@@ -419,19 +419,19 @@ export const vocabularyCommand = new Command('vocabulary')
   .addCommand(
     new Command('refresh-categories')
       .description('Refresh category assignments for vocabulary types (ADR-047)')
-      .option('--all', 'Refresh all types (including builtins), not just computed')
+      .option('--computed-only', 'Refresh only types with category_source=computed (default: all active types)')
       .action(async (options) => {
         try {
           const client = createClientFromEnv();
-          const onlyComputed = !options.all;
+          const onlyComputed = options.computedOnly || false;
 
           console.log('\n' + separator());
           console.log(colors.ui.title('🔄 Refreshing Category Assignments'));
           console.log(separator());
 
           const modeDesc = onlyComputed
-            ? 'computed categories (LLM-generated types)'
-            : 'ALL types (including builtins)';
+            ? 'computed categories only (category_source=computed)'
+            : 'all active types (default)';
           console.log(`\n  ${colors.ui.key('Mode:')} ${colors.ui.value(modeDesc)}`);
           console.log(colors.status.dim('\n  Computing category scores via embedding similarity...'));
 

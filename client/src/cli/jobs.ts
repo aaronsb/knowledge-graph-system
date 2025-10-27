@@ -376,12 +376,14 @@ jobCommand.addCommand(approveCommand);
 // Cancel job(s)
 jobCommand
   .command('cancel <job-id-or-filter>')
-  .description('Cancel a job or all jobs matching filter (pending, queued, etc.)')
+  .description('Cancel a job or all jobs matching filter (all, pending, running, queued, etc.)')
   .showHelpAfterError()
   .option('-c, --client <client-id>', 'Filter by client ID (for batch operations)')
+  .option('-l, --limit <n>', 'Maximum jobs to cancel (default: 100)', '100')
   .action(async (jobIdOrFilter: string, options) => {
     try {
       const client = createClientFromEnv();
+      const limit = parseInt(options.limit);
 
       // Check if it's a job ID or a status filter
       if (jobIdOrFilter.startsWith('job_')) {
@@ -396,32 +398,68 @@ jobCommand
         }
       } else {
         // Batch cancellation by status filter
-        const statusMap: Record<string, string> = {
+        const statusMap: Record<string, string | undefined> = {
+          'all': undefined,  // No filter = all jobs
           'pending': 'awaiting_approval',
           'awaiting': 'awaiting_approval',
+          'approved': 'approved',
+          'queued': 'queued',
+          'running': 'processing',
+          'processing': 'processing',
         };
-        const status = statusMap[jobIdOrFilter] || jobIdOrFilter;
 
-        console.log(chalk.blue(`Finding jobs with status: ${status}...`));
-        const jobs = await client.listJobs(status, options.client, 100);
+        const filter = jobIdOrFilter.toLowerCase();
+
+        // Check if it's a known filter
+        if (!(filter in statusMap)) {
+          console.error(chalk.red(`✗ Unknown filter: "${jobIdOrFilter}"`));
+          console.error(chalk.gray('\nSupported filters:'));
+          console.error(chalk.gray('  all        - All cancellable jobs'));
+          console.error(chalk.gray('  pending    - Jobs awaiting approval'));
+          console.error(chalk.gray('  approved   - Approved jobs (not yet started)'));
+          console.error(chalk.gray('  queued     - Queued jobs'));
+          console.error(chalk.gray('  running    - Currently processing jobs'));
+          process.exit(1);
+        }
+
+        const status = statusMap[filter];
+
+        const filterDisplay = status || 'all cancellable jobs';
+        console.log(chalk.blue(`Finding ${filterDisplay}...`));
+        const jobs = await client.listJobs(status, options.client, limit);
 
         if (jobs.length === 0) {
-          console.log(chalk.gray('No jobs found matching filter'));
+          console.log(chalk.gray(`No jobs found matching filter: ${jobIdOrFilter}`));
           return;
         }
 
-        console.log(chalk.blue(`Found ${jobs.length} job(s). Cancelling...\n`));
+        // Filter to only cancellable statuses (not completed, failed, or already cancelled)
+        const cancellableStatuses = ['awaiting_approval', 'approved', 'queued', 'processing'];
+        const cancellableJobs = jobs.filter(j => cancellableStatuses.includes(j.status));
+
+        if (cancellableJobs.length === 0) {
+          console.log(chalk.yellow(`Found ${jobs.length} job(s), but none are cancellable`));
+          console.log(chalk.gray('Only jobs in these states can be cancelled: awaiting_approval, approved, queued, processing'));
+          return;
+        }
+
+        if (cancellableJobs.length < jobs.length) {
+          console.log(chalk.yellow(`Found ${jobs.length} job(s), ${cancellableJobs.length} are cancellable\n`));
+        } else {
+          console.log(chalk.blue(`Found ${cancellableJobs.length} job(s). Cancelling...\n`));
+        }
 
         let cancelled = 0;
         let failed = 0;
 
-        for (const job of jobs) {
+        for (const job of cancellableJobs) {
           try {
             await client.cancelJob(job.job_id);
-            console.log(chalk.yellow(`✓ Cancelled: ${job.job_id.substring(0, 12)}... (${job.ontology})`));
+            console.log(chalk.yellow(`✓ Cancelled: ${job.job_id.substring(0, 12)}... (${job.status}) - ${job.ontology || 'N/A'}`));
             cancelled++;
           } catch (error: any) {
-            console.log(chalk.red(`✗ Failed: ${job.job_id.substring(0, 12)}... - ${error.message}`));
+            const errorMsg = error.response?.data?.detail || error.message || 'Unknown error';
+            console.log(chalk.red(`✗ Failed: ${job.job_id.substring(0, 12)}... - ${errorMsg}`));
             failed++;
           }
         }

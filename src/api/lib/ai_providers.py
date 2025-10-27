@@ -491,7 +491,7 @@ class LocalEmbeddingProvider(AIProvider):
         """
         Generate embedding using local sentence-transformers model.
 
-        Returns dict with 'embedding' (vector) and 'tokens' (0 for local).
+        Returns dict with 'embedding' (vector), 'model', and 'tokens' (0 for local).
         This matches the interface expected by the rest of the system.
         """
         try:
@@ -499,6 +499,7 @@ class LocalEmbeddingProvider(AIProvider):
 
             return {
                 "embedding": embedding,
+                "model": self.model_manager.get_model_name(),
                 "tokens": 0  # Local embeddings have no token cost
             }
         except Exception as e:
@@ -506,6 +507,11 @@ class LocalEmbeddingProvider(AIProvider):
 
     def get_provider_name(self) -> str:
         return "Local (sentence-transformers)"
+
+    @property
+    def model_name(self) -> str:
+        """Get the local embedding model name (for compatibility with other providers)"""
+        return self.model_manager.get_model_name()
 
     def get_extraction_model(self) -> str:
         """LocalEmbeddingProvider doesn't support extraction"""

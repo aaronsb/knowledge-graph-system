@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 from src.api.lib.chunker import Chunk
 from src.api.lib.markdown_preprocessor import SemanticChunk
 from src.api.lib.age_client import AGEClient
-from src.api.lib.llm_extractor import extract_concepts, generate_embedding
+from src.api.lib.llm_extractor import extract_concepts
 from src.api.lib.relationship_mapper import normalize_relationship_type
 from src.api.lib.ai_providers import get_provider
+from src.api.services.embedding_worker import get_embedding_worker
 
 
 class ChunkedIngestionStats:
@@ -251,9 +252,14 @@ def process_chunk(
         label = concept["label"]
         search_terms = concept.get("search_terms", [])
 
-        # Generate embedding
+        # Generate embedding via unified embedding worker
+        # This automatically handles queueing for local providers
         try:
-            embedding_response = generate_embedding(label)
+            embedding_worker = get_embedding_worker()
+            if embedding_worker is None:
+                raise RuntimeError("Embedding worker not initialized")
+
+            embedding_response = embedding_worker.generate_concept_embedding(label)
             embedding = embedding_response["embedding"]
             embedding_tokens = embedding_response.get("tokens", 0)
             stats.embedding_tokens += embedding_tokens

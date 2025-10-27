@@ -139,38 +139,18 @@ def extract_concepts(
         raise Exception(f"Concept extraction failed: {e}")
 
 
-def generate_embedding(
-    text: str,
-    provider_name: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Generate vector embedding for text using configured AI provider.
-
-    Args:
-        text: Text to embed
-        provider_name: Override provider (default: from AI_PROVIDER env var)
-
-    Returns:
-        Dictionary with 'embedding' (vector) and 'tokens' (usage count)
-
-    Raises:
-        ValueError: If API key not set
-        Exception: If API call fails
-
-    Environment Variables:
-        AI_PROVIDER: "openai" or "anthropic" (default: "openai")
-        OPENAI_API_KEY: Required (even for Anthropic, which uses OpenAI for embeddings)
-        OPENAI_EMBEDDING_MODEL: Optional embedding model override
-    """
-    try:
-        # Get configured provider
-        provider = get_provider(provider_name)
-
-        # Generate embedding using provider (returns dict with 'embedding' and 'tokens')
-        return provider.generate_embedding(text)
-
-    except Exception as e:
-        raise Exception(f"Embedding generation failed: {e}")
+# DEPRECATED: generate_embedding() has been removed
+# All embedding generation now goes through the unified EmbeddingWorker (ADR-045)
+#
+# Migration:
+#   from src.api.services.embedding_worker import get_embedding_worker
+#   worker = get_embedding_worker()
+#   result = worker.generate_concept_embedding(text)
+#
+# Benefits:
+#   - Automatic queueing for local embeddings (prevents GPU contention)
+#   - Unified interface for all embedding operations
+#   - Better resource management
 
 
 def validate_provider_config(provider_name: Optional[str] = None) -> Dict[str, Any]:

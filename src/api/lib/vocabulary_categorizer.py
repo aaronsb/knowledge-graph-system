@@ -276,20 +276,19 @@ class VocabularyCategorizer:
 
     async def _store_category_assignment(self, assignment: CategoryAssignment) -> None:
         """
-        Store category assignment in database.
+        Store category assignment in database and graph.
 
-        Updates relationship_vocabulary table with:
-        - category
-        - category_confidence
-        - category_scores (JSONB)
-        - category_ambiguous
-        - category_source = 'computed'
+        Updates:
+        1. relationship_vocabulary table (PostgreSQL)
+        2. :VocabType node (graph) - ADR-048
 
         Args:
             assignment: CategoryAssignment to store
         """
         import json
+        import asyncio
 
+        # Update PostgreSQL table
         query = """
             UPDATE kg_api.relationship_vocabulary
             SET category = %s,
@@ -311,4 +310,34 @@ class VocabularyCategorizer:
             )
         )
 
-        logger.debug(f"Stored category assignment: {assignment.relationship_type} → {assignment.category} ({assignment.confidence:.2f})")
+        # Update :VocabType graph node (ADR-048 Phase 3.2)
+        # Sync the computed category to the graph
+        try:
+            cypher_query = """
+                MATCH (v:VocabType {name: $name})
+                SET v.category = $category
+                RETURN v.name as name
+            """
+            params = {
+                "name": assignment.relationship_type,
+                "category": assignment.category
+            }
+
+            # Run Cypher in executor since it's sync
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                self.db._execute_cypher,
+                cypher_query,
+                params
+            )
+
+            logger.debug(
+                f"Updated graph node: {assignment.relationship_type} → {assignment.category} "
+                f"({assignment.confidence:.2f})"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to update graph node for '{assignment.relationship_type}': {e}"
+            )
+            # Don't fail the entire operation - table was updated successfully
