@@ -171,12 +171,13 @@ Update `relationship_vocabulary` table:
 
 ```sql
 ALTER TABLE relationship_vocabulary
-ADD COLUMN category_source VARCHAR(20) DEFAULT 'llm_generated',  -- 'builtin', 'computed', or 'curator'
+ADD COLUMN category_source VARCHAR(20) DEFAULT 'computed',  -- 'builtin' or 'computed' (no overrides)
 ADD COLUMN category_confidence FLOAT,  -- 0.0 to 1.0
 ADD COLUMN category_scores JSONB,  -- Full score breakdown
 ADD COLUMN category_ambiguous BOOLEAN DEFAULT false;  -- True if runner-up > 0.70
 
 CREATE INDEX idx_relationship_category ON relationship_vocabulary(category);
+CREATE INDEX idx_category_confidence ON relationship_vocabulary(category_confidence);
 
 -- Example row:
 -- type: ENHANCES
@@ -195,10 +196,31 @@ Category assignments are cached but can be recomputed:
 INSERT INTO relationship_vocabulary (type, category, category_source, category_confidence)
 VALUES ('ENHANCES', 'causation', 'computed', 0.85);
 
-# Recompute periodically or on demand
+# Recompute on demand
 kg vocab refresh-categories
 # Recalculates all 'computed' categories based on current embeddings
 ```
+
+**When to refresh categories:**
+
+1. **After vocabulary merges** (vocabulary topology changes):
+   ```bash
+   kg vocab merge STRENGTHENS ENHANCES  # Consolidate synonyms
+   kg vocab refresh-categories          # Recalculate with cleaner landscape
+   ```
+
+2. **After embedding model changes** (semantic space shifts):
+   ```bash
+   kg admin embedding set --model nomic-embed-text
+   kg admin embedding regenerate --vocabulary
+   kg vocab refresh-categories  # Automatically triggered
+   ```
+
+3. **After seed adjustments** (category definitions change):
+   ```bash
+   # If CATEGORY_SEEDS updated in code
+   kg vocab refresh-categories  # Recalculate with new seeds
+   ```
 
 ### CLI Integration
 
@@ -233,6 +255,78 @@ Similarity to category seeds:
 Assigned: causation (85% confidence)
 ```
 
+### Ecological Pruning Workflow
+
+Categories enable **ecological vocabulary management** without curator overrides.
+
+**Core Philosophy:**
+> The graph is timeless. Vocabulary is part of the graph.
+> Curators observe current state, prune weak connections, let strong ones emerge.
+
+**Vocabulary State (Timeless):**
+- Types exist, connected to concepts via edges
+- Edge count reflects usage (connection strength)
+- Category confidence reflects cluster fit
+- Strong types accumulate edges, weak types remain sparse
+
+**Integrated Workflow with ADR-032 (Pruning) and ADR-046 (Synonym Detection):**
+
+```bash
+# 1. OBSERVE current state
+kg vocab list
+# ENHANCES:     causation, 87% confidence, 47 edges
+# STRENGTHENS:  causation, 86% confidence, 12 edges
+# SUPPORTS:     evidential, 91% confidence, 38 edges
+# MYSTERIOUS:   causation, 45% confidence, 1 edge
+
+# 2. FIND pruning candidates (ADR-047 categories reveal)
+kg vocab find-synonyms --category causation --threshold 0.85
+# ENHANCES ↔ STRENGTHENS: 0.89 similarity (same category)
+
+kg vocab prune-candidates
+# MYSTERIOUS: orphan (confidence < 50%, edge_count = 1)
+
+# 3. MERGE synonyms (ADR-046)
+kg vocab merge STRENGTHENS ENHANCES
+# ENHANCES now has 59 edges (47 + 12)
+# Result: 88 → 87 types
+
+# 4. REFRESH categories (ADR-047)
+kg vocab refresh-categories
+# Recomputes with cleaner vocabulary topology
+# ENHANCES confidence may shift (embedding landscape changed)
+
+# 5. DEPRECATE weak types (ADR-032)
+kg vocab deprecate MYSTERIOUS
+# Result: 87 → 86 types
+
+# 6. OBSERVE new state
+kg vocab list
+# ENHANCES: 59 edges (stronger)
+# Fewer types, denser connections
+# System converging on strong vocabulary
+```
+
+**What Categories Reveal:**
+
+| Insight | Action | ADR |
+|---------|--------|-----|
+| **Orphans** (confidence < 50%, low edges) | Deprecate weak types | ADR-032 |
+| **Synonyms** (same category, similarity > 0.85) | Merge redundant types | ADR-046 |
+| **Imbalances** (40 causation, 3 temporal) | Need better seed diversity | ADR-047 |
+| **Bridges** (ambiguous, runner-up > 0.70) | Keep valuable connectors | ADR-047 |
+
+**Why No Curator Overrides:**
+
+Categories are **computed from current embeddings and seeds**:
+- Override = frozen state that doesn't evolve with system
+- Model upgrades → embeddings change → override blocks benefits
+- Vocabulary merges → topology changes → override becomes stale
+- Better: Curators adjust seeds/topology, categories recompute
+
+**Emergent Signal:**
+After compaction, strong types accumulate more edges (reinforcement). System naturally converges on fewer, stronger vocabulary through graph dynamics, not temporal metrics.
+
 ## Consequences
 
 ### Positive
@@ -262,9 +356,12 @@ Assigned: causation (85% confidence)
 
 ### Negative
 
-**1. Embedding Dependency**
-- Requires embedding model consistency
-- Changing models recalculates categories
+**1. Embedding Model Changes**
+- Requires embedding model consistency within a deployment
+- Changing models triggers automatic recalculation:
+  - `kg admin embedding regenerate --vocabulary` → `kg vocab refresh-categories` (automatic)
+  - Categories recompute with new embeddings
+  - Current state reflects current model (timeless)
 
 **2. Seed Type Quality**
 - Categories only as good as seed types
@@ -281,34 +378,52 @@ Assigned: causation (85% confidence)
 ### Neutral
 
 **1. Category Evolution**
-- Categories can change as vocabulary grows
-- May want to version/track category changes
+- Categories recompute when vocabulary topology changes (merges, model changes)
+- Current state always reflects current embeddings and seeds
+- No historical tracking needed (graph is timeless)
 
 **2. New Categories**
 - System can detect "orphan" types (low scores across all categories)
-- Signals need for new category seed
+- Signals need for new category seed or vocabulary pruning
 
 ## Implementation Plan
 
+### Phase 0: Seed Validation (Optional, Week 1)
+- [ ] Compute pairwise similarity of seeds within each category
+- [ ] Ensure seeds cluster (intra-category similarity > 0.65)
+- [ ] Flag seeds that are outliers or better fit in different categories
+- [ ] Document seed validation results
+
 ### Phase 1: Foundation (Week 1)
-- [ ] Add schema columns (category_source, category_confidence, category_scores)
-- [ ] Implement `compute_category_scores()` function
+- [ ] Add schema columns (category_source, category_confidence, category_scores, category_ambiguous)
+- [ ] Add indexes (idx_relationship_category, idx_category_confidence)
+- [ ] Implement `compute_category_scores()` function with satisficing (max similarity)
 - [ ] Add category assignment to vocabulary insert logic
 
 ### Phase 2: Batch Categorization (Week 1)
 - [ ] Compute categories for existing 88 llm_generated types
 - [ ] Store scores in database
 - [ ] Verify accuracy on sample types
+- [ ] Identify ambiguous types (runner-up > 0.70)
 
 ### Phase 3: CLI Integration (Week 1)
-- [ ] Update `kg vocab list` to show confidence
+- [ ] Update `kg vocab list` to show confidence and ambiguous flag
 - [ ] Add `kg vocab category-scores <TYPE>` command
 - [ ] Add `kg vocab refresh-categories` command
+- [ ] Add `kg vocab prune-candidates` command
+- [ ] Add `kg vocab find-synonyms` command
 
 ### Phase 4: Validation (Week 2)
 - [ ] Compare computed categories to manual review
-- [ ] Identify low-confidence types
+- [ ] Identify low-confidence types (< 50%)
 - [ ] Determine if new category seeds needed
+- [ ] Test merge → refresh workflow
+
+### Phase 5: Orphan Detection (Week 2)
+- [ ] Implement `kg vocab find-orphans` command
+- [ ] Definition: types with max_score < 50% across all categories
+- [ ] Output recommendations (new seed? deprecate? merge?)
+- [ ] Integrate with ecological pruning workflow
 
 ## Alternatives Considered
 
@@ -331,8 +446,12 @@ Allow types to have multiple categories (e.g., ENHANCES = 85% causal, 45% compos
 1. **All llm_generated types get meaningful categories** (not generic "llm_generated")
 2. **Category confidence ≥ 70%** for 80% of types
 3. **No LLM calls** for category assignment
-4. **Recomputation < 1 second** for all 118 types
+4. **Performance targets:**
+   - Single type categorization: < 50ms (on vocab insert)
+   - Batch refresh (all 118 types): < 1s
+   - Category-scores CLI output: < 100ms
 5. **User can understand** why a type got its category (`kg vocab category-scores`)
+6. **Vocabulary convergence:** Strong types accumulate edges, weak types remain sparse (observable from current state)
 
 ## Example Categorization
 
@@ -351,10 +470,11 @@ BUILDS_ON      → composition  (68% - similar to PART_OF)
 
 ## References
 
-- ADR-044: Probabilistic Truth Convergence (pattern we're following)
-- ADR-025: Dynamic Relationship Vocabulary (allows new types)
-- ADR-022: Semantic Relationship Taxonomy (defined the 8 categories)
-- ADR-046: Grounding-Aware Vocabulary Management (vocabulary evolution)
+- **ADR-044:** Probabilistic Truth Convergence (pattern we're following)
+- **ADR-032:** Automatic Edge Vocabulary Expansion (pruning weak types)
+- **ADR-046:** Grounding-Aware Vocabulary Management (synonym detection via embeddings)
+- **ADR-025:** Dynamic Relationship Vocabulary (allows new types)
+- **ADR-022:** Semantic Relationship Taxonomy (defined the 8 categories)
 
 ---
 

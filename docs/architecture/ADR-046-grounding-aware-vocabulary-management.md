@@ -1088,9 +1088,18 @@ ADR-046 (Management) ← This ADR
 2. Extend `EdgeTypeScore` with grounding metrics
 3. Implement grounding contribution calculation
 4. Update synonym detection to use embeddings
-5. Test with production vocabulary (64 types)
+5. Integrate with ADR-047 category-based synonym detection
+6. Test with production vocabulary (64 types)
+
+## References
+
+- **ADR-044:** Probabilistic Truth Convergence (grounding strength calculation)
+- **ADR-045:** Unified Embedding Generation (embeddings for all vocabulary types)
+- **ADR-032:** Automatic Edge Vocabulary Expansion (pruning weak types)
+- **ADR-047:** Probabilistic Vocabulary Categorization (category-based synonym detection)
+- **ADR-022:** Semantic Relationship Taxonomy (8 categories)
 
 ---
 
-**Last Updated:** 2025-10-25
-**Next Review:** After ADR-044/045 implementation
+**Last Updated:** 2025-10-27
+**Next Review:** After ADR-044/045/047 implementation
