@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ARCHITECTURE_DECISIONS/">
+        <link rel="prev" href="../FUZZY_MATCHING_ANALYSIS/">
       
       
-        <link rel="next" href="../CLI_AUTHENTICATION_ARCHITECTURE/">
+        <link rel="next" href="../RECURSIVE_UPSERT_ARCHITECTURE/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Knowledge Graph System Architecture - Knowledge Graph System</title>
+        <title>Query Safety Baseline - Technical Debt - Knowledge Graph System</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#knowledge-graph-system-architecture" class="md-skip">
+        <a href="#query-safety-baseline-technical-debt" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Knowledge Graph System Architecture
+              Query Safety Baseline - Technical Debt
             
           </span>
         </div>
@@ -2808,32 +2808,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Knowledge Graph System Architecture
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -2844,296 +2822,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#system-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      System Architecture
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#core-components" class="md-nav__link">
-    <span class="md-ellipsis">
-      Core Components
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Core Components">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-api-server-layer-srcapi" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. API Server Layer (src/api/)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-ai-provider-layer-srcapilibai_providerspy" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. AI Provider Layer (src/api/lib/ai_providers.py)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-ingestion-library-srcapilib" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Ingestion Library (src/api/lib/)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-client-layer-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      4. Client Layer (client/)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-graph-database-apache-age-postgresql" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Graph Database (Apache AGE + PostgreSQL)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-legacy-query-interfaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      6. Legacy Query Interfaces
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#data-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      Data Flow
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Data Flow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#ingestion-flow-current-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      Ingestion Flow (Current Architecture)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      Query Flow
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      Environment Variables
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#concept-matching-algorithm" class="md-nav__link">
-    <span class="md-ellipsis">
-      Concept Matching Algorithm
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#scalability-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scalability Considerations
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Scalability Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-current" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 1 (Current)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-planned" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 2 (Planned)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#future-enhancements" class="md-nav__link">
-    <span class="md-ellipsis">
-      Future Enhancements
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
-    <span class="md-ellipsis">
-      Security
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Security">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#api-keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Keys
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#database" class="md-nav__link">
-    <span class="md-ellipsis">
-      Database
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      Testing Strategy
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Strategy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unit-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      Unit Tests
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integration Tests
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manual Testing
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3235,10 +2923,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Query Safety Baseline - Technical Debt
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3249,6 +2959,155 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Findings
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-health-check-node-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Health Check Node Count
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-restore-worker-delete-all-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Restore Worker - Delete All Relationships
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-restore-worker-delete-all-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Restore Worker - Delete All Nodes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prioritization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prioritization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1 (Current)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-before-vocabulary-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2 (Before Vocabulary Migration)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-vocabulary-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3 (Vocabulary Migration)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-implication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architectural Implication
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3609,321 +3468,135 @@
   
 
 
-<h1 id="knowledge-graph-system-architecture">Knowledge Graph System Architecture</h1>
-<h2 id="overview">Overview</h2>
-<p>The Knowledge Graph System transforms linear documents into interconnected concept graphs, enabling semantic exploration beyond sequential reading.</p>
-<h2 id="system-architecture">System Architecture</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                    Document Ingestion                         │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  .txt/.pdf files → API Server → Background Jobs → AGE        │
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└──────────────────────────────────────────────────────────────┘
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                            ↓
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>┌──────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                   FastAPI Server (Phase 1)                    │
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  • REST endpoints (ingest, jobs)                              │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│  • Job queue (in-memory + SQLite)                             │
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  • Content deduplication (SHA-256)                            │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  • Placeholder auth (X-Client-ID, X-API-Key)                  │
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>└──────────────────────────────────────────────────────────────┘
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                            ↓
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>┌──────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│         Apache AGE + PostgreSQL Graph Database                │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  • Concepts (nodes with vector embeddings)                    │
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│  • Instances (evidence quotes)                                │
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  • Sources (document paragraphs)                              │
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│  • Relationships (IMPLIES, SUPPORTS, CONTRADICTS, etc.)       │
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>└──────────────────────────────────────────────────────────────┘
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>                            ↓
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                    ┌───────┴───────────┐
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                    │                   │
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>         ┌──────────▼─────┐  ┌──────────▼─────────┐
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>         │  TypeScript    │  │  MCP Server        │
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>         │  CLI (kg)      │  │  (Phase 2)         │
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>         │  • Ingest      │  │  • Claude Desktop  │
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>         │  • Jobs        │  │  • Same codebase   │
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>         └────────────────┘  └────────────────────┘
-</code></pre></div>
-<h2 id="core-components">Core Components</h2>
-<h3 id="1-api-server-layer-srcapi">1. API Server Layer (<code>src/api/</code>)</h3>
-<p><strong>FastAPI REST Server</strong> (Phase 1):
-- <strong>Routes</strong>: Ingestion (<code>POST /ingest</code>), job management (<code>GET/POST /jobs/*</code>)
-- <strong>Services</strong>: Job queue (abstract interface), content hasher (deduplication)
-- <strong>Workers</strong>: Background ingestion processing with progress updates
-- <strong>Models</strong>: Pydantic request/response schemas matching TypeScript client
-- <strong>Middleware</strong>: Placeholder authentication (X-Client-ID, X-API-Key headers)</p>
-<p><strong>Job Queue Pattern</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Abstract interface for Phase 1 → Phase 2 migration</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">JobQueue</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">enqueue</span><span class="p">(</span><span class="n">job_type</span><span class="p">,</span> <span class="n">job_data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">job_id</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobStatus</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Phase 1: InMemoryJobQueue (SQLite persistence)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># Phase 2: RedisJobQueue (distributed workers)</span>
+<h1 id="query-safety-baseline-technical-debt">Query Safety Baseline - Technical Debt</h1>
+<p><strong>Date:</strong> 2025-10-27
+<strong>ADR:</strong> ADR-048 (Vocabulary Metadata as First-Class Graph)
+<strong>Phase:</strong> Phase 1 - Foundation</p>
+<h2 id="summary">Summary</h2>
+<p>Initial query safety audit identified <strong>3 unsafe queries</strong> in the codebase. All are intentionally label-free operations that must be fixed before Phase 3 (moving vocabulary to graph).</p>
+<h2 id="findings">Findings</h2>
+<h3 id="1-health-check-node-count">1. Health Check Node Count</h3>
+<p><strong>File:</strong> <code>src/api/routes/database.py:195</code>
+<strong>Query:</strong> <code>MATCH (n) RETURN count(n) as node_count LIMIT 1</code>
+<strong>Purpose:</strong> Verify graph is accessible
+<strong>Risk:</strong> Once vocabulary is in graph, counts ALL nodes (concepts + vocabulary)</p>
+<p><strong>Fix Required:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Before (unsafe)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">graph_check</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="s2">&quot;MATCH (n) RETURN count(n) as node_count LIMIT 1&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">fetch_one</span><span class="o">=</span><span class="kc">True</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># After (safe)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">graph_check</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="s2">&quot;MATCH (n:Concept) RETURN count(n) as concept_count LIMIT 1&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">fetch_one</span><span class="o">=</span><span class="kc">True</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span>
 </code></pre></div></p>
-<p><strong>Content Deduplication</strong>:
-- SHA-256 hash of document content + ontology name
-- Prevents expensive re-ingestion ($50-100 per document)
-- Returns existing job results if already completed
-- Force flag to override when intentional</p>
-<p>See <a href="../ADR-012-api-server-architecture/">ADR-012</a> for detailed design.</p>
-<h3 id="2-ai-provider-layer-srcapilibai_providerspy">2. AI Provider Layer (<code>src/api/lib/ai_providers.py</code>)</h3>
-<p>Modular abstraction for LLM providers:</p>
-<p><strong>OpenAI Provider:</strong>
-- Extraction: GPT-4o, GPT-4o-mini, o1-preview, o1-mini
-- Embeddings: text-embedding-3-small, text-embedding-3-large</p>
-<p><strong>Anthropic Provider:</strong>
-- Extraction: Claude Sonnet 4.5, Claude 3.5 Sonnet, Claude 3 Opus
-- Embeddings: Delegates to OpenAI (Anthropic doesn't provide embeddings)</p>
-<h3 id="3-ingestion-library-srcapilib">3. Ingestion Library (<code>src/api/lib/</code>)</h3>
-<p><strong>Components:</strong>
-- <code>parser.py</code> - Document parsing (text, PDF, DOCX)
-- <code>llm_extractor.py</code> - LLM-based concept extraction
-- <code>age_client.py</code> - Apache AGE graph database operations
-- <code>chunker.py</code> - Smart document chunking with semantic boundaries
-- <code>ingestion.py</code> - Chunk processing and statistics tracking
-- <code>checkpoint.py</code> - Ingestion checkpoint management</p>
-<p><strong>Flow:</strong>
-1. <strong>API Submission</strong>: Client POSTs file → API returns job_id
-2. <strong>Background Processing</strong>: Worker pulls job from queue
-3. <strong>Parse &amp; Chunk</strong>: Document → semantic chunks with overlap
-4. <strong>For each chunk</strong>:
-   - Query recent concepts from graph (context)
-   - Extract concepts using LLM
-   - Generate embeddings
-   - Match against existing concepts (vector similarity ≥ 0.85)
-   - Upsert to Apache AGE (create/update nodes and relationships)
-   - Update job progress (percent, concepts created)
-5. <strong>Complete</strong>: Worker writes final stats to job result</p>
-<h3 id="4-client-layer-client">4. Client Layer (<code>client/</code>)</h3>
-<p><strong>Unified TypeScript Client</strong> (CLI + MCP in one codebase):</p>
-<p><strong>Shared Components</strong>:
-- <code>src/types/</code> - TypeScript interfaces matching FastAPI Pydantic models
-- <code>src/api/client.ts</code> - HTTP client wrapping REST API endpoints
-- Configuration: Environment variables (<code>KG_API_URL</code>, <code>KG_CLIENT_ID</code>)</p>
-<p><strong>CLI Mode</strong> (Phase 1 - Complete):
-- Commands: <code>kg health</code>, <code>kg ingest file/text</code>, <code>kg jobs status/list/cancel</code>
-- User experience: Color-coded output, progress spinners, duplicate detection
-- Installation: Wrapper script (<code>scripts/kg-cli.sh</code>), direct node, or npm link</p>
-<p><strong>MCP Server Mode</strong> (Phase 2 - Future):
-- Entry point detects <code>MCP_SERVER_MODE=true</code> environment variable
-- Runs as MCP server for Claude Desktop/Code
-- Tools use same API client as CLI
-- Claude Desktop config: Node.js + environment variables</p>
-<p>See <a href="../ADR-013-unified-typescript-client/">ADR-013</a> for detailed design.</p>
-<h3 id="5-graph-database-apache-age-postgresql">5. Graph Database (Apache AGE + PostgreSQL)</h3>
-<p><strong>Node Types:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// Concept - Core knowledge unit</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;linear-scanning-system&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Linear scanning system&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="n">embedding</span><span class="p">:</span><span class="w"> </span><span class="o">[</span><span class="m">0</span><span class="p">.</span><span class="m">123</span><span class="p">,</span><span class="w"> </span><span class="p">...</span><span class="o">]</span><span class="p">,</span><span class="w">  </span><span class="c1">// 1536 dims</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="n">search_terms</span><span class="p">:</span><span class="w"> </span><span class="o">[</span><span class="s">&quot;linear thinking&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;sequential processing&quot;</span><span class="o">]</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">})</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1">// Source - Document location</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;watts-doc-1-para-4&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">  </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Watts Doc 1&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">  </span><span class="n">paragraph</span><span class="p">:</span><span class="w"> </span><span class="m">4</span><span class="p">,</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">  </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;...&quot;</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="p">})</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="c1">// Instance - Evidence quote</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="p">(:</span><span class="n">Instance</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">  </span><span class="n">instance_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;uuid&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">  </span><span class="n">quote</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;exact verbatim quote&quot;</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="p">})</span>
-</code></pre></div>
-<p><strong>Relationships:</strong></p>
-<p><em>Structural Relationships</em> (link concepts to evidence):
-- <code>APPEARS_IN</code> - Concept → Source
-- <code>EVIDENCED_BY</code> - Concept → Instance
-- <code>FROM_SOURCE</code> - Instance → Source</p>
-<p><em>Concept Relationships</em> (30 semantically sparse types, see ADR-022):</p>
-<p><strong>Categories:</strong>
-- <strong>Logical &amp; Truth</strong> (4 types): IMPLIES, CONTRADICTS, PRESUPPOSES, EQUIVALENT_TO
-- <strong>Causal</strong> (5 types): CAUSES, ENABLES, PREVENTS, INFLUENCES, RESULTS_FROM
-- <strong>Structural</strong> (5 types): PART_OF, CONTAINS, COMPOSED_OF, SUBSET_OF, INSTANCE_OF
-- <strong>Evidential</strong> (4 types): SUPPORTS, REFUTES, EXEMPLIFIES, MEASURED_BY
-- <strong>Similarity</strong> (4 types): SIMILAR_TO, ANALOGOUS_TO, CONTRASTS_WITH, OPPOSITE_OF
-- <strong>Temporal</strong> (3 types): PRECEDES, CONCURRENT_WITH, EVOLVES_INTO
-- <strong>Functional</strong> (4 types): USED_FOR, REQUIRES, PRODUCES, REGULATES
-- <strong>Meta</strong> (2 types): DEFINED_AS, CATEGORIZED_AS</p>
-<p><em>Edge Properties:</em>
-- <code>confidence</code> (float): LLM confidence score (0.0-1.0)
-- <code>category</code> (string): Semantic category for query filtering</p>
-<h3 id="6-legacy-query-interfaces">6. Legacy Query Interfaces</h3>
-<p><strong>Legacy MCP Server (<code>mcp-server/</code>):</strong>
-- Direct Apache AGE database access
-- Claude Desktop integration
-- Tools: search_concepts, get_concept_details, find_related_concepts, etc.
-- <strong>Status</strong>: Will migrate to unified TypeScript client (Phase 2)</p>
-<p><strong>Note</strong>: The legacy Python CLI (<code>scripts/cli.py</code>) has been deprecated and removed in favor of the unified TypeScript client (<code>kg</code> command).</p>
-<h2 id="data-flow">Data Flow</h2>
-<h3 id="ingestion-flow-current-architecture">Ingestion Flow (Current Architecture)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Client (kg CLI)
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  ↓ POST /ingest (file + ontology)
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>API Server
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  ├→ Calculate SHA-256 hash
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  ├→ Check for duplicate (hash + ontology)
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  │   ├→ Duplicate found: return existing job result
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  │   └→ No duplicate: continue
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  ├→ Create job in SQLite
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  ├→ Enqueue to in-memory queue
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  ├→ Return job_id immediately
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>  └→ Background worker starts
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>Background Worker
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>  ↓ Parse &amp; chunk document
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>Chunks with context overlap
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>  ↓ for each chunk
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>  ├→ Query recent concepts from graph (context for LLM)
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>  ├→ Extract concepts (LLM)
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>  │   ├→ concepts: [{id, label, search_terms}]
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>  │   ├→ instances: [{concept_id, quote}]
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>  │   └→ relationships: [{from, to, type, confidence}]
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>  │
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>  ├→ Generate embeddings (OpenAI)
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>  │
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>  ├→ Match existing concepts (vector search)
-<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>  │   ├→ similarity ≥ 0.85: use existing
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>  │   └→ else: create new
-<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>  │
-<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>  ├→ Upsert to Apache AGE
-<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>  │   ├→ CREATE/UPDATE concepts
-<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>  │   ├→ CREATE instances
-<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>  │   └→ CREATE relationships
-<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>  │
-<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>  └→ Update job progress (SQLite)
-<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>      └→ percent, chunks_processed, concepts_created
-<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>
-<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>Client polls GET /jobs/{job_id}
-<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>  ↓ every 2 seconds
-<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>Job Status Response
-<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>  ├→ status: queued | processing | completed | failed
-<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>  ├→ progress: {percent, chunks_processed, concepts_created}
-<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>  └→ result: {stats, cost} (if completed)
-</code></pre></div>
-<h3 id="query-flow">Query Flow</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>User Query
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  ↓
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Generate embedding
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  ↓
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Vector similarity search
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  ↓
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>MATCH concepts WHERE similarity &gt; threshold
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>  ↓
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>OPTIONAL MATCH related concepts
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>  ↓
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>Return structured results
-</code></pre></div>
-<h2 id="configuration">Configuration</h2>
-<h3 id="environment-variables">Environment Variables</h3>
-<p><strong>API Server</strong> (<code>.env</code>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># AI Provider Selection</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nv">AI_PROVIDER</span><span class="o">=</span>openai<span class="w">  </span><span class="c1"># or &quot;anthropic&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># OpenAI</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-...
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nv">OPENAI_EXTRACTION_MODEL</span><span class="o">=</span>gpt-4o
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nv">OPENAI_EMBEDDING_MODEL</span><span class="o">=</span>text-embedding-3-small
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Anthropic (optional)</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span>sk-ant-...
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nv">ANTHROPIC_EXTRACTION_MODEL</span><span class="o">=</span>claude-sonnet-4-20250514
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># PostgreSQL + Apache AGE</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="nv">POSTGRES_HOST</span><span class="o">=</span>localhost
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="nv">POSTGRES_PORT</span><span class="o">=</span><span class="m">5432</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="nv">POSTGRES_USER</span><span class="o">=</span>postgres
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="nv">POSTGRES_PASSWORD</span><span class="o">=</span>password
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="nv">POSTGRES_DB</span><span class="o">=</span>knowledge_graph
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="c1"># Authentication (Phase 1: disabled)</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="nv">AUTH_ENABLED</span><span class="o">=</span><span class="nb">false</span>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="nv">AUTH_REQUIRE_CLIENT_ID</span><span class="o">=</span><span class="nb">false</span>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="nv">AUTH_API_KEYS</span><span class="o">=</span><span class="w">  </span><span class="c1"># Comma-separated keys for Phase 2</span>
+<h3 id="2-restore-worker-delete-all-relationships">2. Restore Worker - Delete All Relationships</h3>
+<p><strong>File:</strong> <code>src/api/workers/restore_worker.py:230</code>
+<strong>Query:</strong> <code>MATCH (n)-[r]-() DELETE r</code>
+<strong>Purpose:</strong> Clear database before restore
+<strong>Risk:</strong> CRITICAL - Would delete vocabulary relationships in Phase 3</p>
+<p><strong>Fix Required:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Before (unsafe - deletes EVERYTHING)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n)-[r]-() DELETE r&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># After (safe - only delete concept graph)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Concept)-[r]-() DELETE r&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Source)-[r]-() DELETE r&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Instance)-[r]-() DELETE r&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># Vocabulary graph remains intact</span>
 </code></pre></div></p>
-<p><strong>TypeScript Client</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># API connection</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">KG_API_URL</span><span class="o">=</span>http://localhost:8000
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nv">KG_CLIENT_ID</span><span class="o">=</span>my-client
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nv">KG_API_KEY</span><span class="o">=</span><span class="w">  </span><span class="c1"># Optional, for Phase 2</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Mode selection (CLI vs MCP)</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nv">MCP_SERVER_MODE</span><span class="o">=</span><span class="nb">false</span><span class="w">  </span><span class="c1"># or &quot;true&quot; for MCP server mode</span>
+<h3 id="3-restore-worker-delete-all-nodes">3. Restore Worker - Delete All Nodes</h3>
+<p><strong>File:</strong> <code>src/api/workers/restore_worker.py:233</code>
+<strong>Query:</strong> <code>MATCH (n) DELETE n</code>
+<strong>Purpose:</strong> Clear database before restore
+<strong>Risk:</strong> CRITICAL - Would delete vocabulary nodes in Phase 3</p>
+<p><strong>Fix Required:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Before (unsafe - deletes EVERYTHING)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n) DELETE n&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># After (safe - only delete concept graph)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Concept) DELETE n&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Source) DELETE n&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Instance) DELETE n&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># Vocabulary graph remains intact</span>
 </code></pre></div></p>
-<h2 id="concept-matching-algorithm">Concept Matching Algorithm</h2>
-<p>Multi-stage matching to prevent duplicates:</p>
-<p><strong>Stage 1: Exact ID Match</strong>
-- LLM predicted existing concept_id → use it
-- Confidence: 100%</p>
-<p><strong>Stage 2: Vector Similarity (Primary)</strong>
-- Embed: <code>label + search_terms</code>
-- Cosine similarity search
-- Threshold ≥ 0.85 → match
-- Confidence: similarity score</p>
-<p><strong>Stage 3: Create New</strong>
-- No match found
-- Generate new concept_id (kebab-case)</p>
-<h2 id="scalability-considerations">Scalability Considerations</h2>
+<h2 id="prioritization">Prioritization</h2>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>Severity</th>
+<th>Phase</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>restore_worker.py:230</td>
+<td><strong>CRITICAL</strong></td>
+<td>Before Phase 3</td>
+<td>Would destroy vocabulary metadata</td>
+</tr>
+<tr>
+<td>restore_worker.py:233</td>
+<td><strong>CRITICAL</strong></td>
+<td>Before Phase 3</td>
+<td>Would destroy vocabulary metadata</td>
+</tr>
+<tr>
+<td>database.py:195</td>
+<td><strong>HIGH</strong></td>
+<td>Before Phase 3</td>
+<td>Would return incorrect counts</td>
+</tr>
+</tbody>
+</table>
+<h2 id="migration-strategy">Migration Strategy</h2>
 <h3 id="phase-1-current">Phase 1 (Current)</h3>
 <ul>
-<li><strong>API Server</strong>: Single FastAPI instance with BackgroundTasks</li>
-<li><strong>Job Queue</strong>: In-memory dict + SQLite persistence</li>
-<li><strong>Database</strong>: Single PostgreSQL + Apache AGE instance</li>
-<li><strong>Limitations</strong>: No distributed workers, no multi-instance API</li>
+<li>✅ Query linter identifies unsafe patterns</li>
+<li>✅ Baseline documented</li>
+<li>⏳ Add linter to CI to prevent new unsafe queries</li>
 </ul>
-<h3 id="phase-2-planned">Phase 2 (Planned)</h3>
+<h3 id="phase-2-before-vocabulary-migration">Phase 2 (Before Vocabulary Migration)</h3>
 <ul>
-<li><strong>Job Queue</strong>: Redis-based distributed queue</li>
-<li><strong>Workers</strong>: Separate worker processes (can scale horizontally)</li>
-<li><strong>API Server</strong>: Multiple instances behind load balancer</li>
-<li><strong>Real-time Updates</strong>: WebSocket/SSE for job progress</li>
-<li><strong>Authentication</strong>: Full API key validation and rate limiting</li>
+<li>Fix restore_worker.py to be label-aware</li>
+<li>Fix health check to count only concept nodes</li>
+<li>Verify all queries pass linter</li>
 </ul>
-<h3 id="future-enhancements">Future Enhancements</h3>
+<h3 id="phase-3-vocabulary-migration">Phase 3 (Vocabulary Migration)</h3>
 <ul>
-<li>PostgreSQL replication for HA</li>
-<li>Apache AGE performance optimization</li>
-<li>Dedicated vector database (pgvector, Pinecone, Weaviate)</li>
-<li>Incremental updates (avoid re-processing)</li>
-<li>Caching layer for query results</li>
+<li>Move vocabulary to graph only after Phase 2 complete</li>
+<li>Vocabulary graph isolated from restore operations</li>
+<li>Health checks correctly distinguish namespace</li>
 </ul>
-<h2 id="security">Security</h2>
-<h3 id="api-keys">API Keys</h3>
+<h2 id="architectural-implication">Architectural Implication</h2>
+<p>This audit validates ADR-048's core thesis:</p>
+<blockquote>
+<p><strong>Without namespace isolation, operations that are "safe" in single-namespace graphs become catastrophic in multi-namespace graphs.</strong></p>
+</blockquote>
+<p>The restore worker assumes it owns the entire graph. Once vocabulary metadata lives in the graph, this assumption breaks. GraphQueryFacade enforces namespace awareness to prevent this class of bugs.</p>
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li>✅ Create query linter (<code>scripts/lint_queries.py</code>)</li>
+<li>⏳ Add linter to CI workflow</li>
+<li>⏳ Create GraphQueryFacade with safe abstractions</li>
+<li>⏳ Migrate critical paths (restore_worker, health checks)</li>
+<li>⏳ Re-run linter and verify 0 errors before Phase 3</li>
+</ol>
+<h2 id="metrics">Metrics</h2>
 <ul>
-<li>Stored in <code>.env</code> (gitignored)</li>
-<li>Never committed to version control</li>
-<li>Validated on startup</li>
+<li><strong>Total unsafe queries:</strong> 3</li>
+<li><strong>Critical severity:</strong> 2 (restore worker)</li>
+<li><strong>High severity:</strong> 1 (health check)</li>
+<li><strong>Technical debt:</strong> Must fix before ADR-048 Phase 3</li>
 </ul>
-<h3 id="database">Database</h3>
-<ul>
-<li>PostgreSQL auth required (no anonymous access)</li>
-<li>Apache AGE graph access via PostgreSQL roles</li>
-<li>Local development: simple password</li>
-<li>Production: strong auth + TLS</li>
-</ul>
-<h2 id="testing-strategy">Testing Strategy</h2>
-<h3 id="unit-tests">Unit Tests</h3>
-<ul>
-<li>AI provider abstraction</li>
-<li>Concept matching logic</li>
-<li>Graph queries</li>
-</ul>
-<h3 id="integration-tests">Integration Tests</h3>
-<ul>
-<li>End-to-end ingestion</li>
-<li>MCP tool functionality</li>
-<li>CLI commands</li>
-</ul>
-<h3 id="manual-testing">Manual Testing</h3>
-<ul>
-<li>Use sample Watts documents</li>
-<li>Verify concept extraction quality</li>
-<li>Test relationship accuracy</li>
-</ul>
+<hr />
+<p><strong>Last Updated:</strong> 2025-10-27
+<strong>Next Audit:</strong> After Phase 2 migrations complete</p>
 
 
 
