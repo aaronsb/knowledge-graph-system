@@ -1205,16 +1205,15 @@ class AGEClient:
             Some metadata fields (description, added_by, etc.) not yet in graph
         """
         try:
-            # Query VocabType node and category
-            # Note: Category stored as property for now (Phase 3.2)
-            # Phase 3.3 will add :IN_CATEGORY relationships to :VocabCategory nodes
+            # Query VocabType node and category via relationship (Phase 3.3)
             query = """
             MATCH (v:VocabType {name: $type_name})
+            OPTIONAL MATCH (v)-[:IN_CATEGORY]->(c:VocabCategory)
             RETURN v.name as relationship_type,
                    v.is_active as is_active,
                    v.is_builtin as is_builtin,
                    v.usage_count as usage_count,
-                   v.category as category
+                   c.name as category
             """
             result = self._execute_cypher(query, {"type_name": relationship_type}, fetch_one=True)
 
@@ -1418,19 +1417,22 @@ class AGEClient:
                         # Don't fail the entire operation if embedding generation fails
                         logger.warning(f"Failed to generate embedding for '{relationship_type}': {e}")
 
-                # Create :VocabType node in graph (ADR-048 Phase 3.2)
-                # This enables graph-based vocabulary queries
+                # Create :VocabType node in graph (ADR-048 Phase 3.3)
+                # Creates both node and :IN_CATEGORY relationship
                 if was_added:
                     try:
                         # Use MERGE to be idempotent (in case of partial failures)
+                        # Phase 3.3: Create :IN_CATEGORY relationship to :VocabCategory node
                         vocab_query = """
                             MERGE (v:VocabType {name: $name})
-                            SET v.category = $category,
-                                v.description = $description,
+                            SET v.description = $description,
                                 v.is_builtin = $is_builtin,
                                 v.is_active = 't',
                                 v.added_by = $added_by,
                                 v.usage_count = 0
+                            WITH v
+                            MERGE (c:VocabCategory {name: $category})
+                            MERGE (v)-[:IN_CATEGORY]->(c)
                             RETURN v.name as name
                         """
                         params = {
@@ -1441,7 +1443,7 @@ class AGEClient:
                             "added_by": added_by
                         }
                         self._execute_cypher(vocab_query, params)
-                        logger.debug(f"Created :VocabType node for '{relationship_type}'")
+                        logger.debug(f"Created :VocabType node with :IN_CATEGORY->{category} for '{relationship_type}'")
                     except Exception as e:
                         logger.warning(f"Failed to create :VocabType node for '{relationship_type}': {e}")
                         # Don't fail the entire operation - table row was created successfully
@@ -1605,16 +1607,16 @@ class AGEClient:
             ...     print(f"{category}: {count}")
 
         Note:
-            ADR-048 Phase 3.2: Queries :VocabType.category property
-            Phase 3.3 will use :IN_CATEGORY relationships to :VocabCategory nodes
+            ADR-048 Phase 3.3: Queries :IN_CATEGORY relationships to :VocabCategory nodes
         """
         try:
-            # Phase 3.2: Category is a property on :VocabType nodes
+            # Phase 3.3: Query via :IN_CATEGORY relationships
             query = """
-            MATCH (v:VocabType)
-            WHERE v.is_active = 't' AND v.category IS NOT NULL
-            RETURN v.category as category, count(v) as type_count
-            ORDER BY type_count DESC, category
+            MATCH (v:VocabType)-[:IN_CATEGORY]->(c:VocabCategory)
+            WHERE v.is_active = 't'
+            WITH c.name as category, count(v) as type_count
+            RETURN category, type_count
+            ORDER BY type_count DESC
             """
             results = self._execute_cypher(query)
             return {str(row['category']): int(str(row['type_count'])) for row in results}

@@ -310,12 +310,16 @@ class VocabularyCategorizer:
             )
         )
 
-        # Update :VocabType graph node (ADR-048 Phase 3.2)
-        # Sync the computed category to the graph
+        # Update :VocabType graph node (ADR-048 Phase 3.3)
+        # Update :IN_CATEGORY relationship to reflect new category
         try:
             cypher_query = """
                 MATCH (v:VocabType {name: $name})
-                SET v.category = $category
+                OPTIONAL MATCH (v)-[old_rel:IN_CATEGORY]->()
+                DELETE old_rel
+                WITH v
+                MERGE (c:VocabCategory {name: $category})
+                MERGE (v)-[:IN_CATEGORY]->(c)
                 RETURN v.name as name
             """
             params = {
@@ -333,11 +337,11 @@ class VocabularyCategorizer:
             )
 
             logger.debug(
-                f"Updated graph node: {assignment.relationship_type} → {assignment.category} "
+                f"Updated :IN_CATEGORY relationship: {assignment.relationship_type} → {assignment.category} "
                 f"({assignment.confidence:.2f})"
             )
         except Exception as e:
             logger.warning(
-                f"Failed to update graph node for '{assignment.relationship_type}': {e}"
+                f"Failed to update :IN_CATEGORY relationship for '{assignment.relationship_type}': {e}"
             )
             # Don't fail the entire operation - table was updated successfully
