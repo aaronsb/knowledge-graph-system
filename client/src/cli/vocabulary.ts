@@ -88,13 +88,13 @@ export const vocabularyCommand = new Command('vocabulary')
           console.log(`${colors.ui.key('Custom:')} ${coloredCount(response.custom)}`);
 
           if (response.types.length > 0) {
-            console.log('\n' + separator(80, '─'));
+            console.log('\n' + separator(95, '─'));
             console.log(
               colors.status.dim(
-                `${'TYPE'.padEnd(25)} ${'CATEGORY'.padEnd(15)} ${'EDGES'.padStart(8)} ${'STATUS'.padStart(10)}`
+                `${'TYPE'.padEnd(25)} ${'CATEGORY'.padEnd(15)} ${'CONF'.padStart(6)} ${'EDGES'.padStart(8)} ${'STATUS'.padStart(10)}`
               )
             );
-            console.log(separator(80, '─'));
+            console.log(separator(95, '─'));
 
             response.types.forEach((type: any) => {
               const relColor = colors.getRelationshipColor(type.relationship_type);
@@ -103,15 +103,34 @@ export const vocabularyCommand = new Command('vocabulary')
               const builtinMark = type.is_builtin ? colors.status.dim(' [B]') : '';
               const edgeCount = type.edge_count !== null && type.edge_count !== undefined ? type.edge_count : 0;
 
+              // ADR-047: Show confidence if available
+              let confDisplay = '';
+              if (type.category_confidence !== null && type.category_confidence !== undefined) {
+                const confPercent = (type.category_confidence * 100).toFixed(0);
+                const confNum = type.category_confidence;
+                let confColor = colors.status.dim;
+                if (confNum >= 0.70) confColor = colors.status.success;
+                else if (confNum >= 0.50) confColor = colors.status.warning;
+                else confColor = colors.status.error;
+
+                const ambiguous = type.category_ambiguous ? colors.status.warning('⚠') : '';
+                confDisplay = confColor(confPercent.padStart(3) + '%') + ambiguous;
+              } else if (type.category_source === 'builtin') {
+                confDisplay = colors.status.dim('  --  ');
+              } else {
+                confDisplay = colors.status.dim('  --  ');
+              }
+
               console.log(
                 `${relColor(type.relationship_type.padEnd(25))} ` +
                 `${colors.ui.value(type.category.padEnd(15))} ` +
+                `${confDisplay.padStart(6)} ` +
                 `${String(edgeCount).padStart(8)} ` +
                 `${statusColor(statusIcon.padStart(10))}${builtinMark}`
               );
             });
 
-            console.log(separator(80, '─'));
+            console.log(separator(95, '─'));
           }
 
           console.log();
@@ -327,6 +346,128 @@ export const vocabularyCommand = new Command('vocabulary')
 
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to generate embeddings'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('category-scores')
+      .description('Show category similarity scores for a relationship type (ADR-047)')
+      .argument('<type>', 'Relationship type to analyze (e.g., ENHANCES)')
+      .action(async (relationshipType: string) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.getCategoryScores(relationshipType);
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title(`📊 Category Scores: ${colors.getRelationshipColor(relationshipType)(relationshipType)}`));
+          console.log(separator());
+
+          console.log(`\n${colors.stats.section('Assignment')}`);
+          console.log(`  ${colors.stats.label('Category:')} ${colors.ui.value(result.category)}`);
+
+          // Confidence with color coding
+          const confPercent = (result.confidence * 100).toFixed(0);
+          let confColor = colors.status.dim;
+          if (result.confidence >= 0.70) confColor = colors.status.success;
+          else if (result.confidence >= 0.50) confColor = colors.status.warning;
+          else confColor = colors.status.error;
+
+          console.log(`  ${colors.stats.label('Confidence:')} ${confColor(confPercent + '%')}`);
+          console.log(`  ${colors.stats.label('Ambiguous:')} ${result.ambiguous ? colors.status.warning('Yes') : colors.status.success('No')}`);
+
+          if (result.ambiguous && result.runner_up_category) {
+            const runnerUpPercent = (result.runner_up_score * 100).toFixed(0);
+            console.log(`  ${colors.stats.label('Runner-up:')} ${colors.ui.value(result.runner_up_category)} (${runnerUpPercent}%)`);
+          }
+
+          console.log(`\n${colors.stats.section('Similarity to Category Seeds')}`);
+
+          // Sort categories by score
+          const sortedScores = Object.entries(result.scores)
+            .sort((a: any, b: any) => b[1] - a[1]);
+
+          for (const [category, score] of sortedScores) {
+            const scoreNum = score as number;
+            const percent = (scoreNum * 100).toFixed(0).padStart(3);
+            const barLength = Math.round(scoreNum * 20);
+            const bar = '█'.repeat(barLength);
+
+            // Highlight primary category
+            const catDisplay = category === result.category
+              ? colors.status.success(category.padEnd(15))
+              : colors.ui.value(category.padEnd(15));
+
+            console.log(`  ${catDisplay} ${percent}%  ${bar}`);
+          }
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          if (error.response?.status === 404) {
+            console.error(colors.status.error(`✗ Relationship type not found: ${relationshipType}`));
+            console.error(colors.status.dim('  Make sure the type exists and has an embedding'));
+          } else {
+            console.error(colors.status.error('✗ Failed to get category scores'));
+            console.error(colors.status.error(error.response?.data?.detail || error.message));
+          }
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('refresh-categories')
+      .description('Refresh category assignments for vocabulary types (ADR-047)')
+      .option('--all', 'Refresh all types (including builtins), not just computed')
+      .action(async (options) => {
+        try {
+          const client = createClientFromEnv();
+          const onlyComputed = !options.all;
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('🔄 Refreshing Category Assignments'));
+          console.log(separator());
+
+          const modeDesc = onlyComputed
+            ? 'computed categories (LLM-generated types)'
+            : 'ALL types (including builtins)';
+          console.log(`\n  ${colors.ui.key('Mode:')} ${colors.ui.value(modeDesc)}`);
+          console.log(colors.status.dim('\n  Computing category scores via embedding similarity...'));
+
+          const result = await client.refreshCategories(onlyComputed);
+
+          console.log('\n' + separator());
+          console.log(colors.status.success('✓ Category refresh completed'));
+          console.log(`  ${colors.stats.label('Refreshed:')} ${coloredCount(result.refreshed_count)}`);
+          console.log(`  ${colors.stats.label('Skipped:')} ${coloredCount(result.skipped_count)}`);
+
+          if (result.failed_count > 0) {
+            console.log(`  ${colors.stats.label('Failed:')} ${colors.status.error(result.failed_count.toString())}`);
+          } else {
+            console.log(`  ${colors.stats.label('Failed:')} ${coloredCount(result.failed_count)}`);
+          }
+
+          // Show some examples if any were refreshed
+          if (result.assignments && result.assignments.length > 0) {
+            const sampleSize = Math.min(5, result.assignments.length);
+            console.log(`\n${colors.stats.section(`Sample Results (${sampleSize} of ${result.assignments.length})`)}`);
+
+            for (let i = 0; i < sampleSize; i++) {
+              const assignment = result.assignments[i];
+              const confPercent = (assignment.confidence * 100).toFixed(0);
+              const ambiguous = assignment.ambiguous ? colors.status.warning(' ⚠') : '';
+              console.log(
+                `  ${colors.getRelationshipColor(assignment.relationship_type)(assignment.relationship_type.padEnd(25))} → ` +
+                `${colors.ui.value(assignment.category.padEnd(12))} (${confPercent}%)${ambiguous}`
+              );
+            }
+          }
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to refresh categories'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
           process.exit(1);
         }

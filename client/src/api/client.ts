@@ -806,6 +806,24 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Get category similarity scores for a relationship type (ADR-047)
+   */
+  async getCategoryScores(relationshipType: string): Promise<any> {
+    const response = await this.client.get(`/vocabulary/category-scores/${encodeURIComponent(relationshipType)}`);
+    return response.data;
+  }
+
+  /**
+   * Refresh category assignments for vocabulary types (ADR-047)
+   */
+  async refreshCategories(onlyComputed: boolean = true): Promise<any> {
+    const response = await this.client.post('/vocabulary/refresh-categories', {
+      only_computed: onlyComputed
+    });
+    return response.data;
+  }
+
+  /**
    * Generate embeddings for vocabulary types (bulk operation)
    */
   async generateVocabularyEmbeddings(
