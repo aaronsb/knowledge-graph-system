@@ -190,15 +190,14 @@ async def check_database_health():
                     "status": "error"
                 }
 
-            # Check graph existence
+            # Check graph existence (ADR-048: namespace-aware)
             try:
-                graph_check = client._execute_cypher(
-                    "MATCH (n) RETURN count(n) as node_count LIMIT 1",
-                    fetch_one=True
-                )
+                # Use facade to verify graph is accessible with proper namespace awareness
+                concept_count = client.facade.count_concepts()
                 health["checks"]["graph"] = {
                     "accessible": True,
-                    "status": "ok"
+                    "status": "ok",
+                    "concept_count": concept_count
                 }
             except:
                 health["checks"]["graph"] = {
