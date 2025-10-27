@@ -314,7 +314,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+        <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-tabs__link">
           
   
   
@@ -1670,6 +1670,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -2367,6 +2375,144 @@
       Notes
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-versioning-evolution-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schema Versioning &amp; Evolution Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema Versioning &amp; Evolution Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decision-schema-versioned-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision: Schema-Versioned Backups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore-compatibility-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restore Compatibility Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Restore Compatibility Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#case-1-exact-match-schema_version-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      Case 1: Exact Match (schema_version == current)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-2-newer-database-schema_version-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      Case 2: Newer Database (schema_version &lt; current)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-3-older-database-schema_version-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      Case 3: Older Database (schema_version &gt; current)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-conversion-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Conversion Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-restore-procedure-for-major-schema-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parallel Restore Procedure (For Major Schema Gaps)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#benefits_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consequences_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#related-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3076,6 +3222,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-045-unified-embedding-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-045: Unified Embedding Generation System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-046: Grounding-Aware Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -3128,6 +3343,29 @@
   
   <span class="md-ellipsis">
     CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODE-CHANGES-ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Changes Analysis: ADR-045/046 Implementation
     
   </span>
   
@@ -3379,6 +3617,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3416,6 +3658,52 @@
             Testing
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Test Notes - Working Commands &amp; Observations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Integration Test Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -4098,6 +4386,190 @@ The backup directory is already configurable via <code>kg config</code>:
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>backup_dir<span class="w"> </span>/path/to/backups
 </code></pre></div></p>
 <p>This ADR formalizes using that configured directory as the authoritative backup location.</p>
+<h2 id="schema-versioning-evolution-strategy">Schema Versioning &amp; Evolution Strategy</h2>
+<p><strong>Status:</strong> Accepted<br />
+<strong>Date Added:</strong> 2025-10-26<br />
+<strong>Problem Discovered:</strong> Integration testing revealed backup/restore fails when schema changes between backup creation and restore</p>
+<h3 id="problem-statement">Problem Statement</h3>
+<p>When database schema evolves (e.g., <code>synonyms</code> column changed from <code>jsonb</code> to <code>varchar[]</code>), restoring old backups fails with type mismatch errors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>column &quot;synonyms&quot; is of type character varying[] but expression is of type jsonb
+</code></pre></div>
+<p>This breaks the backup/restore contract: backups should remain restorable even as the system evolves.</p>
+<h3 id="decision-schema-versioned-backups">Decision: Schema-Versioned Backups</h3>
+<p>Add <code>schema_version</code> to backup format based on last applied migration:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="nt">&quot;schema_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w">  </span><span class="c1">// ← Last migration number (012_add_embedding_worker_support.sql)</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;full_backup&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-26T21:15:24Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">  </span><span class="err">...</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Migration Numbering:</strong>
+- Schema version = migration file number (001, 002, ..., 012)
+- Backups include the schema they were created with
+- Restore checks compatibility and provides migration path</p>
+<h3 id="restore-compatibility-strategy">Restore Compatibility Strategy</h3>
+<h4 id="case-1-exact-match-schema_version-current">Case 1: Exact Match (schema_version == current)</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Backup: schema_version=12
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>Database: current migration=012
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>→ Direct restore ✅
+</code></pre></div>
+<h4 id="case-2-newer-database-schema_version-current">Case 2: Newer Database (schema_version &lt; current)</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Backup: schema_version=10
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>Database: current migration=012
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>→ Two options:
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>   A) Apply type conversions during restore (if supported)
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>   B) Restore to parallel instance at v10, migrate to v12, re-backup
+</code></pre></div>
+<h4 id="case-3-older-database-schema_version-current">Case 3: Older Database (schema_version &gt; current)</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Backup: schema_version=12
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>Database: current migration=010
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>→ Error: &quot;Backup requires schema v12, database is v10. Apply migrations first.&quot;
+</code></pre></div>
+<h3 id="type-conversion-layer">Type Conversion Layer</h3>
+<p>For common schema changes, restore can auto-convert:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Example: synonyms field evolution</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1"># Migration 008: synonyms was JSONB</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="c1"># Migration 012: synonyms is VARCHAR[]</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="k">if</span> <span class="n">backup_schema_version</span> <span class="o">&lt;=</span> <span class="mi">8</span> <span class="ow">and</span> <span class="n">current_schema</span> <span class="o">&gt;=</span> <span class="mi">12</span><span class="p">:</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="c1"># Convert JSONB null to VARCHAR[] NULL</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="k">if</span> <span class="n">synonyms_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">synonyms_value</span> <span class="o">==</span> <span class="s1">&#39;null&#39;</span><span class="p">:</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>        <span class="n">synonyms_value</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># PostgreSQL NULL</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synonyms_value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>        <span class="n">synonyms_value</span> <span class="o">=</span> <span class="n">synonyms_value</span>  <span class="c1"># Already array format</span>
+</code></pre></div>
+<p>Supported conversions tracked in <code>schema/MIGRATION_COMPATIBILITY.md</code></p>
+<h3 id="parallel-restore-procedure-for-major-schema-gaps">Parallel Restore Procedure (For Major Schema Gaps)</h3>
+<p>When backup schema is significantly older than current (&gt;5 migrations):</p>
+<ol>
+<li>
+<p><strong>Clone system at backup schema version:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Check out git tag matching backup schema</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/org/knowledge-graph-system<span class="w"> </span>backup-restore-temp
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="nb">cd</span><span class="w"> </span>backup-restore-temp
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>git<span class="w"> </span>checkout<span class="w"> </span>schema-v10<span class="w">  </span><span class="c1"># Tag for migration 010</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="c1"># Start temporary instance</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>scripts/start-api.sh
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Restore backup to old version:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>--file<span class="w"> </span>old_backup_schema_v10.json
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Apply migrations to evolve schema:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>scripts/migrate-db.sh<span class="w">  </span><span class="c1"># Applies 011, 012, ... to current</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Create new backup at current schema:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup<span class="w"> </span>--type<span class="w"> </span>full
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="c1"># Produces: full_backup_20251026_schema_v12.json</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Restore to production:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># In production system</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>--file<span class="w"> </span>full_backup_20251026_schema_v12.json
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Cleanup temporary instance:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>docker-compose<span class="w"> </span>down<span class="w"> </span>-v
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="implementation-requirements">Implementation Requirements</h3>
+<ol>
+<li>
+<p><strong>Backup Export (serialization.py):</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_current_schema_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get last applied migration number from database&quot;&quot;&quot;</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="c1"># Query kg_api.schema_migrations table</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>    <span class="c1"># Return max(version) or parse schema/migrations/*.sql</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">export_full_backup</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">AGEClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>        <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>        <span class="s2">&quot;schema_version&quot;</span><span class="p">:</span> <span class="n">get_current_schema_version</span><span class="p">(),</span>  <span class="c1"># ← Added</span>
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;full_backup&quot;</span><span class="p">,</span>
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>        <span class="o">...</span>
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>    <span class="p">}</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Backup Restore (restore_worker.py):</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">check_schema_compatibility</span><span class="p">(</span><span class="n">backup</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if backup can be restored to current schema&quot;&quot;&quot;</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>    <span class="n">backup_schema</span> <span class="o">=</span> <span class="n">backup</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schema_version&quot;</span><span class="p">)</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>    <span class="n">current_schema</span> <span class="o">=</span> <span class="n">get_current_schema_version</span><span class="p">()</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>    <span class="k">if</span> <span class="n">backup_schema</span> <span class="o">==</span> <span class="n">current_schema</span><span class="p">:</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;Exact match&quot;</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>    <span class="k">elif</span> <span class="n">backup_schema</span> <span class="o">&lt;</span> <span class="n">current_schema</span><span class="p">:</span>
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>        <span class="c1"># Check if auto-conversion supported</span>
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a>        <span class="k">if</span> <span class="n">has_conversion_path</span><span class="p">(</span><span class="n">backup_schema</span><span class="p">,</span> <span class="n">current_schema</span><span class="p">):</span>
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Auto-converting from v</span><span class="si">{</span><span class="n">backup_schema</span><span class="si">}</span><span class="s2"> to v</span><span class="si">{</span><span class="n">current_schema</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a>            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Use parallel restore procedure (backup=v</span><span class="si">{</span><span class="n">backup_schema</span><span class="si">}</span><span class="s2">, current=v</span><span class="si">{</span><span class="n">current_schema</span><span class="si">}</span><span class="s2">)&quot;</span>
+<a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a>        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Backup requires schema v</span><span class="si">{</span><span class="n">backup_schema</span><span class="si">}</span><span class="s2">, database is v</span><span class="si">{</span><span class="n">current_schema</span><span class="si">}</span><span class="s2">. Apply migrations first.&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Schema Migration Tracking:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1">-- Add to next migration</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span><span class="k">version</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span><span class="n">applied_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="p">);</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">)</span>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Add schema versioning to backups&#39;</span><span class="p">);</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="benefits_1">Benefits</h3>
+<ol>
+<li><strong>Safe Evolution:</strong> Schema can evolve without breaking old backups</li>
+<li><strong>Clear Error Messages:</strong> Users know exactly why restore failed</li>
+<li><strong>Migration Path:</strong> Documented procedure for old backups</li>
+<li><strong>Compatibility Matrix:</strong> Track which versions can auto-convert</li>
+<li><strong>Git-Tagged Versions:</strong> Each schema version has a git tag for parallel restore</li>
+</ol>
+<h3 id="consequences_1">Consequences</h3>
+<p><strong>Positive:</strong>
+- ✅ Backups remain valid across schema evolution
+- ✅ Clear restore procedures for all scenarios
+- ✅ Automatic conversion for simple changes
+- ✅ Parallel restore for complex migrations</p>
+<p><strong>Negative:</strong>
+- ⚠️ Requires maintaining conversion logic for schema changes
+- ⚠️ Parallel restore is manual and time-consuming
+- ⚠️ Must tag git releases with schema versions</p>
+<p><strong>Neutral:</strong>
+- Schema evolution must document conversion requirements
+- Major schema changes should be infrequent</p>
+<h3 id="next-steps">Next Steps</h3>
+<ol>
+<li>Create <code>src/api/lib/serialization.py</code> with schema_version support</li>
+<li>Add <code>schema_migrations</code> table in next migration</li>
+<li>Document type conversions in <code>schema/MIGRATION_COMPATIBILITY.md</code></li>
+<li>Tag current release as <code>schema-v12</code></li>
+<li>Test backup/restore across schema versions</li>
+</ol>
+<h3 id="related-issues">Related Issues</h3>
+<ul>
+<li><strong>Current Bug:</strong> Restoring backups fails due to <code>synonyms</code> type mismatch (JSONB → VARCHAR[])</li>
+<li><strong>Integration Testing:</strong> Discovered during Phase 8 (Backup &amp; Restore) testing</li>
+<li><strong>Workaround:</strong> Must use database at same schema version to restore old backups</li>
+</ul>
 
 
 

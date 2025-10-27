@@ -1,0 +1,5648 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../../development/pattern-repetition-notes/">
+      
+      
+        <link rel="next" href="../INTEGRATION_TEST_PLAN/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Integration Test Notes - Working Commands & Observations - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#integration-test-notes-working-commands-observations" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Integration Test Notes - Working Commands &amp; Observations
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../manual/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../manual/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Introduction
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    What is the Knowledge Graph System?
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-045-unified-embedding-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-045: Unified Embedding Generation System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-046: Grounding-Aware Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/CODE-CHANGES-ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Changes Analysis: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Integration Test Notes - Working Commands &amp; Observations
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Test Notes - Working Commands &amp; Observations
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-cold-start-schema-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Cold Start &amp; Schema Validation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1: Cold Start &amp; Schema Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Reset
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Statistics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ontology-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ontology List
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vocabulary Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Embedding Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-ai-provider-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication &amp; AI Provider Initialization
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-learnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Learnings
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-edge-case-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1 Edge Case Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1 Edge Case Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#invalid-api-key-on-cold-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invalid API Key on Cold Start
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-embeddings-after-invalid-key-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      Missing Embeddings After Invalid Key Recovery
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vocabulary-storage-architecture-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vocabulary Storage Architecture - VERIFIED ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vocabulary Storage Architecture - VERIFIED ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#investigation-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      Investigation Result
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-duplication-fix-unified-embedding-generation-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Duplication Fix: Unified Embedding Generation Path ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Duplication Fix: Unified Embedding Generation Path ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue Found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-applied" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fix Applied
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-display-bug-hardcoded-embedding-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI Display Bug: Hardcoded Embedding Provider ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Display Bug: Hardcoded Embedding Provider ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-found_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue Found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-applied_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fix Applied
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hot-reload-not-resetting-embeddingworker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hot Reload Not Resetting EmbeddingWorker ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hot Reload Not Resetting EmbeddingWorker ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-found_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue Found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-applied_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fix Applied
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary of Fixes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-content-ingestion-success" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Content Ingestion - SUCCESS ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2: Content Ingestion - SUCCESS ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Findings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph-evolution-test-incremental-ingestion-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Graph Evolution Test: Incremental Ingestion Impact
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-cli-query-testing-with-json-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: CLI Query Testing with --json Flag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 3: CLI Query Testing with --json Flag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-31-search-query-with-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 3.1: Search Query with JSON
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-32-search-query-with-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 3.2: Search Query with Evidence
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-33-concept-details-with-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 3.3: Concept Details with JSON
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-34-connection-path-with-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 3.4: Connection Path with JSON
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-35-related-concepts-with-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 3.5: Related Concepts with JSON
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3 Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-mcp-server-formatted-output-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: MCP Server Formatted Output Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 4: MCP Server Formatted Output Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-41-mcp-search_concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 4.1: MCP search_concepts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-42-mcp-get_concept_details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 4.2: MCP get_concept_details
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-43-mcp-find_connection_by_search" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 4.3: MCP find_connection_by_search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-44-mcp-find_related_concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 4.4: MCP find_related_concepts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4 Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-embedder-switching-dimension-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Embedder Switching &amp; Dimension Safety
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 5: Embedder Switching &amp; Dimension Safety">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initial-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initial State
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-51-switch-to-different-dimension-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 5.1: Switch to Different Dimension Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-52-search-with-dimension-mismatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 5.2: Search with Dimension Mismatch
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-53-switch-back-without-force" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 5.3: Switch Back Without --force
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-54-force-switch-back-and-verify-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 5.4: Force Switch Back and Verify Search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5 Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-ontology-management-graph-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 6: Ontology Management &amp; Graph Integrity
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 6: Ontology Management &amp; Graph Integrity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-61-list-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 6.1: List Ontologies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-62-database-stats-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 6.2: Database Stats (Baseline)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-63-create-test-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 6.3: Create Test Ontology
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-64-delete-test-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 6.4: Delete Test Ontology
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 6 Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-7-vocabulary-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 7: Vocabulary Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 7: Vocabulary Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-71-vocabulary-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 7.1: Vocabulary Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-72-vocabulary-expansion-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 7.2: Vocabulary Expansion Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-73-grounding-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 7.3: Grounding Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 7 Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-8-backup-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 8: Backup &amp; Restore
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 8: Backup &amp; Restore">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background-schema-evolution-issue-discovered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Background: Schema Evolution Issue Discovered
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-81-schema-versioning-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 8.1: Schema Versioning Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-82-backup-with-schema-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 8.2: Backup with Schema Versioning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-83-restore-with-type-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 8.3: Restore with Type Safety
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-84-data-integrity-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 8.4: Data Integrity Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-evolution-strategy-adr-015" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schema Evolution Strategy (ADR-015)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-fixes-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Fixes Implemented
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-85-complete-backuprestore-cycle-purple-elephant-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 8.5: Complete Backup/Restore Cycle (Purple Elephant Test)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-8-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 8 Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-9-edge-cases-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 9: Edge Cases &amp; Performance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 9: Edge Cases &amp; Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#edge-case-91-invalid-api-key-on-cold-start-phase-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Case 9.1: Invalid API Key on Cold Start (Phase 1)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-case-92-dimension-mismatch-phase-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Case 9.2: Dimension Mismatch (Phase 5)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-case-93-hot-reload-state-management-phase-1-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Case 9.3: Hot Reload State Management (Phase 1 Fix)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-case-94-code-duplication-phase-1-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Case 9.4: Code Duplication (Phase 1 Fix)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-case-95-cold-start-logic-phase-1-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Case 9.5: Cold Start Logic (Phase 1 Fix)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Observations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-9-additional-job-resumption-after-api-restart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 9 (Additional): Job Resumption After API Restart
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 9 (Additional): Job Resumption After API Restart">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initial-implementation-issues-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initial Implementation Issues Found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Setup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Execution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resumption-flow-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resumption Flow Verified
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Findings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-modified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files Modified
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-cases-handled" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Cases Handled
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-job-resumption-validated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Status: Job Resumption VALIDATED ✅
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-10-final-summary-conclusions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 10: Final Summary &amp; Conclusions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 10: Final Summary &amp; Conclusions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-testing-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Testing Results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#major-accomplishments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Major Accomplishments
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bugs-fixed-during-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bugs Fixed During Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-coverage-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Coverage Summary
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-modifiedcreated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files Modified/Created
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-status-production-ready" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Status: PRODUCTION READY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#next-steps-post-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps (Post-Testing)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#final-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final Notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../INTEGRATION_TEST_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Integration Test Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="integration-test-notes-working-commands-observations">Integration Test Notes - Working Commands &amp; Observations</h1>
+<p><strong>Branch:</strong> <code>refactor/embedding-grounding-system</code>
+<strong>Date Started:</strong> 2025-01-26
+<strong>Purpose:</strong> Document verified working commands and observations during manual integration testing</p>
+<hr />
+<h2 id="phase-1-cold-start-schema-validation">Phase 1: Cold Start &amp; Schema Validation</h2>
+<h3 id="database-reset">Database Reset</h3>
+<p>✅ <strong>Command:</strong> <code>kg admin reset</code>
+- User must hold Enter for 3 seconds (prevents accidental automation)
+- Requires authentication (username: admin)
+- Successfully stops containers, deletes database, removes volumes, restarts with clean database
+- Re-initializes AGE schema automatically</p>
+<p><strong>What <code>kg admin reset</code> DOES clear:</strong>
+- Graph tables (concepts, sources, instances, relationships)
+- Vocabulary graph (all custom vocabulary entries)
+- User accounts (admin account cleared)</p>
+<p><strong>What <code>kg admin reset</code> DOES NOT clear:</strong>
+- OpenAI/Anthropic API keys (persisted in database)
+- Embedding configurations (persisted)</p>
+<p><strong>Post-Reset State:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Schema Validation:
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  Constraints: 3/3 (PostgreSQL schemas: kg_api, kg_auth, kg_logs)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  Vector Index: Yes (AGE graph exists)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  Nodes: 0
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  Test Passed: Yes
+</code></pre></div></p>
+<p><strong>⚠️ Important Behavior:</strong>
+- After reset, if API server is running, it will attempt to generate embeddings for vocabulary prototypes
+- It will use persisted API keys (not cleared by reset)
+- However, user accounting is cleared, so authentication fails
+- This triggers need to re-run <code>scripts/initialize-auth.sh</code></p>
+<h3 id="database-statistics">Database Statistics</h3>
+<p>✅ <strong>Command:</strong> <code>kg database stats</code>
+- Shows 0 concepts, 0 sources, 0 instances, 0 relationships after reset
+- Clean state confirmed</p>
+<h3 id="ontology-list">Ontology List</h3>
+<p>✅ <strong>Command:</strong> <code>kg ontology list</code>
+- Shows "No ontologies found" after reset (expected)</p>
+<h3 id="vocabulary-status">Vocabulary Status</h3>
+<p>✅ <strong>Command:</strong> <code>kg vocab status</code>
+- 30 builtin relationship prototypes initialized automatically after reset
+- Zone: COMFORT (healthy state)
+- Aggressiveness: 0.0%
+- 0 custom types (only builtins)
+- 10 categories
+- Builtin types include: SUPPORTS, CONTRADICTS, ENABLES, etc.</p>
+<h3 id="embedding-configuration">Embedding Configuration</h3>
+<p>✅ <strong>Command:</strong> <code>kg admin embedding list</code>
+- Shows all embedding configurations
+- Active configuration marked with "✓ ACTIVE"
+- Protection status visible (🔒 delete-protected, 🔐 change-protected)</p>
+<p><strong>Current Configuration (after reset):</strong>
+- <strong>Active:</strong> OpenAI text-embedding-3-small (1536 dimensions) - protected
+- <strong>Inactive:</strong> Local nomic-embed-text-v1.5 (768 dimensions)</p>
+<h3 id="authentication-ai-provider-initialization">Authentication &amp; AI Provider Initialization</h3>
+<p>✅ <strong>Script:</strong> <code>scripts/initialize-auth.sh</code></p>
+<p><strong>Key Characteristics:</strong>
+- <strong>Does NOT require API server running</strong> - operates directly on database
+- Can be used in Docker container initialization
+- Interactive script with password validation</p>
+<p><strong>What it does:</strong>
+1. Creates/resets admin user account with password
+2. Generates JWT secret key (saved to .env)
+3. Generates encryption key for API keys (Fernet AES-128, saved to .env)
+4. Offers to configure AI provider (OpenAI or Anthropic)
+5. Validates and encrypts API keys at rest
+6. Initializes AI extraction configuration with default model
+7. Resets active embedder to chosen provider</p>
+<p><strong>Post-Initialization State:</strong>
+- Admin account ready with chosen password
+- JWT secret in .env
+- Encryption key in .env
+- API keys encrypted in database
+- AI provider configured (e.g., OpenAI/gpt-4o)
+- Active embedder set to chosen provider</p>
+<p><strong>Use Cases:</strong>
+- Initial setup after fresh database
+- Recovery after <code>kg admin reset</code>
+- Docker container first-run initialization
+- Resetting admin password
+- Changing AI provider</p>
+<hr />
+<h2 id="key-learnings">Key Learnings</h2>
+<ol>
+<li><strong>Correct tool for embedding config:</strong> <code>kg admin embedding</code> (not <code>kg admin extraction</code>)</li>
+<li><strong>Database reset behavior:</strong></li>
+<li>Clears: graph data, vocabulary graph, user accounts</li>
+<li>Preserves: API keys, embedding configurations</li>
+<li>Rebuilds: builtin vocabulary prototypes (30 entries)</li>
+<li><strong>Proper cold start sequence:</strong></li>
+<li>Step 1: <code>kg admin reset</code> (clears graph data)</li>
+<li>Step 2: Restart API server (picks up clean state)</li>
+<li>Step 3: <code>scripts/initialize-auth.sh</code> (sets up auth + AI provider)</li>
+<li>Step 4: Ready to ingest content</li>
+<li><strong>Hot reload mode:</strong> API server can run in hot reload mode during testing</li>
+<li><strong>Protection flags:</strong> Active embedding configurations are protected by default</li>
+<li><strong>initialize-auth.sh independence:</strong> Script operates directly on database, doesn't require API server running</li>
+</ol>
+<hr />
+<h2 id="phase-1-edge-case-testing">Phase 1 Edge Case Testing</h2>
+<h3 id="invalid-api-key-on-cold-start">Invalid API Key on Cold Start</h3>
+<p>✅ <strong>Scenario:</strong> Start API server with invalid OpenAI API key after <code>kg admin reset</code></p>
+<p><strong>Expected Behavior:</strong> Graceful degradation (system starts but vocabulary embeddings fail)</p>
+<p><strong>Observed Behavior:</strong>
+- API server starts successfully
+- EmbeddingWorker attempts to generate embeddings for 30 builtin vocabulary types
+- All 30 embedding generations fail with 401 errors
+- Each failure logged as ERROR with clear message: "Incorrect API key provided"
+- Cold start completes: "0/30 builtin types initialized in ~2800ms"
+- Warning logged: "30 types failed during cold start"
+- API server reports ready: "🎉 API ready!"</p>
+<p><strong>Result:</strong> ✅ <strong>PASS - System fails gracefully</strong>
+- API server remains operational
+- User can fix API key via <code>scripts/initialize-auth.sh</code> or API endpoints
+- No crash or hang
+- Clear error messages in logs</p>
+<p><strong>Key Finding:</strong> The system doesn't require valid API keys to start - this allows recovery from configuration errors without needing to restart services.</p>
+<h3 id="missing-embeddings-after-invalid-key-recovery">Missing Embeddings After Invalid Key Recovery</h3>
+<p>✅ <strong>Scenario:</strong> After cold start fails with invalid key (0/30 initialized), user runs <code>scripts/initialize-auth.sh</code> with valid key and restarts API</p>
+<p><strong>Observed Behavior:</strong>
+- System checks <code>system_initialization_status</code> table: <code>initialized = true</code>
+- Logs: "Cold start already completed, skipping"
+- <strong>No embeddings actually exist in vocabulary graph</strong>
+- API reports: "✓ Builtin vocabulary embeddings already initialized"
+- System operates but grounding calculations will fail</p>
+<p><strong>Root Cause:</strong>
+- <code>system_initialization_status</code> marks initialization as "complete" even when 0/30 types succeed
+- Restart logic only checks boolean flag, not actual embedding existence
+- No validation that embeddings actually exist in graph</p>
+<p><strong>Improvement Needed:</strong>
+1. <strong>Startup validation worker:</strong>
+   - Query vocabulary graph nodes to count embeddings that actually exist
+   - Compare against expected count (30 builtins)
+   - If mismatch, log WARNING and mark system as degraded
+2. <strong>Health endpoint enhancement:</strong>
+   - Add vocabulary embedding status to <code>/health</code>
+   - Return: <code>{ "vocabulary_embeddings": { "expected": 30, "actual": 0, "status": "degraded" }}</code>
+3. <strong>Recovery mechanism:</strong>
+   - Allow manual re-initialization trigger (API endpoint or CLI command)
+   - Or: automatically retry if actual count &lt; expected count on startup</p>
+<p><strong>Current Workaround:</strong>
+- Run <code>kg admin reset</code> again with valid API key configured
+- Or: Manually update <code>system_initialization_status</code> to <code>initialized = false</code></p>
+<hr />
+<h2 id="vocabulary-storage-architecture-verified">Vocabulary Storage Architecture - VERIFIED ✅</h2>
+<h3 id="investigation-result">Investigation Result</h3>
+<p>Vocabulary embeddings are stored in <strong><code>kg_api.relationship_vocabulary</code> PostgreSQL table</strong>, NOT as graph nodes. <strong>This is the correct, intended design per ADR-045/046.</strong></p>
+<p><strong>Evidence:</strong>
+- Only 1 AGE graph exists: <code>knowledge_graph</code> (for concepts, not vocabulary)
+- No <code>VocabularyType</code> label in graph
+- All ADRs (044, 045, 046) specify table-based approach
+- Migrations 011 &amp; 012 modify the table, not graph structure</p>
+<p><strong>Conclusion:</strong> Table-based design is complete and working correctly.</p>
+<hr />
+<h2 id="code-duplication-fix-unified-embedding-generation-path">Code Duplication Fix: Unified Embedding Generation Path ✅</h2>
+<h3 id="issue-found">Issue Found</h3>
+<p>Two separate code paths for generating vocabulary embeddings:
+1. <strong>Cold start:</strong> <code>EmbeddingWorker.initialize_builtin_embeddings()</code> - logs job_id and progress
+2. <strong>CLI command:</strong> <code>AGEClient.generate_vocabulary_embeddings()</code> - no logging, separate implementation</p>
+<p><strong>Impact:</strong> Duplicate logic, inconsistent logging, violates DRY principle</p>
+<h3 id="fix-applied">Fix Applied</h3>
+<p><strong>File:</strong> <code>src/api/routes/vocabulary.py:483-558</code>
+- Updated <code>/vocabulary/generate-embeddings</code> endpoint to use <code>EmbeddingWorker</code>
+- Now calls <code>initialize_builtin_embeddings()</code> (same as cold start)
+- Removed obsolete <code>AGEClient.generate_vocabulary_embeddings()</code> method</p>
+<p><strong>File:</strong> <code>src/api/lib/age_client.py</code>
+- Deleted 118 lines of duplicate embedding generation code (lines 1614-1731)</p>
+<p><strong>Result:</strong>
+- ✅ Single code path for vocabulary embeddings
+- ✅ Consistent logging with job_id tracking
+- ✅ CLI command shows same helpful output as cold start
+- ✅ ~118 lines of duplicate code removed</p>
+<p><strong>Verification:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
+</code></pre></div></p>
+<p><strong>Log output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>2025-10-26 11:02:08 | INFO | src.api.services.embedding_worker:initialize_builtin_embeddings:125 | [2e685f7f-a044-405b-8c0f-5cd5cdd6008c] Starting cold start: Initializing builtin vocabulary embeddings
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2025-10-26 11:02:08 | INFO | src.api.services.embedding_worker:initialize_builtin_embeddings:130 | [2e685f7f-a044-405b-8c0f-5cd5cdd6008c] Cold start already completed, skipping
+</code></pre></div></p>
+<p><strong>Status:</strong> FIXED ✅</p>
+<hr />
+<h2 id="cli-display-bug-hardcoded-embedding-provider">CLI Display Bug: Hardcoded Embedding Provider ✅</h2>
+<h3 id="issue-found_1">Issue Found</h3>
+<p><code>kg vocab generate-embeddings</code> always displayed "Generating embeddings via OpenAI API..." regardless of active embedding configuration.</p>
+<p><strong>Evidence:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list<span class="w">  </span><span class="c1"># Shows active: local / nomic-ai/nomic-embed-text-v1.5</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings<span class="w">  </span><span class="c1"># Incorrectly showed: &quot;via OpenAI API...&quot;</span>
+</code></pre></div></p>
+<h3 id="fix-applied_1">Fix Applied</h3>
+<p><strong>File:</strong> <code>client/src/cli/vocabulary.ts:300-306</code>
+- Dynamically fetch active embedding config via <code>client.getEmbeddingConfig()</code>
+- Display correct provider name and model
+- Updated message format: <code>"Generating embeddings via {provider} ({model})..."</code></p>
+<p><strong>Result:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Now correctly shows: &quot;Generating embeddings via local embeddings (nomic-ai/nomic-embed-text-v1.5)...&quot;</span>
+</code></pre></div></p>
+<p><strong>Status:</strong> FIXED ✅</p>
+<hr />
+<h2 id="hot-reload-not-resetting-embeddingworker">Hot Reload Not Resetting EmbeddingWorker ✅</h2>
+<h3 id="issue-found_2">Issue Found</h3>
+<p>After running <code>kg admin embedding reload</code>, the EmbeddingWorker singleton continued using the old provider. Switching from local (768D) → OpenAI (1536D) resulted in embeddings still being generated at 768D.</p>
+<p><strong>Root Cause:</strong>
+- Hot reload endpoint called <code>reload_embedding_model_manager()</code> but not <code>reset_embedding_worker()</code>
+- EmbeddingWorker is a singleton initialized once on first use
+- Subsequent calls to <code>get_embedding_worker()</code> returned cached instance with old provider</p>
+<h3 id="fix-applied_2">Fix Applied</h3>
+<p><strong>File:</strong> <code>src/api/routes/embedding.py:222-229</code>
+- Added call to <code>reset_embedding_worker()</code> in hot reload endpoint
+- EmbeddingWorker singleton now resets when config changes
+- Next <code>get_embedding_worker()</code> call creates fresh instance with new provider</p>
+<p><strong>Verification:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>activate<span class="w"> </span><span class="m">1</span><span class="w">  </span><span class="c1"># Switch to OpenAI (1536D)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload<span class="w">       </span><span class="c1"># Hot reload</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings<span class="w"> </span>--force
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># SQL verification:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>SELECT<span class="w"> </span>jsonb_array_length<span class="o">(</span>embedding<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>kg_api.relationship_vocabulary<span class="w"> </span>LIMIT<span class="w"> </span><span class="m">1</span><span class="p">;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Returns: 1536 ✅ (was 768 before fix)</span>
+</code></pre></div></p>
+<p><strong>Status:</strong> FIXED ✅</p>
+<hr />
+<h2 id="summary-of-fixes">Summary of Fixes</h2>
+<p>During Phase 1 integration testing, we discovered and fixed:</p>
+<ol>
+<li>✅ <strong>Vocabulary storage architecture</strong> - Table-based is correct design (not a bug)</li>
+<li>✅ <strong>Code duplication</strong> - Unified embedding generation path, removed 118 lines of duplicate code</li>
+<li>✅ <strong>CLI display bug</strong> - Dynamically fetch and display actual active embedding provider</li>
+<li>✅ <strong>Cold start detection</strong> - Moved from EmbeddingWorker to API startup logic</li>
+<li>✅ <strong>Hot reload</strong> - Now resets EmbeddingWorker singleton to pick up provider changes</li>
+</ol>
+<p><strong>Key Learnings:</strong>
+- Cold start logic belongs in startup code, not worker methods
+- Singletons must be reset when config changes
+- User-initiated commands should bypass cold start checks</p>
+<hr />
+<h2 id="phase-2-content-ingestion-success">Phase 2: Content Ingestion - SUCCESS ✅</h2>
+<h3 id="test-configuration">Test Configuration</h3>
+<ul>
+<li><strong>Ontology:</strong> SignalFabric</li>
+<li><strong>Files ingested:</strong> 4</li>
+<li><strong>Embedding provider:</strong> local (nomic-ai/nomic-embed-text-v1.5, 768D)</li>
+<li><strong>All 4 jobs completed successfully</strong></li>
+</ul>
+<h3 id="results">Results</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
+</code></pre></div>
+<p><strong>Nodes Created:</strong>
+- Concepts: 63
+- Sources: 9 (document chunks)
+- Instances: 81 (evidence quotes)</p>
+<p><strong>Relationships:</strong>
+- Total: 300
+- Types discovered: 20 (15 builtins + 5 custom)
+- Top types: SUPPORTS (10), PART_OF (8), CONTAINS (6), CONTRASTS_WITH (5), REQUIRES (5)</p>
+<p><strong>Vocabulary Expansion:</strong>
+- Before: 30 builtin types
+- After: 35 total (5 new custom types)
+- Zone: COMFORT (5.7% aggressiveness)
+- Categories: 11</p>
+<h3 id="verification-tests">Verification Tests</h3>
+<p><strong>1. Search Functionality ✅</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;signal&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+- Found: "Signal Fabric" concept (73.9% similarity)
+- Evidence: 8 instances
+- <strong>Grounding: ⚡ Moderate (0.380, 38%)</strong> ← Confirmed working!</p>
+<p><strong>2. Grounding Calculations ✅</strong>
+- Grounding strength calculated and displayed correctly
+- Format: "⚡ Moderate (0.380, 38%)"
+- Semantic similarity search working (requires embeddings)</p>
+<p><strong>3. Evidence Display ✅</strong>
+- Instance counts shown in search results
+- Evidence properly linked to concepts</p>
+<h3 id="key-findings">Key Findings</h3>
+<ol>
+<li>✅ Local embeddings (768D) work correctly for ingestion</li>
+<li>✅ LLM extraction discovered 5 new relationship types</li>
+<li>✅ Grounding calculations functional</li>
+<li>✅ Semantic search working via embeddings</li>
+<li>✅ Vocabulary management staying in COMFORT zone</li>
+</ol>
+<p><strong>Status:</strong> Phase 2 COMPLETE ✅</p>
+<h3 id="graph-evolution-test-incremental-ingestion-impact">Graph Evolution Test: Incremental Ingestion Impact</h3>
+<p>Tested the same query before and after ingesting a 5th document to observe how the graph evolves:</p>
+<p><strong>Query:</strong> <code>kg search connect "configuration management" "atlassian operator" --show-evidence</code></p>
+<p><strong>Before (4 documents):</strong>
+- From: Change Management (60.9% match)
+- To: Atlassian (86.1% match)
+- Result: 3 paths, all <strong>4 hops</strong> long
+- Path: Change Management → Signal Fabric → Govern-Agility → Cprime → Atlassian</p>
+<p><strong>After (+ Atlassian Platform Operations document):</strong>
+- From: Ongoing Configuration Management (89.5% match) ← MORE SPECIFIC
+- To: atlassian-operator (96.9% match) ← NEARLY PERFECT
+- Result: <strong>1 path, only 1 hop</strong> (DIRECT CONNECTION!)
+- Path: Ongoing Configuration Management →ENABLES→ atlassian-operator
+- Grounding: Strong (100%) → Weak (27%)</p>
+<p><strong>Key Findings:</strong>
+1. ✅ <strong>Semantic search improved</strong>: Better concept matches as vocabulary grows
+2. ✅ <strong>Graph evolution</strong>: New document created direct relationship (1 hop vs 4 hops)
+3. ✅ <strong>Concept specificity</strong>: System prefers "Ongoing Configuration Management" over generic "Change Management"
+4. ✅ <strong>Exact term extraction</strong>: "atlassian-operator" extracted as distinct concept
+5. ✅ <strong>Path optimization</strong>: System found shorter, more specific path automatically
+6. ✅ <strong>Grounding on new concepts</strong>: Both new concepts show grounding calculations (100%, 27%)</p>
+<p><strong>Conclusion:</strong> The knowledge graph correctly evolves with new information, creating more direct and semantically accurate relationships as content is ingested.</p>
+<hr />
+<h2 id="phase-3-cli-query-testing-with-json-flag">Phase 3: CLI Query Testing with --json Flag</h2>
+<p>Testing all CLI commands with <code>--json</code> flag to verify structured output for MCP server integration.</p>
+<h3 id="test-31-search-query-with-json">Test 3.1: Search Query with JSON</h3>
+<p><strong>Command:</strong> <code>kg search query "signal fabric" --limit 3 --json</code></p>
+<p><strong>Results:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;signal fabric&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">&quot;count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;marketopp.md_chunk1_6875584f&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Signal Fabric&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="nt">&quot;grounding_strength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.37990068523214476</span><span class="p">,</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="err">✅</span><span class="w"> </span><span class="err">Prese</span><span class="kc">nt</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nt">&quot;evidence_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="nt">&quot;sample_evidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="err">Wi</span><span class="kc">t</span><span class="err">hou</span><span class="kc">t</span><span class="w"> </span><span class="mi">--</span><span class="err">show</span><span class="mf">-e</span><span class="err">vide</span><span class="kc">n</span><span class="err">ce</span><span class="w"> </span><span class="kc">fla</span><span class="err">g</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span><span class="p">}]</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ JSON output is well-structured
+- ✅ <code>grounding_strength</code> included in results
+- ✅ <code>evidence_count</code> shows number of supporting quotes
+- ✅ Threshold information included (threshold_used, below_threshold_count)
+- ⚠️ <code>sample_evidence</code> is null without <code>--show-evidence</code> flag</p>
+<h3 id="test-32-search-query-with-evidence">Test 3.2: Search Query with Evidence</h3>
+<p><strong>Command:</strong> <code>kg search query "signal fabric" --limit 3 --show-evidence --json</code></p>
+<p><strong>Results:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">&quot;grounding_strength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.37990068523214476</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">&quot;sample_evidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">      </span><span class="p">{</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">        </span><span class="nt">&quot;quote&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Signal Fabric as a consulting methodology&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">        </span><span class="nt">&quot;document&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SignalFabric&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">        </span><span class="nt">&quot;paragraph&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">        </span><span class="nt">&quot;source_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;impllay.md_chunk1&quot;</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">      </span><span class="c1">// ... more evidence</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">  </span><span class="p">}]</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ <code>--show-evidence</code> populates <code>sample_evidence</code> array
+- ✅ Evidence includes quote, document, paragraph, source_id
+- ✅ Multiple evidence samples shown (up to 3 per concept)
+- ✅ Grounding strength + evidence together enable verification</p>
+<h3 id="test-33-concept-details-with-json">Test 3.3: Concept Details with JSON</h3>
+<p><strong>Command:</strong> <code>kg search details marketopp.md_chunk1_6875584f --json</code></p>
+<p><strong>Results:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;marketopp.md_chunk1_6875584f&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Signal Fabric&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">&quot;search_terms&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Signal Fabric&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Signal-First Methodology&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="p">],</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nt">&quot;documents&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;SignalFabric&quot;</span><span class="p">],</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nt">&quot;instances&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nt">&quot;quote&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Signal Fabric provides the technical playbook...&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">      </span><span class="nt">&quot;document&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SignalFabric&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">      </span><span class="nt">&quot;paragraph&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">      </span><span class="nt">&quot;source_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;govagilealign.md_chunk1&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">      </span><span class="nt">&quot;full_text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="w"> </span><span class="c1">// Full paragraph context</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">    </span><span class="c1">// ... all 8 instances</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Complete concept details in JSON
+- ✅ All evidence instances with full context
+- ✅ Search terms array for semantic matching
+- ⚠️ <code>grounding_strength</code> not included in details output (may be intentional)</p>
+<h3 id="test-34-connection-path-with-json">Test 3.4: Connection Path with JSON</h3>
+<p><strong>Command:</strong> <code>kg search connect "configuration management" "atlassian operator" --json</code></p>
+<p><strong>Results:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;from_concept&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;020-atlassian-platform-operations-compiler.md_chunk2_47df31a1&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ongoing Configuration Management&quot;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span><span class="nt">&quot;to_concept&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;020-atlassian-platform-operations-compiler.md_chunk3_74477954&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;atlassian-operator&quot;</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">  </span><span class="nt">&quot;from_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8954896529153705</span><span class="p">,</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">  </span><span class="nt">&quot;to_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9689494130319128</span><span class="p">,</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">  </span><span class="nt">&quot;paths&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">    </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">      </span><span class="p">{</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">        </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">        </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ongoing Configuration Management&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">        </span><span class="nt">&quot;grounding_strength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="err">✅</span><span class="w"> </span><span class="err">Prese</span><span class="kc">nt</span><span class="w"> </span><span class="err">i</span><span class="kc">n</span><span class="w"> </span><span class="err">pa</span><span class="kc">t</span><span class="err">h</span><span class="w"> </span><span class="kc">n</span><span class="err">odes</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">      </span><span class="p">},</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">      </span><span class="p">{</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="w">        </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="w">        </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;atlassian-operator&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="w">        </span><span class="nt">&quot;grounding_strength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.27202611556534745</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="err">✅</span><span class="w"> </span><span class="err">Prese</span><span class="kc">nt</span>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="w">    </span><span class="p">],</span>
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="w">    </span><span class="nt">&quot;relationships&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;ENABLES&quot;</span><span class="p">],</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="w">    </span><span class="nt">&quot;hops&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="w">  </span><span class="p">}]</span>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Complete path information in JSON
+- ✅ <code>grounding_strength</code> included for each node in path
+- ✅ Relationship types shown
+- ✅ Similarity scores for matched concepts
+- ✅ Hop count for each path</p>
+<h3 id="test-35-related-concepts-with-json">Test 3.5: Related Concepts with JSON</h3>
+<p><strong>Command:</strong> <code>kg search related marketopp.md_chunk1_6875584f --depth 1 --json</code></p>
+<p><strong>Results:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;marketopp.md_chunk1_6875584f&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">&quot;max_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">&quot;count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">19</span><span class="p">,</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">      </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;marketopp.md_chunk1_1804a3be&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">      </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AI and Data Quality&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">      </span><span class="nt">&quot;distance&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">      </span><span class="nt">&quot;path_types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;SUPPORTS&quot;</span><span class="p">]</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">    </span><span class="c1">// ... 18 more</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ List of related concepts with labels
+- ✅ Distance (hop count) from source concept
+- ✅ Relationship types as <code>path_types</code> array
+- ⚠️ <code>grounding_strength</code> not included for related concepts (may be performance consideration)</p>
+<h3 id="phase-3-summary">Phase 3 Summary</h3>
+<p><strong>What Works:</strong>
+1. ✅ All CLI commands support <code>--json</code> flag
+2. ✅ Grounding strength included in search and connect results
+3. ✅ Evidence display works with <code>--show-evidence</code> flag
+4. ✅ JSON output is well-structured and parseable
+5. ✅ Complete metadata (similarity scores, hop counts, relationship types)</p>
+<p><strong>Design Decisions Observed:</strong>
+- Details command focuses on evidence/instances, not grounding (grounding shown in search)
+- Related concepts omit grounding (19 results would be verbose, performance consideration)
+- Evidence sampling: Search shows 3 samples, details shows all instances</p>
+<p><strong>MCP Integration Readiness:</strong>
+- ✅ JSON output suitable for MCP server consumption
+- ✅ Grounding + evidence available for AI agents to assess concept reliability
+- ✅ All query types have structured output</p>
+<p><strong>Status:</strong> Phase 3 COMPLETE ✅</p>
+<hr />
+<h2 id="phase-4-mcp-server-formatted-output-testing">Phase 4: MCP Server Formatted Output Testing</h2>
+<p>Testing MCP server tools to verify markdown-formatted output includes grounding and evidence for AI agent consumption.</p>
+<h3 id="test-41-mcp-search_concepts">Test 4.1: MCP search_concepts</h3>
+<p><strong>Tool:</strong> <code>mcp__knowledge-graph__search_concepts</code>
+<strong>Query:</strong> "signal fabric", limit=3, min_similarity=0.7</p>
+<p><strong>Output Validation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="gh"># Search Results: &quot;signal fabric&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>Found 1 concepts (threshold: 70%)
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="gu">## 1. Signal Fabric</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Similarity:**</span> 100.0%
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Evidence:**</span> 8 instances
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Grounding:**</span> ⚡ Moderate (0.380, 38%) - Mixed evidence, use with caution ← ✅
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="gu">### Sample Evidence (3 of 8):</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="k">1.</span> <span class="gs">**SignalFabric**</span> (para 1) [source_id: impllay.md_chunk1]
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="k">   &gt; </span><span class="ge">&quot;Signal Fabric as a consulting methodology&quot;</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>💡 Tip: Use get_concept_details(&quot;marketopp.md_chunk1_6875584f&quot;) to see all 8 evidence instances
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Grounding displayed with indicator (⚡), score (0.380), percentage (38%), and interpretation
+- ✅ Sample evidence shown with document, paragraph, source_id
+- ✅ Helpful tips for drilling down to full details
+- ✅ Clean markdown formatting suitable for AI consumption</p>
+<h3 id="test-42-mcp-get_concept_details">Test 4.2: MCP get_concept_details</h3>
+<p><strong>Tool:</strong> <code>mcp__knowledge-graph__get_concept_details</code>
+<strong>Concept:</strong> marketopp.md_chunk1_6875584f</p>
+<p><strong>Output Validation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="gh"># Concept Details: Signal Fabric</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Grounding:**</span> ⚡ Moderate (0.380, 38%) - Mixed evidence, use with caution ← ✅
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="gu">## Evidence (8 instances)</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">1.</span> <span class="gs">**SignalFabric**</span> (para 1)
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="k">   &gt; </span><span class="ge">&quot;Signal Fabric provides the technical playbook...&quot;</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="gu">## Relationships (8)</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="k">-</span><span class="w"> </span><span class="gs">**ADDRESSES**</span> → Intelligence Gap (marketopp.md_chunk1_3351a24d) [95%]
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="k">-</span><span class="w"> </span><span class="gs">**REQUIRES**</span> → Atlassian Platform (marketopp.md_chunk1_789210e3) [80%]
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>--- Grounding Strength ---
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>Score: 0.380 (38%)
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>Meaning: Grounding measures probabilistic truth convergence...
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Complete grounding information in header
+- ✅ All 8 evidence instances listed
+- ✅ Relationship types and confidence scores shown
+- ✅ Explanatory section about grounding interpretation</p>
+<h3 id="test-43-mcp-find_connection_by_search">Test 4.3: MCP find_connection_by_search</h3>
+<p><strong>Tool:</strong> <code>mcp__knowledge-graph__find_connection_by_search</code>
+<strong>From:</strong> "configuration management", <strong>To:</strong> "atlassian operator"</p>
+<p><strong>Output Validation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="gh"># Connection Found</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="gs">**From:**</span> Ongoing Configuration Management (89.5% match)
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="gs">**To:**</span> atlassian-operator (96.9% match)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="gu">## Path 1 (1 hops)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="gu">### Ongoing Configuration Management</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">-</span><span class="w"> </span>Grounding: ✓ Strong (1.000, 100%) - Well-supported by evidence ← ✅
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="k">-</span><span class="w"> </span>Evidence (2 samples):
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">  </span><span class="k">1.</span> <span class="gs">**SignalFabric**</span> (para 2)
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="k">     &gt; </span><span class="ge">&quot;Primary Use Case: Ongoing Configuration Management&quot;</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>  💡 Tip: Use get_concept_details(...) to see all evidence instances
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    ↓ <span class="gs">**ENABLES**</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="gu">### atlassian-operator</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="k">-</span><span class="w"> </span>Grounding: ◯ Weak (0.272, 27%) - More contradictions than support ← ✅
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="k">-</span><span class="w"> </span>Evidence (3 samples):
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">  </span><span class="k">1.</span> <span class="gs">**SignalFabric**</span> (para 3)
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="k">     &gt; </span><span class="ge">&quot;atlassian-operator is the ONLY solution...&quot;</span>
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Grounding shown for EACH node in the path
+- ✅ Evidence samples provided at each step
+- ✅ Relationship type clearly labeled (ENABLES)
+- ✅ Similarity scores for matched concepts
+- ✅ Visual arrows showing direction of relationship</p>
+<h3 id="test-44-mcp-find_related_concepts">Test 4.4: MCP find_related_concepts</h3>
+<p><strong>Tool:</strong> <code>mcp__knowledge-graph__find_related_concepts</code>
+<strong>Concept:</strong> marketopp.md_chunk1_6875584f, max_depth=2</p>
+<p><strong>Output Validation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="gh"># Related Concepts</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="gs">**Found:**</span> 62 concepts
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="gu">## Distance 1</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="k">-</span><span class="w"> </span><span class="gs">**AI and Data Quality**</span> (marketopp.md_chunk1_1804a3be)
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>  Path: SUPPORTS
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Change Management**</span> (strategypos.md_chunk1_f40fbfc0)
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>  Path: ENABLED_BY
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="gu">## Distance 2</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="k">-</span><span class="w"> </span><span class="gs">**atlassian-operator**</span> (...74477954)
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>  Path: REQUIRES → ENABLES
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Concepts organized by distance (hop count)
+- ✅ Relationship paths shown for multi-hop connections
+- ✅ Clear hierarchical structure (Distance 1, Distance 2)
+- ⚠️ Grounding not included (deliberate design choice for performance with 62 results)</p>
+<h3 id="phase-4-summary">Phase 4 Summary</h3>
+<p><strong>MCP Server Formatting Excellence:</strong>
+1. ✅ All tools provide grounding information where relevant
+2. ✅ Evidence samples included with proper attribution
+3. ✅ Clean markdown formatting optimized for AI consumption
+4. ✅ Helpful tips and retrieval hints embedded in output
+5. ✅ Interpretations provided ("Mixed evidence, use with caution")
+6. ✅ Visual indicators (✓ ⚡ ◯ ⚠ ✗) for quick grounding assessment</p>
+<p><strong>Design Decisions Validated:</strong>
+- Search &amp; Details: Include grounding prominently
+- Connection paths: Show grounding for each node + evidence samples
+- Related concepts: Omit grounding for performance (62 results would be verbose)
+- Consistent formatting: All tools use same grounding display pattern</p>
+<p><strong>AI Agent Usability:</strong>
+- ✅ Grounding enables AI to assess concept reliability automatically
+- ✅ Evidence samples allow verification without deep drilling
+- ✅ Retrieval hints guide AI to more detailed tools when needed
+- ✅ Relationship context helps AI understand concept connections</p>
+<p><strong>Status:</strong> Phase 4 COMPLETE ✅</p>
+<hr />
+<h2 id="phase-5-embedder-switching-dimension-safety">Phase 5: Embedder Switching &amp; Dimension Safety</h2>
+<p>Testing embedding provider switching to verify dimension mismatch protection and hot reload functionality.</p>
+<h3 id="initial-state">Initial State</h3>
+<p><strong>Active Config:</strong> local / nomic-ai/nomic-embed-text-v1.5 (768D)
+<strong>Stored Embeddings:</strong> All concepts have 768D embeddings
+<strong>Search:</strong> ✅ Working (100% match for "signal fabric")</p>
+<h3 id="test-51-switch-to-different-dimension-provider">Test 5.1: Switch to Different Dimension Provider</h3>
+<p><strong>Action:</strong> <code>kg admin embedding activate 1 --force</code> (OpenAI 1536D)</p>
+<p><strong>Result:</strong>
+- ✅ Activation succeeded with --force flag
+- ✅ Warning displayed: "FORCE MODE: Bypassing dimension safety check"
+- ✅ Configuration switched: local (768D) → OpenAI (1536D)</p>
+<p><strong>Hot Reload:</strong> <code>kg admin embedding reload</code>
+- ✅ Reload successful
+- ✅ Confirmed: Provider=openai, Model=text-embedding-3-small, Dimensions=1536</p>
+<h3 id="test-52-search-with-dimension-mismatch">Test 5.2: Search with Dimension Mismatch</h3>
+<p><strong>Action:</strong> <code>kg search query "signal fabric" --limit 3</code></p>
+<p><strong>Result:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>✗ Search failed
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>Search failed: Vector search failed: shapes (1536,) and (768,) not aligned:
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>1536 (dim 0) != 768 (dim 0)
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Search fails gracefully with clear error message
+- ✅ Dimension mismatch detected: query=1536D, stored=768D
+- ✅ System remains stable (no crash, clear diagnostic)
+- ✅ Error message explains exactly what's wrong</p>
+<p><strong>This validates:</strong> Dimension mismatch protection works as designed (ADR-039)</p>
+<h3 id="test-53-switch-back-without-force">Test 5.3: Switch Back Without --force</h3>
+<p><strong>Action:</strong> <code>kg admin embedding activate 2</code> (local 768D, no --force flag)</p>
+<p><strong>Result:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>✗ Failed to activate configuration
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>Cannot switch: dimension mismatch (1536D → 768D). Changing embedding dimensions
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>breaks vector search for all existing concepts. You must re-embed all concepts
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>after switching. Use --force to bypass this check (dangerous!).
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>See ADR-039 for migration procedures.
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ System blocks dimension change without --force
+- ✅ Clear error message with explanation
+- ✅ References ADR-039 for migration procedures
+- ✅ Safety check prevents accidental dimension changes</p>
+<h3 id="test-54-force-switch-back-and-verify-search">Test 5.4: Force Switch Back and Verify Search</h3>
+<p><strong>Action:</strong> <code>kg admin embedding activate 2 --force &amp;&amp; kg admin embedding reload</code></p>
+<p><strong>Result:</strong>
+- ✅ Activation succeeded with --force
+- ✅ Hot reload confirmed: Provider=local, Model=nomic-ai/nomic-embed-text-v1.5, Dimensions=768
+- ✅ Configuration matches stored embeddings again (768D)</p>
+<p><strong>Search Test:</strong> <code>kg search query "signal fabric" --limit 3</code></p>
+<p><strong>Result:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>✓ Found 1 concepts:
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>● 1. Signal Fabric
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>   Similarity: 100.0%
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>   Grounding: ⚡ Moderate (0.380, 38%)
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Search works perfectly after switching back to matching dimensions
+- ✅ Grounding still calculated correctly (0.380, 38%)
+- ✅ System fully functional after dimension round-trip</p>
+<h3 id="phase-5-summary">Phase 5 Summary</h3>
+<p><strong>Dimension Safety Mechanisms:</strong>
+1. ✅ --force flag required for dimension mismatches
+2. ✅ Clear warnings when bypassing safety checks
+3. ✅ Graceful error messages when search fails
+4. ✅ System blocks unforced dimension changes
+5. ✅ References ADR-039 for proper migration procedures</p>
+<p><strong>Hot Reload Validation:</strong>
+1. ✅ Configuration changes applied without API restart
+2. ✅ EmbeddingWorker singleton resets correctly (from Phase 1 fix)
+3. ✅ Next embedding requests use new configuration immediately</p>
+<p><strong>Search Behavior:</strong>
+- ✅ <strong>Matching dimensions (768D query, 768D stored):</strong> Search works perfectly
+- ✅ <strong>Mismatched dimensions (1536D query, 768D stored):</strong> Fails with clear error
+- ✅ <strong>After dimension correction:</strong> Search immediately functional again</p>
+<p><strong>Key Insight:</strong>
+The system correctly prevents accidental embedding provider switches that would break all vector search. Users must:
+1. Use --force to acknowledge the risk
+2. Re-embed all concepts after switching dimensions
+3. Follow ADR-039 migration procedures for production systems</p>
+<p><strong>Status:</strong> Phase 5 COMPLETE ✅</p>
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>[x] Test content ingestion with local embedder</li>
+<li>[x] Verify grounding calculations work</li>
+<li>[x] <strong>Phase 3:</strong> Test CLI queries with --json flag</li>
+<li>[x] <strong>Phase 4:</strong> Test MCP server formatted output</li>
+<li>[x] <strong>Phase 5:</strong> Switch embedders and verify compatibility</li>
+<li>[ ] <strong>Phase 6:</strong> Ontology management and graph integrity</li>
+<li>[ ] <strong>Phase 7:</strong> Vocabulary management</li>
+<li>[ ] <strong>Phase 8:</strong> Backup &amp; restore</li>
+<li>[ ] <strong>Phase 9:</strong> Edge cases &amp; performance</li>
+<li>[ ] <strong>Phase 10:</strong> Cleanup &amp; documentation</li>
+</ul>
+<hr />
+<p><em>This document will be updated as we progress through integration testing.</em></p>
+<h2 id="phase-6-ontology-management-graph-integrity">Phase 6: Ontology Management &amp; Graph Integrity</h2>
+<p>Testing ontology operations and verifying cascade deletion maintains graph integrity.</p>
+<h3 id="test-61-list-ontologies">Test 6.1: List Ontologies</h3>
+<p><strong>Command:</strong> <code>kg ontology list</code></p>
+<p><strong>Result:</strong>
+- SignalFabric: 5 files, 27 chunks, 199 concepts</p>
+<h3 id="test-62-database-stats-baseline">Test 6.2: Database Stats (Baseline)</h3>
+<p><strong>Before test ontology:</strong>
+- Concepts: 199
+- Sources: 27
+- Instances: 276
+- Relationships: 966
+- Relationship types: 31</p>
+<h3 id="test-63-create-test-ontology">Test 6.3: Create Test Ontology</h3>
+<p><strong>Action:</strong> Ingested small test document into "TestOntologyDelete" ontology</p>
+<p><strong>Result:</strong>
+- ✅ Ingestion completed: 4 concepts, 1 source, 3 relationships
+- ✅ Ontology list now shows 2 ontologies
+- ✅ Database stats updated:
+  - Concepts: 203 (199 + 4)
+  - Sources: 28 (27 + 1)
+  - Instances: 281 (276 + 5)
+  - Relationships: 983 (966 + 17)</p>
+<h3 id="test-64-delete-test-ontology">Test 6.4: Delete Test Ontology</h3>
+<p><strong>Command:</strong> <code>kg ontology delete "TestOntologyDelete" --force</code></p>
+<p><strong>Result:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>✓ Deleted ontology &quot;TestOntologyDelete&quot;
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>  Sources deleted: 1
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>  Orphaned concepts cleaned: 4
+</code></pre></div></p>
+<p><strong>Verification:</strong>
+- ✅ Test ontology removed from list (only SignalFabric remains)
+- ✅ Concepts: 199 (4 test concepts removed)
+- ✅ Sources: 27 (1 test source removed)
+- ✅ Instances: 276 (5 test instances removed)
+- ✅ Relationships: 966 (17 test relationships removed)</p>
+<h3 id="phase-6-summary">Phase 6 Summary</h3>
+<p><strong>Ontology Management:</strong>
+- ✅ List operations show accurate counts
+- ✅ Ontology creation via ingestion works correctly
+- ✅ Deletion with --force flag succeeds</p>
+<p><strong>Graph Integrity:</strong>
+- ✅ Cascade deletion removes all related nodes:
+  - Sources (document chunks)
+  - Concepts
+  - Instances (evidence quotes)
+  - Relationships (concept-to-concept edges)
+- ✅ No orphaned nodes remain
+- ✅ Other ontologies remain completely intact
+- ✅ Database stats accurately reflect changes</p>
+<p><strong>Key Finding:</strong> Apache AGE cascade delete operations work correctly. Deleting an ontology:
+1. Removes all sources (documents) in that ontology
+2. Identifies and removes orphaned concepts (concepts only in deleted sources)
+3. Cleans up all evidence instances
+4. Removes all relationships involving deleted concepts
+5. Leaves other ontologies completely untouched</p>
+<p><strong>Status:</strong> Phase 6 COMPLETE ✅</p>
+<hr />
+<h2 id="next-steps_1">Next Steps</h2>
+<ul>
+<li>[x] <strong>Phase 1-5:</strong> All complete</li>
+<li>[x] <strong>Phase 6:</strong> Ontology management and graph integrity</li>
+<li>[ ] <strong>Phase 7:</strong> Vocabulary management</li>
+<li>[ ] <strong>Phase 8:</strong> Backup &amp; restore</li>
+<li>[ ] <strong>Phase 9:</strong> Edge cases &amp; performance</li>
+<li>[ ] <strong>Phase 10:</strong> Cleanup &amp; documentation</li>
+</ul>
+<hr />
+<p><em>This document will be updated as we progress through integration testing.</em></p>
+<h2 id="phase-7-vocabulary-management">Phase 7: Vocabulary Management</h2>
+<p>Testing vocabulary expansion and grounding-aware management (ADR-046).</p>
+<h3 id="test-71-vocabulary-status">Test 7.1: Vocabulary Status</h3>
+<p><strong>Command:</strong> <code>kg vocab status</code></p>
+<p><strong>Result:</strong>
+- ✅ Vocabulary size: 41 types (30 builtins + 11 custom discovered)
+- ✅ Zone: COMFORT (15.5% aggressiveness)
+- ✅ Thresholds: min=30, max=90, emergency=200
+- ✅ Categories: 11 custom relationship types from ingestion</p>
+<h3 id="test-72-vocabulary-expansion-validation">Test 7.2: Vocabulary Expansion Validation</h3>
+<p><strong>Observations:</strong>
+- ✅ Started with 30 builtin types (Phase 1)
+- ✅ Grew to 35 types after 4 documents (Phase 2)
+- ✅ Now at 41 types after 5 documents
+- ✅ Stayed in COMFORT zone throughout (never exceeded 90 max)
+- ✅ All vocabulary types have embeddings (from Phase 1 fix)</p>
+<h3 id="test-73-grounding-integration">Test 7.3: Grounding Integration</h3>
+<p><strong>From Previous Phases:</strong>
+- ✅ Grounding calculations working (0%, 27%, 38%, 100% observed)
+- ✅ Display in CLI with indicators (✓ ⚡ ◯ ⚠ ✗)
+- ✅ Display in MCP with interpretations
+- ✅ JSON output includes grounding_strength field</p>
+<h3 id="phase-7-summary">Phase 7 Summary</h3>
+<p><strong>Vocabulary Management:</strong>
+- ✅ Builtin types initialized on cold start
+- ✅ Custom types discovered during ingestion
+- ✅ Aggressive profile enables discovery but stays within bounds
+- ✅ COMFORT zone maintained (15.5% &lt; 66% threshold)</p>
+<p><strong>Grounding-Aware Features (ADR-046):</strong>
+- ✅ Grounding calculated for all concepts
+- ✅ Evidence tracking via SUPPORTS/CONTRADICTS relationships
+- ✅ Visual indicators for quick assessment
+- ✅ AI agents can assess concept reliability</p>
+<p><strong>Status:</strong> Phase 7 COMPLETE ✅</p>
+<hr />
+<h2 id="phase-8-backup-restore">Phase 8: Backup &amp; Restore</h2>
+<p>Complete testing of JSON serialization backup/restore with schema versioning (ADR-015).</p>
+<h3 id="background-schema-evolution-issue-discovered">Background: Schema Evolution Issue Discovered</h3>
+<p>During initial restore testing, discovered schema compatibility issue:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Error: column &quot;synonyms&quot; is of type character varying[] but expression is of type jsonb
+</code></pre></div></p>
+<p><strong>Root Cause:</strong> Backup serialization treated synonyms as JSONB, but database schema expects VARCHAR[] array</p>
+<p><strong>Solution Implemented:</strong>
+1. Fixed serialization.py to handle VARCHAR[] arrays correctly
+2. Added schema versioning (migration 013) to track database evolution
+3. Updated ADR-015 with schema evolution strategy</p>
+<h3 id="test-81-schema-versioning-implementation">Test 8.1: Schema Versioning Implementation</h3>
+<p><strong>Created Migration 013:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span><span class="k">version</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span><span class="n">applied_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="p">);</span>
+</code></pre></div></p>
+<p><strong>Retroactive Migration Tracking:</strong>
+- Inserted historical migrations 1-13 with descriptions
+- Enabled schema version tracking for all future backups</p>
+<p><strong>Applied:</strong> <code>./scripts/migrate-db.sh -y</code></p>
+<p><strong>Result:</strong> ✅ Migration 013 applied successfully</p>
+<h3 id="test-82-backup-with-schema-versioning">Test 8.2: Backup with Schema Versioning</h3>
+<p><strong>Test Data:</strong> Created test document with 15 concepts about backup validation</p>
+<p><strong>Ingestion:</strong> <code>kg ingest file --ontology "BackupRestoreTest" /tmp/backup-restore-test.txt --wait</code>
+- ✅ 15 concepts created
+- ✅ 1 source created
+- ✅ 13 relationships</p>
+<p><strong>Backup:</strong> <code>kg admin backup --type ontology --ontology "BackupRestoreTest"</code></p>
+<p><strong>Backup Metadata Validation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ontology_backup&quot;</span><span class="p">,</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-26T21:39:54.620335Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">  </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BackupRestoreTest&quot;</span><span class="p">,</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">  </span><span class="nt">&quot;schema_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">13</span><span class="p">,</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="err">✅</span><span class="w"> </span><span class="err">NEW</span><span class="p">:</span><span class="w"> </span><span class="err">Schema</span><span class="w"> </span><span class="err">versio</span><span class="kc">n</span><span class="w"> </span><span class="kc">tra</span><span class="err">cki</span><span class="kc">n</span><span class="err">g</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">  </span><span class="nt">&quot;statistics&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">    </span><span class="nt">&quot;concepts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="w">    </span><span class="nt">&quot;sources&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="w">    </span><span class="nt">&quot;instances&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="w">    </span><span class="nt">&quot;relationships&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">13</span><span class="p">,</span>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="w">    </span><span class="nt">&quot;vocabulary&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Observations:</strong>
+- ✅ Backup includes schema_version field
+- ✅ Size: 1.27 MB (contains real data)
+- ✅ Statistics match ingestion results</p>
+<h3 id="test-83-restore-with-type-safety">Test 8.3: Restore with Type Safety</h3>
+<p><strong>Pre-Restore State:</strong>
+- Database: 199 concepts, 27 sources, 276 instances</p>
+<p><strong>Deletion:</strong> <code>kg ontology delete "BackupRestoreTest" --force</code>
+- ✅ 1 source deleted
+- ✅ 15 orphaned concepts cleaned (cascade)</p>
+<p><strong>Restore:</strong> <code>kg admin restore --file backuprestoretest_backup_20251026_163954.json</code></p>
+<p><strong>Restore Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Backup contains: 15 concepts, 1 sources
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>⚠️  Backup has 3 validation warnings
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>✓ Creating checkpoint backup
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>✓ Loading backup file
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>✓ Restoring concepts
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>✓ Restoring sources
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>✓ Restoring instances ████████████████████ 15/15
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>✓ Restoring relationships
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>✓ Restore Complete
+</code></pre></div></p>
+<p><strong>Result:</strong> ✅ <strong>NO TYPE MISMATCH ERRORS</strong> - Restore completed successfully!</p>
+<h3 id="test-84-data-integrity-validation">Test 8.4: Data Integrity Validation</h3>
+<p><strong>Post-Restore Database Stats:</strong>
+- Concepts: 199 (unchanged - stitching behavior)
+- Sources: 28 (+1) ✅
+- Instances: 291 (+15) ✅</p>
+<p><strong>Observations:</strong>
+- ✅ Source restored correctly
+- ✅ All 15 instances restored
+- ✅ Stitching behavior working as designed (ADR-015)
+  - Concepts matched existing ones in graph
+  - Evidence linked to matched concepts
+  - No concept duplication</p>
+<p><strong>Files Restored:</strong> <code>kg ontology files "BackupRestoreTest"</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>✓ Found 1 files:
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>/tmp/tmp9to1d1ii.txt
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>  Chunks: 1
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>  Concepts: 0  ← Expected: Stitched to existing concepts
+</code></pre></div></p>
+<h3 id="schema-evolution-strategy-adr-015">Schema Evolution Strategy (ADR-015)</h3>
+<p><strong>For Future Schema Changes:</strong></p>
+<ol>
+<li><strong>Schema Version in Backups:</strong> All backups now include last applied migration number</li>
+<li><strong>Backward Compatibility:</strong> Type-safe serialization prevents restore errors</li>
+<li><strong>Parallel Restore Procedure</strong> (for major schema gaps):</li>
+<li>Clone system at backup's schema version</li>
+<li>Restore to old version</li>
+<li>Apply migrations to evolve schema</li>
+<li>Create new backup at current version</li>
+<li>Restore to production</li>
+</ol>
+<p><strong>Documentation:</strong> Added comprehensive section to ADR-015</p>
+<h3 id="key-fixes-implemented">Key Fixes Implemented</h3>
+<p><strong>src/lib/serialization.py:</strong>
+1. Added <code>get_schema_version()</code> method to query schema_migrations table
+2. Updated <code>create_metadata()</code> to include schema_version in all backups
+3. Fixed vocabulary export: VARCHAR[] arrays not JSONB
+4. Fixed vocabulary import: Pass arrays directly, removed ::jsonb cast</p>
+<p><strong>schema/migrations/013_add_schema_version_tracking.sql:</strong>
+- Created schema_migrations table
+- Retroactive tracking for migrations 1-13
+- Enables version-aware backup/restore</p>
+<p><strong>docs/architecture/ADR-015-backup-restore-streaming.md:</strong>
+- Added "Schema Versioning &amp; Evolution Strategy" section
+- Documented parallel restore procedure
+- Explained type-safe serialization approach</p>
+<h3 id="test-85-complete-backuprestore-cycle-purple-elephant-test">Test 8.5: Complete Backup/Restore Cycle (Purple Elephant Test)</h3>
+<p><strong>Purpose:</strong> Validate that data completely disappears when deleted and returns after restore</p>
+<p><strong>Test Procedure:</strong></p>
+<ol>
+<li><strong>Create unique test data</strong> with concepts that won't match existing ones:</li>
+<li>Document: "Purple Elephant Migration Pattern" (whimsical test concepts)</li>
+<li>
+<p>Ingestion: 9 concepts, 1 source, 8 relationships</p>
+</li>
+<li>
+<p><strong>Search before backup:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg search query &quot;purple elephant&quot; --min-similarity 0.7
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>✓ Found 1 concepts:
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>Purple Elephant Migration Pattern (83.8% similarity)
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Create backup:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg admin backup --type ontology --ontology &quot;PurpleElephantTest&quot;
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>✓ Backup: 1.14 MB, 9 concepts
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Delete ontology:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg ontology delete &quot;PurpleElephantTest&quot; --force
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>✓ Sources deleted: 1
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>✓ Orphaned concepts cleaned: 9
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Search after deletion:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg search query &quot;purple elephant&quot; --min-similarity 0.7
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>✓ Found 0 concepts  ← DATA IS GONE ✅
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Restore with --overwrite flag:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg admin restore --file purpleelephanttest_backup_20251026_164753.json --overwrite
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>✓ Restore Complete
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Search after restore:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg search query &quot;purple elephant&quot; --min-similarity 0.7
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>✓ Found 1 concepts:
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>Purple Elephant Migration Pattern (83.8% similarity)  ← DATA IS BACK ✅
+</code></pre></div></p>
+</li>
+</ol>
+<p><strong>Critical Finding: --overwrite Flag Required</strong></p>
+<p>Without <code>--overwrite</code>, restore uses "stitching" behavior (ADR-015):
+- Concepts matched to existing ones via embedding similarity
+- Evidence added to matched concepts
+- Original concept nodes NOT created
+- <strong>Problem:</strong> Unique concepts lost their identity</p>
+<p>With <code>--overwrite</code>:
+- Concepts created as new nodes with original embeddings
+- Full ontology structure restored
+- Concepts searchable with original similarity scores
+- <strong>Result:</strong> Complete data restoration ✅</p>
+<p><strong>Recommendation:</strong> Document <code>--overwrite</code> as default for ontology restore operations</p>
+<h3 id="phase-8-summary">Phase 8 Summary</h3>
+<p><strong>What Was Tested:</strong>
+1. ✅ Schema versioning implementation (migration 013)
+2. ✅ Backup creation with schema version metadata
+3. ✅ Full backup/restore cycle (create → backup → delete → restore)
+4. ✅ Complete disappearance and return of data (Purple Elephant test)
+5. ✅ Type safety (VARCHAR[] arrays handled correctly)
+6. ✅ Data integrity (sources, instances, relationships, concepts preserved)
+7. ✅ Stitching vs. overwrite modes tested</p>
+<p><strong>Bugs Fixed:</strong>
+1. ✅ Type mismatch error (synonyms JSONB vs VARCHAR[])
+2. ✅ Missing schema versioning in backup format
+3. ✅ No tracking of database schema evolution</p>
+<p><strong>Critical Findings:</strong>
+- <code>--overwrite</code> flag essential for complete ontology restoration
+- Without it, stitching behavior may lose concept identity
+- With it, full graph structure restored with original embeddings</p>
+<p><strong>Production Readiness:</strong>
+- ✅ Backup/restore stable and tested end-to-end
+- ✅ Schema evolution strategy documented
+- ✅ Type-safe serialization prevents restore errors
+- ✅ ADR-015 fully implemented
+- ✅ Complete data recovery validated</p>
+<p><strong>Status:</strong> Phase 8 COMPLETE ✅</p>
+<hr />
+<h2 id="phase-9-edge-cases-performance">Phase 9: Edge Cases &amp; Performance</h2>
+<p>Summary of edge cases discovered and handled during integration testing.</p>
+<h3 id="edge-case-91-invalid-api-key-on-cold-start-phase-1">Edge Case 9.1: Invalid API Key on Cold Start (Phase 1)</h3>
+<p><strong>Issue:</strong> System starts with invalid OpenAI API key
+<strong>Behavior:</strong>
+- ✅ API starts successfully (graceful degradation)
+- ✅ Logged: "0/30 builtin types initialized"
+- ✅ System remains operational
+- ⚠️ Marks initialization as complete even with 0 embeddings</p>
+<p><strong>Future Enhancement:</strong> Add startup validation worker to verify actual embedding existence</p>
+<h3 id="edge-case-92-dimension-mismatch-phase-5">Edge Case 9.2: Dimension Mismatch (Phase 5)</h3>
+<p><strong>Issue:</strong> Switching embedding providers with different dimensions
+<strong>Behavior:</strong>
+- ✅ System blocks switch without --force flag
+- ✅ Clear error message with ADR-039 reference
+- ✅ Search fails gracefully with diagnostic message
+- ✅ No data corruption or system crash</p>
+<p><strong>Protection:</strong> Dimension safety checks prevent accidental breakage</p>
+<h3 id="edge-case-93-hot-reload-state-management-phase-1-fix">Edge Case 9.3: Hot Reload State Management (Phase 1 Fix)</h3>
+<p><strong>Issue:</strong> EmbeddingWorker singleton retained old provider after hot reload
+<strong>Fix:</strong> Added reset_embedding_worker() call in hot reload endpoint
+<strong>Result:</strong> ✅ Provider switches work correctly now</p>
+<h3 id="edge-case-94-code-duplication-phase-1-fix">Edge Case 9.4: Code Duplication (Phase 1 Fix)</h3>
+<p><strong>Issue:</strong> Two separate code paths for vocabulary embedding generation
+<strong>Fix:</strong> Unified to use EmbeddingWorker, deleted 119 lines of duplicate code
+<strong>Result:</strong> ✅ Consistent behavior and logging</p>
+<h3 id="edge-case-95-cold-start-logic-phase-1-fix">Edge Case 9.5: Cold Start Logic (Phase 1 Fix)</h3>
+<p><strong>Issue:</strong> User commands skipped generation due to cold start check
+<strong>Fix:</strong> User commands use regenerate_all_embeddings() (bypasses cold start check)
+<strong>Result:</strong> ✅ Explicit user requests now work as expected</p>
+<h3 id="performance-observations">Performance Observations</h3>
+<p><strong>Ingestion Speed:</strong>
+- Single document (small): ~5-10 seconds
+- 4-5 documents: All completed successfully in parallel
+- Bottleneck: LLM extraction (~2-5s per chunk)</p>
+<p><strong>Query Performance:</strong>
+- Vector search: Fast (~100-200ms for 199 concepts)
+- Graph traversal: Fast for 1-2 hops, manageable for 3-5 hops
+- Related concepts (depth=2): 62 concepts returned instantly</p>
+<p><strong>Database Size:</strong>
+- 199 concepts, 276 instances, 966 relationships: Performs well
+- Apache AGE handles graph queries efficiently</p>
+<p><strong>Status:</strong> Phase 9 COMPLETE ✅</p>
+<hr />
+<h2 id="phase-9-additional-job-resumption-after-api-restart">Phase 9 (Additional): Job Resumption After API Restart</h2>
+<p>Testing database-based job checkpointing to handle API restarts/crashes without losing progress (ADR-014).</p>
+<h3 id="initial-implementation-issues-found">Initial Implementation Issues Found</h3>
+<p><strong>Issue 1:</strong> Resume logic checked for "processing" status (SQLite) but not "running" status (PostgreSQL)
+- PostgreSQLJobQueue uses <code>status="running"</code>
+- InMemoryJobQueue uses <code>status="processing"</code>
+- <strong>Fix:</strong> Check both statuses in startup resume logic</p>
+<p><strong>Issue 2:</strong> NULL progress field caused AttributeError
+- Job interrupted before chunks start has <code>progress = NULL</code>
+- Code: <code>job.get("progress", {}).get("chunks_total", 0)</code> failed
+- <strong>Fix:</strong> <code>progress = job.get("progress") or {}</code></p>
+<p><strong>Issue 3:</strong> job_data not updatable in PostgreSQL queue
+- Worker saved checkpoint to job_data JSONB column
+- update_job() method ignored job_data field
+- Checkpoint data silently discarded
+- <strong>Fix:</strong> Added 'job_data' to updatable JSONB fields list</p>
+<p><strong>Issue 4:</strong> Missing retry limit protection
+- Jobs could loop infinitely if repeatedly crashing
+- No safety mechanism to prevent infinite resume attempts
+- <strong>Fix:</strong> Added MAX_RESUME_ATTEMPTS (3) with resume_attempts counter</p>
+<h3 id="test-setup">Test Setup</h3>
+<p><strong>Document:</strong> docs/architecture/RECURSIVE_UPSERT_ARCHITECTURE.md (97KB, 10,622 words, 4 chunks)
+<strong>Method:</strong> Hot reload via trivial code edit to trigger API restart mid-processing</p>
+<h3 id="test-execution">Test Execution</h3>
+<p><strong>Step 1: Submit job</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;ResumptionTest&quot;</span><span class="w"> </span>docs/architecture/RECURSIVE_UPSERT_ARCHITECTURE.md
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="c1"># Job: job_a49cd0638b5e</span>
+</code></pre></div></p>
+<p><strong>Step 2: Wait for chunk processing to start (3-4 seconds)</strong>
+- Confirmed chunk 1 started processing via API logs
+- Job status showed 0/4 chunks (chunking phase complete)</p>
+<p><strong>Step 3: Trigger API restart (hot reload)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;# Test interrupt&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>src/api/main.py
+</code></pre></div></p>
+<p><strong>API Startup Log Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>🔄 Queued interrupted job for resume (attempt 1/3): job_a49cd0638b5e (chunk 3/4)
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>✅ Resumed 1 interrupted job(s)
+</code></pre></div></p>
+<p><strong>Step 4: Verify resumption</strong>
+- Job automatically restarted by startup logic
+- Worker log: "🔄 Resuming job from chunk 3/4"
+- Chunks 1-2 skipped (already completed before interrupt)
+- Processing continued from chunk 3</p>
+<p><strong>Step 5: Completion</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>✓ completed
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>Duration: 114.6s (including interruption + resume)
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>100% complete (4/4 chunks)
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>Results: 5 concepts, 4 sources, 36 relationships
+</code></pre></div></p>
+<h3 id="resumption-flow-verified">Resumption Flow Verified</h3>
+<p><strong>Database Checkpoint After Each Chunk:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ingestion_jobs</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">job_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">{</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">  </span><span class="p">...</span><span class="n">original_data</span><span class="p">,</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">  </span><span class="n">resume_from_chunk</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Last completed chunk</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="w">  </span><span class="n">stats</span><span class="p">:</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="n">concepts_created</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="err">}</span><span class="p">,</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="w">  </span><span class="n">recent_concept_ids</span><span class="p">:</span><span class="w"> </span><span class="p">[...]</span><span class="w">  </span><span class="c1">-- Last 50 for context</span>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="err">}</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">job_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;job_a49cd0638b5e&#39;</span>
+</code></pre></div></p>
+<p><strong>Startup Resume Logic:</strong>
+1. Query jobs with status IN ('running', 'processing')
+2. For each interrupted job:
+   - Read resume_attempts from job_data
+   - If &gt;= 3 attempts → fail job with error
+   - If chunks_total == 0 → restart from beginning
+   - If chunks_processed &lt; chunks_total → resume from checkpoint
+3. Reset status to 'approved'
+4. Auto-trigger execution via execute_job_async()</p>
+<p><strong>Worker Resume Logic:</strong>
+1. Check job_data.resume_from_chunk
+2. If &gt; 0 → load saved stats and recent_concept_ids
+3. Skip chunks 1..resume_from_chunk in processing loop
+4. Continue from resume_from_chunk + 1</p>
+<h3 id="key-findings_1">Key Findings</h3>
+<p><strong>What Works:</strong>
+- ✅ Checkpoint saved after each chunk completes
+- ✅ Stats preserved across resume (concepts, relationships, sources)
+- ✅ Recent concept IDs maintained for context continuity
+- ✅ Automatic detection and resume on startup
+- ✅ No duplicate concepts created (chunks not re-processed)
+- ✅ Retry limit prevents infinite loops (3 attempts max)
+- ✅ Clear logging shows resume attempt count</p>
+<p><strong>Design Decisions:</strong>
+- Checkpoint threshold: AFTER chunk upsert completes
+  - If crash occurs during LLM extraction → chunk re-processed
+  - If crash occurs after upsert → chunk skipped on resume
+  - Trade-off: Wasted API call vs. data integrity
+- Job-level retry limit (3 attempts) not per-chunk
+  - Simpler implementation
+  - Still prevents infinite loops
+  - Could be enhanced to per-chunk retry tracking</p>
+<p><strong>Performance Impact:</strong>
+- Checkpoint overhead: ~2-5KB JSONB per chunk
+- Resume detection: Runs on every API startup (negligible)
+- No impact on successful job processing</p>
+<h3 id="files-modified">Files Modified</h3>
+<p><strong>src/api/main.py (startup resume logic):</strong>
+- Check both "running" and "processing" statuses
+- Handle NULL progress field
+- Track resume_attempts in job_data
+- Fail jobs after 3 resume attempts
+- Reset interrupted jobs to "approved" and trigger execution</p>
+<p><strong>src/api/services/job_queue.py:</strong>
+- Added 'job_data' to PostgreSQL update_job() updatable fields
+- Enables checkpoint data persistence</p>
+<p><strong>src/api/workers/ingestion_worker.py (already implemented):</strong>
+- Check for resume_from_chunk in job_data
+- Load saved stats and recent_concept_ids
+- Skip already-processed chunks
+- Save checkpoint after each chunk</p>
+<p><strong>docs/architecture/ADR-014-job-approval-workflow.md:</strong>
+- Added comprehensive "Job Resumption After Interruption" section
+- Documented checkpoint strategy
+- Explained resume flow
+- Listed benefits and alternatives</p>
+<h3 id="edge-cases-handled">Edge Cases Handled</h3>
+<ol>
+<li><strong>Job never started (chunks_total=0):</strong></li>
+<li>Reset to approved, increment resume_attempts</li>
+<li>
+<p>Restart from beginning</p>
+</li>
+<li>
+<p><strong>Job partially complete (chunks_processed &lt; chunks_total):</strong></p>
+</li>
+<li>Load checkpoint data</li>
+<li>
+<p>Resume from last completed chunk + 1</p>
+</li>
+<li>
+<p><strong>Job finished all chunks but didn't mark complete:</strong></p>
+</li>
+<li>
+<p>Mark as completed (rare edge case)</p>
+</li>
+<li>
+<p><strong>Infinite loop protection:</strong></p>
+</li>
+<li>After 3 resume attempts → mark as failed</li>
+<li>Clear error message: "possible infinite loop or persistent crash"</li>
+</ol>
+<h3 id="status-job-resumption-validated">Status: Job Resumption VALIDATED ✅</h3>
+<p><strong>Production Readiness:</strong>
+- ✅ Database-based checkpointing working correctly
+- ✅ Automatic resume on API restart
+- ✅ No data loss or duplication
+- ✅ Retry limits prevent infinite loops
+- ✅ ADR-014 fully implemented and documented</p>
+<p><strong>Known Limitations:</strong>
+- Checkpoint threshold is post-upsert (LLM work may be wasted on crash)
+- Job-level retry limit (not per-chunk granularity)
+- No checkpoint cleanup after job completion (minor JSONB overhead)</p>
+<p><strong>Future Enhancements:</strong>
+- Per-chunk retry tracking (fail after N attempts on same chunk)
+- Checkpoint cleanup worker (remove old checkpoint data)
+- Progress streaming (real-time updates instead of polling)</p>
+<hr />
+<h2 id="phase-10-final-summary-conclusions">Phase 10: Final Summary &amp; Conclusions</h2>
+<h3 id="integration-testing-results">Integration Testing Results</h3>
+<p><strong>All 10 phases completed successfully!</strong> ✅</p>
+<h3 id="major-accomplishments">Major Accomplishments</h3>
+<ol>
+<li><strong>✅ ADR-044: Probabilistic Truth Convergence</strong></li>
+<li>Grounding calculations functional (observed: 0%, 27%, 38%, 100%)</li>
+<li>SUPPORTS/CONTRADICTS relationships tracked correctly</li>
+<li>
+<p>Evidence aggregation working as designed</p>
+</li>
+<li>
+<p><strong>✅ ADR-045: Unified Embedding Generation</strong></p>
+</li>
+<li>EmbeddingWorker centralized all embedding operations</li>
+<li>Cold start and user commands use same code path</li>
+<li>
+<p>Hot reload properly resets singleton state</p>
+</li>
+<li>
+<p><strong>✅ ADR-046: Grounding-Aware Vocabulary Management</strong></p>
+</li>
+<li>Vocabulary expansion working (30 → 41 types)</li>
+<li>COMFORT zone maintained (15.5% aggressiveness)</li>
+<li>Grounding displayed in all interfaces (CLI, MCP, JSON)</li>
+</ol>
+<h3 id="bugs-fixed-during-testing">Bugs Fixed During Testing</h3>
+<ol>
+<li><strong>Code Duplication</strong> - Unified vocabulary embedding generation (119 lines removed)</li>
+<li><strong>CLI Display</strong> - Dynamic provider name display (not hardcoded)</li>
+<li><strong>Cold Start Logic</strong> - User commands bypass cold start check</li>
+<li><strong>Hot Reload</strong> - EmbeddingWorker singleton resets correctly</li>
+</ol>
+<h3 id="system-validation">System Validation</h3>
+<p><strong>Grounding &amp; Evidence:</strong>
+- ✅ Grounding strength calculated for all concepts
+- ✅ Evidence tracking with source attribution
+- ✅ Visual indicators (✓ ⚡ ◯ ⚠ ✗) for quick assessment
+- ✅ AI agents can assess concept reliability</p>
+<p><strong>Graph Evolution:</strong>
+- ✅ System creates more direct paths as content grows (4-hop → 1-hop)
+- ✅ Semantic precision improves with more documents (60.9% → 89.5%)
+- ✅ Relationships emerge naturally from source material</p>
+<p><strong>Data Integrity:</strong>
+- ✅ Cascade deletion works correctly (no orphaned nodes)
+- ✅ Ontology isolation maintained
+- ✅ Database stats accurate after all operations</p>
+<p><strong>Embedding Safety:</strong>
+- ✅ Dimension mismatch protection prevents breakage
+- ✅ Hot reload applies configuration changes
+- ✅ Search fails gracefully with clear diagnostics</p>
+<p><strong>Query Interfaces:</strong>
+- ✅ CLI: Formatted output with grounding and evidence
+- ✅ MCP: Markdown formatted for AI consumption
+- ✅ JSON: Complete structured output for programmatic access</p>
+<h3 id="test-coverage-summary">Test Coverage Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Test Area</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Cold Start &amp; Schema Validation</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Content Ingestion &amp; Graph Evolution</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CLI Query Testing (--json flag)</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>4</td>
+<td>MCP Server Formatted Output</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Embedder Switching &amp; Safety</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Ontology Management &amp; Integrity</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Vocabulary Management</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Backup &amp; Restore</td>
+<td>✅ VALIDATED</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Edge Cases &amp; Performance</td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Final Documentation</td>
+<td>✅ COMPLETE</td>
+</tr>
+</tbody>
+</table>
+<h3 id="files-modifiedcreated">Files Modified/Created</h3>
+<p><strong>Created:</strong>
+- <code>docs/testing/INTEGRATION_TEST_PLAN.md</code> - 10-phase test plan
+- <code>docs/testing/INTEGRATION_TEST_NOTES.md</code> - This document</p>
+<p><strong>Modified:</strong>
+- <code>src/api/lib/age_client.py</code> - Removed duplicate embedding code (119 lines)
+- <code>src/api/routes/vocabulary.py</code> - Unified with EmbeddingWorker
+- <code>src/api/routes/embedding.py</code> - Added hot reload reset
+- <code>client/src/cli/vocabulary.ts</code> - Dynamic provider display
+- <code>client/src/mcp/formatters.ts</code> - Grounding formatting (unchanged, validated)</p>
+<h3 id="system-status-production-ready">System Status: PRODUCTION READY</h3>
+<p>All critical ADRs validated:
+- ✅ ADR-044: Grounding calculations functional
+- ✅ ADR-045: Unified embedding generation
+- ✅ ADR-046: Grounding-aware vocabulary</p>
+<p>All bugs discovered during testing have been fixed.
+All query interfaces (CLI, MCP, JSON) working correctly.
+All data integrity checks passing.</p>
+<h3 id="next-steps-post-testing">Next Steps (Post-Testing)</h3>
+<ol>
+<li><strong>Merge to main</strong> - Integration testing complete, ready for production</li>
+<li><strong>Unit tests</strong> - Write automated tests for discovered edge cases</li>
+<li><strong>Documentation updates</strong> - Update user docs with grounding interpretation guide</li>
+<li><strong>Performance monitoring</strong> - Track query performance at larger scales</li>
+</ol>
+<hr />
+<h2 id="final-notes">Final Notes</h2>
+<p>This integration testing session validated the complete ADR-044/045/046 implementation stack. The system correctly:</p>
+<ul>
+<li>Calculates probabilistic truth convergence (grounding)</li>
+<li>Displays grounding with clear visual indicators</li>
+<li>Provides evidence samples for verification</li>
+<li>Manages vocabulary expansion intelligently</li>
+<li>Protects against embedding dimension mismatches</li>
+<li>Maintains graph integrity across operations</li>
+<li>Evolves intelligently as content grows</li>
+</ul>
+<p><strong>The knowledge graph system is ready for production use.</strong> ✅</p>
+<hr />
+<p><em>Integration testing completed: 2025-10-26</em>
+<em>Total phases: 10/10</em>
+<em>Status: ALL PASS</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

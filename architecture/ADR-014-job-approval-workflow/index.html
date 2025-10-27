@@ -314,7 +314,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-tabs__link">
+        <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-tabs__link">
           
   
   
@@ -1670,6 +1670,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -2135,6 +2143,66 @@
       Job Lifecycle Management (Scheduler)
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-resumption-after-interruption" class="md-nav__link">
+    <span class="md-ellipsis">
+      Job Resumption After Interruption
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job Resumption After Interruption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkpoint-strategy-database-based" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkpoint Strategy (Database-Based)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resume-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resume Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Scenario
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-approaches-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative Approaches Considered
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -3034,6 +3102,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-045-unified-embedding-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-045: Unified Embedding Generation System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-046: Grounding-Aware Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -3086,6 +3223,29 @@
   
   <span class="md-ellipsis">
     CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODE-CHANGES-ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Changes Analysis: ADR-045/046 Implementation
     
   </span>
   
@@ -3337,6 +3497,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3374,6 +3538,52 @@
             Testing
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Test Notes - Working Commands &amp; Observations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Integration Test Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -3908,6 +4118,121 @@
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
 <a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>        <span class="k">return</span> <span class="kc">True</span>
 </code></pre></div>
+<h3 id="job-resumption-after-interruption">Job Resumption After Interruption</h3>
+<p><strong>Problem:</strong> API restarts, crashes, or hot reloads can interrupt jobs mid-processing, leaving them orphaned with status <code>processing</code> but no active worker.</p>
+<p><strong>Solution:</strong> Database-based checkpointing with automatic resume on startup.</p>
+<h4 id="checkpoint-strategy-database-based">Checkpoint Strategy (Database-Based)</h4>
+<p>After each chunk is processed, save resume state in <code>job_data</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># After processing chunk i</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">job_queue</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="p">{</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="s2">&quot;progress&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>        <span class="s2">&quot;resume_from_chunk&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>  <span class="c1"># Last completed chunk</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>        <span class="s2">&quot;chunks_processed&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="s2">&quot;chunks_total&quot;</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>        <span class="o">...</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="p">},</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="s2">&quot;job_data&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>        <span class="o">**</span><span class="n">job_data</span><span class="p">,</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>        <span class="s2">&quot;resume_from_chunk&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>        <span class="s2">&quot;stats&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>            <span class="s2">&quot;concepts_created&quot;</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">concepts_created</span><span class="p">,</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>            <span class="s2">&quot;relationships_created&quot;</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">relationships_created</span><span class="p">,</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>            <span class="o">...</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>        <span class="p">},</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>        <span class="s2">&quot;recent_concept_ids&quot;</span><span class="p">:</span> <span class="n">recent_ids</span><span class="p">[</span><span class="o">-</span><span class="mi">50</span><span class="p">:]</span>  <span class="c1"># Context for next chunk</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    <span class="p">}</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="p">})</span>
+</code></pre></div>
+<p><strong>Why database vs filesystem:</strong>
+- ✅ All data in one place (no file management)
+- ✅ Transactional updates with job status
+- ✅ Works with both PostgreSQL and SQLite queues
+- ✅ Easy to query and monitor
+- ✅ Minimal storage overhead (~2-5KB per job)
+- ⚠️ Could migrate to filesystem if job_data becomes too large</p>
+<h4 id="resume-flow">Resume Flow</h4>
+<p><strong>On ingestion worker start:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Check if this is a resumed job</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">resume_from_chunk</span> <span class="o">=</span> <span class="n">job_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resume_from_chunk&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">is_resuming</span> <span class="o">=</span> <span class="n">resume_from_chunk</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">if</span> <span class="n">is_resuming</span><span class="p">:</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄 Resuming from chunk </span><span class="si">{</span><span class="n">resume_from_chunk</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="c1"># Load saved stats</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="n">stats</span><span class="o">.</span><span class="n">concepts_created</span> <span class="o">=</span> <span class="n">saved_stats</span><span class="p">[</span><span class="s2">&quot;concepts_created&quot;</span><span class="p">]</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="n">stats</span><span class="o">.</span><span class="n">relationships_created</span> <span class="o">=</span> <span class="n">saved_stats</span><span class="p">[</span><span class="s2">&quot;relationships_created&quot;</span><span class="p">]</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>    <span class="o">...</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    <span class="n">recent_concept_ids</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s2">&quot;recent_concept_ids&quot;</span><span class="p">]</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># Process chunks (skip already-completed)</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">resume_from_chunk</span><span class="p">:</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏭️  Skipping chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> (already processed)&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>        <span class="k">continue</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>    <span class="c1"># Process chunk normally...</span>
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>    <span class="n">process_chunk</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>    <span class="c1"># Save checkpoint</span>
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a>    <span class="n">update_job_with_checkpoint</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>On API startup (<code>main.py</code>):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Resume interrupted jobs</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">processing_jobs</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">list_jobs</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;processing&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">processing_jobs</span><span class="p">:</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">chunks_total</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s2">&quot;progress&quot;</span><span class="p">][</span><span class="s2">&quot;chunks_total&quot;</span><span class="p">]</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="n">chunks_processed</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s2">&quot;progress&quot;</span><span class="p">][</span><span class="s2">&quot;resume_from_chunk&quot;</span><span class="p">]</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>    <span class="k">if</span> <span class="n">chunks_processed</span> <span class="o">&lt;</span> <span class="n">chunks_total</span><span class="p">:</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>        <span class="c1"># Interrupted mid-processing - reset to approved</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>        <span class="n">queue</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;approved&quot;</span><span class="p">})</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄 Queued for resume: </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> (chunk </span><span class="si">{</span><span class="n">chunks_processed</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">chunks_total</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>        <span class="c1"># Finished all chunks but didn&#39;t mark complete</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>        <span class="n">queue</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;completed&quot;</span><span class="p">})</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1"># Start all approved jobs (includes resumed ones)</span>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="n">approved_jobs</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">list_jobs</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">approved_jobs</span><span class="p">:</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>    <span class="n">queue</span><span class="o">.</span><span class="n">execute_job_async</span><span class="p">(</span><span class="n">job</span><span class="p">[</span><span class="s2">&quot;job_id&quot;</span><span class="p">])</span>
+</code></pre></div></p>
+<h4 id="benefits">Benefits</h4>
+<ol>
+<li><strong>Zero data loss</strong>: Chunks already processed aren't re-done</li>
+<li><strong>No duplicate concepts</strong>: Stats preserved, relationships maintained</li>
+<li><strong>Context preserved</strong>: Recent concept IDs for semantic continuity</li>
+<li><strong>Automatic recovery</strong>: No manual intervention needed</li>
+<li><strong>Progress visibility</strong>: Resume point shown in job status</li>
+<li><strong>Minimal overhead</strong>: ~2-5KB per checkpoint</li>
+</ol>
+<h4 id="example-scenario">Example Scenario</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>1. User submits large document (125 chunks)
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>2. Job processes chunks 1-47 successfully
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>3. API crashes (deployment, restart, crash)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>   → Job status: &quot;processing&quot;, resume_from_chunk: 47
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>4. API restarts, detects interrupted job
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>   → Resets to &quot;approved&quot;, triggers execution
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>5. Worker loads job, finds resume_from_chunk: 47
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>   → Skips chunks 1-47, resumes from chunk 48
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>6. Continues with saved stats (1,240 concepts, 3,876 relationships)
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>7. Completes chunks 48-125 normally
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>8. Marks job &quot;completed&quot; with final stats
+</code></pre></div>
+<h4 id="alternative-approaches-considered">Alternative Approaches Considered</h4>
+<p><strong>Option 1: Filesystem checkpoints</strong>
+- Use existing <code>src/api/lib/checkpoint.py</code> (already implemented but unused)
+- Store chunks + progress in <code>.checkpoints/</code> directory
+- ❌ File management complexity
+- ❌ Orphaned files on incomplete cleanup
+- ✅ Could handle very large job_data if needed</p>
+<p><strong>Option 3: Stateless resume</strong>
+- Re-chunk document on resume (deterministic)
+- Skip chunks by checking if concepts exist
+- ❌ Extra LLM calls to check existence
+- ❌ Non-deterministic if chunking algorithm changes
+- ✅ No storage overhead</p>
+<p><strong>Decision:</strong> Use Option 2 (database) for simplicity. Can migrate to Option 1 if storage becomes an issue.</p>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
 <ol>
@@ -3995,33 +4320,33 @@
 </ol>
 <h3 id="cost-configuration">Cost Configuration</h3>
 <p>Cost estimates require pricing configuration in <code>.env</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Extraction costs (per 1M tokens)</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nv">TOKEN_COST_GPT4O</span><span class="o">=</span><span class="m">6</span>.25
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="nv">TOKEN_COST_GPT4O_MINI</span><span class="o">=</span><span class="m">0</span>.375
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="nv">TOKEN_COST_CLAUDE_SONNET_4</span><span class="o">=</span><span class="m">9</span>.00
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># Embedding costs (per 1M tokens)</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="nv">TOKEN_COST_EMBEDDING_SMALL</span><span class="o">=</span><span class="m">0</span>.02
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="nv">TOKEN_COST_EMBEDDING_LARGE</span><span class="o">=</span><span class="m">0</span>.13
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Extraction costs (per 1M tokens)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nv">TOKEN_COST_GPT4O</span><span class="o">=</span><span class="m">6</span>.25
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nv">TOKEN_COST_GPT4O_MINI</span><span class="o">=</span><span class="m">0</span>.375
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="nv">TOKEN_COST_CLAUDE_SONNET_4</span><span class="o">=</span><span class="m">9</span>.00
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1"># Embedding costs (per 1M tokens)</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="nv">TOKEN_COST_EMBEDDING_SMALL</span><span class="o">=</span><span class="m">0</span>.02
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="nv">TOKEN_COST_EMBEDDING_LARGE</span><span class="o">=</span><span class="m">0</span>.13
 </code></pre></div>
 <p>Analyzer reads these values to calculate estimates.</p>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <h3 id="1-synchronous-analysis-before-queue">1. Synchronous Analysis Before Queue</h3>
 <p>Return analysis in submit response, require separate approve call:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>POST /ingest/analyze → Returns analysis (no queue)
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>POST /ingest/submit → Queue job (with pre-analysis)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>POST /ingest/analyze → Returns analysis (no queue)
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>POST /ingest/submit → Queue job (with pre-analysis)
 </code></pre></div>
 <p><strong>Rejected</strong>: Two API calls for single operation, poor UX</p>
 <h3 id="2-optional-analysis-flag">2. Optional Analysis Flag</h3>
 <p>Only analyze if <code>?analyze=true</code> parameter provided:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>POST /ingest?analyze=true → Queue with analysis
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>POST /ingest → Queue and immediately process (current behavior)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>POST /ingest?analyze=true → Queue with analysis
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>POST /ingest → Queue and immediately process (current behavior)
 </code></pre></div>
 <p><strong>Rejected</strong>: Cost transparency should be default, not opt-in</p>
 <h3 id="3-cost-threshold-auto-approve">3. Cost Threshold Auto-Approve</h3>
 <p>Auto-approve jobs below certain cost (e.g., $0.10):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>if estimated_cost &lt; threshold:
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>    auto_approve()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>if estimated_cost &lt; threshold:
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    auto_approve()
 </code></pre></div>
 <p><strong>Rejected</strong>: Users should see all costs, arbitrary thresholds confusing</p>
 <h2 id="references">References</h2>
