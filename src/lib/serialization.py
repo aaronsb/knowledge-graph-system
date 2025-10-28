@@ -655,6 +655,52 @@ class DataImporter:
             finally:
                 client.pool.putconn(conn)
 
+            # Create :VocabType graph nodes (ADR-048)
+            # After SQL import, sync vocabulary to graph nodes
+            Console.info("  Creating vocabulary graph nodes...")
+            for i, entry in enumerate(data["vocabulary"]):
+                current = i + 1
+                relationship_type = entry.get('relationship_type')
+                category = entry.get('category', 'unknown')
+                description = entry.get('description', '')
+                is_builtin = entry.get('is_builtin', False)
+                added_by = entry.get('added_by', 'system')
+                direction_semantics = entry.get('direction_semantics')
+
+                try:
+                    # Use MERGE to be idempotent (safe for re-runs)
+                    # Creates both :VocabType node and :IN_CATEGORY relationship
+                    vocab_query = """
+                        MERGE (v:VocabType {name: $name})
+                        SET v.description = $description,
+                            v.is_builtin = $is_builtin,
+                            v.is_active = $is_active,
+                            v.added_by = $added_by,
+                            v.usage_count = $usage_count,
+                            v.direction_semantics = $direction_semantics
+                        WITH v
+                        MERGE (c:VocabCategory {name: $category})
+                        MERGE (v)-[:IN_CATEGORY]->(c)
+                        RETURN v.name as name
+                    """
+                    params = {
+                        "name": relationship_type,
+                        "category": category,
+                        "description": description,
+                        "is_builtin": 't' if is_builtin else 'f',
+                        "is_active": 't' if entry.get('is_active', True) else 'f',
+                        "added_by": added_by,
+                        "usage_count": entry.get('usage_count', 0),
+                        "direction_semantics": direction_semantics
+                    }
+                    client._execute_cypher(vocab_query, params)
+
+                    if current % 10 == 0:
+                        Console.progress(current, total_vocab, "Graph nodes")
+                except Exception as e:
+                    # Log but don't fail the restore - SQL data is already imported
+                    Console.warning(f"  Failed to create graph node for '{relationship_type}': {e}")
+
             if progress_callback and total_vocab > 0:
                 progress_callback("vocabulary", total_vocab, total_vocab, 100.0)
 
