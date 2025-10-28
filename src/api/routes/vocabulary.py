@@ -115,11 +115,11 @@ async def get_vocabulary_status():
         try:
             vocab_size = client.get_vocabulary_size()
 
-            # Get configuration
-            vocab_min = int(os.getenv("VOCAB_MIN", "30"))
-            vocab_max = int(os.getenv("VOCAB_MAX", "90"))
-            vocab_emergency = int(os.getenv("VOCAB_EMERGENCY", "200"))
-            profile = os.getenv("VOCAB_AGGRESSIVENESS", "aggressive")
+            # Get configuration from database (with .env fallback)
+            vocab_min = int(client.get_vocab_config('vocab_min') or os.getenv("VOCAB_MIN", "30"))
+            vocab_max = int(client.get_vocab_config('vocab_max') or os.getenv("VOCAB_MAX", "90"))
+            vocab_emergency = int(client.get_vocab_config('vocab_emergency') or os.getenv("VOCAB_EMERGENCY", "200"))
+            profile = client.get_vocab_config('aggressiveness_profile') or os.getenv("VOCAB_AGGRESSIVENESS", "aggressive")
 
             # Calculate aggressiveness
             aggressiveness, zone = calculate_aggressiveness(

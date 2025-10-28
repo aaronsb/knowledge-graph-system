@@ -144,7 +144,16 @@ class VocabularyManager:
         self.db = db_client
         self.ai_provider = ai_provider
         self.mode = mode
-        self.profile = aggressiveness_profile
+
+        # Load configuration from database (with class constant fallback)
+        try:
+            self.VOCAB_MIN = int(db_client.get_vocab_config('vocab_min') or self.VOCAB_MIN)
+            self.VOCAB_MAX = int(db_client.get_vocab_config('vocab_max') or self.VOCAB_MAX)
+            self.VOCAB_EMERGENCY = int(db_client.get_vocab_config('vocab_emergency') or self.VOCAB_EMERGENCY)
+            self.profile = db_client.get_vocab_config('aggressiveness_profile') or aggressiveness_profile
+        except Exception as e:
+            logger.warning(f"Failed to load vocab config from database, using defaults: {e}")
+            self.profile = aggressiveness_profile
 
         # Initialize worker modules
         self.scorer = VocabularyScorer(db_client)
@@ -152,7 +161,8 @@ class VocabularyManager:
         self.synonym_detector = SynonymDetector(ai_provider)
         self.strategy = PruningStrategy(mode=mode, ai_provider=ai_provider)
 
-        logger.info(f"VocabularyManager initialized (mode={mode}, profile={aggressiveness_profile})")
+        logger.info(f"VocabularyManager initialized (mode={mode}, profile={self.profile}, "
+                   f"thresholds: min={self.VOCAB_MIN}, max={self.VOCAB_MAX}, emergency={self.VOCAB_EMERGENCY})")
 
     async def analyze_vocabulary(
         self,
