@@ -32,7 +32,7 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - [`list_jobs`](#list-jobs) - List recent ingestion jobs with optional filtering by status (pending, awaiting_approval, running, completed, failed).
 - [`approve_job`](#approve-job) - Approve a job for processing after reviewing cost estimates (ADR-014 approval workflow). Job must be in awaiting_approval status.
 - [`cancel_job`](#cancel-job) - Cancel a pending or running job. Cannot cancel completed or failed jobs.
-- [`ingest_text`](#ingest-text) - Ingest raw text content into the knowledge graph. Creates a job with cost estimation. Use auto_approve=true to skip approval or approve manually with approve_job.
+- [`ingest_text`](#ingest-text) - Submit text content to the knowledge graph for concept extraction. Automatically processes and extracts concepts, relationships, and evidence. Specify which ontology (knowledge domain) to add the concepts to. The system will chunk the text, extract concepts using LLM, and add them to the graph. Returns a job ID for tracking progress.
 - [`get_api_health`](#get-api-health) - Check API server health status. Returns status and timestamp.
 - [`get_system_status`](#get-system-status) - Get comprehensive system status including database, job scheduler, and resource usage statistics.
 
@@ -223,15 +223,15 @@ Cancel a pending or running job. Cannot cancel completed or failed jobs.
 
 ### ingest_text
 
-Ingest raw text content into the knowledge graph. Creates a job with cost estimation. Use auto_approve=true to skip approval or approve manually with approve_job.
+Submit text content to the knowledge graph for concept extraction. Automatically processes and extracts concepts, relationships, and evidence. Specify which ontology (knowledge domain) to add the concepts to. The system will chunk the text, extract concepts using LLM, and add them to the graph. Returns a job ID for tracking progress.
 
 **Parameters:**
 
-- `text` (`string`) **(required)** - Text content to ingest
-- `ontology` (`string`) **(required)** - Ontology/collection name to organize concepts
+- `text` (`string`) **(required)** - Text content to ingest into the knowledge graph
+- `ontology` (`string`) **(required)** - Ontology/collection name (ask user which knowledge domain this belongs to, e.g., "Project Documentation", "Research Notes", "Meeting Notes")
 - `filename` (`string`) - Optional filename for source tracking (default: "text_input")
-- `auto_approve` (`boolean`) - Auto-approve job and skip manual review (default: false)
-  - Default: `false`
+- `auto_approve` (`boolean`) - Auto-approve and start processing immediately (default: true). Set to false to require manual approval.
+  - Default: `true`
 - `force` (`boolean`) - Force re-ingestion even if content already exists (default: false)
   - Default: `false`
 - `processing_mode` (`string`) - Processing mode: serial (clean, recommended) or parallel (fast, may duplicate concepts)

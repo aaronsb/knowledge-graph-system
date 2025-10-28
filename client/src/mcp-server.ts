@@ -20,6 +20,7 @@ import {
   formatConceptDetails,
   formatConnectionPaths,
   formatRelatedConcepts,
+  formatJobStatus,
 } from './mcp/formatters.js';
 
 // Create server instance
@@ -335,17 +336,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // ========== Ingestion Tools ==========
       {
         name: 'ingest_text',
-        description: 'Ingest raw text content into the knowledge graph. Creates a job with cost estimation. Use auto_approve=true to skip approval or approve manually with approve_job.',
+        description: 'Submit text content to the knowledge graph for concept extraction. Automatically processes and extracts concepts, relationships, and evidence. Specify which ontology (knowledge domain) to add the concepts to. The system will chunk the text, extract concepts using LLM, and add them to the graph. Returns a job ID for tracking progress.',
         inputSchema: {
           type: 'object',
           properties: {
             text: {
               type: 'string',
-              description: 'Text content to ingest',
+              description: 'Text content to ingest into the knowledge graph',
             },
             ontology: {
               type: 'string',
-              description: 'Ontology/collection name to organize concepts',
+              description: 'Ontology/collection name (ask user which knowledge domain this belongs to, e.g., "Project Documentation", "Research Notes", "Meeting Notes")',
             },
             filename: {
               type: 'string',
@@ -353,8 +354,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             auto_approve: {
               type: 'boolean',
-              description: 'Auto-approve job and skip manual review (default: false)',
-              default: false,
+              description: 'Auto-approve and start processing immediately (default: true). Set to false to require manual approval.',
+              default: true,
             },
             force: {
               type: 'boolean',
@@ -671,8 +672,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // ========== Job Tools ==========
       case 'get_job_status': {
         const result = await client.getJobStatus(toolArgs.job_id as string);
+        const formattedText = formatJobStatus(result);
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          content: [{ type: 'text', text: formattedText }],
         };
       }
 
@@ -706,7 +708,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const result = await client.ingestText(toolArgs.text as string, {
           ontology: toolArgs.ontology as string,
           filename: toolArgs.filename as string | undefined,
-          auto_approve: toolArgs.auto_approve as boolean || false,
+          auto_approve: toolArgs.auto_approve !== undefined ? toolArgs.auto_approve as boolean : true,
           force: toolArgs.force as boolean || false,
           processing_mode: toolArgs.processing_mode as 'serial' | 'parallel' || 'serial',
           options: {
