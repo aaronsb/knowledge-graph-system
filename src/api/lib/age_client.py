@@ -144,20 +144,30 @@ class AGEClient:
                 try:
                     cur.execute(age_query)
                 except Exception as e:
-                    # Log detailed error information
-                    logger.error("=" * 80)
-                    logger.error("Query execution failed")
-                    logger.error(f"Error: {e}")
-                    logger.error(f"Column spec: {column_spec}")
-                    logger.error(f"Original query length: {len(query)} chars")
-                    logger.error(f"First 500 chars: {query[:500]}")
-                    logger.error(f"Last 500 chars: {query[-500:]}")
+                    error_str = str(e)
+
+                    # Check if this is an expected race condition (parallel restore operations)
+                    is_expected_race = (
+                        "already exists" in error_str or
+                        "Entity failed to be updated" in error_str
+                    )
+
+                    # Log at appropriate level (DEBUG for expected races, ERROR for real problems)
+                    log_level = logger.debug if is_expected_race else logger.error
+
+                    log_level("=" * 80)
+                    log_level("Query execution failed" if not is_expected_race else "Expected concurrency conflict (will retry)")
+                    log_level(f"Error: {e}")
+                    log_level(f"Column spec: {column_spec}")
+                    log_level(f"Original query length: {len(query)} chars")
+                    log_level(f"First 500 chars: {query[:500]}")
+                    log_level(f"Last 500 chars: {query[-500:]}")
                     if params:
-                        logger.error(f"Parameters:")
+                        log_level(f"Parameters:")
                         for k, v in params.items():
                             val_preview = str(v)[:200] if isinstance(v, str) else str(v)
-                            logger.error(f"  {k}: {val_preview}")
-                    logger.error("=" * 80)
+                            log_level(f"  {k}: {val_preview}")
+                    log_level("=" * 80)
                     raise
 
                 if fetch_one:

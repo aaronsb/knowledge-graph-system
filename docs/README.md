@@ -2,6 +2,14 @@
 
 This directory contains all documentation for the Knowledge Graph System, organized by category.
 
+## 🚀 Quick Start
+
+**New to the system?** Get operational in under 5 minutes:
+
+→ **[5-Minute Cold Start Guide](guides/COLD-START.md)** - From zero to running system with 5 commands
+
+Nuclear tested on October 28, 2025 (complete system deletion and rebuild). Battle-tested procedure for fresh installations.
+
 ## Directory Structure
 
 ### 📚 `manual/`
@@ -26,6 +34,7 @@ Architecture decisions, design documents, and ADRs (Architectural Decision Recor
 ### 📖 `guides/`
 Standalone guides for specific topics and workflows.
 
+- **COLD-START.md** - 5-minute cold start from fresh clone (nuclear tested!)
 - **DEPLOYMENT.md** - Comprehensive deployment guide for all environments
 - **VOCABULARY_CATEGORIES.md** - Understanding vocabulary category scores and confidence
 
