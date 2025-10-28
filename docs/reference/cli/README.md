@@ -9,11 +9,11 @@
 
 ## Commands
 
-- [`health`](#health) - Check API server health
-- [`config` (cfg)](#config) - Manage kg CLI configuration
+- [`health`](#health) - Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.
+- [`config` (cfg)](#config) - Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).
 - [`ingest`](#ingest) - Ingest documents into the knowledge graph
 - [`search`](#search) - Search for concepts and explore the graph
-- [`database` (db)](#database) - Database operations and information
+- [`database` (db)](#database) - Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.
 - [`ontology` (onto)](#ontology) - Manage ontologies (knowledge domains)
 - [`vocabulary` (vocab)](#vocabulary) - Edge vocabulary management and consolidation (ADR-032)
 - [`admin`](#admin) - System administration (status, backup, restore, reset, scheduler, user, rbac, embedding, extraction, keys, regenerate-embeddings)
@@ -22,7 +22,7 @@
 
 ## health
 
-Check API server health
+Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.
 
 **Usage:**
 ```bash
@@ -32,7 +32,7 @@ kg health [options]
 
 ## config (cfg)
 
-Manage kg CLI configuration
+Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).
 
 **Usage:**
 ```bash
@@ -41,8 +41,8 @@ kg config [options]
 
 **Subcommands:**
 
-- `get` - Get configuration value(s)
-- `set` - Set configuration value
+- `get` - Get one or all configuration values. Supports dot notation for nested keys (e.g., "mcp.enabled", "client.id").
+- `set` - Set a configuration value. Auto-detects data types (boolean, number, JSON). Use --string to force literal string interpretation.
 - `delete` - Delete configuration key
 - `list` - List all configuration
 - `path` - Show configuration file path
@@ -50,16 +50,16 @@ kg config [options]
 - `reset` - Reset configuration to defaults
 - `enable-mcp` - Enable an MCP tool
 - `disable-mcp` - Disable an MCP tool
-- `mcp` - Show MCP tool configuration
-- `auto-approve` - Enable/disable auto-approval of jobs (ADR-014)
-- `update-secret` - Authenticate and update API secret/key
+- `mcp` - Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
+- `auto-approve` - Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
+- `update-secret` - Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.
 - `json` - JSON-based configuration operations (machine-friendly)
 
 ---
 
 ### get
 
-Get configuration value(s)
+Get one or all configuration values. Supports dot notation for nested keys (e.g., "mcp.enabled", "client.id").
 
 **Usage:**
 ```bash
@@ -68,7 +68,7 @@ kg get [key]
 
 **Arguments:**
 
-- `<key>` - Configuration key (supports dot notation, e.g., "mcp.enabled")
+- `<key>` - Configuration key (supports dot notation, e.g., "mcp.enabled"). Omit to show all configuration.
 
 **Options:**
 
@@ -78,7 +78,7 @@ kg get [key]
 
 ### set
 
-Set configuration value
+Set a configuration value. Auto-detects data types (boolean, number, JSON). Use --string to force literal string interpretation.
 
 **Usage:**
 ```bash
@@ -87,8 +87,8 @@ kg set <key> <value>
 
 **Arguments:**
 
-- `<key>` - Configuration key (supports dot notation)
-- `<value>` - Value to set (auto-detects JSON arrays/objects)
+- `<key>` - Configuration key (supports dot notation, e.g., "apiUrl", "mcp.enabled")
+- `<value>` - Value to set (auto-detects JSON arrays/objects, booleans, numbers)
 
 **Options:**
 
@@ -192,7 +192,7 @@ kg disable-mcp <tool>
 
 ### mcp
 
-Show MCP tool configuration
+Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
 
 **Usage:**
 ```bash
@@ -201,7 +201,7 @@ kg mcp [tool]
 
 **Arguments:**
 
-- `<tool>` - Specific MCP tool name
+- `<tool>` - Specific MCP tool name (optional). Omit to show all MCP tools.
 
 **Options:**
 
@@ -211,7 +211,7 @@ kg mcp [tool]
 
 ### auto-approve
 
-Enable/disable auto-approval of jobs (ADR-014)
+Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
 
 **Usage:**
 ```bash
@@ -220,11 +220,11 @@ kg auto-approve [value]
 
 **Arguments:**
 
-- `<value>` - Enable (true/on/yes) or disable (false/off/no)
+- `<value>` - Enable (true/on/yes) or disable (false/off/no). Omit to show current status.
 
 ### update-secret
 
-Authenticate and update API secret/key
+Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.
 
 **Usage:**
 ```bash
@@ -493,7 +493,7 @@ kg connect <from> <to>
 
 ## database (db)
 
-Database operations and information
+Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.
 
 **Usage:**
 ```bash
@@ -502,15 +502,15 @@ kg database [options]
 
 **Subcommands:**
 
-- `stats` - Show database statistics
-- `info` - Show database connection information
-- `health` - Check database health and connectivity
+- `stats` - Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.
+- `info` - Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.
+- `health` - Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.
 
 ---
 
 ### stats
 
-Show database statistics
+Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.
 
 **Usage:**
 ```bash
@@ -519,7 +519,7 @@ kg stats [options]
 
 ### info
 
-Show database connection information
+Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.
 
 **Usage:**
 ```bash
@@ -528,7 +528,7 @@ kg info [options]
 
 ### health
 
-Check database health and connectivity
+Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.
 
 **Usage:**
 ```bash

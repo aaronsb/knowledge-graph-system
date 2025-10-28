@@ -4,7 +4,7 @@
 
 ## config (cfg)
 
-Manage kg CLI configuration
+Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).
 
 **Usage:**
 ```bash
@@ -13,8 +13,8 @@ kg config [options]
 
 **Subcommands:**
 
-- `get` - Get configuration value(s)
-- `set` - Set configuration value
+- `get` - Get one or all configuration values. Supports dot notation for nested keys (e.g., "mcp.enabled", "client.id").
+- `set` - Set a configuration value. Auto-detects data types (boolean, number, JSON). Use --string to force literal string interpretation.
 - `delete` - Delete configuration key
 - `list` - List all configuration
 - `path` - Show configuration file path
@@ -22,16 +22,16 @@ kg config [options]
 - `reset` - Reset configuration to defaults
 - `enable-mcp` - Enable an MCP tool
 - `disable-mcp` - Disable an MCP tool
-- `mcp` - Show MCP tool configuration
-- `auto-approve` - Enable/disable auto-approval of jobs (ADR-014)
-- `update-secret` - Authenticate and update API secret/key
+- `mcp` - Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
+- `auto-approve` - Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
+- `update-secret` - Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.
 - `json` - JSON-based configuration operations (machine-friendly)
 
 ---
 
 ### get
 
-Get configuration value(s)
+Get one or all configuration values. Supports dot notation for nested keys (e.g., "mcp.enabled", "client.id").
 
 **Usage:**
 ```bash
@@ -40,7 +40,7 @@ kg get [key]
 
 **Arguments:**
 
-- `<key>` - Configuration key (supports dot notation, e.g., "mcp.enabled")
+- `<key>` - Configuration key (supports dot notation, e.g., "mcp.enabled"). Omit to show all configuration.
 
 **Options:**
 
@@ -50,7 +50,7 @@ kg get [key]
 
 ### set
 
-Set configuration value
+Set a configuration value. Auto-detects data types (boolean, number, JSON). Use --string to force literal string interpretation.
 
 **Usage:**
 ```bash
@@ -59,8 +59,8 @@ kg set <key> <value>
 
 **Arguments:**
 
-- `<key>` - Configuration key (supports dot notation)
-- `<value>` - Value to set (auto-detects JSON arrays/objects)
+- `<key>` - Configuration key (supports dot notation, e.g., "apiUrl", "mcp.enabled")
+- `<value>` - Value to set (auto-detects JSON arrays/objects, booleans, numbers)
 
 **Options:**
 
@@ -164,7 +164,7 @@ kg disable-mcp <tool>
 
 ### mcp
 
-Show MCP tool configuration
+Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
 
 **Usage:**
 ```bash
@@ -173,7 +173,7 @@ kg mcp [tool]
 
 **Arguments:**
 
-- `<tool>` - Specific MCP tool name
+- `<tool>` - Specific MCP tool name (optional). Omit to show all MCP tools.
 
 **Options:**
 
@@ -183,7 +183,7 @@ kg mcp [tool]
 
 ### auto-approve
 
-Enable/disable auto-approval of jobs (ADR-014)
+Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
 
 **Usage:**
 ```bash
@@ -192,11 +192,11 @@ kg auto-approve [value]
 
 **Arguments:**
 
-- `<value>` - Enable (true/on/yes) or disable (false/off/no)
+- `<value>` - Enable (true/on/yes) or disable (false/off/no). Omit to show current status.
 
 ### update-secret
 
-Authenticate and update API secret/key
+Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.
 
 **Usage:**
 ```bash
