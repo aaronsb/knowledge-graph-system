@@ -733,18 +733,6 @@ class DataImporter:
         Console.info("Importing instances...")
         total_instances = len(data["instances"])
 
-        # Pre-create Instance label and relationship types to avoid race conditions
-        # in parallel processing (AGE creates label tables on first use)
-        if total_instances > 0:
-            client._execute_cypher("""
-                MERGE (c:Concept {concept_id: '_dummy_concept'})
-                MERGE (s:Source {source_id: '_dummy_source'})
-                MERGE (i:Instance {instance_id: '_dummy_instance'})
-                MERGE (c)-[:EVIDENCED_BY]->(i)
-                MERGE (i)-[:FROM_SOURCE]->(s)
-                MERGE (c)-[:APPEARS_IN]->(s)
-                DELETE i, c, s
-            """)
 
         # Thread-safe counter and lock for progress tracking
         progress_lock = threading.Lock()
@@ -764,7 +752,16 @@ class DataImporter:
                 MERGE (i)-[:FROM_SOURCE]->(s)
                 MERGE (c)-[:APPEARS_IN]->(s)
             """
-            client._execute_cypher(query, params=instance)
+
+            try:
+                client._execute_cypher(query, params=instance)
+            except Exception as e:
+                # Handle AGE race condition: parallel threads creating label tables
+                if "already exists" in str(e):
+                    # Retry - label table now exists
+                    client._execute_cypher(query, params=instance)
+                else:
+                    raise
 
             # Thread-safe progress tracking
             with progress_lock:
@@ -813,11 +810,23 @@ class DataImporter:
                 RETURN count(r) as created
             """
 
-            result = client._execute_cypher(query, params={
-                "from_id": rel["from"],
-                "to_id": rel["to"],
-                "properties": rel["properties"]
-            }, fetch_one=True)
+            try:
+                result = client._execute_cypher(query, params={
+                    "from_id": rel["from"],
+                    "to_id": rel["to"],
+                    "properties": rel["properties"]
+                }, fetch_one=True)
+            except Exception as e:
+                # Handle AGE race condition: parallel threads creating label tables
+                if "already exists" in str(e):
+                    # Retry - label table now exists
+                    result = client._execute_cypher(query, params={
+                        "from_id": rel["from"],
+                        "to_id": rel["to"],
+                        "properties": rel["properties"]
+                    }, fetch_one=True)
+                else:
+                    raise
 
             created = 0
             if result and int(str(result.get("created", 0))) > 0:
