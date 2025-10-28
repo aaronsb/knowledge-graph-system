@@ -405,7 +405,7 @@ def process_chunk(
             # Generate embedding immediately for vocabulary matching on subsequent chunks
             try:
                 provider = get_provider()  # Get current AI provider for embedding generation
-                age_client.add_edge_type(
+                was_added = age_client.add_edge_type(
                     relationship_type=canonical_type,
                     category=category,
                     description=f"LLM-generated relationship type from ingestion",
@@ -414,7 +414,11 @@ def process_chunk(
                     direction_semantics=direction_semantics,  # ADR-049: Store LLM's direction decision
                     ai_provider=provider  # Pass provider for automatic embedding generation
                 )
-                logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (direction: {direction_semantics}, embedding generated)")
+                # Only log if this call actually added the type (not if it already existed)
+                if was_added:
+                    logger.info(f"  🆕 New edge type discovered: '{canonical_type}' (direction: {direction_semantics}, embedding generated)")
+                else:
+                    logger.debug(f"  Edge type '{canonical_type}' already exists (reused)")
             except Exception as e:
                 # If adding fails (e.g., already exists from another worker), continue anyway
                 logger.debug(f"  Note: Edge type '{canonical_type}' may already exist: {e}")
