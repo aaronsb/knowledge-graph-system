@@ -43,7 +43,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-# Category seed types (30 builtin types mapped to 8 categories)
+# Category seed types (30 builtin types mapped to 11 categories)
 CATEGORY_SEEDS = {
     'causation': ['CAUSES', 'ENABLES', 'PREVENTS', 'INFLUENCES', 'RESULTS_FROM'],
     'composition': ['PART_OF', 'CONTAINS', 'COMPOSED_OF', 'SUBSET_OF', 'INSTANCE_OF', 'COMPLEMENTS'],
@@ -52,7 +52,10 @@ CATEGORY_SEEDS = {
     'semantic': ['SIMILAR_TO', 'ANALOGOUS_TO', 'CONTRASTS_WITH', 'OPPOSITE_OF'],
     'temporal': ['PRECEDES', 'CONCURRENT_WITH', 'EVOLVES_INTO'],
     'dependency': ['DEPENDS_ON', 'REQUIRES', 'CONSUMES', 'PRODUCES'],
-    'derivation': ['DERIVED_FROM', 'GENERATED_BY', 'BASED_ON']
+    'derivation': ['DERIVED_FROM', 'GENERATED_BY', 'BASED_ON'],
+    'operation': ['ANALYZES', 'CALCULATES', 'PROCESSES', 'TRANSFORMS', 'EVALUATES'],
+    'interaction': ['INTEGRATES_WITH', 'COMMUNICATES_WITH', 'CONNECTS_TO', 'INTERACTS_WITH'],
+    'modification': ['CONFIGURES', 'UPDATES', 'ENHANCES', 'OPTIMIZES', 'IMPROVES']
 }
 
 # Confidence thresholds (ADR-047)

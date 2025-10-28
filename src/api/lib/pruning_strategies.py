@@ -126,6 +126,7 @@ Consider:
 2. **Directional inverses**: Are they opposite directions (e.g., PART_OF vs HAS_PART)?
 3. **Useful distinctions**: Would merging lose important nuance?
 4. **Graph consistency**: Would a unified term improve clarity?
+5. **Simplicity**: Always prefer the simpler, single-word term when possible
 
 **Response format (JSON):**
 ```json
@@ -139,9 +140,13 @@ Consider:
 
 **Important:**
 - If they're directional inverses (opposite directions), return should_merge=false
-- If they're truly synonymous, create a term that captures both meanings
-- Prefer the more commonly used term if no better alternative exists
-- Keep term names concise and clear (2-3 words max)
+- **STRONGLY prefer single-word relationship types** (e.g., PROVIDES, DESCRIBES, ENABLES, FACILITATES)
+- Only use compound terms for directional relationships with prepositions (BY, TO, FROM, IN, FOR, WITH)
+- **NEVER** create verb+noun compounds (e.g., FACILITATES_ESTABLISHMENT → use FACILITATES)
+- **NEVER** create verb+verb compounds (e.g., DESCRIBES_PROVIDES → use DESCRIBES or PROVIDES)
+- **NEVER** use OR clauses in names (e.g., DESCRIBES_OR_IDENTIFIES → choose DESCRIBES or IDENTIFIES)
+- Prefer the simpler, more general term from the pair when choosing
+- If compound is absolutely necessary: use VERB_PREPOSITION format only (e.g., SPECIFIED_IN, DERIVED_FROM, MEASURED_BY)
 
 Respond with ONLY the JSON, no other text."""
 
