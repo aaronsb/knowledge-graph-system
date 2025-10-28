@@ -171,10 +171,13 @@ async function main() {
   writer.write(path.join(outDir, 'README.md'), index.join('\n'));
   console.log(`✅ Generated: docs/reference/cli/README.md`);
 
-  // Individual files (flat structure)
+  // Individual command files in commands/ subdirectory
+  const commandsDir = path.join(outDir, 'commands');
+  fs.mkdirSync(commandsDir, { recursive: true });
+
   commands.forEach(cmd => {
     writer.write(
-      path.join(outDir, `${cmd.name}.md`),
+      path.join(commandsDir, `${cmd.name}.md`),
       `# kg ${cmd.name}\n\n> Auto-generated\n\n${generateMarkdown(cmd, 2)}`
     );
   });
