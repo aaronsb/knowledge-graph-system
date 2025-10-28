@@ -2154,6 +2154,60 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    <span class="md-ellipsis">
+      config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      config-update
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      profiles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profiles-show" class="md-nav__link">
+    <span class="md-ellipsis">
+      profiles-show
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profiles-create" class="md-nav__link">
+    <span class="md-ellipsis">
+      profiles-create
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profiles-delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      profiles-delete
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4940,6 +4994,12 @@
 <li><code>generate-embeddings</code> - Generate vector embeddings for vocabulary types (required for consolidation and categorization). Identifies types without embeddings, generates embeddings using configured embedding model, stores embeddings for similarity comparison, and enables consolidation and auto-categorization. Use after fresh install (bootstrap vocabulary embeddings), after ingestion introduces new custom types, when switching embedding models (regenerate), or for inconsistency fixes (force regeneration if corrupted). Performance: ~100-200ms per embedding (OpenAI), ~20-50ms per embedding (local models), parallel generation (batches of 10).</li>
 <li><code>category-scores</code> - Show category similarity scores for a specific relationship type (ADR-047). Displays assigned category, confidence score (calculated as max_score/second_max_score * 100), ambiguous flag (set when runner-up within 20% of winner), runner-up category if ambiguous, and similarity to all category seeds (0-100%) sorted by similarity with visual bar chart. Use this to verify auto-categorization makes sense, debug low confidence assignments, understand why confidence is low, resolve ambiguity between close categories, and audit all types for misassignments.</li>
 <li><code>refresh-categories</code> - Refresh category assignments for vocabulary types using latest embeddings (ADR-047). Identifies types needing category refresh, recalculates similarity to all category seeds, assigns best-matching category, updates confidence scores, and flags ambiguous assignments. Use after embedding model changes (recalculate with new model), category definition updates (refresh after changing seed terms), periodic maintenance (quarterly review), or quality improvement (re-evaluate low confidence). This is a non-destructive operation (doesn't affect edges), preserves manual assignments, and records audit trail per type.</li>
+<li><code>config</code> - Show current vocabulary configuration including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile (Bezier curve), synonym thresholds (strong, moderate), and other settings. Use this to verify configuration before updates, check active profile and mode, understand current thresholds, review synonym detection settings, and audit configuration state.</li>
+<li><code>config-update</code> - Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.</li>
+<li><code>profiles</code> - List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.</li>
+<li><code>profiles-show</code> - Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.</li>
+<li><code>profiles-create</code> - Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.</li>
+<li><code>profiles-delete</code> - Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.</li>
 </ul>
 <hr />
 <h3 id="status">status</h3>
@@ -5101,6 +5161,153 @@
 </tr>
 </tbody>
 </table>
+<h3 id="config">config</h3>
+<p>Show current vocabulary configuration including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile (Bezier curve), synonym thresholds (strong, moderate), and other settings. Use this to verify configuration before updates, check active profile and mode, understand current thresholds, review synonym detection settings, and audit configuration state.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h3 id="config-update">config-update</h3>
+<p>Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>config-update<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--min &lt;n&gt;</code></td>
+<td>Minimum vocabulary size (10-100)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--max &lt;n&gt;</code></td>
+<td>Maximum vocabulary size (50-200)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--emergency &lt;n&gt;</code></td>
+<td>Emergency threshold (100-500)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--mode &lt;mode&gt;</code></td>
+<td>Pruning mode: naive, hitl, aitl</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--profile &lt;name&gt;</code></td>
+<td>Aggressiveness profile name</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--auto-expand</code></td>
+<td>Enable automatic expansion</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--no-auto-expand</code></td>
+<td>Disable automatic expansion</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--synonym-strong &lt;n&gt;</code></td>
+<td>Strong synonym threshold (0.7-1.0)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--synonym-moderate &lt;n&gt;</code></td>
+<td>Moderate synonym threshold (0.5-0.9)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--low-value &lt;n&gt;</code></td>
+<td>Low value score threshold (0.0-10.0)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--consolidation-threshold &lt;n&gt;</code></td>
+<td>Auto-merge threshold (0.5-1.0)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="profiles">profiles</h3>
+<p>List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>profiles<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h3 id="profiles-show">profiles-show</h3>
+<p>Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>profiles-show<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Profile name</li>
+</ul>
+<h3 id="profiles-create">profiles-create</h3>
+<p>Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>profiles-create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--name &lt;name&gt;</code></td>
+<td>Profile name (3-50 chars)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--x1 &lt;n&gt;</code></td>
+<td>First control point X (0.0-1.0)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--y1 &lt;n&gt;</code></td>
+<td>First control point Y (-2.0 to 2.0)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--x2 &lt;n&gt;</code></td>
+<td>Second control point X (0.0-1.0)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--y2 &lt;n&gt;</code></td>
+<td>Second control point Y (-2.0 to 2.0)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--description &lt;desc&gt;</code></td>
+<td>Profile description (min 10 chars)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="profiles-delete">profiles-delete</h3>
+<p>Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>profiles-delete<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Profile name to delete</li>
+</ul>
 
 
 
