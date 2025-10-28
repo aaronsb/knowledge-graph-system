@@ -94,7 +94,7 @@ async function logoutCommand(options: LogoutOptions) {
 export function registerLogoutCommand(program: Command): void {
   program
     .command('logout')
-    .description('End authentication session')
-    .option('--forget', 'Also forget saved username')
+    .description('End authentication session - clears JWT token (use --forget to also clear saved username)')
+    .option('--forget', 'Also forget saved username (requires username prompt on next login)')
     .action(logoutCommand);
 }
