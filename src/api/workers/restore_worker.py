@@ -229,14 +229,12 @@ def _clear_database(client: AGEClient, job_id: str) -> None:
     """
     logger.info(f"[{job_id}] Clearing concept graph data")
 
-    # Single query with DETACH DELETE (removes nodes and relationships atomically)
-    # Much faster than 6 separate queries on large graphs
-    # DETACH DELETE automatically removes all connected relationships
-    client._execute_cypher("""
-        MATCH (n)
-        WHERE n:Concept OR n:Source OR n:Instance
-        DETACH DELETE n
-    """)
+    # DETACH DELETE removes nodes and relationships atomically
+    # AGE doesn't support WHERE with label OR, so use 3 separate queries
+    # Still faster than original 6 queries (no separate relationship deletion needed)
+    client._execute_cypher("MATCH (n:Concept) DETACH DELETE n")
+    client._execute_cypher("MATCH (n:Source) DETACH DELETE n")
+    client._execute_cypher("MATCH (n:Instance) DETACH DELETE n")
 
     logger.info(f"[{job_id}] Concept graph cleared successfully (vocabulary preserved)")
 

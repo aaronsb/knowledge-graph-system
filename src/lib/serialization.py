@@ -822,14 +822,24 @@ class DataImporter:
                     "properties": rel["properties"]
                 }, fetch_one=True)
             except Exception as e:
-                # AGE creates edge type tables on first use - parallel threads may race
-                if "already exists" in str(e):
-                    # Extract edge type from error message
+                # AGE concurrency issues with parallel processing
+                error_str = str(e)
+
+                if "already exists" in error_str:
+                    # AGE creates edge type tables on first use - parallel threads may race
                     import re
-                    match = re.search(r'relation "(\w+)" already exists', str(e))
+                    match = re.search(r'relation "(\w+)" already exists', error_str)
                     if match:
                         Console.info(f"  Initializing edge type: {match.group(1)}")
                     # Retry - edge type table now exists
+                    result = client._execute_cypher(query, params={
+                        "from_id": rel["from"],
+                        "to_id": rel["to"],
+                        "properties": rel["properties"]
+                    }, fetch_one=True)
+                elif "Entity failed to be updated" in error_str:
+                    # AGE concurrency: Multiple threads updating same relationship
+                    # Retry once - conflict should be resolved
                     result = client._execute_cypher(query, params={
                         "from_id": rel["from"],
                         "to_id": rel["to"],
