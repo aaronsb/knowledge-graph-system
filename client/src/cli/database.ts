@@ -9,12 +9,12 @@ import { coloredCount, separator } from './colors';
 
 export const databaseCommand = new Command('database')
   .alias('db')  // Short alias
-  .description('Database operations and information')
+  .description('Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(
     new Command('stats')
-      .description('Show database statistics')
+      .description('Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.')
       .action(async () => {
         try {
           const client = createClientFromEnv();
@@ -49,7 +49,7 @@ export const databaseCommand = new Command('database')
   )
   .addCommand(
     new Command('info')
-      .description('Show database connection information')
+      .description('Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.')
       .action(async () => {
         try {
           const client = createClientFromEnv();
@@ -85,7 +85,7 @@ export const databaseCommand = new Command('database')
   )
   .addCommand(
     new Command('health')
-      .description('Check database health and connectivity')
+      .description('Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.')
       .action(async () => {
         try {
           const client = createClientFromEnv();
