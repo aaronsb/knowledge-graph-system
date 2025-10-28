@@ -10,6 +10,8 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import sys
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # Add parent directory to path for AGEClient import
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -562,7 +564,8 @@ class DataImporter:
     @staticmethod
     def import_backup(client: AGEClient, backup_data: Dict[str, Any],
                      overwrite_existing: bool = False,
-                     progress_callback: Optional[callable] = None) -> Dict[str, int]:
+                     progress_callback: Optional[callable] = None,
+                     max_workers: int = 2) -> Dict[str, int]:
         """
         Import backup data into database
 
@@ -571,6 +574,7 @@ class DataImporter:
             backup_data: Parsed backup JSON
             overwrite_existing: If True, update existing nodes; if False, skip duplicates
             progress_callback: Optional callback(stage, current, total, percent) for progress updates
+            max_workers: Maximum parallel workers for instances/relationships (default: 2)
 
         Returns:
             Dictionary with import statistics
@@ -725,59 +729,80 @@ class DataImporter:
         if progress_callback and total_sources > 0:
             progress_callback("sources", total_sources, total_sources, 100.0)
 
-        # Import instances
+        # Import instances (parallel processing for performance)
         Console.info("Importing instances...")
         total_instances = len(data["instances"])
-        for i, instance in enumerate(data["instances"]):
-            current = i + 1
-            Console.progress(current, total_instances, "Instances")
 
-            # Call progress callback every 10 items
-            if progress_callback and current % 10 == 0:
-                percent = (current / total_instances) * 100
-                progress_callback("instances", current, total_instances, percent)
 
-            # AGE limitation: Can't use SET with WITH/MATCH joins
-            # Split into two queries: 1) create instance, 2) create relationships
+        # Thread-safe counter and lock for progress tracking
+        progress_lock = threading.Lock()
+        completed = {"count": 0}
 
-            # Query 1: Create/update instance node
-            instance_query = """
-                MERGE (i:Instance {instance_id: $instance_id})
-                SET i.quote = $quote
-            """
-            client._execute_cypher(instance_query, params={
-                "instance_id": instance["instance_id"],
-                "quote": instance["quote"]
-            })
-
-            # Query 2: Create relationships
-            rel_query = """
-                MATCH (i:Instance {instance_id: $instance_id})
+        def process_instance(instance):
+            """Process single instance with optimized single-query approach"""
+            # Optimized: Single query instead of two
+            # MATCH dependencies first, then MERGE+SET, then create relationships
+            # No WITH clause needed - all variables stay in scope
+            query = """
                 MATCH (c:Concept {concept_id: $concept_id})
                 MATCH (s:Source {source_id: $source_id})
+                MERGE (i:Instance {instance_id: $instance_id})
+                SET i.quote = $quote
                 MERGE (c)-[:EVIDENCED_BY]->(i)
                 MERGE (i)-[:FROM_SOURCE]->(s)
                 MERGE (c)-[:APPEARS_IN]->(s)
             """
-            client._execute_cypher(rel_query, params=instance)
-            stats["instances_created"] += 1
+
+            try:
+                client._execute_cypher(query, params=instance)
+            except Exception as e:
+                # AGE creates label tables on first use - parallel threads may race
+                if "already exists" in str(e):
+                    # Extract label name from error message
+                    import re
+                    match = re.search(r'relation "(\w+)" already exists', str(e))
+                    if match:
+                        Console.info(f"  Initializing AGE label: {match.group(1)}")
+                    # Retry - label table now exists
+                    client._execute_cypher(query, params=instance)
+                else:
+                    raise
+
+            # Thread-safe progress tracking
+            with progress_lock:
+                completed["count"] += 1
+                current = completed["count"]
+                if current % 10 == 0 or current == total_instances:
+                    Console.progress(current, total_instances, "Instances")
+                    if progress_callback:
+                        percent = (current / total_instances) * 100
+                        progress_callback("instances", current, total_instances, percent)
+
+        # Process instances in parallel (configurable workers)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(process_instance, instance)
+                      for instance in data["instances"]]
+
+            # Wait for all to complete
+            for future in as_completed(futures):
+                future.result()  # Raise any exceptions
+
+        stats["instances_created"] = total_instances
 
         # Final callback for instances stage
         if progress_callback and total_instances > 0:
             progress_callback("instances", total_instances, total_instances, 100.0)
 
-        # Import concept-concept relationships
+        # Import concept-concept relationships (parallel processing for performance)
         Console.info("Importing relationships...")
         total_relationships = len(data["relationships"])
-        for i, rel in enumerate(data["relationships"]):
-            current = i + 1
-            Console.progress(current, total_relationships, "Relationships")
 
-            # Call progress callback every 10 items
-            if progress_callback and current % 10 == 0:
-                percent = (current / total_relationships) * 100
-                progress_callback("relationships", current, total_relationships, percent)
+        # Thread-safe counter and lock for progress tracking
+        rel_progress_lock = threading.Lock()
+        rel_completed = {"count": 0, "created": 0}
 
+        def process_relationship(rel):
+            """Process single relationship"""
             # Dynamic relationship type (IMPLIES, SUPPORTS, etc.)
             # Use OPTIONAL MATCH to handle missing nodes gracefully
             query = f"""
@@ -790,14 +815,64 @@ class DataImporter:
                 RETURN count(r) as created
             """
 
-            result = client._execute_cypher(query, params={
-                "from_id": rel["from"],
-                "to_id": rel["to"],
-                "properties": rel["properties"]
-            }, fetch_one=True)
+            try:
+                result = client._execute_cypher(query, params={
+                    "from_id": rel["from"],
+                    "to_id": rel["to"],
+                    "properties": rel["properties"]
+                }, fetch_one=True)
+            except Exception as e:
+                # AGE concurrency issues with parallel processing
+                error_str = str(e)
 
+                if "already exists" in error_str:
+                    # AGE creates edge type tables on first use - parallel threads may race
+                    import re
+                    match = re.search(r'relation "(\w+)" already exists', error_str)
+                    if match:
+                        Console.info(f"  Initializing edge type: {match.group(1)}")
+                    # Retry - edge type table now exists
+                    result = client._execute_cypher(query, params={
+                        "from_id": rel["from"],
+                        "to_id": rel["to"],
+                        "properties": rel["properties"]
+                    }, fetch_one=True)
+                elif "Entity failed to be updated" in error_str:
+                    # AGE concurrency: Multiple threads updating same relationship
+                    # Retry once - conflict should be resolved
+                    result = client._execute_cypher(query, params={
+                        "from_id": rel["from"],
+                        "to_id": rel["to"],
+                        "properties": rel["properties"]
+                    }, fetch_one=True)
+                else:
+                    raise
+
+            created = 0
             if result and int(str(result.get("created", 0))) > 0:
-                stats["relationships_created"] += 1
+                created = 1
+
+            # Thread-safe progress tracking
+            with rel_progress_lock:
+                rel_completed["count"] += 1
+                rel_completed["created"] += created
+                current = rel_completed["count"]
+                if current % 10 == 0 or current == total_relationships:
+                    Console.progress(current, total_relationships, "Relationships")
+                    if progress_callback:
+                        percent = (current / total_relationships) * 100
+                        progress_callback("relationships", current, total_relationships, percent)
+
+        # Process relationships in parallel (configurable workers)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(process_relationship, rel)
+                      for rel in data["relationships"]]
+
+            # Wait for all to complete
+            for future in as_completed(futures):
+                future.result()  # Raise any exceptions
+
+        stats["relationships_created"] = rel_completed["created"]
 
         # Final callback for relationships stage
         if progress_callback and total_relationships > 0:
