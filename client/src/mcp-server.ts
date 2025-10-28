@@ -20,6 +20,7 @@ import {
   formatConceptDetails,
   formatConnectionPaths,
   formatRelatedConcepts,
+  formatJobStatus,
 } from './mcp/formatters.js';
 
 // Create server instance
@@ -671,8 +672,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // ========== Job Tools ==========
       case 'get_job_status': {
         const result = await client.getJobStatus(toolArgs.job_id as string);
+        const formattedText = formatJobStatus(result);
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          content: [{ type: 'text', text: formattedText }],
         };
       }
 
