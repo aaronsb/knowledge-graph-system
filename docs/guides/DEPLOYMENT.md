@@ -500,7 +500,9 @@ kg health
 
 ## See Also
 
-- [Build System](../../build/README.md) - Build and deployment tooling
-- [Development Guide](../../CLAUDE.md) - Developer workflow
-- [Architecture](../architecture/ARCHITECTURE.md) - System design
-- [API Reference](../reference/api/README.md) - API documentation
+- [Architecture Overview](../architecture/ARCHITECTURE_OVERVIEW.md) - System design and architecture
+- [Architecture Decisions](../architecture/ARCHITECTURE_DECISIONS.md) - ADR index
+- [API Reference](../reference/api/README.md) - REST API documentation
+- **Developer Resources** (in source repository):
+  - `CLAUDE.md` - Developer workflow guide for Claude Code
+  - `README.md` - Project overview and quick start
