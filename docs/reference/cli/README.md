@@ -12,6 +12,7 @@
 - [`health`](#health) - Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.
 - [`config` (cfg)](#config) - Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).
 - [`ingest`](#ingest) - Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.
+- [`job` (jobs)](#job) - Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)
 - [`search`](#search) - Search and explore the knowledge graph using vector similarity, graph traversal, and path finding
 - [`database` (db)](#database) - Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.
 - [`ontology` (onto)](#ontology) - Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.
@@ -382,6 +383,259 @@ kg text <text>
 | `--filename <name>` | Filename for tracking (displayed in ontology files list, temporary path context) | `"text_input"` |
 | `--target-words <n>` | Target words per chunk | `"1000"` |
 | `-w, --wait` | Wait for job completion (polls until complete, shows progress). Default: submit and exit. | `false` |
+
+
+## job (jobs)
+
+Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)
+
+**Usage:**
+```bash
+kg job [options]
+```
+
+**Subcommands:**
+
+- `status` - Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion
+- `list` - List recent jobs with optional filtering by status or client - includes subcommands for common filters
+- `approve` - Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status
+- `cancel` - Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)
+- `clear` - Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)
+
+---
+
+### status
+
+Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion
+
+**Usage:**
+```bash
+kg status <job-id>
+```
+
+**Arguments:**
+
+- `<job-id>` - Required
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-w, --watch` | Watch job until completion (polls every few seconds) | `false` |
+
+### list
+
+List recent jobs with optional filtering by status or client - includes subcommands for common filters
+
+**Usage:**
+```bash
+kg list [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-s, --status <status>` | Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled) | - |
+| `-c, --client <client-id>` | Filter by client ID (view specific user's jobs in multi-tenant setups) | - |
+| `-l, --limit <n>` | Maximum jobs to return (max: 500, default: 100) | `"100"` |
+| `-o, --offset <n>` | Number of jobs to skip for pagination (default: 0) | `"0"` |
+| `--full-id` | Show full job IDs without truncation | `false` |
+
+**Subcommands:**
+
+- `pending` - List jobs awaiting approval
+- `approved` - List approved jobs (queued or processing)
+- `done` - List completed jobs
+- `failed` - List failed jobs
+- `cancelled` - List cancelled jobs
+
+---
+
+#### pending
+
+List jobs awaiting approval
+
+**Usage:**
+```bash
+kg pending [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID | - |
+| `-l, --limit <n>` | Maximum jobs to return | `"20"` |
+| `--full-id` | Show full job IDs (no truncation) | `false` |
+
+#### approved
+
+List approved jobs (queued or processing)
+
+**Usage:**
+```bash
+kg approved [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID | - |
+| `-l, --limit <n>` | Maximum jobs to return | `"20"` |
+| `--full-id` | Show full job IDs (no truncation) | `false` |
+
+#### done
+
+List completed jobs
+
+**Usage:**
+```bash
+kg done [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID | - |
+| `-l, --limit <n>` | Maximum jobs to return | `"20"` |
+| `--full-id` | Show full job IDs (no truncation) | `false` |
+
+#### failed
+
+List failed jobs
+
+**Usage:**
+```bash
+kg failed [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID | - |
+| `-l, --limit <n>` | Maximum jobs to return | `"20"` |
+| `--full-id` | Show full job IDs (no truncation) | `false` |
+
+#### cancelled
+
+List cancelled jobs
+
+**Usage:**
+```bash
+kg cancelled [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID | - |
+| `-l, --limit <n>` | Maximum jobs to return | `"20"` |
+| `--full-id` | Show full job IDs (no truncation) | `false` |
+
+### approve
+
+Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status
+
+**Usage:**
+```bash
+kg approve [options]
+```
+
+**Subcommands:**
+
+- `job` - Approve a specific job by ID after reviewing cost estimates
+- `pending` - Approve all jobs awaiting approval (batch operation with confirmation)
+- `filter` - Approve all jobs matching status filter
+
+---
+
+#### job
+
+Approve a specific job by ID after reviewing cost estimates
+
+**Usage:**
+```bash
+kg job <job-id>
+```
+
+**Arguments:**
+
+- `<job-id>` - Required
+
+#### pending
+
+Approve all jobs awaiting approval (batch operation with confirmation)
+
+**Usage:**
+```bash
+kg pending [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID for multi-tenant environments | - |
+| `-l, --limit <n>` | Maximum jobs to approve (default: 100) | `"100"` |
+
+#### filter
+
+Approve all jobs matching status filter
+
+**Usage:**
+```bash
+kg filter <status>
+```
+
+**Arguments:**
+
+- `<status>` - Required
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID | - |
+
+### cancel
+
+Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)
+
+**Usage:**
+```bash
+kg cancel <job-id-or-filter>
+```
+
+**Arguments:**
+
+- `<job-id-or-filter>` - Required
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --client <client-id>` | Filter by client ID for batch operations in multi-tenant setups | - |
+| `-l, --limit <n>` | Maximum jobs to cancel for safety (default: 100) | `"100"` |
+
+### clear
+
+Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)
+
+**Usage:**
+```bash
+kg clear [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--confirm` | Confirm deletion (REQUIRED for safety) | `false` |
 
 
 ## search

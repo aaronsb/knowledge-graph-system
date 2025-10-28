@@ -23,6 +23,12 @@ Architecture decisions, design documents, and ADRs (Architectural Decision Recor
 - **ARCHITECTURE_OVERVIEW.md** - System architecture overview
 - **ADR-###-*.md** - Individual architecture decision records
 
+### 📖 `guides/`
+Standalone guides for specific topics and workflows.
+
+- **DEPLOYMENT.md** - Comprehensive deployment guide for all environments
+- **VOCABULARY_CATEGORIES.md** - Understanding vocabulary category scores and confidence
+
 ### 🔨 `development/`
 Development journals, learnings, and internal notes.
 
@@ -49,12 +55,13 @@ Images, diagrams, and other media assets.
 7. Review [Examples](manual/06-reference/03-EXAMPLES.md) and [Use Cases](manual/06-reference/02-USE_CASES.md)
 
 ### Administrators
-1. Read [AUTHENTICATION.md](manual/04-security-and-access/01-AUTHENTICATION.md) for login and session management
-2. **Important:** Keep [PASSWORD_RECOVERY.md](manual/04-security-and-access/04-PASSWORD_RECOVERY.md) handy for account recovery
-3. Review [RBAC.md](manual/04-security-and-access/02-RBAC.md) for user and permission management
-4. **Important:** Read [SECURITY.md](manual/04-security-and-access/03-SECURITY.md) for encrypted API key management and security infrastructure
-5. Learn about [BACKUP_RESTORE.md](manual/05-maintenance/01-BACKUP_RESTORE.md) for data protection
-6. Reference [MCP_SETUP.md](manual/03-integration/01-MCP_SETUP.md) for service account configuration
+1. Read [DEPLOYMENT.md](guides/DEPLOYMENT.md) for deployment strategies and production setup
+2. Read [AUTHENTICATION.md](manual/04-security-and-access/01-AUTHENTICATION.md) for login and session management
+3. **Important:** Keep [PASSWORD_RECOVERY.md](manual/04-security-and-access/04-PASSWORD_RECOVERY.md) handy for account recovery
+4. Review [RBAC.md](manual/04-security-and-access/02-RBAC.md) for user and permission management
+5. **Important:** Read [SECURITY.md](manual/04-security-and-access/03-SECURITY.md) for encrypted API key management and security infrastructure
+6. Learn about [BACKUP_RESTORE.md](manual/05-maintenance/01-BACKUP_RESTORE.md) for data protection
+7. Reference [MCP_SETUP.md](manual/03-integration/01-MCP_SETUP.md) for service account configuration
 
 ### Developers
 1. Read [ARCHITECTURE_OVERVIEW.md](architecture/ARCHITECTURE_OVERVIEW.md)
