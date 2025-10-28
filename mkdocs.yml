@@ -64,6 +64,10 @@ plugins:
 # Navigation structure (order controlled, content auto-generated)
 nav:
   - Documentation Index: README.md
+  - Guides:
+    - 5-Minute Cold Start: guides/COLD-START.md
+    - Deployment Guide: guides/DEPLOYMENT.md
+    - Vocabulary Categories: guides/VOCABULARY_CATEGORIES.md
   - Manual:
     - manual/README.md
     - Introduction: manual/00-introduction/
@@ -73,7 +77,6 @@ nav:
     - Security & Access: manual/04-security-and-access/
     - Maintenance: manual/05-maintenance/
     - Reference: manual/06-reference/
-    - CLI Command Reference: manual/kg-command-reference/
   - Tool Reference:
     - reference/README.md
     - CLI Commands: reference/cli/
