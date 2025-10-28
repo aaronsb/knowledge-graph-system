@@ -733,11 +733,17 @@ class DataImporter:
         Console.info("Importing instances...")
         total_instances = len(data["instances"])
 
-        # Pre-create Instance label to avoid race condition in parallel processing
+        # Pre-create Instance label and relationship types to avoid race conditions
+        # in parallel processing (AGE creates label tables on first use)
         if total_instances > 0:
             client._execute_cypher("""
-                MERGE (dummy:Instance {instance_id: '_label_init_dummy'})
-                DELETE dummy
+                MERGE (c:Concept {concept_id: '_dummy_concept'})
+                MERGE (s:Source {source_id: '_dummy_source'})
+                MERGE (i:Instance {instance_id: '_dummy_instance'})
+                MERGE (c)-[:EVIDENCED_BY]->(i)
+                MERGE (i)-[:FROM_SOURCE]->(s)
+                MERGE (c)-[:APPEARS_IN]->(s)
+                DELETE i, c, s
             """)
 
         # Thread-safe counter and lock for progress tracking
