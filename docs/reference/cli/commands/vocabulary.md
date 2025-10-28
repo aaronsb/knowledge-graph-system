@@ -20,6 +20,12 @@ kg vocabulary [options]
 - `generate-embeddings` - Generate vector embeddings for vocabulary types (required for consolidation and categorization). Identifies types without embeddings, generates embeddings using configured embedding model, stores embeddings for similarity comparison, and enables consolidation and auto-categorization. Use after fresh install (bootstrap vocabulary embeddings), after ingestion introduces new custom types, when switching embedding models (regenerate), or for inconsistency fixes (force regeneration if corrupted). Performance: ~100-200ms per embedding (OpenAI), ~20-50ms per embedding (local models), parallel generation (batches of 10).
 - `category-scores` - Show category similarity scores for a specific relationship type (ADR-047). Displays assigned category, confidence score (calculated as max_score/second_max_score * 100), ambiguous flag (set when runner-up within 20% of winner), runner-up category if ambiguous, and similarity to all category seeds (0-100%) sorted by similarity with visual bar chart. Use this to verify auto-categorization makes sense, debug low confidence assignments, understand why confidence is low, resolve ambiguity between close categories, and audit all types for misassignments.
 - `refresh-categories` - Refresh category assignments for vocabulary types using latest embeddings (ADR-047). Identifies types needing category refresh, recalculates similarity to all category seeds, assigns best-matching category, updates confidence scores, and flags ambiguous assignments. Use after embedding model changes (recalculate with new model), category definition updates (refresh after changing seed terms), periodic maintenance (quarterly review), or quality improvement (re-evaluate low confidence). This is a non-destructive operation (doesn't affect edges), preserves manual assignments, and records audit trail per type.
+- `config` - Show current vocabulary configuration including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile (Bezier curve), synonym thresholds (strong, moderate), and other settings. Use this to verify configuration before updates, check active profile and mode, understand current thresholds, review synonym detection settings, and audit configuration state.
+- `config-update` - Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.
+- `profiles` - List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.
+- `profiles-show` - Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.
+- `profiles-create` - Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.
+- `profiles-delete` - Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.
 
 ---
 
@@ -130,3 +136,92 @@ kg refresh-categories [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--computed-only` | Refresh only types with category_source=computed (excludes manual assignments) | - |
+
+### config
+
+Show current vocabulary configuration including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile (Bezier curve), synonym thresholds (strong, moderate), and other settings. Use this to verify configuration before updates, check active profile and mode, understand current thresholds, review synonym detection settings, and audit configuration state.
+
+**Usage:**
+```bash
+kg config [options]
+```
+
+### config-update
+
+Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.
+
+**Usage:**
+```bash
+kg config-update [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--min <n>` | Minimum vocabulary size (10-100) | - |
+| `--max <n>` | Maximum vocabulary size (50-200) | - |
+| `--emergency <n>` | Emergency threshold (100-500) | - |
+| `--mode <mode>` | Pruning mode: naive, hitl, aitl | - |
+| `--profile <name>` | Aggressiveness profile name | - |
+| `--auto-expand` | Enable automatic expansion | - |
+| `--no-auto-expand` | Disable automatic expansion | - |
+| `--synonym-strong <n>` | Strong synonym threshold (0.7-1.0) | - |
+| `--synonym-moderate <n>` | Moderate synonym threshold (0.5-0.9) | - |
+| `--low-value <n>` | Low value score threshold (0.0-10.0) | - |
+| `--consolidation-threshold <n>` | Auto-merge threshold (0.5-1.0) | - |
+
+### profiles
+
+List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.
+
+**Usage:**
+```bash
+kg profiles [options]
+```
+
+### profiles-show
+
+Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.
+
+**Usage:**
+```bash
+kg profiles-show <name>
+```
+
+**Arguments:**
+
+- `<name>` - Profile name
+
+### profiles-create
+
+Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.
+
+**Usage:**
+```bash
+kg profiles-create [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--name <name>` | Profile name (3-50 chars) | - |
+| `--x1 <n>` | First control point X (0.0-1.0) | - |
+| `--y1 <n>` | First control point Y (-2.0 to 2.0) | - |
+| `--x2 <n>` | Second control point X (0.0-1.0) | - |
+| `--y2 <n>` | Second control point Y (-2.0 to 2.0) | - |
+| `--description <desc>` | Profile description (min 10 chars) | - |
+
+### profiles-delete
+
+Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.
+
+**Usage:**
+```bash
+kg profiles-delete <name>
+```
+
+**Arguments:**
+
+- `<name>` - Profile name to delete

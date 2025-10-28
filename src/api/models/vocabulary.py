@@ -192,7 +192,7 @@ class VocabularyAnalysisResponse(BaseModel):
 # =============================================================================
 
 class VocabularyConfigResponse(BaseModel):
-    """Vocabulary configuration"""
+    """Vocabulary configuration (public view)"""
     vocab_min: int
     vocab_max: int
     vocab_emergency: int
@@ -204,20 +204,94 @@ class VocabularyConfigResponse(BaseModel):
     synonym_threshold_strong: float = 0.90
     synonym_threshold_moderate: float = 0.70
     low_value_threshold: float = 1.0
+    consolidation_similarity_threshold: float = 0.90
     embedding_model: str = "text-embedding-ada-002"
+
+
+class VocabularyConfigDetail(BaseModel):
+    """Full vocabulary configuration with metadata (admin view)"""
+    vocab_min: int
+    vocab_max: int
+    vocab_emergency: int
+    pruning_mode: str
+    aggressiveness_profile: str
+    auto_expand_enabled: bool
+    synonym_threshold_strong: float
+    synonym_threshold_moderate: float
+    low_value_threshold: float
+    consolidation_similarity_threshold: float
+    embedding_model: str
+    updated_at: Optional[datetime] = None
+    updated_by: Optional[str] = None
+    # Computed fields
+    current_size: Optional[int] = None
+    zone: Optional[ZoneEnum] = None
+    aggressiveness: Optional[float] = None
 
 
 class UpdateConfigRequest(BaseModel):
     """Update vocabulary configuration"""
-    vocab_min: Optional[int] = None
-    vocab_max: Optional[int] = None
-    vocab_emergency: Optional[int] = None
+    vocab_min: Optional[int] = Field(None, ge=10, le=100)
+    vocab_max: Optional[int] = Field(None, ge=50, le=200)
+    vocab_emergency: Optional[int] = Field(None, ge=100, le=500)
     pruning_mode: Optional[PruningModeEnum] = None
     aggressiveness_profile: Optional[str] = None
     auto_expand_enabled: Optional[bool] = None
-    synonym_threshold_strong: Optional[float] = None
-    synonym_threshold_moderate: Optional[float] = None
-    low_value_threshold: Optional[float] = None
+    synonym_threshold_strong: Optional[float] = Field(None, ge=0.7, le=1.0)
+    synonym_threshold_moderate: Optional[float] = Field(None, ge=0.5, le=0.9)
+    low_value_threshold: Optional[float] = Field(None, ge=0.0, le=10.0)
+    consolidation_similarity_threshold: Optional[float] = Field(None, ge=0.5, le=1.0)
+    updated_by: str = Field(..., description="User making the update")
+
+
+class UpdateConfigResponse(BaseModel):
+    """Response after updating configuration"""
+    success: bool
+    updated_fields: List[str]
+    config: VocabularyConfigDetail
+    message: str
+
+
+# =============================================================================
+# Aggressiveness Profile Models
+# =============================================================================
+
+class AggressivenessProfile(BaseModel):
+    """Aggressiveness profile with Bezier curve parameters"""
+    profile_name: str
+    control_x1: float = Field(..., ge=0.0, le=1.0)
+    control_y1: float
+    control_x2: float = Field(..., ge=0.0, le=1.0)
+    control_y2: float
+    description: Optional[str] = None
+    is_builtin: bool = False
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class CreateProfileRequest(BaseModel):
+    """Request to create custom aggressiveness profile"""
+    profile_name: str = Field(..., min_length=3, max_length=50)
+    control_x1: float = Field(..., ge=0.0, le=1.0)
+    control_y1: float = Field(..., ge=-2.0, le=2.0)
+    control_x2: float = Field(..., ge=0.0, le=1.0)
+    control_y2: float = Field(..., ge=-2.0, le=2.0)
+    description: str = Field(..., min_length=10)
+
+
+class ProfileListResponse(BaseModel):
+    """List of aggressiveness profiles"""
+    total: int
+    builtin: int
+    custom: int
+    profiles: List[AggressivenessProfile]
+
+
+class DeleteProfileResponse(BaseModel):
+    """Response after deleting profile"""
+    success: bool
+    profile_name: str
+    message: str
 
 
 # =============================================================================

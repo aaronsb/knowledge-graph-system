@@ -119,8 +119,8 @@ class VocabularyManager:
 
     # Vocabulary thresholds (from ADR-032)
     VOCAB_MIN = 30          # Protected core (30 builtin types)
-    VOCAB_MAX = 90          # Soft limit for new additions
-    VOCAB_EMERGENCY = 200   # Hard limit - aggressive pruning kicks in
+    VOCAB_MAX = 90          # Soft limit for new additions (GREEN zone)
+    VOCAB_EMERGENCY = 300   # Hard limit - aggressive pruning kicks in
 
     # Pruning thresholds
     LOW_VALUE_THRESHOLD = 1.0    # Value score threshold for pruning consideration
@@ -144,7 +144,16 @@ class VocabularyManager:
         self.db = db_client
         self.ai_provider = ai_provider
         self.mode = mode
-        self.profile = aggressiveness_profile
+
+        # Load configuration from database (with class constant fallback)
+        try:
+            self.VOCAB_MIN = int(db_client.get_vocab_config('vocab_min') or self.VOCAB_MIN)
+            self.VOCAB_MAX = int(db_client.get_vocab_config('vocab_max') or self.VOCAB_MAX)
+            self.VOCAB_EMERGENCY = int(db_client.get_vocab_config('vocab_emergency') or self.VOCAB_EMERGENCY)
+            self.profile = db_client.get_vocab_config('aggressiveness_profile') or aggressiveness_profile
+        except Exception as e:
+            logger.warning(f"Failed to load vocab config from database, using defaults: {e}")
+            self.profile = aggressiveness_profile
 
         # Initialize worker modules
         self.scorer = VocabularyScorer(db_client)
@@ -152,7 +161,8 @@ class VocabularyManager:
         self.synonym_detector = SynonymDetector(ai_provider)
         self.strategy = PruningStrategy(mode=mode, ai_provider=ai_provider)
 
-        logger.info(f"VocabularyManager initialized (mode={mode}, profile={aggressiveness_profile})")
+        logger.info(f"VocabularyManager initialized (mode={mode}, profile={self.profile}, "
+                   f"thresholds: min={self.VOCAB_MIN}, max={self.VOCAB_MAX}, emergency={self.VOCAB_EMERGENCY})")
 
     async def analyze_vocabulary(
         self,
@@ -731,6 +741,11 @@ class VocabularyManager:
         logger.info("LIVE MODE: Processing candidates one-at-a-time with re-query")
         iteration = 0
 
+        # Calculate max iterations as half of starting vocabulary size
+        initial_vocab_size = await self._get_vocabulary_size()
+        max_iterations = max(10, initial_vocab_size // 2)  # At least 10, or vocab_size/2
+        logger.info(f"Max iterations set to {max_iterations} (vocab_size: {initial_vocab_size})")
+
         # Track processed pairs during this session to avoid re-presenting rejected candidates
         processed_pairs: set[frozenset[str]] = set()
 
@@ -841,8 +856,8 @@ class VocabularyManager:
             # Vocabulary has changed - next iteration will re-query
 
             # Safety: don't run forever
-            if iteration >= 10:
-                logger.warning("Max iterations (10) reached, stopping")
+            if iteration >= max_iterations:
+                logger.warning(f"Max iterations ({max_iterations}) reached, stopping")
                 break
 
         logger.info(

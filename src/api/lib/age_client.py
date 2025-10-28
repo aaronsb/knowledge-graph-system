@@ -1147,6 +1147,42 @@ class AGEClient:
             logger.error(f"Failed to get vocabulary size from graph: {e}")
             return 0
 
+    def get_vocab_config(self, key: str, fallback: Optional[str] = None) -> Optional[str]:
+        """
+        Get vocabulary configuration value from database.
+
+        Reads from kg_api.vocabulary_config table using helper function
+        created in migration 017.
+
+        Args:
+            key: Configuration key (e.g., 'vocab_min', 'vocab_emergency')
+            fallback: Value to return if key not found
+
+        Returns:
+            Configuration value as string, or fallback if not found
+
+        Example:
+            >>> client = AGEClient()
+            >>> emergency = client.get_vocab_config('vocab_emergency', '200')
+            >>> print(f"Emergency threshold: {emergency}")
+        """
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT kg_api.get_vocab_config(%s, %s)",
+                    (key, fallback)
+                )
+                result = cur.fetchone()
+                if result and result[0] is not None:
+                    return result[0]
+                return fallback
+        except Exception as e:
+            logger.error(f"Failed to get vocab config '{key}' from database: {e}")
+            return fallback
+        finally:
+            self.pool.putconn(conn)
+
     def get_all_edge_types(self, include_inactive: bool = False) -> List[str]:
         """
         Get list of all relationship types in vocabulary.

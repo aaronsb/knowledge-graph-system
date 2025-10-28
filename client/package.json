@@ -32,8 +32,10 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.0",
+    "@types/asciichart": "^1.5.8",
     "@types/prompts": "^2.4.9",
     "ansis": "^4.2.0",
+    "asciichart": "^1.5.25",
     "axios": "^1.6.0",
     "cfonts": "^3.3.1",
     "chalk": "^4.1.2",

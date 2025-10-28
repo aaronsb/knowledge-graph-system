@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { coloredCount, separator } from './colors';
+import { plotBezierCurve, formatCurveSummary, type CurveMarker, type ZoneLabel } from './curve-viz';
 
 export const vocabularyCommand = new Command('vocabulary')
   .alias('vocab')
@@ -56,6 +57,59 @@ export const vocabularyCommand = new Command('vocabulary')
           console.log(`  ${colors.stats.label('Builtin:')} ${coloredCount(status.builtin_types)}`);
           console.log(`  ${colors.stats.label('Custom:')} ${coloredCount(status.custom_types)}`);
           console.log(`  ${colors.stats.label('Categories:')} ${coloredCount(status.categories)}`);
+
+          // Fetch and display aggressiveness curve
+          try {
+            const profile = await client.getAggressivenessProfile(status.profile);
+
+            console.log('\n' + colors.stats.section('Aggressiveness Curve'));
+            console.log(`  ${colors.stats.label('Profile:')} ${colors.ui.value(formatCurveSummary(profile))}`);
+            if (profile.description) {
+              console.log(`  ${colors.status.dim(profile.description)}`);
+            }
+
+            // Calculate normalized position and create markers
+            const range = status.vocab_emergency - status.vocab_min;
+            // Detect terminal width and calculate optimal chart width
+            const terminalWidth = process.stdout.columns || 80;
+            // Reserve space for Y-axis labels (6 chars) + margins (4 chars)
+            const chartWidth = Math.min(Math.max(40, terminalWidth - 10), 120);
+
+            const currentNormalized = Math.max(0, Math.min(1, (status.vocab_size - status.vocab_min) / range));
+            const maxNormalized = Math.max(0, Math.min(1, (status.vocab_max - status.vocab_min) / range));
+
+            const markers: CurveMarker[] = [
+              { position: 0, char: '│', label: `${status.vocab_min}` },
+              { position: maxNormalized, char: '│', label: `MAX:${status.vocab_max}` },
+              {
+                position: currentNormalized,
+                char: '▼',
+                label: `YOU:${status.vocab_size}`,
+                drawVerticalLine: true,
+                color: zoneColor
+              },
+              { position: 1, char: '│', label: `${status.vocab_emergency}` }
+            ];
+
+            // Calculate zone widths based on dynamic chart width
+            const zoneWidth = Math.floor(chartWidth / 3);
+            const zones: ZoneLabel[] = [
+              { label: 'GREEN', width: zoneWidth, color: colors.status.success },
+              { label: 'WATCH', width: zoneWidth, color: colors.status.warning },
+              { label: 'DANGER/EMERGENCY', width: zoneWidth, color: colors.status.error }
+            ];
+
+            console.log('\n' + colors.status.dim('Y-axis: Consolidation aggressiveness | X-axis: Vocabulary size'));
+            console.log(plotBezierCurve(
+              profile.control_x1,
+              profile.control_y1,
+              profile.control_x2,
+              profile.control_y2,
+              { markers, zones, points: chartWidth, height: 12 }
+            ));
+          } catch (error: any) {
+            console.log('\n' + colors.status.dim('  (Unable to load aggressiveness curve)'));
+          }
 
           console.log('\n' + separator());
         } catch (error: any) {
@@ -468,6 +522,293 @@ export const vocabularyCommand = new Command('vocabulary')
 
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to refresh categories'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('config')
+      .description('Show current vocabulary configuration including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile (Bezier curve), synonym thresholds (strong, moderate), and other settings. Use this to verify configuration before updates, check active profile and mode, understand current thresholds, review synonym detection settings, and audit configuration state.')
+      .action(async () => {
+        try {
+          const client = createClientFromEnv();
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('📋 Vocabulary Configuration'));
+          console.log(separator());
+
+          const config = await client.getVocabularyConfigDetail();
+
+          // Thresholds section
+          console.log(`\n${colors.stats.section('Thresholds')}`);
+          console.log(`  ${colors.stats.label('Minimum:')} ${coloredCount(config.vocab_min)}`);
+          console.log(`  ${colors.stats.label('Maximum:')} ${coloredCount(config.vocab_max)}`);
+          console.log(`  ${colors.stats.label('Emergency:')} ${coloredCount(config.vocab_emergency)}`);
+
+          // Current state
+          console.log(`\n${colors.stats.section('Current State')}`);
+          console.log(`  ${colors.stats.label('Vocabulary Size:')} ${coloredCount(config.current_size)}`);
+
+          const zoneColors: Record<string, (text: string) => string> = {
+            comfort: colors.status.success,
+            watch: colors.status.warning,
+            merge: colors.status.warning,
+            mixed: colors.status.warning,
+            emergency: colors.status.error,
+            block: colors.status.error
+          };
+          const zoneColor = zoneColors[config.zone] || colors.ui.value;
+          console.log(`  ${colors.stats.label('Zone:')} ${zoneColor(config.zone.toUpperCase())}`);
+          console.log(`  ${colors.stats.label('Aggressiveness:')} ${colors.ui.value((config.aggressiveness * 100).toFixed(1) + '%')}`);
+
+          // Modes and profiles
+          console.log(`\n${colors.stats.section('Modes and Profiles')}`);
+          console.log(`  ${colors.stats.label('Pruning Mode:')} ${colors.ui.value(config.pruning_mode)}`);
+          console.log(`  ${colors.stats.label('Aggressiveness Profile:')} ${colors.ui.value(config.aggressiveness_profile)}`);
+          console.log(`  ${colors.stats.label('Auto-expand Enabled:')} ${config.auto_expand_enabled ? colors.status.success('true') : colors.status.dim('false')}`);
+
+          // Thresholds
+          console.log(`\n${colors.stats.section('Detection Thresholds')}`);
+          console.log(`  ${colors.stats.label('Synonym (Strong):')} ${colors.ui.value(config.synonym_threshold_strong.toFixed(2))}`);
+          console.log(`  ${colors.stats.label('Synonym (Moderate):')} ${colors.ui.value(config.synonym_threshold_moderate.toFixed(2))}`);
+          console.log(`  ${colors.stats.label('Low Value:')} ${colors.ui.value(config.low_value_threshold.toFixed(1))}`);
+          console.log(`  ${colors.stats.label('Consolidation:')} ${colors.ui.value(config.consolidation_similarity_threshold.toFixed(2))}`);
+
+          // Model
+          console.log(`\n${colors.stats.section('Model')}`);
+          console.log(`  ${colors.stats.label('Embedding Model:')} ${colors.ui.value(config.embedding_model)}`);
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to get vocabulary configuration'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('config-update')
+      .description('Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.')
+      .option('--min <n>', 'Minimum vocabulary size (10-100)', parseInt)
+      .option('--max <n>', 'Maximum vocabulary size (50-200)', parseInt)
+      .option('--emergency <n>', 'Emergency threshold (100-500)', parseInt)
+      .option('--mode <mode>', 'Pruning mode: naive, hitl, aitl')
+      .option('--profile <name>', 'Aggressiveness profile name')
+      .option('--auto-expand', 'Enable automatic expansion')
+      .option('--no-auto-expand', 'Disable automatic expansion')
+      .option('--synonym-strong <n>', 'Strong synonym threshold (0.7-1.0)', parseFloat)
+      .option('--synonym-moderate <n>', 'Moderate synonym threshold (0.5-0.9)', parseFloat)
+      .option('--low-value <n>', 'Low value score threshold (0.0-10.0)', parseFloat)
+      .option('--consolidation-threshold <n>', 'Auto-merge threshold (0.5-1.0)', parseFloat)
+      .action(async (options) => {
+        try {
+          const client = createClientFromEnv();
+
+          // Build update request
+          const updates: any = { updated_by: 'cli' };
+
+          if (options.min !== undefined) updates.vocab_min = options.min;
+          if (options.max !== undefined) updates.vocab_max = options.max;
+          if (options.emergency !== undefined) updates.vocab_emergency = options.emergency;
+          if (options.mode) updates.pruning_mode = options.mode;
+          if (options.profile) updates.aggressiveness_profile = options.profile;
+          if (options.autoExpand !== undefined) updates.auto_expand_enabled = options.autoExpand;
+          if (options.synonymStrong !== undefined) updates.synonym_threshold_strong = options.synonymStrong;
+          if (options.synonymModerate !== undefined) updates.synonym_threshold_moderate = options.synonymModerate;
+          if (options.lowValue !== undefined) updates.low_value_threshold = options.lowValue;
+          if (options.consolidationThreshold !== undefined) updates.consolidation_similarity_threshold = options.consolidationThreshold;
+
+          if (Object.keys(updates).length === 1) { // Only 'updated_by'
+            console.error(colors.status.error('✗ No configuration fields provided for update'));
+            console.error(colors.status.dim('\nUse --help to see available options'));
+            process.exit(1);
+          }
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('📝 Updating Vocabulary Configuration'));
+          console.log(separator());
+
+          const result = await client.updateVocabularyConfig(updates);
+
+          console.log('\n' + colors.status.success('✓ Configuration updated successfully'));
+          console.log(`\n  ${colors.stats.label('Updated fields:')} ${colors.ui.value(result.updated_fields.join(', '))}`);
+
+          // Show new values
+          console.log(`\n${colors.stats.section('New Configuration')}`);
+          if (result.config.vocab_min) console.log(`  ${colors.stats.label('Minimum:')} ${coloredCount(result.config.vocab_min)}`);
+          if (result.config.vocab_max) console.log(`  ${colors.stats.label('Maximum:')} ${coloredCount(result.config.vocab_max)}`);
+          if (result.config.vocab_emergency) console.log(`  ${colors.stats.label('Emergency:')} ${coloredCount(result.config.vocab_emergency)}`);
+          if (result.config.pruning_mode) console.log(`  ${colors.stats.label('Mode:')} ${colors.ui.value(result.config.pruning_mode)}`);
+          if (result.config.aggressiveness_profile) console.log(`  ${colors.stats.label('Profile:')} ${colors.ui.value(result.config.aggressiveness_profile)}`);
+
+          console.log(`\n  ${colors.stats.label('Current Size:')} ${coloredCount(result.config.current_size)}`);
+
+          const zoneColors: Record<string, (text: string) => string> = {
+            comfort: colors.status.success,
+            watch: colors.status.warning,
+            merge: colors.status.warning,
+            mixed: colors.status.warning,
+            emergency: colors.status.error,
+            block: colors.status.error
+          };
+          const zoneColor = zoneColors[result.config.zone] || colors.ui.value;
+          console.log(`  ${colors.stats.label('Zone:')} ${zoneColor(result.config.zone.toUpperCase())}`);
+          console.log(`  ${colors.stats.label('Aggressiveness:')} ${colors.ui.value((result.config.aggressiveness * 100).toFixed(1) + '%')}`);
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to update vocabulary configuration'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('profiles')
+      .description('List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.')
+      .action(async () => {
+        try {
+          const client = createClientFromEnv();
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('🎨 Aggressiveness Profiles'));
+          console.log(separator());
+
+          const result = await client.listAggressivenessProfiles();
+
+          console.log(`\n  ${colors.stats.label('Total Profiles:')} ${coloredCount(result.total)}`);
+          console.log(`  ${colors.stats.label('Builtin:')} ${coloredCount(result.builtin)}`);
+          console.log(`  ${colors.stats.label('Custom:')} ${coloredCount(result.custom)}`);
+
+          console.log(`\n${colors.stats.section('Profiles')}`);
+
+          for (const profile of result.profiles) {
+            const builtinFlag = profile.is_builtin ? colors.status.dim(' [B]') : '';
+            console.log(`\n  ${colors.ui.value(profile.profile_name)}${builtinFlag}`);
+            console.log(`    ${colors.stats.label('Control Points:')} (${profile.control_x1.toFixed(2)}, ${profile.control_y1.toFixed(2)}) (${profile.control_x2.toFixed(2)}, ${profile.control_y2.toFixed(2)})`);
+            console.log(`    ${colors.stats.label('Description:')} ${colors.status.dim(profile.description)}`);
+          }
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to list aggressiveness profiles'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('profiles-show')
+      .description('Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.')
+      .argument('<name>', 'Profile name')
+      .action(async (name: string) => {
+        try {
+          const client = createClientFromEnv();
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title(`🎨 Profile: ${name}`));
+          console.log(separator());
+
+          const profile = await client.getAggressivenessProfile(name);
+
+          console.log(`\n  ${colors.stats.label('Profile Name:')} ${colors.ui.value(profile.profile_name)}`);
+          console.log(`  ${colors.stats.label('Builtin:')} ${profile.is_builtin ? colors.status.success('Yes') : colors.ui.value('No')}`);
+
+          console.log(`\n${colors.stats.section('Bezier Curve Parameters')}`);
+          console.log(`  ${colors.stats.label('Control Point 1:')} (${colors.ui.value(profile.control_x1.toFixed(2))}, ${colors.ui.value(profile.control_y1.toFixed(2))})`);
+          console.log(`  ${colors.stats.label('Control Point 2:')} (${colors.ui.value(profile.control_x2.toFixed(2))}, ${colors.ui.value(profile.control_y2.toFixed(2))})`);
+
+          console.log(`\n${colors.stats.section('Description')}`);
+          console.log(`  ${colors.status.dim(profile.description)}`);
+
+          if (profile.created_at) {
+            console.log(`\n${colors.stats.section('Metadata')}`);
+            console.log(`  ${colors.stats.label('Created:')} ${colors.status.dim(new Date(profile.created_at).toLocaleString())}`);
+            if (profile.updated_at) {
+              console.log(`  ${colors.stats.label('Updated:')} ${colors.status.dim(new Date(profile.updated_at).toLocaleString())}`);
+            }
+          }
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error(`✗ Failed to get profile: ${name}`));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('profiles-create')
+      .description('Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.')
+      .requiredOption('--name <name>', 'Profile name (3-50 chars)')
+      .requiredOption('--x1 <n>', 'First control point X (0.0-1.0)', parseFloat)
+      .requiredOption('--y1 <n>', 'First control point Y (-2.0 to 2.0)', parseFloat)
+      .requiredOption('--x2 <n>', 'Second control point X (0.0-1.0)', parseFloat)
+      .requiredOption('--y2 <n>', 'Second control point Y (-2.0 to 2.0)', parseFloat)
+      .requiredOption('--description <desc>', 'Profile description (min 10 chars)')
+      .action(async (options) => {
+        try {
+          const client = createClientFromEnv();
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('🎨 Creating Aggressiveness Profile'));
+          console.log(separator());
+
+          console.log(`\n  ${colors.stats.label('Name:')} ${colors.ui.value(options.name)}`);
+          console.log(`  ${colors.stats.label('Control Point 1:')} (${colors.ui.value(options.x1.toFixed(2))}, ${colors.ui.value(options.y1.toFixed(2))})`);
+          console.log(`  ${colors.stats.label('Control Point 2:')} (${colors.ui.value(options.x2.toFixed(2))}, ${colors.ui.value(options.y2.toFixed(2))})`);
+          console.log(`  ${colors.stats.label('Description:')} ${colors.status.dim(options.description)}`);
+
+          const profile = await client.createAggressivenessProfile({
+            profile_name: options.name,
+            control_x1: options.x1,
+            control_y1: options.y1,
+            control_x2: options.x2,
+            control_y2: options.y2,
+            description: options.description
+          });
+
+          console.log('\n' + colors.status.success('✓ Profile created successfully'));
+          console.log(`\n  ${colors.stats.label('Profile Name:')} ${colors.ui.value(profile.profile_name)}`);
+          console.log(`  ${colors.stats.label('Created:')} ${colors.status.dim(new Date(profile.created_at).toLocaleString())}`);
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to create aggressiveness profile'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('profiles-delete')
+      .description('Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.')
+      .argument('<name>', 'Profile name to delete')
+      .action(async (name: string) => {
+        try {
+          const client = createClientFromEnv();
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('🗑️  Deleting Aggressiveness Profile'));
+          console.log(separator());
+
+          console.log(`\n  ${colors.stats.label('Profile:')} ${colors.ui.value(name)}`);
+
+          const result = await client.deleteAggressivenessProfile(name);
+
+          console.log('\n' + colors.status.success('✓ Profile deleted successfully'));
+          console.log(`\n  ${colors.stats.label('Message:')} ${colors.status.dim(result.message)}`);
+
+          console.log('\n' + separator());
+
+        } catch (error: any) {
+          console.error(colors.status.error(`✗ Failed to delete profile: ${name}`));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
           process.exit(1);
         }
