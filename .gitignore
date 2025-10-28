@@ -90,7 +90,8 @@ temp/
 Desktop.ini
 $RECYCLE.BIN/
 .mcp.json
-docs/.obsidian/workspace.json
+# Obsidian workspace files (any level)
+**/.obsidian/
 
 # ----------------------------------------------------------------------------
 # MkDocs
