@@ -1,0 +1,204 @@
+{
+  "main": {
+    "id": "d297ea5129026f7c",
+    "type": "split",
+    "children": [
+      {
+        "id": "926ca074cc0619e3",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d5956bb0d4f6699b",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "4129e351e4872005",
+    "type": "split",
+    "children": [
+      {
+        "id": "66afd63c20d080bd",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e5ae4bd80a491045",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "1b7f8e1724891b6a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "cc2a62af6cbfee32",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "24eba7eacc8f5df3",
+    "type": "split",
+    "children": [
+      {
+        "id": "b3740c4ea8e6eeba",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5fec2df618233c71",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "7c0c6162e1d4f026",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "57674c4ef3da5f43",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "223f7f4f03489c48",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "d5956bb0d4f6699b",
+  "lastOpenFiles": [
+    "client/src/cli/ontology.ts.tmp.39560.1761658862943",
+    "client/src/cli/ontology.ts.tmp.39560.1761658855268",
+    "client/src/cli/ontology.ts.tmp.39560.1761658846347",
+    "client/src/cli/ontology.ts.tmp.39560.1761658838608",
+    "client/src/cli/ontology.ts.tmp.39560.1761658831183",
+    "client/src/cli/ontology.ts.tmp.39560.1761658822988",
+    "client/src/cli/config.ts.tmp.39560.1761658657560",
+    "client/src/cli/config.ts.tmp.39560.1761658651558",
+    "client/src/cli/config.ts.tmp.39560.1761658644788",
+    "client/src/cli/config.ts.tmp.39560.1761658637315",
+    "client/src/cli/config.ts.tmp.39560.1761658625623",
+    "docs/reference/mcp/tools/search_concepts.md",
+    "docs/reference/mcp/tools/list_ontologies.md",
+    "docs/reference/mcp/tools/list_jobs.md",
+    "docs/reference/mcp/tools/ingest_text.md",
+    "docs/reference/mcp/tools/get_system_status.md",
+    "docs/reference/mcp/tools/get_ontology_info.md",
+    "docs/reference/mcp/tools/get_ontology_files.md",
+    "docs/reference/mcp/tools/get_job_status.md",
+    "docs/reference/mcp/tools/get_database_stats.md",
+    "docs/reference/mcp/tools/get_database_info.md",
+    "docs/reference/mcp/tools/get_database_health.md",
+    "docs/reference/mcp/tools/get_concept_details.md",
+    "docs/reference/mcp/tools/get_api_health.md",
+    "docs/reference/mcp/tools/find_related_concepts.md",
+    "docs/reference/mcp/tools/find_connection_by_search.md",
+    "docs/reference/mcp/tools/find_connection.md",
+    "docs/reference/mcp/tools/delete_ontology.md",
+    "docs/reference/mcp/tools/cancel_job.md",
+    "docs/reference/mcp/tools/approve_job.md",
+    "docs/reference/mcp/media/README.md",
+    "docs/reference/cli/media/README.md",
+    "docs/reference/cli/commands/vocabulary.md",
+    "docs/reference/cli/commands/database.md",
+    "docs/reference/cli/commands/search.md",
+    "docs/reference/cli/commands/config.md"
+  ]
+}

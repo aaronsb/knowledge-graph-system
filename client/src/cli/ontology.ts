@@ -10,12 +10,12 @@ import { Table } from '../lib/table';
 
 export const ontologyCommand = new Command('ontology')
   .alias('onto')  // Short alias
-  .description('Manage ontologies (knowledge domains)')
+  .description('Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(
     new Command('list')
-      .description('List all ontologies')
+      .description('List all ontologies in the knowledge graph. Shows a table with ontology name, file count, chunk count, and concept count. Use this to get a bird\'s-eye view of all knowledge domains, verify ingestion results, and understand how knowledge is distributed.')
       .action(async () => {
         try {
           const client = createClientFromEnv();
@@ -72,7 +72,7 @@ export const ontologyCommand = new Command('ontology')
   )
   .addCommand(
     new Command('info')
-      .description('Get detailed information about an ontology')
+      .description('Get detailed information about a specific ontology. Shows statistics (files, chunks, concepts, evidence, relationships) and lists all source files. Use this to understand ontology composition, verify expected files are present, and troubleshoot ingestion issues.')
       .showHelpAfterError()
       .argument('<name>', 'Ontology name')
       .action(async (name) => {
@@ -108,7 +108,7 @@ export const ontologyCommand = new Command('ontology')
   )
   .addCommand(
     new Command('files')
-      .description('List files in an ontology')
+      .description('List files in a specific ontology with per-file statistics (chunks and concepts). Shows which files contributed most concepts and helps identify files that may need re-ingestion. Original file paths are preserved, though temporary paths may appear for text-based ingestion.')
       .showHelpAfterError()
       .argument('<name>', 'Ontology name')
       .action(async (name) => {
@@ -137,7 +137,7 @@ export const ontologyCommand = new Command('ontology')
   )
   .addCommand(
     new Command('rename')
-      .description('Rename an ontology')
+      .description('Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.')
       .showHelpAfterError()
       .argument('<old-name>', 'Current ontology name')
       .argument('<new-name>', 'New ontology name')
@@ -180,7 +180,7 @@ export const ontologyCommand = new Command('ontology')
   )
   .addCommand(
     new Command('delete')
-      .description('Delete an ontology and all its data')
+      .description('Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).')
       .showHelpAfterError()
       .argument('<name>', 'Ontology name')
       .option('-f, --force', 'Skip confirmation and force deletion')
