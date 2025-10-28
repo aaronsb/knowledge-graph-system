@@ -78,6 +78,10 @@ nav:
     - Maintenance: manual/05-maintenance/
     - Reference: manual/06-reference/
     - CLI Command Reference: manual/kg-command-reference/
+  - API Reference:
+    - reference/README.md
+    - CLI Commands: reference/cli/
+    - MCP Tools: reference/mcp/
   - Architecture: architecture/
   - Development: development/
   - Testing: testing/
