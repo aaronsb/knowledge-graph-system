@@ -7,20 +7,20 @@ repo_name: aaronsb/knowledge-graph-system
 theme:
   name: material
   palette:
-    # Dark mode (default - listed first)
-    - scheme: slate
+    # Light mode (default)
+    - scheme: default
       primary: indigo
-      accent: cyan
+      accent: indigo
       toggle:
         icon: material/brightness-7
-        name: Switch to light mode
-    # Light mode
-    - scheme: default
-      primary: blue grey
-      accent: deep orange
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
       toggle:
         icon: material/brightness-4
-        name: Switch to dark mode
+        name: Switch to light mode
   features:
     - navigation.instant
     - navigation.tracking
@@ -33,11 +33,6 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
-  font:
-    text: Roboto Mono
-    code: Roboto Mono
-  icon:
-    logo: material/graph-outline
 
 markdown_extensions:
   - admonition
@@ -57,6 +52,7 @@ markdown_extensions:
 
 plugins:
   - search
+  - swagger-ui-tag  # OpenAPI/Swagger UI for REST API docs
   - include_dir_to_nav:
       file_name_as_title: true
       sort_file: true
@@ -78,10 +74,12 @@ nav:
     - Maintenance: manual/05-maintenance/
     - Reference: manual/06-reference/
     - CLI Command Reference: manual/kg-command-reference/
-  - API Reference:
+  - Tool Reference:
     - reference/README.md
     - CLI Commands: reference/cli/
     - MCP Tools: reference/mcp/
+  - API Reference:
+    - REST API: reference/api/
   - Architecture: architecture/
   - Development: development/
   - Testing: testing/

@@ -24,3 +24,6 @@ pytest-asyncio>=0.23.0  # Async test support for FastAPI
 httpx>=0.26.0  # HTTP client for FastAPI testing
 pytest-cov>=4.1.0  # Code coverage reporting
 pytest-env>=1.1.0  # Environment variable management in tests
+
+# Documentation
+mkdocs-swagger-ui-tag>=0.6.0  # OpenAPI/Swagger UI plugin for API docs
