@@ -8,7 +8,7 @@
     "kg-mcp-server": "dist/mcp-server.js"
   },
   "scripts": {
-    "build": "node scripts/generate-version.js && tsc && npm run postbuild",
+    "build": "node scripts/generate-version.js && tsc && npm run postbuild && npm run docs:generate",
     "postbuild": "chmod +x dist/index.js dist/mcp-server.js",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
@@ -18,7 +18,10 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "docs": "node scripts/check-docs.js",
-    "docs:check": "node scripts/check-docs.js"
+    "docs:check": "node scripts/check-docs.js",
+    "docs:generate": "npm run docs:cli && npm run docs:mcp",
+    "docs:cli": "node scripts/simple-doc-gen.mjs",
+    "docs:mcp": "node scripts/generate-mcp-docs.mjs"
   },
   "keywords": [
     "knowledge-graph",

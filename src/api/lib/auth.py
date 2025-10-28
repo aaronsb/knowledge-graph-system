@@ -12,6 +12,19 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 
+# Fix passlib 1.7.4 compatibility with bcrypt 4.x/5.x
+# passlib expects bcrypt.__about__.__version__ but newer bcrypt uses bcrypt.__version__
+try:
+    import bcrypt
+    if not hasattr(bcrypt, '__about__'):
+        # Create mock __about__ module for passlib compatibility
+        class _BcryptAbout:
+            __version__ = getattr(bcrypt, '__version__', 'unknown')
+
+        bcrypt.__about__ = _BcryptAbout()
+except ImportError:
+    pass  # bcrypt not installed, passlib will handle
+
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 
