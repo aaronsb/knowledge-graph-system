@@ -733,6 +733,13 @@ class DataImporter:
         Console.info("Importing instances...")
         total_instances = len(data["instances"])
 
+        # Pre-create Instance label to avoid race condition in parallel processing
+        if total_instances > 0:
+            client._execute_cypher("""
+                MERGE (dummy:Instance {instance_id: '_label_init_dummy'})
+                DELETE dummy
+            """)
+
         # Thread-safe counter and lock for progress tracking
         progress_lock = threading.Lock()
         completed = {"count": 0}
