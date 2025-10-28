@@ -565,7 +565,7 @@ class DataImporter:
     def import_backup(client: AGEClient, backup_data: Dict[str, Any],
                      overwrite_existing: bool = False,
                      progress_callback: Optional[callable] = None,
-                     max_workers: int = 2) -> Dict[str, int]:
+                     max_workers: int = 4) -> Dict[str, int]:
         """
         Import backup data into database
 
@@ -574,7 +574,7 @@ class DataImporter:
             backup_data: Parsed backup JSON
             overwrite_existing: If True, update existing nodes; if False, skip duplicates
             progress_callback: Optional callback(stage, current, total, percent) for progress updates
-            max_workers: Maximum parallel workers for instances/relationships (default: 2)
+            max_workers: Maximum parallel workers for instances/relationships (default: 4)
 
         Returns:
             Dictionary with import statistics
