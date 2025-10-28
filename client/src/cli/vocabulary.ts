@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { coloredCount, separator } from './colors';
+import { plotBezierCurve, formatCurveSummary, type CurveMarker } from './curve-viz';
 
 export const vocabularyCommand = new Command('vocabulary')
   .alias('vocab')
@@ -56,6 +57,48 @@ export const vocabularyCommand = new Command('vocabulary')
           console.log(`  ${colors.stats.label('Builtin:')} ${coloredCount(status.builtin_types)}`);
           console.log(`  ${colors.stats.label('Custom:')} ${coloredCount(status.custom_types)}`);
           console.log(`  ${colors.stats.label('Categories:')} ${coloredCount(status.categories)}`);
+
+          // Fetch and display aggressiveness curve
+          try {
+            const profile = await client.getAggressivenessProfile(status.profile);
+
+            console.log('\n' + colors.stats.section('Aggressiveness Curve'));
+            console.log(`  ${colors.stats.label('Profile:')} ${colors.ui.value(formatCurveSummary(profile))}`);
+            if (profile.description) {
+              console.log(`  ${colors.status.dim(profile.description)}`);
+            }
+
+            // Calculate normalized position and create markers
+            const range = status.vocab_emergency - status.vocab_min;
+            const currentNormalized = Math.max(0, Math.min(1, (status.vocab_size - status.vocab_min) / range));
+            const maxNormalized = Math.max(0, Math.min(1, (status.vocab_max - status.vocab_min) / range));
+
+            const markers: CurveMarker[] = [
+              { position: 0, char: '│', label: `${status.vocab_min}` },
+              { position: maxNormalized, char: '│', label: `MAX:${status.vocab_max}` },
+              { position: currentNormalized, char: '▼', label: `YOU:${status.vocab_size}` },
+              { position: 1, char: '│', label: `${status.vocab_emergency}` }
+            ];
+
+            // Calculate zone widths based on thresholds
+            const zoneWidth = Math.floor(60 / 3);
+            const zones = [
+              { label: 'GREEN', width: zoneWidth },
+              { label: 'WATCH', width: zoneWidth },
+              { label: 'DANGER/EMERGENCY', width: zoneWidth }
+            ];
+
+            console.log('\n' + colors.status.dim('Y-axis: Consolidation aggressiveness | X-axis: Vocabulary size'));
+            console.log(plotBezierCurve(
+              profile.control_x1,
+              profile.control_y1,
+              profile.control_x2,
+              profile.control_y2,
+              { markers, zones, points: 60, height: 12 }
+            ));
+          } catch (error: any) {
+            console.log('\n' + colors.status.dim('  (Unable to load aggressiveness curve)'));
+          }
 
           console.log('\n' + separator());
         } catch (error: any) {
