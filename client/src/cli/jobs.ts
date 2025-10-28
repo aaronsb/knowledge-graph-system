@@ -9,14 +9,14 @@ import { JobStatus } from '../types';
 import * as colors from './colors';
 import { Table } from '../lib/table';
 
-export const jobCommand = new Command('job')
+export const jobsCommand = new Command('job')
   .alias('jobs')  // Plural alias for backwards compatibility
   .description('Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError();
 
 // Get job status
-jobCommand
+jobsCommand
   .command('status <job-id>')
   .description('Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion')
   .showHelpAfterError()
@@ -254,7 +254,7 @@ listCommand
   });
 
 // Add list command to jobs
-jobCommand.addCommand(listCommand);
+jobsCommand.addCommand(listCommand);
 
 // Approve job(s) (ADR-014)
 const approveCommand = new Command('approve')
@@ -371,10 +371,10 @@ approveCommand
       }
     });
 
-jobCommand.addCommand(approveCommand);
+jobsCommand.addCommand(approveCommand);
 
 // Cancel job(s)
-jobCommand
+jobsCommand
   .command('cancel <job-id-or-filter>')
   .description('Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)')
   .showHelpAfterError()
@@ -474,7 +474,7 @@ jobCommand
   });
 
 // Clear all jobs
-jobCommand
+jobsCommand
   .command('clear')
   .description('Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)')
   .option('--confirm', 'Confirm deletion (REQUIRED for safety)', false)

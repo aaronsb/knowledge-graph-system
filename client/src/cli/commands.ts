@@ -7,7 +7,7 @@ import cfonts from 'cfonts';
 import * as colors from './colors';
 import { configureColoredHelp } from './help-formatter';
 import { ingestCommand } from './ingest';
-import { jobCommand } from './jobs';
+import { jobsCommand } from './jobs';
 import { healthCommand } from './health';
 import { searchCommand } from './search';
 import { databaseCommand } from './database';
@@ -88,7 +88,7 @@ export async function registerCommands(program: Command) {
     healthCommand,
     configCommand,
     ingestCommand,
-    jobCommand,
+    jobsCommand,
     searchCommand,
     databaseCommand,
     ontologyCommand,
