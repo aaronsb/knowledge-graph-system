@@ -756,8 +756,13 @@ class DataImporter:
             try:
                 client._execute_cypher(query, params=instance)
             except Exception as e:
-                # Handle AGE race condition: parallel threads creating label tables
+                # AGE creates label tables on first use - parallel threads may race
                 if "already exists" in str(e):
+                    # Extract label name from error message
+                    import re
+                    match = re.search(r'relation "(\w+)" already exists', str(e))
+                    if match:
+                        Console.info(f"  Initializing AGE label: {match.group(1)}")
                     # Retry - label table now exists
                     client._execute_cypher(query, params=instance)
                 else:
@@ -817,9 +822,14 @@ class DataImporter:
                     "properties": rel["properties"]
                 }, fetch_one=True)
             except Exception as e:
-                # Handle AGE race condition: parallel threads creating label tables
+                # AGE creates edge type tables on first use - parallel threads may race
                 if "already exists" in str(e):
-                    # Retry - label table now exists
+                    # Extract edge type from error message
+                    import re
+                    match = re.search(r'relation "(\w+)" already exists', str(e))
+                    if match:
+                        Console.info(f"  Initializing edge type: {match.group(1)}")
+                    # Retry - edge type table now exists
                     result = client._execute_cypher(query, params={
                         "from_id": rel["from"],
                         "to_id": rel["to"],
