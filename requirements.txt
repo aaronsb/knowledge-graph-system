@@ -2,4 +2,5 @@
 mkdocs>=1.5.3
 mkdocs-material>=9.5.0
 mkdocs-include-dir-to-nav>=1.2.0
+mkdocs-swagger-ui-tag>=0.6.0
 pymdown-extensions>=10.7.0
