@@ -78,40 +78,90 @@ function generateToolMarkdown(tool) {
 
 /**
  * Extract tool definitions from mcp-server.ts source
+ * Uses balanced brace counting to handle nested objects properly
  */
 async function extractToolsFromSource() {
   const sourcePath = path.join(__dirname, '../src/mcp-server.ts');
   const source = fs.readFileSync(sourcePath, 'utf-8');
 
-  // Parse tool definitions (they're in ListToolsRequestHandler)
-  // This is a simple regex-based parser - could be improved with proper AST parsing
-  const toolsMatch = source.match(/return\s*\{[\s\S]*?tools:\s*\[([\s\S]*?)\]/m);
+  // Find the tools array
+  const toolsArrayMatch = source.match(/tools:\s*\[([\s\S]*?)\n\s*\],?\s*\}/m);
 
-  if (!toolsMatch) {
+  if (!toolsArrayMatch) {
     throw new Error('Could not find tools array in mcp-server.ts');
   }
 
-  const toolsSource = toolsMatch[1];
+  const toolsArrayContent = toolsArrayMatch[1];
 
-  // Extract each tool object
+  // Extract individual tool objects using brace counting
   const tools = [];
-  const toolRegex = /\{[\s\S]*?name:\s*['"`]([^'"`]+)['"`][\s\S]*?description:\s*[`]([^`]+)[`][\s\S]*?inputSchema:\s*(\{[\s\S]*?\}),?\s*\}/g;
+  let currentTool = '';
+  let braceDepth = 0;
+  let inString = false;
+  let stringChar = '';
+  let inTemplate = false;
+  let inTool = false; // Track whether we're inside a tool object
 
-  let match;
-  while ((match = toolRegex.exec(toolsSource)) !== null) {
-    const [_, name, description, schemaStr] = match;
+  for (let i = 0; i < toolsArrayContent.length; i++) {
+    const char = toolsArrayContent[i];
+    const prevChar = i > 0 ? toolsArrayContent[i - 1] : '';
 
-    // Parse the schema (it's JavaScript object notation)
-    let inputSchema;
-    try {
-      // Use a safer eval in a controlled context (only for static tool definitions)
-      inputSchema = eval(`(${schemaStr})`);
-    } catch (err) {
-      console.warn(`Warning: Could not parse schema for ${name}`);
-      inputSchema = { type: 'object', properties: {} };
+    // Track template literals (backticks)
+    if (char === '`' && prevChar !== '\\') {
+      inTemplate = !inTemplate;
+      if (inTool) currentTool += char;
+      continue;
     }
 
-    tools.push({ name, description, inputSchema });
+    // Track string literals (quotes)
+    if (!inTemplate && (char === '"' || char === "'") && prevChar !== '\\') {
+      if (!inString) {
+        inString = true;
+        stringChar = char;
+      } else if (char === stringChar) {
+        inString = false;
+        stringChar = '';
+      }
+      if (inTool) currentTool += char;
+      continue;
+    }
+
+    // Only count braces outside of strings/templates
+    if (!inString && !inTemplate) {
+      if (char === '{') {
+        braceDepth++;
+        if (braceDepth === 1) {
+          // Starting a new top-level tool object
+          inTool = true;
+          currentTool = char;
+          continue;
+        }
+      } else if (char === '}') {
+        braceDepth--;
+        if (inTool) currentTool += char;
+
+        // When we close the top-level tool object
+        if (braceDepth === 0 && inTool) {
+          try {
+            // Parse the tool object
+            const toolStr = currentTool.trim().replace(/,\s*$/, ''); // Remove trailing comma
+            const tool = eval(`(${toolStr})`);
+
+            if (tool.name && tool.description && tool.inputSchema) {
+              tools.push(tool);
+            }
+          } catch (err) {
+            console.warn(`Warning: Could not parse tool object:`, err.message);
+          }
+
+          currentTool = '';
+          inTool = false;
+        }
+        continue;
+      }
+    }
+
+    if (inTool) currentTool += char;
   }
 
   return tools;
