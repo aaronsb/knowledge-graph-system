@@ -42,6 +42,9 @@ function bezierPoint(
 /**
  * Generate points along a cubic Bezier curve
  *
+ * Properly samples the curve at regular X intervals by finding the t parameter
+ * that corresponds to each X position.
+ *
  * @param x1 - Control point 1 X coordinate (0-1)
  * @param y1 - Control point 1 Y coordinate
  * @param x2 - Control point 2 X coordinate (0-1)
@@ -58,9 +61,38 @@ export function generateBezierCurve(
 ): number[] {
   const curve: number[] = [];
 
+  // Generate many t samples to build a lookup table
+  const samples: Array<{ x: number; y: number; t: number }> = [];
+  for (let i = 0; i <= 200; i++) {
+    const t = i / 200;
+    const [x, y] = bezierPoint(t, x1, y1, x2, y2);
+    samples.push({ x, y, t });
+  }
+
+  // Sort by X to enable binary search/interpolation
+  samples.sort((a, b) => a.x - b.x);
+
+  // Sample at regular X intervals
   for (let i = 0; i < points; i++) {
-    const t = i / (points - 1);
-    const [_x, y] = bezierPoint(t, x1, y1, x2, y2);
+    const targetX = i / (points - 1);
+
+    // Find the Y value at this X position via interpolation
+    let y = 0;
+    if (targetX <= samples[0].x) {
+      y = samples[0].y;
+    } else if (targetX >= samples[samples.length - 1].x) {
+      y = samples[samples.length - 1].y;
+    } else {
+      // Find surrounding samples and interpolate
+      for (let j = 0; j < samples.length - 1; j++) {
+        if (samples[j].x <= targetX && targetX <= samples[j + 1].x) {
+          const ratio = (targetX - samples[j].x) / (samples[j + 1].x - samples[j].x);
+          y = samples[j].y + ratio * (samples[j + 1].y - samples[j].y);
+          break;
+        }
+      }
+    }
+
     // Convert to percentage (0-100)
     curve.push(Math.max(0, Math.min(100, y * 100)));
   }
@@ -78,6 +110,24 @@ export interface CurveMarker {
   char: string;
   /** Optional label to display */
   label?: string;
+  /** Draw a vertical line through the chart at this position */
+  drawVerticalLine?: boolean;
+  /** Character to use for vertical line (default: '│') */
+  verticalLineChar?: string;
+  /** Color function to apply to vertical line (e.g., colors.status.success) */
+  color?: (text: string) => string;
+}
+
+/**
+ * Zone label for X-axis annotation
+ */
+export interface ZoneLabel {
+  /** Zone label text */
+  label: string;
+  /** Zone width in characters */
+  width: number;
+  /** Optional color function for the label */
+  color?: (text: string) => string;
 }
 
 /**
@@ -95,7 +145,7 @@ export interface CurvePlotConfig {
   /** Markers to display on the curve */
   markers?: CurveMarker[];
   /** Zone labels for X-axis annotations */
-  zones?: Array<{ label: string; width: number }>;
+  zones?: ZoneLabel[];
 }
 
 /**
@@ -135,7 +185,42 @@ export function plotBezierCurve(
   };
 
   const chart = asciichart.plot([curve], chartConfig);
-  const lines = chart.split('\n');
+  let lines = chart.split('\n');
+
+  // Add vertical lines through chart for markers with drawVerticalLine=true
+  const verticalLineMarkers = markers.filter(m => m.drawVerticalLine);
+  if (verticalLineMarkers.length > 0) {
+    lines = lines.map((line, lineIndex) => {
+      // Skip the first line (doesn't need vertical markers)
+      if (lineIndex === 0) return line;
+
+      // Convert line to array for easier manipulation
+      const chars = line.split('');
+
+      verticalLineMarkers.forEach(marker => {
+        const pos = marker.position <= 1
+          ? Math.floor(marker.position * (points - 1))
+          : marker.position;
+        const xPos = 6 + pos; // Add Y-axis label padding
+
+        // Only draw if position is valid and not overwriting Y-axis labels
+        if (xPos >= 6 && xPos < chars.length) {
+          const lineChar = marker.verticalLineChar || '│';
+          // Don't overwrite the curve itself (colored characters or box drawing)
+          const currentChar = chars[xPos];
+          // Only replace spaces or existing vertical lines
+          if (currentChar === ' ' || currentChar === '│' || currentChar === '┤' || currentChar === '┼') {
+            // Apply color if provided
+            const coloredChar = marker.color ? marker.color(lineChar) : lineChar;
+            // Note: colored character might be longer due to ANSI codes, but that's OK for display
+            chars[xPos] = coloredChar;
+          }
+        }
+      });
+
+      return chars.join('');
+    });
+  }
 
   // Add marker line if markers provided
   if (markers.length > 0) {
@@ -176,7 +261,10 @@ export function plotBezierCurve(
   // Add zone labels if provided
   if (zones.length > 0) {
     const zoneLine = ' '.repeat(6) +
-      zones.map(z => z.label.padEnd(z.width)).join('');
+      zones.map(z => {
+        const paddedLabel = z.label.padEnd(z.width);
+        return z.color ? z.color(paddedLabel) : paddedLabel;
+      }).join('');
     lines.push(zoneLine);
   }
 

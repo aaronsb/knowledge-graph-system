@@ -7,7 +7,7 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { coloredCount, separator } from './colors';
-import { plotBezierCurve, formatCurveSummary, type CurveMarker } from './curve-viz';
+import { plotBezierCurve, formatCurveSummary, type CurveMarker, type ZoneLabel } from './curve-viz';
 
 export const vocabularyCommand = new Command('vocabulary')
   .alias('vocab')
@@ -70,22 +70,33 @@ export const vocabularyCommand = new Command('vocabulary')
 
             // Calculate normalized position and create markers
             const range = status.vocab_emergency - status.vocab_min;
+            // Detect terminal width and calculate optimal chart width
+            const terminalWidth = process.stdout.columns || 80;
+            // Reserve space for Y-axis labels (6 chars) + margins (4 chars)
+            const chartWidth = Math.min(Math.max(40, terminalWidth - 10), 120);
+
             const currentNormalized = Math.max(0, Math.min(1, (status.vocab_size - status.vocab_min) / range));
             const maxNormalized = Math.max(0, Math.min(1, (status.vocab_max - status.vocab_min) / range));
 
             const markers: CurveMarker[] = [
               { position: 0, char: '│', label: `${status.vocab_min}` },
               { position: maxNormalized, char: '│', label: `MAX:${status.vocab_max}` },
-              { position: currentNormalized, char: '▼', label: `YOU:${status.vocab_size}` },
+              {
+                position: currentNormalized,
+                char: '▼',
+                label: `YOU:${status.vocab_size}`,
+                drawVerticalLine: true,
+                color: zoneColor
+              },
               { position: 1, char: '│', label: `${status.vocab_emergency}` }
             ];
 
-            // Calculate zone widths based on thresholds
-            const zoneWidth = Math.floor(60 / 3);
-            const zones = [
-              { label: 'GREEN', width: zoneWidth },
-              { label: 'WATCH', width: zoneWidth },
-              { label: 'DANGER/EMERGENCY', width: zoneWidth }
+            // Calculate zone widths based on dynamic chart width
+            const zoneWidth = Math.floor(chartWidth / 3);
+            const zones: ZoneLabel[] = [
+              { label: 'GREEN', width: zoneWidth, color: colors.status.success },
+              { label: 'WATCH', width: zoneWidth, color: colors.status.warning },
+              { label: 'DANGER/EMERGENCY', width: zoneWidth, color: colors.status.error }
             ];
 
             console.log('\n' + colors.status.dim('Y-axis: Consolidation aggressiveness | X-axis: Vocabulary size'));
@@ -94,7 +105,7 @@ export const vocabularyCommand = new Command('vocabulary')
               profile.control_y1,
               profile.control_x2,
               profile.control_y2,
-              { markers, zones, points: 60, height: 12 }
+              { markers, zones, points: chartWidth, height: 12 }
             ));
           } catch (error: any) {
             console.log('\n' + colors.status.dim('  (Unable to load aggressiveness curve)'));
