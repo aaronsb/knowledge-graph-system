@@ -61,52 +61,24 @@ else
     RESET_MODE=false
 fi
 
-# Prompt for admin password
+# Set admin password using dedicated script
 echo ""
 echo -e "${BOLD}Admin Password Setup${NC}"
-echo -e "${YELLOW}Password requirements:${NC}"
-echo "  • Minimum 8 characters"
-echo "  • At least one uppercase letter"
-echo "  • At least one lowercase letter"
-echo "  • At least one digit"
-echo "  • At least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)"
-echo ""
 
-while true; do
-    read -s -p "Enter admin password: " ADMIN_PASSWORD
-    echo
-    read -s -p "Confirm admin password: " ADMIN_PASSWORD_CONFIRM
-    echo
+# Call set-admin-password.sh to handle password setup
+if [ "$RESET_MODE" = true ]; then
+    "$SCRIPT_DIR/set-admin-password.sh" --quiet
+else
+    "$SCRIPT_DIR/set-admin-password.sh" --quiet --create
+fi
 
-    if [ "$ADMIN_PASSWORD" != "$ADMIN_PASSWORD_CONFIRM" ]; then
-        echo -e "${RED}✗ Passwords do not match. Try again.${NC}"
-        echo ""
-        continue
-    fi
+# Check if password was set successfully
+if [ $? -ne 0 ]; then
+    echo -e "${RED}✗ Failed to set admin password${NC}"
+    exit 1
+fi
 
-    # Validate password strength using Python
-    VALIDATION_RESULT=$($PYTHON << EOF
-import sys
-sys.path.insert(0, "$PROJECT_ROOT")
-from src.api.lib.auth import validate_password_strength
-
-is_valid, error = validate_password_strength("$ADMIN_PASSWORD")
-if is_valid:
-    print("VALID")
-else:
-    print(f"INVALID:{error}")
-EOF
-)
-
-    if [[ $VALIDATION_RESULT == "VALID" ]]; then
-        echo -e "${GREEN}✓${NC} Password meets requirements"
-        break
-    else
-        ERROR_MSG=$(echo "$VALIDATION_RESULT" | cut -d':' -f2-)
-        echo -e "${RED}✗ $ERROR_MSG${NC}"
-        echo ""
-    fi
-done
+echo -e "${GREEN}✓${NC} Admin password configured"
 
 # Generate or check JWT_SECRET_KEY
 echo ""
@@ -210,142 +182,7 @@ if [ "$GENERATE_ENCRYPTION_KEY" = true ]; then
     echo -e "${GREEN}✓${NC} Encryption key saved to .env"
 fi
 
-# Create or update admin user in database
-echo ""
-echo -e "${BOLD}Database Setup${NC}"
-
-if [ "$RESET_MODE" = true ]; then
-    echo -e "${BLUE}→${NC} Resetting admin password..."
-
-    # Hash password using Python - capture both stdout and stderr
-    HASH_OUTPUT=$($PYTHON << EOF 2>&1
-import sys
-sys.path.insert(0, "$PROJECT_ROOT")
-
-# Get version info and check compatibility
-try:
-    import passlib
-    import bcrypt
-    passlib_version = passlib.__version__
-    try:
-        bcrypt_version = bcrypt.__version__
-    except AttributeError:
-        # bcrypt 5.x changed the version attribute location
-        try:
-            bcrypt_version = bcrypt.__about__.__version__
-        except:
-            bcrypt_version = "unknown (5.x+ detected)"
-
-    # Check if we'll hit the compatibility issue
-    has_compat_issue = not hasattr(bcrypt, '__about__')
-
-    if has_compat_issue:
-        print(f"BCRYPT_COMPAT_INFO:passlib={passlib_version},bcrypt={bcrypt_version}")
-except Exception as e:
-    print(f"VERSION_CHECK_ERROR:{e}")
-
-from src.api.lib.auth import get_password_hash
-print(get_password_hash("$ADMIN_PASSWORD"))
-EOF
-)
-
-    # Check if there were any errors (anything other than just the hash)
-    if echo "$HASH_OUTPUT" | grep -q "VERSION_CHECK_ERROR"; then
-        echo -e "${RED}✗ Failed to check crypto library versions${NC}"
-        echo "$HASH_OUTPUT" | grep "VERSION_CHECK_ERROR"
-    fi
-
-    if echo "$HASH_OUTPUT" | grep -q "Traceback.*Error" | grep -v "bcrypt.*version"; then
-        echo -e "${RED}✗ Failed to hash password${NC}"
-        echo "$HASH_OUTPUT"
-        exit 1
-    fi
-
-    # Extract just the hash (last line of output)
-    PASSWORD_HASH=$(echo "$HASH_OUTPUT" | tail -n 1)
-
-    # Show informational message if bcrypt compatibility notice appeared
-    if echo "$HASH_OUTPUT" | grep -q "BCRYPT_COMPAT_INFO"; then
-        COMPAT_INFO=$(echo "$HASH_OUTPUT" | grep "BCRYPT_COMPAT_INFO" | cut -d: -f2)
-        PASSLIB_VER=$(echo "$COMPAT_INFO" | cut -d, -f1 | cut -d= -f2)
-        BCRYPT_VER=$(echo "$COMPAT_INFO" | cut -d, -f2 | cut -d= -f2)
-
-        echo -e "${YELLOW}ℹ${NC}  Crypto libraries: passlib ${PASSLIB_VER}, bcrypt ${BCRYPT_VER}"
-        echo -e "${YELLOW}ℹ${NC}  Note: passlib 1.7.4 expects bcrypt <5.0 (caught compatibility notice, working correctly)"
-    fi
-
-    # Update admin password
-    docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
-        "UPDATE kg_auth.users SET password_hash = '$PASSWORD_HASH' WHERE username = 'admin'" > /dev/null
-
-    echo -e "${GREEN}✓${NC} Admin password updated"
-else
-    echo -e "${BLUE}→${NC} Creating admin user..."
-
-    # Hash password using Python - capture both stdout and stderr
-    HASH_OUTPUT=$($PYTHON << EOF 2>&1
-import sys
-sys.path.insert(0, "$PROJECT_ROOT")
-
-# Get version info and check compatibility
-try:
-    import passlib
-    import bcrypt
-    passlib_version = passlib.__version__
-    try:
-        bcrypt_version = bcrypt.__version__
-    except AttributeError:
-        # bcrypt 5.x changed the version attribute location
-        try:
-            bcrypt_version = bcrypt.__about__.__version__
-        except:
-            bcrypt_version = "unknown (5.x+ detected)"
-
-    # Check if we'll hit the compatibility issue
-    has_compat_issue = not hasattr(bcrypt, '__about__')
-
-    if has_compat_issue:
-        print(f"BCRYPT_COMPAT_INFO:passlib={passlib_version},bcrypt={bcrypt_version}")
-except Exception as e:
-    print(f"VERSION_CHECK_ERROR:{e}")
-
-from src.api.lib.auth import get_password_hash
-print(get_password_hash("$ADMIN_PASSWORD"))
-EOF
-)
-
-    # Check if there were any errors (anything other than just the hash)
-    if echo "$HASH_OUTPUT" | grep -q "VERSION_CHECK_ERROR"; then
-        echo -e "${RED}✗ Failed to check crypto library versions${NC}"
-        echo "$HASH_OUTPUT" | grep "VERSION_CHECK_ERROR"
-    fi
-
-    if echo "$HASH_OUTPUT" | grep -q "Traceback.*Error" | grep -v "bcrypt.*version"; then
-        echo -e "${RED}✗ Failed to hash password${NC}"
-        echo "$HASH_OUTPUT"
-        exit 1
-    fi
-
-    # Extract just the hash (last line of output)
-    PASSWORD_HASH=$(echo "$HASH_OUTPUT" | tail -n 1)
-
-    # Show informational message if bcrypt compatibility notice appeared
-    if echo "$HASH_OUTPUT" | grep -q "BCRYPT_COMPAT_INFO"; then
-        COMPAT_INFO=$(echo "$HASH_OUTPUT" | grep "BCRYPT_COMPAT_INFO" | cut -d: -f2)
-        PASSLIB_VER=$(echo "$COMPAT_INFO" | cut -d, -f1 | cut -d= -f2)
-        BCRYPT_VER=$(echo "$COMPAT_INFO" | cut -d, -f2 | cut -d= -f2)
-
-        echo -e "${YELLOW}ℹ${NC}  Crypto libraries: passlib ${PASSLIB_VER}, bcrypt ${BCRYPT_VER}"
-        echo -e "${YELLOW}ℹ${NC}  Note: passlib 1.7.4 expects bcrypt <5.0 (caught compatibility notice, working correctly)"
-    fi
-
-    # Create admin user
-    docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
-        "INSERT INTO kg_auth.users (username, password_hash, primary_role, created_at)
-         VALUES ('admin', '$PASSWORD_HASH', 'admin', NOW())" > /dev/null
-
-    echo -e "${GREEN}✓${NC} Admin user created"
-fi
+# Admin password and database user are now handled by set-admin-password.sh (see above)
 
 # AI Provider and API Key Setup (ADR-041)
 echo ""
