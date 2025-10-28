@@ -817,6 +817,73 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Get vocabulary configuration details (admin endpoint)
+   */
+  async getVocabularyConfigDetail(): Promise<any> {
+    const response = await this.client.get('/admin/vocabulary/config');
+    return response.data;
+  }
+
+  /**
+   * Update vocabulary configuration (admin endpoint)
+   */
+  async updateVocabularyConfig(config: {
+    vocab_min?: number;
+    vocab_max?: number;
+    vocab_emergency?: number;
+    pruning_mode?: string;
+    aggressiveness_profile?: string;
+    auto_expand_enabled?: boolean;
+    synonym_threshold_strong?: number;
+    synonym_threshold_moderate?: number;
+    low_value_threshold?: number;
+    consolidation_similarity_threshold?: number;
+    updated_by: string;
+  }): Promise<any> {
+    const response = await this.client.put('/admin/vocabulary/config', config);
+    return response.data;
+  }
+
+  /**
+   * List aggressiveness profiles (admin endpoint)
+   */
+  async listAggressivenessProfiles(): Promise<any> {
+    const response = await this.client.get('/admin/vocabulary/profiles');
+    return response.data;
+  }
+
+  /**
+   * Get specific aggressiveness profile (admin endpoint)
+   */
+  async getAggressivenessProfile(profileName: string): Promise<any> {
+    const response = await this.client.get(`/admin/vocabulary/profiles/${encodeURIComponent(profileName)}`);
+    return response.data;
+  }
+
+  /**
+   * Create custom aggressiveness profile (admin endpoint)
+   */
+  async createAggressivenessProfile(profile: {
+    profile_name: string;
+    control_x1: number;
+    control_y1: number;
+    control_x2: number;
+    control_y2: number;
+    description: string;
+  }): Promise<any> {
+    const response = await this.client.post('/admin/vocabulary/profiles', profile);
+    return response.data;
+  }
+
+  /**
+   * Delete custom aggressiveness profile (admin endpoint)
+   */
+  async deleteAggressivenessProfile(profileName: string): Promise<any> {
+    const response = await this.client.delete(`/admin/vocabulary/profiles/${encodeURIComponent(profileName)}`);
+    return response.data;
+  }
+
+  /**
    * Merge two edge types (curator action)
    */
   async mergeEdgeTypes(request: {
