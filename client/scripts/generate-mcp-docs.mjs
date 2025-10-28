@@ -215,11 +215,8 @@ async function main() {
   writer.write(path.join(outDir, 'README.md'), index.join('\n'));
   console.log(`✅ Generated: docs/reference/mcp/README.md`);
 
-  // Generate individual tool files
+  // Generate individual tool files (flat structure)
   tools.forEach(tool => {
-    const toolDir = path.join(outDir, tool.name);
-    fs.mkdirSync(toolDir, { recursive: true });
-
     const toolMd = [
       `# ${tool.name}\n`,
       '> Auto-generated from MCP tool schema\n',
@@ -227,7 +224,7 @@ async function main() {
     ];
 
     writer.write(
-      path.join(toolDir, 'README.md'),
+      path.join(outDir, `${tool.name}.md`),
       toolMd.join('\n')
     );
   });
