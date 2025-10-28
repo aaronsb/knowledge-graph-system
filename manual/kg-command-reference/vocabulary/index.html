@@ -1,0 +1,5817 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../unix-shortcuts/">
+      
+      
+        <link rel="next" href="../../../architecture/ADR-001-multi-tier-agent-access/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>kg vocabulary - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/css/graph-theme.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kg-vocabulary" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              kg vocabulary
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Documentation Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Introduction
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    What is the Knowledge Graph System?
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LLM Edge Discovery Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_9" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    CLI Command Reference
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_9" id="__nav_2_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            CLI Command Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CLI-STRUCTURE-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Structure Review &amp; Refactoring Opportunities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../admin/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    admin
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            admin
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../auth/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    auth
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_4">
+            <span class="md-nav__icon md-icon"></span>
+            auth
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../config/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    config
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_9_5" id="__nav_2_9_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_5">
+            <span class="md-nav__icon md-icon"></span>
+            config
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_5_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../config/json/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    json
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_9_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            json
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../database/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    database
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_6">
+            <span class="md-nav__icon md-icon"></span>
+            database
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../health/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    health
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_7">
+            <span class="md-nav__icon md-icon"></span>
+            health
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../ingest/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    ingest
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_8">
+            <span class="md-nav__icon md-icon"></span>
+            ingest
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../job/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    job
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_9_9" id="__nav_2_9_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_9">
+            <span class="md-nav__icon md-icon"></span>
+            job
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_9_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../job/approve/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    approve
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_9_9_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_9_2">
+            <span class="md-nav__icon md-icon"></span>
+            approve
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_9_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../job/list/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    list
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_9_9_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            list
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_10" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../ontology/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    ontology
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_10">
+            <span class="md-nav__icon md-icon"></span>
+            ontology
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_11" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../search/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    search
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_11">
+            <span class="md-nav__icon md-icon"></span>
+            search
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9_12" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../unix-shortcuts/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    unix-shortcuts
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9_12">
+            <span class="md-nav__icon md-icon"></span>
+            unix-shortcuts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_9_13" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="./" class="md-nav__link md-nav__link--active">
+              
+  
+  
+  <span class="md-ellipsis">
+    vocabulary
+    
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_9_13_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_9_13">
+            <span class="md-nav__icon md-icon"></span>
+            vocabulary
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-045-unified-embedding-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-045: Unified Embedding Generation System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-046: Grounding-Aware Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-047: Probabilistic Vocabulary Categorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-048: Vocabulary Metadata as First-Class Graph
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ADR-049-llm-determined-relationship-direction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-049: LLM-Determined Relationship Direction Semantics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/CODE-CHANGES-ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Changes Analysis: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/PHASE_3_3_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-048 Phase 3.3 Implementation Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/PHASE_3_IMPLEMENTATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Implementation Plan: Vocabulary as Graph Nodes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Safety Baseline - Technical Debt
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Relationship Semantics: How Others Do It vs. Our Proposal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Vocabulary Direction Semantics Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Test Notes - Working Commands &amp; Observations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Integration Test Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="kg-vocabulary">kg vocabulary</h1>
+<p>Edge vocabulary management and consolidation.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>vocabulary<span class="p">|</span>vocab<span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span><span class="o">[</span>command<span class="o">]</span>
+</code></pre></div>
+<p><strong>Alias:</strong> <code>vocab</code></p>
+<h2 id="description">Description</h2>
+<p>The <code>vocabulary</code> command manages the edge relationship vocabulary - the types of relationships that can exist between concepts in the knowledge graph. This includes:</p>
+<ul>
+<li><strong>Builtin types</strong> - Predefined relationship types (30 types)</li>
+<li><strong>Custom types</strong> - LLM-extracted types from documents (emerges naturally)</li>
+<li><strong>Categories</strong> - Semantic groupings (causation, logical, temporal, etc.)</li>
+<li><strong>Consolidation</strong> - AI-assisted merging of synonymous types (ADR-032)</li>
+<li><strong>Auto-categorization</strong> - Probabilistic category assignment via embeddings (ADR-047)</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ol>
+<li><strong>Dynamic Vocabulary</strong> - Grows as documents introduce new relationship types</li>
+<li><strong>AITL Consolidation</strong> - AI-in-the-loop workflow for controlled merging</li>
+<li><strong>Zone-Based Management</strong> - GREEN/WATCH/DANGER/EMERGENCY zones (ADR-032)</li>
+<li><strong>Probabilistic Categorization</strong> - Embedding-based category inference (ADR-047)</li>
+<li><strong>LLM-Determined Direction</strong> - Semantic orientation of relationships (ADR-049)</li>
+</ol>
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcommands">Subcommands</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Doc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td>Show current vocabulary status and zone</td>
+<td><a href="#status">↓</a></td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>List all edge types with statistics</td>
+<td><a href="#list">↓</a></td>
+</tr>
+<tr>
+<td><code>consolidate</code></td>
+<td>AI-assisted vocabulary consolidation workflow (AITL)</td>
+<td><a href="#consolidate">↓</a></td>
+</tr>
+<tr>
+<td><code>merge &lt;deprecated-type&gt; &lt;target-type&gt;</code></td>
+<td>Manually merge one edge type into another</td>
+<td><a href="#merge">↓</a></td>
+</tr>
+<tr>
+<td><code>generate-embeddings</code></td>
+<td>Generate embeddings for vocabulary types</td>
+<td><a href="#generate-embeddings">↓</a></td>
+</tr>
+<tr>
+<td><code>category-scores &lt;type&gt;</code></td>
+<td>Show category similarity scores for a relationship type</td>
+<td><a href="#category-scores">↓</a></td>
+</tr>
+<tr>
+<td><code>refresh-categories</code></td>
+<td>Refresh category assignments for vocabulary types</td>
+<td><a href="#refresh-categories">↓</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="command-tree">Command Tree</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg vocabulary (vocab)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── status
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├── list
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├── consolidate
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>├── merge &lt;deprecated-type&gt; &lt;target-type&gt;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>├── generate-embeddings
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>├── category-scores &lt;type&gt;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>└── refresh-categories
+</code></pre></div>
+<hr />
+<h2 id="subcommand-details">Subcommand Details</h2>
+<h3 id="status">status</h3>
+<p>Show current vocabulary status including size, zone, and thresholds.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What You Get:</strong></p>
+<ol>
+<li><strong>Current State</strong></li>
+<li>Vocabulary Size (total active types)</li>
+<li>Zone (GREEN, WATCH, DANGER, EMERGENCY)</li>
+<li>Aggressiveness (percentage above minimum)</li>
+<li>
+<p>Profile (conservative/aggressive)</p>
+</li>
+<li>
+<p><strong>Thresholds</strong> (ADR-032)</p>
+</li>
+<li>Minimum (30)</li>
+<li>Maximum (90)</li>
+<li>
+<p>Emergency (200)</p>
+</li>
+<li>
+<p><strong>Edge Types Breakdown</strong></p>
+</li>
+<li>Builtin count</li>
+<li>Custom count</li>
+<li>Categories count</li>
+</ol>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Check vocabulary status</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>status
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Use alias</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+</code></pre></div>
+<p><strong>Output Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>📚 Vocabulary Status
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Current State
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  Vocabulary Size: 55
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  Zone: ⚠ WATCH
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>  Aggressiveness: 40.8%
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>  Profile: aggressive
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>Thresholds
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>  Minimum: 30
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>  Maximum: 90
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>  Emergency: 200
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>Edge Types
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>  Builtin: 30
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>  Custom: 25
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>  Categories: 11
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>────────────────────────────────────────────────────────────────────────────────
+</code></pre></div>
+<p><strong>Understanding Zones</strong> (ADR-032):</p>
+<table>
+<thead>
+<tr>
+<th>Zone</th>
+<th>Range</th>
+<th>Meaning</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GREEN</strong></td>
+<td>30-50</td>
+<td>Healthy vocabulary size</td>
+<td>Normal operation</td>
+</tr>
+<tr>
+<td><strong>WATCH</strong></td>
+<td>51-90</td>
+<td>Growing vocabulary</td>
+<td>Consider consolidation</td>
+</tr>
+<tr>
+<td><strong>DANGER</strong></td>
+<td>91-199</td>
+<td>Bloated vocabulary</td>
+<td>Consolidation recommended</td>
+</tr>
+<tr>
+<td><strong>EMERGENCY</strong></td>
+<td>200+</td>
+<td>Vocabulary explosion</td>
+<td>Immediate consolidation required</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Aggressiveness:</strong>
+- Measures how far vocabulary has grown above minimum (30)
+- Formula: <code>(size - min) / (max - min) * 100%</code>
+- Higher percentage = more aggressive consolidation recommended</p>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Health Check</strong> - Monitor vocabulary growth</li>
+<li><strong>Pre-Consolidation</strong> - Check zone before consolidating</li>
+<li><strong>Tracking</strong> - Monitor vocabulary size over time</li>
+<li><strong>Alerting</strong> - Trigger consolidation workflows</li>
+</ul>
+<p><strong>Tips:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Track vocabulary growth</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>date<span class="k">)</span><span class="s2">: </span><span class="k">$(</span>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;Vocabulary Size&#39;</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>vocab-growth.log
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Check if consolidation needed</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">if</span><span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;DANGER\|EMERGENCY&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Consolidation recommended!&quot;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">fi</span>
+</code></pre></div>
+<hr />
+<h3 id="list">list</h3>
+<p>List all edge types with statistics, categories, and confidence scores.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--inactive</code></td>
+<td>Include inactive/deprecated types</td>
+<td>excludes inactive</td>
+</tr>
+<tr>
+<td><code>--no-builtin</code></td>
+<td>Exclude builtin types</td>
+<td>includes builtin</td>
+</tr>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What You Get:</strong></p>
+<p>For each edge type:
+- <strong>TYPE</strong> - Relationship type name (colored by semantic)
+- <strong>CATEGORY</strong> - Assigned category (composition, causation, etc.)
+- <strong>CONF</strong> - Confidence score for category assignment (ADR-047)
+- <strong>EDGES</strong> - Number of edges using this type
+- <strong>STATUS</strong> - Active status (✓ = active)
+- <strong>[B]</strong> flag - Builtin type indicator</p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># List all active types</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>list
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Include inactive/deprecated types</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>list<span class="w"> </span>--inactive
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Show only custom types (exclude builtin)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>list<span class="w"> </span>--no-builtin
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Use alias</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
+</code></pre></div>
+<p><strong>Output Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>📋 Edge Types
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Total: 55
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>Active: 55
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>Builtin: 30
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>Custom: 25
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>───────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>TYPE                      CATEGORY          CONF    EDGES     STATUS
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>───────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>ADDRESSES                 composition        58%        0          ✓
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>ALTERNATIVE_TO            semantic           63%        0          ✓
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>ANALOGOUS_TO              semantic          100%⚠       0          ✓ [B]
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>BUILDS_ON                 llm_generated      --         1          ✓
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>CAUSES                    causation         100%⚠       1          ✓ [B]
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>COMPLEMENTS               composition       100%⚠       0          ✓ [B]
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>CONTRADICTS               logical           100%⚠       0          ✓ [B]
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>DEFINES                   semantic           86%⚠       1          ✓ [B]
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>DEPENDS_ON                dependency        100%⚠       0          ✓ [B]
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>ENABLES                   causation         100%⚠       0          ✓ [B]
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>... (45 more types)
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>───────────────────────────────────────────────────────────────────────────────────
+</code></pre></div>
+<p><strong>Understanding Columns:</strong></p>
+<p><strong>TYPE:</strong>
+- Colored based on semantic meaning
+- Orange/Red = High-impact (CAUSES, CONTRADICTS)
+- Blue/Purple = Structural (composition, logical)
+- White = Neutral or custom</p>
+<p><strong>CATEGORY:</strong>
+- <strong>causation</strong> - Cause/effect relationships (CAUSES, ENABLES, PREVENTS)
+- <strong>composition</strong> - Part/whole (CONTAINS, PART_OF, COMPOSED_OF)
+- <strong>logical</strong> - Logic (IMPLIES, CONTRADICTS, EQUIVALENT_TO)
+- <strong>semantic</strong> - Meaning (SIMILAR_TO, DEFINES, CONTRASTS_WITH)
+- <strong>temporal</strong> - Time-based (PRECEDES, FOLLOWS)
+- <strong>dependency</strong> - Requirements (REQUIRES, DEPENDS_ON)
+- <strong>derivation</strong> - Origin (DERIVED_FROM, RESULTS_FROM)
+- <strong>evidential</strong> - Support (SUPPORTS, EVIDENCED_BY)
+- <strong>llm_generated</strong> - Custom types from extraction (no category yet)</p>
+<p><strong>CONF (Confidence):</strong>
+- Similarity to category seed terms (ADR-047)
+- <code>100%⚠</code> = Perfect match, may be ambiguous (check runner-up)
+- <code>80-99%</code> = High confidence
+- <code>60-79%</code> = Moderate confidence
+- <code>&lt;60%</code> = Low confidence, review needed
+- <code>--</code> = No embedding yet (llm_generated types)</p>
+<p><strong>[B] Flag:</strong>
+- Indicates builtin type (predefined, not from extraction)</p>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Vocabulary Overview</strong> - See all relationship types at a glance</li>
+<li><strong>Consolidation Candidates</strong> - Identify similar types</li>
+<li><strong>Category Review</strong> - Verify auto-categorization accuracy</li>
+<li><strong>Usage Statistics</strong> - Find unused types</li>
+<li><strong>Quality Audit</strong> - Check confidence scores</li>
+</ul>
+<p><strong>Tips:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Find types with low confidence</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;[0-5][0-9]%&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Find unused types (candidates for removal)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot; 0 &quot;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Count custom types</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span>--no-builtin<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Find ambiguous types (100% with warning)</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;100%⚠&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="consolidate">consolidate</h3>
+<p>AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop).</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-t, --target &lt;size&gt;</code></td>
+<td>Target vocabulary size</td>
+<td><code>90</code></td>
+</tr>
+<tr>
+<td><code>--threshold &lt;value&gt;</code></td>
+<td>Auto-execute threshold (0.0-1.0)</td>
+<td><code>0.90</code></td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Evaluate candidates without executing merges</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--auto</code></td>
+<td>Auto-execute high confidence merges (AITL mode)</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>How It Works</strong> (ADR-032):</p>
+<ol>
+<li><strong>Analyze Vocabulary</strong> - Compare all types via embeddings</li>
+<li><strong>Identify Candidates</strong> - Find similar pairs above threshold</li>
+<li><strong>Present Recommendations</strong> - Show merge suggestions with confidence</li>
+<li><strong>Execute or Prompt</strong> - Auto-merge (if <code>--auto</code>) or request confirmation</li>
+<li><strong>Apply Merges</strong> - Deprecate source, redirect edges to target</li>
+<li><strong>Iterate</strong> - Repeat until target size reached or no candidates</li>
+</ol>
+<p><strong>Modes:</strong></p>
+<p><strong>Interactive (default):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Prompts for each merge</span>
+</code></pre></div></p>
+<p><strong>Dry Run:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Shows candidates without executing</span>
+</code></pre></div></p>
+<p><strong>AITL (Auto):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate<span class="w"> </span>--auto
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Auto-executes high confidence merges</span>
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Interactive consolidation to target 90</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Set custom target size</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate<span class="w"> </span>--target<span class="w"> </span><span class="m">60</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Dry run to see candidates</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># AITL mode with custom threshold</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.95
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="c1"># Use alias</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+</code></pre></div>
+<p><strong>Dry Run Output Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>🔍 Vocabulary Consolidation (Dry Run)
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Current Size: 55
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>Target Size: 90
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>Zone: ⚠ WATCH
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>Merge Candidates (similarity ≥ 0.90):
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>1. ALTERNATIVE_TO → ANALOGOUS_TO (similarity: 0.95)
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>   - ALTERNATIVE_TO: 2 edges, semantic, 63% confidence
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>   - ANALOGOUS_TO: 0 edges, semantic, 100% confidence
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>   - Recommended: Merge (high similarity, target is builtin)
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>2. ENFORCES → ENSURES (similarity: 0.92)
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>   - ENFORCES: 0 edges, causation, 60% confidence
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>   - ENSURES: 1 edge, llm_generated, -- confidence
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>   - Recommended: Merge (high similarity, consolidate to stronger type)
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>3. CONNECTS_TO → LINKS_TO (similarity: 0.91)
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>   - CONNECTS_TO: 3 edges, composition, 75% confidence
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a>   - LINKS_TO: 1 edge, composition, 68% confidence
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a>   - Recommended: Review (both have edges, verify semantic equivalence)
+<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a>
+<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a>Total Candidates: 3
+<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a>Estimated Final Size: 52 (after merges)
+<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a>
+<a id="__codelineno-15-29" name="__codelineno-15-29" href="#__codelineno-15-29"></a>[Dry Run - No changes applied]
+<a id="__codelineno-15-30" name="__codelineno-15-30" href="#__codelineno-15-30"></a>────────────────────────────────────────────────────────────────────────────────
+</code></pre></div>
+<p><strong>Interactive Mode Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Merge Candidate 1 of 3:
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>  Source: ALTERNATIVE_TO (2 edges)
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  Target: ANALOGOUS_TO (0 edges)
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>  Similarity: 0.95
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>Merge this pair? [y/n/skip]:
+</code></pre></div>
+<p><strong>AITL Mode Output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>AITL Mode: Auto-executing high confidence merges (threshold: 0.90)
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>✓ Merged: ALTERNATIVE_TO → ANALOGOUS_TO (0.95)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>✓ Merged: ENFORCES → ENSURES (0.92)
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>⏸ Skipped: CONNECTS_TO → LINKS_TO (0.91, requires review)
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>Results:
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>  Executed: 2 merges
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>  Skipped: 1 merge
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>  New Size: 53
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>Vocabulary Zone: ⚠ WATCH → ✓ GREEN
+</code></pre></div>
+<p><strong>Threshold Guidelines:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Threshold</th>
+<th>Use Case</th>
+<th>Risk Level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0.95+</strong></td>
+<td>Very conservative, clear synonyms</td>
+<td>Very low</td>
+</tr>
+<tr>
+<td><strong>0.90-0.95</strong></td>
+<td>Balanced, AITL recommended</td>
+<td>Low</td>
+</tr>
+<tr>
+<td><strong>0.85-0.90</strong></td>
+<td>Aggressive, requires review</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td><strong>&lt;0.85</strong></td>
+<td>Very aggressive, manual review required</td>
+<td>High</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Vocabulary Cleanup</strong> - Consolidate redundant types</li>
+<li><strong>Zone Management</strong> - Bring vocabulary back to GREEN zone</li>
+<li><strong>Quality Improvement</strong> - Merge similar custom types to builtins</li>
+<li><strong>Periodic Maintenance</strong> - Run quarterly to prevent bloat</li>
+</ul>
+<p><strong>Safety Features:</strong></p>
+<ul>
+<li>Similarity threshold prevents false positives</li>
+<li>Dry run mode for preview</li>
+<li>Interactive confirmation by default</li>
+<li>Atomic operations (all or nothing per merge)</li>
+<li>Audit trail (reason, timestamp, user)</li>
+</ul>
+<p><strong>⚠️ Important:</strong></p>
+<ul>
+<li><strong>Review ambiguous merges</strong> - 0.90-0.92 similarity may need manual check</li>
+<li><strong>Check edge counts</strong> - Merging types with many edges affects queries</li>
+<li><strong>Test after consolidation</strong> - Verify no semantic loss</li>
+<li><strong>Backup vocabulary</strong> - Capture <code>kg vocab list</code> before consolidating</li>
+</ul>
+<hr />
+<h3 id="merge">merge</h3>
+<p>Manually merge one edge type into another (for consolidation or correction).</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>merge<span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>&lt;deprecated-type&gt;<span class="w"> </span>&lt;target-type&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong>
+- <code>&lt;deprecated-type&gt;</code> - Edge type to deprecate (becomes inactive)
+- <code>&lt;target-type&gt;</code> - Target edge type to merge into (receives all edges)</p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-r, --reason &lt;text&gt;</code></td>
+<td>Reason for merge (audit trail)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>-u, --user &lt;email&gt;</code></td>
+<td>User performing the merge</td>
+<td><code>cli-user</code></td>
+</tr>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Behavior:</strong></p>
+<ol>
+<li>Validates both types exist</li>
+<li>Redirects all edges from deprecated type to target type</li>
+<li>Marks deprecated type as inactive</li>
+<li>Records audit trail (reason, user, timestamp)</li>
+<li>Preserves edge provenance</li>
+</ol>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Basic merge</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>merge<span class="w"> </span>CONNECTS_TO<span class="w"> </span>LINKS_TO
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># With reason</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>merge<span class="w"> </span>ALTERNATIVE_TO<span class="w"> </span>ANALOGOUS_TO<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">  </span>--reason<span class="w"> </span><span class="s2">&quot;Synonym consolidation&quot;</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="c1"># With user attribution</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>merge<span class="w"> </span>ENFORCES<span class="w"> </span>ENSURES<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">  </span>--reason<span class="w"> </span><span class="s2">&quot;Semantic duplicate&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">  </span>--user<span class="w"> </span><span class="s2">&quot;admin@example.com&quot;</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="c1"># Use alias</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>OLD_TYPE<span class="w"> </span>NEW_TYPE<span class="w"> </span>--reason<span class="w"> </span><span class="s2">&quot;Consolidation&quot;</span>
+</code></pre></div>
+<p><strong>Output Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Merging: CONNECTS_TO → LINKS_TO
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>Validation:
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>  ✓ CONNECTS_TO exists (3 edges)
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>  ✓ LINKS_TO exists (1 edge)
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>Executing merge...
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>  ✓ Redirected 3 edges
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>  ✓ Marked CONNECTS_TO as inactive
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>  ✓ Recorded audit trail
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>Result:
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>  CONNECTS_TO: inactive (0 edges)
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>  LINKS_TO: active (4 edges)
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>Reason: Synonym consolidation
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>User: admin@example.com
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>Timestamp: 2024-01-15 14:30:22
+</code></pre></div>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Manual Consolidation</strong> - Merge specific type pairs</li>
+<li><strong>Correction</strong> - Fix misnamed types from extraction</li>
+<li><strong>Bulk Operations</strong> - Script multiple merges</li>
+<li><strong>Targeted Cleanup</strong> - Consolidate specific category</li>
+</ul>
+<p><strong>Safety:</strong></p>
+<ul>
+<li>Non-destructive (edges preserved)</li>
+<li>Atomic transaction</li>
+<li>Audit trail for compliance</li>
+<li>Can be reviewed in inactive types list</li>
+</ul>
+<p><strong>Tips:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Merge all types to a canonical form</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>LEADS_TO<span class="w"> </span>CAUSES<span class="w"> </span>--reason<span class="w"> </span><span class="s2">&quot;Canonical form&quot;</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>RESULTS_IN<span class="w"> </span>CAUSES<span class="w"> </span>--reason<span class="w"> </span><span class="s2">&quot;Canonical form&quot;</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>PRODUCES<span class="w"> </span>CAUSES<span class="w"> </span>--reason<span class="w"> </span><span class="s2">&quot;Canonical form&quot;</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="c1"># Check result</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>CAUSES
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="c1"># CAUSES: now has combined edge count</span>
+</code></pre></div>
+<p><strong>Error Cases:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Source type doesn&#39;t exist</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>NONEXISTENT<span class="w"> </span>TARGET
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># Error: Type &quot;NONEXISTENT&quot; not found</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1"># Target type doesn&#39;t exist</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>SOURCE<span class="w"> </span>NONEXISTENT
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="c1"># Error: Type &quot;NONEXISTENT&quot; not found</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="c1"># Merging to itself</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>CAUSES<span class="w"> </span>CAUSES
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="c1"># Error: Cannot merge type to itself</span>
+</code></pre></div>
+<hr />
+<h3 id="generate-embeddings">generate-embeddings</h3>
+<p>Generate vector embeddings for vocabulary types (required for consolidation and categorization).</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>generate-embeddings<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--force</code></td>
+<td>Regenerate ALL embeddings regardless of existing state</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--all</code></td>
+<td>Process all active types (not just missing)</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What It Does:</strong></p>
+<ol>
+<li>Identifies types without embeddings</li>
+<li>Generates embeddings using configured embedding model</li>
+<li>Stores embeddings for similarity comparison</li>
+<li>Enables consolidation and auto-categorization</li>
+</ol>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li><strong>After Fresh Install</strong> - Bootstrap vocabulary embeddings</li>
+<li><strong>New Custom Types</strong> - After ingestion introduces new types</li>
+<li><strong>Model Change</strong> - Regenerate if switching embedding models</li>
+<li><strong>Inconsistency</strong> - Force regeneration if embeddings corrupted</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Generate embeddings for types missing them</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>generate-embeddings
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Process all types (update existing)</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>generate-embeddings<span class="w"> </span>--all
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="c1"># Force regenerate everything</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>generate-embeddings<span class="w"> </span>--force
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="c1"># Use alias</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
+</code></pre></div>
+<p><strong>Output Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>🔄 Generating Vocabulary Embeddings
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>Scanning vocabulary...
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>  Total types: 55
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>  Missing embeddings: 8
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>  Will process: 8 types
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>Generating embeddings...
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>  ✓ BUILDS_ON (1/8)
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>  ✓ DECIDES (2/8)
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>  ✓ DOCUMENTS (3/8)
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>  ✓ ENHANCES (4/8)
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>  ✓ ENSURES (5/8)
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>  ✓ EXEMPLIFIES (6/8)
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>  ✓ INFLUENCES (7/8)
+<a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a>  ✓ VALIDATES (8/8)
+<a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a>
+<a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a>Results:
+<a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a>  Generated: 8
+<a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a>  Failed: 0
+<a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a>  Duration: 3.2s
+<a id="__codelineno-25-24" name="__codelineno-25-24" href="#__codelineno-25-24"></a>
+<a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a>✓ All types now have embeddings
+<a id="__codelineno-25-26" name="__codelineno-25-26" href="#__codelineno-25-26"></a>────────────────────────────────────────────────────────────────────────────────
+</code></pre></div>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>~100-200ms per embedding (OpenAI)</li>
+<li>~20-50ms per embedding (local models)</li>
+<li>Parallel generation (batches of 10)</li>
+<li>Progress bar for large sets</li>
+</ul>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Post-Ingestion</strong> - Generate embeddings for new custom types</li>
+<li><strong>System Initialization</strong> - First-time vocabulary setup</li>
+<li><strong>Model Migration</strong> - Regenerate after switching embedding providers</li>
+<li><strong>Maintenance</strong> - Periodic regeneration for consistency</li>
+</ul>
+<p><strong>Tips:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Check which types need embeddings</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;llm_generated&quot;</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="c1"># These types likely need embeddings</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="c1"># Generate after ingestion</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Docs&quot;</span><span class="w"> </span>document.txt<span class="w"> </span>-w
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="c1"># Force regeneration with new embedding model</span>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--model<span class="w"> </span>text-embedding-3-large
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings<span class="w"> </span>--force
+</code></pre></div>
+<hr />
+<h3 id="category-scores">category-scores</h3>
+<p>Show category similarity scores for a specific relationship type (ADR-047).</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>category-scores<span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>&lt;type&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong>
+- <code>&lt;type&gt;</code> - Relationship type to analyze (e.g., CAUSES, ENABLES)</p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What You Get:</strong></p>
+<ol>
+<li><strong>Assignment</strong></li>
+<li>Assigned category</li>
+<li>Confidence score</li>
+<li>Ambiguous flag (if runner-up is close)</li>
+<li>
+<p>Runner-up category (if ambiguous)</p>
+</li>
+<li>
+<p><strong>Similarity to Category Seeds</strong></p>
+</li>
+<li>Scores for all categories (0-100%)</li>
+<li>Visual bar chart</li>
+<li>Sorted by similarity (highest first)</li>
+</ol>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Show scores for a type</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>category-scores<span class="w"> </span>CAUSES
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Check ambiguous type</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>category-scores<span class="w"> </span>ENABLES
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1"># Use alias</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>DEFINES
+</code></pre></div>
+<p><strong>Output Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>📊 Category Scores: CAUSES
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>Assignment
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>  Category: causation
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>  Confidence: 100%
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a>  Ambiguous: Yes
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>  Runner-up: derivation (82%)
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a>
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>Similarity to Category Seeds
+<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a>  causation       100%  ████████████████████
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a>  derivation       82%  ████████████████
+<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>  dependency       82%  ████████████████
+<a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a>  composition      81%  ████████████████
+<a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a>  logical          80%  ████████████████
+<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a>  evidential       80%  ████████████████
+<a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a>  semantic         77%  ███████████████
+<a id="__codelineno-29-19" name="__codelineno-29-19" href="#__codelineno-29-19"></a>  temporal         76%  ███████████████
+<a id="__codelineno-29-20" name="__codelineno-29-20" href="#__codelineno-29-20"></a>  (3 more categories &lt;70%)
+<a id="__codelineno-29-21" name="__codelineno-29-21" href="#__codelineno-29-21"></a>
+<a id="__codelineno-29-22" name="__codelineno-29-22" href="#__codelineno-29-22"></a>────────────────────────────────────────────────────────────────────────────────
+</code></pre></div>
+<p><strong>Understanding Output:</strong></p>
+<p><strong>Confidence:</strong>
+- Calculated as: <code>max_score / second_max_score * 100</code>
+- 100% = Perfect match to category seeds
+- High confidence but marked ambiguous = Runner-up is close</p>
+<p><strong>Ambiguous Flag:</strong>
+- Set when runner-up is within 20% of winner
+- Indicates type could belong to multiple categories
+- Review semantics manually</p>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Verify Categorization</strong> - Check if auto-assignment makes sense</li>
+<li><strong>Debug Low Confidence</strong> - Understand why confidence is low</li>
+<li><strong>Resolve Ambiguity</strong> - Decide between close categories</li>
+<li><strong>Quality Audit</strong> - Review all types for misassignments</li>
+</ul>
+<p><strong>Tips:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Check all ambiguous types</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="k">for</span><span class="w"> </span><span class="nb">type</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;100%⚠&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $1}&#39;</span><span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== </span><span class="nv">$type</span><span class="s2"> ===&quot;</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">  </span>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$type</span><span class="s2">&quot;</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="k">done</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="c1"># Find types in wrong category</span>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>TEMPORAL_RELATION
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a><span class="c1"># If top score is not temporal, may be miscategorized</span>
+</code></pre></div>
+<hr />
+<h3 id="refresh-categories">refresh-categories</h3>
+<p>Refresh category assignments for vocabulary types using latest embeddings (ADR-047).</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>refresh-categories<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--computed-only</code></td>
+<td>Refresh only types with <code>category_source=computed</code></td>
+<td>all active types</td>
+</tr>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Display help for command</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What It Does:</strong></p>
+<ol>
+<li>Identifies types needing category refresh</li>
+<li>Recalculates similarity to all category seeds</li>
+<li>Assigns best-matching category</li>
+<li>Updates confidence scores</li>
+<li>Flags ambiguous assignments</li>
+</ol>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li><strong>After Model Change</strong> - Recalculate with new embedding model</li>
+<li><strong>Category Definition Update</strong> - Refresh after changing seed terms</li>
+<li><strong>Periodic Maintenance</strong> - Quarterly review of categorization</li>
+<li><strong>Quality Improvement</strong> - Re-evaluate low confidence assignments</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Refresh all active types</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>refresh-categories
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Refresh only computed categories (not manual)</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>refresh-categories<span class="w"> </span>--computed-only
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># Use alias</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
+</code></pre></div>
+<p><strong>Output Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>🔄 Refreshing Category Assignments
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>Scanning vocabulary...
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>  Total types: 55
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>  Will refresh: 55 types
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>Recalculating categories...
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>  ✓ ADDRESSES: composition → composition (no change)
+<a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a>  ✓ ALTERNATIVE_TO: semantic → semantic (no change)
+<a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a>  ⚠ ENFORCES: causation → dependency (changed!)
+<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a>  ✓ ENABLES: causation → causation (no change)
+<a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a>  ⚠ TEMPORAL_RELATION: temporal → semantic (changed!)
+<a id="__codelineno-33-15" name="__codelineno-33-15" href="#__codelineno-33-15"></a>  ... (50 more types)
+<a id="__codelineno-33-16" name="__codelineno-33-16" href="#__codelineno-33-16"></a>
+<a id="__codelineno-33-17" name="__codelineno-33-17" href="#__codelineno-33-17"></a>Results:
+<a id="__codelineno-33-18" name="__codelineno-33-18" href="#__codelineno-33-18"></a>  Refreshed: 55 types
+<a id="__codelineno-33-19" name="__codelineno-33-19" href="#__codelineno-33-19"></a>  Changed: 2 assignments
+<a id="__codelineno-33-20" name="__codelineno-33-20" href="#__codelineno-33-20"></a>  Unchanged: 53 assignments
+<a id="__codelineno-33-21" name="__codelineno-33-21" href="#__codelineno-33-21"></a>  Ambiguous: 8 types
+<a id="__codelineno-33-22" name="__codelineno-33-22" href="#__codelineno-33-22"></a>  Duration: 2.8s
+<a id="__codelineno-33-23" name="__codelineno-33-23" href="#__codelineno-33-23"></a>
+<a id="__codelineno-33-24" name="__codelineno-33-24" href="#__codelineno-33-24"></a>Changed Assignments:
+<a id="__codelineno-33-25" name="__codelineno-33-25" href="#__codelineno-33-25"></a>  ENFORCES: causation → dependency (confidence: 78%)
+<a id="__codelineno-33-26" name="__codelineno-33-26" href="#__codelineno-33-26"></a>  TEMPORAL_RELATION: temporal → semantic (confidence: 62%)
+<a id="__codelineno-33-27" name="__codelineno-33-27" href="#__codelineno-33-27"></a>
+<a id="__codelineno-33-28" name="__codelineno-33-28" href="#__codelineno-33-28"></a>✓ Category assignments refreshed
+<a id="__codelineno-33-29" name="__codelineno-33-29" href="#__codelineno-33-29"></a>────────────────────────────────────────────────────────────────────────────────
+</code></pre></div>
+<p><strong>Understanding Output:</strong></p>
+<p><strong>No Change:</strong>
+- Category assignment confirmed
+- Confidence may have changed slightly</p>
+<p><strong>Changed:</strong>
+- Category reassigned based on new similarity scores
+- Review semantics to verify correctness
+- May indicate improved embeddings or seed terms</p>
+<p><strong>Ambiguous:</strong>
+- Type has close runner-up category
+- Requires manual review
+- Use <code>category-scores</code> for details</p>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li><strong>Model Migration</strong> - Refresh after changing embedding model</li>
+<li><strong>Quality Audit</strong> - Periodic review of auto-assignments</li>
+<li><strong>Seed Update</strong> - Recalculate after changing category definitions</li>
+<li><strong>Inconsistency Fix</strong> - Correct miscategorizations</li>
+</ul>
+<p><strong>Safety:</strong></p>
+<ul>
+<li>Non-destructive (doesn't affect edges)</li>
+<li>Preserves manual assignments (unless <code>--force</code> added in future)</li>
+<li>Atomic operation per type</li>
+<li>Audit trail recorded</li>
+</ul>
+<p><strong>Tips:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Refresh after model change</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--model<span class="w"> </span>text-embedding-3-large
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings<span class="w"> </span>--force
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="c1"># Check changed assignments</span>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;changed!&quot;</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>
+<a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a><span class="c1"># Focus on low confidence types</span>
+<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;[0-5][0-9]%&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>low-confidence.txt
+<a id="__codelineno-34-11" name="__codelineno-34-11" href="#__codelineno-34-11"></a><span class="c1"># Review these manually</span>
+<a id="__codelineno-34-12" name="__codelineno-34-12" href="#__codelineno-34-12"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--computed-only
+</code></pre></div>
+<hr />
+<h2 id="common-use-cases">Common Use Cases</h2>
+<h3 id="monitor-vocabulary-health">Monitor Vocabulary Health</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Check status regularly</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># If in WATCH/DANGER, consolidate</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="k">if</span><span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;DANGER\|EMERGENCY&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="w">  </span>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="k">fi</span>
+</code></pre></div>
+<h3 id="consolidate-redundant-types">Consolidate Redundant Types</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># Review candidates</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># Run interactive consolidation</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="c1"># Or auto-execute high confidence</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.92
+</code></pre></div>
+<h3 id="bootstrap-new-installation">Bootstrap New Installation</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># After first ingestion</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>document.txt<span class="w"> </span>-w
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="c1"># Generate embeddings for new types</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>
+<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a><span class="c1"># Categorize types</span>
+<a id="__codelineno-37-8" name="__codelineno-37-8" href="#__codelineno-37-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
+<a id="__codelineno-37-9" name="__codelineno-37-9" href="#__codelineno-37-9"></a>
+<a id="__codelineno-37-10" name="__codelineno-37-10" href="#__codelineno-37-10"></a><span class="c1"># Check results</span>
+<a id="__codelineno-37-11" name="__codelineno-37-11" href="#__codelineno-37-11"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
+</code></pre></div>
+<h3 id="fix-miscategorized-types">Fix Miscategorized Types</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># Find low confidence assignments</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;[0-5][0-9]%&quot;</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="c1"># Check specific type</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>TEMPORAL_RELATION
+<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a>
+<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="c1"># Refresh if needed</span>
+<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--computed-only
+</code></pre></div>
+<h3 id="merge-similar-custom-types">Merge Similar Custom Types</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># Find synonyms</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="c1"># Merge manually</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>CONNECTS_TO<span class="w"> </span>LINKS_TO<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a><span class="w">  </span>--reason<span class="w"> </span><span class="s2">&quot;Synonym found during consolidation&quot;</span>
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a>
+<a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a><span class="c1"># Verify</span>
+<a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;CONNECTS_TO|LINKS_TO&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="understanding-the-vocabulary-system">Understanding the Vocabulary System</h2>
+<h3 id="vocabulary-lifecycle">Vocabulary Lifecycle</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>Document Ingestion
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>  ↓
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>LLM Extracts Relationships
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a>  ↓
+<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>New Edge Types Created (llm_generated)
+<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>  ↓
+<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>Generate Embeddings (kg vocab generate-embeddings)
+<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>  ↓
+<a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a>Auto-Categorize (kg vocab refresh-categories)
+<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a>  ↓
+<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a>Review &amp; Consolidate (kg vocab consolidate)
+<a id="__codelineno-40-12" name="__codelineno-40-12" href="#__codelineno-40-12"></a>  ↓
+<a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a>Stable Vocabulary
+</code></pre></div>
+<h3 id="zone-based-management-adr-032">Zone-Based Management (ADR-032)</h3>
+<p><strong>GREEN Zone (30-50 types):</strong>
+- Healthy vocabulary size
+- Good semantic coverage
+- Easy to understand
+- <strong>Action:</strong> None needed</p>
+<p><strong>WATCH Zone (51-90 types):</strong>
+- Growing vocabulary
+- Some redundancy likely
+- Still manageable
+- <strong>Action:</strong> Consider consolidation</p>
+<p><strong>DANGER Zone (91-199 types):</strong>
+- Vocabulary bloat
+- High redundancy
+- Harder to query
+- <strong>Action:</strong> Consolidation recommended</p>
+<p><strong>EMERGENCY Zone (200+ types):</strong>
+- Vocabulary explosion
+- System degradation risk
+- Query confusion
+- <strong>Action:</strong> Immediate consolidation required</p>
+<h3 id="category-system-adr-047">Category System (ADR-047)</h3>
+<p><strong>11 Semantic Categories:</strong></p>
+<ol>
+<li><strong>causation</strong> - Cause/effect (CAUSES, ENABLES, PREVENTS)</li>
+<li><strong>composition</strong> - Part/whole (CONTAINS, PART_OF, COMPOSED_OF)</li>
+<li><strong>logical</strong> - Logic (IMPLIES, CONTRADICTS, EQUIVALENT_TO)</li>
+<li><strong>semantic</strong> - Meaning (SIMILAR_TO, DEFINES, CONTRASTS_WITH)</li>
+<li><strong>temporal</strong> - Time (PRECEDES, FOLLOWS, CONCURRENT_WITH)</li>
+<li><strong>dependency</strong> - Requirements (REQUIRES, DEPENDS_ON, CONSUMES)</li>
+<li><strong>derivation</strong> - Origin (DERIVED_FROM, RESULTS_FROM)</li>
+<li><strong>evidential</strong> - Support (SUPPORTS, EVIDENCED_BY, CONTRADICTS)</li>
+<li><strong>procedural</strong> - Process (LEADS_TO, TRANSITIONS_TO)</li>
+<li><strong>attribution</strong> - Ownership (CREATED_BY, AUTHORED_BY)</li>
+<li><strong>llm_generated</strong> - Uncategorized custom types</li>
+</ol>
+<p><strong>Probabilistic Assignment:</strong>
+- Compare type embedding to category seed embeddings
+- Assign to highest similarity category
+- Calculate confidence score
+- Flag ambiguous (runner-up within 20%)</p>
+<hr />
+<h2 id="scripting-and-automation">Scripting and Automation</h2>
+<h3 id="periodic-vocabulary-maintenance">Periodic Vocabulary Maintenance</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a><span class="c1"># vocab-maintenance.sh</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Vocabulary Maintenance ===&quot;</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>
+<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a><span class="c1"># Check status</span>
+<a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Current status:&quot;</span>
+<a id="__codelineno-41-8" name="__codelineno-41-8" href="#__codelineno-41-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-41-9" name="__codelineno-41-9" href="#__codelineno-41-9"></a>
+<a id="__codelineno-41-10" name="__codelineno-41-10" href="#__codelineno-41-10"></a><span class="c1"># Check zone</span>
+<a id="__codelineno-41-11" name="__codelineno-41-11" href="#__codelineno-41-11"></a><span class="nv">ZONE</span><span class="o">=</span><span class="k">$(</span>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;Zone:&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="k">)</span>
+<a id="__codelineno-41-12" name="__codelineno-41-12" href="#__codelineno-41-12"></a>
+<a id="__codelineno-41-13" name="__codelineno-41-13" href="#__codelineno-41-13"></a><span class="k">if</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ZONE</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;DANGER&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ZONE</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;EMERGENCY&quot;</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-41-14" name="__codelineno-41-14" href="#__codelineno-41-14"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;⚠ Consolidation recommended&quot;</span>
+<a id="__codelineno-41-15" name="__codelineno-41-15" href="#__codelineno-41-15"></a>
+<a id="__codelineno-41-16" name="__codelineno-41-16" href="#__codelineno-41-16"></a><span class="w">  </span><span class="c1"># Dry run first</span>
+<a id="__codelineno-41-17" name="__codelineno-41-17" href="#__codelineno-41-17"></a><span class="w">  </span>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+<a id="__codelineno-41-18" name="__codelineno-41-18" href="#__codelineno-41-18"></a>
+<a id="__codelineno-41-19" name="__codelineno-41-19" href="#__codelineno-41-19"></a><span class="w">  </span><span class="c1"># Prompt user</span>
+<a id="__codelineno-41-20" name="__codelineno-41-20" href="#__codelineno-41-20"></a><span class="w">  </span><span class="nb">read</span><span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;Execute consolidation? [y/N]: &quot;</span><span class="w"> </span>CONFIRM
+<a id="__codelineno-41-21" name="__codelineno-41-21" href="#__codelineno-41-21"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CONFIRM</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;y&quot;</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-41-22" name="__codelineno-41-22" href="#__codelineno-41-22"></a><span class="w">    </span>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.92
+<a id="__codelineno-41-23" name="__codelineno-41-23" href="#__codelineno-41-23"></a><span class="w">  </span><span class="k">fi</span>
+<a id="__codelineno-41-24" name="__codelineno-41-24" href="#__codelineno-41-24"></a><span class="k">fi</span>
+<a id="__codelineno-41-25" name="__codelineno-41-25" href="#__codelineno-41-25"></a>
+<a id="__codelineno-41-26" name="__codelineno-41-26" href="#__codelineno-41-26"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Maintenance complete&quot;</span>
+</code></pre></div>
+<h3 id="post-ingestion-vocabulary-processing">Post-Ingestion Vocabulary Processing</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="c1"># post-ingest-vocab.sh</span>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="nv">FILE</span><span class="o">=</span><span class="nv">$1</span>
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a><span class="nv">ONTOLOGY</span><span class="o">=</span><span class="nv">$2</span>
+<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>
+<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Ingesting </span><span class="nv">$FILE</span><span class="s2"> ===&quot;</span>
+<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ONTOLOGY</span><span class="s2">&quot;</span><span class="w"> </span>-w<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FILE</span><span class="s2">&quot;</span>
+<a id="__codelineno-42-9" name="__codelineno-42-9" href="#__codelineno-42-9"></a>
+<a id="__codelineno-42-10" name="__codelineno-42-10" href="#__codelineno-42-10"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Generating embeddings for new types ===&quot;</span>
+<a id="__codelineno-42-11" name="__codelineno-42-11" href="#__codelineno-42-11"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
+<a id="__codelineno-42-12" name="__codelineno-42-12" href="#__codelineno-42-12"></a>
+<a id="__codelineno-42-13" name="__codelineno-42-13" href="#__codelineno-42-13"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Refreshing categories ===&quot;</span>
+<a id="__codelineno-42-14" name="__codelineno-42-14" href="#__codelineno-42-14"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--computed-only
+<a id="__codelineno-42-15" name="__codelineno-42-15" href="#__codelineno-42-15"></a>
+<a id="__codelineno-42-16" name="__codelineno-42-16" href="#__codelineno-42-16"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;=== Final vocabulary status ===&quot;</span>
+<a id="__codelineno-42-17" name="__codelineno-42-17" href="#__codelineno-42-17"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+</code></pre></div>
+<h3 id="find-and-merge-synonyms">Find and Merge Synonyms</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a><span class="c1"># merge-synonyms.sh</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1"># Get merge candidates</span>
+<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>&gt;<span class="w"> </span>/tmp/candidates.txt
+<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>
+<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># Extract pairs with similarity ≥ 0.95</span>
+<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>grep<span class="w"> </span><span class="s2">&quot;similarity: 0.9[5-9]&quot;</span><span class="w"> </span>/tmp/candidates.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>line<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-43-9" name="__codelineno-43-9" href="#__codelineno-43-9"></a><span class="w">  </span><span class="nv">SOURCE</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$line</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">&#39;→&#39;</span><span class="w"> </span><span class="s1">&#39;{print $1}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="k">)</span>
+<a id="__codelineno-43-10" name="__codelineno-43-10" href="#__codelineno-43-10"></a><span class="w">  </span><span class="nv">TARGET</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$line</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">&#39;→&#39;</span><span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $1}&#39;</span><span class="k">)</span>
+<a id="__codelineno-43-11" name="__codelineno-43-11" href="#__codelineno-43-11"></a><span class="w">  </span><span class="nv">SIMILARITY</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$line</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oP<span class="w"> </span><span class="s1">&#39;similarity: \K[0-9.]+&#39;</span><span class="k">)</span>
+<a id="__codelineno-43-12" name="__codelineno-43-12" href="#__codelineno-43-12"></a>
+<a id="__codelineno-43-13" name="__codelineno-43-13" href="#__codelineno-43-13"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Merge: </span><span class="nv">$SOURCE</span><span class="s2"> → </span><span class="nv">$TARGET</span><span class="s2"> (</span><span class="nv">$SIMILARITY</span><span class="s2">)&quot;</span>
+<a id="__codelineno-43-14" name="__codelineno-43-14" href="#__codelineno-43-14"></a><span class="w">  </span><span class="nb">read</span><span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;Confirm? [y/N]: &quot;</span><span class="w"> </span>CONFIRM
+<a id="__codelineno-43-15" name="__codelineno-43-15" href="#__codelineno-43-15"></a>
+<a id="__codelineno-43-16" name="__codelineno-43-16" href="#__codelineno-43-16"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CONFIRM</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;y&quot;</span><span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-43-17" name="__codelineno-43-17" href="#__codelineno-43-17"></a><span class="w">    </span>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SOURCE</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$TARGET</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-18" name="__codelineno-43-18" href="#__codelineno-43-18"></a><span class="w">      </span>--reason<span class="w"> </span><span class="s2">&quot;High similarity (</span><span class="nv">$SIMILARITY</span><span class="s2">) synonym consolidation&quot;</span>
+<a id="__codelineno-43-19" name="__codelineno-43-19" href="#__codelineno-43-19"></a><span class="w">  </span><span class="k">fi</span>
+<a id="__codelineno-43-20" name="__codelineno-43-20" href="#__codelineno-43-20"></a><span class="k">done</span>
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="no-embeddings-for-types">No Embeddings for Types</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="c1"># llm_generated types with -- confidence</span>
+</code></pre></div></p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
+</code></pre></div></p>
+<h3 id="low-confidence-assignments">Low Confidence Assignments</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;[0-5][0-9]%&quot;</span>
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a><span class="c1"># Many types with &lt;60% confidence</span>
+</code></pre></div></p>
+<p><strong>Causes &amp; Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Ambiguous type name</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>AMBIGUOUS_TYPE
+<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="c1"># Review semantics, may need manual categorization</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Wrong embedding model</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a><span class="c1"># Switch to better model</span>
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--model<span class="w"> </span>text-embedding-3-large
+<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings<span class="w"> </span>--force
+<a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="vocabulary-in-danger-zone">Vocabulary in DANGER Zone</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="c1"># Zone: ⚠ DANGER</span>
+</code></pre></div></p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="c1"># Review candidates</span>
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="c1"># Execute consolidation</span>
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.92
+</code></pre></div></p>
+<h3 id="merge-failed">Merge Failed</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>SOURCE<span class="w"> </span>TARGET
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a><span class="c1"># Error: Type &quot;SOURCE&quot; not found</span>
+</code></pre></div></p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Check type exists</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>SOURCE
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Check exact spelling (case-sensitive)</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="nb">source</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Type may be inactive</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span>--inactive<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>SOURCE
+</code></pre></div></p>
+</li>
+</ol>
+<hr />
+<h2 id="related-commands">Related Commands</h2>
+<ul>
+<li><a href="../database/#stats"><code>kg database stats</code></a> - Shows relationship type distribution</li>
+<li><a href="../search/#related"><code>kg search related</code></a> - Uses vocabulary types for filtering</li>
+<li><a href="../admin/#embedding"><code>kg admin embedding</code></a> - Configure embedding model</li>
+<li><a href="../ingest/"><code>kg ingest</code></a> - Introduces new vocabulary types</li>
+</ul>
+<hr />
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../../../architecture/ADR-032-vocabulary-consolidation-ai-in-the-loop.md">ADR-032: AITL Vocabulary Consolidation</a></li>
+<li><a href="../../../architecture/ADR-047-probabilistic-vocabulary-categorization/">ADR-047: Probabilistic Vocabulary Categorization</a></li>
+<li><a href="../../../architecture/ADR-049-llm-determined-relationship-direction/">ADR-049: LLM-Determined Relationship Direction</a></li>
+<li><a href="../../06-reference/vocabulary-management.md">Vocabulary Management Guide</a></li>
+<li><a href="../../02-concepts/relationships.md">Graph Relationships</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
