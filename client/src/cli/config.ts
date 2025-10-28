@@ -58,13 +58,13 @@ function promptPassword(question: string): Promise<string> {
 
 export const configCommand = new Command('config')
   .alias('cfg')  // Short alias
-  .description('Manage kg CLI configuration')
+  .description('Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(
     new Command('get')
-      .description('Get configuration value(s)')
-      .argument('[key]', 'Configuration key (supports dot notation, e.g., "mcp.enabled")')
+      .description('Get one or all configuration values. Supports dot notation for nested keys (e.g., "mcp.enabled", "client.id").')
+      .argument('[key]', 'Configuration key (supports dot notation, e.g., "mcp.enabled"). Omit to show all configuration.')
       .option('--json', 'Output as JSON')
       .action(async (key, options) => {
         try {
@@ -107,9 +107,9 @@ export const configCommand = new Command('config')
   )
   .addCommand(
     new Command('set')
-      .description('Set configuration value')
-      .argument('<key>', 'Configuration key (supports dot notation)')
-      .argument('<value>', 'Value to set (auto-detects JSON arrays/objects)')
+      .description('Set a configuration value. Auto-detects data types (boolean, number, JSON). Use --string to force literal string interpretation.')
+      .argument('<key>', 'Configuration key (supports dot notation, e.g., "apiUrl", "mcp.enabled")')
+      .argument('<value>', 'Value to set (auto-detects JSON arrays/objects, booleans, numbers)')
       .option('--json', 'Force parse value as JSON')
       .option('--string', 'Force treat value as string (no JSON parsing)')
       .action(async (key, value, options) => {
@@ -422,8 +422,8 @@ export const configCommand = new Command('config')
   )
   .addCommand(
     new Command('mcp')
-      .description('Show MCP tool configuration')
-      .argument('[tool]', 'Specific MCP tool name')
+      .description('Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.')
+      .argument('[tool]', 'Specific MCP tool name (optional). Omit to show all MCP tools.')
       .option('--json', 'Output as JSON')
       .action(async (tool, options) => {
         try {
@@ -521,8 +521,8 @@ export const configCommand = new Command('config')
   )
   .addCommand(
     new Command('auto-approve')
-      .description('Enable/disable auto-approval of jobs (ADR-014)')
-      .argument('[value]', 'Enable (true/on/yes) or disable (false/off/no)', 'status')
+      .description('Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).')
+      .argument('[value]', 'Enable (true/on/yes) or disable (false/off/no). Omit to show current status.', 'status')
       .action(async (value) => {
         try {
           const config = getConfig();
@@ -573,7 +573,7 @@ export const configCommand = new Command('config')
   )
   .addCommand(
     new Command('update-secret')
-      .description('Authenticate and update API secret/key')
+      .description('Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.')
       .option('-u, --username <username>', 'Username (will prompt if not provided)')
       .action(async (options) => {
         try {
