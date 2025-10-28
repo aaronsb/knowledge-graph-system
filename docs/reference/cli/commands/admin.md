@@ -4,7 +4,7 @@
 
 ## admin
 
-System administration (status, backup, restore, reset, scheduler, user, rbac, embedding, extraction, keys, regenerate-embeddings)
+System administration and management - health monitoring, backup/restore, database operations, user/RBAC management, AI model configuration (requires authentication for destructive operations)
 
 **Usage:**
 ```bash
@@ -13,13 +13,13 @@ kg admin [options]
 
 **Subcommands:**
 
-- `status` - Show system status (Docker, database, environment)
-- `backup` - Create a database backup
+- `status` - Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)
+- `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (requires authentication)
-- `reset` - Reset database - DESTRUCTIVE (requires authentication)
-- `scheduler` - Job scheduler management (ADR-014)
-- `regenerate-embeddings` - Regenerate embeddings for concept nodes in the graph
+- `reset` - Reset database - PERMANENTLY DELETES ALL DATA (requires 3-second confirmation hold + authentication) - wipes graph, reapplies migrations, clears logs/checkpoints
+- `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
+- `regenerate-embeddings` - Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)
 - `user` - User management commands (admin only)
 - `rbac` - Manage roles, permissions, and access control (ADR-028)
 - `embedding` - Manage embedding model configuration (ADR-039)
@@ -30,7 +30,7 @@ kg admin [options]
 
 ### status
 
-Show system status (Docker, database, environment)
+Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)
 
 **Usage:**
 ```bash
@@ -39,7 +39,7 @@ kg status [options]
 
 ### backup
 
-Create a database backup
+Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
 
 **Usage:**
 ```bash
@@ -50,10 +50,10 @@ kg backup [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--type <type>` | Backup type: "full" or "ontology" | - |
-| `--ontology <name>` | Ontology name (required if type is ontology) | - |
-| `--output <filename>` | Custom output filename | - |
-| `--format <format>` | Export format: "json" (native, restorable) or "gexf" (Gephi visualization) | `"json"` |
+| `--type <type>` | Backup type: "full" (entire graph) or "ontology" (single namespace) | - |
+| `--ontology <name>` | Ontology name (required if --type ontology) | - |
+| `--output <filename>` | Custom output filename (auto-generated if not specified) | - |
+| `--format <format>` | Export format: "json" (native, restorable) or "gexf" (Gephi visualization - not restorable) | `"json"` |
 
 ### list-backups
 
@@ -84,7 +84,7 @@ kg restore [options]
 
 ### reset
 
-Reset database - DESTRUCTIVE (requires authentication)
+Reset database - PERMANENTLY DELETES ALL DATA (requires 3-second confirmation hold + authentication) - wipes graph, reapplies migrations, clears logs/checkpoints
 
 **Usage:**
 ```bash
@@ -95,12 +95,12 @@ kg reset [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--no-logs` | Do not clear log files | - |
-| `--no-checkpoints` | Do not clear checkpoint files | - |
+| `--no-logs` | Do not clear log files during reset | - |
+| `--no-checkpoints` | Do not clear checkpoint files during reset | - |
 
 ### scheduler
 
-Job scheduler management (ADR-014)
+Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
 
 **Usage:**
 ```bash
@@ -134,7 +134,7 @@ kg cleanup [options]
 
 ### regenerate-embeddings
 
-Regenerate embeddings for concept nodes in the graph
+Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)
 
 **Usage:**
 ```bash
@@ -145,10 +145,10 @@ kg regenerate-embeddings [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--concepts` | Regenerate concept embeddings (default if no options) | `true` |
-| `--only-missing` | Only generate for concepts without embeddings | `false` |
-| `--ontology <name>` | Limit to specific ontology | - |
-| `--limit <n>` | Maximum number of concepts to process (for testing) | - |
+| `--concepts` | Regenerate concept embeddings (default if no options specified) | `true` |
+| `--only-missing` | Only generate for concepts without embeddings (skip existing) | `false` |
+| `--ontology <name>` | Limit regeneration to specific ontology namespace | - |
+| `--limit <n>` | Maximum number of concepts to process (useful for testing/batching) | - |
 
 ### user
 

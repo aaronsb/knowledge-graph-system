@@ -11,16 +11,16 @@ import { Table } from '../lib/table';
 
 export const jobCommand = new Command('job')
   .alias('jobs')  // Plural alias for backwards compatibility
-  .description('Manage and monitor ingestion jobs')
+  .description('Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError();
 
 // Get job status
 jobCommand
   .command('status <job-id>')
-  .description('Get job status')
+  .description('Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion')
   .showHelpAfterError()
-  .option('-w, --watch', 'Watch job until completion', false)
+  .option('-w, --watch', 'Watch job until completion (polls every few seconds)', false)
   .action(async (jobId: string, options) => {
     try {
       const client = createClientFromEnv();
@@ -148,12 +148,12 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
 
 // List command with subcommands
 const listCommand = new Command('list')
-  .description('List recent jobs (optionally filtered)')
+  .description('List recent jobs with optional filtering by status or client - includes subcommands for common filters')
   .option('-s, --status <status>', 'Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)')
-  .option('-c, --client <client-id>', 'Filter by client ID (view specific user\'s jobs)')
-  .option('-l, --limit <n>', 'Maximum jobs to return (max: 500)', '100')
-  .option('-o, --offset <n>', 'Number of jobs to skip (for pagination)', '0')
-  .option('--full-id', 'Show full job IDs (no truncation)', false)
+  .option('-c, --client <client-id>', 'Filter by client ID (view specific user\'s jobs in multi-tenant setups)')
+  .option('-l, --limit <n>', 'Maximum jobs to return (max: 500, default: 100)', '100')
+  .option('-o, --offset <n>', 'Number of jobs to skip for pagination (default: 0)', '0')
+  .option('--full-id', 'Show full job IDs without truncation', false)
   .showHelpAfterError()
   .action(async (options) => {
     try {
@@ -258,13 +258,13 @@ jobCommand.addCommand(listCommand);
 
 // Approve job(s) (ADR-014)
 const approveCommand = new Command('approve')
-  .description('Approve jobs for processing')
+  .description('Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status')
   .showHelpAfterError();
 
 // Approve single job
 approveCommand
   .command('job <job-id>')
-  .description('Approve a specific job by ID')
+  .description('Approve a specific job by ID after reviewing cost estimates')
   .action(async (jobId: string) => {
     try {
       const client = createClientFromEnv();
@@ -284,9 +284,9 @@ approveCommand
 // Approve all pending jobs
 approveCommand
   .command('pending')
-  .description('Approve all jobs awaiting approval')
-  .option('-c, --client <client-id>', 'Filter by client ID')
-  .option('-l, --limit <n>', 'Maximum jobs to approve', '100')
+  .description('Approve all jobs awaiting approval (batch operation with confirmation)')
+  .option('-c, --client <client-id>', 'Filter by client ID for multi-tenant environments')
+  .option('-l, --limit <n>', 'Maximum jobs to approve (default: 100)', '100')
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
@@ -376,10 +376,10 @@ jobCommand.addCommand(approveCommand);
 // Cancel job(s)
 jobCommand
   .command('cancel <job-id-or-filter>')
-  .description('Cancel a job or all jobs matching filter (all, pending, running, queued, etc.)')
+  .description('Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)')
   .showHelpAfterError()
-  .option('-c, --client <client-id>', 'Filter by client ID (for batch operations)')
-  .option('-l, --limit <n>', 'Maximum jobs to cancel (default: 100)', '100')
+  .option('-c, --client <client-id>', 'Filter by client ID for batch operations in multi-tenant setups')
+  .option('-l, --limit <n>', 'Maximum jobs to cancel for safety (default: 100)', '100')
   .action(async (jobIdOrFilter: string, options) => {
     try {
       const client = createClientFromEnv();
@@ -476,8 +476,8 @@ jobCommand
 // Clear all jobs
 jobCommand
   .command('clear')
-  .description('Clear ALL jobs from database (requires confirmation)')
-  .option('--confirm', 'Confirm deletion (required)', false)
+  .description('Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)')
+  .option('--confirm', 'Confirm deletion (REQUIRED for safety)', false)
   .showHelpAfterError()
   .action(async (options) => {
     try {

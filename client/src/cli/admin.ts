@@ -479,7 +479,7 @@ function createProgressBar(current: number, total: number, width: number = 20): 
 // ========== Status Command ==========
 
 const statusCommand = new Command('status')
-  .description('Show system status (Docker, database, environment)')
+  .description('Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)')
   .action(async () => {
     try {
       const client = createClientFromEnv();
@@ -576,11 +576,11 @@ const statusCommand = new Command('status')
 // ========== Backup Command ==========
 
 const backupCommand = new Command('backup')
-  .description('Create a database backup')
-  .option('--type <type>', 'Backup type: "full" or "ontology"')
-  .option('--ontology <name>', 'Ontology name (required if type is ontology)')
-  .option('--output <filename>', 'Custom output filename')
-  .option('--format <format>', 'Export format: "json" (native, restorable) or "gexf" (Gephi visualization)', 'json')
+  .description('Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format')
+  .option('--type <type>', 'Backup type: "full" (entire graph) or "ontology" (single namespace)')
+  .option('--ontology <name>', 'Ontology name (required if --type ontology)')
+  .option('--output <filename>', 'Custom output filename (auto-generated if not specified)')
+  .option('--format <format>', 'Export format: "json" (native, restorable) or "gexf" (Gephi visualization - not restorable)', 'json')
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
@@ -957,9 +957,9 @@ const restoreCommand = new Command('restore')
 // ========== Reset Command ==========
 
 const resetCommand = new Command('reset')
-  .description('Reset database - DESTRUCTIVE (requires authentication)')
-  .option('--no-logs', 'Do not clear log files')
-  .option('--no-checkpoints', 'Do not clear checkpoint files')
+  .description('Reset database - PERMANENTLY DELETES ALL DATA (requires 3-second confirmation hold + authentication) - wipes graph, reapplies migrations, clears logs/checkpoints')
+  .option('--no-logs', 'Do not clear log files during reset')
+  .option('--no-checkpoints', 'Do not clear checkpoint files during reset')
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
@@ -1141,18 +1141,18 @@ const schedulerCleanupCommand = new Command('cleanup')
   });
 
 const schedulerCommand = new Command('scheduler')
-  .description('Job scheduler management (ADR-014)')
+  .description('Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs')
   .addCommand(schedulerStatusCommand)
   .addCommand(schedulerCleanupCommand);
 
 // ========== Concept Embedding Regeneration Command ==========
 
 const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
-  .description('Regenerate embeddings for concept nodes in the graph')
-  .option('--concepts', 'Regenerate concept embeddings (default if no options)', true)
-  .option('--only-missing', 'Only generate for concepts without embeddings', false)
-  .option('--ontology <name>', 'Limit to specific ontology')
-  .option('--limit <n>', 'Maximum number of concepts to process (for testing)', parseInt)
+  .description('Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)')
+  .option('--concepts', 'Regenerate concept embeddings (default if no options specified)', true)
+  .option('--only-missing', 'Only generate for concepts without embeddings (skip existing)', false)
+  .option('--ontology <name>', 'Limit regeneration to specific ontology namespace')
+  .option('--limit <n>', 'Maximum number of concepts to process (useful for testing/batching)', parseInt)
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
@@ -1225,7 +1225,7 @@ const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
 // ========== Main Admin Command ==========
 
 export const adminCommand = new Command('admin')
-  .description('System administration (status, backup, restore, reset, scheduler, user, rbac, embedding, extraction, keys, regenerate-embeddings)')
+  .description('System administration and management - health monitoring, backup/restore, database operations, user/RBAC management, AI model configuration (requires authentication for destructive operations)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(statusCommand)

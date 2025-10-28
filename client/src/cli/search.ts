@@ -29,14 +29,14 @@ function formatGroundingStrength(grounding: number): string {
 }
 
 const queryCommand = new Command('query')
-      .description('Search for concepts using natural language')
+      .description('Search for concepts using vector similarity (embeddings) - use specific phrases for best results')
       .showHelpAfterError()
-      .argument('<query>', 'Search query text')
-      .option('-l, --limit <number>', 'Maximum results', '10')
-      .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0)', '0.7')
-      .option('--show-evidence', 'Show sample evidence quotes from source text')
-      .option('--no-grounding', 'Disable grounding strength calculation (faster)')
-      .option('--json', 'Output raw JSON instead of formatted text')
+      .argument('<query>', 'Natural language search query (2-3 words work best)')
+      .option('-l, --limit <number>', 'Maximum number of results to return', '10')
+      .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches)', '0.7')
+      .option('--show-evidence', 'Show sample evidence quotes from source documents')
+      .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
+      .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (query, options) => {
         try {
           const client = createClientFromEnv();
@@ -104,11 +104,11 @@ const queryCommand = new Command('query')
       });
 
 const detailsCommand = new Command('details')
-      .description('Get detailed information about a concept')
+      .description('Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength')
       .showHelpAfterError()
-      .argument('<concept-id>', 'Concept ID to retrieve')
-      .option('--no-grounding', 'Disable grounding strength calculation (faster)')
-      .option('--json', 'Output raw JSON instead of formatted text')
+      .argument('<concept-id>', 'Concept ID to retrieve (from search results)')
+      .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
+      .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (conceptId, options) => {
         try {
           const client = createClientFromEnv();
@@ -160,12 +160,12 @@ const detailsCommand = new Command('details')
       });
 
 const relatedCommand = new Command('related')
-      .description('Find concepts related through graph traversal')
+      .description('Find concepts related through graph traversal (breadth-first search) - groups results by distance')
       .showHelpAfterError()
-      .argument('<concept-id>', 'Starting concept ID')
-      .option('-d, --depth <number>', 'Maximum traversal depth (1-5)', '2')
-      .option('-t, --types <types...>', 'Filter by relationship types')
-      .option('--json', 'Output raw JSON instead of formatted text')
+      .argument('<concept-id>', 'Starting concept ID for traversal')
+      .option('-d, --depth <number>', 'Maximum traversal depth in hops (1-2 fast, 3-4 moderate, 5 slow)', '2')
+      .option('-t, --types <types...>', 'Filter by relationship types (IMPLIES, ENABLES, SUPPORTS, etc. - see kg vocab list)')
+      .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (conceptId, options) => {
         try {
           const client = createClientFromEnv();
@@ -340,7 +340,7 @@ Notes:
 [queryCommand, detailsCommand, relatedCommand, connectCommand].forEach(configureColoredHelp);
 
 export const searchCommand = new Command('search')
-  .description('Search for concepts and explore the graph')
+  .description('Search and explore the knowledge graph using vector similarity, graph traversal, and path finding')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(queryCommand)

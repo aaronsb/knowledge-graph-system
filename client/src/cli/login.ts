@@ -159,7 +159,7 @@ async function loginCommand(options: LoginOptions) {
 export function registerLoginCommand(program: Command): void {
   program
     .command('login')
-    .description('Authenticate with username and password')
-    .option('-u, --username <username>', 'Username (will prompt if not provided)')
+    .description('Authenticate with username and password - stores JWT token for session (required for admin commands)')
+    .option('-u, --username <username>', 'Username (will prompt if not provided - can be saved for future logins)')
     .action(loginCommand);
 }
