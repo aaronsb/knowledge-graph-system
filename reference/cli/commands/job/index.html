@@ -5201,7 +5201,7 @@
 <p><strong>Subcommands:</strong></p>
 <ul>
 <li><code>status</code> - Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion</li>
-<li><code>list</code> - List recent jobs with optional filtering by status or client - includes subcommands for common filters</li>
+<li><code>list</code> - List recent jobs with optional filtering by status or user - includes subcommands for common filters</li>
 <li><code>approve</code> - Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status</li>
 <li><code>cancel</code> - Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)</li>
 <li><code>clear</code> - Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)</li>
@@ -5234,7 +5234,7 @@
 </tbody>
 </table>
 <h3 id="list">list</h3>
-<p>List recent jobs with optional filtering by status or client - includes subcommands for common filters</p>
+<p>List recent jobs with optional filtering by status or user - includes subcommands for common filters</p>
 <p><strong>Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
@@ -5254,8 +5254,8 @@
 <td>awaiting_approval</td>
 </tr>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID (view specific user's jobs in multi-tenant setups)</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID (view specific user's jobs)</td>
 <td>-</td>
 </tr>
 <tr>
@@ -5300,8 +5300,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID</td>
 <td>-</td>
 </tr>
 <tr>
@@ -5332,8 +5332,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID</td>
 <td>-</td>
 </tr>
 <tr>
@@ -5364,8 +5364,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID</td>
 <td>-</td>
 </tr>
 <tr>
@@ -5396,8 +5396,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID</td>
 <td>-</td>
 </tr>
 <tr>
@@ -5428,8 +5428,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID</td>
 <td>-</td>
 </tr>
 <tr>
@@ -5481,8 +5481,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID for multi-tenant environments</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID</td>
 <td>-</td>
 </tr>
 <tr>
@@ -5512,8 +5512,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID</td>
 <td>-</td>
 </tr>
 </tbody>
@@ -5538,8 +5538,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-c, --client &lt;client-id&gt;</code></td>
-<td>Filter by client ID for batch operations in multi-tenant setups</td>
+<td><code>-c, --client &lt;user-id&gt;</code></td>
+<td>Filter by user ID for batch operations</td>
 <td>-</td>
 </tr>
 <tr>
