@@ -837,7 +837,7 @@ ON CONFLICT (name) DO NOTHING;
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from croniter import croniter  # Simple cron parser library
 from typing import Dict, Type
 
@@ -892,6 +892,9 @@ class JobScheduler:
     async def _check_schedules(self):
         """
         Check all enabled schedules and trigger if due.
+
+        Uses PostgreSQL advisory lock to ensure only one worker checks
+        schedules in multi-worker deployments (e.g., Gunicorn -w 4).
         """
         from src.api.lib.age_client import AGEClient
 
@@ -900,6 +903,24 @@ class JobScheduler:
 
         try:
             with conn.cursor() as cur:
+                # --- MULTI-WORKER SAFETY ---
+                # Try to acquire a unique, non-blocking advisory lock.
+                # Only one worker across all processes can hold this lock.
+                # Key: 1050 (arbitrary unique integer for this system)
+                cur.execute("SELECT pg_try_advisory_lock(1050)")
+                got_lock = cur.fetchone()[0]
+
+                if not got_lock:
+                    # Another worker has the lock and is checking schedules.
+                    # This worker should do nothing to avoid duplicate job creation.
+                    logger.debug(
+                        "Scheduler lock held by another worker, skipping check cycle"
+                    )
+                    return
+
+                # If we're here, we are the ONLY worker running schedule checks
+                logger.debug("Acquired scheduler lock, proceeding with schedule check")
+                # --- END MULTI-WORKER SAFETY ---
                 cur.execute("""
                     SELECT id, name, launcher_class, schedule_cron,
                            retry_count, max_retries, last_run, next_run
@@ -941,15 +962,28 @@ class JobScheduler:
                         # Create launcher instance
                         launcher = launcher_cls(self.job_queue, max_retries)
 
-                        # Trigger launcher
-                        job_id = launcher.launch()
+                        # Trigger launcher (three possible outcomes)
+                        job_id = None
+                        launch_failed = False
 
-                        # Update schedule
+                        try:
+                            # launch() returns job_id, None (for skip),
+                            # or raises Exception (for failure)
+                            job_id = launcher.launch()
+                        except Exception as e:
+                            logger.error(
+                                f"❌ Schedule '{name}' launcher failed: {e}",
+                                exc_info=True
+                            )
+                            launch_failed = True
+
+                        # Calculate next run time for schedule advancement
                         cron = croniter(cron_expr, now)
                         next_next_run = cron.get_next(datetime)
 
                         if job_id:
-                            # Success: reset retry count
+                            # Outcome 1: Success - Job enqueued
+                            # Reset retry_count, update last_success
                             cur.execute("""
                                 UPDATE kg_api.scheduled_jobs
                                 SET last_run = %s,
@@ -959,8 +993,23 @@ class JobScheduler:
                                 WHERE id = %s
                             """, (now, now, next_next_run, schedule_id))
                             logger.info(f"✅ Schedule '{name}' triggered job {job_id}")
+
+                        elif not launch_failed:
+                            # Outcome 2: Normal skip - Conditions not met
+                            # This is healthy, reset retry_count, advance schedule
+                            # Don't update last_success (no job ran)
+                            cur.execute("""
+                                UPDATE kg_api.scheduled_jobs
+                                SET last_run = %s,
+                                    next_run = %s,
+                                    retry_count = 0
+                                WHERE id = %s
+                            """, (now, next_next_run, schedule_id))
+                            logger.info(f"⏭️  Schedule '{name}' skipped (conditions not met)")
+
                         else:
-                            # Failure: increment retry count
+                            # Outcome 3: Launcher failure - Exception raised
+                            # Increment retry_count, apply exponential backoff
                             new_retry_count = retry_count + 1
 
                             if new_retry_count >= max_retries:
@@ -997,6 +1046,12 @@ class JobScheduler:
                         conn.commit()
 
         finally:
+            # --- MULTI-WORKER SAFETY ---
+            # Always release the advisory lock, even if we failed.
+            # This allows another worker to take over on the next 60s poll.
+            with conn.cursor() as cur:
+                cur.execute("SELECT pg_advisory_unlock(1050)")
+            # --- END MULTI-WORKER SAFETY ---
             client.pool.putconn(conn)
 ```
 
@@ -1066,35 +1121,44 @@ class JobLauncher(ABC):
         Execute the launcher: check conditions, prepare data, enqueue job.
 
         Returns:
-            job_id if enqueued, None if conditions not met
+            job_id if enqueued, None if conditions not met (normal skip).
+
+        Raises:
+            Exception: If condition check, data prep, or enqueueing fails.
+
+        Important: A return value of None means "conditions not met, this is
+        normal, don't treat as failure." Any actual failure should raise an
+        exception so the scheduler can distinguish:
+            - Success (job_id returned) → Reset retry_count
+            - Skip (None returned) → Reset retry_count, advance schedule
+            - Failure (exception raised) → Increment retry_count, backoff
         """
-        # Check conditions
-        try:
-            if not self.check_conditions():
-                logger.info(f"⏭️  {self.__class__.__name__}: Conditions not met, skipping")
-                return None
-        except Exception as e:
-            logger.error(f"❌ {self.__class__.__name__}: Condition check failed: {e}")
-            return None
+        # Let exceptions bubble up - scheduler handles them
+        if not self.check_conditions():
+            logger.info(f"⏭️  {self.__class__.__name__}: Conditions not met, skipping")
+            return None  # Normal skip, not a failure
 
-        # Prepare job data
-        try:
-            job_data = self.prepare_job_data()
-        except Exception as e:
-            logger.error(f"❌ {self.__class__.__name__}: Failed to prepare job data: {e}")
-            return None
+        logger.info(f"✓  {self.__class__.__name__}: Conditions met, preparing job")
 
-        # Enqueue job to existing queue
-        try:
-            job_id = self.job_queue.enqueue(
-                job_type=self.get_job_type(),
-                job_data=job_data
-            )
-            logger.info(f"✅ {self.__class__.__name__}: Enqueued job {job_id}")
-            return job_id
-        except Exception as e:
-            logger.error(f"❌ {self.__class__.__name__}: Failed to enqueue job: {e}")
-            return None
+        # Let exceptions bubble up
+        job_data = self.prepare_job_data()
+
+        # Let exceptions bubble up
+        job_id = self.job_queue.enqueue(
+            job_type=self.get_job_type(),
+            job_data=job_data
+        )
+
+        # Mark as system job
+        if job_id:
+            self.job_queue.update_job(job_id, {
+                "is_system_job": True,
+                "job_source": "scheduled_task",
+                "created_by": f"system:scheduler:{self.__class__.__name__}"
+            })
+
+        logger.info(f"✅ {self.__class__.__name__}: Enqueued job {job_id}")
+        return job_id
 ```
 
 #### 4. Example Launchers
@@ -1247,6 +1311,151 @@ async def shutdown_event():
     await scheduler.stop()
 ```
 
+## Production Deployment Considerations
+
+### Multi-Worker Safety (Critical)
+
+**Problem:** In production, FastAPI runs with multiple Gunicorn workers:
+```bash
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.api.main:app
+```
+
+Each worker process runs the `startup_event`, creating **N separate scheduler loops**. Without coordination, all N schedulers will check schedules simultaneously, causing **duplicate job creation**.
+
+**Example (without advisory lock):**
+```
+2025-10-29 00:00:00 - Worker 1: Schedule 'category_refresh' due → Enqueue job_abc123
+2025-10-29 00:00:00 - Worker 2: Schedule 'category_refresh' due → Enqueue job_abc456
+2025-10-29 00:00:00 - Worker 3: Schedule 'category_refresh' due → Enqueue job_abc789
+2025-10-29 00:00:00 - Worker 4: Schedule 'category_refresh' due → Enqueue job_abcXYZ
+Result: 4 identical jobs instead of 1 ❌
+```
+
+**Solution: PostgreSQL Advisory Locks**
+
+Advisory locks are lightweight, session-level locks that coordinate across processes:
+
+```python
+# In _check_schedules():
+cur.execute("SELECT pg_try_advisory_lock(1050)")
+got_lock = cur.fetchone()[0]
+
+if not got_lock:
+    # Another worker is handling schedules, skip
+    return
+
+# Only one worker reaches here
+# ... trigger launchers ...
+
+# Always release lock in finally block
+cur.execute("SELECT pg_advisory_unlock(1050)")
+```
+
+**How it works:**
+- Lock key `1050` is unique to the scheduler (arbitrary integer)
+- `pg_try_advisory_lock()` is **non-blocking** - returns immediately
+- Only one process across all workers can hold the lock
+- Other workers see `got_lock=False` and skip the check cycle
+- Lock auto-releases on connection close (failsafe)
+
+**Benefits:**
+- ✅ No external coordination service (Redis, ZooKeeper)
+- ✅ No database table contention
+- ✅ Automatic failover (if lock holder crashes, next worker takes over)
+- ✅ Zero configuration required
+
+**Testing multi-worker safety:**
+```bash
+# Start with 4 workers
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.api.main:app
+
+# Watch logs - you should see only ONE worker per minute logging:
+# "Acquired scheduler lock, proceeding with schedule check"
+# Other 3 workers: "Scheduler lock held by another worker, skipping check cycle"
+
+# Verify only ONE job created per schedule trigger
+kg jobs list --limit 10 | grep category_refresh
+```
+
+### Distinguishing Skip from Failure (Critical)
+
+**Problem:** The launcher returns `None` in two very different scenarios:
+1. **Normal skip**: Conditions not met (healthy, expected)
+2. **Actual failure**: Exception during condition check or enqueueing (needs retry)
+
+Treating both as "failure" causes schedules to get disabled after 5 normal skips.
+
+**Solution: Three-Outcome Pattern**
+
+Launcher returns three possible outcomes:
+- `job_id` → Success (job enqueued)
+- `None` → Skip (conditions not met, normal)
+- `Exception` → Failure (needs retry/backoff)
+
+```python
+# Launcher.launch() - Let exceptions bubble up
+def launch(self) -> Optional[str]:
+    if not self.check_conditions():
+        return None  # Normal skip, not a failure
+
+    job_data = self.prepare_job_data()  # Raises on failure
+    job_id = self.job_queue.enqueue(...)  # Raises on failure
+    return job_id
+
+# Scheduler._check_schedules() - Handle three outcomes
+try:
+    job_id = launcher.launch()
+except Exception as e:
+    launch_failed = True
+
+if job_id:
+    # Success: reset retry_count, update last_success
+elif not launch_failed:
+    # Skip: reset retry_count, advance schedule (DON'T increment retries!)
+else:
+    # Failure: increment retry_count, exponential backoff
+```
+
+**Why this matters:**
+```
+Without fix:
+  00:00 ⏭️  Skip (conditions not met) → retry_count = 1
+  06:00 ⏭️  Skip (conditions not met) → retry_count = 2
+  12:00 ⏭️  Skip (conditions not met) → retry_count = 3
+  18:00 ⏭️  Skip (conditions not met) → retry_count = 4
+  24:00 ⏭️  Skip (conditions not met) → retry_count = 5
+  30:00 ❌  Schedule disabled (max retries) - WRONG!
+
+With fix:
+  00:00 ⏭️  Skip (conditions not met) → retry_count = 0 ✅
+  06:00 ⏭️  Skip (conditions not met) → retry_count = 0 ✅
+  48:00 ✅  Success (conditions met) → retry_count = 0 ✅
+  Schedule stays healthy ✅
+```
+
+### Monitoring Requirements
+
+**Key metrics to track:**
+- Scheduler lock acquisition rate (should be ~60 locks/hour = 1 per minute)
+- Schedule success rate (last_success vs last_failure)
+- Skip vs failure ratio (high skip rate is normal for polling pattern)
+- Job queue depth (scheduled jobs vs manual jobs)
+
+**Log patterns to watch:**
+```
+✅ Good: Multiple workers, one active scheduler
+Worker 1: "Acquired scheduler lock, proceeding..."
+Worker 2: "Scheduler lock held by another worker, skipping"
+Worker 3: "Scheduler lock held by another worker, skipping"
+Worker 4: "Scheduler lock held by another worker, skipping"
+
+❌ Bad: All workers acquiring lock (advisory lock not working)
+Worker 1: "Acquired scheduler lock..."
+Worker 2: "Acquired scheduler lock..."  ← PROBLEM!
+Worker 3: "Acquired scheduler lock..."  ← PROBLEM!
+Worker 4: "Acquired scheduler lock..."  ← PROBLEM!
+```
+
 ## Consequences
 
 ### Positive
@@ -1285,6 +1494,10 @@ async def shutdown_event():
 **Monitoring:**
 - ❌ Need to monitor scheduler health (is the loop running?)
 - ❌ Need to track schedule failures (last_success, last_failure)
+
+**Multi-Worker Coordination:**
+- ❌ Requires advisory locks in multi-worker deployments (but simple to implement)
+- ❌ Single point of failure in scheduler loop (but auto-recovers via lock failover)
 
 ## Alternatives Considered
 
@@ -1372,7 +1585,7 @@ def test_scheduled_job_end_to_end():
 
 ### Manual Testing
 ```bash
-# 1. Start API
+# 1. Start API (single worker for initial testing)
 ./scripts/start-api.sh -y
 
 # 2. Check scheduled jobs
@@ -1386,6 +1599,32 @@ tail -f logs/api_*.log | grep -i "launcher\|schedule"
 
 # 5. Verify job created
 kg jobs list --limit 5
+```
+
+### Multi-Worker Testing (Critical)
+```bash
+# 1. Start API with 4 workers
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.api.main:app
+
+# 2. Watch logs for lock acquisition pattern (should see only ONE worker per minute)
+tail -f logs/api_*.log | grep -i "scheduler lock"
+
+# Expected pattern (repeated every 60 seconds):
+# Worker 1: "Acquired scheduler lock, proceeding with schedule check"
+# Worker 2: "Scheduler lock held by another worker, skipping check cycle"
+# Worker 3: "Scheduler lock held by another worker, skipping check cycle"
+# Worker 4: "Scheduler lock held by another worker, skipping check cycle"
+
+# 3. Trigger a schedule manually
+psql -c "UPDATE kg_api.scheduled_jobs SET next_run = NOW() WHERE name = 'category_refresh'"
+
+# 4. Verify only ONE job created (not 4!)
+kg jobs list --limit 10 | grep category_refresh
+# Should show exactly 1 job, not 4
+
+# 5. Check advisory lock status in PostgreSQL
+psql -c "SELECT * FROM pg_locks WHERE locktype = 'advisory'"
+# Should show lock key 1050 held by one backend process
 ```
 
 ## Monitoring
