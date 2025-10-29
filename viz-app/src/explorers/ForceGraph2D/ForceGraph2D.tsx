@@ -7,7 +7,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff } from 'lucide-react';
+import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
@@ -1441,6 +1441,38 @@ export const ForceGraph2D: React.FC<
     }
   }, [mergeGraphData, setGraphData, setFocusedNodeId]);
 
+  // Pin/Unpin node functionality
+  const isPinned = useCallback((nodeId: string): boolean => {
+    const node = data.nodes.find(n => n.id === nodeId);
+    return node?.fx !== undefined && node?.fx !== null;
+  }, [data.nodes]);
+
+  const togglePinNode = useCallback((nodeId: string) => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+    const nodeSelection = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
+
+    if (!nodeSelection.empty()) {
+      const nodeData = nodeSelection.datum() as D3Node;
+
+      if (nodeData.fx !== undefined && nodeData.fx !== null) {
+        // Unpin: remove fixed position
+        nodeData.fx = null;
+        nodeData.fy = null;
+      } else {
+        // Pin: set fixed position to current position
+        nodeData.fx = nodeData.x;
+        nodeData.fy = nodeData.y;
+      }
+
+      // Restart simulation briefly to apply changes
+      if (settings.physics.enabled && simulationRef.current) {
+        simulationRef.current.alpha(0.1).restart();
+      }
+    }
+  }, [data.nodes, settings.physics.enabled]);
+
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? [
@@ -1460,6 +1492,24 @@ export const ForceGraph2D: React.FC<
               onClick: () => {
                 setOriginNodeId(contextMenu.nodeId);
                 applyGoldRing(contextMenu.nodeId);
+                setContextMenu(null);
+              },
+            },
+        // Contextual pin/unpin node
+        isPinned(contextMenu.nodeId)
+          ? {
+              label: 'Unpin Node',
+              icon: PinOff,
+              onClick: () => {
+                togglePinNode(contextMenu.nodeId);
+                setContextMenu(null);
+              },
+            }
+          : {
+              label: 'Pin Node',
+              icon: Pin,
+              onClick: () => {
+                togglePinNode(contextMenu.nodeId);
                 setContextMenu(null);
               },
             },
