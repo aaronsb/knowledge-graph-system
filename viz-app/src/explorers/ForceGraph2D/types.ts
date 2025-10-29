@@ -24,6 +24,7 @@ export interface ForceGraph2DSettings {
     edgeColorBy: EdgeColorMode;
     showLabels: boolean;
     showArrows: boolean;
+    showGrid: boolean;
     nodeSize: number; // Base node size multiplier (0.5-3)
     linkWidth: number; // Base link width (0.5-5)
   };
@@ -65,6 +66,7 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     edgeColorBy: 'category',
     showLabels: true, // Enabled by default for better readability
     showArrows: true,
+    showGrid: true,
     nodeSize: 1,
     linkWidth: 1,
   },

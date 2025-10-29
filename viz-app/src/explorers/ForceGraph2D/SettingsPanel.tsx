@@ -152,6 +152,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph2DSettings>> =
             <span>Show Arrows</span>
           </label>
 
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={settings.visual.showGrid}
+              onChange={(e) => updateVisual('showGrid', e.target.checked)}
+              className="rounded"
+            />
+            <span>Show Grid</span>
+          </label>
+
           <div>
             <label className="block text-sm mb-1">
               Node Size: {settings.visual.nodeSize.toFixed(1)}x
