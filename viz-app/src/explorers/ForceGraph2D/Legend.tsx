@@ -5,8 +5,8 @@
  * with collapsible sections and vertical resize capability.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as d3 from 'd3';
 import { categoryColors } from '../../config/categoryColors';
 import type { GraphData } from '../../types/graph';
@@ -20,8 +20,6 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['nodeColors', 'edgeColors'])
   );
-  const [height, setHeight] = useState(600);
-  const [isDragging, setIsDragging] = useState(false);
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
@@ -34,36 +32,6 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
       return next;
     });
   };
-
-  // Resize handlers
-  const handleMouseDown = useCallback(() => {
-    setIsDragging(true);
-  }, []);
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging) return;
-      // Update height based on mouse Y position (from top)
-      const newHeight = Math.max(200, Math.min(1200, e.clientY - 80)); // 80px = header offset
-      setHeight(newHeight);
-    },
-    [isDragging]
-  );
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Extract ontologies and their colors
   const ontologies = Array.from(new Set(data.nodes.map((n) => n.group))).sort();
@@ -133,10 +101,10 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
   return (
     <div
       className="absolute top-4 left-4 bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl z-10 flex flex-col"
-      style={{ width: '240px', height: `${height}px`, maxHeight: '95vh' }}
+      style={{ width: '240px', maxHeight: '95vh' }}
     >
       {/* Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3">
+      <div className="overflow-y-auto overflow-x-hidden p-3 space-y-3">
         {/* Node Colors Section */}
         <div className="border-b border-gray-700 pb-3">
           <button
@@ -183,14 +151,6 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Resize Handle */}
-      <div
-        onMouseDown={handleMouseDown}
-        className="h-2 bg-gray-700/50 hover:bg-blue-500/50 cursor-ns-resize transition-colors flex items-center justify-center group rounded-b-lg"
-      >
-        <GripVertical size={12} className="text-gray-500 group-hover:text-blue-400" />
       </div>
     </div>
   );
