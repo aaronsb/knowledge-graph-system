@@ -663,7 +663,12 @@ export const ForceGraph2D: React.FC<
       .attr('stroke-width', (d) => (d.value || 1) * settings.visual.linkWidth)
       .attr('stroke-opacity', 0.6)
       .attr('fill', 'none')
-      .attr('marker-end', settings.visual.showArrows ? 'url(#arrowhead)' : '')
+      .attr('marker-end', (d) => {
+        if (!settings.visual.showArrows) return '';
+        // Use category-specific marker
+        const category = d.category || 'default';
+        return `url(#arrowhead-${category})`;
+      })
       .attr('cursor', 'pointer')
       .attr('data-link-key', (d) => {
         const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
@@ -737,21 +742,40 @@ export const ForceGraph2D: React.FC<
         });
       });
 
-    // Add arrow marker definition
+    // Add arrow marker definitions - one per category color
     if (settings.visual.showArrows) {
-      svg
-        .append('defs')
-        .append('marker')
-        .attr('id', 'arrowhead')
-        .attr('viewBox', '-0 -5 10 10')
-        .attr('refX', 20)
-        .attr('refY', 0)
-        .attr('orient', 'auto')
-        .attr('markerWidth', 8)
-        .attr('markerHeight', 8)
-        .append('path')
-        .attr('d', 'M 0,-5 L 10,0 L 0,5')
-        .attr('fill', '#999');
+      const defs = svg.append('defs');
+
+      // Create markers for each category
+      const categoryColors: Record<string, string> = {
+        derivation: '#8b5cf6',
+        modification: '#f59e0b',
+        operation: '#3b82f6',
+        interaction: '#22c55e',
+        composition: '#ec4899',
+        causation: '#ef4444',
+        dependency: '#a855f7',
+        logical: '#06b6d4',
+        temporal: '#f97316',
+        semantic: '#84cc16',
+        evidential: '#14b8a6',
+        default: '#6b7280',
+      };
+
+      Object.entries(categoryColors).forEach(([category, color]) => {
+        defs
+          .append('marker')
+          .attr('id', `arrowhead-${category}`)
+          .attr('viewBox', '-0 -5 10 10')
+          .attr('refX', 20)
+          .attr('refY', 0)
+          .attr('orient', 'auto')
+          .attr('markerWidth', 8)
+          .attr('markerHeight', 8)
+          .append('path')
+          .attr('d', 'M 0,-5 L 10,0 L 0,5')
+          .attr('fill', color);
+      });
     }
 
     // Add edge labels showing relationship types
