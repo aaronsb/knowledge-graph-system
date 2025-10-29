@@ -30,6 +30,7 @@ export interface ExplorerConfig {
 export interface ExplorerProps<TData = any, TSettings = any> {
   data: TData;
   settings: TSettings;
+  onSettingsChange?: (settings: TSettings) => void;
   onNodeClick?: (nodeId: string) => void;
   onSelectionChange?: (selection: string[]) => void;
   className?: string;

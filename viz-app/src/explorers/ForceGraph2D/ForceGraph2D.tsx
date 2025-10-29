@@ -18,6 +18,7 @@ import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
 import { Legend } from './Legend';
+import { CanvasSettingsPanel } from './CanvasSettingsPanel';
 
 /**
  * Format grounding strength with emoji indicator (matches CLI format)
@@ -386,7 +387,7 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
 
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
-> = ({ data, settings, onNodeClick, className }) => {
+> = ({ data, settings, onSettingsChange, onNodeClick, className }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -1422,6 +1423,11 @@ export const ForceGraph2D: React.FC<
           {data.nodes.length} nodes • {data.links.length} edges
         </div>
       </div>
+
+      {/* Settings Panel */}
+      {onSettingsChange && (
+        <CanvasSettingsPanel settings={settings} onChange={onSettingsChange} />
+      )}
 
       {/* Context Menu */}
       {contextMenu && (

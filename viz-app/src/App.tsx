@@ -407,6 +407,7 @@ const AppContent: React.FC = () => {
             <ExplorerComponent
               data={graphData}
               settings={explorerSettings}
+              onSettingsChange={setExplorerSettings}
               onNodeClick={handleNodeClick}
             />
           )}
