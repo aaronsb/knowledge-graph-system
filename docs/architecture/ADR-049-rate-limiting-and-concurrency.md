@@ -367,6 +367,88 @@ Different limits for different operations:
 - Embeddings: 16 concurrent (cheaper)
 - Translation: 4 concurrent (moderate)
 
+## Provider HTTP Error Codes
+
+### OpenAI API Errors
+
+| Code | Error Type | Cause | Retry Strategy |
+|------|-----------|-------|----------------|
+| **401** | Invalid Authentication | Invalid API key or requesting organization | ❌ Do not retry - Fix credentials |
+| **401** | Incorrect API key provided | The requesting API key is not correct | ❌ Do not retry - Fix API key |
+| **401** | Not member of organization | Account is not part of an organization | ❌ Do not retry - Contact support |
+| **401** | IP not authorized | Request IP does not match configured allowlist | ❌ Do not retry - Update IP allowlist |
+| **403** | Country/region not supported | Accessing API from unsupported location | ❌ Do not retry - Use VPN/proxy |
+| **429** | Rate limit reached for requests | Sending requests too quickly | ✅ **Retry with exponential backoff** |
+| **429** | Quota exceeded | Run out of credits or hit monthly spend limit | ❌ Do not retry - Buy more credits |
+| **500** | Server error | Issue on OpenAI's servers | ✅ Retry after brief wait |
+| **503** | Engine overloaded | High traffic on OpenAI servers | ✅ Retry after brief wait |
+| **503** | Slow Down | Sudden increase in request rate impacting reliability | ✅ Retry with reduced rate |
+
+**Key Insight:** Only retry 429 (rate limit), 500 (server error), and 503 (overload/slow down) errors. All 401/403 errors indicate permanent configuration issues.
+
+### Anthropic API Errors
+
+| Code | Error Type | Cause | Retry Strategy |
+|------|-----------|-------|----------------|
+| **400** | invalid_request_error | Issue with format/content of request | ❌ Do not retry - Fix request |
+| **401** | authentication_error | Issue with API key | ❌ Do not retry - Fix API key |
+| **403** | permission_error | API key lacks permission for resource | ❌ Do not retry - Fix permissions |
+| **404** | not_found_error | Requested resource not found | ❌ Do not retry - Fix resource path |
+| **413** | request_too_large | Request exceeds maximum size (32 MB standard, 256 MB batch, 500 MB files) | ❌ Do not retry - Reduce request size |
+| **429** | rate_limit_error | Account hit rate limit or acceleration limit | ✅ **Retry with exponential backoff** |
+| **500** | api_error | Unexpected internal error | ✅ Retry after brief wait |
+| **529** | overloaded_error | API temporarily overloaded (high traffic) | ✅ Retry after brief wait |
+
+**Key Insight:** Only retry 429 (rate limit), 500 (internal error), and 529 (overload) errors. All 4XX errors (except 429) indicate permanent request issues.
+
+**Special Notes:**
+- Anthropic's 529 errors occur during high traffic across all users
+- Sharp usage increases may trigger 429 acceleration limits - ramp up gradually
+- When streaming, errors can occur after 200 response (non-standard error handling)
+- Every Anthropic response includes `request_id` header for support tracking
+
+### Request Size Limits (Anthropic)
+
+| Endpoint Type | Maximum Size |
+|---------------|--------------|
+| Messages API | 32 MB |
+| Token Counting API | 32 MB |
+| Batch API | 256 MB |
+| Files API | 500 MB |
+
+Exceeding these limits returns **413 request_too_large** from Cloudflare before reaching API servers.
+
+### Retry Logic Implementation
+
+Our rate limiter (`src/api/lib/rate_limiter.py`) detects retryable errors:
+
+```python
+def _is_rate_limit_error(e: Exception) -> bool:
+    """
+    Detect rate limit and retryable errors.
+
+    Returns True for:
+    - OpenAI: 429, 500, 503
+    - Anthropic: 429, 500, 529
+    - Ollama: Connection errors
+    """
+    # Check HTTP status codes
+    if hasattr(e, 'status_code'):
+        return e.status_code in [429, 500, 503, 529]
+
+    # Check exception type names
+    error_type = type(e).__name__
+    return 'RateLimit' in error_type or 'Overload' in error_type
+```
+
+**Non-Retryable Errors (Fail Fast):**
+- 401 (authentication) - Invalid API key
+- 403 (permission) - Insufficient permissions
+- 404 (not found) - Invalid resource
+- 413 (too large) - Request too big
+
+These errors indicate configuration or request problems that won't resolve with retries.
+
 ## References
 
 - **OpenAI Cookbook:** [How to handle rate limits](https://cookbook.openai.com/examples/how_to_handle_rate_limits)

@@ -322,19 +322,26 @@ def exponential_backoff_retry(
 
 def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple] = None) -> bool:
     """
-    Detect if an exception is a rate limit error.
+    Detect if an exception is a retryable error.
 
-    Checks for:
-    - HTTP 429 status code
-    - Rate limit keywords in error message
-    - Provider-specific rate limit exceptions
+    Checks for retryable HTTP errors (ADR-049):
+    - 429: Rate limit (OpenAI, Anthropic)
+    - 500: Server error (OpenAI, Anthropic)
+    - 503: Service unavailable/overloaded (OpenAI)
+    - 529: Overloaded (Anthropic)
+
+    Non-retryable errors (fail fast):
+    - 401: Authentication error
+    - 403: Permission error
+    - 404: Not found
+    - 413: Request too large
 
     Args:
         exception: The exception to check
         catch_exceptions: Optional tuple of exception types to catch
 
     Returns:
-        True if this is a rate limit error that should trigger retry
+        True if this is a retryable error that should trigger retry
     """
     # If explicit exception types provided, check those first
     if catch_exceptions and isinstance(exception, catch_exceptions):
@@ -344,9 +351,11 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
     error_str = str(exception).lower()
     error_type = type(exception).__name__.lower()
 
-    # Check for 429 status code (HTTP Too Many Requests)
-    if '429' in error_str or '429' in error_type:
-        return True
+    # Check for retryable HTTP status codes
+    retryable_codes = ['429', '500', '503', '529']
+    for code in retryable_codes:
+        if code in error_str or code in error_type:
+            return True
 
     # Check for rate limit keywords
     rate_limit_keywords = [
@@ -357,7 +366,10 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
         'requests per',
         'tokens per minute',
         'rpm exceeded',
-        'tpm exceeded'
+        'tpm exceeded',
+        'overloaded',
+        'server error',
+        'internal error'
     ]
 
     for keyword in rate_limit_keywords:
@@ -366,17 +378,22 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
 
     # Check for provider-specific exception types
     # OpenAI SDK >= 1.0.0
-    if 'ratelimiterror' in error_type:
+    if 'ratelimiterror' in error_type or 'apierror' in error_type:
         return True
 
     # Anthropic SDK
-    if 'ratelimit' in error_type:
+    if 'ratelimit' in error_type or 'overloaded' in error_type or 'apierror' in error_type:
         return True
 
-    # Ollama / HTTP requests
+    # Ollama / HTTP requests - check status_code attribute
     if hasattr(exception, 'response'):
         status_code = getattr(exception.response, 'status_code', None)
-        if status_code == 429:
+        if status_code in [429, 500, 503, 529]:
+            return True
+
+    # Direct status_code attribute (some SDKs)
+    if hasattr(exception, 'status_code'):
+        if exception.status_code in [429, 500, 503, 529]:
             return True
 
     return False
