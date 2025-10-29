@@ -385,6 +385,69 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
   );
 };
 
+/**
+ * Calculate edge midpoint position for info boxes
+ * Handles both straight and curved edges (quadratic Bezier)
+ */
+function calculateEdgeMidpoint(
+  link: D3Link,
+  curveOffset: number,
+  draggedNodeId?: string,
+  draggedNodeX?: number,
+  draggedNodeY?: number
+): { x: number; y: number } {
+  const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+  const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+  // Get source position (use drag position if this is the dragged node)
+  const sourceX = sourceId === draggedNodeId && draggedNodeX !== undefined
+    ? draggedNodeX
+    : (typeof link.source === 'object' ? link.source.x || 0 : 0);
+  const sourceY = sourceId === draggedNodeId && draggedNodeY !== undefined
+    ? draggedNodeY
+    : (typeof link.source === 'object' ? link.source.y || 0 : 0);
+
+  // Get target position (use drag position if this is the dragged node)
+  const targetX = targetId === draggedNodeId && draggedNodeX !== undefined
+    ? draggedNodeX
+    : (typeof link.target === 'object' ? link.target.x || 0 : 0);
+  const targetY = targetId === draggedNodeId && draggedNodeY !== undefined
+    ? draggedNodeY
+    : (typeof link.target === 'object' ? link.target.y || 0 : 0);
+
+  let midX, midY;
+
+  if (curveOffset === 0) {
+    // Straight line - simple midpoint
+    midX = (sourceX + targetX) / 2;
+    midY = (sourceY + targetY) / 2;
+  } else {
+    // Curved line - calculate point on quadratic Bezier curve at t=0.5
+    const dx = targetX - sourceX;
+    const dy = targetY - sourceY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < 0.01) {
+      // Guard against zero or very small distance
+      midX = (sourceX + targetX) / 2;
+      midY = (sourceY + targetY) / 2;
+    } else {
+      // Calculate control point
+      const perpX = -dy / distance;
+      const perpY = dx / distance;
+      const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+      const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+
+      // Evaluate quadratic Bezier at t=0.5
+      const t = 0.5;
+      midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+      midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+    }
+  }
+
+  return { x: midX, y: midY };
+}
+
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
 > = ({ data, settings, onSettingsChange, onNodeClick, className }) => {
@@ -951,35 +1014,8 @@ export const ForceGraph2D: React.FC<
                 if (sourceId !== d.id && targetId !== d.id) return info; // Not connected
 
                 // Recalculate edge midpoint with updated node position
-                const sourceX = sourceId === d.id ? event.x : (typeof link.source === 'object' ? link.source.x || 0 : 0);
-                const sourceY = sourceId === d.id ? event.y : (typeof link.source === 'object' ? link.source.y || 0 : 0);
-                const targetX = targetId === d.id ? event.x : (typeof link.target === 'object' ? link.target.x || 0 : 0);
-                const targetY = targetId === d.id ? event.y : (typeof link.target === 'object' ? link.target.y || 0 : 0);
-
                 const curveOffset = linkCurveOffsets.get(info.linkKey) || 0;
-                let midX, midY;
-
-                if (curveOffset === 0) {
-                  midX = (sourceX + targetX) / 2;
-                  midY = (sourceY + targetY) / 2;
-                } else {
-                  const dx = targetX - sourceX;
-                  const dy = targetY - sourceY;
-                  const distance = Math.sqrt(dx * dx + dy * dy);
-
-                  if (distance < 0.01) {
-                    midX = (sourceX + targetX) / 2;
-                    midY = (sourceY + targetY) / 2;
-                  } else {
-                    const perpX = -dy / distance;
-                    const perpY = dx / distance;
-                    const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
-                    const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
-                    const t = 0.5;
-                    midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
-                    midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
-                  }
-                }
+                const { x: midX, y: midY } = calculateEdgeMidpoint(link, curveOffset, d.id, event.x, event.y);
 
                 return { ...info, x: midX, y: midY };
               })
@@ -1149,36 +1185,8 @@ export const ForceGraph2D: React.FC<
 
             if (!link) return info; // Link not found, keep old position
 
-            const sourceX = typeof link.source === 'object' ? link.source.x || 0 : 0;
-            const sourceY = typeof link.source === 'object' ? link.source.y || 0 : 0;
-            const targetX = typeof link.target === 'object' ? link.target.x || 0 : 0;
-            const targetY = typeof link.target === 'object' ? link.target.y || 0 : 0;
-
             const curveOffset = linkCurveOffsets.get(info.linkKey) || 0;
-            let midX, midY;
-
-            if (curveOffset === 0) {
-              midX = (sourceX + targetX) / 2;
-              midY = (sourceY + targetY) / 2;
-            } else {
-              const dx = targetX - sourceX;
-              const dy = targetY - sourceY;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-
-              // Guard against zero or very small distance
-              if (distance < 0.01) {
-                midX = (sourceX + targetX) / 2;
-                midY = (sourceY + targetY) / 2;
-              } else {
-                const perpX = -dy / distance;
-                const perpY = dx / distance;
-                const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
-                const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
-                const t = 0.5;
-                midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
-                midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
-              }
-            }
+            const { x: midX, y: midY } = calculateEdgeMidpoint(link, curveOffset);
 
             return { ...info, x: midX, y: midY };
           })
