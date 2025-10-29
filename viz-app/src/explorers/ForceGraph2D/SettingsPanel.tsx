@@ -107,15 +107,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph2DSettings>> =
 
         <div className="space-y-3">
           <div>
-            <label className="block text-sm mb-1">Color By</label>
+            <label className="block text-sm mb-1">Node Color By</label>
             <select
-              value={settings.visual.colorBy}
-              onChange={(e) => updateVisual('colorBy', e.target.value)}
+              value={settings.visual.nodeColorBy}
+              onChange={(e) => updateVisual('nodeColorBy', e.target.value)}
               className="w-full rounded border p-2"
             >
               <option value="ontology">Ontology</option>
               <option value="degree">Degree (Connections)</option>
               <option value="centrality">Centrality</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Edge Color By</label>
+            <select
+              value={settings.visual.edgeColorBy}
+              onChange={(e) => updateVisual('edgeColorBy', e.target.value)}
+              className="w-full rounded border p-2"
+            >
+              <option value="category">Category (Relationship Type)</option>
+              <option value="confidence">Confidence</option>
+              <option value="uniform">Uniform (Gray)</option>
             </select>
           </div>
 

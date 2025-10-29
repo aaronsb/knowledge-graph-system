@@ -16,13 +16,125 @@ import { useGraphStore } from '../../store/graphStore';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
 
+/**
+ * Edge Info Box - Speech bubble style info display for edges
+ */
+interface EdgeInfoBoxProps {
+  info: {
+    linkKey: string;
+    sourceId: string;
+    targetId: string;
+    type: string;
+    confidence: number;
+    category?: string;
+    x: number;
+    y: number;
+  };
+  zoomTransform: { x: number; y: number; k: number };
+  onDismiss: () => void;
+}
+
+const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
+  // Apply zoom transform to graph coordinates
+  const screenX = info.x * zoomTransform.k + zoomTransform.x;
+  const screenY = info.y * zoomTransform.k + zoomTransform.y;
+
+  return (
+    <div
+      className="absolute pointer-events-auto"
+      style={{
+        left: `${screenX}px`,
+        top: `${screenY}px`,
+        transform: 'translate(-50%, -100%)', // Position above the edge midpoint
+      }}
+    >
+      {/* Speech bubble pointer */}
+      <div className="relative">
+        {/* Light mode pointer */}
+        <div
+          className="absolute left-1/2 bottom-0 w-0 h-0 dark:hidden"
+          style={{
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid white',
+            transform: 'translateX(-50%) translateY(100%)',
+          }}
+        />
+        {/* Dark mode pointer */}
+        <div
+          className="hidden dark:block absolute left-1/2 bottom-0 w-0 h-0"
+          style={{
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
+            transform: 'translateX(-50%) translateY(100%)',
+          }}
+        />
+        {/* Info box content */}
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-300 dark:border-gray-600 px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss();
+          }}
+          style={{ minWidth: '200px' }}
+        >
+          <div className="space-y-2 text-sm">
+            <div className="font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+              Edge Information
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{info.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Confidence:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {(info.confidence * 100).toFixed(1)}%
+                </span>
+              </div>
+              {info.category && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Category:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{info.category}</span>
+                </div>
+              )}
+              <div className="text-xs text-gray-500 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700">
+                Click to dismiss
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
 > = ({ data, settings, onNodeClick, className }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+
+  // Track zoom transform for info box positioning
+  const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
+
+  // Track active edge info boxes
+  interface EdgeInfo {
+    linkKey: string;
+    sourceId: string;
+    targetId: string;
+    type: string;
+    confidence: number;
+    category?: string;
+    x: number;
+    y: number;
+  }
+  const [activeEdgeInfos, setActiveEdgeInfos] = useState<EdgeInfo[]>([]);
 
   // Imperative function to apply gold ring - can be called anytime
   const applyGoldRing = useCallback((nodeId: string) => {
@@ -81,6 +193,148 @@ export const ForceGraph2D: React.FC<
     return getNeighbors(hoveredNode, data.links);
   }, [hoveredNode, data.links, settings.interaction.highlightNeighbors]);
 
+  // Calculate node colors based on nodeColorBy setting
+  const nodeColors = useMemo(() => {
+    const colors = new Map<string, string>();
+
+    if (settings.visual.nodeColorBy === 'ontology') {
+      // Color by ontology (default behavior from transformForD3)
+      data.nodes.forEach(node => {
+        colors.set(node.id, node.color);
+      });
+    } else if (settings.visual.nodeColorBy === 'degree') {
+      // Color by degree (number of connections)
+      const degrees = new Map<string, number>();
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
+        degrees.set(targetId, (degrees.get(targetId) || 0) + 1);
+      });
+
+      const maxDegree = Math.max(...Array.from(degrees.values()), 1);
+      const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, maxDegree]);
+
+      data.nodes.forEach(node => {
+        const degree = degrees.get(node.id) || 0;
+        colors.set(node.id, colorScale(degree));
+      });
+    } else if (settings.visual.nodeColorBy === 'centrality') {
+      // Color by centrality (using degree as proxy for now)
+      const degrees = new Map<string, number>();
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
+        degrees.set(targetId, (degrees.get(targetId) || 0) + 1);
+      });
+
+      const maxDegree = Math.max(...Array.from(degrees.values()), 1);
+      const colorScale = d3.scaleSequential(d3.interpolatePlasma).domain([0, maxDegree]);
+
+      data.nodes.forEach(node => {
+        const degree = degrees.get(node.id) || 0;
+        colors.set(node.id, colorScale(degree));
+      });
+    }
+
+    return colors;
+  }, [data.nodes, data.links, settings.visual.nodeColorBy]);
+
+  // Calculate edge colors based on edgeColorBy setting
+  const linkColors = useMemo(() => {
+    const colors = new Map<string, string>();
+
+    if (settings.visual.edgeColorBy === 'confidence') {
+      // Find min/max confidence values in the data for dynamic scaling
+      const confidenceValues = data.links.map(link => link.value || 0.5);
+      const minConfidence = Math.min(...confidenceValues);
+      const maxConfidence = Math.max(...confidenceValues);
+
+      // Use actual data range, or fallback to [0, 1] if all values are the same
+      const domain = minConfidence === maxConfidence
+        ? [0, 1]
+        : [minConfidence, maxConfidence];
+
+      const colorScale = d3.scaleSequential(d3.interpolateTurbo).domain(domain);
+
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        const linkKey = `${sourceId}->${targetId}-${link.type}`;
+        const confidence = link.value || 0.5;
+        colors.set(linkKey, colorScale(confidence));
+      });
+    } else {
+      // Category or uniform coloring
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        const linkKey = `${sourceId}->${targetId}-${link.type}`;
+
+        if (settings.visual.edgeColorBy === 'category') {
+          // Color by category (default from transformForD3)
+          colors.set(linkKey, link.color);
+        } else if (settings.visual.edgeColorBy === 'uniform') {
+          // Uniform gray color
+          colors.set(linkKey, '#6b7280');
+        }
+      });
+    }
+
+    return colors;
+  }, [data.links, settings.visual.edgeColorBy]);
+
+  // Calculate curve offsets for multiple edges between same nodes
+  // This ensures edges don't overlap and their labels are visible
+  const linkCurveOffsets = useMemo(() => {
+    const offsets = new Map<string, number>();
+
+    // Group links by node pair (undirected)
+    const linkGroups = new Map<string, D3Link[]>();
+
+    data.links.forEach(link => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+      // Create a consistent key for the node pair (sorted to treat as undirected)
+      const pairKey = [sourceId, targetId].sort().join('->');
+
+      if (!linkGroups.has(pairKey)) {
+        linkGroups.set(pairKey, []);
+      }
+      linkGroups.get(pairKey)!.push(link);
+    });
+
+    // Assign curve offsets to links in groups with multiple edges
+    linkGroups.forEach(links => {
+      if (links.length > 1) {
+        // Multiple edges between same nodes - distribute them with curves
+        links.forEach((link, index) => {
+          const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+          const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+          const linkKey = `${sourceId}->${targetId}-${link.type}`;
+
+          // Calculate offset: center around 0 and spread evenly
+          const totalLinks = links.length;
+          const offsetMultiplier = index - (totalLinks - 1) / 2;
+          const curveStrength = 30; // Base curve distance
+
+          offsets.set(linkKey, offsetMultiplier * curveStrength);
+        });
+      } else {
+        // Single edge - no curve needed (offset = 0)
+        const link = links[0];
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        const linkKey = `${sourceId}->${targetId}-${link.type}`;
+        offsets.set(linkKey, 0);
+      }
+    });
+
+    return offsets;
+  }, [data.links]);
+
   // Initialize and update force simulation
   useEffect(() => {
     if (!svgRef.current || !data.nodes.length) return;
@@ -104,6 +358,12 @@ export const ForceGraph2D: React.FC<
         .scaleExtent([0.1, 10])
         .on('zoom', (event) => {
           g.attr('transform', event.transform);
+          // Update zoom transform state for info box positioning
+          setZoomTransform({
+            x: event.transform.x,
+            y: event.transform.y,
+            k: event.transform.k,
+          });
         });
 
       if (settings.interaction.enableZoom && settings.interaction.enablePan) {
@@ -146,15 +406,84 @@ export const ForceGraph2D: React.FC<
       simulation.stop();
     }
 
-    // Draw links
+    // Draw links as paths (supports curves for multiple edges)
     const link = linksGroup
-      .selectAll<SVGLineElement, D3Link>('line')
+      .selectAll<SVGPathElement, D3Link>('path')
       .data(data.links)
-      .join('line')
-      .attr('stroke', (d) => d.color)
+      .join('path')
+      .attr('stroke', (d) => {
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
+        return linkColors.get(linkKey) || d.color;
+      })
       .attr('stroke-width', (d) => (d.value || 1) * settings.visual.linkWidth)
       .attr('stroke-opacity', 0.6)
-      .attr('marker-end', settings.visual.showArrows ? 'url(#arrowhead)' : '');
+      .attr('fill', 'none')
+      .attr('marker-end', settings.visual.showArrows ? 'url(#arrowhead)' : '')
+      .attr('cursor', 'pointer')
+      .attr('data-link-key', (d) => {
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        return `${sourceId}->${targetId}-${d.type}`;
+      })
+      .on('mouseenter', (_event, d) => {
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        setHoveredEdge(`${sourceId}->${targetId}-${d.type}`);
+      })
+      .on('mouseleave', () => {
+        setHoveredEdge(null);
+      })
+      .on('click', (event, d) => {
+        event.stopPropagation(); // Prevent triggering background click
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
+
+        // Check if info box already exists for this edge
+        const exists = activeEdgeInfos.some(info => info.linkKey === linkKey);
+        if (exists) return; // Don't create duplicate
+
+        // Calculate edge midpoint (will be updated during simulation)
+        const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
+        const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
+        const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
+        const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+
+        const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+        let midX, midY;
+
+        if (curveOffset === 0) {
+          midX = (sourceX + targetX) / 2;
+          midY = (sourceY + targetY) / 2;
+        } else {
+          const dx = targetX - sourceX;
+          const dy = targetY - sourceY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const perpX = -dy / distance;
+          const perpY = dx / distance;
+          const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+          const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+          const t = 0.5;
+          midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+          midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+        }
+
+        // Create new edge info
+        const newInfo: EdgeInfo = {
+          linkKey,
+          sourceId,
+          targetId,
+          type: d.type,
+          confidence: d.value || 1.0,
+          category: undefined, // We'll need to add this to the link data if available
+          x: midX,
+          y: midY,
+        };
+
+        setActiveEdgeInfos(prev => [...prev, newInfo]);
+      });
 
     // Add arrow marker definition
     if (settings.visual.showArrows) {
@@ -195,7 +524,7 @@ export const ForceGraph2D: React.FC<
       .data(data.nodes)
       .join('circle')
       .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
-      .attr('fill', (d) => d.color)
+      .attr('fill', (d) => nodeColors.get(d.id) || d.color)
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
@@ -266,11 +595,48 @@ export const ForceGraph2D: React.FC<
 
     // Update positions on simulation tick
     simulation.on('tick', () => {
-      link
-        .attr('x1', (d) => (typeof d.source === 'object' ? d.source.x || 0 : 0))
-        .attr('y1', (d) => (typeof d.source === 'object' ? d.source.y || 0 : 0))
-        .attr('x2', (d) => (typeof d.target === 'object' ? d.target.x || 0 : 0))
-        .attr('y2', (d) => (typeof d.target === 'object' ? d.target.y || 0 : 0));
+      // Update curved paths for links
+      link.attr('d', (d) => {
+        const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
+        const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
+        const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
+        const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+
+        // Get curve offset for this link
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
+        const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+
+        if (curveOffset === 0) {
+          // Straight line for single edges
+          return `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
+        } else {
+          // Quadratic curve for multiple edges
+          // Calculate perpendicular offset for control point
+          const dx = targetX - sourceX;
+          const dy = targetY - sourceY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // Guard against zero or very small distance (nodes at same position)
+          if (distance < 0.01) {
+            // Draw straight line if nodes are too close
+            return `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
+          }
+
+          // Perpendicular unit vector
+          const perpX = -dy / distance;
+          const perpY = dx / distance;
+
+          // Control point at midpoint + perpendicular offset
+          const midX = (sourceX + targetX) / 2;
+          const midY = (sourceY + targetY) / 2;
+          const controlX = midX + perpX * curveOffset;
+          const controlY = midY + perpY * curveOffset;
+
+          return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
+        }
+      });
 
       node.attr('cx', (d) => d.x || 0).attr('cy', (d) => d.y || 0);
 
@@ -281,12 +647,51 @@ export const ForceGraph2D: React.FC<
         const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
         const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
 
-        // Calculate midpoint
-        const midX = (sourceX + targetX) / 2;
-        const midY = (sourceY + targetY) / 2;
+        // Get curve offset for label positioning
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
+        const curveOffset = linkCurveOffsets.get(linkKey) || 0;
 
-        // Calculate angle to rotate text along edge
-        let angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+        let midX, midY, angle;
+
+        if (curveOffset === 0) {
+          // Straight line - position at midpoint
+          midX = (sourceX + targetX) / 2;
+          midY = (sourceY + targetY) / 2;
+          angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+        } else {
+          // Curved line - position at curve midpoint (on the quadratic curve)
+          const dx = targetX - sourceX;
+          const dy = targetY - sourceY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // Guard against zero or very small distance
+          if (distance < 0.01) {
+            // Fallback to straight line positioning
+            midX = (sourceX + targetX) / 2;
+            midY = (sourceY + targetY) / 2;
+            angle = 0;
+          } else {
+            // Perpendicular unit vector
+            const perpX = -dy / distance;
+            const perpY = dx / distance;
+
+            // Control point
+            const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+            const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+
+            // Point on quadratic curve at t=0.5 (midpoint)
+            const t = 0.5;
+            midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+            midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+
+            // Calculate tangent angle at midpoint
+            const tangentX = 2 * (1 - t) * (controlX - sourceX) + 2 * t * (targetX - controlX);
+            const tangentY = 2 * (1 - t) * (controlY - sourceY) + 2 * t * (targetY - controlY);
+            angle = Math.atan2(tangentY, tangentX) * (180 / Math.PI);
+          }
+        }
 
         // Keep text readable (don't flip upside down)
         if (angle > 90 || angle < -90) {
@@ -302,12 +707,61 @@ export const ForceGraph2D: React.FC<
           .attr('x', (d) => d.x || 0)
           .attr('y', (d) => (d.y || 0) + (d.size || 10) * settings.visual.nodeSize + 14);
       }
+
+      // Update info box positions to follow edges
+      if (activeEdgeInfos.length > 0) {
+        setActiveEdgeInfos(prevInfos =>
+          prevInfos.map(info => {
+            // Find the corresponding link
+            const link = data.links.find(l => {
+              const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+              const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+              return `${sourceId}->${targetId}-${l.type}` === info.linkKey;
+            });
+
+            if (!link) return info; // Link not found, keep old position
+
+            const sourceX = typeof link.source === 'object' ? link.source.x || 0 : 0;
+            const sourceY = typeof link.source === 'object' ? link.source.y || 0 : 0;
+            const targetX = typeof link.target === 'object' ? link.target.x || 0 : 0;
+            const targetY = typeof link.target === 'object' ? link.target.y || 0 : 0;
+
+            const curveOffset = linkCurveOffsets.get(info.linkKey) || 0;
+            let midX, midY;
+
+            if (curveOffset === 0) {
+              midX = (sourceX + targetX) / 2;
+              midY = (sourceY + targetY) / 2;
+            } else {
+              const dx = targetX - sourceX;
+              const dy = targetY - sourceY;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              // Guard against zero or very small distance
+              if (distance < 0.01) {
+                midX = (sourceX + targetX) / 2;
+                midY = (sourceY + targetY) / 2;
+              } else {
+                const perpX = -dy / distance;
+                const perpY = dx / distance;
+                const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+                const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+                const t = 0.5;
+                midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+                midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+              }
+            }
+
+            return { ...info, x: midX, y: midY };
+          })
+        );
+      }
     });
 
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick]);
+  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets]);
 
   // Update highlighting based on hover
   useEffect(() => {
@@ -315,6 +769,7 @@ export const ForceGraph2D: React.FC<
 
     const svg = d3.select(svgRef.current);
 
+    // Node highlighting
     svg.selectAll<SVGCircleElement, D3Node>('circle').attr('opacity', (d) => {
       if (!d || !hoveredNode) return 1;
       if (d.id === hoveredNode) return 1;
@@ -322,15 +777,41 @@ export const ForceGraph2D: React.FC<
       return 0.2;
     });
 
-    svg.selectAll<SVGLineElement, D3Link>('line').attr('stroke-opacity', (link) => {
-      if (!hoveredNode) return 0.6;
-      const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
-      const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
-      if (!sourceId || !targetId) return 0.6; // Handle undefined during transition
-      if (sourceId === hoveredNode || targetId === hoveredNode) return 1;
-      return 0.1;
+    // Edge highlighting (paths not lines)
+    svg.selectAll<SVGPathElement, D3Link>('path').each(function(link) {
+      const path = d3.select(this);
+      const linkKey = path.attr('data-link-key');
+
+      // Guard against undefined link data during graph updates
+      if (!link) {
+        return;
+      }
+
+      if (hoveredEdge) {
+        // Edge hover mode
+        if (linkKey === hoveredEdge) {
+          path.attr('stroke-opacity', 1).attr('stroke-width', ((link.value || 1) * settings.visual.linkWidth) * 2);
+        } else {
+          path.attr('stroke-opacity', 0.2).attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
+        }
+      } else if (hoveredNode) {
+        // Node hover mode
+        const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
+        if (!sourceId || !targetId) {
+          path.attr('stroke-opacity', 0.6);
+        } else if (sourceId === hoveredNode || targetId === hoveredNode) {
+          path.attr('stroke-opacity', 1);
+        } else {
+          path.attr('stroke-opacity', 0.1);
+        }
+        path.attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
+      } else {
+        // No hover
+        path.attr('stroke-opacity', 0.6).attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
+      }
     });
-  }, [hoveredNode, neighbors]);
+  }, [hoveredNode, hoveredEdge, neighbors, settings.visual.linkWidth]);
 
   // "You Are Here" highlighting for origin node - async update after DOM ready
   useEffect(() => {
@@ -509,6 +990,11 @@ export const ForceGraph2D: React.FC<
       ]
     : [];
 
+  // Dismiss edge info box
+  const handleDismissEdgeInfo = useCallback((linkKey: string) => {
+    setActiveEdgeInfos(prev => prev.filter(info => info.linkKey !== linkKey));
+  }, []);
+
   return (
     <div className={`relative w-full h-full ${className || ''}`}>
       <svg
@@ -534,6 +1020,18 @@ export const ForceGraph2D: React.FC<
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* Edge Info Boxes */}
+      <div className="absolute inset-0 pointer-events-none">
+        {activeEdgeInfos.map(info => (
+          <EdgeInfoBox
+            key={info.linkKey}
+            info={info}
+            zoomTransform={zoomTransform}
+            onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
