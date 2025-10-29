@@ -166,7 +166,7 @@ const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismis
                 {expandedSections.has('relationships') && (
                   <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
                     {detailedData.relationships.slice(0, 20).map((rel: any, idx: number) => (
-                      <div key={idx} className="text-gray-300">
+                      <div key={`${rel.to_id || rel.target_id}-${rel.rel_type || rel.type}-${idx}`} className="text-gray-300">
                         <span className="font-medium">{rel.rel_type || rel.type}</span> → {rel.to_label || rel.target_label || rel.to_id}
                       </div>
                     ))}
@@ -202,7 +202,7 @@ const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismis
                 {expandedSections.has('evidence') && (
                   <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
                     {detailedData.instances.slice(0, 10).map((instance: any, idx: number) => (
-                      <div key={idx} className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
+                      <div key={`${instance.instance_id || instance.id || idx}-${instance.quote?.substring(0, 20) || ''}`} className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
                         "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
                       </div>
                     ))}
@@ -654,48 +654,57 @@ export const ForceGraph2D: React.FC<
         const targetId = typeof d.target === 'string' ? d.target : d.target.id;
         const linkKey = `${sourceId}->${targetId}-${d.type}`;
 
-        // Check if info box already exists for this edge
-        const exists = activeEdgeInfos.some(info => info.linkKey === linkKey);
-        if (exists) return; // Don't create duplicate
+        // Use functional setState to ensure we have the latest state
+        setActiveEdgeInfos(prev => {
+          const exists = prev.some(info => info.linkKey === linkKey);
+          if (exists) return prev; // Don't create duplicate
 
-        // Calculate edge midpoint (will be updated during simulation)
-        const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
-        const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
-        const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
-        const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+          // Calculate edge midpoint (will be updated during simulation)
+          const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
+          const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
+          const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
+          const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
 
-        const curveOffset = linkCurveOffsets.get(linkKey) || 0;
-        let midX, midY;
+          const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+          let midX, midY;
 
-        if (curveOffset === 0) {
-          midX = (sourceX + targetX) / 2;
-          midY = (sourceY + targetY) / 2;
-        } else {
-          const dx = targetX - sourceX;
-          const dy = targetY - sourceY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const perpX = -dy / distance;
-          const perpY = dx / distance;
-          const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
-          const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
-          const t = 0.5;
-          midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
-          midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
-        }
+          if (curveOffset === 0) {
+            midX = (sourceX + targetX) / 2;
+            midY = (sourceY + targetY) / 2;
+          } else {
+            const dx = targetX - sourceX;
+            const dy = targetY - sourceY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Create new edge info
-        const newInfo: EdgeInfo = {
-          linkKey,
-          sourceId,
-          targetId,
-          type: d.type,
-          confidence: d.value || 1.0,
-          category: undefined, // We'll need to add this to the link data if available
-          x: midX,
-          y: midY,
-        };
+            // Guard against zero distance
+            if (distance < 0.01) {
+              midX = (sourceX + targetX) / 2;
+              midY = (sourceY + targetY) / 2;
+            } else {
+              const perpX = -dy / distance;
+              const perpY = dx / distance;
+              const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+              const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+              const t = 0.5;
+              midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+              midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+            }
+          }
 
-        setActiveEdgeInfos(prev => [...prev, newInfo]);
+          // Create new edge info
+          const newInfo: EdgeInfo = {
+            linkKey,
+            sourceId,
+            targetId,
+            type: d.type,
+            confidence: d.value || 1.0,
+            category: undefined, // We'll need to add this to the link data if available
+            x: midX,
+            y: midY,
+          };
+
+          return [...prev, newInfo];
+        });
       });
 
     // Add arrow marker definition
@@ -749,27 +758,30 @@ export const ForceGraph2D: React.FC<
         // Check if this node is already selected (has gold ring)
         if (originNodeId === d.id) {
           // Second click on same node - spawn info box
-          const exists = activeNodeInfos.some(info => info.nodeId === d.id);
-          if (exists) return; // Don't create duplicate
+          // Use functional setState to ensure we have the latest state
+          setActiveNodeInfos(prev => {
+            const exists = prev.some(info => info.nodeId === d.id);
+            if (exists) return prev; // Don't create duplicate
 
-          // Calculate degree (number of connections)
-          const degree = data.links.filter(link => {
-            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-            return sourceId === d.id || targetId === d.id;
-          }).length;
+            // Calculate degree (number of connections)
+            const degree = data.links.filter(link => {
+              const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+              const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+              return sourceId === d.id || targetId === d.id;
+            }).length;
 
-          // Create new node info
-          const newInfo: NodeInfo = {
-            nodeId: d.id,
-            label: d.label,
-            group: d.group || 'Unknown',
-            degree,
-            x: d.x || 0,
-            y: d.y || 0,
-          };
+            // Create new node info
+            const newInfo: NodeInfo = {
+              nodeId: d.id,
+              label: d.label,
+              group: d.group || 'Unknown',
+              degree,
+              x: d.x || 0,
+              y: d.y || 0,
+            };
 
-          setActiveNodeInfos(prev => [...prev, newInfo]);
+            return [...prev, newInfo];
+          });
         } else {
           // First click on node - select it (show gold ring)
           setOriginNodeId(d.id);
