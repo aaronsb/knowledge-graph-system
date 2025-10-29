@@ -8,6 +8,7 @@ import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { coloredCount, separator } from './colors';
 import { plotBezierCurve, formatCurveSummary, type CurveMarker, type ZoneLabel } from './curve-viz';
+import { Table } from '../lib/table';
 
 export const vocabularyCommand = new Command('vocabulary')
   .alias('vocab')
@@ -540,13 +541,7 @@ export const vocabularyCommand = new Command('vocabulary')
 
           const config = await client.getVocabularyConfigDetail();
 
-          // Thresholds section
-          console.log(`\n${colors.stats.section('Thresholds')}`);
-          console.log(`  ${colors.stats.label('Minimum:')} ${coloredCount(config.vocab_min)}`);
-          console.log(`  ${colors.stats.label('Maximum:')} ${coloredCount(config.vocab_max)}`);
-          console.log(`  ${colors.stats.label('Emergency:')} ${coloredCount(config.vocab_emergency)}`);
-
-          // Current state
+          // Current state (above table)
           console.log(`\n${colors.stats.section('Current State')}`);
           console.log(`  ${colors.stats.label('Vocabulary Size:')} ${coloredCount(config.current_size)}`);
 
@@ -562,23 +557,51 @@ export const vocabularyCommand = new Command('vocabulary')
           console.log(`  ${colors.stats.label('Zone:')} ${zoneColor(config.zone.toUpperCase())}`);
           console.log(`  ${colors.stats.label('Aggressiveness:')} ${colors.ui.value((config.aggressiveness * 100).toFixed(1) + '%')}`);
 
-          // Modes and profiles
-          console.log(`\n${colors.stats.section('Modes and Profiles')}`);
-          console.log(`  ${colors.stats.label('Pruning Mode:')} ${colors.ui.value(config.pruning_mode)}`);
-          console.log(`  ${colors.stats.label('Aggressiveness Profile:')} ${colors.ui.value(config.aggressiveness_profile)}`);
-          console.log(`  ${colors.stats.label('Auto-expand Enabled:')} ${config.auto_expand_enabled ? colors.status.success('true') : colors.status.dim('false')}`);
+          // Configuration table
+          console.log(`\n${colors.stats.section('Configuration Parameters')}`);
+          console.log(colors.status.dim('Use `kg vocab config-update` with these options to modify:\n'));
 
-          // Thresholds
-          console.log(`\n${colors.stats.section('Detection Thresholds')}`);
-          console.log(`  ${colors.stats.label('Synonym (Strong):')} ${colors.ui.value(config.synonym_threshold_strong.toFixed(2))}`);
-          console.log(`  ${colors.stats.label('Synonym (Moderate):')} ${colors.ui.value(config.synonym_threshold_moderate.toFixed(2))}`);
-          console.log(`  ${colors.stats.label('Low Value:')} ${colors.ui.value(config.low_value_threshold.toFixed(1))}`);
-          console.log(`  ${colors.stats.label('Consolidation:')} ${colors.ui.value(config.consolidation_similarity_threshold.toFixed(2))}`);
+          const configRows = [
+            { parameter: 'Minimum Threshold', value: config.vocab_min.toString(), option: '--min <n>' },
+            { parameter: 'Maximum Threshold', value: config.vocab_max.toString(), option: '--max <n>' },
+            { parameter: 'Emergency Threshold', value: config.vocab_emergency.toString(), option: '--emergency <n>' },
+            { parameter: 'Pruning Mode', value: config.pruning_mode, option: '--mode <mode>' },
+            { parameter: 'Aggressiveness Profile', value: config.aggressiveness_profile, option: '--profile <name>' },
+            { parameter: 'Auto-expand', value: config.auto_expand_enabled ? 'true' : 'false', option: '--auto-expand / --no-auto-expand' },
+            { parameter: 'Synonym (Strong)', value: config.synonym_threshold_strong.toFixed(2), option: '--synonym-strong <n>' },
+            { parameter: 'Synonym (Moderate)', value: config.synonym_threshold_moderate.toFixed(2), option: '--synonym-moderate <n>' },
+            { parameter: 'Low Value Threshold', value: config.low_value_threshold.toFixed(1), option: '--low-value <n>' },
+            { parameter: 'Consolidation Threshold', value: config.consolidation_similarity_threshold.toFixed(2), option: '--consolidation-threshold <n>' },
+            { parameter: 'Embedding Model', value: config.embedding_model, option: '(managed via kg admin embedding)' },
+          ];
 
-          // Model
-          console.log(`\n${colors.stats.section('Model')}`);
-          console.log(`  ${colors.stats.label('Embedding Model:')} ${colors.ui.value(config.embedding_model)}`);
+          const table = new Table<typeof configRows[0]>({
+            columns: [
+              {
+                header: 'Parameter',
+                field: 'parameter',
+                type: 'heading',
+                width: 'flex',
+                priority: 2
+              },
+              {
+                header: 'Value',
+                field: 'value',
+                type: 'value',
+                width: 'auto',
+                priority: 3
+              },
+              {
+                header: 'CLI Option',
+                field: 'option',
+                type: 'value',
+                width: 'flex',
+                priority: 1
+              }
+            ]
+          });
 
+          table.print(configRows);
           console.log('\n' + separator());
 
         } catch (error: any) {
