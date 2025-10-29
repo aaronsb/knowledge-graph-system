@@ -6,6 +6,7 @@
 
 import * as d3 from 'd3';
 import { useVocabularyStore } from '../store/vocabularyStore';
+import { getCategoryColor } from '../config/categoryColors';
 import type {
   APIGraphNode,
   APIGraphLink,
@@ -16,36 +17,6 @@ import type {
   Link3D,
   Graph3DData,
 } from '../types/graph';
-
-/**
- * Get color for relationship category
- * Uses vocabulary taxonomy with 11 categories
- */
-function getLinkColor(category?: string): string {
-  const colors: Record<string, string> = {
-    // Primary categories (most common)
-    derivation: '#8b5cf6',    // violet - most common (112 types)
-    modification: '#f59e0b',  // amber
-    operation: '#3b82f6',     // blue
-    interaction: '#22c55e',   // green
-
-    // Secondary categories
-    composition: '#ec4899',   // pink
-    causation: '#ef4444',     // red
-    dependency: '#a855f7',    // purple
-
-    // Tertiary categories (less common)
-    logical: '#06b6d4',       // cyan
-    temporal: '#f97316',      // orange
-    semantic: '#84cc16',      // lime
-    evidential: '#14b8a6',    // teal
-
-    // Fallback
-    default: '#6b7280',       // gray
-  };
-
-  return colors[category || 'default'] || colors.default;
-}
 
 /**
  * Transform API data to D3 2D format
@@ -83,7 +54,7 @@ export function transformForD3(
       target: link.to_id,
       type: link.relationship_type,
       value: categoryConfidence, // Use category confidence for visualization
-      color: getLinkColor(category),
+      color: getCategoryColor(category),
       category, // Store category for info boxes
     };
   });

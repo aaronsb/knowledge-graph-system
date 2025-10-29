@@ -13,6 +13,8 @@ import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
+import { useVocabularyStore } from '../../store/vocabularyStore';
+import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
 
@@ -33,6 +35,20 @@ function formatGrounding(grounding: number | undefined | null): { emoji: string;
   } else {
     return { emoji: '✗', label: 'Contradicted', percentage: `${(grounding * 100).toFixed(0)}%` };
   }
+}
+
+/**
+ * Get brighter color for relationship type text
+ * Uses same category colors as edges but +40% brightness
+ */
+function getRelationshipTextColor(relationshipType: string): string {
+  // Get category from vocabulary store
+  const vocabStore = useVocabularyStore.getState();
+  const category = vocabStore.getCategory(relationshipType) || 'default';
+
+  // Get base color from shared config
+  const baseColor = getCategoryColor(category);
+  return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
 }
 
 /**
@@ -195,11 +211,15 @@ const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismis
                 </button>
                 {expandedSections.has('relationships') && (
                   <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
-                    {detailedData.relationships.slice(0, 20).map((rel: any, idx: number) => (
-                      <div key={`${rel.to_id || rel.target_id}-${rel.rel_type || rel.type}-${idx}`} className="text-gray-300">
-                        <span className="font-medium">{rel.rel_type || rel.type}</span> → {rel.to_label || rel.target_label || rel.to_id}
-                      </div>
-                    ))}
+                    {detailedData.relationships.slice(0, 20).map((rel: any, idx: number) => {
+                      const relType = rel.rel_type || rel.type;
+                      const color = getRelationshipTextColor(relType);
+                      return (
+                        <div key={`${rel.to_id || rel.target_id}-${relType}-${idx}`} className="text-gray-300">
+                          <span className="font-medium" style={{ color }}>{relType}</span> → {rel.to_label || rel.target_label || rel.to_id}
+                        </div>
+                      );
+                    })}
                     {detailedData.relationships.length > 20 && (
                       <div className="text-gray-500 italic">
                         +{detailedData.relationships.length - 20} more
@@ -750,22 +770,7 @@ export const ForceGraph2D: React.FC<
     if (settings.visual.showArrows) {
       const defs = svg.append('defs');
 
-      // Create markers for each category
-      const categoryColors: Record<string, string> = {
-        derivation: '#8b5cf6',
-        modification: '#f59e0b',
-        operation: '#3b82f6',
-        interaction: '#22c55e',
-        composition: '#ec4899',
-        causation: '#ef4444',
-        dependency: '#a855f7',
-        logical: '#06b6d4',
-        temporal: '#f97316',
-        semantic: '#84cc16',
-        evidential: '#14b8a6',
-        default: '#6b7280',
-      };
-
+      // Create markers for each category (uses shared config)
       Object.entries(categoryColors).forEach(([category, color]) => {
         defs
           .append('marker')
@@ -790,7 +795,11 @@ export const ForceGraph2D: React.FC<
       .text((d) => d.type)
       .attr('font-size', 9)
       .attr('font-weight', 400)
-      .attr('fill', '#aaa')
+      .attr('fill', (d) => {
+        // Use edge color +40% brightness
+        const baseColor = d.color || '#6b7280';
+        return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
+      })
       .attr('stroke', '#1a1a2e')
       .attr('stroke-width', 0.5)
       .attr('paint-order', 'stroke')
