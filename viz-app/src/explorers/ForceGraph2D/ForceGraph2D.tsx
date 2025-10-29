@@ -830,6 +830,9 @@ export const ForceGraph2D: React.FC<
     if (settings.visual.showShadows) {
       const shadowOffset = 3; // Same offset as nodes
 
+      // Apply offset to the group so all child paths inherit it
+      edgeShadowsGroup.attr('transform', `translate(${shadowOffset}, ${shadowOffset})`);
+
       edgeShadows = edgeShadowsGroup
         .selectAll<SVGPathElement, D3Link>('path')
         .data(data.links)
@@ -838,7 +841,6 @@ export const ForceGraph2D: React.FC<
         .attr('stroke-width', (d) => (d.value || 1) * settings.visual.linkWidth)
         .attr('stroke-opacity', 0.8)
         .attr('fill', 'none')
-        .attr('transform', `translate(${shadowOffset}, ${shadowOffset})`)
         .attr('pointer-events', 'none');
     }
 
@@ -1049,7 +1051,6 @@ export const ForceGraph2D: React.FC<
         .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
         .attr('fill', '#000')
         .attr('opacity', 0.8)
-        .attr('transform', `translate(${shadowOffset}, ${shadowOffset})`)
         .attr('pointer-events', 'none');
 
       // Node highlights (reflection and shade arcs)
@@ -1383,10 +1384,10 @@ export const ForceGraph2D: React.FC<
           });
         }
 
-        // Update node shadow positions
+        // Update node shadow positions (use transform for offset)
+        const shadowOffset = 3;
         nodeShadowsGroup.selectAll('circle')
-          .attr('cx', (d: any) => d.x || 0)
-          .attr('cy', (d: any) => d.y || 0);
+          .attr('transform', (d: any) => `translate(${(d.x || 0) + shadowOffset}, ${(d.y || 0) + shadowOffset})`);
 
         // Update node highlight arc positions
         nodeHighlightsGroup.selectAll('path')
