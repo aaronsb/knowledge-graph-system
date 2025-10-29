@@ -7,7 +7,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
@@ -755,38 +755,31 @@ export const ForceGraph2D: React.FC<
         event.stopPropagation();
         setContextMenu(null); // Close any open context menu
 
-        // Check if this node is already selected (has gold ring)
-        if (originNodeId === d.id) {
-          // Second click on same node - spawn info box
-          // Use functional setState to ensure we have the latest state
-          setActiveNodeInfos(prev => {
-            const exists = prev.some(info => info.nodeId === d.id);
-            if (exists) return prev; // Don't create duplicate
+        // Left click: Immediately show info box
+        // Use functional setState to ensure we have the latest state
+        setActiveNodeInfos(prev => {
+          const exists = prev.some(info => info.nodeId === d.id);
+          if (exists) return prev; // Don't create duplicate
 
-            // Calculate degree (number of connections)
-            const degree = data.links.filter(link => {
-              const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-              const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-              return sourceId === d.id || targetId === d.id;
-            }).length;
+          // Calculate degree (number of connections)
+          const degree = data.links.filter(link => {
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            return sourceId === d.id || targetId === d.id;
+          }).length;
 
-            // Create new node info
-            const newInfo: NodeInfo = {
-              nodeId: d.id,
-              label: d.label,
-              group: d.group || 'Unknown',
-              degree,
-              x: d.x || 0,
-              y: d.y || 0,
-            };
+          // Create new node info
+          const newInfo: NodeInfo = {
+            nodeId: d.id,
+            label: d.label,
+            group: d.group || 'Unknown',
+            degree,
+            x: d.x || 0,
+            y: d.y || 0,
+          };
 
-            return [...prev, newInfo];
-          });
-        } else {
-          // First click on node - select it (show gold ring)
-          setOriginNodeId(d.id);
-          applyGoldRing(d.id); // Immediate visual feedback
-        }
+          return [...prev, newInfo];
+        });
       })
       .on('contextmenu', (event, d) => {
         // Right-click: Show context menu
@@ -1242,6 +1235,25 @@ export const ForceGraph2D: React.FC<
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? [
+        // Contextual mark/unmark location
+        originNodeId === contextMenu.nodeId
+          ? {
+              label: 'Unmark Location',
+              icon: MapPinOff,
+              onClick: () => {
+                setOriginNodeId(null);
+                setContextMenu(null);
+              },
+            }
+          : {
+              label: 'Mark Location',
+              icon: MapPin,
+              onClick: () => {
+                setOriginNodeId(contextMenu.nodeId);
+                applyGoldRing(contextMenu.nodeId);
+                setContextMenu(null);
+              },
+            },
         {
           label: `Follow "${contextMenu.nodeLabel}"`,
           icon: ArrowRight,

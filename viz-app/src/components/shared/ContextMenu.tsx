@@ -50,7 +50,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
   return (
     <div
       ref={menuRef}
-      className="fixed bg-card border border-border rounded-lg shadow-lg py-1 z-50 min-w-[180px]"
+      className="fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
       style={{ left: x, top: y }}
     >
       {items.map((item, index) => {
@@ -67,16 +67,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
             disabled={item.disabled}
             className={`
               w-full text-left px-4 py-2 flex items-center gap-3
-              transition-colors
+              transition-colors text-gray-100
               ${
                 item.disabled
                   ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:bg-accent hover:text-accent-foreground cursor-pointer'
+                  : 'hover:bg-gray-700 cursor-pointer'
               }
             `}
           >
             {Icon && <Icon className="w-4 h-4" />}
-            <span>{item.label}</span>
+            <span className="text-sm">{item.label}</span>
           </button>
         );
       })}

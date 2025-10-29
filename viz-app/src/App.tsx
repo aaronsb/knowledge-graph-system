@@ -5,7 +5,7 @@
  * Follows ADR-034 architecture.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/layout/AppLayout';
 import { SearchBar } from './components/shared/SearchBar';
@@ -261,6 +261,19 @@ const AppContent: React.FC = () => {
     }
   }, [isDraggingSearchBar, handleSearchBarMouseMove, handleSearchBarMouseUp]);
 
+  // Stable callback for node clicks to prevent simulation restarts
+  const handleNodeClick = useCallback((nodeId: string) => {
+    // Follow Concept: Load clicked node's neighborhood
+    const store = useGraphStore.getState();
+    store.setFocusedNodeId(nodeId);
+    store.setSearchParams({
+      mode: 'neighborhood',
+      centerConceptId: nodeId,
+      depth: 2, // Default depth for Follow Concept
+      loadMode: 'add', // Add to existing graph
+    });
+  }, []); // Empty deps - uses getState() to avoid stale closures
+
   return (
     <AppLayout
       settingsPanel={
@@ -346,17 +359,7 @@ const AppContent: React.FC = () => {
             <ExplorerComponent
               data={graphData}
               settings={explorerSettings}
-              onNodeClick={(nodeId) => {
-                // Follow Concept: Load clicked node's neighborhood
-                const store = useGraphStore.getState();
-                store.setFocusedNodeId(nodeId);
-                store.setSearchParams({
-                  mode: 'neighborhood',
-                  centerConceptId: nodeId,
-                  depth: 2, // Default depth for Follow Concept
-                  loadMode: 'add', // Add to existing graph
-                });
-              }}
+              onNodeClick={handleNodeClick}
             />
           )}
         </div>
