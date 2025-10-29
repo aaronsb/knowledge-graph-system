@@ -1055,17 +1055,16 @@ export const ForceGraph2D: React.FC<
 
       // Node highlights (reflection and shade arcs)
       nodeHighlightsGroup
-        .selectAll<SVGPathElement, D3Node>('.highlight-arc')
+        .selectAll<SVGPathElement, any>('.highlight-arc')
         .data(data.nodes.flatMap(d => [
-          { ...d, arcType: 'reflection' },
-          { ...d, arcType: 'shade' }
+          { node: d, arcType: 'reflection' },
+          { node: d, arcType: 'shade' }
         ]))
         .join('path')
         .attr('class', 'highlight-arc')
         .attr('d', (d: any) => {
-          const nodeRadius = ((d.size || 10) * settings.visual.nodeSize);
+          const nodeRadius = ((d.node.size || 10) * settings.visual.nodeSize);
           const arcRadius = nodeRadius * 0.8; // 80% of node diameter
-          const strokeWidth = 3; // Slightly thicker than node stroke (2)
 
           // Arc angles in degrees (0° = right/3 o'clock)
           const isReflection = d.arcType === 'reflection';
@@ -1089,7 +1088,7 @@ export const ForceGraph2D: React.FC<
         })
         .attr('fill', 'none')
         .attr('stroke', (d: any) => {
-          const baseColor = nodeColors.get(d.id) || d.color;
+          const baseColor = nodeColors.get(d.node.id) || d.node.color;
           const color = d3.color(baseColor);
           if (!color) return baseColor;
 
@@ -1391,7 +1390,7 @@ export const ForceGraph2D: React.FC<
 
         // Update node highlight arc positions
         nodeHighlightsGroup.selectAll('path')
-          .attr('transform', (d: any) => `translate(${d.x || 0}, ${d.y || 0})`);
+          .attr('transform', (d: any) => `translate(${d.node.x || 0}, ${d.node.y || 0})`);
       }
 
       // Update info box positions to follow edges
