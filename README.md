@@ -29,7 +29,13 @@ Complete guides, architecture decisions, and API reference hosted on GitHub Page
 
 ### Interactive Graph Visualization
 
-Explore concept relationships through interactive force-directed graphs. Search semantically, find paths between ideas, and visualize how knowledge connects across your corpus.
+Explore concept relationships through interactive force-directed graphs with advanced visual features including 3D-style shadows, dynamic legend, context menus, and real-time node information.
+
+![Force Graph 2D Advanced Features](docs/media/screenshots/force_graph_2d_advanced_features.png)
+
+*Force-directed graph with 3D shadows, reference grid, nested context menus, collapsible legend, and interactive info boxes showing concept details and relationships.*
+
+Search semantically, find paths between ideas, and visualize how knowledge connects across your corpus.
 
 ![Concept Pathing and Compounding](docs/media/screenshots/concept_pathing_and_compounding.png)
 
