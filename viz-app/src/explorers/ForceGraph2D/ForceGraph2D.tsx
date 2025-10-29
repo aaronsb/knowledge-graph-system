@@ -17,6 +17,7 @@ import { useVocabularyStore } from '../../store/vocabularyStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
+import { Legend } from './Legend';
 
 /**
  * Format grounding strength with emoji indicator (matches CLI format)
@@ -1411,6 +1412,9 @@ export const ForceGraph2D: React.FC<
         height={dimensions.height}
         className="bg-white dark:bg-gray-900"
       />
+
+      {/* Legend Panel */}
+      <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
 
       {/* Node count indicator */}
       <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg px-3 py-2 text-sm">
