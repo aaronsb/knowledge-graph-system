@@ -418,6 +418,25 @@ Different limits for different operations:
 
 Exceeding these limits returns **413 request_too_large** from Cloudflare before reaching API servers.
 
+### Ollama API Errors
+
+| Code | Error Type | Cause | Retry Strategy |
+|------|-----------|-------|----------------|
+| **200** | Success | Request completed successfully | ✅ N/A - Success |
+| **400** | Bad Request | Missing parameters, invalid JSON, etc. | ❌ Do not retry - Fix request |
+| **404** | Not Found | Model doesn't exist | ❌ Do not retry - Use valid model |
+| **429** | Too Many Requests | Rate limit exceeded (local/cloud) | ✅ **Retry with exponential backoff** |
+| **500** | Internal Server Error | Ollama server encountered an error | ✅ Retry after brief wait |
+| **502** | Bad Gateway | Cloud model cannot be reached (remote inference) | ✅ Retry after brief wait |
+
+**Key Insight:** Ollama supports both local and cloud models. 502 errors occur when cloud models (e.g., remote API backends) are unreachable.
+
+**Special Notes:**
+- **Streaming errors:** Errors can occur mid-stream after 200 response (returns error object in `application/x-ndjson` format)
+- **Error format:** JSON with `error` property: `{"error": "the model failed to generate a response"}`
+- **Local inference:** 429 errors less common (single GPU bottleneck, not API rate limits)
+- **Cloud models:** 502 errors indicate network/upstream issues, retry appropriate
+
 ### Retry Logic Implementation
 
 Our rate limiter (`src/api/lib/rate_limiter.py`) detects retryable errors:
@@ -430,22 +449,31 @@ def _is_rate_limit_error(e: Exception) -> bool:
     Returns True for:
     - OpenAI: 429, 500, 503
     - Anthropic: 429, 500, 529
-    - Ollama: Connection errors
+    - Ollama: 429, 500, 502
+    - All: Connection errors, timeouts
     """
     # Check HTTP status codes
     if hasattr(e, 'status_code'):
-        return e.status_code in [429, 500, 503, 529]
+        return e.status_code in [429, 500, 502, 503, 529]
 
     # Check exception type names
     error_type = type(e).__name__
-    return 'RateLimit' in error_type or 'Overload' in error_type
+    return 'RateLimit' in error_type or 'Overload' in error_type or 'Gateway' in error_type
 ```
 
+**Retryable Errors (Exponential Backoff):**
+- **429** - Rate limit exceeded (all providers)
+- **500** - Internal server error (all providers)
+- **502** - Bad gateway (Ollama cloud models)
+- **503** - Service unavailable (OpenAI)
+- **529** - Overloaded (Anthropic)
+
 **Non-Retryable Errors (Fail Fast):**
-- 401 (authentication) - Invalid API key
-- 403 (permission) - Insufficient permissions
-- 404 (not found) - Invalid resource
-- 413 (too large) - Request too big
+- **400** - Bad request (malformed input)
+- **401** - Authentication error (invalid API key)
+- **403** - Permission error (insufficient permissions)
+- **404** - Not found (invalid resource/model)
+- **413** - Request too large (exceeds size limits)
 
 These errors indicate configuration or request problems that won't resolve with retries.
 

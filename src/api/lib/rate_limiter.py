@@ -325,12 +325,14 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
     Detect if an exception is a retryable error.
 
     Checks for retryable HTTP errors (ADR-049):
-    - 429: Rate limit (OpenAI, Anthropic)
-    - 500: Server error (OpenAI, Anthropic)
+    - 429: Rate limit (OpenAI, Anthropic, Ollama)
+    - 500: Server error (OpenAI, Anthropic, Ollama)
+    - 502: Bad gateway (Ollama cloud models)
     - 503: Service unavailable/overloaded (OpenAI)
     - 529: Overloaded (Anthropic)
 
     Non-retryable errors (fail fast):
+    - 400: Bad request
     - 401: Authentication error
     - 403: Permission error
     - 404: Not found
@@ -352,7 +354,7 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
     error_type = type(exception).__name__.lower()
 
     # Check for retryable HTTP status codes
-    retryable_codes = ['429', '500', '503', '529']
+    retryable_codes = ['429', '500', '502', '503', '529']
     for code in retryable_codes:
         if code in error_str or code in error_type:
             return True
@@ -369,7 +371,9 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
         'tpm exceeded',
         'overloaded',
         'server error',
-        'internal error'
+        'internal error',
+        'bad gateway',
+        'gateway timeout'
     ]
 
     for keyword in rate_limit_keywords:
@@ -388,12 +392,12 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
     # Ollama / HTTP requests - check status_code attribute
     if hasattr(exception, 'response'):
         status_code = getattr(exception.response, 'status_code', None)
-        if status_code in [429, 500, 503, 529]:
+        if status_code in [429, 500, 502, 503, 529]:
             return True
 
     # Direct status_code attribute (some SDKs)
     if hasattr(exception, 'status_code'):
-        if exception.status_code in [429, 500, 503, 529]:
+        if exception.status_code in [429, 500, 502, 503, 529]:
             return True
 
     return False
