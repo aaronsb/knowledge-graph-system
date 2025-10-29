@@ -271,6 +271,19 @@ class APIClient {
     });
     return response.data;
   }
+
+  /**
+   * Refresh vocabulary category assignments
+   * Recomputes probabilistic categories based on embeddings
+   */
+  async refreshVocabularyCategories(params?: {
+    only_computed?: boolean;
+  }): Promise<any> {
+    const response = await this.client.post('/vocabulary/refresh-categories', {
+      only_computed: params?.only_computed ?? true,
+    });
+    return response.data;
+  }
 }
 
 // Export singleton instance

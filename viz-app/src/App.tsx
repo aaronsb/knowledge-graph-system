@@ -35,12 +35,40 @@ const AppContent: React.FC = () => {
     const loadVocabulary = async () => {
       setLoading(true);
       try {
-        const response = await apiClient.getVocabularyTypes();
-        setTypes(response.types || []);
-        console.log(`✅ Loaded ${response.types?.length || 0} vocabulary types`);
+        // First load existing vocabulary (include inactive types that may still be in use)
+        const response = await apiClient.getVocabularyTypes({
+          include_inactive: true, // Include all types, even inactive ones
+          include_builtin: true,
+        });
+        const types = response.types || [];
+
+        // Check if any types (active or inactive but with edge_count > 0) are missing categories
+        const typesWithoutCategory = types.filter((t: any) =>
+          t.edge_count > 0 && !t.category
+        );
+
+        if (typesWithoutCategory.length > 0) {
+          console.log(`⚠️ Found ${typesWithoutCategory.length} types without categories, refreshing...`);
+
+          // Trigger category refresh
+          await apiClient.refreshVocabularyCategories({ only_computed: true });
+
+          // Reload vocabulary after refresh (include inactive again)
+          const refreshedResponse = await apiClient.getVocabularyTypes({
+            include_inactive: true,
+            include_builtin: true,
+          });
+          setTypes(refreshedResponse.types || []);
+          console.log(`✅ Refreshed and loaded ${refreshedResponse.types?.length || 0} vocabulary types`);
+        } else {
+          setTypes(types);
+          console.log(`✅ Loaded ${types.length} vocabulary types (all have categories)`);
+        }
+
         // Log category distribution
         const categoryCount: Record<string, number> = {};
-        response.types?.forEach((t: any) => {
+        const currentTypes = useVocabularyStore.getState().types;
+        currentTypes.forEach((t: any) => {
           categoryCount[t.category] = (categoryCount[t.category] || 0) + 1;
         });
         console.log('📊 Category distribution:', categoryCount);
