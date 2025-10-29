@@ -698,7 +698,7 @@ export const ForceGraph2D: React.FC<
             targetId,
             type: d.type,
             confidence: d.value || 1.0,
-            category: undefined, // We'll need to add this to the link data if available
+            category: d.category, // Vocabulary category (derivation, modification, etc.)
             x: midX,
             y: midY,
           };

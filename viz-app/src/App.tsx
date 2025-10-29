@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/layout/AppLayout';
 import { SearchBar } from './components/shared/SearchBar';
 import { useGraphStore } from './store/graphStore';
+import { useVocabularyStore } from './store/vocabularyStore';
 import { useSubgraph, useFindConnection } from './hooks/useGraphData';
 import { getExplorer } from './explorers';
 import { apiClient } from './api/client';
@@ -27,6 +28,23 @@ const queryClient = new QueryClient({
 
 const AppContent: React.FC = () => {
   const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData, queryMode, blockBuilderExpanded } = useGraphStore();
+  const { setTypes, setLoading, setError } = useVocabularyStore();
+
+  // Load vocabulary on mount
+  useEffect(() => {
+    const loadVocabulary = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.getVocabularyTypes();
+        setTypes(response.types || []);
+        console.log(`Loaded ${response.types?.length || 0} vocabulary types`);
+      } catch (error) {
+        console.error('Failed to load vocabulary:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load vocabulary');
+      }
+    };
+    loadVocabulary();
+  }, []); // Run once on mount
 
   // Resizable SearchBar state
   const BLOCK_BUILDER_MIN_HEIGHT = 500; // Minimum for block builder to show all components

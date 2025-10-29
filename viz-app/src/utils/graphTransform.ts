@@ -5,6 +5,7 @@
  */
 
 import * as d3 from 'd3';
+import { useVocabularyStore } from '../store/vocabularyStore';
 import type {
   APIGraphNode,
   APIGraphLink,
@@ -18,14 +19,29 @@ import type {
 
 /**
  * Get color for relationship category
+ * Uses vocabulary taxonomy with 11 categories
  */
 function getLinkColor(category?: string): string {
   const colors: Record<string, string> = {
-    logical: '#3b82f6', // blue
-    evidential: '#22c55e', // green
-    structural: '#a855f7', // purple
-    temporal: '#f59e0b', // amber
-    default: '#6b7280', // gray
+    // Primary categories (most common)
+    derivation: '#8b5cf6',    // violet - most common (112 types)
+    modification: '#f59e0b',  // amber
+    operation: '#3b82f6',     // blue
+    interaction: '#22c55e',   // green
+
+    // Secondary categories
+    composition: '#ec4899',   // pink
+    causation: '#ef4444',     // red
+    dependency: '#a855f7',    // purple
+
+    // Tertiary categories (less common)
+    logical: '#06b6d4',       // cyan
+    temporal: '#f97316',      // orange
+    semantic: '#84cc16',      // lime
+    evidential: '#14b8a6',    // teal
+
+    // Fallback
+    default: '#6b7280',       // gray
   };
 
   return colors[category || 'default'] || colors.default;
@@ -33,11 +49,15 @@ function getLinkColor(category?: string): string {
 
 /**
  * Transform API data to D3 2D format
+ * Automatically enriches links with vocabulary category data
  */
 export function transformForD3(
   apiNodes: APIGraphNode[],
   apiLinks: APIGraphLink[]
 ): GraphData {
+  // Get vocabulary data from store
+  const vocabStore = useVocabularyStore.getState();
+
   // Create color scale for ontologies
   const ontologies = [...new Set(apiNodes.map(n => n.ontology))];
   const colorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(ontologies);
@@ -51,14 +71,21 @@ export function transformForD3(
     color: colorScale(node.ontology),
   }));
 
-  // Transform links
-  const links: D3Link[] = apiLinks.map(link => ({
-    source: link.from_id,
-    target: link.to_id,
-    type: link.relationship_type,
-    value: link.confidence || 1.0,
-    color: getLinkColor(link.category),
-  }));
+  // Transform links - enrich with vocabulary data from store
+  const links: D3Link[] = apiLinks.map(link => {
+    // Look up category from vocabulary store
+    const category = vocabStore.getCategory(link.relationship_type) || link.category || 'default';
+    const categoryConfidence = vocabStore.getConfidence(link.relationship_type) || 1.0;
+
+    return {
+      source: link.from_id,
+      target: link.to_id,
+      type: link.relationship_type,
+      value: categoryConfidence, // Use category confidence for visualization
+      color: getLinkColor(category),
+      category, // Store category for info boxes
+    };
+  });
 
   // Calculate node degrees and update sizes
   const degrees = new Map<string, number>();

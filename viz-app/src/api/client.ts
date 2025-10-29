@@ -250,6 +250,22 @@ class APIClient {
     const response = await this.client.post('/query/related', params);
     return response.data;
   }
+
+  /**
+   * Get vocabulary types with categories and confidence scores
+   */
+  async getVocabularyTypes(params?: {
+    include_inactive?: boolean;
+    include_builtin?: boolean;
+  }): Promise<any> {
+    const response = await this.client.get('/vocabulary/types', {
+      params: {
+        include_inactive: params?.include_inactive ?? false,
+        include_builtin: params?.include_builtin ?? true,
+      },
+    });
+    return response.data;
+  }
 }
 
 // Export singleton instance

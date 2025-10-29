@@ -50,8 +50,9 @@ export interface D3Link {
   source: string | D3Node;
   target: string | D3Node;
   type: string;
-  value: number; // confidence or weight
+  value: number; // category confidence or weight
   color: string;
+  category?: string; // relationship category from vocabulary
 }
 
 export interface GraphData {
