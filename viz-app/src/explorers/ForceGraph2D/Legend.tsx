@@ -20,7 +20,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['nodeColors', 'edgeColors'])
   );
-  const [height, setHeight] = useState(400);
+  const [height, setHeight] = useState(600);
   const [isDragging, setIsDragging] = useState(false);
 
   const toggleSection = (section: string) => {
@@ -44,7 +44,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
     (e: MouseEvent) => {
       if (!isDragging) return;
       // Update height based on mouse Y position (from top)
-      const newHeight = Math.max(200, Math.min(800, e.clientY - 80)); // 80px = header offset
+      const newHeight = Math.max(200, Math.min(1200, e.clientY - 80)); // 80px = header offset
       setHeight(newHeight);
     },
     [isDragging]
@@ -133,7 +133,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
   return (
     <div
       className="absolute top-4 left-4 bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl z-10 flex flex-col"
-      style={{ width: '240px', height: `${height}px`, maxHeight: '80vh' }}
+      style={{ width: '240px', height: `${height}px`, maxHeight: '95vh' }}
     >
       {/* Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3">
