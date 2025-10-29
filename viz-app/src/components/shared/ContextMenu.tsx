@@ -41,7 +41,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isOutsideMenu = menuRef.current && !menuRef.current.contains(target);
+      const isOutsideSubmenu = !submenuRef.current || !submenuRef.current.contains(target);
+
+      // Only close if click is outside BOTH main menu and submenu
+      if (isOutsideMenu && isOutsideSubmenu) {
         onClose();
       }
     };
