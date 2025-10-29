@@ -327,11 +327,7 @@ const AppContent: React.FC = () => {
   }, []); // Empty deps - uses getState() to avoid stale closures
 
   return (
-    <AppLayout
-      settingsPanel={
-        <SettingsPanelComponent settings={explorerSettings} onChange={setExplorerSettings} />
-      }
-    >
+    <AppLayout>
       <div className="h-full flex flex-col">
         {/* Search Bar */}
         <div
