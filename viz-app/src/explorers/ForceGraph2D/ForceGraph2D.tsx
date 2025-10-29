@@ -569,6 +569,10 @@ export const ForceGraph2D: React.FC<
   // Grid visibility state
   const [showGrid, setShowGrid] = useState(false);
 
+  // Right-click drag tracking for pan behavior
+  const rightClickStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const [isRightClickDragging, setIsRightClickDragging] = useState(false);
+
   // Get navigation state and settings from store
   const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
@@ -735,8 +739,9 @@ export const ForceGraph2D: React.FC<
     const canvasColor = d3.color(
       window.getComputedStyle(svgRef.current).backgroundColor || '#ffffff'
     );
-    const mainGridColor = canvasColor ? canvasColor.brighter(0.4).toString() : '#e0e0e0';
-    const subGridColor = canvasColor ? canvasColor.brighter(0.2).toString() : '#f0f0f0';
+    // Make grid more visible: use brighter values and higher opacity
+    const mainGridColor = canvasColor ? canvasColor.brighter(1.0).toString() : '#d0d0d0';
+    const subGridColor = canvasColor ? canvasColor.brighter(0.5).toString() : '#e8e8e8';
 
     // Create grid group (separate from graph container, not affected by zoom)
     const gridGroup = svg.append('g').attr('class', 'grid-layer');
@@ -754,7 +759,7 @@ export const ForceGraph2D: React.FC<
       const gridMinY = -gridMargin;
       const gridMaxY = height + gridMargin;
 
-      // Draw subdivision grid (20% brighter - more subtle)
+      // Draw subdivision grid (50% brighter - more subtle)
       for (let x = Math.floor(gridMinX / subGridSize) * subGridSize; x <= gridMaxX; x += subGridSize) {
         if (x % mainGridSize !== 0) { // Skip main grid positions
           gridGroup
@@ -766,7 +771,7 @@ export const ForceGraph2D: React.FC<
             .attr('y2', gridMaxY)
             .attr('stroke', subGridColor)
             .attr('stroke-width', 1)
-            .attr('opacity', 0.3);
+            .attr('opacity', 0.6);
         }
       }
 
@@ -781,11 +786,11 @@ export const ForceGraph2D: React.FC<
             .attr('y2', y)
             .attr('stroke', subGridColor)
             .attr('stroke-width', 1)
-            .attr('opacity', 0.3);
+            .attr('opacity', 0.6);
         }
       }
 
-      // Draw main grid (40% brighter - more visible)
+      // Draw main grid (100% brighter - more visible)
       for (let x = Math.floor(gridMinX / mainGridSize) * mainGridSize; x <= gridMaxX; x += mainGridSize) {
         gridGroup
           .append('line')
@@ -796,7 +801,7 @@ export const ForceGraph2D: React.FC<
           .attr('y2', gridMaxY)
           .attr('stroke', mainGridColor)
           .attr('stroke-width', 1)
-          .attr('opacity', 0.5);
+          .attr('opacity', 0.8);
       }
 
       for (let y = Math.floor(gridMinY / mainGridSize) * mainGridSize; y <= gridMaxY; y += mainGridSize) {
@@ -809,7 +814,7 @@ export const ForceGraph2D: React.FC<
           .attr('y2', y)
           .attr('stroke', mainGridColor)
           .attr('stroke-width', 1)
-          .attr('opacity', 0.5);
+          .attr('opacity', 0.8);
       }
     }
 
@@ -823,6 +828,20 @@ export const ForceGraph2D: React.FC<
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 10])
+        .filter((event) => {
+          // Allow zoom/pan with:
+          // - Left mouse button (button 0)
+          // - Right mouse button (button 2) - for right-click+drag pan
+          // - Mouse wheel (type 'wheel')
+          // - Touch events
+          return !event.ctrlKey && (
+            event.type === 'wheel' ||
+            event.type === 'touchstart' ||
+            event.type === 'touchmove' ||
+            event.button === 0 ||
+            event.button === 2
+          );
+        })
         .on('zoom', (event) => {
           g.attr('transform', event.transform);
 
@@ -1684,15 +1703,51 @@ export const ForceGraph2D: React.FC<
           setContextMenu(null);
           setCanvasContextMenu(null);
         }}
+        onMouseDown={(e) => {
+          // Track right-click start position for drag detection
+          if (e.button === 2) { // Right mouse button
+            rightClickStartRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              time: Date.now(),
+            };
+          }
+        }}
+        onMouseMove={(e) => {
+          // Check if right-click is being dragged
+          if (rightClickStartRef.current && e.buttons === 2) { // Right button still pressed
+            const dx = e.clientX - rightClickStartRef.current.x;
+            const dy = e.clientY - rightClickStartRef.current.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // If moved more than 10 pixels, treat as pan (not context menu)
+            if (distance > 10) {
+              setIsRightClickDragging(true);
+            }
+          }
+        }}
+        onMouseUp={(e) => {
+          // Reset right-click drag tracking
+          if (e.button === 2) { // Right mouse button released
+            rightClickStartRef.current = null;
+            setIsRightClickDragging(false);
+          }
+        }}
         onContextMenu={(e) => {
-          // Only show canvas context menu if not clicking on node/edge
+          e.preventDefault(); // Always prevent default browser context menu
+
+          // Only show canvas context menu if NOT dragging
           // (nodes/edges have their own context menu handlers that stopPropagation)
-          e.preventDefault();
-          setContextMenu(null); // Close node context menu if open
-          setCanvasContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-          });
+          if (!isRightClickDragging) {
+            setContextMenu(null); // Close node context menu if open
+            setCanvasContextMenu({
+              x: e.clientX,
+              y: e.clientY,
+            });
+          } else {
+            // Was dragging, so don't show context menu
+            setIsRightClickDragging(false);
+          }
         }}
       />
 
