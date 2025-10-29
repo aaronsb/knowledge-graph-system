@@ -45,6 +45,12 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
   // Extract edge categories
   const categories = Array.from(new Set(data.links.map((l) => l.category).filter(Boolean))).sort();
 
+  // Generate gradient string from D3 color scale
+  const generateGradient = (interpolator: (t: number) => string, steps: number = 10) => {
+    const colors = Array.from({ length: steps }, (_, i) => interpolator(i / (steps - 1)));
+    return `linear-gradient(to right, ${colors.join(', ')})`;
+  };
+
   // Render node color legend based on mode
   const renderNodeColorLegend = () => {
     if (nodeColorMode === 'ontology') {
@@ -70,7 +76,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
           <div
             className="h-4 rounded"
             style={{
-              background: 'linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899, #ef4444)',
+              background: generateGradient(d3.interpolateViridis),
             }}
           />
           <div className="flex justify-between text-[10px] text-gray-400">
@@ -86,7 +92,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
           <div
             className="h-4 rounded"
             style={{
-              background: 'linear-gradient(to right, #6b7280, #3b82f6, #8b5cf6, #ec4899)',
+              background: generateGradient(d3.interpolatePlasma),
             }}
           />
           <div className="flex justify-between text-[10px] text-gray-400">
