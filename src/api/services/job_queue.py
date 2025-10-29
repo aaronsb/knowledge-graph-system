@@ -259,6 +259,15 @@ class PostgreSQLJobQueue(JobQueue):
                     if job.get(field):
                         job[field] = job[field].isoformat()
 
+                # Parse JSONB columns from strings to dicts (psycopg2 returns JSONB as strings)
+                for json_field in ['progress', 'result', 'analysis', 'job_data']:
+                    if job.get(json_field) and isinstance(job[json_field], str):
+                        try:
+                            job[json_field] = json.loads(job[json_field])
+                        except json.JSONDecodeError:
+                            # If parsing fails, leave as None
+                            job[json_field] = None
+
                 # Rename error to error for consistency
                 job['error'] = job.pop('error', None)
 
@@ -379,6 +388,16 @@ class PostgreSQLJobQueue(JobQueue):
                         if job.get(field):
                             job[field] = job[field].isoformat()
 
+                    # Parse JSONB columns from strings to dicts (psycopg2 returns JSONB as strings)
+                    import json
+                    for json_field in ['progress', 'result', 'analysis', 'job_data']:
+                        if job.get(json_field) and isinstance(job[json_field], str):
+                            try:
+                                job[json_field] = json.loads(job[json_field])
+                            except json.JSONDecodeError:
+                                # If parsing fails, leave as None
+                                job[json_field] = None
+
                     # Rename error to error
                     job['error'] = job.pop('error', None)
 
@@ -443,6 +462,15 @@ class PostgreSQLJobQueue(JobQueue):
                 for field in ['created_at', 'started_at', 'completed_at', 'approved_at', 'expires_at']:
                     if job.get(field):
                         job[field] = job[field].isoformat()
+
+                # Parse JSONB columns from strings to dicts (psycopg2 returns JSONB as strings)
+                for json_field in ['progress', 'result', 'analysis', 'job_data']:
+                    if job.get(json_field) and isinstance(job[json_field], str):
+                        try:
+                            job[json_field] = json.loads(job[json_field])
+                        except json.JSONDecodeError:
+                            # If parsing fails, leave as None
+                            job[json_field] = None
 
                 # Rename error to error for consistency
                 job['error'] = job.pop('error', None)
