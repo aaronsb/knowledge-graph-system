@@ -753,7 +753,6 @@ export const ForceGraph2D: React.FC<
     const linksGroup = g.append('g').attr('class', 'links');
     const nodeShadowsGroup = g.append('g').attr('class', 'node-shadows');
     const nodesGroup = g.append('g').attr('class', 'nodes');
-    const nodeHighlightsGroup = g.append('g').attr('class', 'node-highlights');
 
     // Setup zoom behavior
     if (settings.interaction.enableZoom || settings.interaction.enablePan) {
@@ -1053,8 +1052,8 @@ export const ForceGraph2D: React.FC<
         .attr('opacity', 0.8)
         .attr('pointer-events', 'none');
 
-      // Node highlights (reflection and shade arcs)
-      nodeHighlightsGroup
+      // Node highlights (reflection and shade arcs) - rendered in nodesGroup to not block events
+      nodesGroup
         .selectAll<SVGPathElement, any>('.highlight-arc')
         .data(data.nodes.flatMap(d => [
           { node: d, arcType: 'reflection' },
@@ -1389,7 +1388,7 @@ export const ForceGraph2D: React.FC<
           .attr('transform', (d: any) => `translate(${(d.x || 0) + shadowOffset}, ${(d.y || 0) + shadowOffset})`);
 
         // Update node highlight arc positions
-        nodeHighlightsGroup.selectAll('path')
+        nodesGroup.selectAll('.highlight-arc')
           .attr('transform', (d: any) => `translate(${d.node.x || 0}, ${d.node.y || 0})`);
       }
 
