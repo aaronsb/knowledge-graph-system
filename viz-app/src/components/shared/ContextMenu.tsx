@@ -5,7 +5,7 @@
  * Supports nested submenus with flyout behavior.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 export interface ContextMenuItem {
@@ -25,8 +25,18 @@ interface ContextMenuProps {
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
   const [submenuPosition, setSubmenuPosition] = useState<{ top: number; left: number } | null>(null);
+
+  // Helper to cancel any pending close timeout
+  const cancelCloseTimeout = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, []);
 
   // Close on click outside
   useEffect(() => {
@@ -49,8 +59,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
+      // Cancel any pending close timeout on unmount
+      cancelCloseTimeout();
     };
-  }, [onClose]);
+  }, [onClose, cancelCloseTimeout]);
 
   return (
     <>
@@ -69,6 +81,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
               className="relative"
               onMouseEnter={(e) => {
                 if (hasSubmenu) {
+                  // Cancel any pending close timeout
+                  cancelCloseTimeout();
+
                   const rect = e.currentTarget.getBoundingClientRect();
                   setOpenSubmenu(index);
                   setSubmenuPosition({
@@ -79,8 +94,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
               }}
               onMouseLeave={() => {
                 if (hasSubmenu) {
-                  // Small delay to allow moving to submenu
-                  setTimeout(() => setOpenSubmenu(null), 100);
+                  // Delay closing to allow moving to submenu
+                  closeTimeoutRef.current = setTimeout(() => {
+                    setOpenSubmenu(null);
+                  }, 150);
                 }
               }}
             >
@@ -114,10 +131,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       {/* Render submenu */}
       {openSubmenu !== null && items[openSubmenu]?.submenu && submenuPosition && (
         <div
+          ref={submenuRef}
           className="fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
           style={{ left: submenuPosition.left, top: submenuPosition.top }}
-          onMouseEnter={() => setOpenSubmenu(openSubmenu)}
-          onMouseLeave={() => setOpenSubmenu(null)}
+          onMouseEnter={() => {
+            // Cancel any pending close timeout when entering submenu
+            cancelCloseTimeout();
+          }}
+          onMouseLeave={() => {
+            // Close submenu when mouse leaves it
+            setOpenSubmenu(null);
+          }}
         >
           {items[openSubmenu].submenu!.map((subitem, subindex) => {
             const SubIcon = subitem.icon;
