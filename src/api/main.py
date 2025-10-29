@@ -128,17 +128,9 @@ async def startup_event():
     # ADR-015: Cleanup abandoned restore temp files on startup
     _cleanup_abandoned_temp_files()
 
-    # Initialize job queue (ADR-024: PostgreSQL by default)
-    queue_type = os.getenv("QUEUE_TYPE", "postgresql")
-
-    if queue_type == "postgresql":
-        queue = init_job_queue(queue_type="postgresql")
-        logger.info(f"✅ Job queue initialized: postgresql (kg_api.ingestion_jobs)")
-    else:
-        # Fallback to SQLite (for development/testing only)
-        db_path = os.getenv("JOB_DB_PATH", "data/jobs.db")
-        queue = init_job_queue(queue_type=queue_type, db_path=db_path)
-        logger.info(f"✅ Job queue initialized: {queue_type} (db: {db_path})")
+    # Initialize job queue (ADR-024+050: PostgreSQL only, unified kg_api.jobs table)
+    queue = init_job_queue(queue_type="postgresql")
+    logger.info(f"✅ Job queue initialized: postgresql (kg_api.jobs)")
 
     # Register worker functions
     queue.register_worker("ingestion", run_ingestion_worker)
@@ -319,8 +311,8 @@ async def root():
         queued = queue.list_jobs(status="queued", limit=1000)
         processing = queue.list_jobs(status="processing", limit=1000)
 
-        # Determine queue type from instance
-        queue_type_name = "postgresql" if isinstance(queue, PostgreSQLJobQueue) else "inmemory"
+        # Queue type is always PostgreSQL now (ADR-050: SQLite removed)
+        queue_type_name = "postgresql"
 
         return {
             "service": "Knowledge Graph API",
