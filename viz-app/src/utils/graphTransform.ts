@@ -62,13 +62,14 @@ export function transformForD3(
   const ontologies = [...new Set(apiNodes.map(n => n.ontology))];
   const colorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(ontologies);
 
-  // Transform nodes
+  // Transform nodes (with grounding strength)
   const nodes: D3Node[] = apiNodes.map(node => ({
     id: node.concept_id,
     label: node.label,
     group: node.ontology,
     size: 10, // Will be updated with degree
     color: colorScale(node.ontology),
+    grounding: node.grounding_strength, // -1.0 to +1.0
   }));
 
   // Transform links - enrich with vocabulary data from store

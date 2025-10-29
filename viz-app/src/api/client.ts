@@ -47,19 +47,22 @@ class APIClient {
       ...relatedConcepts.map((rc: any) => rc.concept_id)
     ];
 
-    // Step 3: Fetch details for all concepts in parallel
+    // Step 3: Fetch details for all concepts in parallel (with grounding)
     const conceptDetailsPromises = allConceptIds.map(id =>
-      this.client.get(`/query/concept/${id}`).then(r => r.data).catch(() => null)
+      this.client.get(`/query/concept/${id}`, {
+        params: { include_grounding: true }
+      }).then(r => r.data).catch(() => null)
     );
 
     const allConceptDetails = (await Promise.all(conceptDetailsPromises)).filter(Boolean);
 
-    // Step 4: Build nodes array
+    // Step 4: Build nodes array (with grounding strength)
     const nodes = allConceptDetails.map((concept: any) => ({
       concept_id: concept.concept_id,
       label: concept.label,
       ontology: 'default',
       search_terms: concept.search_terms || [],
+      grounding_strength: concept.grounding_strength, // -1.0 to +1.0
     }));
 
     // Step 5: Build links array from ALL concepts' relationships
@@ -189,7 +192,9 @@ class APIClient {
    * Get concept details
    */
   async getConceptDetails(concept_id: string): Promise<any> {
-    const response = await this.client.get(`/query/concept/${concept_id}`);
+    const response = await this.client.get(`/query/concept/${concept_id}`, {
+      params: { include_grounding: true }
+    });
     return response.data;
   }
 

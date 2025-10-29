@@ -17,6 +17,25 @@ import { ContextMenu, type ContextMenuItem } from '../../components/shared/Conte
 import { apiClient } from '../../api/client';
 
 /**
+ * Format grounding strength with emoji indicator (matches CLI format)
+ */
+function formatGrounding(grounding: number | undefined | null): { emoji: string; label: string; percentage: string } | null {
+  if (grounding === undefined || grounding === null) return null;
+
+  if (grounding >= 0.8) {
+    return { emoji: '✓', label: 'Strong', percentage: `${(grounding * 100).toFixed(0)}%` };
+  } else if (grounding >= 0.4) {
+    return { emoji: '⚡', label: 'Moderate', percentage: `${(grounding * 100).toFixed(0)}%` };
+  } else if (grounding >= 0.0) {
+    return { emoji: '◯', label: 'Weak', percentage: `${(grounding * 100).toFixed(0)}%` };
+  } else if (grounding >= -0.4) {
+    return { emoji: '◯', label: 'Contested', percentage: `${(grounding * 100).toFixed(0)}%` };
+  } else {
+    return { emoji: '✗', label: 'Contradicted', percentage: `${(grounding * 100).toFixed(0)}%` };
+  }
+}
+
+/**
  * Node Info Box - Speech bubble style info display for nodes with collapsible sections
  */
 interface NodeInfoBoxProps {
@@ -140,6 +159,17 @@ const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismis
                     <span className="text-gray-400">Connections:</span>
                     <span className="font-medium text-gray-100">{info.degree}</span>
                   </div>
+                  {detailedData?.grounding_strength !== undefined && detailedData?.grounding_strength !== null && (() => {
+                    const grounding = formatGrounding(detailedData.grounding_strength);
+                    return grounding && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Grounding:</span>
+                        <span className="font-medium text-gray-100">
+                          {grounding.emoji} {grounding.label} ({grounding.percentage})
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
