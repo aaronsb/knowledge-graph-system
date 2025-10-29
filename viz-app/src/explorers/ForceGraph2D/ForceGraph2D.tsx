@@ -771,7 +771,7 @@ export const ForceGraph2D: React.FC<
           .append('marker')
           .attr('id', `arrowhead-${category}`)
           .attr('viewBox', '-0 -5 10 10')
-          .attr('refX', 18)
+          .attr('refX', 8) // Position arrow tip at node boundary
           .attr('refY', 0)
           .attr('orient', 'auto')
           .attr('markerWidth', 4)
@@ -904,10 +904,16 @@ export const ForceGraph2D: React.FC<
     simulation.on('tick', () => {
       // Update curved paths for links
       link.attr('d', (d) => {
-        const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
-        const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
-        const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
-        const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+        const sourceNode = typeof d.source === 'object' ? d.source : null;
+        const targetNode = typeof d.target === 'object' ? d.target : null;
+
+        const sourceX = sourceNode?.x || 0;
+        const sourceY = sourceNode?.y || 0;
+        const targetX = targetNode?.x || 0;
+        const targetY = targetNode?.y || 0;
+
+        // Get target node radius (account for node size + stroke width)
+        const targetRadius = targetNode ? ((targetNode.size || 10) * settings.visual.nodeSize) + 2 : 10;
 
         // Get curve offset for this link
         const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
@@ -915,22 +921,25 @@ export const ForceGraph2D: React.FC<
         const linkKey = `${sourceId}->${targetId}-${d.type}`;
         const curveOffset = linkCurveOffsets.get(linkKey) || 0;
 
-        if (curveOffset === 0) {
-          // Straight line for single edges
+        // Calculate direction and distance
+        const dx = targetX - sourceX;
+        const dy = targetY - sourceY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Guard against zero or very small distance
+        if (distance < 0.01) {
           return `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
+        }
+
+        if (curveOffset === 0) {
+          // Straight line - shorten to stop at target node boundary + 1 unit gap
+          const unitX = dx / distance;
+          const unitY = dy / distance;
+          const adjustedTargetX = targetX - unitX * (targetRadius + 1);
+          const adjustedTargetY = targetY - unitY * (targetRadius + 1);
+          return `M ${sourceX},${sourceY} L ${adjustedTargetX},${adjustedTargetY}`;
         } else {
           // Quadratic curve for multiple edges
-          // Calculate perpendicular offset for control point
-          const dx = targetX - sourceX;
-          const dy = targetY - sourceY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          // Guard against zero or very small distance (nodes at same position)
-          if (distance < 0.01) {
-            // Draw straight line if nodes are too close
-            return `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
-          }
-
           // Perpendicular unit vector
           const perpX = -dy / distance;
           const perpY = dx / distance;
@@ -941,7 +950,24 @@ export const ForceGraph2D: React.FC<
           const controlX = midX + perpX * curveOffset;
           const controlY = midY + perpY * curveOffset;
 
-          return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
+          // Calculate tangent at curve endpoint (t=1)
+          // For quadratic Bezier, tangent at t=1 is in direction from control point to target
+          const tangentX = targetX - controlX;
+          const tangentY = targetY - controlY;
+          const tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+
+          // Guard against zero-length tangent
+          if (tangentLength < 0.01) {
+            return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
+          }
+
+          // Normalize tangent and shorten curve to stop at target node boundary + 1 unit gap
+          const tangentUnitX = tangentX / tangentLength;
+          const tangentUnitY = tangentY / tangentLength;
+          const adjustedTargetX = targetX - tangentUnitX * (targetRadius + 1);
+          const adjustedTargetY = targetY - tangentUnitY * (targetRadius + 1);
+
+          return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${adjustedTargetX},${adjustedTargetY}`;
         }
       });
 
