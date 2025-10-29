@@ -60,7 +60,7 @@ class APIClient {
     const nodes = allConceptDetails.map((concept: any) => ({
       concept_id: concept.concept_id,
       label: concept.label,
-      ontology: 'default',
+      ontology: concept.documents?.[0] || 'Unknown', // Use first document as ontology
       search_terms: concept.search_terms || [],
       grounding_strength: concept.grounding_strength, // -1.0 to +1.0
     }));

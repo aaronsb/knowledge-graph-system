@@ -29,9 +29,16 @@ export function transformForD3(
   // Get vocabulary data from store
   const vocabStore = useVocabularyStore.getState();
 
-  // Create color scale for ontologies
-  const ontologies = [...new Set(apiNodes.map(n => n.ontology))];
-  const colorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(ontologies);
+  // Create color scale for ontologies using equidistant points on a color ramp
+  const ontologies = [...new Set(apiNodes.map(n => n.ontology))].sort();
+  const colorScale = d3.scaleOrdinal<string>()
+    .domain(ontologies)
+    .range(ontologies.map((_, i) => {
+      // Distribute ontologies evenly across the Turbo color ramp [0, 1]
+      // Avoid extreme ends (0.1 to 0.9) for better visibility
+      const t = ontologies.length === 1 ? 0.5 : 0.1 + (i / (ontologies.length - 1)) * 0.8;
+      return d3.interpolateTurbo(t);
+    }));
 
   // Transform nodes (with grounding strength)
   const nodes: D3Node[] = apiNodes.map(node => ({
