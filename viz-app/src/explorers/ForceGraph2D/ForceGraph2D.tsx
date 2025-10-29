@@ -921,6 +921,15 @@ export const ForceGraph2D: React.FC<
         .on('drag', (event, d) => {
           d.fx = event.x;
           d.fy = event.y;
+
+          // Update info box position immediately during drag
+          setActiveNodeInfos(prevInfos =>
+            prevInfos.map(info =>
+              info.nodeId === d.id
+                ? { ...info, x: event.x, y: event.y }
+                : info
+            )
+          );
         })
         .on('end', (event, _d) => {
           if (!event.active && settings.physics.enabled) simulation.alphaTarget(0);
