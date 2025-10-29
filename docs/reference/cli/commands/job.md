@@ -14,7 +14,7 @@ kg job [options]
 **Subcommands:**
 
 - `status` - Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion
-- `list` - List recent jobs with optional filtering by status or client - includes subcommands for common filters
+- `list` - List recent jobs with optional filtering by status or user - includes subcommands for common filters
 - `approve` - Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status
 - `cancel` - Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)
 - `clear` - Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)
@@ -42,7 +42,7 @@ kg status <job-id>
 
 ### list
 
-List recent jobs with optional filtering by status or client - includes subcommands for common filters
+List recent jobs with optional filtering by status or user - includes subcommands for common filters
 
 **Usage:**
 ```bash
@@ -54,7 +54,7 @@ kg list [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-s, --status <status>` | Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled) | - |
-| `-c, --client <client-id>` | Filter by client ID (view specific user's jobs in multi-tenant setups) | - |
+| `-c, --client <user-id>` | Filter by user ID (view specific user's jobs) | - |
 | `-l, --limit <n>` | Maximum jobs to return (max: 500, default: 100) | `"100"` |
 | `-o, --offset <n>` | Number of jobs to skip for pagination (default: 0) | `"0"` |
 | `--full-id` | Show full job IDs without truncation | `false` |
@@ -82,7 +82,7 @@ kg pending [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID | - |
+| `-c, --client <user-id>` | Filter by user ID | - |
 | `-l, --limit <n>` | Maximum jobs to return | `"20"` |
 | `--full-id` | Show full job IDs (no truncation) | `false` |
 
@@ -99,7 +99,7 @@ kg approved [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID | - |
+| `-c, --client <user-id>` | Filter by user ID | - |
 | `-l, --limit <n>` | Maximum jobs to return | `"20"` |
 | `--full-id` | Show full job IDs (no truncation) | `false` |
 
@@ -116,7 +116,7 @@ kg done [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID | - |
+| `-c, --client <user-id>` | Filter by user ID | - |
 | `-l, --limit <n>` | Maximum jobs to return | `"20"` |
 | `--full-id` | Show full job IDs (no truncation) | `false` |
 
@@ -133,7 +133,7 @@ kg failed [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID | - |
+| `-c, --client <user-id>` | Filter by user ID | - |
 | `-l, --limit <n>` | Maximum jobs to return | `"20"` |
 | `--full-id` | Show full job IDs (no truncation) | `false` |
 
@@ -150,7 +150,7 @@ kg cancelled [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID | - |
+| `-c, --client <user-id>` | Filter by user ID | - |
 | `-l, --limit <n>` | Maximum jobs to return | `"20"` |
 | `--full-id` | Show full job IDs (no truncation) | `false` |
 
@@ -197,7 +197,7 @@ kg pending [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID for multi-tenant environments | - |
+| `-c, --client <user-id>` | Filter by user ID | - |
 | `-l, --limit <n>` | Maximum jobs to approve (default: 100) | `"100"` |
 
 #### filter
@@ -217,7 +217,7 @@ kg filter <status>
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID | - |
+| `-c, --client <user-id>` | Filter by user ID | - |
 
 ### cancel
 
@@ -236,7 +236,7 @@ kg cancel <job-id-or-filter>
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-c, --client <client-id>` | Filter by client ID for batch operations in multi-tenant setups | - |
+| `-c, --client <user-id>` | Filter by user ID for batch operations | - |
 | `-l, --limit <n>` | Maximum jobs to cancel for safety (default: 100) | `"100"` |
 
 ### clear

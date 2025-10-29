@@ -64,7 +64,7 @@ async def list_jobs(
         None,
         description="Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)"
     ),
-    client_id: Optional[str] = Query(
+    user_id: Optional[str] = Query(
         None,
         description="Filter by client ID (ADR-014: view specific user's jobs)"
     ),
@@ -73,24 +73,24 @@ async def list_jobs(
     current_user: dict = Depends(get_current_user)  # Auth placeholder
 ):
     """
-    List recent jobs, optionally filtered by status and/or client_id.
+    List recent jobs, optionally filtered by status and/or user_id.
 
     Useful for:
     - Viewing jobs awaiting approval: `?status=awaiting_approval`
-    - Viewing your own jobs: `?client_id=your-client-id`
-    - Viewing another user's jobs: `?client_id=other-user`
+    - Viewing your own jobs: `?user_id=your-client-id`
+    - Viewing another user's jobs: `?user_id=other-user`
     - Monitoring queue backlog
     - Debugging failed jobs
 
     Examples:
     - `GET /jobs?status=awaiting_approval` - Jobs needing approval
-    - `GET /jobs?client_id=alice&status=awaiting_approval` - Alice's pending jobs
+    - `GET /jobs?user_id=alice&status=awaiting_approval` - Alice's pending jobs
     - `GET /jobs?status=completed&limit=100` - Last 100 completed jobs
     """
     queue = get_job_queue()
-    jobs = queue.list_jobs(status=status, client_id=client_id, limit=limit, offset=offset)
+    jobs = queue.list_jobs(status=status, user_id=user_id, limit=limit, offset=offset)
 
-    # Phase 2: Enforce ownership filtering based on current_user.client_id
+    # Phase 2: Enforce ownership filtering based on current_user.user_id
     # For now, allow viewing all jobs (no filtering enforcement)
 
     return [JobStatus(**job) for job in jobs]

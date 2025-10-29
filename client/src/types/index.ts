@@ -62,6 +62,8 @@ export interface JobStatus {
   job_id: string;
   job_type: string;
   status: 'pending' | 'awaiting_approval' | 'approved' | 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  user_id?: number;  // User ID who submitted the job (from kg_auth.users)
+  username?: string;  // Username who submitted the job
   progress?: JobProgress;
   result?: JobResult;
   error?: string;
@@ -70,7 +72,7 @@ export interface JobStatus {
   completed_at?: string;
   content_hash?: string;
   ontology?: string;
-  client_id?: string;
+  client_id?: string;  // DEPRECATED: kept for backwards compatibility, use user_id instead
   processing_mode?: string;  // Serial or parallel processing
   analysis?: any;  // Pre-ingestion analysis (ADR-014)
   approved_at?: string;

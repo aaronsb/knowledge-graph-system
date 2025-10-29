@@ -53,6 +53,8 @@ class JobStatus(BaseModel):
     job_id: str = Field(..., description="Unique job identifier")
     job_type: str = Field(..., description="Type of job")
     status: str = Field(..., description="Job status: pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled")
+    user_id: Optional[int] = Field(None, description="User ID who submitted the job (from kg_auth.users)")
+    username: Optional[str] = Field(None, description="Username who submitted the job")
     progress: Optional[JobProgress] = Field(None, description="Progress information")
     result: Optional[JobResult] = Field(None, description="Result data (if completed)")
     error: Optional[str] = Field(None, description="Error message (if failed)")
