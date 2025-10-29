@@ -150,8 +150,12 @@ const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismis
 
         {/* Info box content - always dark theme */}
         <div
-          className="bg-gray-800 rounded-lg shadow-xl border border-gray-600 cursor-pointer hover:shadow-2xl transition-shadow"
-          style={{ minWidth: '280px', maxWidth: '400px' }}
+          className="bg-gray-800 rounded-lg border border-gray-600 cursor-pointer transition-shadow"
+          style={{
+            minWidth: '280px',
+            maxWidth: '400px',
+            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
+          }}
         >
           {/* Header - always visible */}
           <div
@@ -346,12 +350,15 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
         />
         {/* Info box content - always dark theme */}
         <div
-          className="bg-gray-800 rounded-lg shadow-xl border border-gray-600 px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow"
+          className="bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 cursor-pointer transition-shadow"
           onClick={(e) => {
             e.stopPropagation();
             onDismiss();
           }}
-          style={{ minWidth: '200px' }}
+          style={{
+            minWidth: '200px',
+            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
+          }}
         >
           <div className="space-y-2 text-sm">
             <div className="font-semibold text-gray-100 border-b border-gray-700 pb-2">
@@ -742,6 +749,34 @@ export const ForceGraph2D: React.FC<
     // Clear previous content
     svg.selectAll('*').remove();
 
+    // Define SVG filters for shadow effects
+    const defs = svg.append('defs');
+    const shadowFilter = defs.append('filter')
+      .attr('id', 'drop-shadow')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%');
+
+    shadowFilter.append('feGaussianBlur')
+      .attr('in', 'SourceAlpha')
+      .attr('stdDeviation', 2);
+
+    shadowFilter.append('feOffset')
+      .attr('dx', 3.6)
+      .attr('dy', 3.6)
+      .attr('result', 'offsetblur');
+
+    shadowFilter.append('feComponentTransfer')
+      .append('feFuncA')
+      .attr('type', 'linear')
+      .attr('slope', 0.8);
+
+    const feMerge = shadowFilter.append('feMerge');
+    feMerge.append('feMergeNode');
+    feMerge.append('feMergeNode')
+      .attr('in', 'SourceGraphic');
+
     // Create container groups (order determines layering)
     const g = svg.append('g').attr('class', 'graph-container');
 
@@ -825,23 +860,7 @@ export const ForceGraph2D: React.FC<
     }
 
     // Draw edge shadows if enabled
-    let edgeShadows: d3.Selection<SVGPathElement, D3Link, SVGGElement, unknown> | null = null;
-    if (settings.visual.showShadows) {
-      const shadowOffset = 3; // Same offset as nodes
-
-      // Apply offset to the group so all child paths inherit it
-      edgeShadowsGroup.attr('transform', `translate(${shadowOffset}, ${shadowOffset})`);
-
-      edgeShadows = edgeShadowsGroup
-        .selectAll<SVGPathElement, D3Link>('path')
-        .data(data.links)
-        .join('path')
-        .attr('stroke', '#000')
-        .attr('stroke-width', (d) => (d.value || 1) * settings.visual.linkWidth)
-        .attr('stroke-opacity', 0.8)
-        .attr('fill', 'none')
-        .attr('pointer-events', 'none');
-    }
+    // Edge shadows now handled by SVG filter on the edges themselves
 
     // Draw links as paths (supports curves for multiple edges)
     const link = linksGroup
@@ -869,6 +888,7 @@ export const ForceGraph2D: React.FC<
         const targetId = typeof d.target === 'string' ? d.target : d.target.id;
         return `${sourceId}->${targetId}-${d.type}`;
       })
+      .style('filter', settings.visual.showShadows ? 'url(#drop-shadow)' : null)
       .on('mouseenter', (_event, d) => {
         const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
         const targetId = typeof d.target === 'string' ? d.target : d.target.id;
@@ -979,17 +999,7 @@ export const ForceGraph2D: React.FC<
 
     // Render node highlights FIRST (before circles) if shadows enabled, so circles are on top
     if (settings.visual.showShadows) {
-      const shadowOffset = 3.6; // pixels (20% more than original 3px)
-
-      // Node shadows (drop shadow effect)
-      nodeShadowsGroup
-        .selectAll<SVGCircleElement, D3Node>('circle')
-        .data(data.nodes)
-        .join('circle')
-        .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
-        .attr('fill', '#000')
-        .attr('opacity', 0.8)
-        .attr('pointer-events', 'none');
+      // Node shadows now handled by SVG filter on the nodes themselves
 
       // Node highlights (reflection and shade arcs) - MUST be created before circles
       nodesGroup
@@ -1057,6 +1067,7 @@ export const ForceGraph2D: React.FC<
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
       .attr('data-node-id', (d) => d.id) // Add ID for selection
+      .style('filter', settings.visual.showShadows ? 'url(#drop-shadow)' : null)
       .on('click', (event, d) => {
         event.stopPropagation();
         setContextMenu(null); // Close any open context menu
@@ -1090,6 +1101,7 @@ export const ForceGraph2D: React.FC<
       .on('contextmenu', (event, d) => {
         // Right-click: Show context menu
         event.preventDefault();
+        event.stopPropagation(); // Prevent canvas context menu from showing
         setContextMenu({
           x: event.clientX,
           y: event.clientY,
@@ -1322,71 +1334,8 @@ export const ForceGraph2D: React.FC<
           .attr('y', (d) => (d.y || 0) + (d.size || 10) * settings.visual.nodeSize + 14);
       }
 
-      // Update shadow and highlight positions if enabled
+      // Update highlight positions if enabled (shadows handled by SVG filter)
       if (settings.visual.showShadows) {
-        // Update edge shadow paths to match edge paths
-        if (edgeShadows) {
-          edgeShadows.attr('d', (d) => {
-            const sourceNode = typeof d.source === 'object' ? d.source : null;
-            const targetNode = typeof d.target === 'object' ? d.target : null;
-
-            const sourceX = sourceNode?.x || 0;
-            const sourceY = sourceNode?.y || 0;
-            const targetX = targetNode?.x || 0;
-            const targetY = targetNode?.y || 0;
-
-            const targetRadius = targetNode ? ((targetNode.size || 10) * settings.visual.nodeSize) + 2 : 10;
-
-            const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
-            const targetId = typeof d.target === 'string' ? d.target : d.target.id;
-            const linkKey = `${sourceId}->${targetId}-${d.type}`;
-            const curveOffset = linkCurveOffsets.get(linkKey) || 0;
-
-            const dx = targetX - sourceX;
-            const dy = targetY - sourceY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 0.01) {
-              return `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
-            }
-
-            if (curveOffset === 0) {
-              const unitX = dx / distance;
-              const unitY = dy / distance;
-              const adjustedTargetX = targetX - unitX * (targetRadius + 1);
-              const adjustedTargetY = targetY - unitY * (targetRadius + 1);
-              return `M ${sourceX},${sourceY} L ${adjustedTargetX},${adjustedTargetY}`;
-            } else {
-              const perpX = -dy / distance;
-              const perpY = dx / distance;
-              const midX = (sourceX + targetX) / 2;
-              const midY = (sourceY + targetY) / 2;
-              const controlX = midX + perpX * curveOffset;
-              const controlY = midY + perpY * curveOffset;
-
-              const tangentX = targetX - controlX;
-              const tangentY = targetY - controlY;
-              const tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
-
-              if (tangentLength < 0.01) {
-                return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
-              }
-
-              const tangentUnitX = tangentX / tangentLength;
-              const tangentUnitY = tangentY / tangentLength;
-              const adjustedTargetX = targetX - tangentUnitX * (targetRadius + 1);
-              const adjustedTargetY = targetY - tangentUnitY * (targetRadius + 1);
-
-              return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${adjustedTargetX},${adjustedTargetY}`;
-            }
-          });
-        }
-
-        // Update node shadow positions (use transform for offset)
-        const shadowOffset = 3.6;
-        nodeShadowsGroup.selectAll('circle')
-          .attr('transform', (d: any) => `translate(${(d.x || 0) + shadowOffset}, ${(d.y || 0) + shadowOffset})`);
-
         // Update node highlight arc positions
         nodesGroup.selectAll('.highlight-arc')
           .attr('transform', (d: any) => `translate(${d.node.x || 0}, ${d.node.y || 0})`);
