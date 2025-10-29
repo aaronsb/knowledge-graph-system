@@ -6,33 +6,6 @@ repo_name: aaronsb/knowledge-graph-system
 
 theme:
   name: material
-  palette:
-    # Light mode (default)
-    - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    # Dark mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-  features:
-    - navigation.instant
-    - navigation.tracking
-    - navigation.tabs
-    - navigation.sections
-    - navigation.expand
-    - navigation.indexes
-    - navigation.top
-    - toc.integrate
-    - search.suggest
-    - search.highlight
-    - content.code.copy
 
 markdown_extensions:
   - admonition
@@ -86,9 +59,6 @@ nav:
   - Architecture: architecture/
   - Development: development/
   - Testing: testing/
-
-extra_css:
-  - assets/css/graph-theme.css
 
 # Build settings
 docs_dir: docs
