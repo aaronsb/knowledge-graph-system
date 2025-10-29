@@ -1582,6 +1582,10 @@ export const ForceGraph2D: React.FC<
         width={dimensions.width}
         height={dimensions.height}
         className="bg-white dark:bg-gray-900"
+        onClick={() => {
+          // Close context menu when clicking on canvas background
+          setContextMenu(null);
+        }}
       />
 
       {/* Legend Panel */}
