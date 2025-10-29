@@ -382,28 +382,28 @@ CREATE (v)-[:IN_CATEGORY]->(computed_category)
 ### Phase 1: Foundation (Week 1)
 
 **1.1 Add Query Facade**
-- [ ] Create `src/api/lib/query_facade.py`
-- [ ] Implement core methods (match_concepts, match_vocab_types)
-- [ ] Add audit logging
-- [ ] Add to age_client as optional interface
+- [x] Create `src/api/lib/query_facade.py`
+- [x] Implement core methods (match_concepts, match_vocab_types)
+- [x] Add audit logging
+- [x] Add to age_client as optional interface
 
 **1.2 Add Query Linter**
-- [ ] Create `scripts/lint_queries.py`
-- [ ] Add CI workflow
-- [ ] Run initial audit (expect many failures)
-- [ ] Document baseline
+- [x] Create `scripts/lint_queries.py`
+- [x] Add CI workflow
+- [x] Run initial audit (expect many failures)
+- [x] Document baseline
 
 **1.3 Use Facade for New Code**
-- [ ] Update development guide (CLAUDE.md)
-- [ ] Use facade in any new features
+- [x] Update development guide (CLAUDE.md)
+- [x] Use facade in any new features
 - [ ] Begin tracking raw query count
 
 ### Phase 2: Critical Path Migration (Week 2-3)
 
 **2.1 Migrate Search Queries**
-- [ ] Convert concept search to facade
-- [ ] Convert relationship queries to facade
-- [ ] Test namespace isolation
+- [x] Convert concept search to facade
+- [x] Convert relationship queries to facade
+- [x] Test namespace isolation
 
 **2.2 Migrate Ingestion Pipeline**
 - [ ] Convert concept upsert to facade
@@ -427,18 +427,18 @@ CREATE (v)-[:IN_CATEGORY]->(computed_category)
 - [x] Update vocab info queries - get_edge_type_info(), get_category_distribution()
 - [x] Verify read queries work correctly - All tests pass
 - [x] Handle AGE boolean string storage ('t'/'f' vs true/false)
-- [ ] Update `kg vocab find-synonyms` to query graph - **Phase 3.3**
-- [ ] Update `kg vocab merge` to rewire graph edges - **Phase 3.3**
-- [ ] Update `kg vocab refresh-categories` to update graph - **Phase 3.3**
+- [x] Update `kg vocab find-synonyms` to query graph - **Phase 3.3**
+- [x] Update `kg vocab merge` to rewire graph edges - **Phase 3.3**
+- [x] Update `kg vocab refresh-categories` to update graph - **Phase 3.3**
 
 **3.3 Complete Migration & SQL Deprecation** ⏸️ **FUTURE WORK**
-- [ ] Migrate write operations to graph (add_edge_type, update_edge_type, merge_edge_types)
-- [ ] Migrate embedding operations to :VocabType properties
-- [ ] Migrate scoring operations to graph queries
-- [ ] Verify all 25+ SQL queries replaced with graph equivalents
-- [ ] Add graph-based usage count tracking
-- [ ] Backup SQL tables
-- [ ] Drop SQL vocabulary tables (optional)
+- [x] Migrate write operations to graph (add_edge_type, update_edge_type, merge_edge_types)
+- [x] Migrate embedding operations to :VocabType properties
+- [x] Migrate scoring operations to graph queries
+- [x] Verify all 25+ SQL queries replaced with graph equivalents
+- [x] Add graph-based usage count tracking
+- [x] Backup SQL tables
+- [x] Drop SQL vocabulary tables (optional)
 
 ## Migration Strategy
 

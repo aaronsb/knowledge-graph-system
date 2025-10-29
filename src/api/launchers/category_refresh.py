@@ -41,23 +41,21 @@ class CategoryRefreshLauncher(JobLauncher):
         try:
             client = AGEClient()
 
-            # Query for categories with llm_generated relationship types
-            # This is the condition that determines if refresh is needed
-            query = """
-                SELECT ag_catalog.cypher('knowledge_graph', $$
-                    MATCH (c:VocabCategory)
-                    WHERE c.name IS NOT NULL
-                    RETURN c.name AS category_name,
-                           c.relationship_types AS relationship_types
-                $$) AS (category_name agtype, relationship_types agtype)
-            """
-
-            results = client._execute_cypher_raw(query)
+            # Query for categories with llm_generated relationship types using facade
+            # This ensures namespace safety and audit logging (ADR-048)
+            results = client.facade.match_vocab_categories(
+                where="c.name IS NOT NULL"
+            )
 
             # Check if any category has 'llm_generated' in its relationship_types
             for row in results:
-                category_name = row[0]
-                relationship_types = row[1] if row[1] else []
+                # Facade returns {c: {...}} format
+                category = row.get('c', {})
+                if not category:
+                    continue
+
+                category_name = category.get('name')
+                relationship_types = category.get('relationship_types', [])
 
                 # Parse agtype to Python list if needed
                 if isinstance(relationship_types, str):

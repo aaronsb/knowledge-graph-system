@@ -88,6 +88,8 @@ class JobScheduler:
         Uses PostgreSQL advisory lock to ensure only one worker checks
         schedules in multi-worker deployments (e.g., Gunicorn -w 4).
         """
+        logger.info("🔍 Scheduler check cycle starting")
+
         # Get database connection from job queue
         conn = self.job_queue._get_connection()
 
@@ -103,13 +105,13 @@ class JobScheduler:
                 if not got_lock:
                     # Another worker has the lock and is checking schedules.
                     # This worker should do nothing to avoid duplicate job creation.
-                    logger.debug(
-                        "Scheduler lock held by another worker, skipping check cycle"
+                    logger.info(
+                        "   Scheduler lock held by another worker, skipping this cycle"
                     )
                     return
 
                 # If we're here, we are the ONLY worker running schedule checks
-                logger.debug("Acquired scheduler lock, proceeding with schedule check")
+                logger.info("   Acquired scheduler lock, checking schedules")
                 # --- END MULTI-WORKER SAFETY ---
 
                 cur.execute("""
@@ -123,15 +125,20 @@ class JobScheduler:
                 schedules = cur.fetchall()
                 now = datetime.now()
 
+                logger.info(f"   Found {len(schedules)} enabled schedule(s), current time: {now}")
+
                 for schedule in schedules:
                     schedule_id, name, launcher_class, cron_expr, \
                     retry_count, max_retries, last_run, next_run = schedule
+
+                    logger.info(f"   Schedule '{name}': next_run={next_run}, launcher={launcher_class}")
 
                     # Calculate next run if not set
                     if not next_run:
                         cron = croniter(cron_expr, now)
                         next_run = cron.get_next(datetime)
 
+                        logger.info(f"   Initializing next_run for '{name}' to {next_run}")
                         cur.execute("""
                             UPDATE kg_api.scheduled_jobs
                             SET next_run = %s

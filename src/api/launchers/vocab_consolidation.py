@@ -51,27 +51,26 @@ class VocabConsolidationLauncher(JobLauncher):
         try:
             client = AGEClient()
 
-            # Query vocabulary statistics
+            # Query vocabulary statistics using facade
+            # Complex aggregation requires execute_raw() but with namespace safety (ADR-048)
             query = """
-                SELECT ag_catalog.cypher('knowledge_graph', $$
-                    MATCH (v:VocabType)
-                    RETURN
-                        COUNT(v) AS total_types,
-                        SUM(CASE WHEN v.is_active = true THEN 1 ELSE 0 END) AS active_types,
-                        SUM(CASE WHEN v.is_active = false THEN 1 ELSE 0 END) AS inactive_types
-                $$) AS (total_types agtype, active_types agtype, inactive_types agtype)
+                MATCH (v:VocabType)
+                RETURN
+                    COUNT(v) AS total_types,
+                    SUM(CASE WHEN v.is_active = true THEN 1 ELSE 0 END) AS active_types,
+                    SUM(CASE WHEN v.is_active = false THEN 1 ELSE 0 END) AS inactive_types
             """
 
-            results = client._execute_cypher_raw(query)
+            results = client.facade.execute_raw(query, namespace="vocabulary")
 
             if not results:
                 logger.warning("VocabConsolidationLauncher: No vocabulary stats found")
                 return False
 
             row = results[0]
-            total_types = int(row[0]) if row[0] else 0
-            active_types = int(row[1]) if row[1] else 0
-            inactive_types = int(row[2]) if row[2] else 0
+            total_types = int(row.get('total_types', 0))
+            active_types = int(row.get('active_types', 0))
+            inactive_types = int(row.get('inactive_types', 0))
 
             logger.debug(
                 f"VocabConsolidationLauncher stats: "
