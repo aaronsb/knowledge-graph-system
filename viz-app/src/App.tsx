@@ -37,9 +37,15 @@ const AppContent: React.FC = () => {
       try {
         const response = await apiClient.getVocabularyTypes();
         setTypes(response.types || []);
-        console.log(`Loaded ${response.types?.length || 0} vocabulary types`);
+        console.log(`✅ Loaded ${response.types?.length || 0} vocabulary types`);
+        // Log category distribution
+        const categoryCount: Record<string, number> = {};
+        response.types?.forEach((t: any) => {
+          categoryCount[t.category] = (categoryCount[t.category] || 0) + 1;
+        });
+        console.log('📊 Category distribution:', categoryCount);
       } catch (error) {
-        console.error('Failed to load vocabulary:', error);
+        console.error('❌ Failed to load vocabulary:', error);
         setError(error instanceof Error ? error.message : 'Failed to load vocabulary');
       }
     };

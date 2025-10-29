@@ -671,6 +671,9 @@ export const ForceGraph2D: React.FC<
         if (!settings.visual.showArrows) return '';
         // Use category-specific marker
         const category = d.category || 'default';
+        if (!d.category) {
+          console.warn(`Link ${d.type} has no category, using default`, d);
+        }
         return `url(#arrowhead-${category})`;
       })
       .attr('cursor', 'pointer')

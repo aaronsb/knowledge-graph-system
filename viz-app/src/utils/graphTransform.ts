@@ -78,6 +78,11 @@ export function transformForD3(
     const category = vocabStore.getCategory(link.relationship_type) || link.category || 'default';
     const categoryConfidence = vocabStore.getConfidence(link.relationship_type) || 1.0;
 
+    // Debug: Log edges with no category
+    if (category === 'default' && !link.category) {
+      console.warn(`Edge type '${link.relationship_type}' has no category in vocabulary`);
+    }
+
     return {
       source: link.from_id,
       target: link.to_id,
