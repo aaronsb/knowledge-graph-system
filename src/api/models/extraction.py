@@ -31,6 +31,10 @@ class ExtractionConfigResponse(BaseModel):
     num_threads: Optional[int] = Field(None, description="CPU threads for inference")
     thinking_mode: Optional[str] = Field(None, description="Thinking mode: 'off', 'low', 'medium', 'high' (Ollama 0.12.x+)")
 
+    # Rate limiting configuration (Migration 018)
+    max_concurrent_requests: Optional[int] = Field(None, description="Maximum concurrent API requests for this provider")
+    max_retries: Optional[int] = Field(None, description="Maximum retry attempts for rate-limited requests (429 errors)")
+
 
 class ExtractionConfigDetail(BaseModel):
     """
@@ -57,6 +61,10 @@ class ExtractionConfigDetail(BaseModel):
     num_threads: Optional[int] = None
     thinking_mode: Optional[str] = None
 
+    # Rate limiting configuration (Migration 018)
+    max_concurrent_requests: Optional[int] = None
+    max_retries: Optional[int] = None
+
 
 class UpdateExtractionConfigRequest(BaseModel):
     """
@@ -78,6 +86,10 @@ class UpdateExtractionConfigRequest(BaseModel):
     gpu_layers: Optional[int] = Field(None, description="GPU layers: -1=auto, 0=CPU, >0=specific")
     num_threads: Optional[int] = Field(None, description="CPU threads for inference")
     thinking_mode: Optional[str] = Field('off', description="Thinking mode: 'off', 'low', 'medium', 'high' (Ollama 0.12.x+)")
+
+    # Rate limiting configuration (Migration 018)
+    max_concurrent_requests: Optional[int] = Field(None, description="Maximum concurrent API requests (OpenAI=8, Anthropic=4, Ollama=1)")
+    max_retries: Optional[int] = Field(None, description="Maximum retry attempts for rate limits (cloud=8, local=3)")
 
 
 class UpdateExtractionConfigResponse(BaseModel):

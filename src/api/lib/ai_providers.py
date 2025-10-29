@@ -14,6 +14,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
 import json
+from .rate_limiter import exponential_backoff_retry
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +199,17 @@ class OpenAIProvider(AIProvider):
                 "  3. Add to .env file (development only)"
             )
 
-        self.client = OpenAI(api_key=self.api_key)
+        # Configure retry behavior (exponential backoff built into SDK)
+        # Load from database (ADR-041) or fall back to env/defaults
+        from .rate_limiter import get_provider_max_retries
+        max_retries = get_provider_max_retries("openai")
+
+        self.client = OpenAI(
+            api_key=self.api_key,
+            max_retries=max_retries,
+            timeout=120.0  # 2 minute timeout for long operations
+        )
+        logger.info(f"OpenAI client configured with max_retries={max_retries}")
 
         # Configurable models with defaults
         self.extraction_model = extraction_model or os.getenv("OPENAI_EXTRACTION_MODEL", "gpt-4o")
@@ -593,7 +604,17 @@ class AnthropicProvider(AIProvider):
                 "  3. Add to .env file (development only)"
             )
 
-        self.client = Anthropic(api_key=self.api_key)
+        # Configure retry behavior (exponential backoff built into SDK)
+        # Load from database (ADR-041) or fall back to env/defaults
+        from .rate_limiter import get_provider_max_retries
+        max_retries = get_provider_max_retries("anthropic")
+
+        self.client = Anthropic(
+            api_key=self.api_key,
+            max_retries=max_retries,
+            timeout=120.0  # 2 minute timeout for long operations
+        )
+        logger.info(f"Anthropic client configured with max_retries={max_retries}")
 
         # Configurable extraction model
         self.extraction_model = extraction_model or os.getenv("ANTHROPIC_EXTRACTION_MODEL", "claude-sonnet-4-20250514")
@@ -942,13 +963,18 @@ class OllamaProvider(AIProvider):
                 request_data["think"] = True
                 logger.info(f"🤔 Thinking: {self.thinking_mode}, num_predict={num_predict}")
 
-            response = self.session.post(
-                f"{self.base_url}/api/chat",
-                json=request_data,
-                timeout=300  # 5 minute timeout for local inference
-            )
+            # Wrap with retry logic for rate limiting (local Ollama unlikely, but good practice)
+            @exponential_backoff_retry(max_retries=3, base_delay=0.5)
+            def _make_request():
+                resp = self.session.post(
+                    f"{self.base_url}/api/chat",
+                    json=request_data,
+                    timeout=300  # 5 minute timeout for local inference
+                )
+                resp.raise_for_status()
+                return resp
 
-            response.raise_for_status()
+            response = _make_request()
             response_data = response.json()
 
             # Extract message from /api/chat response
@@ -1076,22 +1102,27 @@ class OllamaProvider(AIProvider):
         import requests
 
         try:
-            response = self.session.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": self.extraction_model,
-                    "prompt": f"You are a technical writer who explains code and diagrams in clear, simple prose.\n\n{prompt}\n\n{code}",
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.5,  # Balanced: clear but not robotic
-                        "top_p": self.top_p,
-                        "num_predict": 1000
-                    }
-                },
-                timeout=120  # 2 minute timeout
-            )
+            # Wrap with retry logic for rate limiting
+            @exponential_backoff_retry(max_retries=3, base_delay=0.5)
+            def _make_request():
+                resp = self.session.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.extraction_model,
+                        "prompt": f"You are a technical writer who explains code and diagrams in clear, simple prose.\n\n{prompt}\n\n{code}",
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.5,  # Balanced: clear but not robotic
+                            "top_p": self.top_p,
+                            "num_predict": 1000
+                        }
+                    },
+                    timeout=120  # 2 minute timeout
+                )
+                resp.raise_for_status()
+                return resp
 
-            response.raise_for_status()
+            response = _make_request()
             response_data = response.json()
             prose = response_data.get("response", "").strip()
 
@@ -1126,23 +1157,28 @@ class OllamaProvider(AIProvider):
                     "Consider using 'llava:7b' or 'llava:13b' for image description."
                 )
 
-            response = self.session.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": vision_model,
-                    "prompt": prompt,
-                    "images": [image_base64],
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.3,  # Lower for consistency
-                        "top_p": self.top_p,
-                        "num_predict": 2000
-                    }
-                },
-                timeout=180  # 3 minute timeout for vision
-            )
+            # Wrap with retry logic for rate limiting
+            @exponential_backoff_retry(max_retries=3, base_delay=0.5)
+            def _make_request():
+                resp = self.session.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": vision_model,
+                        "prompt": prompt,
+                        "images": [image_base64],
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.3,  # Lower for consistency
+                            "top_p": self.top_p,
+                            "num_predict": 2000
+                        }
+                    },
+                    timeout=180  # 3 minute timeout for vision
+                )
+                resp.raise_for_status()
+                return resp
 
-            response.raise_for_status()
+            response = _make_request()
             response_data = response.json()
             description = response_data.get("response", "").strip()
 

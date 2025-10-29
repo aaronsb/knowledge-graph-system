@@ -144,8 +144,16 @@ class InMemoryJobQueue(JobQueue):
 
         # Create thread pool for worker execution (ADR-031: Non-blocking workers)
         import concurrent.futures
+        import os
+
+        # Configurable worker count for rate limit management
+        # Lower values (2-3) reduce API rate limit pressure
+        # Higher values (4-6) increase throughput but may hit rate limits
+        max_workers = int(os.getenv("MAX_CONCURRENT_JOBS", "4"))
+        logger.info(f"Job queue configured with max_workers={max_workers}")
+
         self.executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=4,  # Concurrent ingestion jobs
+            max_workers=max_workers,
             thread_name_prefix="kg-worker-"
         )
 
@@ -622,8 +630,16 @@ class PostgreSQLJobQueue(JobQueue):
 
         # Create thread pool for worker execution (ADR-031: Non-blocking workers)
         import concurrent.futures
+        import os
+
+        # Configurable worker count for rate limit management
+        # Lower values (2-3) reduce API rate limit pressure
+        # Higher values (4-6) increase throughput but may hit rate limits
+        max_workers = int(os.getenv("MAX_CONCURRENT_JOBS", "4"))
+        logger.info(f"Job queue configured with max_workers={max_workers}")
+
         self.executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=4,  # Concurrent ingestion jobs
+            max_workers=max_workers,
             thread_name_prefix="kg-worker-"
         )
 
