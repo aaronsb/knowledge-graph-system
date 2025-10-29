@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../DATA_CONTRACT/">
+        <link rel="prev" href="../ADR-049-llm-determined-relationship-direction/">
       
       
-        <link rel="next" href="../PHASE_3_3_PLAN/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Fuzzy Matching Analysis for 30-Type Relationship Taxonomy - Knowledge Graph System</title>
+        <title>ADR-049: Rate Limiting and Per-Provider Concurrency Management - Knowledge Graph System</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#fuzzy-matching-analysis-for-30-type-relationship-taxonomy" class="md-skip">
+        <a href="#adr-049-rate-limiting-and-per-provider-concurrency-management" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+              ADR-049: Rate Limiting and Per-Provider Concurrency Management
             
           </span>
         </div>
@@ -4316,10 +4316,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-049: Rate Limiting and Per-Provider Concurrency Management
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4330,6 +4352,383 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-sdk-level-retry-exponential-backoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. SDK-Level Retry (Exponential Backoff)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-per-provider-concurrency-limiting-semaphores" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Per-Provider Concurrency Limiting (Semaphores)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-configuration-system-database-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Configuration System (Database-First)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-safety-bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Safety Bounds
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      Negative
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rate-limiter-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limiter Module
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Provider Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Exposure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Priority
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives Considered
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-global-token-bucket-rate-limiter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option A: Global Token Bucket Rate Limiter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-reduce-worker-count-to-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option B: Reduce Worker Count to 2
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-queue-with-circuit-breaker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option C: Queue with Circuit Breaker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-d-separate-queue-per-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option D: Separate Queue Per Provider
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-testing-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load Testing (Future)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoring
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Enhancements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Enhancements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-token-bucket-pre-emption" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Token Bucket Pre-emption
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-auto-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Auto-Tuning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-per-endpoint-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Per-Endpoint Limits
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-http-error-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Provider HTTP Error Codes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider HTTP Error Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#openai-api-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      OpenAI API Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anthropic-api-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Anthropic API Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-size-limits-anthropic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Request Size Limits (Anthropic)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-api-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ollama API Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retry-logic-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retry Logic Implementation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -4454,32 +4853,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -4490,149 +4867,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#problem-statement" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problem Statement
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#algorithms-tested" class="md-nav__link">
-    <span class="md-ellipsis">
-      Algorithms Tested
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Algorithms Tested">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-difflibsequencematcher-threshold-07" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. difflib.SequenceMatcher (threshold 0.7)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-difflibget_close_matches-cutoff-07" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. difflib.get_close_matches (cutoff 0.7)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-nltk-edit-distance-levenshtein-max-distance-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. NLTK Edit Distance (Levenshtein, max distance 3)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-hybrid-strategy-prefix-contains-fuzzy-085" class="md-nav__link">
-    <span class="md-ellipsis">
-      4. Hybrid Strategy (prefix + contains + fuzzy 0.85)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-combined-hybrid-edit-distance-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Combined (Hybrid + Edit Distance ≤3)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#comprehensive-test-results-249-variations-across-30-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Comprehensive Test Results (249 variations across 30 types)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recommended-solution" class="md-nav__link">
-    <span class="md-ellipsis">
-      Recommended Solution
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trade-offs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Trade-offs
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-insights" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Insights
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#remaining-failures-13-of-test-cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      Remaining Failures (13% of test cases)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Implementation
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -5137,128 +5371,562 @@
   
 
 
-<h1 id="fuzzy-matching-analysis-for-30-type-relationship-taxonomy">Fuzzy Matching Analysis for 30-Type Relationship Taxonomy</h1>
-<p><strong>Date:</strong> 2025-10-09
-<strong>Context:</strong> Testing fuzzy matching algorithms for normalizing LLM relationship type outputs</p>
-<h2 id="problem-statement">Problem Statement</h2>
-<p>LLMs produce variations of canonical relationship types:
-- <strong>Prefix variations:</strong> <code>CONTRASTS</code> instead of <code>CONTRASTS_WITH</code>
-- <strong>Verb tense:</strong> <code>CAUSING</code> instead of <code>CAUSES</code>
-- <strong>Typos:</strong> <code>CAUZES</code> instead of <code>CAUSES</code>
-- <strong>Reversed relationships:</strong> <code>CAUSED_BY</code> (should be rejected)
-- <strong>Similar words:</strong> <code>CREATES</code> (should NOT match <code>REGULATES</code>)</p>
-<p>Original approach using <code>difflib.SequenceMatcher.ratio()</code> with 0.7 threshold:
-- ❌ CONTRASTS → CONTRADICTS (wrong! should be CONTRASTS_WITH)
-- ❌ COMPONENT_OF → COMPOSED_OF (false positive)
-- ❌ Only 16.7% accuracy on critical edge cases</p>
-<h2 id="algorithms-tested">Algorithms Tested</h2>
-<h3 id="1-difflibsequencematcher-threshold-07">1. difflib.SequenceMatcher (threshold 0.7)</h3>
-<p><strong>Accuracy: 16.7%</strong>
-- Ratio-based similarity: <code>SequenceMatcher(None, a, b).ratio()</code>
-- ❌ CONTRASTS → CONTRADICTS (0.800) instead of CONTRASTS_WITH (0.783)
-- ❌ Reversed relationships match (ENABLED_BY → ENABLES at 0.706)
-- ❌ False positives (CREATES → REGULATES at 0.750)</p>
-<h3 id="2-difflibget_close_matches-cutoff-07">2. difflib.get_close_matches (cutoff 0.7)</h3>
-<p><strong>Accuracy: 16.7%</strong>
-- Uses SequenceMatcher internally - same issues</p>
-<h3 id="3-nltk-edit-distance-levenshtein-max-distance-3">3. NLTK Edit Distance (Levenshtein, max distance 3)</h3>
-<p><strong>Accuracy: 66.7%</strong>
-- Character-level edit distance
-- ✅ Handles verb tense (CAUSING → CAUSES, distance 3)
-- ✅ Rejects _BY reversed (distance &gt; 3)
-- ❌ CONTRASTS → CONTAINS (distance 3) instead of CONTRASTS_WITH
-- ❌ COMPONENT_OF → COMPOSED_OF (distance 3, false positive)</p>
-<h3 id="4-hybrid-strategy-prefix-contains-fuzzy-085">4. Hybrid Strategy (prefix + contains + fuzzy 0.85)</h3>
-<p><strong>Accuracy: 66.7%</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="mf">1.</span> <span class="n">Exact</span> <span class="n">match</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="mf">2.</span> <span class="n">Reject</span> <span class="n">_BY</span> <span class="nb">reversed</span> <span class="n">relationships</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="mf">3.</span> <span class="n">Prefix</span> <span class="n">match</span> <span class="p">(</span><span class="n">CONTRASTS</span> <span class="err">→</span> <span class="n">CONTRASTS_WITH</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="mf">4.</span> <span class="n">Contains</span> <span class="n">match</span> <span class="p">(</span><span class="n">CONTRADICTS_WITH</span> <span class="err">→</span> <span class="n">CONTRADICTS</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="mf">5.</span> <span class="n">High</span><span class="o">-</span><span class="n">threshold</span> <span class="n">fuzzy</span> <span class="p">(</span><span class="mf">0.85</span><span class="p">)</span> <span class="k">for</span> <span class="n">typos</span> <span class="n">only</span>
-</code></pre></div>
-- ✅ Perfect prefix/contains matching
-- ✅ Rejects _BY reversed
-- ✅ Rejects false positives (CREATES, COMPONENT_OF)
-- ❌ Misses verb tense (threshold too high)</p>
-<h3 id="5-combined-hybrid-edit-distance-3">5. Combined (Hybrid + Edit Distance ≤3)</h3>
-<p><strong>Accuracy: 83.3% with distance=3</strong>
-- Best overall but creates new false positives at distance=3
-- Distance=2: 75% (misses verb tense)
-- Distance=3: 83% (adds CREATES → REFUTES false positive)</p>
-<h2 id="comprehensive-test-results-249-variations-across-30-types">Comprehensive Test Results (249 variations across 30 types)</h2>
-<p><strong>Using improved prefix-aware algorithm:</strong>
-- Improved: 218/249 (87%)
-- Current (buggy): 214/249 (85%)
-- Fixed: 4 critical cases including CONTRASTS bug</p>
-<h2 id="recommended-solution">Recommended Solution</h2>
-<p><strong>Use Hybrid Strategy with optimized parameters:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">normalize_relationship_type</span><span class="p">(</span><span class="n">llm_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    \<span class="s2">&quot;</span><span class="se">\&quot;\&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">Multi</span><span class="o">-</span><span class="n">stage</span> <span class="n">matching</span> <span class="n">strategy</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="mf">1.</span> <span class="n">Exact</span> <span class="n">match</span> <span class="p">(</span><span class="n">fast</span> <span class="n">path</span><span class="p">)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="mf">2.</span> <span class="n">Reject</span> <span class="n">_BY</span> <span class="nb">reversed</span> <span class="n">relationships</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="mf">3.</span> <span class="n">Prefix</span> <span class="n">match</span> <span class="p">(</span><span class="nb">input</span> <span class="ow">is</span> <span class="n">prefix</span> <span class="n">of</span> <span class="n">canonical</span><span class="p">)</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="mf">4.</span> <span class="n">Contains</span> <span class="n">match</span> <span class="p">(</span><span class="n">canonical</span> <span class="ow">is</span> <span class="n">prefix</span> <span class="n">of</span> <span class="nb">input</span><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="mf">5.</span> <span class="n">Fallback</span> <span class="n">to</span> <span class="n">difflib</span> <span class="n">SequenceMatcher</span> <span class="k">with</span> <span class="n">threshold</span> <span class="mf">0.7</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    \<span class="s2">&quot;</span><span class="se">\&quot;\&quot;</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">llm_upper</span> <span class="o">=</span> <span class="n">llm_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="c1"># 1. Exact match</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="k">if</span> <span class="n">llm_upper</span> <span class="ow">in</span> <span class="n">RELATIONSHIP_TYPES</span><span class="p">:</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">llm_upper</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="c1"># 2. Reject _BY reversed relationships</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="k">if</span> <span class="n">llm_upper</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_BY&#39;</span><span class="p">):</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="c1"># 3. Prefix match (handles CONTRASTS → CONTRASTS_WITH)</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    <span class="n">prefix_matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">RELATIONSHIP_TYPES</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">llm_upper</span><span class="p">)]</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="k">if</span> <span class="n">prefix_matches</span><span class="p">:</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="n">best</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">prefix_matches</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">)</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>    <span class="c1"># 4. Contains match (handles CONTRASTS_WITH → CONTRASTS)</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>    <span class="n">contains_matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">RELATIONSHIP_TYPES</span> <span class="k">if</span> <span class="n">llm_upper</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    <span class="k">if</span> <span class="n">contains_matches</span><span class="p">:</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>        <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">contains_matches</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">)</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>    <span class="c1"># 5. Sequence similarity fallback (0.7 threshold for typos)</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>    <span class="c1"># Use difflib.SequenceMatcher...</span>
-</code></pre></div>
-<h2 id="trade-offs">Trade-offs</h2>
-<p><strong>Why not use NLTK edit distance?</strong>
-- Adds dependency (24MB package)
-- Slightly better verb tense handling (66.7% → 75% with distance=3)
-- But creates new false positives at distance=3
-- Hybrid achieves 87% on comprehensive test without NLTK</p>
-<p><strong>Why not lower fuzzy threshold to catch verb tense?</strong>
-- Threshold 0.6: Creates false positives (CREATES → REGULATES)
-- Threshold 0.7: Misses verb tense but avoids false positives
-- <strong>Better to miss legitimate variations than accept wrong matches</strong></p>
-<p><strong>Why reject _BY explicitly?</strong>
-- Reversed relationships (CAUSED_BY, ENABLED_BY) indicate opposite directionality
-- LLM should use RESULTS_FROM for reverse causation
-- Explicit rejection prevents directional confusion</p>
-<h2 id="key-insights">Key Insights</h2>
-<ol>
-<li><strong>Prefix matching is critical:</strong> CONTRASTS → CONTRASTS_WITH solves the original bug</li>
-<li><strong>No single threshold works:</strong> Verb tense needs ~0.6, false positive avoidance needs ~0.8</li>
-<li><strong>Multi-stage matching wins:</strong> Prefix → Contains → Fuzzy achieves best balance</li>
-<li><strong>Reject reversed relationships:</strong> _BY suffix indicates reversed direction, always reject</li>
-<li><strong>Accept imperfection:</strong> 87% accuracy on 249 variations is good enough for production</li>
-</ol>
-<h2 id="remaining-failures-13-of-test-cases">Remaining Failures (13% of test cases)</h2>
-<p>Mostly verb tense variations that could be addressed by:
-1. Adding explicit variations to LLM prompt (CAUSING, ENABLING, etc.)
-2. Simple suffix stripping before matching (CAUSING → CAUSE)
-3. Accepting that LLMs should learn the canonical forms</p>
-<p><strong>Decision:</strong> Ship with prefix+contains+fuzzy hybrid (87% accuracy). Monitor logs for common failures and add to LLM prompt as needed.</p>
+<h1 id="adr-049-rate-limiting-and-per-provider-concurrency-management">ADR-049: Rate Limiting and Per-Provider Concurrency Management</h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2025-10-28
+<strong>Deciders:</strong> Development Team
+<strong>Related:</strong> ADR-041 (AI Extraction Provider Configuration), ADR-042 (Local LLM Inference)</p>
+<h2 id="context">Context</h2>
+<p>Users experiencing 429 rate limit errors when running multiple concurrent ingestion jobs:</p>
+<p><strong>Observed Issues:</strong>
+- Multiple workers (4 concurrent jobs) hitting API providers simultaneously
+- SDK default retry count (2 attempts) insufficient for concurrent workloads
+- No coordination between workers → synchronized retry storms
+- Different providers have different rate limits (OpenAI vs Anthropic vs Ollama)
+- Local providers (Ollama) have GPU/CPU resource constraints</p>
+<p><strong>Real-World Scenario:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Worker 1: [Call OpenAI] → 429 → retry 1s → 429 → retry 2s → FAIL
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Worker 2: [Call OpenAI] → 429 → retry 1s → 429 → retry 2s → FAIL
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Worker 3: [Call OpenAI] → 429 → retry 1s → 429 → retry 2s → FAIL
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Worker 4: [Call OpenAI] → 429 → retry 1s → 429 → retry 2s → FAIL
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Result: All 4 workers fail despite having capacity for retries
+</code></pre></div></p>
+<h2 id="decision">Decision</h2>
+<p>Implement comprehensive rate limiting with three layers:</p>
+<h3 id="1-sdk-level-retry-exponential-backoff">1. SDK-Level Retry (Exponential Backoff)</h3>
+<p>Configure built-in retry mechanisms in provider SDKs:
+- <strong>OpenAI SDK:</strong> <code>max_retries=8</code> (default was 2)
+- <strong>Anthropic SDK:</strong> <code>max_retries=8</code> (default was 2)
+- <strong>Ollama (raw HTTP):</strong> Custom retry wrapper with <code>max_retries=3</code></p>
+<p><strong>Retry Pattern:</strong> Exponential backoff with jitter
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Attempt 1: immediate
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Attempt 2: ~1s delay
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Attempt 3: ~2s delay
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Attempt 4: ~4s delay
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Attempt 5: ~8s delay
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Attempt 6: ~16s delay
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Attempt 7: ~32s delay
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Attempt 8: ~64s delay
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Total: ~127 seconds of retry window
+</code></pre></div></p>
+<h3 id="2-per-provider-concurrency-limiting-semaphores">2. Per-Provider Concurrency Limiting (Semaphores)</h3>
+<p>Thread-safe semaphores limit simultaneous API calls per provider:</p>
+<p><strong>Default Limits:</strong>
+- <strong>OpenAI:</strong> 8 concurrent requests (higher API tier limits)
+- <strong>Anthropic:</strong> 4 concurrent requests (moderate API limits)
+- <strong>Ollama:</strong> 1 concurrent request (single GPU/CPU bottleneck)
+- <strong>Mock:</strong> 100 concurrent requests (testing - no real limits)</p>
+<p><strong>Implementation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Thread-safe singleton semaphore per provider</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">semaphore</span> <span class="o">=</span> <span class="n">get_provider_semaphore</span><span class="p">(</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span>  <span class="c1"># limit=8</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Acquire before API call</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">with</span> <span class="n">semaphore</span><span class="p">:</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Benefit:</strong> Prevents worker collision even with 4+ jobs running
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>4 Workers with OpenAI (limit=8):
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Worker 1: [Acquire] → Call API → [Release]
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Worker 2: [Acquire] → Call API → [Release]
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Worker 3: [Acquire] → Call API → [Release]
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Worker 4: [Acquire] → Call API → [Release]
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>All proceed smoothly - no contention at limit=8
+</code></pre></div></p>
+<h3 id="3-configuration-system-database-first">3. Configuration System (Database-First)</h3>
+<p>Following ADR-041 pattern, configuration stored in database with environment fallbacks:</p>
+<p><strong>Precedence:</strong>
+1. <strong>Primary:</strong> <code>ai_extraction_config</code> table columns
+   - <code>max_concurrent_requests</code> (per-provider limit)
+   - <code>max_retries</code> (exponential backoff attempts)
+2. <strong>Fallback:</strong> Environment variables
+   - <code>{PROVIDER}_MAX_CONCURRENT</code> (e.g., <code>OPENAI_MAX_CONCURRENT</code>)
+   - <code>{PROVIDER}_MAX_RETRIES</code> (e.g., <code>OPENAI_MAX_RETRIES</code>)
+3. <strong>Default:</strong> Hardcoded per provider</p>
+<p><strong>Schema Migration 018:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">max_concurrent_requests</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">4</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">max_concurrent_requests</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">max_concurrent_requests</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">100</span><span class="p">);</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">max_retries</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">8</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">max_retries</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">max_retries</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">20</span><span class="p">);</span>
+</code></pre></div></p>
+<h3 id="4-safety-bounds">4. Safety Bounds</h3>
+<p>Enforce reasonable limits to prevent misconfiguration:</p>
+<p><strong>Minimum:</strong> 1 concurrent request
+- Falls back to serial processing if undefined/invalid
+- Logs warning: "Defaulting to 1 for safety"</p>
+<p><strong>Maximum:</strong> 32 concurrent requests (configurable via <code>MAX_CONCURRENT_THREADS</code>)
+- Caps per-provider limits to prevent resource exhaustion
+- Logs warning: "Capping at 32 to prevent resource exhaustion"</p>
+<p><strong>Rationale:</strong>
+- Prevents accidental configuration of 1000 concurrent requests
+- Protects against API cost explosions
+- Ensures system stability under misconfiguration</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<p><strong>Eliminates Rate Limit Failures:</strong>
+- 8 retries with exponential backoff provides ~127s retry window
+- Most rate limits reset within 60 seconds
+- Semaphores prevent worker collision</p>
+<p><strong>Optimizes Resource Usage:</strong>
+- Ollama (1 concurrent) prevents GPU thrashing
+- Cloud providers (8 concurrent) maximize throughput
+- Configurable limits adapt to different API tiers</p>
+<p><strong>Database-Driven Configuration:</strong>
+- Hot-reloadable without API restart
+- Consistent with ADR-041 pattern
+- API endpoints for runtime changes</p>
+<p><strong>Safety and Observability:</strong>
+- Bounds checking prevents misconfiguration
+- Clear logging at each retry attempt
+- Warnings for fallback configurations</p>
+<h3 id="negative">Negative</h3>
+<p><strong>Added Complexity:</strong>
+- New rate_limiter module (258 lines)
+- Schema migration required
+- Configuration precedence to understand</p>
+<p><strong>Serialization Overhead:</strong>
+- Ollama (1 concurrent) may bottleneck on multi-job ingestion
+- Semaphore acquisition adds microseconds latency
+- Trade-off: stability over maximum speed</p>
+<p><strong>Migration Dependency:</strong>
+- Existing installations must run migration 018
+- No automatic migration on API startup
+- Requires manual <code>./scripts/migrate-db.sh</code></p>
 <h2 id="implementation">Implementation</h2>
-<p>✅ Updated <code>src/api/lib/relationship_mapper.py</code> with hybrid strategy
-⏳ Update ADR-022 to document prefix-matching strategy
-⏳ Add logging for normalization with similarity scores
-⏳ Monitor production for common LLM variations to add to prompt</p>
+<h3 id="rate-limiter-module">Rate Limiter Module</h3>
+<p><code>src/api/lib/rate_limiter.py</code>:
+- <code>get_provider_concurrency_limit()</code> - Load from DB/env/defaults
+- <code>get_provider_max_retries()</code> - Load from DB/env/defaults
+- <code>get_provider_semaphore()</code> - Thread-safe singleton
+- <code>exponential_backoff_retry()</code> - Decorator for retry logic
+- <code>_is_rate_limit_error()</code> - Detect 429/rate limit exceptions</p>
+<h3 id="provider-integration">Provider Integration</h3>
+<p><strong>OpenAI (<code>src/api/lib/ai_providers.py</code>):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mf">120.0</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Anthropic (<code>src/api/lib/ai_providers.py</code>):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">&quot;anthropic&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">Anthropic</span><span class="p">(</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mf">120.0</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Ollama (<code>src/api/lib/ai_providers.py</code>):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@exponential_backoff_retry</span><span class="p">(</span><span class="n">max_retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">base_delay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">_make_request</span><span class="p">():</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">return</span> <span class="n">resp</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">response</span> <span class="o">=</span> <span class="n">_make_request</span><span class="p">()</span>
+</code></pre></div></p>
+<h3 id="api-exposure">API Exposure</h3>
+<p><strong>Models (<code>src/api/models/extraction.py</code>):</strong>
+- Added <code>max_concurrent_requests</code> to request/response models
+- Added <code>max_retries</code> to request/response models</p>
+<p><strong>Endpoints:</strong>
+- <code>GET /extraction/config</code> - Public summary (includes limits)
+- <code>GET /admin/extraction/config</code> - Full details (includes limits)
+- <code>POST /admin/extraction/config</code> - Update configuration</p>
+<h3 id="configuration-priority">Configuration Priority</h3>
+<p><strong>NOT respecting DEVELOPMENT_MODE:</strong>
+Unlike ADR-041 (provider/model selection), rate limiting loads database-first regardless of <code>DEVELOPMENT_MODE</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Always tries database first</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="c1"># Load from kg_api.ai_extraction_config</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">load_from_database</span><span class="p">()</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">except</span><span class="p">:</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="c1"># Fall back to environment</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">load_from_env</span><span class="p">()</span>
+</code></pre></div>
+<p><strong>Rationale:</strong>
+- Rate limits are operational constraints, not development settings
+- Production systems should use database configuration
+- Environment variables serve as emergency fallback
+- Simpler logic than DEVELOPMENT_MODE branching</p>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="option-a-global-token-bucket-rate-limiter">Option A: Global Token Bucket Rate Limiter</h3>
+<p><strong>Description:</strong> Pre-emptive rate limiting using token bucket algorithm</p>
+<p><strong>Pros:</strong>
+- Prevents 429 errors before they happen
+- Smooth traffic distribution
+- Industry standard for high-throughput systems</p>
+<p><strong>Cons:</strong>
+- Complex implementation (token refill, rate tracking)
+- Requires knowing exact rate limits per provider
+- Adds latency to every API call
+- Overkill for 4-worker scenario</p>
+<p><strong>Decision:</strong> Rejected - Exponential backoff simpler and sufficient for current scale</p>
+<h3 id="option-b-reduce-worker-count-to-2">Option B: Reduce Worker Count to 2</h3>
+<p><strong>Description:</strong> Lower <code>MAX_CONCURRENT_JOBS</code> from 4 to 2</p>
+<p><strong>Pros:</strong>
+- Dead simple - no code changes
+- Reduces rate limit pressure by 50%</p>
+<p><strong>Cons:</strong>
+- Halves ingestion throughput
+- Doesn't address root cause
+- Doesn't scale as usage grows</p>
+<p><strong>Decision:</strong> Rejected - Doesn't solve the problem, just hides it</p>
+<h3 id="option-c-queue-with-circuit-breaker">Option C: Queue with Circuit Breaker</h3>
+<p><strong>Description:</strong> Job queue with circuit breaker pattern for degraded providers</p>
+<p><strong>Pros:</strong>
+- Protects against cascading failures
+- Automatic fallback to slow mode
+- Enterprise-grade reliability</p>
+<p><strong>Cons:</strong>
+- Significant complexity (state machine, health checks)
+- Requires distributed state management
+- Premature optimization for current scale</p>
+<p><strong>Decision:</strong> Rejected - Consider for future at higher scale</p>
+<h3 id="option-d-separate-queue-per-provider">Option D: Separate Queue Per Provider</h3>
+<p><strong>Description:</strong> Maintain separate job queues for each provider type</p>
+<p><strong>Pros:</strong>
+- Complete isolation between providers
+- Prevents one provider from blocking others</p>
+<p><strong>Cons:</strong>
+- Requires queue multiplexing logic
+- Complicates job scheduling
+- Doesn't address within-provider rate limits</p>
+<p><strong>Decision:</strong> Rejected - Semaphores provide equivalent isolation with less complexity</p>
+<h2 id="testing-strategy">Testing Strategy</h2>
+<h3 id="unit-tests">Unit Tests</h3>
+<ul>
+<li><code>test_rate_limiter.py</code> - Semaphore behavior, retry logic</li>
+<li><code>test_exponential_backoff</code> - Timing verification</li>
+<li><code>test_concurrency_limits</code> - Thread safety</li>
+</ul>
+<h3 id="integration-tests">Integration Tests</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 1. Test with multiple workers</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>directory<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-r<span class="w"> </span>--depth<span class="w"> </span><span class="m">2</span><span class="w"> </span>ingest_source/
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 2. Monitor logs for retry behavior</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/api_*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;rate limit\|retry&quot;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># 3. Verify configuration loading</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>curl<span class="w"> </span>http://localhost:8000/admin/extraction/config
+</code></pre></div>
+<h3 id="load-testing-future">Load Testing (Future)</h3>
+<ul>
+<li>Simulate 10+ concurrent jobs</li>
+<li>Verify no 429 failures with defaults</li>
+<li>Test configuration changes without restart</li>
+</ul>
+<h2 id="monitoring">Monitoring</h2>
+<p><strong>Key Metrics:</strong>
+- Rate limit hit rate (429 errors per hour)
+- Retry success rate (recovered after N attempts)
+- Semaphore contention (workers waiting for slots)
+- Average retry delay (exponential backoff effectiveness)</p>
+<p><strong>Log Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a># Success
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>INFO: OpenAI client configured with max_retries=8
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>INFO: Created concurrency semaphore for provider &#39;openai&#39; with limit=8
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>INFO: Rate limit recovered after 2 retries (function: extract_concepts)
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a># Rate limit hit
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>WARNING: Rate limit hit (attempt 2/9), backing off for 1.2s (function: extract_concepts): 429 Too Many Requests
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a># Safety warnings
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>WARNING: Provider &#39;ollama&#39; concurrency limit not configured. Defaulting to 1 for safety.
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>WARNING: Provider &#39;openai&#39; concurrency limit (100) exceeds maximum (32). Capping at 32.
+</code></pre></div></p>
+<h2 id="future-enhancements">Future Enhancements</h2>
+<h3 id="phase-2-token-bucket-pre-emption">Phase 2: Token Bucket Pre-emption</h3>
+<p>Add token bucket rate limiter to prevent 429 errors proactively:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TokenBucket</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rate_per_minute</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="n">rate_per_minute</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">rate_per_minute</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">last_update</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+</code></pre></div></p>
+<h3 id="phase-3-auto-tuning">Phase 3: Auto-Tuning</h3>
+<p>Monitor 429 error rate and automatically adjust concurrency:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">if</span> <span class="n">error_429_rate</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="o">%</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">reduce_concurrency</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">elif</span> <span class="n">error_429_rate</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="o">%</span> <span class="ow">and</span> <span class="n">latency_acceptable</span><span class="p">:</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">increase_concurrency</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
+</code></pre></div></p>
+<h3 id="phase-4-per-endpoint-limits">Phase 4: Per-Endpoint Limits</h3>
+<p>Different limits for different operations:
+- Extraction: 8 concurrent (expensive)
+- Embeddings: 16 concurrent (cheaper)
+- Translation: 4 concurrent (moderate)</p>
+<h2 id="provider-http-error-codes">Provider HTTP Error Codes</h2>
+<h3 id="openai-api-errors">OpenAI API Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Error Type</th>
+<th>Cause</th>
+<th>Retry Strategy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>401</strong></td>
+<td>Invalid Authentication</td>
+<td>Invalid API key or requesting organization</td>
+<td>❌ Do not retry - Fix credentials</td>
+</tr>
+<tr>
+<td><strong>401</strong></td>
+<td>Incorrect API key provided</td>
+<td>The requesting API key is not correct</td>
+<td>❌ Do not retry - Fix API key</td>
+</tr>
+<tr>
+<td><strong>401</strong></td>
+<td>Not member of organization</td>
+<td>Account is not part of an organization</td>
+<td>❌ Do not retry - Contact support</td>
+</tr>
+<tr>
+<td><strong>401</strong></td>
+<td>IP not authorized</td>
+<td>Request IP does not match configured allowlist</td>
+<td>❌ Do not retry - Update IP allowlist</td>
+</tr>
+<tr>
+<td><strong>403</strong></td>
+<td>Country/region not supported</td>
+<td>Accessing API from unsupported location</td>
+<td>❌ Do not retry - Use VPN/proxy</td>
+</tr>
+<tr>
+<td><strong>429</strong></td>
+<td>Rate limit reached for requests</td>
+<td>Sending requests too quickly</td>
+<td>✅ <strong>Retry with exponential backoff</strong></td>
+</tr>
+<tr>
+<td><strong>429</strong></td>
+<td>Quota exceeded</td>
+<td>Run out of credits or hit monthly spend limit</td>
+<td>❌ Do not retry - Buy more credits</td>
+</tr>
+<tr>
+<td><strong>500</strong></td>
+<td>Server error</td>
+<td>Issue on OpenAI's servers</td>
+<td>✅ Retry after brief wait</td>
+</tr>
+<tr>
+<td><strong>503</strong></td>
+<td>Engine overloaded</td>
+<td>High traffic on OpenAI servers</td>
+<td>✅ Retry after brief wait</td>
+</tr>
+<tr>
+<td><strong>503</strong></td>
+<td>Slow Down</td>
+<td>Sudden increase in request rate impacting reliability</td>
+<td>✅ Retry with reduced rate</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Insight:</strong> Only retry 429 (rate limit), 500 (server error), and 503 (overload/slow down) errors. All 401/403 errors indicate permanent configuration issues.</p>
+<h3 id="anthropic-api-errors">Anthropic API Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Error Type</th>
+<th>Cause</th>
+<th>Retry Strategy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>400</strong></td>
+<td>invalid_request_error</td>
+<td>Issue with format/content of request</td>
+<td>❌ Do not retry - Fix request</td>
+</tr>
+<tr>
+<td><strong>401</strong></td>
+<td>authentication_error</td>
+<td>Issue with API key</td>
+<td>❌ Do not retry - Fix API key</td>
+</tr>
+<tr>
+<td><strong>403</strong></td>
+<td>permission_error</td>
+<td>API key lacks permission for resource</td>
+<td>❌ Do not retry - Fix permissions</td>
+</tr>
+<tr>
+<td><strong>404</strong></td>
+<td>not_found_error</td>
+<td>Requested resource not found</td>
+<td>❌ Do not retry - Fix resource path</td>
+</tr>
+<tr>
+<td><strong>413</strong></td>
+<td>request_too_large</td>
+<td>Request exceeds maximum size (32 MB standard, 256 MB batch, 500 MB files)</td>
+<td>❌ Do not retry - Reduce request size</td>
+</tr>
+<tr>
+<td><strong>429</strong></td>
+<td>rate_limit_error</td>
+<td>Account hit rate limit or acceleration limit</td>
+<td>✅ <strong>Retry with exponential backoff</strong></td>
+</tr>
+<tr>
+<td><strong>500</strong></td>
+<td>api_error</td>
+<td>Unexpected internal error</td>
+<td>✅ Retry after brief wait</td>
+</tr>
+<tr>
+<td><strong>529</strong></td>
+<td>overloaded_error</td>
+<td>API temporarily overloaded (high traffic)</td>
+<td>✅ Retry after brief wait</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Insight:</strong> Only retry 429 (rate limit), 500 (internal error), and 529 (overload) errors. All 4XX errors (except 429) indicate permanent request issues.</p>
+<p><strong>Special Notes:</strong>
+- Anthropic's 529 errors occur during high traffic across all users
+- Sharp usage increases may trigger 429 acceleration limits - ramp up gradually
+- When streaming, errors can occur after 200 response (non-standard error handling)
+- Every Anthropic response includes <code>request_id</code> header for support tracking</p>
+<h3 id="request-size-limits-anthropic">Request Size Limits (Anthropic)</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint Type</th>
+<th>Maximum Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Messages API</td>
+<td>32 MB</td>
+</tr>
+<tr>
+<td>Token Counting API</td>
+<td>32 MB</td>
+</tr>
+<tr>
+<td>Batch API</td>
+<td>256 MB</td>
+</tr>
+<tr>
+<td>Files API</td>
+<td>500 MB</td>
+</tr>
+</tbody>
+</table>
+<p>Exceeding these limits returns <strong>413 request_too_large</strong> from Cloudflare before reaching API servers.</p>
+<h3 id="ollama-api-errors">Ollama API Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Error Type</th>
+<th>Cause</th>
+<th>Retry Strategy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>200</strong></td>
+<td>Success</td>
+<td>Request completed successfully</td>
+<td>✅ N/A - Success</td>
+</tr>
+<tr>
+<td><strong>400</strong></td>
+<td>Bad Request</td>
+<td>Missing parameters, invalid JSON, etc.</td>
+<td>❌ Do not retry - Fix request</td>
+</tr>
+<tr>
+<td><strong>404</strong></td>
+<td>Not Found</td>
+<td>Model doesn't exist</td>
+<td>❌ Do not retry - Use valid model</td>
+</tr>
+<tr>
+<td><strong>429</strong></td>
+<td>Too Many Requests</td>
+<td>Rate limit exceeded (local/cloud)</td>
+<td>✅ <strong>Retry with exponential backoff</strong></td>
+</tr>
+<tr>
+<td><strong>500</strong></td>
+<td>Internal Server Error</td>
+<td>Ollama server encountered an error</td>
+<td>✅ Retry after brief wait</td>
+</tr>
+<tr>
+<td><strong>502</strong></td>
+<td>Bad Gateway</td>
+<td>Cloud model cannot be reached (remote inference)</td>
+<td>✅ Retry after brief wait</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Insight:</strong> Ollama supports both local and cloud models. 502 errors occur when cloud models (e.g., remote API backends) are unreachable.</p>
+<p><strong>Special Notes:</strong>
+- <strong>Streaming errors:</strong> Errors can occur mid-stream after 200 response (returns error object in <code>application/x-ndjson</code> format)
+- <strong>Error format:</strong> JSON with <code>error</code> property: <code>{"error": "the model failed to generate a response"}</code>
+- <strong>Local inference:</strong> 429 errors less common (single GPU bottleneck, not API rate limits)
+- <strong>Cloud models:</strong> 502 errors indicate network/upstream issues, retry appropriate</p>
+<h3 id="retry-logic-implementation">Retry Logic Implementation</h3>
+<p>Our rate limiter (<code>src/api/lib/rate_limiter.py</code>) detects retryable errors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_rate_limit_error</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="sd">    Detect rate limit and retryable errors.</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="sd">    Returns True for:</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="sd">    - OpenAI: 429, 500, 503</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="sd">    - Anthropic: 429, 500, 529</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="sd">    - Ollama: 429, 500, 502</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="sd">    - All: Connection errors, timeouts</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="c1"># Check HTTP status codes</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;status_code&#39;</span><span class="p">):</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">429</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">502</span><span class="p">,</span> <span class="mi">503</span><span class="p">,</span> <span class="mi">529</span><span class="p">]</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="c1"># Check exception type names</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">error_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="k">return</span> <span class="s1">&#39;RateLimit&#39;</span> <span class="ow">in</span> <span class="n">error_type</span> <span class="ow">or</span> <span class="s1">&#39;Overload&#39;</span> <span class="ow">in</span> <span class="n">error_type</span> <span class="ow">or</span> <span class="s1">&#39;Gateway&#39;</span> <span class="ow">in</span> <span class="n">error_type</span>
+</code></pre></div>
+<p><strong>Retryable Errors (Exponential Backoff):</strong>
+- <strong>429</strong> - Rate limit exceeded (all providers)
+- <strong>500</strong> - Internal server error (all providers)
+- <strong>502</strong> - Bad gateway (Ollama cloud models)
+- <strong>503</strong> - Service unavailable (OpenAI)
+- <strong>529</strong> - Overloaded (Anthropic)</p>
+<p><strong>Non-Retryable Errors (Fail Fast):</strong>
+- <strong>400</strong> - Bad request (malformed input)
+- <strong>401</strong> - Authentication error (invalid API key)
+- <strong>403</strong> - Permission error (insufficient permissions)
+- <strong>404</strong> - Not found (invalid resource/model)
+- <strong>413</strong> - Request too large (exceeds size limits)</p>
+<p>These errors indicate configuration or request problems that won't resolve with retries.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>OpenAI Cookbook:</strong> <a href="https://cookbook.openai.com/examples/how_to_handle_rate_limits">How to handle rate limits</a></li>
+<li><strong>Industry Standard:</strong> Exponential backoff with jitter</li>
+<li><strong>ADR-041:</strong> AI Extraction Provider Configuration (database-first pattern)</li>
+<li><strong>Migration 018:</strong> <code>schema/migrations/018_add_rate_limiting_config.sql</code></li>
+<li><strong>Implementation:</strong> <code>src/api/lib/rate_limiter.py</code></li>
+</ul>
 
 
 
