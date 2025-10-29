@@ -55,10 +55,11 @@ def run_vocab_consolidate_worker(
             "progress": "Vocabulary consolidation worker started"
         })
 
-        # Extract parameters
+        # Extract parameters from launcher (reads from vocab config)
         auto_mode = job_data.get("auto_mode", False)
-        target_size = job_data.get("target_size", 90)
+        target_size = job_data.get("target_size", 90)  # Provided by launcher from vocab_max config
         auto_execute_threshold = job_data.get("auto_execute_threshold", 0.90)
+        profile_name = job_data.get("aggressiveness_profile", "aggressive")  # For logging only
 
         logger.info(
             f"Vocab consolidation params: auto_mode={auto_mode}, "

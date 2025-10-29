@@ -126,17 +126,47 @@ class VocabConsolidationLauncher(JobLauncher):
         """
         Prepare data for vocab consolidation worker.
 
+        Reads target size and aggressiveness profile from vocab config.
+
         Returns:
             Dict with operation parameters
         """
-        return {
-            "operation": "consolidate",
-            "auto_mode": True,
-            "strategy": "hysteresis",
-            "upper_threshold": self.UPPER_THRESHOLD,
-            "lower_threshold": self.LOWER_THRESHOLD,
-            "description": "Scheduled vocabulary consolidation (hysteresis-based)"
-        }
+        client = AGEClient()
+
+        try:
+            # Read vocab_max from config (target size)
+            target_query = """
+                SELECT value FROM kg_api.vocabulary_config
+                WHERE key = 'vocab_max'
+            """
+            target_result = client._execute_sql(target_query)
+            target_size = int(target_result[0]['value']) if target_result else 90
+
+            # Read active aggressiveness profile
+            profile_query = """
+                SELECT value FROM kg_api.vocabulary_config
+                WHERE key = 'aggressiveness_profile'
+            """
+            profile_result = client._execute_sql(profile_query)
+            profile_name = profile_result[0]['value'] if profile_result else "aggressive"
+
+            logger.info(
+                f"VocabConsolidationLauncher: Using target_size={target_size} "
+                f"from config, profile={profile_name}"
+            )
+
+            return {
+                "operation": "consolidate",
+                "auto_mode": True,
+                "strategy": "hysteresis",
+                "upper_threshold": self.UPPER_THRESHOLD,
+                "lower_threshold": self.LOWER_THRESHOLD,
+                "target_size": target_size,
+                "aggressiveness_profile": profile_name,
+                "description": f"Scheduled vocabulary consolidation (target: {target_size}, profile: {profile_name})"
+            }
+        finally:
+            client.close()
 
     def get_job_type(self) -> str:
         """
