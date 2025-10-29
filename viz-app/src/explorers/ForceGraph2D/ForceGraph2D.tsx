@@ -385,10 +385,14 @@ export const ForceGraph2D: React.FC<
 
     const svg = d3.select(svgRef.current);
 
-    // Remove from previous node
+    // Remove from previous node (restore darkened stroke)
     svg.selectAll('circle.origin-node')
       .interrupt()
-      .attr('stroke', '#fff')
+      .attr('stroke', function() {
+        const d = d3.select(this).datum() as D3Node;
+        const color = nodeColors.get(d.id) || d.color;
+        return d3.color(color)?.darker(0.3).toString() || color;
+      })
       .attr('stroke-width', 2)
       .attr('stroke-opacity', 1)
       .classed('origin-node', false);
@@ -801,7 +805,10 @@ export const ForceGraph2D: React.FC<
       .join('circle')
       .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
       .attr('fill', (d) => nodeColors.get(d.id) || d.color)
-      .attr('stroke', '#fff')
+      .attr('stroke', (d) => {
+        const color = nodeColors.get(d.id) || d.color;
+        return d3.color(color)?.darker(0.3).toString() || color;
+      })
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
       .attr('data-node-id', (d) => d.id) // Add ID for selection
@@ -1145,12 +1152,16 @@ export const ForceGraph2D: React.FC<
 
     return () => {
       cancelAnimationFrame(rafId);
-      // Cleanup: remove gold ring
+      // Cleanup: remove gold ring (restore darkened stroke)
       if (svgRef.current) {
         d3.select(svgRef.current)
           .selectAll('circle.origin-node')
           .interrupt()
-          .attr('stroke', '#fff')
+          .attr('stroke', function() {
+            const d = d3.select(this).datum() as D3Node;
+            const color = nodeColors.get(d.id) || d.color;
+            return d3.color(color)?.darker(0.3).toString() || color;
+          })
           .attr('stroke-width', 2)
           .attr('stroke-opacity', 1)
           .classed('origin-node', false);
