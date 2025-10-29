@@ -8,7 +8,7 @@
 import { Network } from 'lucide-react';
 import type { ExplorerPlugin } from '../../types/explorer';
 import { ForceGraph2D } from './ForceGraph2D';
-import { SettingsPanel } from './SettingsPanel';
+import { ProfilePanel } from './ProfilePanel';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { DEFAULT_SETTINGS } from './types';
 import { transformForD3 } from '../../utils/graphTransform';
@@ -30,7 +30,7 @@ export const ForceGraph2DExplorer: ExplorerPlugin<ForceGraph2DData, ForceGraph2D
   },
 
   component: ForceGraph2D,
-  settingsPanel: SettingsPanel,
+  settingsPanel: ProfilePanel,
 
   dataTransformer: (apiData) => {
     // API data already transformed by hooks, but allow for custom transformation
