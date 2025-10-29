@@ -386,6 +386,30 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
 };
 
 /**
+ * Calculate node position for info boxes
+ * Uses override position during drag, otherwise uses node's current position
+ */
+function calculateNodePosition(
+  nodeId: string,
+  nodes: D3Node[],
+  draggedNodeId?: string,
+  draggedNodeX?: number,
+  draggedNodeY?: number
+): { x: number; y: number } {
+  // If this is the dragged node and we have override coordinates, use them
+  if (nodeId === draggedNodeId && draggedNodeX !== undefined && draggedNodeY !== undefined) {
+    return { x: draggedNodeX, y: draggedNodeY };
+  }
+
+  // Otherwise find the node and use its current position
+  const node = nodes.find(n => n.id === nodeId);
+  return {
+    x: node?.x || 0,
+    y: node?.y || 0,
+  };
+}
+
+/**
  * Calculate edge midpoint position for info boxes
  * Handles both straight and curved edges (quadratic Bezier)
  */
@@ -987,11 +1011,10 @@ export const ForceGraph2D: React.FC<
 
           // Update node info box position immediately during drag
           setActiveNodeInfos(prevInfos =>
-            prevInfos.map(info =>
-              info.nodeId === d.id
-                ? { ...info, x: event.x, y: event.y }
-                : info
-            )
+            prevInfos.map(info => {
+              const { x, y } = calculateNodePosition(info.nodeId, data.nodes, d.id, event.x, event.y);
+              return { ...info, x, y };
+            })
           );
 
           // Update edge info boxes for edges connected to this node
@@ -1197,16 +1220,8 @@ export const ForceGraph2D: React.FC<
       if (activeNodeInfos.length > 0) {
         setActiveNodeInfos(prevInfos =>
           prevInfos.map(info => {
-            // Find the corresponding node
-            const node = data.nodes.find(n => n.id === info.nodeId);
-
-            if (!node) return info; // Node not found, keep old position
-
-            return {
-              ...info,
-              x: node.x || 0,
-              y: node.y || 0,
-            };
+            const { x, y } = calculateNodePosition(info.nodeId, data.nodes);
+            return { ...info, x, y };
           })
         );
       }
