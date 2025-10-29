@@ -922,7 +922,7 @@ export const ForceGraph2D: React.FC<
           d.fx = event.x;
           d.fy = event.y;
 
-          // Update info box position immediately during drag
+          // Update node info box position immediately during drag
           setActiveNodeInfos(prevInfos =>
             prevInfos.map(info =>
               info.nodeId === d.id
@@ -930,6 +930,61 @@ export const ForceGraph2D: React.FC<
                 : info
             )
           );
+
+          // Update edge info boxes for edges connected to this node
+          if (activeEdgeInfos.length > 0) {
+            setActiveEdgeInfos(prevInfos =>
+              prevInfos.map(info => {
+                // Find the corresponding link
+                const link = data.links.find(l => {
+                  const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+                  const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+                  return `${sourceId}->${targetId}-${l.type}` === info.linkKey;
+                });
+
+                if (!link) return info;
+
+                // Check if this edge is connected to the dragged node
+                const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+                const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+                if (sourceId !== d.id && targetId !== d.id) return info; // Not connected
+
+                // Recalculate edge midpoint with updated node position
+                const sourceX = sourceId === d.id ? event.x : (typeof link.source === 'object' ? link.source.x || 0 : 0);
+                const sourceY = sourceId === d.id ? event.y : (typeof link.source === 'object' ? link.source.y || 0 : 0);
+                const targetX = targetId === d.id ? event.x : (typeof link.target === 'object' ? link.target.x || 0 : 0);
+                const targetY = targetId === d.id ? event.y : (typeof link.target === 'object' ? link.target.y || 0 : 0);
+
+                const curveOffset = linkCurveOffsets.get(info.linkKey) || 0;
+                let midX, midY;
+
+                if (curveOffset === 0) {
+                  midX = (sourceX + targetX) / 2;
+                  midY = (sourceY + targetY) / 2;
+                } else {
+                  const dx = targetX - sourceX;
+                  const dy = targetY - sourceY;
+                  const distance = Math.sqrt(dx * dx + dy * dy);
+
+                  if (distance < 0.01) {
+                    midX = (sourceX + targetX) / 2;
+                    midY = (sourceY + targetY) / 2;
+                  } else {
+                    const perpX = -dy / distance;
+                    const perpY = dx / distance;
+                    const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+                    const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+                    const t = 0.5;
+                    midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+                    midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+                  }
+                }
+
+                return { ...info, x: midX, y: midY };
+              })
+            );
+          }
         })
         .on('end', (event, _d) => {
           if (!event.active && settings.physics.enabled) simulation.alphaTarget(0);
