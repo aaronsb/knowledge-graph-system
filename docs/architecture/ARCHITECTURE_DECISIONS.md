@@ -66,6 +66,7 @@ All ADRs follow a consistent format:
 | [ADR-047](ADR-047-probabilistic-vocabulary-categorization.md) | Probabilistic Vocabulary Categorization | Proposed | Embedding-based category assignment for LLM-generated relationship types using semantic similarity to 30 seed types - no manual classification, categories emerge from similarity scores |
 | [ADR-048](ADR-048-vocabulary-metadata-as-graph.md) | Vocabulary Metadata as First-Class Graph | In Progress (Phase 3.1 ✅) | Move vocabulary metadata from SQL tables to Apache AGE graph nodes with namespace safety layer (GraphQueryFacade) - vocabulary becomes part of timeless graph, operations become graph-native traversals |
 | [ADR-049](ADR-049-rate-limiting-and-concurrency.md) | Rate Limiting and Per-Provider Concurrency | Accepted | Exponential backoff retry (8 attempts) + per-provider semaphores (OpenAI=8, Anthropic=4, Ollama=1) with database-first configuration to eliminate 429 errors across concurrent workers |
+| [ADR-050](ADR-050-scheduled-jobs-system.md) | Scheduled Jobs System | Proposed | Simple scheduler loop + launcher pattern extends existing job queue for automated maintenance tasks (category refresh, vocab consolidation) with ownership permissions and polling-based condition checks |
 
 ## How to Use This Index
 

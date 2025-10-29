@@ -102,6 +102,9 @@ class JobScheduler:
         expired_count = 0
         for job in queue.list_jobs(status="awaiting_approval", limit=1000):
             created = datetime.fromisoformat(job["created_at"])
+            # Make timezone-aware if naive
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
             age = now - created
 
             if age > self.approval_timeout:
@@ -120,6 +123,9 @@ class JobScheduler:
             for job in queue.list_jobs(status=status, limit=1000):
                 if job.get("completed_at"):
                     completed = datetime.fromisoformat(job["completed_at"])
+                    # Make timezone-aware if naive
+                    if completed.tzinfo is None:
+                        completed = completed.replace(tzinfo=timezone.utc)
                     age = now - completed
 
                     if age > self.completed_retention:
@@ -134,6 +140,9 @@ class JobScheduler:
         for job in queue.list_jobs(status="failed", limit=1000):
             if job.get("completed_at"):
                 completed = datetime.fromisoformat(job["completed_at"])
+                # Make timezone-aware if naive
+                if completed.tzinfo is None:
+                    completed = completed.replace(tzinfo=timezone.utc)
                 age = now - completed
 
                 if age > self.failed_retention:

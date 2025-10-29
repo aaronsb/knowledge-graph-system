@@ -27,12 +27,18 @@ logger = setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
 # Now import application modules (these may log during import, so logging must be configured)
 from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueue
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
+from .services.scheduled_jobs_manager import JobScheduler as ScheduledJobsManager
 from .workers.ingestion_worker import run_ingestion_worker
 from .workers.restore_worker import run_restore_worker
+from .workers.vocab_refresh_worker import run_vocab_refresh_worker
+from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
+from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher
 from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
+# Module-level variables
+scheduled_jobs_manager = None
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -128,22 +134,16 @@ async def startup_event():
     # ADR-015: Cleanup abandoned restore temp files on startup
     _cleanup_abandoned_temp_files()
 
-    # Initialize job queue (ADR-024: PostgreSQL by default)
-    queue_type = os.getenv("QUEUE_TYPE", "postgresql")
-
-    if queue_type == "postgresql":
-        queue = init_job_queue(queue_type="postgresql")
-        logger.info(f"✅ Job queue initialized: postgresql (kg_api.ingestion_jobs)")
-    else:
-        # Fallback to SQLite (for development/testing only)
-        db_path = os.getenv("JOB_DB_PATH", "data/jobs.db")
-        queue = init_job_queue(queue_type=queue_type, db_path=db_path)
-        logger.info(f"✅ Job queue initialized: {queue_type} (db: {db_path})")
+    # Initialize job queue (ADR-024+050: PostgreSQL only, unified kg_api.jobs table)
+    queue = init_job_queue(queue_type="postgresql")
+    logger.info(f"✅ Job queue initialized: postgresql (kg_api.jobs)")
 
     # Register worker functions
     queue.register_worker("ingestion", run_ingestion_worker)
     queue.register_worker("restore", run_restore_worker)
-    logger.info("✅ Workers registered: ingestion, restore")
+    queue.register_worker("vocab_refresh", run_vocab_refresh_worker)  # ADR-050
+    queue.register_worker("vocab_consolidate", run_vocab_consolidate_worker)  # ADR-050
+    logger.info("✅ Workers registered: ingestion, restore, vocab_refresh, vocab_consolidate")
 
     # Resume interrupted jobs (jobs that were processing when server stopped)
     # Note: SQLite queue uses "processing", PostgreSQL queue uses "running"
@@ -209,10 +209,20 @@ async def startup_event():
     except Exception as e:
         logger.error(f"⚠️  Failed to resume interrupted jobs: {e}", exc_info=True)
 
-    # ADR-014: Initialize and start job scheduler
+    # ADR-014: Initialize and start job scheduler (lifecycle management)
     scheduler = init_job_scheduler()
     scheduler.start()
     logger.info("✅ Job scheduler started (lifecycle management enabled)")
+
+    # ADR-050: Initialize and start scheduled jobs manager (maintenance tasks)
+    global scheduled_jobs_manager
+    launcher_registry = {
+        'CategoryRefreshLauncher': CategoryRefreshLauncher,
+        'VocabConsolidationLauncher': VocabConsolidationLauncher
+    }
+    scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
+    await scheduled_jobs_manager.start()
+    logger.info("✅ Scheduled jobs manager started (maintenance tasks enabled)")
 
     # ADR-039: Initialize embedding model manager (if local embeddings configured)
     try:
@@ -274,13 +284,19 @@ async def shutdown_event():
     """Cleanup on shutdown"""
     logger.info("👋 Shutting down API...")
 
-    # ADR-014: Stop scheduler gracefully
+    # ADR-014: Stop lifecycle scheduler gracefully
     try:
         scheduler = get_job_scheduler()
         await scheduler.stop()
-        logger.info("✅ Job scheduler stopped")
+        logger.info("✅ Job scheduler stopped (lifecycle management)")
     except RuntimeError:
         pass  # Scheduler not initialized
+
+    # ADR-050: Stop scheduled jobs manager gracefully
+    global scheduled_jobs_manager
+    if scheduled_jobs_manager:
+        await scheduled_jobs_manager.stop()
+        logger.info("✅ Scheduled jobs manager stopped (maintenance tasks)")
 
     # TODO: Gracefully finish pending jobs
     logger.info("Shutdown complete")
@@ -319,8 +335,8 @@ async def root():
         queued = queue.list_jobs(status="queued", limit=1000)
         processing = queue.list_jobs(status="processing", limit=1000)
 
-        # Determine queue type from instance
-        queue_type_name = "postgresql" if isinstance(queue, PostgreSQLJobQueue) else "inmemory"
+        # Queue type is always PostgreSQL now (ADR-050: SQLite removed)
+        queue_type_name = "postgresql"
 
         return {
             "service": "Knowledge Graph API",

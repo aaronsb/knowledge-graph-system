@@ -325,7 +325,7 @@ class PruningStrategy:
 
     def __init__(
         self,
-        mode: Literal["naive", "hitl", "aitl"] = "hitl",
+        mode: Literal["naive", "hitl", "aitl"] = "aitl",  # Default to AITL (HITL deprecated)
         ai_provider = None
     ):
         """

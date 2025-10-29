@@ -84,7 +84,7 @@ def get_vocabulary_manager() -> VocabularyManager:
     provider = get_provider()
 
     # Get configuration from database (with .env fallback)
-    mode = client.get_vocab_config('pruning_mode') or os.getenv("VOCAB_PRUNING_MODE", "hitl")
+    mode = client.get_vocab_config('pruning_mode') or os.getenv("VOCAB_PRUNING_MODE", "aitl")
     profile = client.get_vocab_config('aggressiveness_profile') or os.getenv("VOCAB_AGGRESSIVENESS", "aggressive")
 
     return VocabularyManager(
