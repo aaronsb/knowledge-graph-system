@@ -17,6 +17,9 @@ import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class JobQueue(ABC):
