@@ -2,15 +2,18 @@
  * Context Menu Component
  *
  * Right-click menu for graph nodes and edges.
+ * Supports nested submenus with flyout behavior.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 
 export interface ContextMenuItem {
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
   icon?: React.ComponentType<{ className?: string }>;
   disabled?: boolean;
+  submenu?: ContextMenuItem[]; // Support nested submenus
 }
 
 interface ContextMenuProps {
@@ -22,6 +25,8 @@ interface ContextMenuProps {
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
+  const [submenuPosition, setSubmenuPosition] = useState<{ top: number; left: number } | null>(null);
 
   // Close on click outside
   useEffect(() => {
@@ -48,38 +53,101 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
   }, [onClose]);
 
   return (
-    <div
-      ref={menuRef}
-      className="fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
-      style={{ left: x, top: y }}
-    >
-      {items.map((item, index) => {
-        const Icon = item.icon;
-        return (
-          <button
-            key={index}
-            onClick={() => {
-              if (!item.disabled) {
-                item.onClick();
-                onClose();
-              }
-            }}
-            disabled={item.disabled}
-            className={`
-              w-full text-left px-4 py-2 flex items-center gap-3
-              transition-colors text-gray-100
-              ${
-                item.disabled
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:bg-gray-700 cursor-pointer'
-              }
-            `}
-          >
-            {Icon && <Icon className="w-4 h-4" />}
-            <span className="text-sm">{item.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <div
+        ref={menuRef}
+        className="fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
+        style={{ left: x, top: y }}
+      >
+        {items.map((item, index) => {
+          const Icon = item.icon;
+          const hasSubmenu = item.submenu && item.submenu.length > 0;
+
+          return (
+            <div
+              key={index}
+              className="relative"
+              onMouseEnter={(e) => {
+                if (hasSubmenu) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setOpenSubmenu(index);
+                  setSubmenuPosition({
+                    top: rect.top,
+                    left: rect.right,
+                  });
+                }
+              }}
+              onMouseLeave={() => {
+                if (hasSubmenu) {
+                  // Small delay to allow moving to submenu
+                  setTimeout(() => setOpenSubmenu(null), 100);
+                }
+              }}
+            >
+              <button
+                onClick={() => {
+                  if (!item.disabled && !hasSubmenu && item.onClick) {
+                    item.onClick();
+                    onClose();
+                  }
+                }}
+                disabled={item.disabled}
+                className={`
+                  w-full text-left px-4 py-2 flex items-center gap-3
+                  transition-colors text-gray-100
+                  ${
+                    item.disabled
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-gray-700 cursor-pointer'
+                  }
+                `}
+              >
+                {Icon && <Icon className="w-4 h-4" />}
+                <span className="text-sm flex-1">{item.label}</span>
+                {hasSubmenu && <ChevronRight className="w-4 h-4 text-gray-400" />}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Render submenu */}
+      {openSubmenu !== null && items[openSubmenu]?.submenu && submenuPosition && (
+        <div
+          className="fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
+          style={{ left: submenuPosition.left, top: submenuPosition.top }}
+          onMouseEnter={() => setOpenSubmenu(openSubmenu)}
+          onMouseLeave={() => setOpenSubmenu(null)}
+        >
+          {items[openSubmenu].submenu!.map((subitem, subindex) => {
+            const SubIcon = subitem.icon;
+            return (
+              <button
+                key={subindex}
+                onClick={() => {
+                  if (!subitem.disabled && subitem.onClick) {
+                    subitem.onClick();
+                    onClose();
+                  }
+                }}
+                disabled={subitem.disabled}
+                className={`
+                  w-full text-left px-4 py-2 flex items-center gap-3
+                  transition-colors text-gray-100
+                  ${
+                    subitem.disabled
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-gray-700 cursor-pointer'
+                  }
+                `}
+              >
+                {SubIcon && <SubIcon className="w-4 h-4" />}
+                <span className="text-sm">{subitem.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 };

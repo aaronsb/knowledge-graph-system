@@ -7,7 +7,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff } from 'lucide-react';
+import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff, Circle } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
@@ -1473,6 +1473,24 @@ export const ForceGraph2D: React.FC<
     }
   }, [data.nodes, settings.physics.enabled]);
 
+  const unpinAllNodes = useCallback(() => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Unpin all nodes
+    svg.selectAll<SVGCircleElement, D3Node>('circle[data-node-id]').each(function() {
+      const nodeData = d3.select(this).datum() as D3Node;
+      nodeData.fx = null;
+      nodeData.fy = null;
+    });
+
+    // Restart simulation to let forces take over
+    if (settings.physics.enabled && simulationRef.current) {
+      simulationRef.current.alpha(0.3).restart();
+    }
+  }, [settings.physics.enabled]);
+
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? [
@@ -1495,24 +1513,39 @@ export const ForceGraph2D: React.FC<
                 setContextMenu(null);
               },
             },
-        // Contextual pin/unpin node
-        isPinned(contextMenu.nodeId)
-          ? {
-              label: 'Unpin Node',
+        // Node submenu with pin operations
+        {
+          label: 'Node',
+          icon: Circle,
+          submenu: [
+            // Contextual pin/unpin node
+            isPinned(contextMenu.nodeId)
+              ? {
+                  label: 'Unpin Node',
+                  icon: PinOff,
+                  onClick: () => {
+                    togglePinNode(contextMenu.nodeId);
+                    setContextMenu(null);
+                  },
+                }
+              : {
+                  label: 'Pin Node',
+                  icon: Pin,
+                  onClick: () => {
+                    togglePinNode(contextMenu.nodeId);
+                    setContextMenu(null);
+                  },
+                },
+            {
+              label: 'Unpin All',
               icon: PinOff,
               onClick: () => {
-                togglePinNode(contextMenu.nodeId);
-                setContextMenu(null);
-              },
-            }
-          : {
-              label: 'Pin Node',
-              icon: Pin,
-              onClick: () => {
-                togglePinNode(contextMenu.nodeId);
+                unpinAllNodes();
                 setContextMenu(null);
               },
             },
+          ],
+        },
         {
           label: `Follow "${contextMenu.nodeLabel}"`,
           icon: ArrowRight,
