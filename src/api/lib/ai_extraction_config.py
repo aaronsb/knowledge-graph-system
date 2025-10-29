@@ -46,7 +46,7 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
                         supports_json_mode, max_tokens,
                         created_at, updated_at, updated_by, active,
                         base_url, temperature, top_p, gpu_layers, num_threads,
-                        thinking_mode
+                        thinking_mode, max_concurrent_requests, max_retries
                     FROM kg_api.ai_extraction_config
                     WHERE active = TRUE
                     LIMIT 1
@@ -74,7 +74,9 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
                     "top_p": row[12],
                     "gpu_layers": row[13],
                     "num_threads": row[14],
-                    "thinking_mode": row[15]
+                    "thinking_mode": row[15],
+                    "max_concurrent_requests": row[16],
+                    "max_retries": row[17]
                 }
 
                 logger.debug(f"✅ Loaded AI extraction config: {config['provider']} / {config.get('model_name', 'N/A')}")
@@ -131,10 +133,10 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                         provider, model_name, supports_vision, supports_json_mode,
                         max_tokens, updated_by, active,
                         base_url, temperature, top_p, gpu_layers, num_threads,
-                        thinking_mode
+                        thinking_mode, max_concurrent_requests, max_retries
                     ) VALUES (
                         %s, %s, %s, %s, %s, %s, TRUE,
-                        %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s
                     )
                 """, (
                     config['provider'],
@@ -148,7 +150,9 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                     config.get('top_p'),
                     config.get('gpu_layers'),
                     config.get('num_threads'),
-                    config.get('thinking_mode', 'off')
+                    config.get('thinking_mode', 'off'),
+                    config.get('max_concurrent_requests'),
+                    config.get('max_retries')
                 ))
 
                 # Commit transaction
@@ -210,5 +214,7 @@ def get_extraction_config_summary() -> Dict[str, Any]:
         "top_p": config.get('top_p'),
         "gpu_layers": config.get('gpu_layers'),
         "num_threads": config.get('num_threads'),
-        "thinking_mode": config.get('thinking_mode')
+        "thinking_mode": config.get('thinking_mode'),
+        "max_concurrent_requests": config.get('max_concurrent_requests'),
+        "max_retries": config.get('max_retries')
     }
