@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../ADR-049-rate-limiting-and-concurrency/">
+        <link rel="prev" href="../ADR-050-scheduled-jobs-system/">
       
       
         <link rel="next" href="../ARCHITECTURE_OVERVIEW/">
@@ -3192,6 +3192,8 @@
       
         
       
+        
+      
     
     
     
@@ -4339,6 +4341,29 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-050: Scheduled Jobs System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -5416,6 +5441,12 @@
 <td>Rate Limiting and Per-Provider Concurrency</td>
 <td>Accepted</td>
 <td>Exponential backoff retry (8 attempts) + per-provider semaphores (OpenAI=8, Anthropic=4, Ollama=1) with database-first configuration to eliminate 429 errors across concurrent workers</td>
+</tr>
+<tr>
+<td><a href="../ADR-050-scheduled-jobs-system/">ADR-050</a></td>
+<td>Scheduled Jobs System</td>
+<td>Proposed</td>
+<td>Simple scheduler loop + launcher pattern extends existing job queue for automated maintenance tasks (category refresh, vocab consolidation) with ownership permissions and polling-based condition checks</td>
 </tr>
 </tbody>
 </table>
