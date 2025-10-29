@@ -977,7 +977,73 @@ export const ForceGraph2D: React.FC<
       .attr('pointer-events', 'none')
       .style('user-select', 'none');
 
-    // Draw nodes
+    // Render node highlights FIRST (before circles) if shadows enabled, so circles are on top
+    if (settings.visual.showShadows) {
+      const shadowOffset = 3.6; // pixels (20% more than original 3px)
+
+      // Node shadows (drop shadow effect)
+      nodeShadowsGroup
+        .selectAll<SVGCircleElement, D3Node>('circle')
+        .data(data.nodes)
+        .join('circle')
+        .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
+        .attr('fill', '#000')
+        .attr('opacity', 0.8)
+        .attr('pointer-events', 'none');
+
+      // Node highlights (reflection and shade arcs) - MUST be created before circles
+      nodesGroup
+        .selectAll<SVGPathElement, any>('.highlight-arc')
+        .data(data.nodes.flatMap(d => [
+          { node: d, arcType: 'reflection' },
+          { node: d, arcType: 'shade' }
+        ]))
+        .join('path')
+        .attr('class', 'highlight-arc')
+        .attr('d', (d: any) => {
+          const nodeRadius = ((d.node.size || 10) * settings.visual.nodeSize);
+          const arcRadius = nodeRadius * 0.8; // 80% of node diameter
+
+          // Arc angles in degrees (0° = right/3 o'clock)
+          const isReflection = d.arcType === 'reflection';
+          const startAngle = isReflection ? 290 : 110; // degrees
+          const endAngle = isReflection ? 340 : 160;   // degrees
+
+          // Convert to radians
+          const startRad = (startAngle - 90) * (Math.PI / 180);
+          const endRad = (endAngle - 90) * (Math.PI / 180);
+
+          // Calculate arc path (80% of node radius)
+          const x1 = arcRadius * Math.cos(startRad);
+          const y1 = arcRadius * Math.sin(startRad);
+          const x2 = arcRadius * Math.cos(endRad);
+          const y2 = arcRadius * Math.sin(endRad);
+
+          // Large arc flag: 0 for arcs <= 180°, 1 for arcs > 180°
+          const largeArcFlag = 0;
+
+          return `M ${x1} ${y1} A ${arcRadius} ${arcRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
+        })
+        .attr('fill', 'none')
+        .attr('stroke', (d: any) => {
+          const baseColor = nodeColors.get(d.node.id) || d.node.color;
+          const color = d3.color(baseColor);
+          if (!color) return baseColor;
+
+          if (d.arcType === 'reflection') {
+            // Increase luminance for reflection (nearly white)
+            return color.brighter(2.5).toString();
+          } else {
+            // Decrease luminance for shade (darker)
+            return color.darker(1.5).toString();
+          }
+        })
+        .attr('stroke-width', 3)
+        .attr('stroke-linecap', 'round')
+        .attr('pointer-events', 'none');
+    }
+
+    // Draw nodes (AFTER highlights so they're on top and receive events)
     const node = nodesGroup
       .selectAll<SVGCircleElement, D3Node>('circle')
       .data(data.nodes)
@@ -1037,72 +1103,6 @@ export const ForceGraph2D: React.FC<
       .on('mouseleave', () => {
         setHoveredNode(null);
       });
-
-    // Render shadows and highlights if enabled
-    if (settings.visual.showShadows) {
-      const shadowOffset = 3; // pixels
-
-      // Node shadows (drop shadow effect)
-      nodeShadowsGroup
-        .selectAll<SVGCircleElement, D3Node>('circle')
-        .data(data.nodes)
-        .join('circle')
-        .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
-        .attr('fill', '#000')
-        .attr('opacity', 0.8)
-        .attr('pointer-events', 'none');
-
-      // Node highlights (reflection and shade arcs) - rendered in nodesGroup to not block events
-      nodesGroup
-        .selectAll<SVGPathElement, any>('.highlight-arc')
-        .data(data.nodes.flatMap(d => [
-          { node: d, arcType: 'reflection' },
-          { node: d, arcType: 'shade' }
-        ]))
-        .join('path')
-        .attr('class', 'highlight-arc')
-        .attr('d', (d: any) => {
-          const nodeRadius = ((d.node.size || 10) * settings.visual.nodeSize);
-          const arcRadius = nodeRadius * 0.8; // 80% of node diameter
-
-          // Arc angles in degrees (0° = right/3 o'clock)
-          const isReflection = d.arcType === 'reflection';
-          const startAngle = isReflection ? 290 : 110; // degrees
-          const endAngle = isReflection ? 340 : 160;   // degrees
-
-          // Convert to radians
-          const startRad = (startAngle - 90) * (Math.PI / 180);
-          const endRad = (endAngle - 90) * (Math.PI / 180);
-
-          // Calculate arc path (80% of node radius)
-          const x1 = arcRadius * Math.cos(startRad);
-          const y1 = arcRadius * Math.sin(startRad);
-          const x2 = arcRadius * Math.cos(endRad);
-          const y2 = arcRadius * Math.sin(endRad);
-
-          // Large arc flag: 0 for arcs <= 180°, 1 for arcs > 180°
-          const largeArcFlag = 0;
-
-          return `M ${x1} ${y1} A ${arcRadius} ${arcRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
-        })
-        .attr('fill', 'none')
-        .attr('stroke', (d: any) => {
-          const baseColor = nodeColors.get(d.node.id) || d.node.color;
-          const color = d3.color(baseColor);
-          if (!color) return baseColor;
-
-          if (d.arcType === 'reflection') {
-            // Increase luminance for reflection (nearly white)
-            return color.brighter(2.5).toString();
-          } else {
-            // Decrease luminance for shade (darker)
-            return color.darker(1.5).toString();
-          }
-        })
-        .attr('stroke-width', 3)
-        .attr('stroke-linecap', 'round')
-        .attr('pointer-events', 'none');
-    }
 
     // Add labels if enabled
     let labels: d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown> | null = null;
@@ -1383,7 +1383,7 @@ export const ForceGraph2D: React.FC<
         }
 
         // Update node shadow positions (use transform for offset)
-        const shadowOffset = 3;
+        const shadowOffset = 3.6;
         nodeShadowsGroup.selectAll('circle')
           .attr('transform', (d: any) => `translate(${(d.x || 0) + shadowOffset}, ${(d.y || 0) + shadowOffset})`);
 
