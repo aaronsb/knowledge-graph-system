@@ -385,13 +385,13 @@ export const ForceGraph2D: React.FC<
 
     const svg = d3.select(svgRef.current);
 
-    // Remove from previous node (restore darkened stroke)
+    // Remove from previous node (restore brighter stroke)
     svg.selectAll('circle.origin-node')
       .interrupt()
       .attr('stroke', function() {
         const d = d3.select(this).datum() as D3Node;
         const color = nodeColors.get(d.id) || d.color;
-        return d3.color(color)?.darker(0.3).toString() || color;
+        return d3.color(color)?.brighter(0.4).toString() || color;
       })
       .attr('stroke-width', 2)
       .attr('stroke-opacity', 1)
@@ -807,7 +807,7 @@ export const ForceGraph2D: React.FC<
       .attr('fill', (d) => nodeColors.get(d.id) || d.color)
       .attr('stroke', (d) => {
         const color = nodeColors.get(d.id) || d.color;
-        return d3.color(color)?.darker(0.3).toString() || color;
+        return d3.color(color)?.brighter(0.4).toString() || color;
       })
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
@@ -1152,7 +1152,7 @@ export const ForceGraph2D: React.FC<
 
     return () => {
       cancelAnimationFrame(rafId);
-      // Cleanup: remove gold ring (restore darkened stroke)
+      // Cleanup: remove gold ring (restore brighter stroke)
       if (svgRef.current) {
         d3.select(svgRef.current)
           .selectAll('circle.origin-node')
@@ -1160,7 +1160,7 @@ export const ForceGraph2D: React.FC<
           .attr('stroke', function() {
             const d = d3.select(this).datum() as D3Node;
             const color = nodeColors.get(d.id) || d.color;
-            return d3.color(color)?.darker(0.3).toString() || color;
+            return d3.color(color)?.brighter(0.4).toString() || color;
           })
           .attr('stroke-width', 2)
           .attr('stroke-opacity', 1)
