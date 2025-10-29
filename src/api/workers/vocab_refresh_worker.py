@@ -7,6 +7,7 @@ categories are detected.
 """
 
 import logging
+import asyncio
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -20,11 +21,15 @@ def run_vocab_refresh_worker(
     """
     Execute vocabulary category refresh as a background job.
 
+    Uses the existing category refresh logic from VocabularyCategorizer
+    (same logic as `kg vocab refresh-categories` CLI command).
+
     Args:
         job_data: Job parameters
             - operation: str - "refresh_categories"
             - auto_mode: bool - True for automatic refresh
             - filter: str - "llm_generated" to filter categories
+            - only_computed: bool - Only refresh computed categories (default: True)
             - description: str - Job description
         job_id: Job ID for progress tracking
         job_queue: Queue instance for progress updates
@@ -34,53 +39,77 @@ def run_vocab_refresh_worker(
 
     Raises:
         Exception: If refresh fails
-
-    TODO: Implement full refresh logic
-    - Query VocabCategory nodes with llm_generated relationship types
-    - Extract those types back into base vocabulary
-    - Update category relationships
-    - Report statistics
     """
     try:
+        from src.api.lib.age_client import AGEClient
+        from src.api.lib.vocabulary_categorizer import VocabularyCategorizer
+
         logger.info(f"🔄 Vocab refresh worker started: {job_id}")
 
         # Update progress
         job_queue.update_job(job_id, {
             "status": "processing",
-            "progress": "Vocabulary refresh worker started (stub implementation)"
+            "progress": "Vocabulary refresh worker started"
         })
 
-        operation = job_data.get("operation", "refresh_categories")
-        auto_mode = job_data.get("auto_mode", False)
-        filter_type = job_data.get("filter", "llm_generated")
+        # Extract parameters
+        only_computed = job_data.get("only_computed", True)
 
         logger.info(
-            f"Vocab refresh params: operation={operation}, auto_mode={auto_mode}, "
-            f"filter={filter_type}"
+            f"Vocab refresh params: only_computed={only_computed}"
         )
 
-        # TODO: Implement actual refresh logic
-        # For now, just log and return success
-        logger.warning(
-            "⚠️  Vocab refresh worker is a stub implementation. "
-            "Full functionality not yet implemented."
-        )
+        # Initialize categorizer and client
+        db_client = AGEClient()
+        categorizer = VocabularyCategorizer(db_client)
 
-        # Update progress
-        job_queue.update_job(job_id, {
-            "progress": "Vocabulary refresh completed (stub - no actual work performed)"
-        })
+        try:
+            # Update progress
+            job_queue.update_job(job_id, {
+                "progress": "Refreshing category assignments"
+            })
 
-        result = {
-            "status": "completed (stub)",
-            "operation": operation,
-            "categories_processed": 0,
-            "types_refreshed": 0,
-            "note": "Stub implementation - full refresh logic not yet implemented"
-        }
+            # Refresh categories (same logic as kg vocab refresh-categories)
+            # Note: categorizer.refresh_all_categories() is async, so we need asyncio.run()
+            assignments = asyncio.run(categorizer.refresh_all_categories(
+                only_computed=only_computed
+            ))
 
-        logger.info(f"✅ Vocab refresh worker completed: {job_id}")
-        return result
+            refreshed_count = len(assignments)
+
+            # Count ambiguous assignments
+            ambiguous_count = sum(1 for a in assignments if a.ambiguous)
+
+            # Update progress
+            job_queue.update_job(job_id, {
+                "progress": f"Refresh complete: {refreshed_count} assignments updated"
+            })
+
+            # Build result
+            result = {
+                "status": "completed",
+                "refreshed_count": refreshed_count,
+                "ambiguous_count": ambiguous_count,
+                "only_computed": only_computed,
+                "assignments": [
+                    {
+                        "relationship_type": a.relationship_type,
+                        "category": a.category,
+                        "confidence": a.confidence,
+                        "ambiguous": a.ambiguous
+                    }
+                    for a in assignments[:10]  # Include first 10 for logging
+                ]
+            }
+
+            logger.info(
+                f"✅ Vocab refresh worker completed: {job_id} "
+                f"({refreshed_count} assignments updated, {ambiguous_count} ambiguous)"
+            )
+            return result
+
+        finally:
+            db_client.close()
 
     except Exception as e:
         logger.error(f"❌ Vocab refresh worker failed: {e}", exc_info=True)

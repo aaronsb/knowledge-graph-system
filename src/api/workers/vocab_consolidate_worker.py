@@ -7,6 +7,7 @@ vocabulary ratio exceeds 20%.
 """
 
 import logging
+import asyncio
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -20,13 +21,18 @@ def run_vocab_consolidate_worker(
     """
     Execute vocabulary consolidation as a background job.
 
+    Uses the existing AITL consolidation logic from VocabularyManager
+    (same logic as `kg vocab consolidate` CLI command).
+
     Args:
         job_data: Job parameters
             - operation: str - "consolidate"
-            - auto_mode: bool - True for automatic consolidation
+            - auto_mode: bool - True for automatic consolidation (AITL)
             - strategy: str - "hysteresis"
             - upper_threshold: float - 0.20 (20%)
             - lower_threshold: float - 0.10 (10%)
+            - target_size: int - Target vocabulary size (default: 90)
+            - auto_execute_threshold: float - Auto-execute threshold (default: 0.90)
             - description: str - Job description
         job_id: Job ID for progress tracking
         job_queue: Queue instance for progress updates
@@ -36,57 +42,81 @@ def run_vocab_consolidate_worker(
 
     Raises:
         Exception: If consolidation fails
-
-    TODO: Implement full consolidation logic
-    - Query inactive vocabulary types
-    - Find similar/redundant types using embeddings
-    - Merge types and update relationships
-    - Mark consolidated types as inactive
-    - Report statistics
     """
     try:
+        from src.api.lib.age_client import AGEClient
+        from src.api.lib.vocabulary_manager import get_vocabulary_manager
+
         logger.info(f"🔄 Vocab consolidation worker started: {job_id}")
 
         # Update progress
         job_queue.update_job(job_id, {
             "status": "processing",
-            "progress": "Vocabulary consolidation worker started (stub implementation)"
+            "progress": "Vocabulary consolidation worker started"
         })
 
-        operation = job_data.get("operation", "consolidate")
+        # Extract parameters
         auto_mode = job_data.get("auto_mode", False)
-        strategy = job_data.get("strategy", "hysteresis")
-        upper_threshold = job_data.get("upper_threshold", 0.20)
-        lower_threshold = job_data.get("lower_threshold", 0.10)
+        target_size = job_data.get("target_size", 90)
+        auto_execute_threshold = job_data.get("auto_execute_threshold", 0.90)
 
         logger.info(
-            f"Vocab consolidation params: operation={operation}, auto_mode={auto_mode}, "
-            f"strategy={strategy}, thresholds=({lower_threshold:.0%}-{upper_threshold:.0%})"
+            f"Vocab consolidation params: auto_mode={auto_mode}, "
+            f"target_size={target_size}, threshold={auto_execute_threshold}"
         )
 
-        # TODO: Implement actual consolidation logic
-        # For now, just log and return success
-        logger.warning(
-            "⚠️  Vocab consolidation worker is a stub implementation. "
-            "Full functionality not yet implemented."
-        )
+        # Initialize manager and client
+        manager = get_vocabulary_manager()
+        client = AGEClient()
 
-        # Update progress
-        job_queue.update_job(job_id, {
-            "progress": "Vocabulary consolidation completed (stub - no actual work performed)"
-        })
+        try:
+            # Get initial size
+            initial_size = client.get_vocabulary_size()
 
-        result = {
-            "status": "completed (stub)",
-            "operation": operation,
-            "strategy": strategy,
-            "types_consolidated": 0,
-            "types_remaining": 0,
-            "note": "Stub implementation - full consolidation logic not yet implemented"
-        }
+            # Update progress
+            job_queue.update_job(job_id, {
+                "progress": f"Analyzing vocabulary (initial size: {initial_size})"
+            })
 
-        logger.info(f"✅ Vocab consolidation worker completed: {job_id}")
-        return result
+            # Run AITL consolidation (same logic as kg vocab consolidate)
+            # Note: manager.aitl_consolidate_vocabulary() is async, so we need asyncio.run()
+            results = asyncio.run(manager.aitl_consolidate_vocabulary(
+                target_size=target_size,
+                batch_size=1,
+                auto_execute_threshold=auto_execute_threshold,
+                dry_run=not auto_mode  # Only execute if auto_mode=True
+            ))
+
+            # Get final size
+            final_size = client.get_vocabulary_size()
+            size_reduction = initial_size - final_size
+
+            # Update progress
+            job_queue.update_job(job_id, {
+                "progress": f"Consolidation complete: {size_reduction} types reduced"
+            })
+
+            # Build result
+            result = {
+                "status": "completed",
+                "initial_size": initial_size,
+                "final_size": final_size,
+                "size_reduction": size_reduction,
+                "auto_executed_count": len(results["auto_executed"]),
+                "needs_review_count": len(results["needs_review"]),
+                "rejected_count": len(results["rejected"]),
+                "auto_mode": auto_mode,
+                "dry_run": not auto_mode
+            }
+
+            logger.info(
+                f"✅ Vocab consolidation worker completed: {job_id} "
+                f"({size_reduction} types reduced, {result['auto_executed_count']} auto-executed)"
+            )
+            return result
+
+        finally:
+            client.close()
 
     except Exception as e:
         logger.error(f"❌ Vocab consolidation worker failed: {e}", exc_info=True)
