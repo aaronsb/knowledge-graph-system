@@ -76,6 +76,7 @@ const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismis
         left: `${screenX}px`,
         top: `${screenY}px`,
         transform: 'translate(-50%, calc(-100% - 20px))', // Position above node with offset
+        zIndex: 9999, // Ensure info box draws on top of everything
       }}
     >
       <div className="relative">
@@ -257,6 +258,7 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
         left: `${screenX}px`,
         top: `${screenY}px`,
         transform: 'translate(-50%, -100%)', // Position above the edge midpoint
+        zIndex: 9999, // Ensure info box draws on top of everything
       }}
     >
       {/* Speech bubble pointer - always dark */}
@@ -1284,7 +1286,7 @@ export const ForceGraph2D: React.FC<
       )}
 
       {/* Edge Info Boxes */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
         {activeEdgeInfos.map(info => (
           <EdgeInfoBox
             key={info.linkKey}
@@ -1296,7 +1298,7 @@ export const ForceGraph2D: React.FC<
       </div>
 
       {/* Node Info Boxes */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
         {activeNodeInfos.map(info => (
           <NodeInfoBox
             key={info.nodeId}
