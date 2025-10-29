@@ -90,11 +90,11 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
         minWidth: fullId ? 38 : 20
       },
       {
-        header: 'Client',
-        field: 'client_id',
+        header: 'User',
+        field: 'username',
         type: 'user',
         width: 12,
-        customFormat: (id) => id || 'anonymous',
+        customFormat: (username) => username || 'unknown',
         truncate: true
       },
       {
@@ -148,9 +148,9 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
 
 // List command with subcommands
 const listCommand = new Command('list')
-  .description('List recent jobs with optional filtering by status or client - includes subcommands for common filters')
+  .description('List recent jobs with optional filtering by status or user - includes subcommands for common filters')
   .option('-s, --status <status>', 'Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)')
-  .option('-c, --client <client-id>', 'Filter by client ID (view specific user\'s jobs in multi-tenant setups)')
+  .option('-c, --client <user-id>', 'Filter by user ID (view specific user\'s jobs)')
   .option('-l, --limit <n>', 'Maximum jobs to return (max: 500, default: 100)', '100')
   .option('-o, --offset <n>', 'Number of jobs to skip for pagination (default: 0)', '0')
   .option('--full-id', 'Show full job IDs without truncation', false)
@@ -171,7 +171,7 @@ const listCommand = new Command('list')
 listCommand
   .command('pending')
   .description('List jobs awaiting approval')
-  .option('-c, --client <client-id>', 'Filter by client ID')
+  .option('-c, --client <user-id>', 'Filter by user ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
   .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
@@ -188,7 +188,7 @@ listCommand
 listCommand
   .command('approved')
   .description('List approved jobs (queued or processing)')
-  .option('-c, --client <client-id>', 'Filter by client ID')
+  .option('-c, --client <user-id>', 'Filter by user ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
   .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
@@ -205,7 +205,7 @@ listCommand
 listCommand
   .command('done')
   .description('List completed jobs')
-  .option('-c, --client <client-id>', 'Filter by client ID')
+  .option('-c, --client <user-id>', 'Filter by user ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
   .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
@@ -222,7 +222,7 @@ listCommand
 listCommand
   .command('failed')
   .description('List failed jobs')
-  .option('-c, --client <client-id>', 'Filter by client ID')
+  .option('-c, --client <user-id>', 'Filter by user ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
   .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
@@ -239,7 +239,7 @@ listCommand
 listCommand
   .command('cancelled')
   .description('List cancelled jobs')
-  .option('-c, --client <client-id>', 'Filter by client ID')
+  .option('-c, --client <user-id>', 'Filter by user ID')
   .option('-l, --limit <n>', 'Maximum jobs to return', '20')
   .option('--full-id', 'Show full job IDs (no truncation)', false)
   .action(async (options) => {
@@ -285,7 +285,7 @@ approveCommand
 approveCommand
   .command('pending')
   .description('Approve all jobs awaiting approval (batch operation with confirmation)')
-  .option('-c, --client <client-id>', 'Filter by client ID for multi-tenant environments')
+  .option('-c, --client <user-id>', 'Filter by user ID')
   .option('-l, --limit <n>', 'Maximum jobs to approve (default: 100)', '100')
   .action(async (options) => {
     try {
@@ -328,7 +328,7 @@ approveCommand
 approveCommand
   .command('filter <status>')
   .description('Approve all jobs matching status filter')
-  .option('-c, --client <client-id>', 'Filter by client ID')
+  .option('-c, --client <user-id>', 'Filter by user ID')
   .action(async (statusFilter: string, options) => {
       try {
         const client = createClientFromEnv();
@@ -378,7 +378,7 @@ jobsCommand
   .command('cancel <job-id-or-filter>')
   .description('Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)')
   .showHelpAfterError()
-  .option('-c, --client <client-id>', 'Filter by client ID for batch operations in multi-tenant setups')
+  .option('-c, --client <user-id>', 'Filter by user ID for batch operations')
   .option('-l, --limit <n>', 'Maximum jobs to cancel for safety (default: 100)', '100')
   .action(async (jobIdOrFilter: string, options) => {
     try {

@@ -17,7 +17,8 @@ from ..services.content_hasher import ContentHasher
 from ..services.job_analysis import JobAnalyzer
 from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
-from ..middleware.auth import get_current_user
+from ..dependencies.auth import get_current_active_user
+from ..models.auth import UserInDB
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
@@ -124,7 +125,7 @@ async def ingest_document(
     min_words: Optional[int] = Form(None, description="Minimum words per chunk"),
     max_words: Optional[int] = Form(None, description="Maximum words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
-    current_user: dict = Depends(get_current_user)  # Auth placeholder
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Submit a document for async ingestion into the knowledge graph with approval workflow.
@@ -243,7 +244,7 @@ async def ingest_document(
         "content_hash": content_hash,
         "ontology": ontology,
         "filename": use_filename,
-        "client_id": current_user["client_id"],  # Track job owner
+        "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
         "processing_mode": processing_mode,
         "options": {
             "target_words": options.target_words,
@@ -285,7 +286,7 @@ async def ingest_text(
     processing_mode: str = Form("serial", description="Processing mode: serial or parallel (default: serial for clean concept matching)"),
     target_words: int = Form(1000, description="Target words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
-    current_user: dict = Depends(get_current_user)  # Auth placeholder
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Submit raw text content for async ingestion into the knowledge graph.
@@ -354,7 +355,7 @@ async def ingest_text(
         "content_hash": content_hash,
         "ontology": ontology,
         "filename": use_filename,
-        "client_id": current_user["client_id"],  # Track job owner
+        "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
         "processing_mode": processing_mode,
         "options": {
             "target_words": target_words,

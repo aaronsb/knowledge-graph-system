@@ -207,7 +207,7 @@ class PostgreSQLJobQueue(JobQueue):
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO kg_api.jobs (
-                        job_id, job_type, status, ontology, client_id,
+                        job_id, job_type, status, ontology, user_id,
                         content_hash, job_data, progress, result, analysis,
                         processing_mode, created_at
                     ) VALUES (
@@ -218,7 +218,7 @@ class PostgreSQLJobQueue(JobQueue):
                     job_type,
                     "pending",  # ADR-014: Start as pending for analysis
                     job_data.get("ontology"),
-                    job_data.get("client_id", "anonymous"),
+                    job_data.get("user_id", "anonymous"),
                     job_data.get("content_hash"),
                     json.dumps(job_data),
                     None,  # progress
@@ -238,13 +238,15 @@ class PostgreSQLJobQueue(JobQueue):
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute("""
                     SELECT
-                        job_id, job_type, status, ontology, client_id,
-                        content_hash, job_data, progress, result, analysis,
-                        processing_mode, error,
-                        created_at, started_at, completed_at,
-                        approved_at, approved_by, expires_at
-                    FROM kg_api.jobs
-                    WHERE job_id = %s
+                        j.job_id, j.job_type, j.status, j.ontology, j.user_id,
+                        j.content_hash, j.job_data, j.progress, j.result, j.analysis,
+                        j.processing_mode, j.error,
+                        j.created_at, j.started_at, j.completed_at,
+                        j.approved_at, j.approved_by, j.expires_at,
+                        u.username
+                    FROM kg_api.jobs j
+                    LEFT JOIN kg_auth.users u ON j.user_id = u.id
+                    WHERE j.job_id = %s
                 """, (job_id,))
 
                 row = cur.fetchone()
@@ -343,7 +345,7 @@ class PostgreSQLJobQueue(JobQueue):
     def list_jobs(
         self,
         status: Optional[str] = None,
-        client_id: Optional[str] = None,
+        user_id: Optional[str] = None,
         limit: int = 50,
         offset: int = 0
     ) -> List[Dict]:
@@ -355,12 +357,12 @@ class PostgreSQLJobQueue(JobQueue):
                 params = []
 
                 if status:
-                    conditions.append("status = %s")
+                    conditions.append("j.status = %s")
                     params.append(status)
 
-                if client_id:
-                    conditions.append("client_id = %s")
-                    params.append(client_id)
+                if user_id:
+                    conditions.append("j.user_id = %s")
+                    params.append(user_id)
 
                 where_clause = " AND ".join(conditions) if conditions else "1=1"
                 params.append(limit)
@@ -368,14 +370,16 @@ class PostgreSQLJobQueue(JobQueue):
 
                 cur.execute(f"""
                     SELECT
-                        job_id, job_type, status, ontology, client_id,
-                        content_hash, job_data, progress, result, analysis,
-                        processing_mode, error,
-                        created_at, started_at, completed_at,
-                        approved_at, approved_by, expires_at
-                    FROM kg_api.jobs
+                        j.job_id, j.job_type, j.status, j.ontology, j.user_id,
+                        j.content_hash, j.job_data, j.progress, j.result, j.analysis,
+                        j.processing_mode, j.error,
+                        j.created_at, j.started_at, j.completed_at,
+                        j.approved_at, j.approved_by, j.expires_at,
+                        u.username
+                    FROM kg_api.jobs j
+                    LEFT JOIN kg_auth.users u ON j.user_id = u.id
                     WHERE {where_clause}
-                    ORDER BY created_at DESC
+                    ORDER BY j.created_at DESC
                     LIMIT %s OFFSET %s
                 """, params)
 
@@ -438,16 +442,18 @@ class PostgreSQLJobQueue(JobQueue):
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute("""
                     SELECT
-                        job_id, job_type, status, ontology, client_id,
-                        content_hash, job_data, progress, result, analysis,
-                        processing_mode, error,
-                        created_at, started_at, completed_at,
-                        approved_at, approved_by, expires_at
-                    FROM kg_api.jobs
-                    WHERE content_hash = %s
-                      AND ontology = %s
-                      AND status IN ('completed', 'running', 'queued')
-                    ORDER BY created_at DESC
+                        j.job_id, j.job_type, j.status, j.ontology, j.user_id,
+                        j.content_hash, j.job_data, j.progress, j.result, j.analysis,
+                        j.processing_mode, j.error,
+                        j.created_at, j.started_at, j.completed_at,
+                        j.approved_at, j.approved_by, j.expires_at,
+                        u.username
+                    FROM kg_api.jobs j
+                    LEFT JOIN kg_auth.users u ON j.user_id = u.id
+                    WHERE j.content_hash = %s
+                      AND j.ontology = %s
+                      AND j.status IN ('completed', 'running', 'queued')
+                    ORDER BY j.created_at DESC
                     LIMIT 1
                 """, (content_hash, ontology))
 
