@@ -110,9 +110,9 @@ async def update_vocabulary_config_endpoint(request: UpdateConfigRequest):
     Updates configuration values in the database. Only provided fields are updated.
 
     Request body:
-        - vocab_min (optional): Minimum vocabulary size (10-100)
-        - vocab_max (optional): Maximum vocabulary size (50-200)
-        - vocab_emergency (optional): Emergency threshold (100-500)
+        - vocab_min (optional): Minimum vocabulary size (e.g., 30)
+        - vocab_max (optional): Maximum vocabulary size (e.g., 225-275)
+        - vocab_emergency (optional): Emergency threshold (e.g., 300-400)
         - pruning_mode (optional): Decision mode (naive, hitl, aitl)
         - aggressiveness_profile (optional): Profile name
         - auto_expand_enabled (optional): Enable automatic expansion

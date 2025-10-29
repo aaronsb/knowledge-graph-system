@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2025-10-28
+> Last updated: 2025-10-29
 
 ---
 
@@ -1041,9 +1041,9 @@ kg config-update [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--min <n>` | Minimum vocabulary size (10-100) | - |
-| `--max <n>` | Maximum vocabulary size (50-200) | - |
-| `--emergency <n>` | Emergency threshold (100-500) | - |
+| `--min <n>` | Minimum vocabulary size (e.g., 30) | - |
+| `--max <n>` | Maximum vocabulary size (e.g., 225-275) | - |
+| `--emergency <n>` | Emergency threshold (e.g., 300-400) | - |
 | `--mode <mode>` | Pruning mode: naive, hitl, aitl | - |
 | `--profile <name>` | Aggressiveness profile name | - |
 | `--auto-expand` | Enable automatic expansion | - |
