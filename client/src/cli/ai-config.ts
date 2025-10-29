@@ -437,6 +437,17 @@ function createExtractionConfigCommand(client: KnowledgeGraphClient): Command {
         console.log(`  ${colors.ui.key('JSON Mode:')} ${config.supports_json_mode ? colors.status.success('Yes') : colors.status.dim('No')}`);
         console.log(`  ${colors.ui.key('Max Tokens:')} ${colors.ui.value(config.max_tokens)}`);
 
+        // Show rate limiting configuration (ADR-049)
+        if (config.max_concurrent_requests !== undefined || config.max_retries !== undefined) {
+          console.log(`\n  ${colors.ui.header('Rate Limiting Configuration:')}`);
+          if (config.max_concurrent_requests !== undefined) {
+            console.log(`    ${colors.ui.key('Max Concurrent Requests:')} ${colors.ui.value(config.max_concurrent_requests)}`);
+          }
+          if (config.max_retries !== undefined) {
+            console.log(`    ${colors.ui.key('Max Retries:')} ${colors.ui.value(config.max_retries)}`);
+          }
+        }
+
         // Show local provider configuration (ADR-042)
         if (config.provider === 'ollama' || config.provider === 'vllm') {
           console.log(`\n  ${colors.ui.header('Local Inference Configuration:')}`);
