@@ -729,17 +729,31 @@ export const ForceGraph2D: React.FC<
     const width = dimensions.width;
     const height = dimensions.height;
 
+    // Auto-disable shadows for large graphs (performance protection)
+    const totalElements = data.nodes.length + data.links.length;
+    if (totalElements > 5000 && settings.visual.showShadows) {
+      console.warn(`⚠️ Graph has ${totalElements} elements. Auto-disabling shadows for performance. You can re-enable manually.`);
+      onSettingsChange?.({
+        ...settings,
+        visual: { ...settings.visual, showShadows: false },
+      });
+    }
+
     // Clear previous content
     svg.selectAll('*').remove();
 
-    // Create container groups
+    // Create container groups (order determines layering)
     const g = svg.append('g').attr('class', 'graph-container');
 
     // Create grid group INSIDE graph container so it transforms with the graph
     const gridGroup = g.append('g').attr('class', 'grid-layer');
 
+    // Shadow layers (rendered below main elements)
+    const edgeShadowsGroup = g.append('g').attr('class', 'edge-shadows');
     const linksGroup = g.append('g').attr('class', 'links');
+    const nodeShadowsGroup = g.append('g').attr('class', 'node-shadows');
     const nodesGroup = g.append('g').attr('class', 'nodes');
+    const nodeHighlightsGroup = g.append('g').attr('class', 'node-highlights');
 
     // Setup zoom behavior
     if (settings.interaction.enableZoom || settings.interaction.enablePan) {
@@ -809,6 +823,23 @@ export const ForceGraph2D: React.FC<
     // Stop simulation if physics disabled
     if (!settings.physics.enabled) {
       simulation.stop();
+    }
+
+    // Draw edge shadows if enabled
+    let edgeShadows: d3.Selection<SVGPathElement, D3Link, SVGGElement, unknown> | null = null;
+    if (settings.visual.showShadows) {
+      const shadowOffset = 3; // Same offset as nodes
+
+      edgeShadows = edgeShadowsGroup
+        .selectAll<SVGPathElement, D3Link>('path')
+        .data(data.links)
+        .join('path')
+        .attr('stroke', '#000')
+        .attr('stroke-width', (d) => (d.value || 1) * settings.visual.linkWidth)
+        .attr('stroke-opacity', 0.8)
+        .attr('fill', 'none')
+        .attr('transform', `translate(${shadowOffset}, ${shadowOffset})`)
+        .attr('pointer-events', 'none');
     }
 
     // Draw links as paths (supports curves for multiple edges)
@@ -1005,6 +1036,74 @@ export const ForceGraph2D: React.FC<
       .on('mouseleave', () => {
         setHoveredNode(null);
       });
+
+    // Render shadows and highlights if enabled
+    if (settings.visual.showShadows) {
+      const shadowOffset = 3; // pixels
+
+      // Node shadows (drop shadow effect)
+      nodeShadowsGroup
+        .selectAll<SVGCircleElement, D3Node>('circle')
+        .data(data.nodes)
+        .join('circle')
+        .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
+        .attr('fill', '#000')
+        .attr('opacity', 0.8)
+        .attr('transform', `translate(${shadowOffset}, ${shadowOffset})`)
+        .attr('pointer-events', 'none');
+
+      // Node highlights (reflection and shade arcs)
+      nodeHighlightsGroup
+        .selectAll<SVGPathElement, D3Node>('.highlight-arc')
+        .data(data.nodes.flatMap(d => [
+          { ...d, arcType: 'reflection' },
+          { ...d, arcType: 'shade' }
+        ]))
+        .join('path')
+        .attr('class', 'highlight-arc')
+        .attr('d', (d: any) => {
+          const nodeRadius = ((d.size || 10) * settings.visual.nodeSize);
+          const arcRadius = nodeRadius * 0.8; // 80% of node diameter
+          const strokeWidth = 3; // Slightly thicker than node stroke (2)
+
+          // Arc angles in degrees (0° = right/3 o'clock)
+          const isReflection = d.arcType === 'reflection';
+          const startAngle = isReflection ? 290 : 110; // degrees
+          const endAngle = isReflection ? 340 : 160;   // degrees
+
+          // Convert to radians
+          const startRad = (startAngle - 90) * (Math.PI / 180);
+          const endRad = (endAngle - 90) * (Math.PI / 180);
+
+          // Calculate arc path (80% of node radius)
+          const x1 = arcRadius * Math.cos(startRad);
+          const y1 = arcRadius * Math.sin(startRad);
+          const x2 = arcRadius * Math.cos(endRad);
+          const y2 = arcRadius * Math.sin(endRad);
+
+          // Large arc flag: 0 for arcs <= 180°, 1 for arcs > 180°
+          const largeArcFlag = 0;
+
+          return `M ${x1} ${y1} A ${arcRadius} ${arcRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
+        })
+        .attr('fill', 'none')
+        .attr('stroke', (d: any) => {
+          const baseColor = nodeColors.get(d.id) || d.color;
+          const color = d3.color(baseColor);
+          if (!color) return baseColor;
+
+          if (d.arcType === 'reflection') {
+            // Increase luminance for reflection (nearly white)
+            return color.brighter(2.5).toString();
+          } else {
+            // Decrease luminance for shade (darker)
+            return color.darker(1.5).toString();
+          }
+        })
+        .attr('stroke-width', 3)
+        .attr('stroke-linecap', 'round')
+        .attr('pointer-events', 'none');
+    }
 
     // Add labels if enabled
     let labels: d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown> | null = null;
@@ -1224,6 +1323,76 @@ export const ForceGraph2D: React.FC<
           .attr('y', (d) => (d.y || 0) + (d.size || 10) * settings.visual.nodeSize + 14);
       }
 
+      // Update shadow and highlight positions if enabled
+      if (settings.visual.showShadows) {
+        // Update edge shadow paths to match edge paths
+        if (edgeShadows) {
+          edgeShadows.attr('d', (d) => {
+            const sourceNode = typeof d.source === 'object' ? d.source : null;
+            const targetNode = typeof d.target === 'object' ? d.target : null;
+
+            const sourceX = sourceNode?.x || 0;
+            const sourceY = sourceNode?.y || 0;
+            const targetX = targetNode?.x || 0;
+            const targetY = targetNode?.y || 0;
+
+            const targetRadius = targetNode ? ((targetNode.size || 10) * settings.visual.nodeSize) + 2 : 10;
+
+            const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+            const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+            const linkKey = `${sourceId}->${targetId}-${d.type}`;
+            const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+
+            const dx = targetX - sourceX;
+            const dy = targetY - sourceY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 0.01) {
+              return `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
+            }
+
+            if (curveOffset === 0) {
+              const unitX = dx / distance;
+              const unitY = dy / distance;
+              const adjustedTargetX = targetX - unitX * (targetRadius + 1);
+              const adjustedTargetY = targetY - unitY * (targetRadius + 1);
+              return `M ${sourceX},${sourceY} L ${adjustedTargetX},${adjustedTargetY}`;
+            } else {
+              const perpX = -dy / distance;
+              const perpY = dx / distance;
+              const midX = (sourceX + targetX) / 2;
+              const midY = (sourceY + targetY) / 2;
+              const controlX = midX + perpX * curveOffset;
+              const controlY = midY + perpY * curveOffset;
+
+              const tangentX = targetX - controlX;
+              const tangentY = targetY - controlY;
+              const tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+
+              if (tangentLength < 0.01) {
+                return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
+              }
+
+              const tangentUnitX = tangentX / tangentLength;
+              const tangentUnitY = tangentY / tangentLength;
+              const adjustedTargetX = targetX - tangentUnitX * (targetRadius + 1);
+              const adjustedTargetY = targetY - tangentUnitY * (targetRadius + 1);
+
+              return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${adjustedTargetX},${adjustedTargetY}`;
+            }
+          });
+        }
+
+        // Update node shadow positions
+        nodeShadowsGroup.selectAll('circle')
+          .attr('cx', (d: any) => d.x || 0)
+          .attr('cy', (d: any) => d.y || 0);
+
+        // Update node highlight arc positions
+        nodeHighlightsGroup.selectAll('path')
+          .attr('transform', (d: any) => `translate(${d.x || 0}, ${d.y || 0})`);
+      }
+
       // Update info box positions to follow edges
       if (activeEdgeInfos.length > 0) {
         setActiveEdgeInfos(prevInfos =>
@@ -1278,8 +1447,8 @@ export const ForceGraph2D: React.FC<
     const canvasColor = d3.color(
       window.getComputedStyle(svgRef.current).backgroundColor || '#ffffff'
     );
-    const mainGridColor = canvasColor ? canvasColor.brighter(1.0).toString() : '#d0d0d0';
-    const subGridColor = canvasColor ? canvasColor.brighter(0.5).toString() : '#e8e8e8';
+    const mainGridColor = canvasColor ? canvasColor.brighter(2.0).toString() : '#d0d0d0';
+    const subGridColor = canvasColor ? canvasColor.brighter(1.0).toString() : '#e8e8e8';
 
     // Grid spacing in graph coordinates
     const mainGridSize = 100;
