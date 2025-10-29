@@ -735,88 +735,8 @@ export const ForceGraph2D: React.FC<
     // Clear previous content
     svg.selectAll('*').remove();
 
-    // Get canvas background color and derive grid colors
-    const canvasColor = d3.color(
-      window.getComputedStyle(svgRef.current).backgroundColor || '#ffffff'
-    );
-    // Make grid more visible: use brighter values and higher opacity
-    const mainGridColor = canvasColor ? canvasColor.brighter(1.0).toString() : '#d0d0d0';
-    const subGridColor = canvasColor ? canvasColor.brighter(0.5).toString() : '#e8e8e8';
-
-    // Create grid group (separate from graph container, not affected by zoom)
+    // Create grid group (separate from graph container, will be populated separately)
     const gridGroup = svg.append('g').attr('class', 'grid-layer');
-
-    // Grid spacing (in absolute coordinates)
-    const mainGridSize = 100; // Main grid every 100 pixels
-    const subGridSize = mainGridSize / 2; // Subdivision at 50 pixels
-
-    // Create grid lines (will be updated during pan)
-    if (showGrid) {
-      // Calculate grid bounds (larger than viewport to account for pan)
-      const gridMargin = 2000; // Extra space beyond viewport
-      const gridMinX = -gridMargin;
-      const gridMaxX = width + gridMargin;
-      const gridMinY = -gridMargin;
-      const gridMaxY = height + gridMargin;
-
-      // Draw subdivision grid (50% brighter - more subtle)
-      for (let x = Math.floor(gridMinX / subGridSize) * subGridSize; x <= gridMaxX; x += subGridSize) {
-        if (x % mainGridSize !== 0) { // Skip main grid positions
-          gridGroup
-            .append('line')
-            .attr('class', 'sub-grid-line')
-            .attr('x1', x)
-            .attr('y1', gridMinY)
-            .attr('x2', x)
-            .attr('y2', gridMaxY)
-            .attr('stroke', subGridColor)
-            .attr('stroke-width', 1)
-            .attr('opacity', 0.6);
-        }
-      }
-
-      for (let y = Math.floor(gridMinY / subGridSize) * subGridSize; y <= gridMaxY; y += subGridSize) {
-        if (y % mainGridSize !== 0) { // Skip main grid positions
-          gridGroup
-            .append('line')
-            .attr('class', 'sub-grid-line')
-            .attr('x1', gridMinX)
-            .attr('y1', y)
-            .attr('x2', gridMaxX)
-            .attr('y2', y)
-            .attr('stroke', subGridColor)
-            .attr('stroke-width', 1)
-            .attr('opacity', 0.6);
-        }
-      }
-
-      // Draw main grid (100% brighter - more visible)
-      for (let x = Math.floor(gridMinX / mainGridSize) * mainGridSize; x <= gridMaxX; x += mainGridSize) {
-        gridGroup
-          .append('line')
-          .attr('class', 'main-grid-line')
-          .attr('x1', x)
-          .attr('y1', gridMinY)
-          .attr('x2', x)
-          .attr('y2', gridMaxY)
-          .attr('stroke', mainGridColor)
-          .attr('stroke-width', 1)
-          .attr('opacity', 0.8);
-      }
-
-      for (let y = Math.floor(gridMinY / mainGridSize) * mainGridSize; y <= gridMaxY; y += mainGridSize) {
-        gridGroup
-          .append('line')
-          .attr('class', 'main-grid-line')
-          .attr('x1', gridMinX)
-          .attr('y1', y)
-          .attr('x2', gridMaxX)
-          .attr('y2', y)
-          .attr('stroke', mainGridColor)
-          .attr('stroke-width', 1)
-          .attr('opacity', 0.8);
-      }
-    }
 
     // Create container groups
     const g = svg.append('g').attr('class', 'graph-container');
@@ -846,8 +766,10 @@ export const ForceGraph2D: React.FC<
           g.attr('transform', event.transform);
 
           // Update grid position (only translate, no scale - gives "moving map" effect)
-          if (showGrid) {
-            gridGroup.attr('transform', `translate(${event.transform.x}, ${event.transform.y})`);
+          // Select grid dynamically in case it was added after zoom was set up
+          const grid = svg.select('.grid-layer');
+          if (!grid.empty()) {
+            grid.attr('transform', `translate(${event.transform.x}, ${event.transform.y})`);
           }
 
           // Update zoom transform state for info box positioning
@@ -1346,7 +1268,102 @@ export const ForceGraph2D: React.FC<
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets, showGrid]);
+  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets]);
+
+  // Separate effect for grid rendering (doesn't recreate graph)
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+    const gridGroup = svg.select('.grid-layer');
+
+    if (gridGroup.empty()) return; // Grid layer not created yet
+
+    // Clear existing grid
+    gridGroup.selectAll('*').remove();
+
+    if (showGrid) {
+      const width = dimensions.width;
+      const height = dimensions.height;
+
+      // Get canvas background color and derive grid colors
+      const canvasColor = d3.color(
+        window.getComputedStyle(svgRef.current).backgroundColor || '#ffffff'
+      );
+      const mainGridColor = canvasColor ? canvasColor.brighter(1.0).toString() : '#d0d0d0';
+      const subGridColor = canvasColor ? canvasColor.brighter(0.5).toString() : '#e8e8e8';
+
+      const mainGridSize = 100;
+      const subGridSize = mainGridSize / 2;
+      const gridMargin = 2000;
+      const gridMinX = -gridMargin;
+      const gridMaxX = width + gridMargin;
+      const gridMinY = -gridMargin;
+      const gridMaxY = height + gridMargin;
+
+      // Draw subdivision grid
+      for (let x = Math.floor(gridMinX / subGridSize) * subGridSize; x <= gridMaxX; x += subGridSize) {
+        if (x % mainGridSize !== 0) {
+          gridGroup
+            .append('line')
+            .attr('class', 'sub-grid-line')
+            .attr('x1', x)
+            .attr('y1', gridMinY)
+            .attr('x2', x)
+            .attr('y2', gridMaxY)
+            .attr('stroke', subGridColor)
+            .attr('stroke-width', 1)
+            .attr('opacity', 0.6);
+        }
+      }
+
+      for (let y = Math.floor(gridMinY / subGridSize) * subGridSize; y <= gridMaxY; y += subGridSize) {
+        if (y % mainGridSize !== 0) {
+          gridGroup
+            .append('line')
+            .attr('class', 'sub-grid-line')
+            .attr('x1', gridMinX)
+            .attr('y1', y)
+            .attr('x2', gridMaxX)
+            .attr('y2', y)
+            .attr('stroke', subGridColor)
+            .attr('stroke-width', 1)
+            .attr('opacity', 0.6);
+        }
+      }
+
+      // Draw main grid
+      for (let x = Math.floor(gridMinX / mainGridSize) * mainGridSize; x <= gridMaxX; x += mainGridSize) {
+        gridGroup
+          .append('line')
+          .attr('class', 'main-grid-line')
+          .attr('x1', x)
+          .attr('y1', gridMinY)
+          .attr('x2', x)
+          .attr('y2', gridMaxY)
+          .attr('stroke', mainGridColor)
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.8);
+      }
+
+      for (let y = Math.floor(gridMinY / mainGridSize) * mainGridSize; y <= gridMaxY; y += mainGridSize) {
+        gridGroup
+          .append('line')
+          .attr('class', 'main-grid-line')
+          .attr('x1', gridMinX)
+          .attr('y1', y)
+          .attr('x2', gridMaxX)
+          .attr('y2', y)
+          .attr('stroke', mainGridColor)
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.8);
+      }
+
+      // Apply current zoom transform to grid if it exists
+      const currentTransform = d3.zoomTransform(svgRef.current);
+      gridGroup.attr('transform', `translate(${currentTransform.x}, ${currentTransform.y})`);
+    }
+  }, [showGrid, dimensions]);
 
   // Update highlighting based on hover
   useEffect(() => {
