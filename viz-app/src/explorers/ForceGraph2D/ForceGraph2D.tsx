@@ -7,7 +7,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
@@ -15,6 +15,217 @@ import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
+
+/**
+ * Node Info Box - Speech bubble style info display for nodes with collapsible sections
+ */
+interface NodeInfoBoxProps {
+  info: {
+    nodeId: string;
+    label: string;
+    group: string;
+    degree: number;
+    x: number;
+    y: number;
+  };
+  zoomTransform: { x: number; y: number; k: number };
+  onDismiss: () => void;
+}
+
+const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
+  const [detailedData, setDetailedData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch detailed node data on mount
+  useEffect(() => {
+    const fetchDetails = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.getConceptDetails(info.nodeId);
+        setDetailedData(response);
+      } catch (error) {
+        console.error('Failed to fetch node details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetails();
+  }, [info.nodeId]);
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
+
+  // Apply zoom transform to graph coordinates
+  const screenX = info.x * zoomTransform.k + zoomTransform.x;
+  const screenY = info.y * zoomTransform.k + zoomTransform.y;
+
+  return (
+    <div
+      className="absolute pointer-events-auto"
+      style={{
+        left: `${screenX}px`,
+        top: `${screenY}px`,
+        transform: 'translate(-50%, calc(-100% - 20px))', // Position above node with offset
+      }}
+    >
+      <div className="relative">
+        {/* Speech bubble pointer - always dark */}
+        <div
+          className="absolute left-1/2 bottom-0 w-0 h-0"
+          style={{
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
+            transform: 'translateX(-50%) translateY(100%)',
+          }}
+        />
+
+        {/* Info box content - always dark theme */}
+        <div
+          className="bg-gray-800 rounded-lg shadow-xl border border-gray-600 cursor-pointer hover:shadow-2xl transition-shadow"
+          style={{ minWidth: '280px', maxWidth: '400px' }}
+        >
+          {/* Header - always visible */}
+          <div
+            className="px-4 py-3 border-b border-gray-700"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+          >
+            <div className="font-semibold text-gray-100 text-base">
+              {info.label}
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              Click to dismiss
+            </div>
+          </div>
+
+          {/* Collapsible sections */}
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+            {/* Overview Section */}
+            <div className="border-b border-gray-700">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSection('overview');
+                }}
+                className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
+              >
+                <span className="font-medium text-sm text-gray-300">Overview</span>
+                {expandedSections.has('overview') ? (
+                  <ChevronDown size={16} className="text-gray-500" />
+                ) : (
+                  <ChevronRight size={16} className="text-gray-500" />
+                )}
+              </button>
+              {expandedSections.has('overview') && (
+                <div className="px-4 py-3 space-y-2 text-sm bg-gray-750">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Ontology:</span>
+                    <span className="font-medium text-gray-100">{info.group}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Connections:</span>
+                    <span className="font-medium text-gray-100">{info.degree}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Relationships Section */}
+            {detailedData?.relationships && (
+              <div className="border-b border-gray-700">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSection('relationships');
+                  }}
+                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
+                >
+                  <span className="font-medium text-sm text-gray-300">
+                    Relationships ({detailedData.relationships.length})
+                  </span>
+                  {expandedSections.has('relationships') ? (
+                    <ChevronDown size={16} className="text-gray-500" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-500" />
+                  )}
+                </button>
+                {expandedSections.has('relationships') && (
+                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
+                    {detailedData.relationships.slice(0, 20).map((rel: any, idx: number) => (
+                      <div key={idx} className="text-gray-300">
+                        <span className="font-medium">{rel.rel_type || rel.type}</span> → {rel.to_label || rel.target_label || rel.to_id}
+                      </div>
+                    ))}
+                    {detailedData.relationships.length > 20 && (
+                      <div className="text-gray-500 italic">
+                        +{detailedData.relationships.length - 20} more
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Evidence Section */}
+            {detailedData?.instances && (
+              <div className="border-b border-gray-700">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSection('evidence');
+                  }}
+                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
+                >
+                  <span className="font-medium text-sm text-gray-300">
+                    Evidence ({detailedData.instances.length})
+                  </span>
+                  {expandedSections.has('evidence') ? (
+                    <ChevronDown size={16} className="text-gray-500" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-500" />
+                  )}
+                </button>
+                {expandedSections.has('evidence') && (
+                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
+                    {detailedData.instances.slice(0, 10).map((instance: any, idx: number) => (
+                      <div key={idx} className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
+                        "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
+                      </div>
+                    ))}
+                    {detailedData.instances.length > 10 && (
+                      <div className="text-gray-500 italic">
+                        +{detailedData.instances.length - 10} more
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {loading && (
+              <div className="px-4 py-3 text-center text-sm text-gray-400">
+                Loading details...
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /**
  * Edge Info Box - Speech bubble style info display for edges
@@ -48,21 +259,10 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
         transform: 'translate(-50%, -100%)', // Position above the edge midpoint
       }}
     >
-      {/* Speech bubble pointer */}
+      {/* Speech bubble pointer - always dark */}
       <div className="relative">
-        {/* Light mode pointer */}
         <div
-          className="absolute left-1/2 bottom-0 w-0 h-0 dark:hidden"
-          style={{
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '8px solid white',
-            transform: 'translateX(-50%) translateY(100%)',
-          }}
-        />
-        {/* Dark mode pointer */}
-        <div
-          className="hidden dark:block absolute left-1/2 bottom-0 w-0 h-0"
+          className="absolute left-1/2 bottom-0 w-0 h-0"
           style={{
             borderLeft: '8px solid transparent',
             borderRight: '8px solid transparent',
@@ -70,9 +270,9 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
             transform: 'translateX(-50%) translateY(100%)',
           }}
         />
-        {/* Info box content */}
+        {/* Info box content - always dark theme */}
         <div
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-300 dark:border-gray-600 px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow"
+          className="bg-gray-800 rounded-lg shadow-xl border border-gray-600 px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow"
           onClick={(e) => {
             e.stopPropagation();
             onDismiss();
@@ -80,27 +280,27 @@ const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismis
           style={{ minWidth: '200px' }}
         >
           <div className="space-y-2 text-sm">
-            <div className="font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+            <div className="font-semibold text-gray-100 border-b border-gray-700 pb-2">
               Edge Information
             </div>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Type:</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{info.type}</span>
+                <span className="text-gray-400">Type:</span>
+                <span className="font-medium text-gray-100">{info.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Confidence:</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
+                <span className="text-gray-400">Confidence:</span>
+                <span className="font-medium text-gray-100">
                   {(info.confidence * 100).toFixed(1)}%
                 </span>
               </div>
               {info.category && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Category:</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{info.category}</span>
+                  <span className="text-gray-400">Category:</span>
+                  <span className="font-medium text-gray-100">{info.category}</span>
                 </div>
               )}
-              <div className="text-xs text-gray-500 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-xs text-gray-400 pt-2 border-t border-gray-700">
                 Click to dismiss
               </div>
             </div>
@@ -135,6 +335,17 @@ export const ForceGraph2D: React.FC<
     y: number;
   }
   const [activeEdgeInfos, setActiveEdgeInfos] = useState<EdgeInfo[]>([]);
+
+  // Track active node info boxes
+  interface NodeInfo {
+    nodeId: string;
+    label: string;
+    group: string;
+    degree: number;
+    x: number;
+    y: number;
+  }
+  const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfo[]>([]);
 
   // Imperative function to apply gold ring - can be called anytime
   const applyGoldRing = useCallback((nodeId: string) => {
@@ -529,11 +740,39 @@ export const ForceGraph2D: React.FC<
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
       .attr('data-node-id', (d) => d.id) // Add ID for selection
-      .on('click', (_event, d) => {
-        // Left-click: Select node (show gold ring)
-        setOriginNodeId(d.id);
+      .on('click', (event, d) => {
+        event.stopPropagation();
         setContextMenu(null); // Close any open context menu
-        applyGoldRing(d.id); // Immediate visual feedback
+
+        // Check if this node is already selected (has gold ring)
+        if (originNodeId === d.id) {
+          // Second click on same node - spawn info box
+          const exists = activeNodeInfos.some(info => info.nodeId === d.id);
+          if (exists) return; // Don't create duplicate
+
+          // Calculate degree (number of connections)
+          const degree = data.links.filter(link => {
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            return sourceId === d.id || targetId === d.id;
+          }).length;
+
+          // Create new node info
+          const newInfo: NodeInfo = {
+            nodeId: d.id,
+            label: d.label,
+            group: d.group || 'Unknown',
+            degree,
+            x: d.x || 0,
+            y: d.y || 0,
+          };
+
+          setActiveNodeInfos(prev => [...prev, newInfo]);
+        } else {
+          // First click on node - select it (show gold ring)
+          setOriginNodeId(d.id);
+          applyGoldRing(d.id); // Immediate visual feedback
+        }
       })
       .on('contextmenu', (event, d) => {
         // Right-click: Show context menu
@@ -753,6 +992,24 @@ export const ForceGraph2D: React.FC<
             }
 
             return { ...info, x: midX, y: midY };
+          })
+        );
+      }
+
+      // Update info box positions to follow nodes
+      if (activeNodeInfos.length > 0) {
+        setActiveNodeInfos(prevInfos =>
+          prevInfos.map(info => {
+            // Find the corresponding node
+            const node = data.nodes.find(n => n.id === info.nodeId);
+
+            if (!node) return info; // Node not found, keep old position
+
+            return {
+              ...info,
+              x: node.x || 0,
+              y: node.y || 0,
+            };
           })
         );
       }
@@ -995,6 +1252,11 @@ export const ForceGraph2D: React.FC<
     setActiveEdgeInfos(prev => prev.filter(info => info.linkKey !== linkKey));
   }, []);
 
+  // Dismiss node info box
+  const handleDismissNodeInfo = useCallback((nodeId: string) => {
+    setActiveNodeInfos(prev => prev.filter(info => info.nodeId !== nodeId));
+  }, []);
+
   return (
     <div className={`relative w-full h-full ${className || ''}`}>
       <svg
@@ -1029,6 +1291,18 @@ export const ForceGraph2D: React.FC<
             info={info}
             zoomTransform={zoomTransform}
             onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
+          />
+        ))}
+      </div>
+
+      {/* Node Info Boxes */}
+      <div className="absolute inset-0 pointer-events-none">
+        {activeNodeInfos.map(info => (
+          <NodeInfoBox
+            key={info.nodeId}
+            info={info}
+            zoomTransform={zoomTransform}
+            onDismiss={() => handleDismissNodeInfo(info.nodeId)}
           />
         ))}
       </div>
