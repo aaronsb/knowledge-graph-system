@@ -198,6 +198,16 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
                 <span className="text-gray-200">Show Arrows</span>
               </label>
 
+              <label className="flex items-center space-x-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={settings.visual.showGrid}
+                  onChange={(e) => updateVisual('showGrid', e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-gray-200">Show Grid</span>
+              </label>
+
               <div>
                 <label className="block text-xs text-gray-300 mb-1">
                   Node Size: {settings.visual.nodeSize.toFixed(1)}x
