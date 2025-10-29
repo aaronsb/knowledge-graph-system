@@ -7,7 +7,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff, Circle } from 'lucide-react';
+import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff, Circle, Grid3x3, EyeOff } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
@@ -552,13 +552,22 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.interaction.showOriginNode]);
 
-  // Context menu state
+  // Node context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
     nodeId: string;
     nodeLabel: string;
   } | null>(null);
+
+  // Canvas context menu state
+  const [canvasContextMenu, setCanvasContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // Grid visibility state
+  const [showGrid, setShowGrid] = useState(false);
 
   // Get navigation state and settings from store
   const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
@@ -722,6 +731,88 @@ export const ForceGraph2D: React.FC<
     // Clear previous content
     svg.selectAll('*').remove();
 
+    // Get canvas background color and derive grid colors
+    const canvasColor = d3.color(
+      window.getComputedStyle(svgRef.current).backgroundColor || '#ffffff'
+    );
+    const mainGridColor = canvasColor ? canvasColor.brighter(0.4).toString() : '#e0e0e0';
+    const subGridColor = canvasColor ? canvasColor.brighter(0.2).toString() : '#f0f0f0';
+
+    // Create grid group (separate from graph container, not affected by zoom)
+    const gridGroup = svg.append('g').attr('class', 'grid-layer');
+
+    // Grid spacing (in absolute coordinates)
+    const mainGridSize = 100; // Main grid every 100 pixels
+    const subGridSize = mainGridSize / 2; // Subdivision at 50 pixels
+
+    // Create grid lines (will be updated during pan)
+    if (showGrid) {
+      // Calculate grid bounds (larger than viewport to account for pan)
+      const gridMargin = 2000; // Extra space beyond viewport
+      const gridMinX = -gridMargin;
+      const gridMaxX = width + gridMargin;
+      const gridMinY = -gridMargin;
+      const gridMaxY = height + gridMargin;
+
+      // Draw subdivision grid (20% brighter - more subtle)
+      for (let x = Math.floor(gridMinX / subGridSize) * subGridSize; x <= gridMaxX; x += subGridSize) {
+        if (x % mainGridSize !== 0) { // Skip main grid positions
+          gridGroup
+            .append('line')
+            .attr('class', 'sub-grid-line')
+            .attr('x1', x)
+            .attr('y1', gridMinY)
+            .attr('x2', x)
+            .attr('y2', gridMaxY)
+            .attr('stroke', subGridColor)
+            .attr('stroke-width', 1)
+            .attr('opacity', 0.3);
+        }
+      }
+
+      for (let y = Math.floor(gridMinY / subGridSize) * subGridSize; y <= gridMaxY; y += subGridSize) {
+        if (y % mainGridSize !== 0) { // Skip main grid positions
+          gridGroup
+            .append('line')
+            .attr('class', 'sub-grid-line')
+            .attr('x1', gridMinX)
+            .attr('y1', y)
+            .attr('x2', gridMaxX)
+            .attr('y2', y)
+            .attr('stroke', subGridColor)
+            .attr('stroke-width', 1)
+            .attr('opacity', 0.3);
+        }
+      }
+
+      // Draw main grid (40% brighter - more visible)
+      for (let x = Math.floor(gridMinX / mainGridSize) * mainGridSize; x <= gridMaxX; x += mainGridSize) {
+        gridGroup
+          .append('line')
+          .attr('class', 'main-grid-line')
+          .attr('x1', x)
+          .attr('y1', gridMinY)
+          .attr('x2', x)
+          .attr('y2', gridMaxY)
+          .attr('stroke', mainGridColor)
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.5);
+      }
+
+      for (let y = Math.floor(gridMinY / mainGridSize) * mainGridSize; y <= gridMaxY; y += mainGridSize) {
+        gridGroup
+          .append('line')
+          .attr('class', 'main-grid-line')
+          .attr('x1', gridMinX)
+          .attr('y1', y)
+          .attr('x2', gridMaxX)
+          .attr('y2', y)
+          .attr('stroke', mainGridColor)
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.5);
+      }
+    }
+
     // Create container groups
     const g = svg.append('g').attr('class', 'graph-container');
     const linksGroup = g.append('g').attr('class', 'links');
@@ -734,6 +825,12 @@ export const ForceGraph2D: React.FC<
         .scaleExtent([0.1, 10])
         .on('zoom', (event) => {
           g.attr('transform', event.transform);
+
+          // Update grid position (only translate, no scale - gives "moving map" effect)
+          if (showGrid) {
+            gridGroup.attr('transform', `translate(${event.transform.x}, ${event.transform.y})`);
+          }
+
           // Update zoom transform state for info box positioning
           setZoomTransform({
             x: event.transform.x,
@@ -1230,7 +1327,7 @@ export const ForceGraph2D: React.FC<
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets]);
+  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets, showGrid]);
 
   // Update highlighting based on hover
   useEffect(() => {
@@ -1583,8 +1680,19 @@ export const ForceGraph2D: React.FC<
         height={dimensions.height}
         className="bg-white dark:bg-gray-900"
         onClick={() => {
-          // Close context menu when clicking on canvas background
+          // Close context menus when clicking on canvas background
           setContextMenu(null);
+          setCanvasContextMenu(null);
+        }}
+        onContextMenu={(e) => {
+          // Only show canvas context menu if not clicking on node/edge
+          // (nodes/edges have their own context menu handlers that stopPropagation)
+          e.preventDefault();
+          setContextMenu(null); // Close node context menu if open
+          setCanvasContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+          });
         }}
       />
 
@@ -1603,13 +1711,41 @@ export const ForceGraph2D: React.FC<
         <CanvasSettingsPanel settings={settings} onChange={onSettingsChange} />
       )}
 
-      {/* Context Menu */}
+      {/* Node Context Menu */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           items={contextMenuItems}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {/* Canvas Context Menu */}
+      {canvasContextMenu && (
+        <ContextMenu
+          x={canvasContextMenu.x}
+          y={canvasContextMenu.y}
+          items={[
+            showGrid
+              ? {
+                  label: 'Hide Grid',
+                  icon: EyeOff,
+                  onClick: () => {
+                    setShowGrid(false);
+                    setCanvasContextMenu(null);
+                  },
+                }
+              : {
+                  label: 'Show Grid',
+                  icon: Grid3x3,
+                  onClick: () => {
+                    setShowGrid(true);
+                    setCanvasContextMenu(null);
+                  },
+                },
+          ]}
+          onClose={() => setCanvasContextMenu(null)}
         />
       )}
 
