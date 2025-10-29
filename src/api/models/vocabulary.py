@@ -231,9 +231,9 @@ class VocabularyConfigDetail(BaseModel):
 
 class UpdateConfigRequest(BaseModel):
     """Update vocabulary configuration"""
-    vocab_min: Optional[int] = Field(None, ge=10, le=100)
-    vocab_max: Optional[int] = Field(None, ge=50, le=200)
-    vocab_emergency: Optional[int] = Field(None, ge=100, le=500)
+    vocab_min: Optional[int] = Field(None, ge=30, le=1000, description="Minimum vocabulary size (30-1000)")
+    vocab_max: Optional[int] = Field(None, ge=50, le=1000, description="Maximum vocabulary size (50-1000)")
+    vocab_emergency: Optional[int] = Field(None, ge=100, le=1000, description="Emergency threshold (100-1000)")
     pruning_mode: Optional[PruningModeEnum] = None
     aggressiveness_profile: Optional[str] = None
     auto_expand_enabled: Optional[bool] = None

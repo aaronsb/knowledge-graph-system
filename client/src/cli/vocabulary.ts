@@ -530,8 +530,72 @@ export const vocabularyCommand = new Command('vocabulary')
   )
   .addCommand(
     new Command('config')
-      .description('Show current vocabulary configuration including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile (Bezier curve), synonym thresholds (strong, moderate), and other settings. Use this to verify configuration before updates, check active profile and mode, understand current thresholds, review synonym detection settings, and audit configuration state.')
-      .action(async () => {
+      .description('Show or update vocabulary configuration. No args: display config table. With args: update properties directly using database key names (e.g., "kg vocab config vocab_max 275 vocab_emergency 350"). Property names shown in config table.')
+      .argument('[properties...]', 'Property assignments: key value [key value...]')
+      .action(async (properties: string[]) => {
+        // If properties provided, update config
+        if (properties && properties.length > 0) {
+          if (properties.length % 2 !== 0) {
+            console.error(colors.status.error('✗ Properties must be provided as key-value pairs'));
+            console.error(colors.status.dim('  Usage: kg vocab config <key> <value> [<key> <value>...]'));
+            console.error(colors.status.dim('  Example: kg vocab config vocab_max 275 vocab_emergency 350'));
+            process.exit(1);
+          }
+
+          try {
+            const client = createClientFromEnv();
+
+            // Get logged-in user from auth token
+            const { getConfig } = require('../lib/config');
+            const configManager = getConfig();
+            const authToken = configManager.getAuthToken();
+            const username = authToken?.username || 'cli-user';
+
+            const updates: any = {
+              updated_by: username
+            };
+
+            // Parse key-value pairs
+            for (let i = 0; i < properties.length; i += 2) {
+              const key = properties[i];
+              const value = properties[i + 1];
+
+              // Parse value based on type
+              if (key === 'vocab_min' || key === 'vocab_max' || key === 'vocab_emergency') {
+                updates[key] = parseInt(value);
+              } else if (key === 'auto_expand_enabled') {
+                updates[key] = value.toLowerCase() === 'true';
+              } else if (key === 'synonym_threshold_strong' || key === 'synonym_threshold_moderate' ||
+                        key === 'low_value_threshold' || key === 'consolidation_similarity_threshold') {
+                updates[key] = parseFloat(value);
+              } else if (key === 'pruning_mode' || key === 'aggressiveness_profile' || key === 'embedding_model') {
+                updates[key] = value;
+              } else {
+                console.error(colors.status.error(`✗ Unknown property: ${key}`));
+                process.exit(1);
+              }
+            }
+
+            // Update config
+            await client.updateVocabularyConfig(updates);
+
+            console.log(colors.status.success('\n✓ Configuration updated successfully\n'));
+
+            // Fetch and display updated config (fall through to display code)
+
+          } catch (error: any) {
+            console.error(colors.status.error('✗ Failed to update vocabulary configuration'));
+            if (error.response?.data?.detail) {
+              console.error(colors.status.error(JSON.stringify(error.response.data.detail, null, 2)));
+            } else {
+              console.error(colors.status.error(error.message || String(error)));
+            }
+            process.exit(1);
+          }
+          // Fall through to display code below
+        }
+
+        // Display config (either after update or when called with no args)
         try {
           const client = createClientFromEnv();
 
@@ -541,10 +605,7 @@ export const vocabularyCommand = new Command('vocabulary')
 
           const config = await client.getVocabularyConfigDetail();
 
-          // Current state (above table)
-          console.log(`\n${colors.stats.section('Current State')}`);
-          console.log(`  ${colors.stats.label('Vocabulary Size:')} ${coloredCount(config.current_size)}`);
-
+          // Zone color mapping
           const zoneColors: Record<string, (text: string) => string> = {
             comfort: colors.status.success,
             watch: colors.status.warning,
@@ -554,25 +615,53 @@ export const vocabularyCommand = new Command('vocabulary')
             block: colors.status.error
           };
           const zoneColor = zoneColors[config.zone] || colors.ui.value;
-          console.log(`  ${colors.stats.label('Zone:')} ${zoneColor(config.zone.toUpperCase())}`);
-          console.log(`  ${colors.stats.label('Aggressiveness:')} ${colors.ui.value((config.aggressiveness * 100).toFixed(1) + '%')}`);
+
+          // Current state table
+          console.log(`\n${colors.stats.section('Current State')}\n`);
+
+          const stateRows = [
+            { metric: 'Vocabulary Size', value: config.current_size.toString() },
+            { metric: 'Zone', value: config.zone.toUpperCase() },
+            { metric: 'Aggressiveness', value: (config.aggressiveness * 100).toFixed(1) + '%' }
+          ];
+
+          const stateTable = new Table<typeof stateRows[0]>({
+            columns: [
+              {
+                header: 'Metric',
+                field: 'metric',
+                type: 'heading',
+                width: 'auto',
+                priority: 2
+              },
+              {
+                header: 'Value',
+                field: 'value',
+                type: 'value',
+                width: 'flex',
+                priority: 3
+              }
+            ]
+          });
+
+          stateTable.print(stateRows);
 
           // Configuration table
           console.log(`\n${colors.stats.section('Configuration Parameters')}`);
-          console.log(colors.status.dim('Use `kg vocab config-update` with these options to modify:\n'));
+          console.log(colors.status.dim('Use `kg vocab config <property> <value>` to update (e.g., `kg vocab config vocab_max 275`):\n'));
 
           const configRows = [
-            { parameter: 'Minimum Threshold', value: config.vocab_min.toString(), option: '--min <n>' },
-            { parameter: 'Maximum Threshold', value: config.vocab_max.toString(), option: '--max <n>' },
-            { parameter: 'Emergency Threshold', value: config.vocab_emergency.toString(), option: '--emergency <n>' },
-            { parameter: 'Pruning Mode', value: config.pruning_mode, option: '--mode <mode>' },
-            { parameter: 'Aggressiveness Profile', value: config.aggressiveness_profile, option: '--profile <name>' },
-            { parameter: 'Auto-expand', value: config.auto_expand_enabled ? 'true' : 'false', option: '--auto-expand / --no-auto-expand' },
-            { parameter: 'Synonym (Strong)', value: config.synonym_threshold_strong.toFixed(2), option: '--synonym-strong <n>' },
-            { parameter: 'Synonym (Moderate)', value: config.synonym_threshold_moderate.toFixed(2), option: '--synonym-moderate <n>' },
-            { parameter: 'Low Value Threshold', value: config.low_value_threshold.toFixed(1), option: '--low-value <n>' },
-            { parameter: 'Consolidation Threshold', value: config.consolidation_similarity_threshold.toFixed(2), option: '--consolidation-threshold <n>' },
-            { parameter: 'Embedding Model', value: config.embedding_model, option: '(managed via kg admin embedding)' },
+            { parameter: 'Minimum Threshold', value: config.vocab_min.toString(), property: 'vocab_min' },
+            { parameter: 'Maximum Threshold', value: config.vocab_max.toString(), property: 'vocab_max' },
+            { parameter: 'Emergency Threshold', value: config.vocab_emergency.toString(), property: 'vocab_emergency' },
+            { parameter: 'Pruning Mode', value: config.pruning_mode, property: 'pruning_mode' },
+            { parameter: 'Aggressiveness Profile', value: config.aggressiveness_profile, property: 'aggressiveness_profile' },
+            { parameter: 'Auto-expand', value: config.auto_expand_enabled ? 'true' : 'false', property: 'auto_expand_enabled' },
+            { parameter: 'Synonym (Strong)', value: config.synonym_threshold_strong.toFixed(2), property: 'synonym_threshold_strong' },
+            { parameter: 'Synonym (Moderate)', value: config.synonym_threshold_moderate.toFixed(2), property: 'synonym_threshold_moderate' },
+            { parameter: 'Low Value Threshold', value: config.low_value_threshold.toFixed(1), property: 'low_value_threshold' },
+            { parameter: 'Consolidation Threshold', value: config.consolidation_similarity_threshold.toFixed(2), property: 'consolidation_similarity_threshold' },
+            { parameter: 'Embedding Model', value: config.embedding_model, property: '(managed via kg admin embedding)' },
           ];
 
           const table = new Table<typeof configRows[0]>({
@@ -592,8 +681,8 @@ export const vocabularyCommand = new Command('vocabulary')
                 priority: 3
               },
               {
-                header: 'CLI Option',
-                field: 'option',
+                header: 'Property Name',
+                field: 'property',
                 type: 'value',
                 width: 'flex',
                 priority: 1
@@ -613,7 +702,7 @@ export const vocabularyCommand = new Command('vocabulary')
   )
   .addCommand(
     new Command('config-update')
-      .description('Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.')
+      .description('[DEPRECATED: Use `kg vocab config <property> <value>` instead] Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.')
       .option('--min <n>', 'Minimum vocabulary size (e.g., 30)', parseInt)
       .option('--max <n>', 'Maximum vocabulary size (e.g., 225-275)', parseInt)
       .option('--emergency <n>', 'Emergency threshold (e.g., 300-400)', parseInt)
@@ -626,6 +715,11 @@ export const vocabularyCommand = new Command('vocabulary')
       .option('--low-value <n>', 'Low value score threshold (0.0-10.0)', parseFloat)
       .option('--consolidation-threshold <n>', 'Auto-merge threshold (0.5-1.0)', parseFloat)
       .action(async (options) => {
+        // Deprecation warning
+        console.log(colors.status.warning('\n⚠️  DEPRECATED: config-update will be removed in a future version.'));
+        console.log(colors.status.dim('    Use: kg vocab config <property> <value>'));
+        console.log(colors.status.dim('    Example: kg vocab config vocab_max 275 vocab_emergency 350\n'));
+
         try {
           const client = createClientFromEnv();
 
