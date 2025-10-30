@@ -86,3 +86,17 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
   },
   layout: 'force',
 };
+
+// Slider range configurations for 3D graph
+// 3D uses tighter nodeSize range due to volume-based sizing (radius³)
+export const SLIDER_RANGES = {
+  physics: {
+    charge: { min: -1000, max: -100, step: 50 },
+    linkDistance: { min: 10, max: 200, step: 10 },
+    gravity: { min: 0, max: 1, step: 0.05 },
+  },
+  visual: {
+    nodeSize: { min: 0.1, max: 1.5, step: 0.05 },  // Tighter range for 3D volume scaling
+    linkWidth: { min: 0.5, max: 5, step: 0.1 },
+  },
+};

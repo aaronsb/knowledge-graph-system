@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { ForceGraph2DSettings } from './types';
+import { SLIDER_RANGES } from './types';
 
 interface CanvasSettingsPanelProps {
   settings: ForceGraph2DSettings;
@@ -93,9 +94,9 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
                     </label>
                     <input
                       type="range"
-                      min="-1000"
-                      max="-100"
-                      step="50"
+                      min={SLIDER_RANGES.physics.charge.min}
+                      max={SLIDER_RANGES.physics.charge.max}
+                      step={SLIDER_RANGES.physics.charge.step}
                       value={settings.physics.charge}
                       onChange={(e) => updatePhysics('charge', parseInt(e.target.value))}
                       className="w-full"
@@ -108,9 +109,9 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
                     </label>
                     <input
                       type="range"
-                      min="10"
-                      max="200"
-                      step="10"
+                      min={SLIDER_RANGES.physics.linkDistance.min}
+                      max={SLIDER_RANGES.physics.linkDistance.max}
+                      step={SLIDER_RANGES.physics.linkDistance.step}
                       value={settings.physics.linkDistance}
                       onChange={(e) => updatePhysics('linkDistance', parseInt(e.target.value))}
                       className="w-full"
@@ -123,9 +124,9 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
                     </label>
                     <input
                       type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
+                      min={SLIDER_RANGES.physics.gravity.min}
+                      max={SLIDER_RANGES.physics.gravity.max}
+                      step={SLIDER_RANGES.physics.gravity.step}
                       value={settings.physics.gravity}
                       onChange={(e) => updatePhysics('gravity', parseFloat(e.target.value))}
                       className="w-full"
@@ -224,9 +225,9 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
                 </label>
                 <input
                   type="range"
-                  min="0.5"
-                  max="3"
-                  step="0.1"
+                  min={SLIDER_RANGES.visual.nodeSize.min}
+                  max={SLIDER_RANGES.visual.nodeSize.max}
+                  step={SLIDER_RANGES.visual.nodeSize.step}
                   value={settings.visual.nodeSize}
                   onChange={(e) => updateVisual('nodeSize', parseFloat(e.target.value))}
                   className="w-full"
@@ -239,9 +240,9 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
                 </label>
                 <input
                   type="range"
-                  min="0.5"
-                  max="5"
-                  step="0.1"
+                  min={SLIDER_RANGES.visual.linkWidth.min}
+                  max={SLIDER_RANGES.visual.linkWidth.max}
+                  step={SLIDER_RANGES.visual.linkWidth.step}
                   value={settings.visual.linkWidth}
                   onChange={(e) => updateVisual('linkWidth', parseFloat(e.target.value))}
                   className="w-full"

@@ -86,3 +86,16 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
   },
   layout: 'force',
 };
+
+// Slider range configurations for 2D graph
+export const SLIDER_RANGES = {
+  physics: {
+    charge: { min: -1000, max: -100, step: 50 },
+    linkDistance: { min: 10, max: 200, step: 10 },
+    gravity: { min: 0, max: 1, step: 0.05 },
+  },
+  visual: {
+    nodeSize: { min: 0.5, max: 3, step: 0.1 },
+    linkWidth: { min: 0.5, max: 5, step: 0.1 },
+  },
+};
