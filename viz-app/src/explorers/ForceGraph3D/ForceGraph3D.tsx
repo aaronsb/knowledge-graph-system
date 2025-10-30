@@ -11,15 +11,24 @@ import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
-import { ArrowRight, Plus } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DSettings, ForceGraph3DData } from './types';
-import { getNeighbors } from '../../utils/graphTransform';
+import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { useVocabularyStore } from '../../store/vocabularyStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { NodeInfoBox, EdgeInfoBox, StatsPanel, Settings3DPanel, GraphSettingsPanel, Legend, PanelStack } from '../common';
+import {
+  NodeInfoBox,
+  EdgeInfoBox,
+  StatsPanel,
+  Settings3DPanel,
+  GraphSettingsPanel,
+  Legend,
+  PanelStack,
+  useGraphNavigation,
+  buildNodeContextMenuItems,
+} from '../common';
 import { SLIDER_RANGES } from './types';
 
 export const ForceGraph3D: React.FC<
@@ -734,6 +743,205 @@ export const ForceGraph3D: React.FC<
     };
   }, [settings.camera?.autoLevel, settings.camera?.orientLabels, calculateTargetCameraRotations]);
 
+  // Helper: Merge new graph data with existing (deduplicate nodes/links)
+  const mergeGraphData = useCallback((newData: any) => {
+    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
+      return newData;
+    }
+
+    const existingNodesMap = new Map(
+      graphData.nodes.map((n: any) => [n.id, n])
+    );
+
+    const mergedNodes: any[] = [...graphData.nodes];
+
+    // Add new nodes near center of existing graph
+    newData.nodes.forEach((node: any) => {
+      if (!existingNodesMap.has(node.id)) {
+        const existingPositions = graphData.nodes
+          .filter((n: any) => n.x !== undefined && n.y !== undefined && n.z !== undefined)
+          .map((n: any) => ({ x: n.x, y: n.y, z: n.z }));
+
+        if (existingPositions.length > 0) {
+          const centerX = existingPositions.reduce((sum, p) => sum + p.x, 0) / existingPositions.length;
+          const centerY = existingPositions.reduce((sum, p) => sum + p.y, 0) / existingPositions.length;
+          const centerZ = existingPositions.reduce((sum, p) => sum + p.z, 0) / existingPositions.length;
+
+          node.x = centerX + (Math.random() - 0.5) * 50;
+          node.y = centerY + (Math.random() - 0.5) * 50;
+          node.z = centerZ + (Math.random() - 0.5) * 50;
+        }
+
+        mergedNodes.push(node);
+      }
+    });
+
+    // Merge links (deduplicate)
+    const existingLinks = graphData.links || [];
+    const existingLinkKeys = new Set(
+      existingLinks.map((l: any) => {
+        const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+        const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+        return `${sourceId}->${targetId}:${l.type}`;
+      })
+    );
+    const mergedLinks = [...existingLinks];
+
+    newData.links.forEach((link: any) => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      const key = `${sourceId}->${targetId}:${link.type}`;
+      if (!existingLinkKeys.has(key)) {
+        mergedLinks.push(link);
+      }
+    });
+
+    return { nodes: mergedNodes, links: mergedLinks };
+  }, [graphData]);
+
+  // Use common graph navigation hook
+  const { handleFollowConcept, handleAddToGraph } = useGraphNavigation(mergeGraphData);
+
+  // Pin/Unpin node functionality for 3D
+  const isPinned = useCallback((nodeId: string): boolean => {
+    const node = data.nodes.find(n => n.id === nodeId);
+    return node?.fx !== undefined && node?.fx !== null;
+  }, [data.nodes]);
+
+  const togglePinNode = useCallback((nodeId: string) => {
+    if (!fgRef.current) return;
+
+    const node = data.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    if (node.fx !== undefined && node.fx !== null) {
+      // Unpin: remove fixed position
+      node.fx = undefined;
+      node.fy = undefined;
+      node.fz = undefined;
+    } else {
+      // Pin: set fixed position to current position
+      node.fx = node.x;
+      node.fy = node.y;
+      node.fz = node.z;
+    }
+
+    // Refresh graph to apply changes
+    fgRef.current.refresh();
+  }, [data.nodes]);
+
+  const unpinAllNodes = useCallback(() => {
+    if (!fgRef.current) return;
+
+    data.nodes.forEach(node => {
+      node.fx = undefined;
+      node.fy = undefined;
+      node.fz = undefined;
+    });
+
+    // Refresh graph to apply changes
+    fgRef.current.refresh();
+  }, [data.nodes]);
+
+  // Origin node marker with ring sprite
+  const applyOriginRing = useCallback((nodeId: string) => {
+    if (!fgRef.current || !settings.interaction.showOriginNode) return;
+
+    const scene = fgRef.current.scene();
+
+    // Remove existing ring
+    const existingRing = scene.getObjectByName('origin-ring');
+    if (existingRing) scene.remove(existingRing);
+
+    // Find the target node
+    const targetNode = data.nodes.find(n => n.id === nodeId);
+    if (!targetNode) return;
+
+    // Create ring texture with transparency
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d')!;
+
+    // Draw gold ring
+    ctx.strokeStyle = '#FFD700';  // Gold color
+    ctx.lineWidth = 8;
+    ctx.globalAlpha = 0.8;
+    ctx.beginPath();
+    ctx.arc(64, 64, 50, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner glow
+    ctx.strokeStyle = '#FFF8DC';
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.arc(64, 64, 46, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 1,
+      depthTest: false,  // Always visible
+    });
+
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.name = 'origin-ring';
+
+    // Calculate node radius
+    const calcRadius = (node: any) => {
+      const baseSize = node.size || 10;
+      const sizeMultiplier = settings.visual?.nodeSize ?? 1;
+      const radius = baseSize * sizeMultiplier;
+      const volume = Math.pow(radius, 3);
+      return Math.cbrt(volume);
+    };
+
+    const nodeRadius = calcRadius(targetNode);
+    sprite.scale.set(nodeRadius * 3, nodeRadius * 3, 1);  // 3x node size
+    sprite.position.set(targetNode.x || 0, targetNode.y || 0, targetNode.z || 0);
+
+    scene.add(sprite);
+
+    // Animate pulsing effect
+    let frame = 0;
+    const animate = () => {
+      if (!sprite.parent) return;  // Stop if removed from scene
+
+      frame++;
+      const scale = nodeRadius * 3 + Math.sin(frame * 0.05) * nodeRadius * 0.3;
+      sprite.scale.set(scale, scale, 1);
+      sprite.material.opacity = 0.7 + Math.sin(frame * 0.05) * 0.3;
+
+      // Update position to follow node
+      const node = data.nodes.find(n => n.id === nodeId);
+      if (node) {
+        sprite.position.set(node.x || 0, node.y || 0, node.z || 0);
+      }
+
+      requestAnimationFrame(animate);
+    };
+    animate();
+  }, [data.nodes, settings.visual?.nodeSize, settings.interaction.showOriginNode]);
+
+  // Apply origin ring when originNodeId changes
+  useEffect(() => {
+    if (!fgRef.current) return;
+
+    const scene = fgRef.current.scene();
+
+    if (originNodeId && settings.interaction.showOriginNode) {
+      // Apply ring to new origin node
+      applyOriginRing(originNodeId);
+    } else {
+      // Remove ring if no origin node
+      const existingRing = scene.getObjectByName('origin-ring');
+      if (existingRing) scene.remove(existingRing);
+    }
+  }, [originNodeId, settings.interaction.showOriginNode, applyOriginRing]);
+
   // Dismiss node info box
   const handleDismissNodeInfo = useCallback((nodeId: string) => {
     setActiveNodeInfos(prev => prev.filter(info => info.nodeId !== nodeId));
@@ -744,26 +952,22 @@ export const ForceGraph3D: React.FC<
     setActiveEdgeInfos(prev => prev.filter(info => info.linkKey !== linkKey));
   }, []);
 
-  // Context menu items
+  // Build context menu items using common builder
   const contextMenuItems: ContextMenuItem[] = contextMenu
-    ? [
+    ? buildNodeContextMenuItems(
+        { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel },
         {
-          label: `Follow "${contextMenu.nodeLabel}"`,
-          icon: ArrowRight,
-          onClick: () => {
-            setFocusedNodeId(contextMenu.nodeId);
-            setContextMenu(null);
-          },
+          handleFollowConcept,
+          handleAddToGraph,
+          setOriginNode: setOriginNodeId,
+          isPinned,
+          togglePinNode,
+          unpinAllNodes,
+          applyOriginMarker: applyOriginRing,
         },
-        {
-          label: `Add "${contextMenu.nodeLabel}" to Graph`,
-          icon: Plus,
-          onClick: () => {
-            // Add concept to graph
-            setContextMenu(null);
-          },
-        },
-      ]
+        { onClose: () => setContextMenu(null) },
+        originNodeId
+      )
     : [];
 
   return (
