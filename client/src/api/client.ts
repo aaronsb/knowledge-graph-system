@@ -55,6 +55,7 @@ import {
 export class KnowledgeGraphClient {
   private client: AxiosInstance;
   private config: ApiConfig;
+  private mcpJwtToken: string | null = null;  // JWT token for MCP server authentication
 
   constructor(config: ApiConfig) {
     this.config = config;
@@ -68,7 +69,13 @@ export class KnowledgeGraphClient {
 
     // ADR-027: Add request interceptor for JWT authentication
     this.client.interceptors.request.use((requestConfig) => {
-      // Try to get JWT token from config (via ConfigManager)
+      // Priority 1: Use MCP JWT token if set (for MCP server)
+      if (this.mcpJwtToken) {
+        requestConfig.headers.Authorization = `Bearer ${this.mcpJwtToken}`;
+        return requestConfig;
+      }
+
+      // Priority 2: Try to get JWT token from config (via ConfigManager for CLI)
       try {
         const { getConfig } = require('../lib/config');
         const configManager = getConfig();
@@ -109,6 +116,18 @@ export class KnowledgeGraphClient {
         return Promise.reject(error);
       }
     );
+  }
+
+  /**
+   * Set JWT token for MCP server authentication
+   *
+   * This allows the MCP server to inject a JWT token obtained via automatic login,
+   * making authentication transparent to the AI using the MCP tools.
+   *
+   * @param token JWT access token from login response
+   */
+  setMcpJwtToken(token: string | null): void {
+    this.mcpJwtToken = token;
   }
 
   /**
