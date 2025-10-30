@@ -33,11 +33,7 @@ export const ForceGraph3DExplorer: ExplorerPlugin<ForceGraph3DData, ForceGraph3D
   settingsPanel: ProfilePanel,
 
   dataTransformer: (apiData) => {
-    // API data already transformed by hooks, but allow for custom transformation
-    if (apiData.nodes && apiData.links) {
-      return apiData as ForceGraph3DData;
-    }
-    // Fallback transformation
+    // Always transform to ensure node.size and node.color are calculated
     return transformForD3(apiData.nodes || [], apiData.links || []);
   },
 

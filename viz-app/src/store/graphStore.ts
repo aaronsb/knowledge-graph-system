@@ -54,7 +54,11 @@ interface GraphStore {
   selectedExplorer: VisualizationType;
   setSelectedExplorer: (type: VisualizationType) => void;
 
-  // Graph data
+  // Graph data (raw API format - cached to avoid re-fetching)
+  rawGraphData: { nodes: any[]; links: any[] } | null;
+  setRawGraphData: (data: { nodes: any[]; links: any[] } | null) => void;
+
+  // Graph data (transformed for current explorer)
   graphData: GraphData | null;
   setGraphData: (data: GraphData | null) => void;
 
@@ -133,7 +137,11 @@ export const useGraphStore = create<GraphStore>((set) => ({
   selectedExplorer: 'force-2d',
   setSelectedExplorer: (type) => set({ selectedExplorer: type }),
 
-  // Graph data
+  // Graph data (raw API data - cached)
+  rawGraphData: null,
+  setRawGraphData: (data) => set({ rawGraphData: data }),
+
+  // Graph data (transformed)
   graphData: null,
   setGraphData: (data) => set({ graphData: data }),
 

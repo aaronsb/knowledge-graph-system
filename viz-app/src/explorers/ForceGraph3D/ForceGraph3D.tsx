@@ -16,9 +16,9 @@ import { useGraphStore } from '../../store/graphStore';
 import { useVocabularyStore } from '../../store/vocabularyStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { apiClient } from '../../api/client';
 import { Legend } from './Legend';
 import { CanvasSettingsPanel } from './CanvasSettingsPanel';
+import { NodeInfoBox, EdgeInfoBox, StatsPanel } from '../common';
 
 export const ForceGraph3D: React.FC<
   ExplorerProps<ForceGraph3DData, ForceGraph3DSettings>
@@ -36,37 +36,70 @@ export const ForceGraph3D: React.FC<
     nodeLabel: string;
   } | null>(null);
 
+  // Track active node info boxes
+  interface NodeInfo {
+    nodeId: string;
+    label: string;
+    group: string;
+    degree: number;
+    x: number;
+    y: number;
+  }
+  const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfo[]>([]);
+
+  // Track active edge info boxes
+  interface EdgeInfo {
+    linkKey: string;
+    sourceId: string;
+    targetId: string;
+    type: string;
+    confidence: number;
+    category?: string;
+    x: number;
+    y: number;
+  }
+  const [activeEdgeInfos, setActiveEdgeInfos] = useState<EdgeInfo[]>([]);
+
   // Get navigation state from store
   const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
-  // Calculate node colors
+  // Calculate node colors (match 2D implementation)
   const nodeColors = useMemo(() => {
     const colors = new Map<string, string>();
-    data.nodes.forEach((node) => {
-      let color = '#888';
 
-      switch (settings.visual.nodeColorBy) {
-        case 'ontology':
-          // Use d3-scale-chromatic colors based on ontology hash
-          const ontologyHash = node.group?.split('').reduce((acc, char) =>
-            char.charCodeAt(0) + ((acc << 5) - acc), 0) || 0;
-          const hue = Math.abs(ontologyHash % 360);
-          color = `hsl(${hue}, 70%, 50%)`;
-          break;
-        case 'degree':
-          const degree = node.degree || 1;
-          const degreeNormalized = Math.min(degree / 20, 1);
-          color = `hsl(${220 + degreeNormalized * 120}, 70%, 50%)`;
-          break;
-        case 'centrality':
-          color = `hsl(${(node.centrality || 0) * 180}, 70%, 50%)`;
-          break;
-      }
+    if (settings.visual.nodeColorBy === 'ontology') {
+      // Use pre-computed colors from transformForD3
+      data.nodes.forEach(node => {
+        colors.set(node.id, node.color);
+      });
+    } else if (settings.visual.nodeColorBy === 'degree') {
+      // Color by degree (number of connections)
+      const degrees = new Map<string, number>();
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
+        degrees.set(targetId, (degrees.get(targetId) || 0) + 1);
+      });
 
-      colors.set(node.id, color);
-    });
+      const maxDegree = Math.max(...Array.from(degrees.values()), 1);
+      data.nodes.forEach(node => {
+        const degree = degrees.get(node.id) || 0;
+        const normalized = degree / maxDegree;
+        const hue = 220 + normalized * 120; // Blue to green
+        colors.set(node.id, `hsl(${hue}, 70%, 50%)`);
+      });
+    } else if (settings.visual.nodeColorBy === 'centrality') {
+      // Color by centrality
+      data.nodes.forEach(node => {
+        const centrality = node.centrality || 0;
+        const hue = centrality * 180;
+        colors.set(node.id, `hsl(${hue}, 70%, 50%)`);
+      });
+    }
+
     return colors;
-  }, [data.nodes, settings.visual.nodeColorBy]);
+  }, [data.nodes, data.links, settings.visual.nodeColorBy]);
 
   // Calculate link colors
   const linkColors = useMemo(() => {
@@ -156,6 +189,99 @@ export const ForceGraph3D: React.FC<
     };
   }, [settings.visual.showGrid]);
 
+  // Project 3D world coordinates to 2D screen coordinates
+  const projectToScreen = useCallback((x: number, y: number, z: number): { x: number; y: number } | null => {
+    if (!fgRef.current) return null;
+
+    const camera = fgRef.current.camera();
+    const renderer = fgRef.current.renderer();
+
+    if (!camera || !renderer) return null;
+
+    // Create a 3D vector at the node's position
+    const vec = new THREE.Vector3(x, y, z);
+
+    // Project to screen space
+    vec.project(camera);
+
+    // Convert normalized device coordinates (-1 to +1) to screen pixels
+    const canvas = renderer.domElement;
+    const screenX = (vec.x * 0.5 + 0.5) * canvas.width;
+    const screenY = (-(vec.y * 0.5) + 0.5) * canvas.height;
+
+    return { x: screenX, y: screenY };
+  }, []);
+
+  // Update info box positions when camera moves or simulation updates
+  useEffect(() => {
+    if (!fgRef.current) return;
+
+    const updateInfoBoxPositions = () => {
+      // Update node info boxes
+      setActiveNodeInfos(prevInfos =>
+        prevInfos.map(info => {
+          const node = data.nodes.find(n => n.id === info.nodeId);
+          if (!node || node.x === undefined || node.y === undefined || node.z === undefined) {
+            return info;
+          }
+
+          const screenPos = projectToScreen(node.x, node.y, node.z);
+          if (!screenPos) return info;
+
+          return { ...info, x: screenPos.x, y: screenPos.y };
+        })
+      );
+
+      // Update edge info boxes
+      setActiveEdgeInfos(prevInfos =>
+        prevInfos.map(info => {
+          const link = data.links.find(l => {
+            const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+            const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+            return `${sourceId}->${targetId}-${l.type}` === info.linkKey;
+          });
+
+          if (!link) return info;
+
+          // Get source and target positions
+          const sourceNode = typeof link.source === 'object' ? link.source : data.nodes.find(n => n.id === link.source);
+          const targetNode = typeof link.target === 'object' ? link.target : data.nodes.find(n => n.id === link.target);
+
+          if (!sourceNode || !targetNode ||
+              sourceNode.x === undefined || sourceNode.y === undefined || sourceNode.z === undefined ||
+              targetNode.x === undefined || targetNode.y === undefined || targetNode.z === undefined) {
+            return info;
+          }
+
+          // Calculate midpoint in 3D space
+          const midX = (sourceNode.x + targetNode.x) / 2;
+          const midY = (sourceNode.y + targetNode.y) / 2;
+          const midZ = (sourceNode.z + targetNode.z) / 2;
+
+          const screenPos = projectToScreen(midX, midY, midZ);
+          if (!screenPos) return info;
+
+          return { ...info, x: screenPos.x, y: screenPos.y };
+        })
+      );
+    };
+
+    // Update positions on animation frame
+    const intervalId = setInterval(updateInfoBoxPositions, 100); // Update every 100ms
+
+    return () => clearInterval(intervalId);
+  }, [data.nodes, data.links, projectToScreen, activeNodeInfos.length, activeEdgeInfos.length]);
+
+  // Dismiss node info box
+  const handleDismissNodeInfo = useCallback((nodeId: string) => {
+    setActiveNodeInfos(prev => prev.filter(info => info.nodeId !== nodeId));
+  }, []);
+
+  // Dismiss edge info box
+  const handleDismissEdgeInfo = useCallback((linkKey: string) => {
+    setActiveEdgeInfos(prev => prev.filter(info => info.linkKey !== linkKey));
+  }, []);
+
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? [
@@ -191,7 +317,15 @@ export const ForceGraph3D: React.FC<
         // Node appearance
         nodeLabel={(node: any) => node.label}
         nodeColor={(node: any) => nodeColors.get(node.id) || '#888'}
-        nodeVal={(node: any) => (node.size || 10) * settings.visual.nodeSize}
+        nodeVal={(node: any) => {
+          // Direct scaling to match 2D visual appearance
+          // node.size ranges from 5-30 (already log-scaled in graphTransform.ts)
+          const baseSize = node.size || 10;
+          const sizeMultiplier = settings.visual?.nodeSize ?? 1;
+          const result = baseSize * sizeMultiplier;
+          // Safety check to prevent NaN from breaking THREE.js geometry
+          return isNaN(result) ? 10 : result;
+        }}
         nodeOpacity={0.9}
         nodeResolution={16}  // Sphere detail
 
@@ -219,11 +353,12 @@ export const ForceGraph3D: React.FC<
           return linkColors.get(linkKey) || '#999';
         }}
 
-        // Physics
-        d3AlphaDecay={settings.physics.enabled ? 0.0228 : 1}
-        d3VelocityDecay={settings.physics.friction}
-        warmupTicks={settings.physics.enabled ? 100 : 0}
-        cooldownTicks={settings.physics.enabled ? Infinity : 0}
+        // Physics - always enable simulation, respect settings for forces
+        d3AlphaDecay={0.0228}
+        d3VelocityDecay={settings.physics.enabled ? settings.physics.friction : 0.4}
+        warmupTicks={100}
+        cooldownTicks={Infinity}
+        cooldownTime={settings.physics.enabled ? Infinity : 5000}
 
         // Interaction
         enableNodeDrag={settings.interaction.enableDrag}
@@ -233,9 +368,37 @@ export const ForceGraph3D: React.FC<
         // Events
         onNodeClick={(node: any, event: MouseEvent) => {
           if (event.button === 0) {
-            // Left click
-            setOriginNodeId(node.id);
-            onNodeClick?.(node.id);
+            // Left click - show info box
+            setContextMenu(null); // Close any open context menu
+
+            // Use functional setState to ensure we have the latest state
+            setActiveNodeInfos(prev => {
+              const exists = prev.some(info => info.nodeId === node.id);
+              if (exists) return prev; // Don't create duplicate
+
+              // Calculate degree (number of connections)
+              const degree = data.links.filter(link => {
+                const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+                const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+                return sourceId === node.id || targetId === node.id;
+              }).length;
+
+              // Project to screen coordinates
+              const screenPos = projectToScreen(node.x || 0, node.y || 0, node.z || 0);
+              if (!screenPos) return prev;
+
+              // Create new node info
+              const newInfo: NodeInfo = {
+                nodeId: node.id,
+                label: node.label,
+                group: node.group || 'Unknown',
+                degree,
+                x: screenPos.x,
+                y: screenPos.y,
+              };
+
+              return [...prev, newInfo];
+            });
           }
         }}
         onNodeRightClick={(node: any, event: MouseEvent) => {
@@ -250,25 +413,66 @@ export const ForceGraph3D: React.FC<
         onNodeHover={(node: any) => {
           setHoveredNode(node ? node.id : null);
         }}
+        onLinkClick={(link: any, event: MouseEvent) => {
+          if (event.button === 0) {
+            // Left click - show edge info box
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            const linkKey = `${sourceId}->${targetId}-${link.type}`;
+
+            setActiveEdgeInfos(prev => {
+              const exists = prev.some(info => info.linkKey === linkKey);
+              if (exists) return prev; // Don't create duplicate
+
+              // Get source and target positions for midpoint calculation
+              const sourceNode = typeof link.source === 'object' ? link.source : data.nodes.find(n => n.id === link.source);
+              const targetNode = typeof link.target === 'object' ? link.target : data.nodes.find(n => n.id === link.target);
+
+              if (!sourceNode || !targetNode ||
+                  sourceNode.x === undefined || sourceNode.y === undefined || sourceNode.z === undefined ||
+                  targetNode.x === undefined || targetNode.y === undefined || targetNode.z === undefined) {
+                return prev;
+              }
+
+              // Calculate midpoint in 3D space
+              const midX = (sourceNode.x + targetNode.x) / 2;
+              const midY = (sourceNode.y + targetNode.y) / 2;
+              const midZ = (sourceNode.z + targetNode.z) / 2;
+
+              // Project to screen coordinates
+              const screenPos = projectToScreen(midX, midY, midZ);
+              if (!screenPos) return prev;
+
+              // Get category from vocabulary
+              const vocabStore = useVocabularyStore.getState();
+              const category = vocabStore.getCategory(link.type);
+
+              // Create new edge info
+              const newInfo: EdgeInfo = {
+                linkKey,
+                sourceId,
+                targetId,
+                type: link.type,
+                confidence: link.value || 1.0,
+                category,
+                x: screenPos.x,
+                y: screenPos.y,
+              };
+
+              return [...prev, newInfo];
+            });
+          }
+        }}
         onBackgroundClick={() => {
           setContextMenu(null);
         }}
       />
 
       {/* Stats Panel */}
-      <div className="absolute top-4 right-4 bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl px-3 py-2 text-sm z-10">
-        <div className="text-gray-200">
-          {data.nodes.length} nodes • {data.links.length} edges
-        </div>
-      </div>
+      <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
 
       {/* Legend */}
-      <Legend
-        nodeColors={nodeColors}
-        linkColors={linkColors}
-        data={data}
-        settings={settings}
-      />
+      <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
 
       {/* Canvas Settings Panel */}
       {onSettingsChange && (
@@ -287,6 +491,28 @@ export const ForceGraph3D: React.FC<
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* Node Info Boxes */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10000 }}>
+        {activeNodeInfos.map(info => (
+          <NodeInfoBox
+            key={info.nodeId}
+            info={info}
+            onDismiss={() => handleDismissNodeInfo(info.nodeId)}
+          />
+        ))}
+      </div>
+
+      {/* Edge Info Boxes */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10000 }}>
+        {activeEdgeInfos.map(info => (
+          <EdgeInfoBox
+            key={info.linkKey}
+            info={info}
+            onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
+          />
+        ))}
+      </div>
     </div>
   );
 };

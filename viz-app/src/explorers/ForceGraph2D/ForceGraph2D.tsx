@@ -7,390 +7,18 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff, Circle, Grid3x3, EyeOff } from 'lucide-react';
+import { ArrowRight, Plus, MapPin, MapPinOff, Pin, PinOff, Circle, Grid3x3, EyeOff } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
-import { useVocabularyStore } from '../../store/vocabularyStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
 import { Legend } from './Legend';
 import { CanvasSettingsPanel } from './CanvasSettingsPanel';
-
-/**
- * Format grounding strength with emoji indicator (matches CLI format)
- */
-function formatGrounding(grounding: number | undefined | null): { emoji: string; label: string; percentage: string; color: string } | null {
-  if (grounding === undefined || grounding === null) return null;
-
-  const percentage = (grounding * 100).toFixed(0);
-
-  // Color mapping: green (100%) → yellow (50%) → red (0% or negative)
-  let color: string;
-  if (grounding >= 0.8) {
-    color = '#22c55e'; // green
-  } else if (grounding >= 0.6) {
-    color = '#84cc16'; // lime
-  } else if (grounding >= 0.4) {
-    color = '#eab308'; // yellow
-  } else if (grounding >= 0.2) {
-    color = '#f59e0b'; // amber
-  } else if (grounding >= 0.0) {
-    color = '#f97316'; // orange
-  } else if (grounding >= -0.4) {
-    color = '#ef4444'; // red
-  } else {
-    color = '#dc2626'; // deep red
-  }
-
-  if (grounding >= 0.8) {
-    return { emoji: '✓', label: 'Strong', percentage: `${percentage}%`, color };
-  } else if (grounding >= 0.4) {
-    return { emoji: '⚡', label: 'Moderate', percentage: `${percentage}%`, color };
-  } else if (grounding >= 0.0) {
-    return { emoji: '◯', label: 'Weak', percentage: `${percentage}%`, color };
-  } else if (grounding >= -0.4) {
-    return { emoji: '◯', label: 'Contested', percentage: `${percentage}%`, color };
-  } else {
-    return { emoji: '✗', label: 'Contradicted', percentage: `${percentage}%`, color };
-  }
-}
-
-/**
- * Get brighter color for relationship type text
- * Uses same category colors as edges but +40% brightness
- */
-function getRelationshipTextColor(relationshipType: string): string {
-  // Get category from vocabulary store
-  const vocabStore = useVocabularyStore.getState();
-  const category = vocabStore.getCategory(relationshipType) || 'default';
-
-  // Get base color from shared config
-  const baseColor = getCategoryColor(category);
-  return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
-}
-
-/**
- * Node Info Box - Speech bubble style info display for nodes with collapsible sections
- */
-interface NodeInfoBoxProps {
-  info: {
-    nodeId: string;
-    label: string;
-    group: string;
-    degree: number;
-    x: number;
-    y: number;
-  };
-  zoomTransform: { x: number; y: number; k: number };
-  onDismiss: () => void;
-}
-
-const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
-  const [detailedData, setDetailedData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  // Fetch detailed node data on mount
-  useEffect(() => {
-    const fetchDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await apiClient.getConceptDetails(info.nodeId);
-        setDetailedData(response);
-      } catch (error) {
-        console.error('Failed to fetch node details:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDetails();
-  }, [info.nodeId]);
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(section)) {
-        newSet.delete(section);
-      } else {
-        newSet.add(section);
-      }
-      return newSet;
-    });
-  };
-
-  // Apply zoom transform to graph coordinates
-  const screenX = info.x * zoomTransform.k + zoomTransform.x;
-  const screenY = info.y * zoomTransform.k + zoomTransform.y;
-
-  return (
-    <div
-      className="absolute pointer-events-auto"
-      style={{
-        left: `${screenX}px`,
-        top: `${screenY}px`,
-        transform: 'translate(-50%, calc(-100% - 20px))', // Position above node with offset
-        zIndex: 9999, // Ensure info box draws on top of everything
-      }}
-    >
-      <div className="relative">
-        {/* Speech bubble pointer - always dark */}
-        <div
-          className="absolute left-1/2 bottom-0 w-0 h-0"
-          style={{
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
-            transform: 'translateX(-50%) translateY(100%)',
-          }}
-        />
-
-        {/* Info box content - always dark theme */}
-        <div
-          className="bg-gray-800 rounded-lg border border-gray-600 cursor-pointer transition-shadow"
-          style={{
-            minWidth: '280px',
-            maxWidth: '400px',
-            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
-          }}
-        >
-          {/* Header - always visible */}
-          <div
-            className="px-4 py-3 border-b border-gray-700"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDismiss();
-            }}
-          >
-            <div className="font-semibold text-gray-100 text-base">
-              {info.label}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">
-              Click to dismiss
-            </div>
-          </div>
-
-          {/* Collapsible sections */}
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-            {/* Overview Section */}
-            <div className="border-b border-gray-700">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleSection('overview');
-                }}
-                className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
-              >
-                <span className="font-medium text-sm text-gray-300">Overview</span>
-                {expandedSections.has('overview') ? (
-                  <ChevronDown size={16} className="text-gray-500" />
-                ) : (
-                  <ChevronRight size={16} className="text-gray-500" />
-                )}
-              </button>
-              {expandedSections.has('overview') && (
-                <div className="px-4 py-3 space-y-2 text-sm bg-gray-750">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Ontology:</span>
-                    <span className="font-medium text-gray-100">{info.group}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Connections:</span>
-                    <span className="font-medium text-gray-100">{info.degree}</span>
-                  </div>
-                  {detailedData?.grounding_strength !== undefined && detailedData?.grounding_strength !== null && (() => {
-                    const grounding = formatGrounding(detailedData.grounding_strength);
-                    return grounding && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Grounding:</span>
-                        <span className="font-medium" style={{ color: grounding.color }}>
-                          {grounding.emoji} {grounding.label} ({grounding.percentage})
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Relationships Section */}
-            {detailedData?.relationships && (
-              <div className="border-b border-gray-700">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSection('relationships');
-                  }}
-                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
-                >
-                  <span className="font-medium text-sm text-gray-300">
-                    Relationships ({detailedData.relationships.length})
-                  </span>
-                  {expandedSections.has('relationships') ? (
-                    <ChevronDown size={16} className="text-gray-500" />
-                  ) : (
-                    <ChevronRight size={16} className="text-gray-500" />
-                  )}
-                </button>
-                {expandedSections.has('relationships') && (
-                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
-                    {detailedData.relationships.slice(0, 20).map((rel: any, idx: number) => {
-                      const relType = rel.rel_type || rel.type;
-                      const color = getRelationshipTextColor(relType);
-                      return (
-                        <div key={`${rel.to_id || rel.target_id}-${relType}-${idx}`} className="text-gray-300">
-                          <span className="font-medium" style={{ color }}>{relType}</span> → {rel.to_label || rel.target_label || rel.to_id}
-                        </div>
-                      );
-                    })}
-                    {detailedData.relationships.length > 20 && (
-                      <div className="text-gray-500 italic">
-                        +{detailedData.relationships.length - 20} more
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Evidence Section */}
-            {detailedData?.instances && (
-              <div className="border-b border-gray-700">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSection('evidence');
-                  }}
-                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
-                >
-                  <span className="font-medium text-sm text-gray-300">
-                    Evidence ({detailedData.instances.length})
-                  </span>
-                  {expandedSections.has('evidence') ? (
-                    <ChevronDown size={16} className="text-gray-500" />
-                  ) : (
-                    <ChevronRight size={16} className="text-gray-500" />
-                  )}
-                </button>
-                {expandedSections.has('evidence') && (
-                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
-                    {detailedData.instances.slice(0, 10).map((instance: any, idx: number) => (
-                      <div key={`${instance.instance_id || instance.id || idx}-${instance.quote?.substring(0, 20) || ''}`} className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
-                        "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
-                      </div>
-                    ))}
-                    {detailedData.instances.length > 10 && (
-                      <div className="text-gray-500 italic">
-                        +{detailedData.instances.length - 10} more
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {loading && (
-              <div className="px-4 py-3 text-center text-sm text-gray-400">
-                Loading details...
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * Edge Info Box - Speech bubble style info display for edges
- */
-interface EdgeInfoBoxProps {
-  info: {
-    linkKey: string;
-    sourceId: string;
-    targetId: string;
-    type: string;
-    confidence: number;
-    category?: string;
-    x: number;
-    y: number;
-  };
-  zoomTransform: { x: number; y: number; k: number };
-  onDismiss: () => void;
-}
-
-const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
-  // Apply zoom transform to graph coordinates
-  const screenX = info.x * zoomTransform.k + zoomTransform.x;
-  const screenY = info.y * zoomTransform.k + zoomTransform.y;
-
-  return (
-    <div
-      className="absolute pointer-events-auto"
-      style={{
-        left: `${screenX}px`,
-        top: `${screenY}px`,
-        transform: 'translate(-50%, -100%)', // Position above the edge midpoint
-        zIndex: 9999, // Ensure info box draws on top of everything
-      }}
-    >
-      {/* Speech bubble pointer - always dark */}
-      <div className="relative">
-        <div
-          className="absolute left-1/2 bottom-0 w-0 h-0"
-          style={{
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
-            transform: 'translateX(-50%) translateY(100%)',
-          }}
-        />
-        {/* Info box content - always dark theme */}
-        <div
-          className="bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 cursor-pointer transition-shadow"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDismiss();
-          }}
-          style={{
-            minWidth: '200px',
-            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
-          }}
-        >
-          <div className="space-y-2 text-sm">
-            <div className="font-semibold text-gray-100 border-b border-gray-700 pb-2">
-              Edge Information
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Type:</span>
-                <span className="font-medium text-gray-100">{info.type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Confidence:</span>
-                <span className="font-medium text-gray-100">
-                  {(info.confidence * 100).toFixed(1)}%
-                </span>
-              </div>
-              {info.category && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Category:</span>
-                  <span className="font-medium text-gray-100">{info.category}</span>
-                </div>
-              )}
-              <div className="text-xs text-gray-400 pt-2 border-t border-gray-700">
-                Click to dismiss
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { NodeInfoBox, EdgeInfoBox, StatsPanel } from '../common';
 
 /**
  * Calculate node position for info boxes
@@ -1875,12 +1503,8 @@ export const ForceGraph2D: React.FC<
       {/* Legend Panel */}
       <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
 
-      {/* Node count indicator */}
-      <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg px-3 py-2 text-sm">
-        <div className="text-gray-600 dark:text-gray-400">
-          {data.nodes.length} nodes • {data.links.length} edges
-        </div>
-      </div>
+      {/* Stats Panel */}
+      <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
 
       {/* Settings Panel */}
       {onSettingsChange && (
@@ -1933,26 +1557,34 @@ export const ForceGraph2D: React.FC<
 
       {/* Edge Info Boxes */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
-        {activeEdgeInfos.map(info => (
-          <EdgeInfoBox
-            key={info.linkKey}
-            info={info}
-            zoomTransform={zoomTransform}
-            onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
-          />
-        ))}
+        {activeEdgeInfos.map(info => {
+          // Apply zoom transform to graph coordinates
+          const screenX = info.x * zoomTransform.k + zoomTransform.x;
+          const screenY = info.y * zoomTransform.k + zoomTransform.y;
+          return (
+            <EdgeInfoBox
+              key={info.linkKey}
+              info={{ ...info, x: screenX, y: screenY }}
+              onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
+            />
+          );
+        })}
       </div>
 
       {/* Node Info Boxes */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
-        {activeNodeInfos.map(info => (
-          <NodeInfoBox
-            key={info.nodeId}
-            info={info}
-            zoomTransform={zoomTransform}
-            onDismiss={() => handleDismissNodeInfo(info.nodeId)}
-          />
-        ))}
+        {activeNodeInfos.map(info => {
+          // Apply zoom transform to graph coordinates
+          const screenX = info.x * zoomTransform.k + zoomTransform.x;
+          const screenY = info.y * zoomTransform.k + zoomTransform.y;
+          return (
+            <NodeInfoBox
+              key={info.nodeId}
+              info={{ ...info, x: screenX, y: screenY }}
+              onDismiss={() => handleDismissNodeInfo(info.nodeId)}
+            />
+          );
+        })}
       </div>
     </div>
   );

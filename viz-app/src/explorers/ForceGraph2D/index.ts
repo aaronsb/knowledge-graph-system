@@ -33,11 +33,7 @@ export const ForceGraph2DExplorer: ExplorerPlugin<ForceGraph2DData, ForceGraph2D
   settingsPanel: ProfilePanel,
 
   dataTransformer: (apiData) => {
-    // API data already transformed by hooks, but allow for custom transformation
-    if (apiData.nodes && apiData.links) {
-      return apiData as ForceGraph2DData;
-    }
-    // Fallback transformation
+    // Always transform raw API data to ensure proper field names (concept_id → id, from_id → source, etc.)
     return transformForD3(apiData.nodes || [], apiData.links || []);
   },
 
