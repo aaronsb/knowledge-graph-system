@@ -106,7 +106,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
 
   return (
     <div
-      className="absolute top-4 left-4 bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl z-10 flex flex-col"
+      className="bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl flex flex-col"
       style={{ width: '240px', maxHeight: '95vh' }}
     >
       {/* Content */}

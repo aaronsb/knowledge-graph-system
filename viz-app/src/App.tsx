@@ -27,7 +27,7 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
-  const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData, queryMode, blockBuilderExpanded } = useGraphStore();
+  const { selectedExplorer, searchParams, graphData: storeGraphData, rawGraphData, setGraphData, setRawGraphData, queryMode, blockBuilderExpanded } = useGraphStore();
   const { setTypes, setLoading, setError } = useVocabularyStore();
 
   // Load vocabulary on mount
@@ -197,9 +197,8 @@ const AppContent: React.FC = () => {
           });
         });
 
-        // Transform to D3 format
-        const { transformForD3 } = await import('./utils/graphTransform');
-        const enrichedData = transformForD3(Array.from(allNodes.values()), allLinks);
+        // Return raw API data (transformation happens in explorer-specific dataTransformer)
+        const enrichedData = { nodes: Array.from(allNodes.values()), links: allLinks };
         setEnrichedPathData(enrichedData);
       } catch (error) {
         console.error('Failed to enrich path:', error);
@@ -212,40 +211,37 @@ const AppContent: React.FC = () => {
     enrichPath();
   }, [searchParams.mode, searchParams.fromConceptId, searchParams.toConceptId, searchParams.maxHops, searchParams.depth]);
 
-  // Update graphData when query results come back
+  // Update rawGraphData when query results come back (cache API data)
   useEffect(() => {
     const newData = conceptData || neighborhoodData || pathData || enrichedPathData;
     if (!newData) return;
 
     if (searchParams.loadMode === 'clean') {
-      setGraphData(newData);
+      // Clear old transformed data immediately to prevent stale data being displayed
+      setGraphData(null);
+      // Store raw data (transformation happens in separate useEffect)
+      setRawGraphData({ nodes: newData.nodes || [], links: newData.links || [] });
     } else if (searchParams.loadMode === 'add') {
-      // Merge with existing data - get fresh store data to avoid stale closures
-      const currentGraphData = useGraphStore.getState().graphData;
+      // Merge with existing raw data
+      const currentRawData = useGraphStore.getState().rawGraphData;
 
-      if (!currentGraphData || !currentGraphData.nodes || currentGraphData.nodes.length === 0) {
-        setGraphData(newData);
+      if (!currentRawData || !currentRawData.nodes || currentRawData.nodes.length === 0) {
+        setRawGraphData({ nodes: newData.nodes || [], links: newData.links || [] });
       } else {
         // Simple merge - deduplicate by node ID
-        const existingNodeIds = new Set(currentGraphData.nodes.map((n: any) => n.id));
-        const newNodes = newData.nodes.filter((n: any) => !existingNodeIds.has(n.id));
+        const existingNodeIds = new Set(currentRawData.nodes.map((n: any) => n.id || n.concept_id));
+        const newNodes = (newData.nodes || []).filter((n: any) => !existingNodeIds.has(n.id || n.concept_id));
 
         const existingLinkKeys = new Set(
-          currentGraphData.links.map((l: any) => {
-            const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
-            const targetId = typeof l.target === 'string' ? l.target : l.target.id;
-            return `${sourceId}->${targetId}`;
-          })
+          currentRawData.links.map((l: any) => `${l.from_id || l.source}->${l.to_id || l.target}`)
         );
-        const newLinks = newData.links.filter((l: any) => {
-          const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
-          const targetId = typeof l.target === 'string' ? l.target : l.target.id;
-          return !existingLinkKeys.has(`${sourceId}->${targetId}`);
-        });
+        const newLinks = (newData.links || []).filter((l: any) =>
+          !existingLinkKeys.has(`${l.from_id || l.source}->${l.to_id || l.target}`)
+        );
 
-        setGraphData({
-          nodes: [...currentGraphData.nodes, ...newNodes],
-          links: [...currentGraphData.links, ...newLinks],
+        setRawGraphData({
+          nodes: [...currentRawData.nodes, ...newNodes],
+          links: [...currentRawData.links, ...newLinks],
         });
       }
     }
@@ -258,10 +254,31 @@ const AppContent: React.FC = () => {
   // Get the current explorer plugin
   const explorerPlugin = getExplorer(selectedExplorer);
 
+  // Transform rawGraphData using current explorer's dataTransformer
+  useEffect(() => {
+    if (!rawGraphData || !explorerPlugin) {
+      console.log('⏸️ Skipping transform:', { hasRawData: !!rawGraphData, hasPlugin: !!explorerPlugin });
+      return;
+    }
+
+    console.log('🔄 Transforming data for explorer:', selectedExplorer, 'Raw nodes:', rawGraphData.nodes?.length);
+    const transformedData = explorerPlugin.dataTransformer(rawGraphData);
+    console.log('✅ Transformed data:', { nodes: transformedData.nodes?.length, links: transformedData.links?.length });
+    console.log('📊 Sample link:', transformedData.links?.[0]);
+    setGraphData(transformedData);
+  }, [rawGraphData, explorerPlugin, selectedExplorer]); // Re-transform when raw data or explorer changes
+
   // Local settings state for the current explorer
   const [explorerSettings, setExplorerSettings] = useState(
     explorerPlugin?.defaultSettings || {}
   );
+
+  // Update settings when explorer changes
+  useEffect(() => {
+    if (explorerPlugin) {
+      setExplorerSettings(explorerPlugin.defaultSettings);
+    }
+  }, [explorerPlugin, selectedExplorer]);
 
   if (!explorerPlugin) {
     return (

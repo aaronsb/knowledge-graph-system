@@ -94,7 +94,13 @@ class ContentHasher:
         if status == "completed":
             # Check age - allow re-ingestion if > 30 days old
             completed_at = datetime.fromisoformat(existing_job["completed_at"])
-            # Use timezone-aware datetime for comparison (PostgreSQL returns timezone-aware timestamps)
+
+            # Ensure completed_at is timezone-aware (handle both naive and aware datetimes)
+            if completed_at.tzinfo is None:
+                # Assume UTC if timezone-naive
+                completed_at = completed_at.replace(tzinfo=timezone.utc)
+
+            # Use timezone-aware datetime for comparison
             age = datetime.now(timezone.utc) - completed_at
 
             if age > timedelta(days=30):

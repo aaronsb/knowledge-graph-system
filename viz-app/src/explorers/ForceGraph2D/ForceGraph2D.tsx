@@ -7,390 +7,28 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff, Circle, Grid3x3, EyeOff } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
-import { useVocabularyStore } from '../../store/vocabularyStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { apiClient } from '../../api/client';
-import { Legend } from './Legend';
-import { CanvasSettingsPanel } from './CanvasSettingsPanel';
-
-/**
- * Format grounding strength with emoji indicator (matches CLI format)
- */
-function formatGrounding(grounding: number | undefined | null): { emoji: string; label: string; percentage: string; color: string } | null {
-  if (grounding === undefined || grounding === null) return null;
-
-  const percentage = (grounding * 100).toFixed(0);
-
-  // Color mapping: green (100%) → yellow (50%) → red (0% or negative)
-  let color: string;
-  if (grounding >= 0.8) {
-    color = '#22c55e'; // green
-  } else if (grounding >= 0.6) {
-    color = '#84cc16'; // lime
-  } else if (grounding >= 0.4) {
-    color = '#eab308'; // yellow
-  } else if (grounding >= 0.2) {
-    color = '#f59e0b'; // amber
-  } else if (grounding >= 0.0) {
-    color = '#f97316'; // orange
-  } else if (grounding >= -0.4) {
-    color = '#ef4444'; // red
-  } else {
-    color = '#dc2626'; // deep red
-  }
-
-  if (grounding >= 0.8) {
-    return { emoji: '✓', label: 'Strong', percentage: `${percentage}%`, color };
-  } else if (grounding >= 0.4) {
-    return { emoji: '⚡', label: 'Moderate', percentage: `${percentage}%`, color };
-  } else if (grounding >= 0.0) {
-    return { emoji: '◯', label: 'Weak', percentage: `${percentage}%`, color };
-  } else if (grounding >= -0.4) {
-    return { emoji: '◯', label: 'Contested', percentage: `${percentage}%`, color };
-  } else {
-    return { emoji: '✗', label: 'Contradicted', percentage: `${percentage}%`, color };
-  }
-}
-
-/**
- * Get brighter color for relationship type text
- * Uses same category colors as edges but +40% brightness
- */
-function getRelationshipTextColor(relationshipType: string): string {
-  // Get category from vocabulary store
-  const vocabStore = useVocabularyStore.getState();
-  const category = vocabStore.getCategory(relationshipType) || 'default';
-
-  // Get base color from shared config
-  const baseColor = getCategoryColor(category);
-  return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
-}
-
-/**
- * Node Info Box - Speech bubble style info display for nodes with collapsible sections
- */
-interface NodeInfoBoxProps {
-  info: {
-    nodeId: string;
-    label: string;
-    group: string;
-    degree: number;
-    x: number;
-    y: number;
-  };
-  zoomTransform: { x: number; y: number; k: number };
-  onDismiss: () => void;
-}
-
-const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
-  const [detailedData, setDetailedData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  // Fetch detailed node data on mount
-  useEffect(() => {
-    const fetchDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await apiClient.getConceptDetails(info.nodeId);
-        setDetailedData(response);
-      } catch (error) {
-        console.error('Failed to fetch node details:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDetails();
-  }, [info.nodeId]);
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(section)) {
-        newSet.delete(section);
-      } else {
-        newSet.add(section);
-      }
-      return newSet;
-    });
-  };
-
-  // Apply zoom transform to graph coordinates
-  const screenX = info.x * zoomTransform.k + zoomTransform.x;
-  const screenY = info.y * zoomTransform.k + zoomTransform.y;
-
-  return (
-    <div
-      className="absolute pointer-events-auto"
-      style={{
-        left: `${screenX}px`,
-        top: `${screenY}px`,
-        transform: 'translate(-50%, calc(-100% - 20px))', // Position above node with offset
-        zIndex: 9999, // Ensure info box draws on top of everything
-      }}
-    >
-      <div className="relative">
-        {/* Speech bubble pointer - always dark */}
-        <div
-          className="absolute left-1/2 bottom-0 w-0 h-0"
-          style={{
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
-            transform: 'translateX(-50%) translateY(100%)',
-          }}
-        />
-
-        {/* Info box content - always dark theme */}
-        <div
-          className="bg-gray-800 rounded-lg border border-gray-600 cursor-pointer transition-shadow"
-          style={{
-            minWidth: '280px',
-            maxWidth: '400px',
-            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
-          }}
-        >
-          {/* Header - always visible */}
-          <div
-            className="px-4 py-3 border-b border-gray-700"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDismiss();
-            }}
-          >
-            <div className="font-semibold text-gray-100 text-base">
-              {info.label}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">
-              Click to dismiss
-            </div>
-          </div>
-
-          {/* Collapsible sections */}
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-            {/* Overview Section */}
-            <div className="border-b border-gray-700">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleSection('overview');
-                }}
-                className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
-              >
-                <span className="font-medium text-sm text-gray-300">Overview</span>
-                {expandedSections.has('overview') ? (
-                  <ChevronDown size={16} className="text-gray-500" />
-                ) : (
-                  <ChevronRight size={16} className="text-gray-500" />
-                )}
-              </button>
-              {expandedSections.has('overview') && (
-                <div className="px-4 py-3 space-y-2 text-sm bg-gray-750">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Ontology:</span>
-                    <span className="font-medium text-gray-100">{info.group}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Connections:</span>
-                    <span className="font-medium text-gray-100">{info.degree}</span>
-                  </div>
-                  {detailedData?.grounding_strength !== undefined && detailedData?.grounding_strength !== null && (() => {
-                    const grounding = formatGrounding(detailedData.grounding_strength);
-                    return grounding && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Grounding:</span>
-                        <span className="font-medium" style={{ color: grounding.color }}>
-                          {grounding.emoji} {grounding.label} ({grounding.percentage})
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Relationships Section */}
-            {detailedData?.relationships && (
-              <div className="border-b border-gray-700">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSection('relationships');
-                  }}
-                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
-                >
-                  <span className="font-medium text-sm text-gray-300">
-                    Relationships ({detailedData.relationships.length})
-                  </span>
-                  {expandedSections.has('relationships') ? (
-                    <ChevronDown size={16} className="text-gray-500" />
-                  ) : (
-                    <ChevronRight size={16} className="text-gray-500" />
-                  )}
-                </button>
-                {expandedSections.has('relationships') && (
-                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
-                    {detailedData.relationships.slice(0, 20).map((rel: any, idx: number) => {
-                      const relType = rel.rel_type || rel.type;
-                      const color = getRelationshipTextColor(relType);
-                      return (
-                        <div key={`${rel.to_id || rel.target_id}-${relType}-${idx}`} className="text-gray-300">
-                          <span className="font-medium" style={{ color }}>{relType}</span> → {rel.to_label || rel.target_label || rel.to_id}
-                        </div>
-                      );
-                    })}
-                    {detailedData.relationships.length > 20 && (
-                      <div className="text-gray-500 italic">
-                        +{detailedData.relationships.length - 20} more
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Evidence Section */}
-            {detailedData?.instances && (
-              <div className="border-b border-gray-700">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSection('evidence');
-                  }}
-                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
-                >
-                  <span className="font-medium text-sm text-gray-300">
-                    Evidence ({detailedData.instances.length})
-                  </span>
-                  {expandedSections.has('evidence') ? (
-                    <ChevronDown size={16} className="text-gray-500" />
-                  ) : (
-                    <ChevronRight size={16} className="text-gray-500" />
-                  )}
-                </button>
-                {expandedSections.has('evidence') && (
-                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
-                    {detailedData.instances.slice(0, 10).map((instance: any, idx: number) => (
-                      <div key={`${instance.instance_id || instance.id || idx}-${instance.quote?.substring(0, 20) || ''}`} className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
-                        "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
-                      </div>
-                    ))}
-                    {detailedData.instances.length > 10 && (
-                      <div className="text-gray-500 italic">
-                        +{detailedData.instances.length - 10} more
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {loading && (
-              <div className="px-4 py-3 text-center text-sm text-gray-400">
-                Loading details...
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * Edge Info Box - Speech bubble style info display for edges
- */
-interface EdgeInfoBoxProps {
-  info: {
-    linkKey: string;
-    sourceId: string;
-    targetId: string;
-    type: string;
-    confidence: number;
-    category?: string;
-    x: number;
-    y: number;
-  };
-  zoomTransform: { x: number; y: number; k: number };
-  onDismiss: () => void;
-}
-
-const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
-  // Apply zoom transform to graph coordinates
-  const screenX = info.x * zoomTransform.k + zoomTransform.x;
-  const screenY = info.y * zoomTransform.k + zoomTransform.y;
-
-  return (
-    <div
-      className="absolute pointer-events-auto"
-      style={{
-        left: `${screenX}px`,
-        top: `${screenY}px`,
-        transform: 'translate(-50%, -100%)', // Position above the edge midpoint
-        zIndex: 9999, // Ensure info box draws on top of everything
-      }}
-    >
-      {/* Speech bubble pointer - always dark */}
-      <div className="relative">
-        <div
-          className="absolute left-1/2 bottom-0 w-0 h-0"
-          style={{
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
-            transform: 'translateX(-50%) translateY(100%)',
-          }}
-        />
-        {/* Info box content - always dark theme */}
-        <div
-          className="bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 cursor-pointer transition-shadow"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDismiss();
-          }}
-          style={{
-            minWidth: '200px',
-            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
-          }}
-        >
-          <div className="space-y-2 text-sm">
-            <div className="font-semibold text-gray-100 border-b border-gray-700 pb-2">
-              Edge Information
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Type:</span>
-                <span className="font-medium text-gray-100">{info.type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Confidence:</span>
-                <span className="font-medium text-gray-100">
-                  {(info.confidence * 100).toFixed(1)}%
-                </span>
-              </div>
-              {info.category && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Category:</span>
-                  <span className="font-medium text-gray-100">{info.category}</span>
-                </div>
-              )}
-              <div className="text-xs text-gray-400 pt-2 border-t border-gray-700">
-                Click to dismiss
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import {
+  NodeInfoBox,
+  EdgeInfoBox,
+  StatsPanel,
+  GraphSettingsPanel,
+  Legend,
+  PanelStack,
+  useGraphNavigation,
+  buildContextMenuItems,
+  type GraphContextMenuHandlers,
+  LABEL_FONTS,
+  LABEL_STYLE_2D,
+  ColorTransform,
+} from '../common';
+import { SLIDER_RANGES } from './types';
 
 /**
  * Calculate node position for info boxes
@@ -487,6 +125,7 @@ export const ForceGraph2D: React.FC<
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+  const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
   // Track zoom transform for info box positioning
   const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -559,18 +198,56 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.interaction.showOriginNode]);
 
-  // Node context menu state
+  // Imperative function to apply blue ring for destination
+  const applyBlueRing = useCallback((nodeId: string) => {
+    if (!svgRef.current || !settings.interaction.showOriginNode) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Remove from previous node (restore brighter stroke)
+    svg.selectAll('circle.destination-node')
+      .interrupt()
+      .attr('stroke', function() {
+        const d = d3.select(this).datum() as D3Node;
+        const color = nodeColors.get(d.id) || d.color;
+        return d3.color(color)?.brighter(0.4).toString() || color;
+      })
+      .attr('stroke-width', 2)
+      .attr('stroke-opacity', 1)
+      .classed('destination-node', false);
+
+    // Add to target node
+    const targetCircle = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
+
+    if (!targetCircle.empty()) {
+      targetCircle
+        .attr('stroke', '#4169E1')  // Royal Blue for destination
+        .attr('stroke-width', 4)
+        .classed('destination-node', true);
+
+      // Start pulsing animation
+      const pulse = () => {
+        targetCircle
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', 6)
+          .attr('stroke-opacity', 0.6)
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', 4)
+          .attr('stroke-opacity', 1)
+          .on('end', pulse);
+      };
+      pulse();
+    }
+  }, [settings.interaction.showOriginNode]);
+
+  // Unified context menu state (handles both node and background clicks)
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
-    nodeId: string;
-    nodeLabel: string;
-  } | null>(null);
-
-  // Canvas context menu state
-  const [canvasContextMenu, setCanvasContextMenu] = useState<{
-    x: number;
-    y: number;
+    nodeId: string | null;  // null for background clicks
+    nodeLabel: string | null;  // null for background clicks
   } | null>(null);
 
   // Right-click drag tracking for pan behavior
@@ -578,7 +255,7 @@ export const ForceGraph2D: React.FC<
   const [isRightClickDragging, setIsRightClickDragging] = useState(false);
 
   // Get navigation state and settings from store
-  const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
+  const { originNodeId, setOriginNodeId, destinationNodeId, setDestinationNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Calculate neighbors for highlighting
   const neighbors = useMemo(() => {
@@ -819,6 +496,9 @@ export const ForceGraph2D: React.FC<
           });
         });
 
+      // Store zoom behavior in ref for travel functions to use
+      zoomBehaviorRef.current = zoom;
+
       if (settings.interaction.enableZoom && settings.interaction.enablePan) {
         svg.call(zoom);
       } else if (settings.interaction.enableZoom) {
@@ -917,7 +597,41 @@ export const ForceGraph2D: React.FC<
           const curveOffset = linkCurveOffsets.get(linkKey) || 0;
           let midX, midY;
 
-          if (curveOffset === 0) {
+          // Check if this is a self-loop
+          const isSelfLoop = sourceId === targetId;
+
+          if (isSelfLoop) {
+            // Self-loop: position at apex of hairpin curve
+            const nodeRadius = ((d.source as any).size || 10) * settings.visual.nodeSize;
+            const baseLoopSize = nodeRadius * 3;
+            const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+            const startAngle = curveOffset * 0.3;
+            const endAngle = startAngle + Math.PI / 6;
+            const midAngle = (startAngle + endAngle) / 2;
+
+            // Recreate cubic Bezier curve
+            const loopStartX = sourceX + nodeRadius * Math.cos(startAngle);
+            const loopStartY = sourceY + nodeRadius * Math.sin(startAngle);
+            const control1X = sourceX + loopSize * Math.cos(midAngle - 0.3);
+            const control1Y = sourceY + loopSize * Math.sin(midAngle - 0.3);
+            const control2X = sourceX + loopSize * Math.cos(midAngle + 0.3);
+            const control2Y = sourceY + loopSize * Math.sin(midAngle + 0.3);
+            const loopEndX = sourceX + nodeRadius * Math.cos(endAngle);
+            const loopEndY = sourceY + nodeRadius * Math.sin(endAngle);
+
+            // Calculate position at t=0.5 (apex)
+            const t = 0.5;
+            const mt = 1 - t;
+            midX = mt * mt * mt * loopStartX +
+                   3 * mt * mt * t * control1X +
+                   3 * mt * t * t * control2X +
+                   t * t * t * loopEndX;
+            midY = mt * mt * mt * loopStartY +
+                   3 * mt * mt * t * control1Y +
+                   3 * mt * t * t * control2Y +
+                   t * t * t * loopEndY;
+          } else if (curveOffset === 0) {
             midX = (sourceX + targetX) / 2;
             midY = (sourceY + targetY) / 2;
           } else {
@@ -983,16 +697,23 @@ export const ForceGraph2D: React.FC<
       .data(data.links)
       .join('text')
       .text((d) => d.type)
-      .attr('font-size', 9)
-      .attr('font-weight', 400)
+      .attr('font-family', LABEL_FONTS.family)
+      .attr('font-size', settings.visual?.edgeLabelSize ?? 9)
+      .attr('font-weight', LABEL_STYLE_2D.edge.fontWeight)
       .attr('fill', (d) => {
-        // Use edge color +40% brightness
+        // Use unified color transformation
         const baseColor = d.color || '#6b7280';
-        return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
+        const colors = ColorTransform.getLabelColors(baseColor, 'edge');
+        return colors.fill;
       })
-      .attr('stroke', '#1a1a2e')
-      .attr('stroke-width', 0.5)
-      .attr('paint-order', 'stroke')
+      .attr('stroke', (d) => {
+        // Use unified color transformation
+        const baseColor = d.color || '#6b7280';
+        const colors = ColorTransform.getLabelColors(baseColor, 'edge');
+        return colors.stroke;
+      })
+      .attr('stroke-width', LABEL_STYLE_2D.edge.strokeWidth)
+      .attr('paint-order', LABEL_STYLE_2D.edge.paintOrder)
       .attr('text-anchor', 'middle')
       .attr('pointer-events', 'none')
       .style('user-select', 'none');
@@ -1124,12 +845,23 @@ export const ForceGraph2D: React.FC<
         .data(data.nodes)
         .join('text')
         .text((d) => d.label)
-        .attr('font-size', 11)
-        .attr('font-weight', 500)
-        .attr('fill', '#fff')
-        .attr('stroke', '#000')
-        .attr('stroke-width', 0.3)
-        .attr('paint-order', 'stroke')
+        .attr('font-family', LABEL_FONTS.family)
+        .attr('font-size', settings.visual?.nodeLabelSize ?? 12)
+        .attr('font-weight', LABEL_STYLE_2D.node.fontWeight)
+        .attr('fill', (d) => {
+          // Use unified color transformation
+          const baseColor = d.color || '#6b7280';
+          const colors = ColorTransform.getLabelColors(baseColor, 'node');
+          return colors.fill;
+        })
+        .attr('stroke', (d) => {
+          // Use unified color transformation
+          const baseColor = d.color || '#6b7280';
+          const colors = ColorTransform.getLabelColors(baseColor, 'node');
+          return colors.stroke;
+        })
+        .attr('stroke-width', LABEL_STYLE_2D.node.strokeWidth)
+        .attr('paint-order', LABEL_STYLE_2D.node.paintOrder)
         .attr('text-anchor', 'middle')
         .attr('pointer-events', 'none')
         .style('user-select', 'none');
@@ -1214,6 +946,37 @@ export const ForceGraph2D: React.FC<
         const linkKey = `${sourceId}->${targetId}-${d.type}`;
         const curveOffset = linkCurveOffsets.get(linkKey) || 0;
 
+        // Check if this is a self-loop (edge connects to itself)
+        const isSelfLoop = sourceId === targetId;
+
+        if (isSelfLoop) {
+          // Self-loop: create hairpin curve using cubic Bezier
+          const nodeRadius = sourceNode ? ((sourceNode.size || 10) * settings.visual.nodeSize) : 10;
+
+          // Loop size increases with curve offset (for multiple self-loops)
+          const baseLoopSize = nodeRadius * 3; // Minimum loop size
+          const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+          // Create start and end points on node boundary (30 degrees apart)
+          const startAngle = curveOffset * 0.3; // Rotate based on offset (spreads multiple loops)
+          const endAngle = startAngle + Math.PI / 6; // 30 degrees apart
+          const midAngle = (startAngle + endAngle) / 2;
+
+          const loopStartX = sourceX + nodeRadius * Math.cos(startAngle);
+          const loopStartY = sourceY + nodeRadius * Math.sin(startAngle);
+          const loopEndX = sourceX + nodeRadius * Math.cos(endAngle);
+          const loopEndY = sourceY + nodeRadius * Math.sin(endAngle);
+
+          // Control points push curve outward (hairpin shape)
+          const control1X = sourceX + loopSize * Math.cos(midAngle - 0.3);
+          const control1Y = sourceY + loopSize * Math.sin(midAngle - 0.3);
+          const control2X = sourceX + loopSize * Math.cos(midAngle + 0.3);
+          const control2Y = sourceY + loopSize * Math.sin(midAngle + 0.3);
+
+          // SVG cubic Bezier path: M start C control1 control2 end
+          return `M ${loopStartX},${loopStartY} C ${control1X},${control1Y} ${control2X},${control2Y} ${loopEndX},${loopEndY}`;
+        }
+
         // Calculate direction and distance
         const dx = targetX - sourceX;
         const dy = targetY - sourceY;
@@ -1268,10 +1031,13 @@ export const ForceGraph2D: React.FC<
 
       // Update edge label positions and rotation to align with edges
       edgeLabels.attr('transform', (d) => {
-        const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
-        const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
-        const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
-        const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+        const sourceNode = typeof d.source === 'object' ? d.source : null;
+        const targetNode = typeof d.target === 'object' ? d.target : null;
+
+        const sourceX = sourceNode?.x || 0;
+        const sourceY = sourceNode?.y || 0;
+        const targetX = targetNode?.x || 0;
+        const targetY = targetNode?.y || 0;
 
         // Get curve offset for label positioning
         const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
@@ -1279,9 +1045,52 @@ export const ForceGraph2D: React.FC<
         const linkKey = `${sourceId}->${targetId}-${d.type}`;
         const curveOffset = linkCurveOffsets.get(linkKey) || 0;
 
+        // Check if this is a self-loop
+        const isSelfLoop = sourceId === targetId;
+
         let midX, midY, angle;
 
-        if (curveOffset === 0) {
+        if (isSelfLoop) {
+          // Self-loop: position label at apex of hairpin curve
+          const nodeRadius = sourceNode ? ((sourceNode.size || 10) * settings.visual.nodeSize) : 10;
+          const baseLoopSize = nodeRadius * 3;
+          const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+          const startAngle = curveOffset * 0.3;
+          const endAngle = startAngle + Math.PI / 6;
+          const midAngle = (startAngle + endAngle) / 2;
+
+          // Recreate cubic Bezier curve
+          const loopStartX = sourceX + nodeRadius * Math.cos(startAngle);
+          const loopStartY = sourceY + nodeRadius * Math.sin(startAngle);
+          const loopEndX = sourceX + nodeRadius * Math.cos(endAngle);
+          const loopEndY = sourceY + nodeRadius * Math.sin(endAngle);
+          const control1X = sourceX + loopSize * Math.cos(midAngle - 0.3);
+          const control1Y = sourceY + loopSize * Math.sin(midAngle - 0.3);
+          const control2X = sourceX + loopSize * Math.cos(midAngle + 0.3);
+          const control2Y = sourceY + loopSize * Math.sin(midAngle + 0.3);
+
+          // Calculate position at t=0.5 (apex) on cubic Bezier
+          const t = 0.5;
+          const mt = 1 - t;
+          midX = mt * mt * mt * loopStartX +
+                 3 * mt * mt * t * control1X +
+                 3 * mt * t * t * control2X +
+                 t * t * t * loopEndX;
+          midY = mt * mt * mt * loopStartY +
+                 3 * mt * mt * t * control1Y +
+                 3 * mt * t * t * control2Y +
+                 t * t * t * loopEndY;
+
+          // Calculate tangent at t=0.5 for cubic Bezier
+          const tangentX = 3 * mt * mt * (control1X - loopStartX) +
+                          6 * mt * t * (control2X - control1X) +
+                          3 * t * t * (loopEndX - control2X);
+          const tangentY = 3 * mt * mt * (control1Y - loopStartY) +
+                          6 * mt * t * (control2Y - control1Y) +
+                          3 * t * t * (loopEndY - control2Y);
+          angle = Math.atan2(tangentY, tangentX) * (180 / Math.PI);
+        } else if (curveOffset === 0) {
           // Straight line - position at midpoint
           midX = (sourceX + targetX) / 2;
           midY = (sourceY + targetY) / 2;
@@ -1464,10 +1273,12 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.visual.showGrid]);
 
-  // Render grid when visibility changes
+  // Render grid when SVG structure is rebuilt or visibility changes
   useEffect(() => {
-    renderGrid();
-  }, [renderGrid]);
+    // Small delay to ensure grid-layer is created
+    const timer = setTimeout(() => renderGrid(), 0);
+    return () => clearTimeout(timer);
+  }, [renderGrid, data, settings, dimensions]);
 
   // Update highlighting based on hover
   useEffect(() => {
@@ -1549,6 +1360,37 @@ export const ForceGraph2D: React.FC<
       }
     };
   }, [originNodeId, settings.interaction.showOriginNode, data, applyGoldRing]);
+
+  // "Destination" highlighting - async update after DOM ready
+  useEffect(() => {
+    if (!destinationNodeId || !settings.interaction.showOriginNode) return;
+
+    // Wait for next frame to ensure DOM is fully rendered
+    const rafId = requestAnimationFrame(() => {
+      // Double-raf for extra safety (ensures layout is complete)
+      requestAnimationFrame(() => {
+        applyBlueRing(destinationNodeId);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      // Cleanup: remove blue ring (restore brighter stroke)
+      if (svgRef.current) {
+        d3.select(svgRef.current)
+          .selectAll('circle.destination-node')
+          .interrupt()
+          .attr('stroke', function() {
+            const d = d3.select(this).datum() as D3Node;
+            const color = nodeColors.get(d.id) || d.color;
+            return d3.color(color)?.brighter(0.4).toString() || color;
+          })
+          .attr('stroke-width', 2)
+          .attr('stroke-opacity', 1)
+          .classed('destination-node', false);
+      }
+    };
+  }, [destinationNodeId, settings.interaction.showOriginNode, data, applyBlueRing]);
 
   // Handle window resize
   useEffect(() => {
@@ -1636,47 +1478,8 @@ export const ForceGraph2D: React.FC<
     };
   }, [graphData]);
 
-  // Handler: Follow concept (replace graph)
-  // Matches SearchBar loadConcept('clean') pattern
-  const handleFollowConcept = useCallback(async (nodeId: string) => {
-    try {
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
-        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
-      });
-
-      // Transform API data to D3 format
-      const transformedData = transformForD3(response.nodes, response.links);
-
-      // Replace graph (clean mode)
-      setGraphData(transformedData);
-      setFocusedNodeId(nodeId);
-    } catch (error: any) {
-      console.error('Failed to follow concept:', error);
-      alert(`Failed to follow concept: ${error.message || 'Unknown error'}`);
-    }
-  }, [setGraphData, setFocusedNodeId]);
-
-  // Handler: Add concept to graph (merge)
-  // Matches SearchBar loadConcept('add') pattern
-  const handleAddToGraph = useCallback(async (nodeId: string) => {
-    try {
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
-        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
-      });
-
-      // Transform API data to D3 format
-      const transformedData = transformForD3(response.nodes, response.links);
-
-      // Merge with existing graph (add mode)
-      setGraphData(mergeGraphData(transformedData));
-      setFocusedNodeId(nodeId);
-    } catch (error: any) {
-      console.error('Failed to add concept to graph:', error);
-      alert(`Failed to add concept to graph: ${error.message || 'Unknown error'}`);
-    }
-  }, [mergeGraphData, setGraphData, setFocusedNodeId]);
+  // Use common graph navigation hook
+  const { handleFollowConcept, handleAddToGraph } = useGraphNavigation(mergeGraphData);
 
   // Pin/Unpin node functionality
   const isPinned = useCallback((nodeId: string): boolean => {
@@ -1728,78 +1531,84 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.physics.enabled]);
 
-  // Context menu items
+  // Travel to origin node (center it in viewport with zoom)
+  const travelToOrigin = useCallback(() => {
+    if (!originNodeId || !svgRef.current || !zoomBehaviorRef.current) return;
+
+    const originNode = data.nodes.find(n => n.id === originNodeId);
+    if (!originNode || originNode.x === undefined || originNode.y === undefined) return;
+
+    const svg = d3.select(svgRef.current);
+    const width = dimensions.width;
+    const height = dimensions.height;
+
+    // Calculate transform to center the origin node in viewport
+    const scale = 1.5; // Zoom in to 1.5x for better focus
+    const x = width / 2 - originNode.x * scale;   // Center horizontally
+    const y = height / 2 - originNode.y * scale;  // Center vertically
+
+    // Animate transition with cubic ease in/out (smooth acceleration/deceleration like mouse pan)
+    // Speed automatically adjusts based on distance - farther = faster, but same duration
+    svg.transition()
+      .duration(750)
+      .ease(d3.easeCubicInOut)  // Smooth acceleration at start, deceleration at end
+      .call(
+        zoomBehaviorRef.current.transform,
+        d3.zoomIdentity.translate(x, y).scale(scale)
+      );
+  }, [originNodeId, data.nodes, dimensions]);
+
+  // Travel to destination node (center it in viewport with zoom)
+  const travelToDestination = useCallback(() => {
+    if (!destinationNodeId || !svgRef.current || !zoomBehaviorRef.current) return;
+
+    const destinationNode = data.nodes.find(n => n.id === destinationNodeId);
+    if (!destinationNode || destinationNode.x === undefined || destinationNode.y === undefined) return;
+
+    const svg = d3.select(svgRef.current);
+    const width = dimensions.width;
+    const height = dimensions.height;
+
+    // Calculate transform to center the destination node in viewport
+    const scale = 1.5; // Zoom in to 1.5x for better focus
+    const x = width / 2 - destinationNode.x * scale;   // Center horizontally
+    const y = height / 2 - destinationNode.y * scale;  // Center vertically
+
+    // Animate transition with cubic ease in/out (smooth acceleration/deceleration like mouse pan)
+    // Speed automatically adjusts based on distance - farther = faster, but same duration
+    svg.transition()
+      .duration(750)
+      .ease(d3.easeCubicInOut)  // Smooth acceleration at start, deceleration at end
+      .call(
+        zoomBehaviorRef.current.transform,
+        d3.zoomIdentity.translate(x, y).scale(scale)
+      );
+  }, [destinationNodeId, data.nodes, dimensions]);
+
+  // Build unified context menu items (context-aware for node vs background)
   const contextMenuItems: ContextMenuItem[] = contextMenu
-    ? [
-        // Contextual mark/unmark location
-        originNodeId === contextMenu.nodeId
-          ? {
-              label: 'Unmark Location',
-              icon: MapPinOff,
-              onClick: () => {
-                setOriginNodeId(null);
-                setContextMenu(null);
-              },
-            }
-          : {
-              label: 'Mark Location',
-              icon: MapPin,
-              onClick: () => {
-                setOriginNodeId(contextMenu.nodeId);
-                applyGoldRing(contextMenu.nodeId);
-                setContextMenu(null);
-              },
-            },
-        // Node submenu with pin operations
+    ? buildContextMenuItems(
+        // Pass node context (null for background clicks)
+        contextMenu.nodeId && contextMenu.nodeLabel
+          ? { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel }
+          : null,
         {
-          label: 'Node',
-          icon: Circle,
-          submenu: [
-            // Contextual pin/unpin node
-            isPinned(contextMenu.nodeId)
-              ? {
-                  label: 'Unpin Node',
-                  icon: PinOff,
-                  onClick: () => {
-                    togglePinNode(contextMenu.nodeId);
-                    setContextMenu(null);
-                  },
-                }
-              : {
-                  label: 'Pin Node',
-                  icon: Pin,
-                  onClick: () => {
-                    togglePinNode(contextMenu.nodeId);
-                    setContextMenu(null);
-                  },
-                },
-            {
-              label: 'Unpin All',
-              icon: PinOff,
-              onClick: () => {
-                unpinAllNodes();
-                setContextMenu(null);
-              },
-            },
-          ],
+          handleFollowConcept,
+          handleAddToGraph,
+          setOriginNode: setOriginNodeId,
+          setDestinationNode: setDestinationNodeId,
+          travelToOrigin,
+          travelToDestination,
+          isPinned,
+          togglePinNode,
+          unpinAllNodes,
+          applyOriginMarker: applyGoldRing,
+          applyDestinationMarker: applyBlueRing,
         },
-        {
-          label: `Follow "${contextMenu.nodeLabel}"`,
-          icon: ArrowRight,
-          onClick: () => {
-            handleFollowConcept(contextMenu.nodeId);
-            setContextMenu(null);
-          },
-        },
-        {
-          label: `Add "${contextMenu.nodeLabel}" to Graph`,
-          icon: Plus,
-          onClick: () => {
-            handleAddToGraph(contextMenu.nodeId);
-            setContextMenu(null);
-          },
-        },
-      ]
+        { onClose: () => setContextMenu(null) },
+        originNodeId,
+        destinationNodeId
+      )
     : [];
 
   // Dismiss edge info box
@@ -1820,9 +1629,8 @@ export const ForceGraph2D: React.FC<
         height={dimensions.height}
         className="bg-white dark:bg-gray-900"
         onClick={() => {
-          // Close context menus when clicking on canvas background
+          // Close context menu when clicking on canvas background
           setContextMenu(null);
-          setCanvasContextMenu(null);
         }}
         onMouseDown={(e) => {
           // Track right-click start position for drag detection
@@ -1857,13 +1665,15 @@ export const ForceGraph2D: React.FC<
         onContextMenu={(e) => {
           e.preventDefault(); // Always prevent default browser context menu
 
-          // Only show canvas context menu if NOT dragging
+          // Only show background context menu if NOT dragging
           // (nodes/edges have their own context menu handlers that stopPropagation)
           if (!isRightClickDragging) {
-            setContextMenu(null); // Close node context menu if open
-            setCanvasContextMenu({
+            // Show unified context menu with null node context (background click)
+            setContextMenu({
               x: e.clientX,
               y: e.clientY,
+              nodeId: null,
+              nodeLabel: null,
             });
           } else {
             // Was dragging, so don't show context menu
@@ -1872,22 +1682,25 @@ export const ForceGraph2D: React.FC<
         }}
       />
 
-      {/* Legend Panel */}
-      <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+      {/* Left-side panel stack */}
+      <PanelStack side="left" gap={16} initialTop={16}>
+        <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+      </PanelStack>
 
-      {/* Node count indicator */}
-      <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg px-3 py-2 text-sm">
-        <div className="text-gray-600 dark:text-gray-400">
-          {data.nodes.length} nodes • {data.links.length} edges
-        </div>
-      </div>
+      {/* Right-side panel stack */}
+      <PanelStack side="right" gap={16} initialTop={16}>
+        <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
 
-      {/* Settings Panel */}
-      {onSettingsChange && (
-        <CanvasSettingsPanel settings={settings} onChange={onSettingsChange} />
-      )}
+        {onSettingsChange && (
+          <GraphSettingsPanel
+            settings={settings}
+            onChange={onSettingsChange}
+            sliderRanges={SLIDER_RANGES}
+          />
+        )}
+      </PanelStack>
 
-      {/* Node Context Menu */}
+      {/* Unified Context Menu (context-aware for node vs background) */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
@@ -1897,62 +1710,36 @@ export const ForceGraph2D: React.FC<
         />
       )}
 
-      {/* Canvas Context Menu */}
-      {canvasContextMenu && (
-        <ContextMenu
-          x={canvasContextMenu.x}
-          y={canvasContextMenu.y}
-          items={[
-            settings.visual.showGrid
-              ? {
-                  label: 'Hide Grid',
-                  icon: EyeOff,
-                  onClick: () => {
-                    onSettingsChange?.({
-                      ...settings,
-                      visual: { ...settings.visual, showGrid: false },
-                    });
-                    setCanvasContextMenu(null);
-                  },
-                }
-              : {
-                  label: 'Show Grid',
-                  icon: Grid3x3,
-                  onClick: () => {
-                    onSettingsChange?.({
-                      ...settings,
-                      visual: { ...settings.visual, showGrid: true },
-                    });
-                    setCanvasContextMenu(null);
-                  },
-                },
-          ]}
-          onClose={() => setCanvasContextMenu(null)}
-        />
-      )}
-
       {/* Edge Info Boxes */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
-        {activeEdgeInfos.map(info => (
-          <EdgeInfoBox
-            key={info.linkKey}
-            info={info}
-            zoomTransform={zoomTransform}
-            onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
-          />
-        ))}
+        {activeEdgeInfos.map(info => {
+          // Apply zoom transform to graph coordinates
+          const screenX = info.x * zoomTransform.k + zoomTransform.x;
+          const screenY = info.y * zoomTransform.k + zoomTransform.y;
+          return (
+            <EdgeInfoBox
+              key={info.linkKey}
+              info={{ ...info, x: screenX, y: screenY }}
+              onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
+            />
+          );
+        })}
       </div>
 
       {/* Node Info Boxes */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
-        {activeNodeInfos.map(info => (
-          <NodeInfoBox
-            key={info.nodeId}
-            info={info}
-            zoomTransform={zoomTransform}
-            onDismiss={() => handleDismissNodeInfo(info.nodeId)}
-          />
-        ))}
+        {activeNodeInfos.map(info => {
+          // Apply zoom transform to graph coordinates
+          const screenX = info.x * zoomTransform.k + zoomTransform.x;
+          const screenY = info.y * zoomTransform.k + zoomTransform.y;
+          return (
+            <NodeInfoBox
+              key={info.nodeId}
+              info={{ ...info, x: screenX, y: screenY }}
+              onDismiss={() => handleDismissNodeInfo(info.nodeId)}
+            />
+          );
+        })}
       </div>
     </div>
   );

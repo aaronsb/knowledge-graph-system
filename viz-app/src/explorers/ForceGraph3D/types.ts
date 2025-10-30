@@ -1,5 +1,5 @@
 /**
- * Force-Directed 2D Graph Explorer - Type Definitions
+ * Force-Directed 3D Graph Explorer - Type Definitions
  */
 
 import type { GraphData } from '../../types/graph';
@@ -8,12 +8,12 @@ export type NodeColorMode = 'ontology' | 'degree' | 'centrality';
 export type EdgeColorMode = 'category' | 'confidence' | 'uniform';
 export type LayoutAlgorithm = 'force' | 'circular' | 'grid';
 
-export interface ForceGraph2DSettings {
+export interface ForceGraph3DSettings {
   // Physics simulation
   physics: {
     enabled: boolean;
     charge: number; // Repulsion strength (-100 to -1000)
-    linkDistance: number; // Target link distance (10-400)
+    linkDistance: number; // Target link distance (10-200)
     gravity: number; // Center gravity (0-1)
     friction: number; // Velocity decay (0-1)
   };
@@ -41,6 +41,14 @@ export interface ForceGraph2DSettings {
     showOriginNode: boolean; // "You Are Here" highlighting
   };
 
+  // Camera controls (3D-specific)
+  camera: {
+    fov: number;         // Field of view in degrees (30-120)
+    autoLevel: boolean;  // Smoothly return to level ground when releasing mouse
+    clampToFloor: boolean; // Prevent camera from going below grid floor
+    orientLabels: boolean; // Rotate labels around edge axis to face camera
+  };
+
   // Filters
   filters: {
     relationshipTypes: string[];
@@ -52,16 +60,16 @@ export interface ForceGraph2DSettings {
   layout: LayoutAlgorithm;
 }
 
-export interface ForceGraph2DData extends GraphData {
+export interface ForceGraph3DData extends GraphData {
   // Already has nodes and links
 }
 
-export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
+export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
   physics: {
     enabled: true,
-    charge: -750,        // Strong repulsion for clear spacing in 2D
-    linkDistance: 200,   // Longer links for better graph layout
-    gravity: 0.1,
+    charge: -650,        // Stronger repulsion for 3D space
+    linkDistance: 130,   // Longer links for better 3D depth perception
+    gravity: 0.10,
     friction: 0.9,
   },
   visual: {
@@ -71,10 +79,10 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     showArrows: true,
     showGrid: true,
     showShadows: false, // Disabled by default for performance
-    nodeSize: 1.9,       // Larger nodes for better visibility
+    nodeSize: 0.40,      // Smaller default due to volume scaling (radius³)
     linkWidth: 1.0,
     nodeLabelSize: 12,
-    edgeLabelSize: 12,   // Consistent with node labels in 2D plane
+    edgeLabelSize: 16,   // Larger text for better readability in 3D space
   },
   interaction: {
     enableDrag: true,
@@ -82,6 +90,12 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     enablePan: true,
     highlightNeighbors: true,
     showOriginNode: true,
+  },
+  camera: {
+    fov: 75,            // Default field of view (standard perspective)
+    autoLevel: true,    // Auto-level by default for less disorienting camera
+    clampToFloor: true, // Prevent going below floor by default
+    orientLabels: true, // Orient labels to camera by default for readability
   },
   filters: {
     relationshipTypes: [],
@@ -91,17 +105,18 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
   layout: 'force',
 };
 
-// Slider range configurations for 2D graph
+// Slider range configurations for 3D graph
+// 3D uses tighter nodeSize range due to volume-based sizing (radius³)
 export const SLIDER_RANGES = {
   physics: {
     charge: { min: -1000, max: -100, step: 50 },
-    linkDistance: { min: 10, max: 400, step: 10 },  // Extended range for larger graphs
+    linkDistance: { min: 10, max: 200, step: 10 },
     gravity: { min: 0, max: 1, step: 0.05 },
   },
   visual: {
-    nodeSize: { min: 0.5, max: 3, step: 0.1 },
+    nodeSize: { min: 0.1, max: 1.5, step: 0.05 },  // Tighter range for 3D volume scaling
     linkWidth: { min: 0.5, max: 5, step: 0.1 },
     nodeLabelSize: { min: 6, max: 20, step: 1 },
-    edgeLabelSize: { min: 6, max: 20, step: 1 },     // Smaller range for 2D (everything at same viewing distance)
+    edgeLabelSize: { min: 10, max: 40, step: 1 },
   },
 };

@@ -7,7 +7,6 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { transformForD3 } from '../utils/graphTransform';
 
 /**
  * Fetch subgraph centered on a concept
@@ -33,8 +32,8 @@ export function useSubgraph(
         limit: options?.limit,
       });
 
-      // Transform API data to D3 format
-      return transformForD3(response.nodes, response.links);
+      // Return raw API data (transformation happens in explorer-specific dataTransformer)
+      return { nodes: response.nodes, links: response.links };
     },
     enabled: options?.enabled !== false && !!conceptId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -132,7 +131,8 @@ export function useFindPath(
           });
         });
 
-        return transformForD3(Array.from(allNodes.values()), allLinks);
+        // Return raw API data
+        return { nodes: Array.from(allNodes.values()), links: allLinks };
       }
 
       return { nodes: [], links: [] };
@@ -165,7 +165,7 @@ export function useFindConnection(
         max_hops: options?.maxHops,
       });
 
-      // Transform paths to graph format
+      // Convert paths to graph format (raw API data, not transformed)
       if (response.paths && response.paths.length > 0) {
         const allNodes = new Map();
         const allLinks: any[] = [];
@@ -189,7 +189,8 @@ export function useFindConnection(
           }
         });
 
-        return transformForD3(Array.from(allNodes.values()), allLinks);
+        // Return raw API data
+        return { nodes: Array.from(allNodes.values()), links: allLinks };
       }
 
       return { nodes: [], links: [] };
