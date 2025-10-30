@@ -293,36 +293,41 @@ export const ForceGraph3D: React.FC<
 
   // Configure D3 forces when settings change
   useEffect(() => {
-    if (!fgRef.current) return;
+    if (!fgRef.current || !settings.physics?.enabled) return;
 
     const fg = fgRef.current;
 
-    // Immediate force update (no delay on subsequent changes)
-    try {
-      const chargeForce = fg.d3Force('charge');
-      const linkForce = fg.d3Force('link');
-      const centerForce = fg.d3Force('center');
+    // Delay force configuration to ensure simulation is initialized
+    const timer = setTimeout(() => {
+      try {
+        const chargeForce = fg.d3Force?.('charge');
+        const linkForce = fg.d3Force?.('link');
+        const centerForce = fg.d3Force?.('center');
 
-      // Configure forces if they exist
-      if (chargeForce) {
-        chargeForce.strength(settings.physics?.charge ?? -300);
-      }
-      if (linkForce) {
-        linkForce.distance(settings.physics?.linkDistance ?? 80);
-      }
-      if (centerForce) {
-        centerForce.strength(settings.physics?.gravity ?? 0.1);
-      }
+        // Configure forces if they exist
+        if (chargeForce && typeof chargeForce.strength === 'function') {
+          chargeForce.strength(settings.physics?.charge ?? -300);
+        }
+        if (linkForce && typeof linkForce.distance === 'function') {
+          linkForce.distance(settings.physics?.linkDistance ?? 80);
+        }
+        if (centerForce && typeof centerForce.strength === 'function') {
+          centerForce.strength(settings.physics?.gravity ?? 0.1);
+        }
 
-      // Reheat simulation to keep it active while adjusting sliders
-      // This mimics the behavior of clicking and dragging a node
-      if (fg.d3ReheatSimulation) {
-        fg.d3ReheatSimulation();
+        // Reheat simulation to keep it active while adjusting sliders
+        // This mimics the behavior of clicking and dragging a node
+        if (fg.d3ReheatSimulation && typeof fg.d3ReheatSimulation === 'function') {
+          fg.d3ReheatSimulation();
+        }
+      } catch (e) {
+        // Silently ignore - simulation might not be ready yet on first render
+        console.warn('Error configuring D3 forces:', e);
       }
-    } catch (e) {
-      // Silently ignore - simulation might not be ready yet on first render
-    }
-  }, [settings.physics?.charge, settings.physics?.linkDistance, settings.physics?.gravity]);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [settings.physics?.charge, settings.physics?.linkDistance, settings.physics?.gravity, settings.physics?.enabled]);
 
   // Update line widths when linkWidth slider changes
   useEffect(() => {
@@ -659,7 +664,7 @@ export const ForceGraph3D: React.FC<
           const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
           const targetId = typeof link.target === 'string' ? link.target : link.target.id;
           const linkKey = `${sourceId}->${targetId}-${link.type}`;
-          const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+          const curveOffset = linkCurveOffsets?.get(linkKey) ?? 0;
 
           // Calculate control point for curved arc (perpendicular offset)
           const midPoint = new THREE.Vector3().addVectors(surfaceStart, surfaceEnd).multiplyScalar(0.5);
