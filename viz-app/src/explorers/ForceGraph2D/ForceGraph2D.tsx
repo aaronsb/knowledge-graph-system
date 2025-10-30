@@ -597,7 +597,41 @@ export const ForceGraph2D: React.FC<
           const curveOffset = linkCurveOffsets.get(linkKey) || 0;
           let midX, midY;
 
-          if (curveOffset === 0) {
+          // Check if this is a self-loop
+          const isSelfLoop = sourceId === targetId;
+
+          if (isSelfLoop) {
+            // Self-loop: position at apex of hairpin curve
+            const nodeRadius = ((d.source as any).size || 10) * settings.visual.nodeSize;
+            const baseLoopSize = nodeRadius * 3;
+            const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+            const startAngle = curveOffset * 0.3;
+            const endAngle = startAngle + Math.PI / 6;
+            const midAngle = (startAngle + endAngle) / 2;
+
+            // Recreate cubic Bezier curve
+            const loopStartX = sourceX + nodeRadius * Math.cos(startAngle);
+            const loopStartY = sourceY + nodeRadius * Math.sin(startAngle);
+            const control1X = sourceX + loopSize * Math.cos(midAngle - 0.3);
+            const control1Y = sourceY + loopSize * Math.sin(midAngle - 0.3);
+            const control2X = sourceX + loopSize * Math.cos(midAngle + 0.3);
+            const control2Y = sourceY + loopSize * Math.sin(midAngle + 0.3);
+            const loopEndX = sourceX + nodeRadius * Math.cos(endAngle);
+            const loopEndY = sourceY + nodeRadius * Math.sin(endAngle);
+
+            // Calculate position at t=0.5 (apex)
+            const t = 0.5;
+            const mt = 1 - t;
+            midX = mt * mt * mt * loopStartX +
+                   3 * mt * mt * t * control1X +
+                   3 * mt * t * t * control2X +
+                   t * t * t * loopEndX;
+            midY = mt * mt * mt * loopStartY +
+                   3 * mt * mt * t * control1Y +
+                   3 * mt * t * t * control2Y +
+                   t * t * t * loopEndY;
+          } else if (curveOffset === 0) {
             midX = (sourceX + targetX) / 2;
             midY = (sourceY + targetY) / 2;
           } else {
@@ -912,6 +946,37 @@ export const ForceGraph2D: React.FC<
         const linkKey = `${sourceId}->${targetId}-${d.type}`;
         const curveOffset = linkCurveOffsets.get(linkKey) || 0;
 
+        // Check if this is a self-loop (edge connects to itself)
+        const isSelfLoop = sourceId === targetId;
+
+        if (isSelfLoop) {
+          // Self-loop: create hairpin curve using cubic Bezier
+          const nodeRadius = sourceNode ? ((sourceNode.size || 10) * settings.visual.nodeSize) : 10;
+
+          // Loop size increases with curve offset (for multiple self-loops)
+          const baseLoopSize = nodeRadius * 3; // Minimum loop size
+          const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+          // Create start and end points on node boundary (30 degrees apart)
+          const startAngle = curveOffset * 0.3; // Rotate based on offset (spreads multiple loops)
+          const endAngle = startAngle + Math.PI / 6; // 30 degrees apart
+          const midAngle = (startAngle + endAngle) / 2;
+
+          const loopStartX = sourceX + nodeRadius * Math.cos(startAngle);
+          const loopStartY = sourceY + nodeRadius * Math.sin(startAngle);
+          const loopEndX = sourceX + nodeRadius * Math.cos(endAngle);
+          const loopEndY = sourceY + nodeRadius * Math.sin(endAngle);
+
+          // Control points push curve outward (hairpin shape)
+          const control1X = sourceX + loopSize * Math.cos(midAngle - 0.3);
+          const control1Y = sourceY + loopSize * Math.sin(midAngle - 0.3);
+          const control2X = sourceX + loopSize * Math.cos(midAngle + 0.3);
+          const control2Y = sourceY + loopSize * Math.sin(midAngle + 0.3);
+
+          // SVG cubic Bezier path: M start C control1 control2 end
+          return `M ${loopStartX},${loopStartY} C ${control1X},${control1Y} ${control2X},${control2Y} ${loopEndX},${loopEndY}`;
+        }
+
         // Calculate direction and distance
         const dx = targetX - sourceX;
         const dy = targetY - sourceY;
@@ -966,10 +1031,13 @@ export const ForceGraph2D: React.FC<
 
       // Update edge label positions and rotation to align with edges
       edgeLabels.attr('transform', (d) => {
-        const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
-        const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
-        const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
-        const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+        const sourceNode = typeof d.source === 'object' ? d.source : null;
+        const targetNode = typeof d.target === 'object' ? d.target : null;
+
+        const sourceX = sourceNode?.x || 0;
+        const sourceY = sourceNode?.y || 0;
+        const targetX = targetNode?.x || 0;
+        const targetY = targetNode?.y || 0;
 
         // Get curve offset for label positioning
         const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
@@ -977,9 +1045,52 @@ export const ForceGraph2D: React.FC<
         const linkKey = `${sourceId}->${targetId}-${d.type}`;
         const curveOffset = linkCurveOffsets.get(linkKey) || 0;
 
+        // Check if this is a self-loop
+        const isSelfLoop = sourceId === targetId;
+
         let midX, midY, angle;
 
-        if (curveOffset === 0) {
+        if (isSelfLoop) {
+          // Self-loop: position label at apex of hairpin curve
+          const nodeRadius = sourceNode ? ((sourceNode.size || 10) * settings.visual.nodeSize) : 10;
+          const baseLoopSize = nodeRadius * 3;
+          const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+          const startAngle = curveOffset * 0.3;
+          const endAngle = startAngle + Math.PI / 6;
+          const midAngle = (startAngle + endAngle) / 2;
+
+          // Recreate cubic Bezier curve
+          const loopStartX = sourceX + nodeRadius * Math.cos(startAngle);
+          const loopStartY = sourceY + nodeRadius * Math.sin(startAngle);
+          const loopEndX = sourceX + nodeRadius * Math.cos(endAngle);
+          const loopEndY = sourceY + nodeRadius * Math.sin(endAngle);
+          const control1X = sourceX + loopSize * Math.cos(midAngle - 0.3);
+          const control1Y = sourceY + loopSize * Math.sin(midAngle - 0.3);
+          const control2X = sourceX + loopSize * Math.cos(midAngle + 0.3);
+          const control2Y = sourceY + loopSize * Math.sin(midAngle + 0.3);
+
+          // Calculate position at t=0.5 (apex) on cubic Bezier
+          const t = 0.5;
+          const mt = 1 - t;
+          midX = mt * mt * mt * loopStartX +
+                 3 * mt * mt * t * control1X +
+                 3 * mt * t * t * control2X +
+                 t * t * t * loopEndX;
+          midY = mt * mt * mt * loopStartY +
+                 3 * mt * mt * t * control1Y +
+                 3 * mt * t * t * control2Y +
+                 t * t * t * loopEndY;
+
+          // Calculate tangent at t=0.5 for cubic Bezier
+          const tangentX = 3 * mt * mt * (control1X - loopStartX) +
+                          6 * mt * t * (control2X - control1X) +
+                          3 * t * t * (loopEndX - control2X);
+          const tangentY = 3 * mt * mt * (control1Y - loopStartY) +
+                          6 * mt * t * (control2Y - control1Y) +
+                          3 * t * t * (loopEndY - control2Y);
+          angle = Math.atan2(tangentY, tangentX) * (180 / Math.PI);
+        } else if (curveOffset === 0) {
           // Straight line - position at midpoint
           midX = (sourceX + targetX) / 2;
           midY = (sourceY + targetY) / 2;
