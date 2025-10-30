@@ -25,6 +25,13 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
 }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['camera']));
 
+  // Provide default camera settings if undefined (e.g., when switching from 2D)
+  const cameraSettings = camera || {
+    lockRoll: true,
+    lockPitch: false,
+    lockYaw: false,
+  };
+
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
@@ -39,7 +46,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
 
   const updateCamera = (key: keyof Camera3DSettings, value: boolean) => {
     onCameraChange({
-      ...camera,
+      ...cameraSettings,
       [key]: value,
     });
   };
@@ -69,7 +76,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
               <label className="flex items-center space-x-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={camera.lockRoll}
+                  checked={cameraSettings.lockRoll}
                   onChange={(e) => updateCamera('lockRoll', e.target.checked)}
                   className="rounded"
                 />
@@ -79,7 +86,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
               <label className="flex items-center space-x-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={camera.lockPitch}
+                  checked={cameraSettings.lockPitch}
                   onChange={(e) => updateCamera('lockPitch', e.target.checked)}
                   className="rounded"
                 />
@@ -89,7 +96,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
               <label className="flex items-center space-x-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={camera.lockYaw}
+                  checked={cameraSettings.lockYaw}
                   onChange={(e) => updateCamera('lockYaw', e.target.checked)}
                   className="rounded"
                 />
