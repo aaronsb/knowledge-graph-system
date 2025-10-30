@@ -24,6 +24,10 @@ import {
   Circle,
   Grid3x3,
   EyeOff,
+  Navigation,
+  Target,
+  Flag,
+  FlagOff,
 } from 'lucide-react';
 
 export interface NodeContextMenuParams {
@@ -36,12 +40,16 @@ export interface GraphContextMenuHandlers {
   handleFollowConcept: (nodeId: string) => Promise<void>;
   handleAddToGraph: (nodeId: string) => Promise<void>;
   setOriginNode: (nodeId: string | null) => void;
+  setDestinationNode: (nodeId: string | null) => void;
+  travelToOrigin?: () => void;  // Optional navigation to origin node
+  travelToDestination?: () => void;  // Optional navigation to destination node
 
   // Explorer-specific handlers (must be provided by explorer)
   isPinned: (nodeId: string) => boolean;
   togglePinNode: (nodeId: string) => void;
   unpinAllNodes: () => void;
   applyOriginMarker?: (nodeId: string) => void;  // Optional visual marker (e.g., gold ring)
+  applyDestinationMarker?: (nodeId: string) => void;  // Optional visual marker (e.g., blue flag)
 }
 
 export interface GraphContextMenuCallbacks {
@@ -99,17 +107,31 @@ export function buildNodeContextMenuItems(
   nodeContext: NodeContextMenuParams,
   handlers: GraphContextMenuHandlers,
   callbacks: GraphContextMenuCallbacks,
-  originNodeId: string | null
+  originNodeId: string | null,
+  destinationNodeId: string | null
 ): ContextMenuItem[] {
   const { nodeId, nodeLabel } = nodeContext;
-  const { isPinned, togglePinNode, unpinAllNodes, applyOriginMarker, handleFollowConcept, handleAddToGraph, setOriginNode } = handlers;
+  const {
+    isPinned,
+    togglePinNode,
+    unpinAllNodes,
+    applyOriginMarker,
+    applyDestinationMarker,
+    handleFollowConcept,
+    handleAddToGraph,
+    setOriginNode,
+    setDestinationNode,
+    travelToOrigin,
+    travelToDestination,
+  } = handlers;
   const { onClose } = callbacks;
 
-  return [
-    // Contextual mark/unmark location
+  // Build Origin submenu items
+  const originSubmenu: ContextMenuItem[] = [
+    // Contextual set/clear origin
     originNodeId === nodeId
       ? {
-          label: 'Unmark Location',
+          label: 'Clear Origin',
           icon: MapPinOff,
           onClick: () => {
             setOriginNode(null);
@@ -117,7 +139,7 @@ export function buildNodeContextMenuItems(
           },
         }
       : {
-          label: 'Mark Location',
+          label: 'Set Origin',
           icon: MapPin,
           onClick: () => {
             setOriginNode(nodeId);
@@ -127,6 +149,70 @@ export function buildNodeContextMenuItems(
             onClose();
           },
         },
+  ];
+
+  // Add "Travel to Origin" option only if origin exists and this isn't the origin node
+  if (originNodeId && originNodeId !== nodeId && travelToOrigin) {
+    originSubmenu.push({
+      label: 'Travel to Origin',
+      icon: Navigation,
+      onClick: () => {
+        travelToOrigin();
+        onClose();
+      },
+    });
+  }
+
+  // Build Destination submenu items
+  const destinationSubmenu: ContextMenuItem[] = [
+    // Contextual set/clear destination
+    destinationNodeId === nodeId
+      ? {
+          label: 'Clear Destination',
+          icon: FlagOff,
+          onClick: () => {
+            setDestinationNode(null);
+            onClose();
+          },
+        }
+      : {
+          label: 'Set Destination',
+          icon: Flag,
+          onClick: () => {
+            setDestinationNode(nodeId);
+            if (applyDestinationMarker) {
+              applyDestinationMarker(nodeId);
+            }
+            onClose();
+          },
+        },
+  ];
+
+  // Add "Travel to Destination" option only if destination exists and this isn't the destination node
+  if (destinationNodeId && destinationNodeId !== nodeId && travelToDestination) {
+    destinationSubmenu.push({
+      label: 'Travel to Destination',
+      icon: Navigation,
+      onClick: () => {
+        travelToDestination();
+        onClose();
+      },
+    });
+  }
+
+  return [
+    // Origin submenu
+    {
+      label: 'Origin',
+      icon: Target,
+      submenu: originSubmenu,
+    },
+    // Destination submenu
+    {
+      label: 'Destination',
+      icon: Flag,
+      submenu: destinationSubmenu,
+    },
     // Node submenu with pin operations
     {
       label: 'Node',

@@ -80,9 +80,11 @@ interface GraphStore {
 
   // Navigation history ("You Are Here" feature)
   originNodeId: string | null; // The node that was clicked to get here
+  destinationNodeId: string | null; // The target node for path analysis
   navigationHistory: string[]; // Stack of previous focused nodes
   historyIndex: number; // Current position in history
   setOriginNodeId: (nodeId: string | null) => void;
+  setDestinationNodeId: (nodeId: string | null) => void;
   navigateToNode: (nodeId: string) => void; // Updates focus + history
   navigateBack: () => void;
   navigateForward: () => void;
@@ -167,9 +169,11 @@ export const useGraphStore = create<GraphStore>((set) => ({
 
   // Navigation history
   originNodeId: null,
+  destinationNodeId: null,
   navigationHistory: [],
   historyIndex: -1,
   setOriginNodeId: (nodeId) => set({ originNodeId: nodeId }),
+  setDestinationNodeId: (nodeId) => set({ destinationNodeId: nodeId }),
 
   navigateToNode: (nodeId) =>
     set((state) => {

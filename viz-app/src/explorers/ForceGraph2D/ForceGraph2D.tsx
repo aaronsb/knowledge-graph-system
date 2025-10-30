@@ -1327,6 +1327,31 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.physics.enabled]);
 
+  // Travel to origin node (pan/zoom to center it)
+  const travelToOrigin = useCallback(() => {
+    if (!originNodeId || !svgRef.current) return;
+
+    const originNode = data.nodes.find(n => n.id === originNodeId);
+    if (!originNode || originNode.x === undefined || originNode.y === undefined) return;
+
+    const svg = d3.select(svgRef.current);
+    const width = dimensions.width;
+    const height = dimensions.height;
+
+    // Calculate transform to center the origin node
+    const scale = 1.5; // Zoom in a bit to focus on the node
+    const x = width / 2 - originNode.x * scale;
+    const y = height / 2 - originNode.y * scale;
+
+    // Animate transition to origin node
+    svg.transition()
+      .duration(750)
+      .call(
+        d3.zoom<SVGSVGElement, unknown>().transform as any,
+        d3.zoomIdentity.translate(x, y).scale(scale)
+      );
+  }, [originNodeId, data.nodes, dimensions]);
+
   // Build context menu items using common builder
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? buildNodeContextMenuItems(
@@ -1335,6 +1360,7 @@ export const ForceGraph2D: React.FC<
           handleFollowConcept,
           handleAddToGraph,
           setOriginNode: setOriginNodeId,
+          travelToOrigin,
           isPinned,
           togglePinNode,
           unpinAllNodes,
