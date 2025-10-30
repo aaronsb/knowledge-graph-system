@@ -589,11 +589,60 @@ export const ForceGraph3D: React.FC<
       const start = new THREE.Vector3(sourceNode.x || 0, sourceNode.y || 0, sourceNode.z || 0);
       const end = new THREE.Vector3(targetNode.x || 0, targetNode.y || 0, targetNode.z || 0);
 
-      // Calculate edge tangent (this is the axis we rotate around)
-      const tangent = new THREE.Vector3().subVectors(end, start).normalize();
+      let tangent: THREE.Vector3;
+      let labelPos: THREE.Vector3;
 
-      // Calculate label position (midpoint)
-      const labelPos = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      // Check if this is a self-loop
+      const isSelfLoop = sourceId === targetId;
+
+      if (isSelfLoop) {
+        // Self-loop: calculate tangent from hairpin curve
+        const nodeCenter = start.clone();
+        const sourceRadius = sourceNode.size || 10; // Approximate, actual calc is in linkPositionUpdate
+
+        // Get curve offset for this self-loop
+        const curveOffset = linkCurveOffsets?.get(linkKey) ?? 0;
+        const baseLoopSize = sourceRadius * 3;
+        const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+        // Recreate the hairpin curve (matching linkPositionUpdate logic)
+        const startAngle = curveOffset * 0.3;
+        const endAngle = startAngle + Math.PI / 6;
+        const midAngle = (startAngle + endAngle) / 2;
+
+        const loopStart = new THREE.Vector3(
+          nodeCenter.x + sourceRadius * Math.cos(startAngle),
+          nodeCenter.y + sourceRadius * Math.sin(startAngle),
+          nodeCenter.z
+        );
+
+        const loopEnd = new THREE.Vector3(
+          nodeCenter.x + sourceRadius * Math.cos(endAngle),
+          nodeCenter.y + sourceRadius * Math.sin(endAngle),
+          nodeCenter.z
+        );
+
+        const controlPoint1 = new THREE.Vector3(
+          nodeCenter.x + loopSize * Math.cos(midAngle - 0.3),
+          nodeCenter.y + loopSize * Math.sin(midAngle - 0.3),
+          nodeCenter.z
+        );
+
+        const controlPoint2 = new THREE.Vector3(
+          nodeCenter.x + loopSize * Math.cos(midAngle + 0.3),
+          nodeCenter.y + loopSize * Math.sin(midAngle + 0.3),
+          nodeCenter.z
+        );
+
+        // Create curve and get tangent at midpoint (apex)
+        const loopCurve = new THREE.CubicBezierCurve3(loopStart, controlPoint1, controlPoint2, loopEnd);
+        tangent = loopCurve.getTangent(0.5).normalize();
+        labelPos = loopCurve.getPoint(0.5);
+      } else {
+        // Normal edge: use straight line tangent
+        tangent = new THREE.Vector3().subVectors(end, start).normalize();
+        labelPos = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      }
 
       // Calculate direction from label to camera
       const toCamera = new THREE.Vector3().subVectors(camera.position, labelPos).normalize();
@@ -1429,25 +1478,74 @@ export const ForceGraph3D: React.FC<
           const linkKey = `${sourceId}->${targetId}-${link.type}`;
           const curveOffset = linkCurveOffsets?.get(linkKey) ?? 0;
 
-          // Calculate control point for curved arc (perpendicular offset)
-          const midPoint = new THREE.Vector3().addVectors(surfaceStart, surfaceEnd).multiplyScalar(0.5);
-          const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
+          // Check if this is a self-loop (edge connects to itself)
+          const isSelfLoop = sourceId === targetId;
+          let points: THREE.Vector3[];
+          let curve: THREE.QuadraticBezierCurve3 | null = null;
 
-          // If no offset (single edge), use straight line (no curvature)
-          // If offset exists (multiple edges), apply offset + base curvature for smooth arc
-          let controlPoint: THREE.Vector3;
-          if (curveOffset === 0) {
-            // Straight line - control point at midpoint
-            controlPoint = midPoint.clone();
+          if (isSelfLoop) {
+            // Self-loop: create hairpin loop that extends from node and returns
+            const nodeCenter = startPos.clone();
+            const nodeRadius = sourceRadius;
+
+            // Loop size increases with curve offset (for multiple self-loops)
+            const baseLoopSize = nodeRadius * 3; // Minimum loop size (clears node + space for label)
+            const loopSize = baseLoopSize + Math.abs(curveOffset);
+
+            // Create start and end points on node surface (separated by small angle)
+            const startAngle = curveOffset * 0.3; // Rotate start based on offset (spreads multiple loops)
+            const endAngle = startAngle + Math.PI / 6; // 30 degrees apart
+
+            const loopStart = new THREE.Vector3(
+              nodeCenter.x + nodeRadius * Math.cos(startAngle),
+              nodeCenter.y + nodeRadius * Math.sin(startAngle),
+              nodeCenter.z
+            );
+
+            const loopEnd = new THREE.Vector3(
+              nodeCenter.x + nodeRadius * Math.cos(endAngle),
+              nodeCenter.y + nodeRadius * Math.sin(endAngle),
+              nodeCenter.z
+            );
+
+            // Create two control points that push the curve outward (hairpin shape)
+            const midAngle = (startAngle + endAngle) / 2;
+            const controlPoint1 = new THREE.Vector3(
+              nodeCenter.x + loopSize * Math.cos(midAngle - 0.3),
+              nodeCenter.y + loopSize * Math.sin(midAngle - 0.3),
+              nodeCenter.z
+            );
+
+            const controlPoint2 = new THREE.Vector3(
+              nodeCenter.x + loopSize * Math.cos(midAngle + 0.3),
+              nodeCenter.y + loopSize * Math.sin(midAngle + 0.3),
+              nodeCenter.z
+            );
+
+            // Create cubic Bezier curve for smooth hairpin loop
+            const loopCurve = new THREE.CubicBezierCurve3(loopStart, controlPoint1, controlPoint2, loopEnd);
+            points = loopCurve.getPoints(30);
           } else {
-            // Curved line - apply offset for collision avoidance
-            const baseCurvature = distance * 0.15; // 15% arc height for smooth curves
-            controlPoint = midPoint.clone().add(perpendicular.multiplyScalar(curveOffset + baseCurvature));
-          }
+            // Normal edge: calculate control point for curved arc
+            const midPoint = new THREE.Vector3().addVectors(surfaceStart, surfaceEnd).multiplyScalar(0.5);
+            const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
 
-          // Create curved line
-          const curve = new THREE.QuadraticBezierCurve3(surfaceStart, controlPoint, surfaceEnd);
-          const points = curve.getPoints(20);
+            // If no offset (single edge), use straight line (no curvature)
+            // If offset exists (multiple edges), apply offset + base curvature for smooth arc
+            let controlPoint: THREE.Vector3;
+            if (curveOffset === 0) {
+              // Straight line - control point at midpoint
+              controlPoint = midPoint.clone();
+            } else {
+              // Curved line - apply offset for collision avoidance
+              const baseCurvature = distance * 0.15; // 15% arc height for smooth curves
+              controlPoint = midPoint.clone().add(perpendicular.multiplyScalar(curveOffset + baseCurvature));
+            }
+
+            // Create curved line
+            curve = new THREE.QuadraticBezierCurve3(surfaceStart, controlPoint, surfaceEnd);
+            points = curve.getPoints(20);
+          }
 
           // Update Line2 geometry with new positions
           const line = obj.children.find((child: any) => child instanceof Line2);
@@ -1470,8 +1568,9 @@ export const ForceGraph3D: React.FC<
             // Use edge color for uniform gradient
             const color = new THREE.Color(edgeColor);
 
+            // Create color array matching the number of points
             const colors: number[] = [];
-            for (let i = 0; i <= 20; i++) {
+            for (let i = 0; i < points.length; i++) {
               // Uniform color along the curve (no gradient)
               colors.push(color.r, color.g, color.b);
             }
@@ -1497,11 +1596,31 @@ export const ForceGraph3D: React.FC<
             const targetId = typeof link.target === 'string' ? link.target : link.target.id;
             const linkKey = `${sourceId}->${targetId}-${link.type}`;
 
-            // Get midpoint of curve (t=0.5)
-            const midPoint = curve.getPoint(0.5);
+            // Get midpoint and tangent (different for self-loops vs normal edges)
+            let midPoint: THREE.Vector3;
+            let tangent: THREE.Vector3;
 
-            // Get tangent direction at midpoint - this is the edge arrow direction
-            const tangent = curve.getTangent(0.5);
+            if (isSelfLoop) {
+              // Self-loop: midpoint is at the apex of the hairpin loop (furthest from node)
+              const midIndex = Math.floor(points.length / 2); // Middle of the curve (apex)
+              midPoint = points[midIndex];
+
+              // Calculate tangent from neighboring points
+              const prevPoint = points[Math.max(0, midIndex - 1)];
+              const nextPoint = points[Math.min(points.length - 1, midIndex + 1)];
+              tangent = new THREE.Vector3().subVectors(nextPoint, prevPoint).normalize();
+            } else if (curve) {
+              // Normal edge: use curve getPoint/getTangent
+              midPoint = curve.getPoint(0.5);
+              tangent = curve.getTangent(0.5);
+            } else {
+              // Fallback: shouldn't happen, but use midpoint of points array
+              const midIndex = Math.floor(points.length / 2);
+              midPoint = points[midIndex];
+              const prevPoint = points[Math.max(0, midIndex - 1)];
+              const nextPoint = points[Math.min(points.length - 1, midIndex + 1)];
+              tangent = new THREE.Vector3().subVectors(nextPoint, prevPoint).normalize();
+            }
 
             // Orient text to read along the edge direction (following the arrow)
             // Create a coordinate system where:
