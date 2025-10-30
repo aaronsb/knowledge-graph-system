@@ -41,6 +41,13 @@ export interface ForceGraph3DSettings {
     showOriginNode: boolean; // "You Are Here" highlighting
   };
 
+  // Camera controls (3D-specific)
+  camera: {
+    lockRoll: boolean;   // Lock camera roll axis (keep upright relative to ground)
+    lockPitch: boolean;  // Lock camera pitch axis (prevent looking up/down)
+    lockYaw: boolean;    // Lock camera yaw axis (prevent rotating left/right)
+  };
+
   // Filters
   filters: {
     relationshipTypes: string[];
@@ -82,6 +89,11 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
     enablePan: true,
     highlightNeighbors: true,
     showOriginNode: true,
+  },
+  camera: {
+    lockRoll: true,   // Lock roll by default to prevent disorienting tilting
+    lockPitch: false, // Allow looking up/down
+    lockYaw: false,   // Allow rotating around graph
   },
   filters: {
     relationshipTypes: [],

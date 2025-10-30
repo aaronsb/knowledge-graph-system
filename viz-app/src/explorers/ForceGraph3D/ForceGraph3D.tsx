@@ -21,7 +21,7 @@ import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { Legend } from './Legend';
 import { CanvasSettingsPanel } from './CanvasSettingsPanel';
-import { NodeInfoBox, EdgeInfoBox, StatsPanel } from '../common';
+import { NodeInfoBox, EdgeInfoBox, StatsPanel, Settings3DPanel } from '../common';
 
 export const ForceGraph3D: React.FC<
   ExplorerProps<ForceGraph3DData, ForceGraph3DSettings>
@@ -465,6 +465,35 @@ export const ForceGraph3D: React.FC<
 
     return () => clearInterval(intervalId);
   }, [data.nodes, data.links, projectToScreen, activeNodeInfos.length, activeEdgeInfos.length]);
+
+  // Apply camera axis locks (roll, pitch, yaw)
+  useEffect(() => {
+    if (!fgRef.current) return;
+
+    const controls = fgRef.current.controls();
+    if (!controls) return;
+
+    // Lock roll axis by constraining camera up vector to always point up (Y-axis)
+    // This prevents disorienting camera tilt when rotating around the graph
+    if (settings.camera?.lockRoll) {
+      const lockCameraRoll = () => {
+        const camera = fgRef.current?.camera();
+        if (!camera) return;
+
+        // Force camera's up vector to always be (0, 1, 0) - world up
+        // This keeps the camera upright relative to the ground plane
+        camera.up.set(0, 1, 0);
+        camera.updateProjectionMatrix();
+      };
+
+      // Apply roll lock on every control change
+      controls.addEventListener('change', lockCameraRoll);
+
+      return () => {
+        controls.removeEventListener('change', lockCameraRoll);
+      };
+    }
+  }, [settings.camera?.lockRoll]);
 
   // Dismiss node info box
   const handleDismissNodeInfo = useCallback((nodeId: string) => {
@@ -931,6 +960,14 @@ export const ForceGraph3D: React.FC<
         <CanvasSettingsPanel
           settings={settings}
           onChange={onSettingsChange}
+        />
+      )}
+
+      {/* 3D Settings Panel */}
+      {onSettingsChange && (
+        <Settings3DPanel
+          camera={settings.camera}
+          onCameraChange={(camera) => onSettingsChange({ ...settings, camera })}
         />
       )}
 
