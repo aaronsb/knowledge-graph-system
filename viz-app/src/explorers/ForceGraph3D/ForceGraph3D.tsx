@@ -911,9 +911,9 @@ export const ForceGraph3D: React.FC<
       if (!sprite.parent) return;  // Stop if removed from scene
 
       frame++;
-      const scale = nodeRadius * 3 + Math.sin(frame * 0.05) * nodeRadius * 0.3;
+      const scale = nodeRadius * 3 + Math.sin(frame * 0.15) * nodeRadius * 0.3;
       sprite.scale.set(scale, scale, 1);
-      sprite.material.opacity = 0.7 + Math.sin(frame * 0.05) * 0.3;
+      sprite.material.opacity = 0.7 + Math.sin(frame * 0.15) * 0.3;
 
       // Update position to follow node
       const node = data.nodes.find(n => n.id === nodeId);
