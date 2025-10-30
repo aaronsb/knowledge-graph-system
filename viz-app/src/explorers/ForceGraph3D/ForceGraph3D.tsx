@@ -8,6 +8,9 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import ForceGraph3DLib from 'react-force-graph-3d';
 import * as THREE from 'three';
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { ArrowRight, Plus } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DSettings, ForceGraph3DData } from './types';
@@ -143,10 +146,21 @@ export const ForceGraph3D: React.FC<
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
-        setDimensions({
+        const newDimensions = {
           width: containerRef.current.clientWidth,
           height: containerRef.current.clientHeight,
-        });
+        };
+        setDimensions(newDimensions);
+
+        // Update Line2 material resolution when window resizes
+        if (fgRef.current) {
+          const scene = fgRef.current.scene();
+          scene.traverse((obj: any) => {
+            if (obj instanceof Line2 && obj.material instanceof LineMaterial) {
+              obj.material.resolution.set(newDimensions.width, newDimensions.height);
+            }
+          });
+        }
       }
     };
 
@@ -197,6 +211,20 @@ export const ForceGraph3D: React.FC<
       // Silently ignore - simulation might not be ready yet on first render
     }
   }, [settings.physics?.charge, settings.physics?.linkDistance, settings.physics?.gravity]);
+
+  // Update line widths when linkWidth slider changes
+  useEffect(() => {
+    if (!fgRef.current) return;
+
+    const scene = fgRef.current.scene();
+    const lineWidth = settings.visual?.linkWidth ?? 1;
+
+    scene.traverse((obj: any) => {
+      if (obj instanceof Line2 && obj.material instanceof LineMaterial) {
+        obj.material.linewidth = lineWidth * 0.002;
+      }
+    });
+  }, [settings.visual?.linkWidth]);
 
   // Add grid helper when enabled
   useEffect(() => {
@@ -379,34 +407,40 @@ export const ForceGraph3D: React.FC<
           const group = new THREE.Group();
 
           // We'll set positions in linkPositionUpdate
-          // Just create placeholder line for now
-          const points = [
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 1, 0),
-            new THREE.Vector3(0, 2, 0),
-          ];
-
-          const geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-          // Create gradient colors from source to target
+          // Create placeholder points for now
           const numPoints = 20;
+          const positions: number[] = [];
           const colors: number[] = [];
+
           for (let i = 0; i <= numPoints; i++) {
+            // Placeholder positions (will be updated in linkPositionUpdate)
+            positions.push(0, i, 0);
+
+            // Create gradient colors from source to target
             const t = i / numPoints;
             const gradientColor = sourceColor.clone().lerp(targetColor, t);
             colors.push(gradientColor.r, gradientColor.g, gradientColor.b);
           }
-          geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+          // Create LineGeometry with positions and colors
+          const geometry = new LineGeometry();
+          geometry.setPositions(positions);
+          geometry.setColors(colors);
 
           const linkOpacity = 0.6;
-          const material = new THREE.LineBasicMaterial({
+          const lineWidth = settings.visual?.linkWidth ?? 1;
+
+          // LineMaterial for shader-based thick lines
+          const material = new LineMaterial({
             vertexColors: true,
             transparent: true,
             opacity: linkOpacity,
-            linewidth: settings.visual?.linkWidth ?? 1,  // Stroke width from slider
+            linewidth: lineWidth * 0.002,  // LineMaterial uses world units, scale down
+            resolution: new THREE.Vector2(1200, 800),  // Will be updated in resize
           });
 
-          const line = new THREE.Line(geometry, material);
+          const line = new Line2(geometry, material);
+          line.computeLineDistances();  // Required for dashed lines and proper rendering
           group.add(line);
 
           // Add 2D arrow sprite at endpoint (if enabled)
@@ -444,7 +478,6 @@ export const ForceGraph3D: React.FC<
 
           return group;
         }}
-        linkThreeObjectExtend={true}  // Merge with default behavior
         linkPositionUpdate={(obj: any, { start, end }: any, link: any) => {
           // Update curved line geometry when nodes move
           if (!start || !end) return;
@@ -491,11 +524,37 @@ export const ForceGraph3D: React.FC<
           const curve = new THREE.QuadraticBezierCurve3(surfaceStart, controlPoint, surfaceEnd);
           const points = curve.getPoints(20);
 
-          // Update line geometry
-          const line = obj.children.find((child: any) => child.type === 'Line');
-          if (line) {
-            line.geometry.setFromPoints(points);
-            line.geometry.attributes.position.needsUpdate = true;
+          // Update Line2 geometry with new positions
+          const line = obj.children.find((child: any) => child instanceof Line2);
+          if (line && line.geometry) {
+            // Convert Vector3 points to flat array for LineGeometry
+            const positions: number[] = [];
+            points.forEach(p => {
+              positions.push(p.x, p.y, p.z);
+            });
+
+            line.geometry.setPositions(positions);
+            line.computeLineDistances();  // Recompute after position update
+
+            // Update gradient colors
+            const sourceNode = typeof link.source === 'object' ? link.source : data.nodes.find((n: any) => n.id === link.source);
+            const targetNode = typeof link.target === 'object' ? link.target : data.nodes.find((n: any) => n.id === link.target);
+
+            if (sourceNode && targetNode) {
+              const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+              const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+              const sourceColor = new THREE.Color(nodeColors.get(sourceId) || '#888');
+              const targetColor = new THREE.Color(nodeColors.get(targetId) || '#888');
+
+              const colors: number[] = [];
+              for (let i = 0; i <= 20; i++) {
+                const t = i / 20;
+                const gradientColor = sourceColor.clone().lerp(targetColor, t);
+                colors.push(gradientColor.r, gradientColor.g, gradientColor.b);
+              }
+
+              line.geometry.setColors(colors);
+            }
           }
 
           // Update arrow sprite position at endpoint
