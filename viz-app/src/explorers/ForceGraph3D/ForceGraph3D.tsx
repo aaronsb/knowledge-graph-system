@@ -34,6 +34,10 @@ export const ForceGraph3D: React.FC<
   // Texture cache for edge labels - reuse textures across sprites for memory efficiency
   const edgeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
 
+  // Store camera-facing rotation angles for each edge (rotation around edge axis)
+  // Key: linkKey (sourceId->targetId-type), Value: angle in radians
+  const labelCameraAngles = useRef<Map<string, number>>(new Map());
+
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -508,111 +512,176 @@ export const ForceGraph3D: React.FC<
     };
   }, [settings.camera?.clampToFloor]);
 
-  // Helper function to orient edge labels to face camera
-  const orientLabelsToCamera = useCallback((scene: THREE.Scene, camera: THREE.Camera) => {
-    // Traverse scene to find all edge label meshes
-    scene.traverse((obj: any) => {
-      if (obj.name === 'edge-label-mesh' && obj instanceof THREE.Mesh) {
-        // Get label's world position
-        const labelPos = new THREE.Vector3();
-        obj.getWorldPosition(labelPos);
+  // Helper function to calculate target camera-facing rotation for edge labels
+  // Returns a map of linkKey -> rotation angle around edge axis
+  const calculateTargetCameraRotations = useCallback((camera: THREE.Camera) => {
+    const targets = new Map<string, number>();
 
-        // Calculate direction from label to camera
-        const cameraPos = camera.position.clone();
-        const toCamera = new THREE.Vector3().subVectors(cameraPos, labelPos).normalize();
+    data.links.forEach((link) => {
+      // Get source and target positions
+      const sourceNode = typeof link.source === 'object' ? link.source : data.nodes.find((n: any) => n.id === link.source);
+      const targetNode = typeof link.target === 'object' ? link.target : data.nodes.find((n: any) => n.id === link.target);
 
-        // Get label's current normal (Z-axis in local space -> world space)
-        const localNormal = new THREE.Vector3(0, 0, 1);
-        const worldNormal = localNormal.clone().applyQuaternion(obj.quaternion).normalize();
+      if (!sourceNode || !targetNode) return;
 
-        // Check if label is facing away from camera
-        const dotProduct = worldNormal.dot(toCamera);
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      const linkKey = `${sourceId}->${targetId}-${link.type}`;
 
-        // If normal points away from camera (dot < 0), we should flip the label 180°
-        // We rotate around the label's X-axis (tangent/edge direction)
-        if (dotProduct < 0) {
-          // Rotate 180° around X-axis (edge tangent)
-          const flipRotation = new THREE.Quaternion().setFromAxisAngle(
-            new THREE.Vector3(1, 0, 0), // Local X-axis
-            Math.PI // 180 degrees
-          );
+      // Get node positions (use current positions from force simulation)
+      const start = new THREE.Vector3(sourceNode.x || 0, sourceNode.y || 0, sourceNode.z || 0);
+      const end = new THREE.Vector3(targetNode.x || 0, targetNode.y || 0, targetNode.z || 0);
 
-          // Apply rotation in local space
-          obj.quaternion.multiply(flipRotation);
-        }
+      // Calculate edge tangent (this is the axis we rotate around)
+      const tangent = new THREE.Vector3().subVectors(end, start).normalize();
+
+      // Calculate label position (midpoint)
+      const labelPos = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+
+      // Calculate direction from label to camera
+      const toCamera = new THREE.Vector3().subVectors(camera.position, labelPos).normalize();
+
+      // Project toCamera onto plane perpendicular to tangent (edge axis)
+      const projection = toCamera.clone().sub(
+        tangent.clone().multiplyScalar(toCamera.dot(tangent))
+      );
+
+      // If projection is too small, viewing along edge axis - skip
+      if (projection.lengthSq() < 0.01) return;
+
+      projection.normalize();
+
+      // Calculate current "normal" direction for label (sticks out of plane face)
+      // This is what we want to point toward the camera
+      const worldUp = new THREE.Vector3(0, 0, 1);
+      const currentNormal = new THREE.Vector3().crossVectors(tangent, worldUp).normalize();
+
+      // Handle edge case where tangent is parallel to world up
+      if (currentNormal.length() < 0.001) {
+        worldUp.set(0, 1, 0);
+        currentNormal.crossVectors(tangent, worldUp).normalize();
+      }
+
+      // Calculate rotation angle around edge axis to align currentNormal with projection
+      // We want the normal (Z-axis, face of plane) to point toward camera
+      const angle = Math.atan2(
+        tangent.dot(new THREE.Vector3().crossVectors(currentNormal, projection)),
+        currentNormal.dot(projection)
+      );
+
+      // Store angle if significant (> 0.5 degrees)
+      if (Math.abs(angle) > 0.009) {
+        targets.set(linkKey, angle);
       }
     });
-  }, []);
 
-  // Auto-level camera when user releases mouse
+    return targets;
+  }, [data.links, data.nodes]);
+
+  // Clear camera angles when orient labels is disabled
   useEffect(() => {
-    if (!fgRef.current || !settings.camera?.autoLevel) return;
+    if (!settings.camera?.orientLabels) {
+      labelCameraAngles.current.clear();
+    }
+  }, [settings.camera?.orientLabels]);
+
+  // Auto-level camera and orient labels when user releases mouse
+  useEffect(() => {
+    if (!fgRef.current) return;
+    // Run if either autoLevel or orientLabels is enabled
+    if (!settings.camera?.autoLevel && !settings.camera?.orientLabels) return;
 
     const controls = fgRef.current.controls();
     const camera = fgRef.current.camera();
-    const scene = fgRef.current.scene();
-    if (!controls || !camera || !scene) return;
+    if (!controls || !camera) return;
 
     let animationFrame: number | null = null;
-    let isLeveling = false;
+    let isAnimating = false;
     let startTime = 0;
-    const levelDuration = 800; // 800ms smooth animation
+    const animationDuration = 800; // 800ms smooth animation
+
+    // Store animation state
+    let cameraStartUp: THREE.Vector3 | null = null;
+    let labelTargetAngles = new Map<string, number>(); // Target rotation angles by linkKey
 
     // In our coordinate system, positive Y points DOWN, so up is -Y
     const targetUp = new THREE.Vector3(0, -1, 0);
 
-    const smoothLevel = (timestamp: number) => {
+    const smoothAnimation = (timestamp: number) => {
       if (!camera) return;
 
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / levelDuration, 1);
+      const progress = Math.min(elapsed / animationDuration, 1);
 
       // Ease-in-out curve for smooth acceleration/deceleration
       const eased = progress < 0.5
         ? 2 * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-      // Interpolate camera up vector toward target
-      const currentUp = camera.up.clone().normalize();
-      const newUp = new THREE.Vector3().lerpVectors(currentUp, targetUp, eased);
-      camera.up.copy(newUp);
+      // Auto-level: Interpolate camera up vector toward target
+      if (settings.camera?.autoLevel && cameraStartUp) {
+        const newUp = new THREE.Vector3().lerpVectors(cameraStartUp, targetUp, eased);
+        camera.up.copy(newUp);
+      }
+
+      // Orient labels: Interpolate rotation angles and store in ref
+      if (settings.camera?.orientLabels) {
+        labelTargetAngles.forEach((targetAngle, linkKey) => {
+          // Interpolate from 0 to target angle
+          const currentAngle = targetAngle * eased;
+          // Store in ref for use in linkPositionUpdate
+          labelCameraAngles.current.set(linkKey, currentAngle);
+        });
+      }
 
       if (progress < 1) {
-        animationFrame = requestAnimationFrame(smoothLevel);
+        animationFrame = requestAnimationFrame(smoothAnimation);
       } else {
-        isLeveling = false;
+        isAnimating = false;
         animationFrame = null;
-
-        // After auto-level completes, orient labels to camera if enabled
-        if (settings.camera?.orientLabels && scene) {
-          orientLabelsToCamera(scene, camera);
-        }
+        // Keep final angles in ref (don't clear)
+        labelTargetAngles.clear();
+        cameraStartUp = null;
       }
     };
 
-    const startLeveling = () => {
-      if (isLeveling) return; // Already leveling
+    const startAnimation = () => {
+      if (isAnimating) return; // Already animating
 
       // Check if camera needs leveling (up vector not aligned with -Y)
-      const currentUp = camera.up.clone().normalize();
-      if (currentUp.dot(targetUp) < 0.999) { // More than ~2.5 degree off
-        isLeveling = true;
+      const shouldLevel = settings.camera?.autoLevel &&
+        camera.up.clone().normalize().dot(targetUp) < 0.999; // More than ~2.5 degree off
+
+      // Calculate label target angles if orient labels is enabled
+      let shouldOrient = false;
+      if (settings.camera?.orientLabels) {
+        labelTargetAngles = calculateTargetCameraRotations(camera);
+        shouldOrient = labelTargetAngles.size > 0;
+      }
+
+      if (shouldLevel || shouldOrient) {
+        // Store camera starting orientation
+        if (shouldLevel) {
+          cameraStartUp = camera.up.clone();
+        }
+
+        isAnimating = true;
         startTime = 0;
-        animationFrame = requestAnimationFrame(smoothLevel);
+        animationFrame = requestAnimationFrame(smoothAnimation);
       }
     };
 
-    // Listen for end of interaction
-    controls.addEventListener('end', startLeveling);
+    // Listen for end of interaction (mouse release)
+    controls.addEventListener('end', startAnimation);
 
     return () => {
-      controls.removeEventListener('end', startLeveling);
+      controls.removeEventListener('end', startAnimation);
       if (animationFrame !== null) {
         cancelAnimationFrame(animationFrame);
       }
     };
-  }, [settings.camera?.autoLevel, settings.camera?.orientLabels, orientLabelsToCamera]);
+  }, [settings.camera?.autoLevel, settings.camera?.orientLabels, calculateTargetCameraRotations]);
 
   // Dismiss node info box
   const handleDismissNodeInfo = useCallback((nodeId: string) => {
@@ -898,6 +967,11 @@ export const ForceGraph3D: React.FC<
           // Update edge label mesh position and orientation
           const labelMesh = obj.getObjectByName('edge-label-mesh');
           if (labelMesh) {
+            // Calculate linkKey for this edge (needed for camera-facing rotation lookup)
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            const linkKey = `${sourceId}->${targetId}-${link.type}`;
+
             // Get midpoint of curve (t=0.5)
             const midPoint = curve.getPoint(0.5);
 
@@ -928,16 +1002,29 @@ export const ForceGraph3D: React.FC<
             // Apply rotation - text reads along edge direction
             labelMesh.setRotationFromMatrix(matrix);
 
-            // Offset position so bottom edge of label touches curve (not center)
-            // Shift along the UP direction (Y-axis in label space) by half label height
+            // If "Orient Labels to Camera" is enabled, apply camera-facing rotation
+            if (settings.camera?.orientLabels) {
+              const cameraAngle = labelCameraAngles.current.get(linkKey);
+              if (cameraAngle !== undefined) {
+                // Apply rotation around edge tangent (axis of rotation)
+                const edgeAxis = tangent.clone().normalize();
+                const cameraRotation = new THREE.Quaternion().setFromAxisAngle(edgeAxis, cameraAngle);
+                labelMesh.quaternion.premultiply(cameraRotation);
+              }
+            }
+
+            // Position label: First place center on edge, then offset along rotated local Y-axis
+            // This ensures rotation pivot is ON the edge, not offset in space
             const labelHeight = 10;
-            const offset = up.clone().multiplyScalar(labelHeight / 2);
-            labelMesh.position.copy(midPoint.clone().add(offset));
+            labelMesh.position.copy(midPoint);
+
+            // Offset along the mesh's LOCAL Y-axis (after all rotations applied)
+            const localUp = new THREE.Vector3(0, 1, 0);
+            const rotatedUp = localUp.applyQuaternion(labelMesh.quaternion);
+            const offset = rotatedUp.multiplyScalar(labelHeight / 2);
+            labelMesh.position.add(offset);
 
             // Update texture if edge color mode changed
-            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-            const linkKey = `${sourceId}->${targetId}-${link.type}`;
             const currentEdgeColor = linkColors.get(linkKey) || '#999';
             const newTexture = getEdgeLabelTexture(link.type, currentEdgeColor, settings.visual?.edgeLabelSize ?? 9);
 
