@@ -221,7 +221,7 @@ export const ForceGraph3D: React.FC<
 
     scene.traverse((obj: any) => {
       if (obj instanceof Line2 && obj.material instanceof LineMaterial) {
-        obj.material.linewidth = lineWidth * 0.002;
+        obj.material.linewidth = lineWidth * 2;  // Match scale in linkThreeObject
       }
     });
   }, [settings.visual?.linkWidth]);
@@ -435,8 +435,8 @@ export const ForceGraph3D: React.FC<
             vertexColors: true,
             transparent: true,
             opacity: linkOpacity,
-            linewidth: lineWidth * 0.002,  // LineMaterial uses world units, scale down
-            resolution: new THREE.Vector2(1200, 800),  // Will be updated in resize
+            linewidth: lineWidth * 2,  // LineMaterial uses pixels, scale up for visibility
+            resolution: new THREE.Vector2(dimensions.width, dimensions.height),
           });
 
           const line = new Line2(geometry, material);
