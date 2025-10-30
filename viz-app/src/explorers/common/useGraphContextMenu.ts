@@ -101,16 +101,16 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
 }
 
 /**
- * Build node context menu items
+ * Build unified context menu items (handles both node clicks and background clicks)
+ * @param nodeContext - Node data if right-clicked on a node, null if right-clicked on background
  */
-export function buildNodeContextMenuItems(
-  nodeContext: NodeContextMenuParams,
+export function buildContextMenuItems(
+  nodeContext: NodeContextMenuParams | null,
   handlers: GraphContextMenuHandlers,
   callbacks: GraphContextMenuCallbacks,
   originNodeId: string | null,
   destinationNodeId: string | null
 ): ContextMenuItem[] {
-  const { nodeId, nodeLabel } = nodeContext;
   const {
     isPinned,
     togglePinNode,
@@ -126,95 +126,170 @@ export function buildNodeContextMenuItems(
   } = handlers;
   const { onClose } = callbacks;
 
-  // Build Origin submenu items
-  const originSubmenu: ContextMenuItem[] = [
-    // Contextual set/clear origin
-    originNodeId === nodeId
-      ? {
-          label: 'Clear Origin',
-          icon: MapPinOff,
-          onClick: () => {
-            setOriginNode(null);
-            onClose();
-          },
-        }
-      : {
-          label: 'Set Origin',
-          icon: MapPin,
-          onClick: () => {
-            setOriginNode(nodeId);
-            if (applyOriginMarker) {
-              applyOriginMarker(nodeId);
-            }
-            onClose();
-          },
-        },
-  ];
+  const items: ContextMenuItem[] = [];
 
-  // Add "Travel to Origin" option only if origin exists and this isn't the origin node
-  if (originNodeId && originNodeId !== nodeId && travelToOrigin) {
-    originSubmenu.push({
-      label: 'Travel to Origin',
-      icon: Navigation,
-      onClick: () => {
-        travelToOrigin();
-        onClose();
-      },
-    });
+  // Build Origin submenu - context-aware
+  const originSubmenu: ContextMenuItem[] = [];
+
+  if (nodeContext) {
+    // Right-clicked on a node
+    const { nodeId } = nodeContext;
+
+    if (originNodeId === nodeId) {
+      // This node IS the origin - show Clear
+      originSubmenu.push({
+        label: 'Clear Origin',
+        icon: MapPinOff,
+        onClick: () => {
+          setOriginNode(null);
+          onClose();
+        },
+      });
+    } else {
+      // This node is NOT the origin - show Set
+      originSubmenu.push({
+        label: 'Set Origin',
+        icon: MapPin,
+        onClick: () => {
+          setOriginNode(nodeId);
+          if (applyOriginMarker) {
+            applyOriginMarker(nodeId);
+          }
+          onClose();
+        },
+      });
+
+      // Travel to origin if origin exists
+      if (originNodeId && travelToOrigin) {
+        originSubmenu.push({
+          label: 'Travel to Origin',
+          icon: Navigation,
+          onClick: () => {
+            travelToOrigin();
+            onClose();
+          },
+        });
+      }
+    }
+  } else {
+    // Right-clicked on background
+    if (originNodeId) {
+      // Origin is set - show Clear and Travel
+      originSubmenu.push({
+        label: 'Clear Origin',
+        icon: MapPinOff,
+        onClick: () => {
+          setOriginNode(null);
+          onClose();
+        },
+      });
+
+      if (travelToOrigin) {
+        originSubmenu.push({
+          label: 'Travel to Origin',
+          icon: Navigation,
+          onClick: () => {
+            travelToOrigin();
+            onClose();
+          },
+        });
+      }
+    }
   }
 
-  // Build Destination submenu items
-  const destinationSubmenu: ContextMenuItem[] = [
-    // Contextual set/clear destination
-    destinationNodeId === nodeId
-      ? {
-          label: 'Clear Destination',
-          icon: FlagOff,
-          onClick: () => {
-            setDestinationNode(null);
-            onClose();
-          },
-        }
-      : {
-          label: 'Set Destination',
-          icon: Flag,
-          onClick: () => {
-            setDestinationNode(nodeId);
-            if (applyDestinationMarker) {
-              applyDestinationMarker(nodeId);
-            }
-            onClose();
-          },
-        },
-  ];
+  // Build Destination submenu - context-aware
+  const destinationSubmenu: ContextMenuItem[] = [];
 
-  // Add "Travel to Destination" option only if destination exists and this isn't the destination node
-  if (destinationNodeId && destinationNodeId !== nodeId && travelToDestination) {
-    destinationSubmenu.push({
-      label: 'Travel to Destination',
-      icon: Navigation,
-      onClick: () => {
-        travelToDestination();
-        onClose();
-      },
-    });
+  if (nodeContext) {
+    // Right-clicked on a node
+    const { nodeId } = nodeContext;
+
+    if (destinationNodeId === nodeId) {
+      // This node IS the destination - show Clear
+      destinationSubmenu.push({
+        label: 'Clear Destination',
+        icon: FlagOff,
+        onClick: () => {
+          setDestinationNode(null);
+          onClose();
+        },
+      });
+    } else {
+      // This node is NOT the destination - show Set
+      destinationSubmenu.push({
+        label: 'Set Destination',
+        icon: Flag,
+        onClick: () => {
+          setDestinationNode(nodeId);
+          if (applyDestinationMarker) {
+            applyDestinationMarker(nodeId);
+          }
+          onClose();
+        },
+      });
+
+      // Travel to destination if destination exists
+      if (destinationNodeId && travelToDestination) {
+        destinationSubmenu.push({
+          label: 'Travel to Destination',
+          icon: Navigation,
+          onClick: () => {
+            travelToDestination();
+            onClose();
+          },
+        });
+      }
+    }
+  } else {
+    // Right-clicked on background
+    if (destinationNodeId) {
+      // Destination is set - show Clear and Travel
+      destinationSubmenu.push({
+        label: 'Clear Destination',
+        icon: FlagOff,
+        onClick: () => {
+          setDestinationNode(null);
+          onClose();
+        },
+      });
+
+      if (travelToDestination) {
+        destinationSubmenu.push({
+          label: 'Travel to Destination',
+          icon: Navigation,
+          onClick: () => {
+            travelToDestination();
+            onClose();
+          },
+        });
+      }
+    }
   }
 
-  return [
-    // Origin submenu
-    {
+  // Add Origin submenu if it has items
+  if (originSubmenu.length > 0) {
+    items.push({
       label: 'Origin',
       icon: Target,
       submenu: originSubmenu,
-    },
-    // Destination submenu
-    {
+    });
+  }
+
+  // Add Destination submenu if it has items
+  if (destinationSubmenu.length > 0) {
+    items.push({
       label: 'Destination',
       icon: Flag,
       submenu: destinationSubmenu,
-    },
+    });
+  }
+
+  // Node-specific actions (only when right-clicking on a node)
+  if (nodeContext) {
+    const { nodeId, nodeLabel } = nodeContext;
+
     // Node submenu with pin operations
-    {
+    items.push({
       label: 'Node',
       icon: Circle,
       submenu: [
@@ -245,60 +320,27 @@ export function buildNodeContextMenuItems(
           },
         },
       ],
-    },
-    {
+    });
+
+    // Follow and Add actions
+    items.push({
       label: `Follow "${nodeLabel}"`,
       icon: ArrowRight,
       onClick: () => {
         handleFollowConcept(nodeId);
         onClose();
       },
-    },
-    {
+    });
+
+    items.push({
       label: `Add "${nodeLabel}" to Graph`,
       icon: Plus,
       onClick: () => {
         handleAddToGraph(nodeId);
         onClose();
       },
-    },
-  ];
-}
+    });
+  }
 
-/**
- * Build canvas context menu items
- */
-export function buildCanvasContextMenuItems(
-  settings: { visual: { showGrid: boolean } },
-  callbacks: GraphContextMenuCallbacks
-): ContextMenuItem[] {
-  const { onClose, onSettingsChange } = callbacks;
-
-  if (!onSettingsChange) return [];
-
-  return [
-    settings.visual.showGrid
-      ? {
-          label: 'Hide Grid',
-          icon: EyeOff,
-          onClick: () => {
-            onSettingsChange({
-              ...settings,
-              visual: { ...settings.visual, showGrid: false },
-            });
-            onClose();
-          },
-        }
-      : {
-          label: 'Show Grid',
-          icon: Grid3x3,
-          onClick: () => {
-            onSettingsChange({
-              ...settings,
-              visual: { ...settings.visual, showGrid: true },
-            });
-            onClose();
-          },
-        },
-  ];
+  return items;
 }

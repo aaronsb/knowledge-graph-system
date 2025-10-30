@@ -22,8 +22,7 @@ import {
   Legend,
   PanelStack,
   useGraphNavigation,
-  buildNodeContextMenuItems,
-  buildCanvasContextMenuItems,
+  buildContextMenuItems,
   type GraphContextMenuHandlers,
 } from '../common';
 import { SLIDER_RANGES } from './types';
@@ -123,6 +122,7 @@ export const ForceGraph2D: React.FC<
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+  const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
   // Track zoom transform for info box positioning
   const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -195,18 +195,56 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.interaction.showOriginNode]);
 
-  // Node context menu state
+  // Imperative function to apply blue ring for destination
+  const applyBlueRing = useCallback((nodeId: string) => {
+    if (!svgRef.current || !settings.interaction.showOriginNode) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Remove from previous node (restore brighter stroke)
+    svg.selectAll('circle.destination-node')
+      .interrupt()
+      .attr('stroke', function() {
+        const d = d3.select(this).datum() as D3Node;
+        const color = nodeColors.get(d.id) || d.color;
+        return d3.color(color)?.brighter(0.4).toString() || color;
+      })
+      .attr('stroke-width', 2)
+      .attr('stroke-opacity', 1)
+      .classed('destination-node', false);
+
+    // Add to target node
+    const targetCircle = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
+
+    if (!targetCircle.empty()) {
+      targetCircle
+        .attr('stroke', '#4169E1')  // Royal Blue for destination
+        .attr('stroke-width', 4)
+        .classed('destination-node', true);
+
+      // Start pulsing animation
+      const pulse = () => {
+        targetCircle
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', 6)
+          .attr('stroke-opacity', 0.6)
+          .transition()
+          .duration(1000)
+          .attr('stroke-width', 4)
+          .attr('stroke-opacity', 1)
+          .on('end', pulse);
+      };
+      pulse();
+    }
+  }, [settings.interaction.showOriginNode]);
+
+  // Unified context menu state (handles both node and background clicks)
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
-    nodeId: string;
-    nodeLabel: string;
-  } | null>(null);
-
-  // Canvas context menu state
-  const [canvasContextMenu, setCanvasContextMenu] = useState<{
-    x: number;
-    y: number;
+    nodeId: string | null;  // null for background clicks
+    nodeLabel: string | null;  // null for background clicks
   } | null>(null);
 
   // Right-click drag tracking for pan behavior
@@ -214,7 +252,7 @@ export const ForceGraph2D: React.FC<
   const [isRightClickDragging, setIsRightClickDragging] = useState(false);
 
   // Get navigation state and settings from store
-  const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
+  const { originNodeId, setOriginNodeId, destinationNodeId, setDestinationNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Calculate neighbors for highlighting
   const neighbors = useMemo(() => {
@@ -454,6 +492,9 @@ export const ForceGraph2D: React.FC<
             k: event.transform.k,
           });
         });
+
+      // Store zoom behavior in ref for travel functions to use
+      zoomBehaviorRef.current = zoom;
 
       if (settings.interaction.enableZoom && settings.interaction.enablePan) {
         svg.call(zoom);
@@ -1188,6 +1229,37 @@ export const ForceGraph2D: React.FC<
     };
   }, [originNodeId, settings.interaction.showOriginNode, data, applyGoldRing]);
 
+  // "Destination" highlighting - async update after DOM ready
+  useEffect(() => {
+    if (!destinationNodeId || !settings.interaction.showOriginNode) return;
+
+    // Wait for next frame to ensure DOM is fully rendered
+    const rafId = requestAnimationFrame(() => {
+      // Double-raf for extra safety (ensures layout is complete)
+      requestAnimationFrame(() => {
+        applyBlueRing(destinationNodeId);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      // Cleanup: remove blue ring (restore brighter stroke)
+      if (svgRef.current) {
+        d3.select(svgRef.current)
+          .selectAll('circle.destination-node')
+          .interrupt()
+          .attr('stroke', function() {
+            const d = d3.select(this).datum() as D3Node;
+            const color = nodeColors.get(d.id) || d.color;
+            return d3.color(color)?.brighter(0.4).toString() || color;
+          })
+          .attr('stroke-width', 2)
+          .attr('stroke-opacity', 1)
+          .classed('destination-node', false);
+      }
+    };
+  }, [destinationNodeId, settings.interaction.showOriginNode, data, applyBlueRing]);
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
@@ -1327,9 +1399,9 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.physics.enabled]);
 
-  // Travel to origin node (pan/zoom to center it)
+  // Travel to origin node (center it in viewport with zoom)
   const travelToOrigin = useCallback(() => {
-    if (!originNodeId || !svgRef.current) return;
+    if (!originNodeId || !svgRef.current || !zoomBehaviorRef.current) return;
 
     const originNode = data.nodes.find(n => n.id === originNodeId);
     if (!originNode || originNode.x === undefined || originNode.y === undefined) return;
@@ -1338,47 +1410,74 @@ export const ForceGraph2D: React.FC<
     const width = dimensions.width;
     const height = dimensions.height;
 
-    // Calculate transform to center the origin node
-    const scale = 1.5; // Zoom in a bit to focus on the node
-    const x = width / 2 - originNode.x * scale;
-    const y = height / 2 - originNode.y * scale;
+    // Calculate transform to center the origin node in viewport
+    const scale = 1.5; // Zoom in to 1.5x for better focus
+    const x = width / 2 - originNode.x * scale;   // Center horizontally
+    const y = height / 2 - originNode.y * scale;  // Center vertically
 
-    // Animate transition to origin node
+    // Animate transition with cubic ease in/out (smooth acceleration/deceleration like mouse pan)
+    // Speed automatically adjusts based on distance - farther = faster, but same duration
     svg.transition()
       .duration(750)
+      .ease(d3.easeCubicInOut)  // Smooth acceleration at start, deceleration at end
       .call(
-        d3.zoom<SVGSVGElement, unknown>().transform as any,
+        zoomBehaviorRef.current.transform,
         d3.zoomIdentity.translate(x, y).scale(scale)
       );
   }, [originNodeId, data.nodes, dimensions]);
 
-  // Build context menu items using common builder
+  // Travel to destination node (center it in viewport with zoom)
+  const travelToDestination = useCallback(() => {
+    if (!destinationNodeId || !svgRef.current || !zoomBehaviorRef.current) return;
+
+    const destinationNode = data.nodes.find(n => n.id === destinationNodeId);
+    if (!destinationNode || destinationNode.x === undefined || destinationNode.y === undefined) return;
+
+    const svg = d3.select(svgRef.current);
+    const width = dimensions.width;
+    const height = dimensions.height;
+
+    // Calculate transform to center the destination node in viewport
+    const scale = 1.5; // Zoom in to 1.5x for better focus
+    const x = width / 2 - destinationNode.x * scale;   // Center horizontally
+    const y = height / 2 - destinationNode.y * scale;  // Center vertically
+
+    // Animate transition with cubic ease in/out (smooth acceleration/deceleration like mouse pan)
+    // Speed automatically adjusts based on distance - farther = faster, but same duration
+    svg.transition()
+      .duration(750)
+      .ease(d3.easeCubicInOut)  // Smooth acceleration at start, deceleration at end
+      .call(
+        zoomBehaviorRef.current.transform,
+        d3.zoomIdentity.translate(x, y).scale(scale)
+      );
+  }, [destinationNodeId, data.nodes, dimensions]);
+
+  // Build unified context menu items (context-aware for node vs background)
   const contextMenuItems: ContextMenuItem[] = contextMenu
-    ? buildNodeContextMenuItems(
-        { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel },
+    ? buildContextMenuItems(
+        // Pass node context (null for background clicks)
+        contextMenu.nodeId && contextMenu.nodeLabel
+          ? { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel }
+          : null,
         {
           handleFollowConcept,
           handleAddToGraph,
           setOriginNode: setOriginNodeId,
+          setDestinationNode: setDestinationNodeId,
           travelToOrigin,
+          travelToDestination,
           isPinned,
           togglePinNode,
           unpinAllNodes,
           applyOriginMarker: applyGoldRing,
+          applyDestinationMarker: applyBlueRing,
         },
         { onClose: () => setContextMenu(null) },
-        originNodeId
+        originNodeId,
+        destinationNodeId
       )
     : [];
-
-  // Build canvas context menu items using common builder
-  const canvasMenuItems: ContextMenuItem[] = buildCanvasContextMenuItems(
-    settings,
-    {
-      onClose: () => setCanvasContextMenu(null),
-      onSettingsChange,
-    }
-  );
 
   // Dismiss edge info box
   const handleDismissEdgeInfo = useCallback((linkKey: string) => {
@@ -1398,9 +1497,8 @@ export const ForceGraph2D: React.FC<
         height={dimensions.height}
         className="bg-white dark:bg-gray-900"
         onClick={() => {
-          // Close context menus when clicking on canvas background
+          // Close context menu when clicking on canvas background
           setContextMenu(null);
-          setCanvasContextMenu(null);
         }}
         onMouseDown={(e) => {
           // Track right-click start position for drag detection
@@ -1435,13 +1533,15 @@ export const ForceGraph2D: React.FC<
         onContextMenu={(e) => {
           e.preventDefault(); // Always prevent default browser context menu
 
-          // Only show canvas context menu if NOT dragging
+          // Only show background context menu if NOT dragging
           // (nodes/edges have their own context menu handlers that stopPropagation)
           if (!isRightClickDragging) {
-            setContextMenu(null); // Close node context menu if open
-            setCanvasContextMenu({
+            // Show unified context menu with null node context (background click)
+            setContextMenu({
               x: e.clientX,
               y: e.clientY,
+              nodeId: null,
+              nodeLabel: null,
             });
           } else {
             // Was dragging, so don't show context menu
@@ -1468,23 +1568,13 @@ export const ForceGraph2D: React.FC<
         )}
       </PanelStack>
 
-      {/* Node Context Menu */}
+      {/* Unified Context Menu (context-aware for node vs background) */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           items={contextMenuItems}
           onClose={() => setContextMenu(null)}
-        />
-      )}
-
-      {/* Canvas Context Menu */}
-      {canvasContextMenu && (
-        <ContextMenu
-          x={canvasContextMenu.x}
-          y={canvasContextMenu.y}
-          items={canvasMenuItems}
-          onClose={() => setCanvasContextMenu(null)}
         />
       )}
 

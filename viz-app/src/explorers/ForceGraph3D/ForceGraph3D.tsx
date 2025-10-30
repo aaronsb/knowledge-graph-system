@@ -27,7 +27,7 @@ import {
   Legend,
   PanelStack,
   useGraphNavigation,
-  buildNodeContextMenuItems,
+  buildContextMenuItems,
 } from '../common';
 import { SLIDER_RANGES } from './types';
 
@@ -46,12 +46,12 @@ export const ForceGraph3D: React.FC<
   // Key: linkKey (sourceId->targetId-type), Value: angle in radians
   const labelCameraAngles = useRef<Map<string, number>>(new Map());
 
-  // Context menu state
+  // Unified context menu state (handles both node and background clicks)
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
-    nodeId: string;
-    nodeLabel: string;
+    nodeId: string | null;  // null for background clicks
+    nodeLabel: string | null;  // null for background clicks
   } | null>(null);
 
   // Track active node info boxes
@@ -79,7 +79,7 @@ export const ForceGraph3D: React.FC<
   const [activeEdgeInfos, setActiveEdgeInfos] = useState<EdgeInfo[]>([]);
 
   // Get navigation state from store
-  const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
+  const { originNodeId, setOriginNodeId, destinationNodeId, setDestinationNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Helper function to create or retrieve edge label texture
   // NOTE: Font size is NOT a react-force-graph-3d prop because we manually render text
@@ -926,6 +926,89 @@ export const ForceGraph3D: React.FC<
     animate();
   }, [data.nodes, settings.visual?.nodeSize, settings.interaction.showOriginNode]);
 
+  // Destination node marker with ring sprite (blue)
+  const applyDestinationRing = useCallback((nodeId: string) => {
+    if (!fgRef.current || !settings.interaction.showOriginNode) return;
+
+    const scene = fgRef.current.scene();
+
+    // Remove existing ring
+    const existingRing = scene.getObjectByName('destination-ring');
+    if (existingRing) scene.remove(existingRing);
+
+    // Find the target node
+    const targetNode = data.nodes.find(n => n.id === nodeId);
+    if (!targetNode) return;
+
+    // Create ring texture with transparency
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d')!;
+
+    // Draw royal blue ring
+    ctx.strokeStyle = '#4169E1';  // Royal Blue color
+    ctx.lineWidth = 8;
+    ctx.globalAlpha = 0.8;
+    ctx.beginPath();
+    ctx.arc(64, 64, 50, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner glow
+    ctx.strokeStyle = '#6495ED';  // Cornflower Blue for glow
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.arc(64, 64, 46, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 1,
+      depthTest: false,  // Always visible
+    });
+
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.name = 'destination-ring';
+
+    // Calculate node radius
+    const calcRadius = (node: any) => {
+      const baseSize = node.size || 10;
+      const sizeMultiplier = settings.visual?.nodeSize ?? 1;
+      const radius = baseSize * sizeMultiplier;
+      const volume = Math.pow(radius, 3);
+      return Math.cbrt(volume);
+    };
+
+    const nodeRadius = calcRadius(targetNode);
+    sprite.scale.set(nodeRadius * 3, nodeRadius * 3, 1);  // 3x node size
+    sprite.position.set(targetNode.x || 0, targetNode.y || 0, targetNode.z || 0);
+
+    scene.add(sprite);
+
+    // Animate pulsing effect
+    let frame = 0;
+    const animate = () => {
+      if (!sprite.parent) return;  // Stop if removed from scene
+
+      frame++;
+      const scale = nodeRadius * 3 + Math.sin(frame * 0.15) * nodeRadius * 0.3;
+      sprite.scale.set(scale, scale, 1);
+      sprite.material.opacity = 0.7 + Math.sin(frame * 0.15) * 0.3;
+
+      // Update position to follow node
+      const node = data.nodes.find(n => n.id === nodeId);
+      if (node) {
+        sprite.position.set(node.x || 0, node.y || 0, node.z || 0);
+      }
+
+      requestAnimationFrame(animate);
+    };
+    animate();
+  }, [data.nodes, settings.visual?.nodeSize, settings.interaction.showOriginNode]);
+
   // Apply origin ring when originNodeId changes
   useEffect(() => {
     if (!fgRef.current) return;
@@ -942,6 +1025,136 @@ export const ForceGraph3D: React.FC<
     }
   }, [originNodeId, settings.interaction.showOriginNode, applyOriginRing]);
 
+  // Apply destination ring when destinationNodeId changes
+  useEffect(() => {
+    if (!fgRef.current) return;
+
+    const scene = fgRef.current.scene();
+
+    if (destinationNodeId && settings.interaction.showOriginNode) {
+      // Apply ring to new destination node
+      applyDestinationRing(destinationNodeId);
+    } else {
+      // Remove ring if no destination node
+      const existingRing = scene.getObjectByName('destination-ring');
+      if (existingRing) scene.remove(existingRing);
+    }
+  }, [destinationNodeId, settings.interaction.showOriginNode, applyDestinationRing]);
+
+  // Travel to origin node (animate camera with smooth easing)
+  const travelToOrigin = useCallback(() => {
+    if (!originNodeId || !fgRef.current) return;
+
+    const originNode = data.nodes.find(n => n.id === originNodeId);
+    if (!originNode || originNode.x === undefined || originNode.y === undefined || originNode.z === undefined) return;
+
+    // Get current camera state
+    const camera = fgRef.current.camera();
+    const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+
+    // Calculate target camera position (maintain reasonable distance and viewing angle)
+    const distance = 200;
+    const angle = Math.atan2(startPos.z - originNode.z, startPos.x - originNode.x);
+    const targetPos = {
+      x: originNode.x + Math.cos(angle) * distance,
+      y: originNode.y + 50,  // Slight elevation for better viewing
+      z: originNode.z + Math.sin(angle) * distance,
+    };
+
+    // Cubic ease in/out function for smooth acceleration/deceleration
+    const easeInOutCubic = (t: number): number => {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    };
+
+    // Animate camera with easing (750ms duration)
+    const duration = 750;
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeInOutCubic(progress);
+
+      // Interpolate camera position with easing
+      const currentPos = {
+        x: startPos.x + (targetPos.x - startPos.x) * eased,
+        y: startPos.y + (targetPos.y - startPos.y) * eased,
+        z: startPos.z + (targetPos.z - startPos.z) * eased,
+      };
+
+      // Update camera position (looking at the node)
+      fgRef.current?.cameraPosition(
+        currentPos,
+        { x: originNode.x, y: originNode.y, z: originNode.z },
+        0  // No built-in transition, we're handling it manually
+      );
+
+      // Continue animation until complete
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    animate();
+  }, [originNodeId, data.nodes]);
+
+  // Travel to destination node (animate camera with smooth easing)
+  const travelToDestination = useCallback(() => {
+    if (!destinationNodeId || !fgRef.current) return;
+
+    const destinationNode = data.nodes.find(n => n.id === destinationNodeId);
+    if (!destinationNode || destinationNode.x === undefined || destinationNode.y === undefined || destinationNode.z === undefined) return;
+
+    // Get current camera state
+    const camera = fgRef.current.camera();
+    const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+
+    // Calculate target camera position (maintain reasonable distance and viewing angle)
+    const distance = 200;
+    const angle = Math.atan2(startPos.z - destinationNode.z, startPos.x - destinationNode.x);
+    const targetPos = {
+      x: destinationNode.x + Math.cos(angle) * distance,
+      y: destinationNode.y + 50,  // Slight elevation for better viewing
+      z: destinationNode.z + Math.sin(angle) * distance,
+    };
+
+    // Cubic ease in/out function for smooth acceleration/deceleration
+    const easeInOutCubic = (t: number): number => {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    };
+
+    // Animate camera with easing (750ms duration)
+    const duration = 750;
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeInOutCubic(progress);
+
+      // Interpolate camera position with easing
+      const currentPos = {
+        x: startPos.x + (targetPos.x - startPos.x) * eased,
+        y: startPos.y + (targetPos.y - startPos.y) * eased,
+        z: startPos.z + (targetPos.z - startPos.z) * eased,
+      };
+
+      // Update camera position (looking at the node)
+      fgRef.current?.cameraPosition(
+        currentPos,
+        { x: destinationNode.x, y: destinationNode.y, z: destinationNode.z },
+        0  // No built-in transition, we're handling it manually
+      );
+
+      // Continue animation until complete
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    animate();
+  }, [destinationNodeId, data.nodes]);
+
   // Dismiss node info box
   const handleDismissNodeInfo = useCallback((nodeId: string) => {
     setActiveNodeInfos(prev => prev.filter(info => info.nodeId !== nodeId));
@@ -952,21 +1165,29 @@ export const ForceGraph3D: React.FC<
     setActiveEdgeInfos(prev => prev.filter(info => info.linkKey !== linkKey));
   }, []);
 
-  // Build context menu items using common builder
+  // Build unified context menu items (context-aware for node vs background)
   const contextMenuItems: ContextMenuItem[] = contextMenu
-    ? buildNodeContextMenuItems(
-        { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel },
+    ? buildContextMenuItems(
+        // Pass node context (null for background clicks)
+        contextMenu.nodeId && contextMenu.nodeLabel
+          ? { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel }
+          : null,
         {
           handleFollowConcept,
           handleAddToGraph,
           setOriginNode: setOriginNodeId,
+          setDestinationNode: setDestinationNodeId,
+          travelToOrigin,
+          travelToDestination,
           isPinned,
           togglePinNode,
           unpinAllNodes,
           applyOriginMarker: applyOriginRing,
+          applyDestinationMarker: applyDestinationRing,
         },
         { onClose: () => setContextMenu(null) },
-        originNodeId
+        originNodeId,
+        destinationNodeId
       )
     : [];
 
@@ -1410,6 +1631,16 @@ export const ForceGraph3D: React.FC<
         onBackgroundClick={() => {
           setContextMenu(null);
         }}
+        onBackgroundRightClick={(event: MouseEvent) => {
+          event.preventDefault();
+          // Show unified context menu with null node context (background click)
+          setContextMenu({
+            x: event.clientX,
+            y: event.clientY,
+            nodeId: null,
+            nodeLabel: null,
+          });
+        }}
       />
 
       {/* Left-side panel stack */}
@@ -1437,7 +1668,7 @@ export const ForceGraph3D: React.FC<
         )}
       </PanelStack>
 
-      {/* Context Menu */}
+      {/* Unified Context Menu (context-aware for node vs background) */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}

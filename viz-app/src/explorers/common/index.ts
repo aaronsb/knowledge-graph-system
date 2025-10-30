@@ -14,8 +14,7 @@ export { formatGrounding, getRelationshipTextColor } from './utils';
 export { explorerTheme, type ExplorerTheme } from './styles';
 export {
   useGraphNavigation,
-  buildNodeContextMenuItems,
-  buildCanvasContextMenuItems,
+  buildContextMenuItems,
   type NodeContextMenuParams,
   type GraphContextMenuHandlers,
   type GraphContextMenuCallbacks,
