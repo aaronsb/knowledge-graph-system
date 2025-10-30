@@ -7,7 +7,6 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus, MapPin, MapPinOff, Pin, PinOff, Circle, Grid3x3, EyeOff } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
@@ -15,8 +14,18 @@ import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { apiClient } from '../../api/client';
-import { NodeInfoBox, EdgeInfoBox, StatsPanel, GraphSettingsPanel, Legend, PanelStack } from '../common';
+import {
+  NodeInfoBox,
+  EdgeInfoBox,
+  StatsPanel,
+  GraphSettingsPanel,
+  Legend,
+  PanelStack,
+  useGraphNavigation,
+  buildNodeContextMenuItems,
+  buildCanvasContextMenuItems,
+  type GraphContextMenuHandlers,
+} from '../common';
 import { SLIDER_RANGES } from './types';
 
 /**
@@ -1265,47 +1274,8 @@ export const ForceGraph2D: React.FC<
     };
   }, [graphData]);
 
-  // Handler: Follow concept (replace graph)
-  // Matches SearchBar loadConcept('clean') pattern
-  const handleFollowConcept = useCallback(async (nodeId: string) => {
-    try {
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
-        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
-      });
-
-      // Transform API data to D3 format
-      const transformedData = transformForD3(response.nodes, response.links);
-
-      // Replace graph (clean mode)
-      setGraphData(transformedData);
-      setFocusedNodeId(nodeId);
-    } catch (error: any) {
-      console.error('Failed to follow concept:', error);
-      alert(`Failed to follow concept: ${error.message || 'Unknown error'}`);
-    }
-  }, [setGraphData, setFocusedNodeId]);
-
-  // Handler: Add concept to graph (merge)
-  // Matches SearchBar loadConcept('add') pattern
-  const handleAddToGraph = useCallback(async (nodeId: string) => {
-    try {
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
-        depth: 1, // Load immediate neighbors (same as SearchBar concept mode)
-      });
-
-      // Transform API data to D3 format
-      const transformedData = transformForD3(response.nodes, response.links);
-
-      // Merge with existing graph (add mode)
-      setGraphData(mergeGraphData(transformedData));
-      setFocusedNodeId(nodeId);
-    } catch (error: any) {
-      console.error('Failed to add concept to graph:', error);
-      alert(`Failed to add concept to graph: ${error.message || 'Unknown error'}`);
-    }
-  }, [mergeGraphData, setGraphData, setFocusedNodeId]);
+  // Use common graph navigation hook
+  const { handleFollowConcept, handleAddToGraph } = useGraphNavigation(mergeGraphData);
 
   // Pin/Unpin node functionality
   const isPinned = useCallback((nodeId: string): boolean => {
@@ -1357,79 +1327,32 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.physics.enabled]);
 
-  // Context menu items
+  // Build context menu items using common builder
   const contextMenuItems: ContextMenuItem[] = contextMenu
-    ? [
-        // Contextual mark/unmark location
-        originNodeId === contextMenu.nodeId
-          ? {
-              label: 'Unmark Location',
-              icon: MapPinOff,
-              onClick: () => {
-                setOriginNodeId(null);
-                setContextMenu(null);
-              },
-            }
-          : {
-              label: 'Mark Location',
-              icon: MapPin,
-              onClick: () => {
-                setOriginNodeId(contextMenu.nodeId);
-                applyGoldRing(contextMenu.nodeId);
-                setContextMenu(null);
-              },
-            },
-        // Node submenu with pin operations
+    ? buildNodeContextMenuItems(
+        { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel },
         {
-          label: 'Node',
-          icon: Circle,
-          submenu: [
-            // Contextual pin/unpin node
-            isPinned(contextMenu.nodeId)
-              ? {
-                  label: 'Unpin Node',
-                  icon: PinOff,
-                  onClick: () => {
-                    togglePinNode(contextMenu.nodeId);
-                    setContextMenu(null);
-                  },
-                }
-              : {
-                  label: 'Pin Node',
-                  icon: Pin,
-                  onClick: () => {
-                    togglePinNode(contextMenu.nodeId);
-                    setContextMenu(null);
-                  },
-                },
-            {
-              label: 'Unpin All',
-              icon: PinOff,
-              onClick: () => {
-                unpinAllNodes();
-                setContextMenu(null);
-              },
-            },
-          ],
+          handleFollowConcept,
+          handleAddToGraph,
+          setOriginNode: setOriginNodeId,
+          isPinned,
+          togglePinNode,
+          unpinAllNodes,
+          applyOriginMarker: applyGoldRing,
         },
-        {
-          label: `Follow "${contextMenu.nodeLabel}"`,
-          icon: ArrowRight,
-          onClick: () => {
-            handleFollowConcept(contextMenu.nodeId);
-            setContextMenu(null);
-          },
-        },
-        {
-          label: `Add "${contextMenu.nodeLabel}" to Graph`,
-          icon: Plus,
-          onClick: () => {
-            handleAddToGraph(contextMenu.nodeId);
-            setContextMenu(null);
-          },
-        },
-      ]
+        { onClose: () => setContextMenu(null) },
+        originNodeId
+      )
     : [];
+
+  // Build canvas context menu items using common builder
+  const canvasMenuItems: ContextMenuItem[] = buildCanvasContextMenuItems(
+    settings,
+    {
+      onClose: () => setCanvasContextMenu(null),
+      onSettingsChange,
+    }
+  );
 
   // Dismiss edge info box
   const handleDismissEdgeInfo = useCallback((linkKey: string) => {
@@ -1534,31 +1457,7 @@ export const ForceGraph2D: React.FC<
         <ContextMenu
           x={canvasContextMenu.x}
           y={canvasContextMenu.y}
-          items={[
-            settings.visual.showGrid
-              ? {
-                  label: 'Hide Grid',
-                  icon: EyeOff,
-                  onClick: () => {
-                    onSettingsChange?.({
-                      ...settings,
-                      visual: { ...settings.visual, showGrid: false },
-                    });
-                    setCanvasContextMenu(null);
-                  },
-                }
-              : {
-                  label: 'Show Grid',
-                  icon: Grid3x3,
-                  onClick: () => {
-                    onSettingsChange?.({
-                      ...settings,
-                      visual: { ...settings.visual, showGrid: true },
-                    });
-                    setCanvasContextMenu(null);
-                  },
-                },
-          ]}
+          items={canvasMenuItems}
           onClose={() => setCanvasContextMenu(null)}
         />
       )}

@@ -12,3 +12,11 @@ export { Legend } from './Legend';
 export { PanelStack } from './PanelStack';
 export { formatGrounding, getRelationshipTextColor } from './utils';
 export { explorerTheme, type ExplorerTheme } from './styles';
+export {
+  useGraphNavigation,
+  buildNodeContextMenuItems,
+  buildCanvasContextMenuItems,
+  type NodeContextMenuParams,
+  type GraphContextMenuHandlers,
+  type GraphContextMenuCallbacks,
+} from './useGraphContextMenu';
