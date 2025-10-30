@@ -474,48 +474,28 @@ export const ForceGraph3D: React.FC<
     const camera = fgRef.current.camera();
     if (!controls || !camera) return;
 
-    // OrbitControls naturally prevents roll by maintaining a fixed up vector
-    // We just need to set it correctly and call update()
+    // OrbitControls inherently prevents roll by:
+    // 1. Maintaining a fixed up vector (camera.up)
+    // 2. Internally setting camera.rotation.z = 0 on every update
+    // We just need to set the up vector correctly and let OrbitControls handle the rest.
 
     // In our coordinate system, positive Y points DOWN, so up is -Y
-    camera.up.set(0, -1, 0);
+    const upVector = new THREE.Vector3(0, -1, 0);
+    camera.up.copy(upVector);
 
-    // Ensure controls use the same up vector
+    // Ensure controls' camera reference uses the same up vector
     if (controls.object) {
-      controls.object.up.set(0, -1, 0);
+      controls.object.up.copy(upVector);
     }
 
-    // Update controls to apply the new up vector constraint
-    // This tells OrbitControls to maintain this orientation
+    // Tell controls to apply the constraint
     if (controls.update) {
       controls.update();
     }
 
-    // Lock roll axis by preventing the camera from rotating around its view direction
-    // OrbitControls should handle this automatically with a fixed up vector,
-    // but we can reinforce it by resetting up vector if it drifts
-    if (settings.camera?.lockRoll) {
-      const enforceUpVector = () => {
-        if (!camera || !controls) return;
-
-        // Check if camera.up has drifted from -Y axis
-        const currentUp = camera.up.clone().normalize();
-        const targetUp = new THREE.Vector3(0, -1, 0);
-
-        // If up vector has drifted significantly (dot product < 0.99 means ~8 degree drift)
-        if (currentUp.dot(targetUp) < 0.99) {
-          camera.up.copy(targetUp);
-          if (controls.object) {
-            controls.object.up.copy(targetUp);
-          }
-        }
-      };
-
-      // Check and correct up vector periodically (not every frame to avoid jitter)
-      const intervalId = setInterval(enforceUpVector, 100); // Check every 100ms
-
-      return () => clearInterval(intervalId);
-    }
+    // Note: "lockRoll" setting doesn't actually do anything extra because
+    // OrbitControls ALWAYS prevents roll. We keep the setting for future features
+    // like allowing TrackballControls mode (which permits roll) vs OrbitControls.
   }, [settings.camera?.lockRoll]);
 
   // Dismiss node info box
