@@ -351,39 +351,162 @@ export const ForceGraph3D: React.FC<
         nodeLabel={(node: any) => node.label}
         nodeColor={(node: any) => nodeColors.get(node.id) || '#888'}
         nodeVal={(node: any) => {
-          // Direct scaling to match 2D visual appearance
+          // nodeVal represents sphere VOLUME, library calculates radius as ∛(volume)
+          // To match 2D visual radius, we need to pass radius³ as volume
           // node.size ranges from 5-30 (already log-scaled in graphTransform.ts)
           const baseSize = node.size || 10;
           const sizeMultiplier = settings.visual?.nodeSize ?? 1;
-          const result = baseSize * sizeMultiplier;
+          const radius = baseSize * sizeMultiplier;
+          // Cube the radius to get volume: V = r³ (ignoring the 4/3π constant)
+          const volume = Math.pow(radius, 3);
           // Safety check to prevent NaN from breaking THREE.js geometry
-          return isNaN(result) ? 10 : result;
+          return isNaN(volume) ? 1000 : volume;
         }}
         nodeOpacity={0.9}
         nodeResolution={16}  // Sphere detail
 
-        // Link appearance - using THREE.Line (pure geometry, no cylinders)
+        // Link appearance - custom curved gradient lines (not cylinders)
         linkLabel={(link: any) => link.type}
-        linkColor={(link: any) => {
+        linkWidth={0}  // Disable default cylinders, use custom linkThreeObject
+        linkThreeObject={(link: any) => {
+          // Get node colors for gradient
           const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
           const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-          const linkKey = `${sourceId}->${targetId}-${link.type}`;
-          return linkColors.get(linkKey) || '#999';
-        }}
-        linkWidth={0}  // 0 = use lines, >0 = use cylinder geometry
-        linkOpacity={0.6}
+          const sourceColor = new THREE.Color(nodeColors.get(sourceId) || '#888');
+          const targetColor = new THREE.Color(nodeColors.get(targetId) || '#888');
 
-        // Billboard arrow sprites (2D textures facing camera)
-        linkDirectionalArrowLength={0}  // Disable 3D cone arrows
-        linkDirectionalParticles={settings.visual.showArrows ? 1 : 0}
-        linkDirectionalParticleSpeed={0}  // Static, not moving
-        linkDirectionalParticleWidth={4}
-        linkDirectionalParticleResolution={8}
-        linkDirectionalParticleColor={(link: any) => {
-          const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-          const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-          const linkKey = `${sourceId}->${targetId}-${link.type}`;
-          return linkColors.get(linkKey) || '#999';
+          // Create group to hold line + arrow sprite
+          const group = new THREE.Group();
+
+          // We'll set positions in linkPositionUpdate
+          // Just create placeholder line for now
+          const points = [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 1, 0),
+            new THREE.Vector3(0, 2, 0),
+          ];
+
+          const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+          // Create gradient colors from source to target
+          const numPoints = 20;
+          const colors: number[] = [];
+          for (let i = 0; i <= numPoints; i++) {
+            const t = i / numPoints;
+            const gradientColor = sourceColor.clone().lerp(targetColor, t);
+            colors.push(gradientColor.r, gradientColor.g, gradientColor.b);
+          }
+          geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+          const linkOpacity = 0.6;
+          const material = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: linkOpacity,
+            linewidth: settings.visual?.linkWidth ?? 1,  // Stroke width from slider
+          });
+
+          const line = new THREE.Line(geometry, material);
+          group.add(line);
+
+          // Add 2D arrow sprite at endpoint (if enabled)
+          if (settings.visual.showArrows) {
+            // Create arrow sprite texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d')!;
+
+            // Draw arrow pointing right
+            ctx.fillStyle = `rgb(${Math.floor(targetColor.r * 255)}, ${Math.floor(targetColor.g * 255)}, ${Math.floor(targetColor.b * 255)})`;
+            ctx.globalAlpha = linkOpacity;
+            ctx.beginPath();
+            ctx.moveTo(10, 32);
+            ctx.lineTo(54, 32);
+            ctx.lineTo(54, 20);
+            ctx.lineTo(64, 32);
+            ctx.lineTo(54, 44);
+            ctx.lineTo(54, 32);
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({
+              map: texture,
+              transparent: true,
+              opacity: linkOpacity,
+            });
+
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(8, 8, 1);
+            sprite.name = 'arrow-sprite';
+            group.add(sprite);
+          }
+
+          return group;
+        }}
+        linkThreeObjectExtend={true}  // Merge with default behavior
+        linkPositionUpdate={(obj: any, { start, end }: any, link: any) => {
+          // Update curved line geometry when nodes move
+          if (!start || !end) return;
+
+          // Get node radii for surface offset calculation
+          const sourceNode = typeof link.source === 'object' ? link.source : data.nodes.find((n: any) => n.id === link.source);
+          const targetNode = typeof link.target === 'object' ? link.target : data.nodes.find((n: any) => n.id === link.target);
+
+          if (!sourceNode || !targetNode) return;
+
+          // Calculate node radii (match nodeVal calculation)
+          const calcRadius = (node: any) => {
+            const baseSize = node.size || 10;
+            const sizeMultiplier = settings.visual?.nodeSize ?? 1;
+            const radius = baseSize * sizeMultiplier;
+            const volume = Math.pow(radius, 3);
+            // Reverse: radius = ∛(volume)
+            return Math.cbrt(isNaN(volume) ? 1000 : volume);
+          };
+
+          const sourceRadius = calcRadius(sourceNode);
+          const targetRadius = calcRadius(targetNode);
+
+          // Create vectors for start and end positions
+          const startPos = new THREE.Vector3(start.x, start.y, start.z);
+          const endPos = new THREE.Vector3(end.x, end.y, end.z);
+
+          // Calculate direction vector from source to target
+          const direction = new THREE.Vector3().subVectors(endPos, startPos);
+          const distance = direction.length();
+          direction.normalize();
+
+          // Offset start and end points to sphere surfaces
+          const surfaceStart = startPos.clone().add(direction.clone().multiplyScalar(sourceRadius));
+          const surfaceEnd = endPos.clone().sub(direction.clone().multiplyScalar(targetRadius));
+
+          // Calculate control point for curved arc (perpendicular offset)
+          const midPoint = new THREE.Vector3().addVectors(surfaceStart, surfaceEnd).multiplyScalar(0.5);
+          const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
+          const curvature = distance * 0.15; // 15% arc height
+          const controlPoint = midPoint.clone().add(perpendicular.multiplyScalar(curvature));
+
+          // Create curved line
+          const curve = new THREE.QuadraticBezierCurve3(surfaceStart, controlPoint, surfaceEnd);
+          const points = curve.getPoints(20);
+
+          // Update line geometry
+          const line = obj.children.find((child: any) => child.type === 'Line');
+          if (line) {
+            line.geometry.setFromPoints(points);
+            line.geometry.attributes.position.needsUpdate = true;
+          }
+
+          // Update arrow sprite position at endpoint
+          const sprite = obj.getObjectByName('arrow-sprite');
+          if (sprite) {
+            sprite.position.copy(surfaceEnd);
+
+            // Orient sprite to face direction of link
+            const angle = Math.atan2(direction.y, direction.x);
+            sprite.rotation.z = angle;
+          }
         }}
 
         // Interaction

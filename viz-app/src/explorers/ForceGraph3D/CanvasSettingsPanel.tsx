@@ -220,13 +220,13 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
 
               <div>
                 <label className="block text-xs text-gray-300 mb-1">
-                  Node Size: {settings.visual.nodeSize.toFixed(1)}x
+                  Node Size: {settings.visual.nodeSize.toFixed(2)}x
                 </label>
                 <input
                   type="range"
-                  min="0.5"
-                  max="3"
-                  step="0.1"
+                  min="0.1"
+                  max="1.5"
+                  step="0.05"
                   value={settings.visual.nodeSize}
                   onChange={(e) => updateVisual('nodeSize', parseFloat(e.target.value))}
                   className="w-full"
