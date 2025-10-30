@@ -52,6 +52,77 @@ const server = new Server(
 
 // JWT token storage for authenticated session
 let jwtToken: string | null = null;
+let tokenRefreshTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Perform login and get JWT token
+ * Returns the token and expiry time in milliseconds
+ */
+async function performLogin(): Promise<{ token: string; expiresInMs: number } | null> {
+  const username = process.env.KG_USERNAME;
+  const password = process.env.KG_PASSWORD;
+  const apiUrl = process.env.KG_API_URL || 'http://localhost:8000';
+
+  if (!username || !password) {
+    return null;
+  }
+
+  try {
+    const authClient = new AuthClient(apiUrl);
+    const loginResponse = await authClient.login({ username, password });
+
+    const expiresInMs = loginResponse.expires_in * 1000;
+    const expiryTime = new Date(Date.now() + expiresInMs);
+
+    console.error(`[MCP Auth] Successfully authenticated as ${username}`);
+    console.error(`[MCP Auth] Token expires at ${expiryTime.toISOString()}`);
+
+    return {
+      token: loginResponse.access_token,
+      expiresInMs
+    };
+  } catch (error: any) {
+    console.error(`[MCP Auth] Failed to authenticate: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Schedule automatic token refresh before expiry
+ * Refreshes 5 minutes before the token expires
+ */
+function scheduleTokenRefresh(expiresInMs: number): void {
+  // Clear existing timer if any
+  if (tokenRefreshTimer) {
+    clearTimeout(tokenRefreshTimer);
+  }
+
+  // Refresh 5 minutes (300000ms) before expiry, or halfway through if token life < 10 minutes
+  const refreshBeforeMs = Math.min(300000, expiresInMs / 2);
+  const refreshInMs = expiresInMs - refreshBeforeMs;
+
+  console.error(`[MCP Auth] Token refresh scheduled in ${Math.round(refreshInMs / 1000 / 60)} minutes`);
+
+  tokenRefreshTimer = setTimeout(async () => {
+    console.error('[MCP Auth] Refreshing authentication token...');
+
+    const result = await performLogin();
+    if (result) {
+      jwtToken = result.token;
+
+      // Update the token in the client
+      if (client) {
+        client.setMcpJwtToken(result.token);
+      }
+
+      // Schedule next refresh
+      scheduleTokenRefresh(result.expiresInMs);
+    } else {
+      console.error('[MCP Auth] Token refresh failed! Operations may fail with 401 errors.');
+      console.error('[MCP Auth] Please restart the MCP server to re-authenticate.');
+    }
+  }, refreshInMs);
+}
 
 /**
  * Automatically login if username/password provided in environment
@@ -61,24 +132,14 @@ let jwtToken: string | null = null;
 async function initializeAuth(): Promise<void> {
   const username = process.env.KG_USERNAME;
   const password = process.env.KG_PASSWORD;
-  const apiUrl = process.env.KG_API_URL || 'http://localhost:8000';
 
   if (username && password) {
-    try {
-      const authClient = new AuthClient(apiUrl);
-      const loginResponse = await authClient.login({ username, password });
-      jwtToken = loginResponse.access_token;
-      console.error(`[MCP Auth] Successfully authenticated as ${username}`);
+    const result = await performLogin();
 
-      // Calculate token expiry time
-      const expiresInMs = loginResponse.expires_in * 1000;
-      const expiryTime = new Date(Date.now() + expiresInMs);
-      console.error(`[MCP Auth] Token expires at ${expiryTime.toISOString()}`);
-
-      // TODO: In the future, we could implement automatic token refresh
-      // before expiry to maintain long-lived sessions
-    } catch (error: any) {
-      console.error(`[MCP Auth] Failed to authenticate: ${error.message}`);
+    if (result) {
+      jwtToken = result.token;
+      scheduleTokenRefresh(result.expiresInMs);
+    } else {
       console.error('[MCP Auth] The MCP server will operate without authentication.');
       console.error('[MCP Auth] Some operations may fail with 401 errors.');
     }

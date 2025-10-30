@@ -8,42 +8,81 @@ The Knowledge Graph MCP (Model Context Protocol) server enables Claude to query 
 - PostgreSQL + Apache AGE database running (see `docs/guides/01-QUICKSTART.md`)
 - FastAPI server running (`./scripts/start-api.sh`)
 - kg CLI installed globally (`cd client && ./install.sh`)
+- **User account created** - Run `kg login` to create an admin account if you haven't already
+
+## Important: Authentication Required
+
+**The MCP server now requires authentication.** You must configure username and password in your MCP server settings. The server will automatically login on startup, making authentication transparent to Claude.
+
+**Features:**
+- ✅ Automatic login on startup
+- ✅ Automatic token refresh before expiry (refreshes 5 minutes before token expires)
+- ✅ Long-lived sessions without manual re-authentication
+- ✅ Transparent to Claude - the AI is never aware of authentication
+
+If you previously configured the MCP server without authentication, you'll need to **remove and re-add it** with the new configuration (see below).
 
 ## Setup for Claude Code (CLI)
 
 Claude Code uses the `claude` CLI for MCP server management.
 
-### 1. Check Available Commands
+### Step 1: Create a User Account (If You Haven't Already)
 
 ```bash
-claude mcp --help
-claude mcp list
+# Login to create your admin account
+kg login
+
+# Follow the prompts to:
+# 1. Create a new admin user (first time)
+# 2. Set your username (e.g., "admin")
+# 3. Set your password
+#
+# After successful login, you'll see:
+# ✓ Login successful
+# ✓ Logged in as: admin (role: admin)
 ```
 
-### 2. Add the Knowledge Graph MCP Server
+### Step 2: Remove Old MCP Server (If Previously Configured)
+
+If you had the MCP server configured without authentication, remove it first:
 
 ```bash
-# From project root
+claude mcp remove knowledge-graph
+```
+
+### Step 3: Add the Knowledge Graph MCP Server
+
+```bash
 claude mcp add knowledge-graph
-
-# When prompted, provide:
-# - Server name: knowledge-graph
-# - Command: kg-mcp-server
-# - Environment variables (for authentication):
-#   - KG_USERNAME: your username (e.g., admin)
-#   - KG_PASSWORD: your password
 ```
 
-**Authentication:**
-The MCP server requires authentication to access the API. When you add the server, you'll be prompted for environment variables. Add:
-- `KG_USERNAME`: Your username (create one with `kg login` if you don't have one)
-- `KG_PASSWORD`: Your password
+You'll be prompted for configuration. Here's what to enter:
 
-The MCP server will automatically login on startup using these credentials, making authentication transparent to Claude.
+```
+Server name: knowledge-graph
+Command: kg-mcp-server
+Arguments (optional): [press Enter to skip]
 
-**Note:** The MCP server connects to the FastAPI server at `http://localhost:8000`. Ensure the API server is running before using the MCP server.
+Do you want to add environment variables? (y/n): y
 
-### 3. Verify Installation
+Environment variable name: KG_USERNAME
+Environment variable value: admin
+
+Add another? (y/n): y
+
+Environment variable name: KG_PASSWORD
+Environment variable value: [your-password-here]
+
+Add another? (y/n): n
+```
+
+**Result:** The MCP server is now configured with authentication. It will automatically login on startup.
+
+### Step 4: Restart Claude Code
+
+Close and reopen Claude Code to reload the MCP server configuration.
+
+### Step 5: Verify Installation
 
 ```bash
 # List configured MCP servers
@@ -53,35 +92,67 @@ claude mcp list
 # knowledge-graph: kg-mcp-server  - ✓ Connected
 ```
 
-### 4. Test Connection
+Check the MCP server logs (visible in Claude Code stderr) for authentication confirmation:
+```
+[MCP Auth] Successfully authenticated as admin
+[MCP Auth] Token expires at 2025-10-31T12:34:56.789Z
+[MCP Auth] Token refresh scheduled in 55 minutes
+Knowledge Graph MCP Server running on stdio
+```
 
-Start a Claude Code conversation and try:
+**Authentication Lifecycle:**
+- The MCP server automatically logs in on startup
+- JWT tokens are long-lived (typically 1 hour)
+- The server automatically refreshes the token 5 minutes before expiry
+- You'll see `[MCP Auth] Refreshing authentication token...` in the logs before token expires
+- This ensures uninterrupted access without manual intervention
+
+### Step 6: Test Connection
+
+Start a new Claude Code conversation and try:
 
 ```
 List all ontologies in the database
 ```
 
-Claude should use the `list_ontologies` tool to query your graph.
+Claude should use the `list_ontologies` tool to query your graph. You should **not** see any 401 authentication errors.
 
 ## Setup for Claude Desktop (macOS/Windows)
 
 Claude Desktop requires manual configuration file editing.
 
-### 1. Locate Configuration File
+### Step 1: Create a User Account (If You Haven't Already)
+
+```bash
+# From your terminal, login to create your admin account
+kg login
+
+# Follow the prompts to create a user account
+# Remember your username and password - you'll need them for Step 3
+```
+
+### Step 2: Locate Configuration File
 
 **macOS:**
 ```bash
+# The config file is located at:
 ~/Library/Application Support/Claude/claude_desktop_config.json
+
+# Open it with your preferred editor:
+open -a TextEdit ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```
 
 **Windows:**
 ```
+# The config file is located at:
 %APPDATA%\Claude\claude_desktop_config.json
+
+# Open it with Notepad or your preferred editor
 ```
 
-### 2. Edit Configuration
+### Step 3: Edit Configuration
 
-Open the file and add the MCP server configuration:
+**If the file is empty or only has `{}`, replace the entire contents with:**
 
 ```json
 {
@@ -97,28 +168,64 @@ Open the file and add the MCP server configuration:
 }
 ```
 
-**Important:**
-- The `kg-mcp-server` command must be globally installed: `cd client && ./install.sh`
-- The MCP server connects to the FastAPI server at `http://localhost:8000`
-- Ensure the API server is running before using the MCP server
-- **Authentication:** Add `KG_USERNAME` and `KG_PASSWORD` environment variables for automatic authentication
-  - The MCP server will automatically login on startup using these credentials
-  - Claude will not be aware of authentication - it happens transparently
-  - Create a user with `kg login` if you don't have one
+**If you already have other MCP servers configured, add the `knowledge-graph` entry:**
 
-### 3. Restart Claude Desktop
+```json
+{
+  "mcpServers": {
+    "existing-server": {
+      "command": "some-other-mcp-server"
+    },
+    "knowledge-graph": {
+      "command": "kg-mcp-server",
+      "env": {
+        "KG_USERNAME": "admin",
+        "KG_PASSWORD": "your-password-here"
+      }
+    }
+  }
+}
+```
 
-Close Claude Desktop completely and reopen. The MCP server will initialize on startup.
+**Configuration Breakdown:**
+- `command`: `kg-mcp-server` - The globally installed MCP server command
+- `env.KG_USERNAME`: Your username (same as what you used for `kg login`)
+- `env.KG_PASSWORD`: Your password
+- The MCP server will automatically login on startup using these credentials
+- Authentication happens transparently - Claude is not aware of it
 
-### 4. Verify Connection
+**Important Checklist:**
+- ✅ Replace `your-password-here` with your actual password
+- ✅ Ensure JSON syntax is valid (use a JSON validator if needed)
+- ✅ The `kg-mcp-server` command must be globally installed: `cd client && ./install.sh`
+- ✅ The API server must be running: `./scripts/start-api.sh`
 
-In Claude Desktop, type:
+### Step 4: Restart Claude Desktop
+
+**Important:** You must completely quit and restart Claude Desktop:
+1. **Quit Claude Desktop completely** (Cmd+Q on macOS, or close from system tray on Windows)
+2. Wait a few seconds
+3. Open Claude Desktop again
+
+The MCP server will initialize on startup and automatically authenticate.
+
+### Step 5: Verify Connection
+
+In Claude Desktop, start a new conversation and type:
 
 ```
 What ontologies are available in the knowledge graph?
 ```
 
-You should see Claude query the database and list your ontologies.
+**Expected behavior:**
+- Claude should use the `list_ontologies` tool
+- You should see a list of your ontologies
+- There should be **no 401 authentication errors**
+
+**If you see authentication errors:**
+- Check that `KG_USERNAME` and `KG_PASSWORD` are correct in the config file
+- Verify the API server is running: `curl http://localhost:8000/health`
+- Check Claude Desktop logs (see Troubleshooting section below)
 
 ## Available MCP Tools
 
