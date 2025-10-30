@@ -8,17 +8,15 @@
  */
 
 import React, { useState } from 'react';
-import { Settings, ChevronRight } from 'lucide-react';
+import { User, ChevronRight } from 'lucide-react';
 import { useGraphStore } from '../../store/graphStore';
 import { getAllExplorers } from '../../explorers';
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  settingsPanel?: React.ReactNode;
 }
 
-export const AppLayout: React.FC<AppLayoutProps> = ({ children, settingsPanel }) => {
-  const [settingsOpen, setSettingsOpen] = useState(false);
+export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { selectedExplorer, setSelectedExplorer } = useGraphStore();
 
   const explorers = getAllExplorers();
@@ -89,42 +87,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, settingsPanel })
           </div>
 
           <button
-            onClick={() => setSettingsOpen(!settingsOpen)}
-            className={`
-              flex items-center gap-2 px-3 py-1.5 rounded-lg
-              transition-colors
-              ${
-                settingsOpen
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-accent hover:text-accent-foreground'
-              }
-            `}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+            title="User Profile (Coming Soon)"
           >
-            <Settings className="w-4 h-4" />
-            <span>Settings</span>
+            <User className="w-4 h-4" />
+            <span>Profile</span>
           </button>
         </header>
 
         {/* Visualization Area */}
         <div className="flex-1 overflow-hidden">{children}</div>
       </main>
-
-      {/* Settings Panel (Collapsible) */}
-      {settingsOpen && (
-        <aside className="w-80 border-l border-border bg-card overflow-y-auto">
-          <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between">
-            <h3 className="font-semibold">Settings</h3>
-            <button
-              onClick={() => setSettingsOpen(false)}
-              className="p-1 hover:bg-accent rounded"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="p-4">{settingsPanel}</div>
-        </aside>
-      )}
     </div>
   );
 };

@@ -5,6 +5,8 @@
  */
 
 import * as d3 from 'd3';
+import { useVocabularyStore } from '../store/vocabularyStore';
+import { getCategoryColor } from '../config/categoryColors';
 import type {
   APIGraphNode,
   APIGraphLink,
@@ -17,48 +19,52 @@ import type {
 } from '../types/graph';
 
 /**
- * Get color for relationship category
- */
-function getLinkColor(category?: string): string {
-  const colors: Record<string, string> = {
-    logical: '#3b82f6', // blue
-    evidential: '#22c55e', // green
-    structural: '#a855f7', // purple
-    temporal: '#f59e0b', // amber
-    default: '#6b7280', // gray
-  };
-
-  return colors[category || 'default'] || colors.default;
-}
-
-/**
  * Transform API data to D3 2D format
+ * Automatically enriches links with vocabulary category data
  */
 export function transformForD3(
   apiNodes: APIGraphNode[],
   apiLinks: APIGraphLink[]
 ): GraphData {
-  // Create color scale for ontologies
-  const ontologies = [...new Set(apiNodes.map(n => n.ontology))];
-  const colorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(ontologies);
+  // Get vocabulary data from store
+  const vocabStore = useVocabularyStore.getState();
 
-  // Transform nodes
+  // Create color scale for ontologies using equidistant points on a color ramp
+  const ontologies = [...new Set(apiNodes.map(n => n.ontology))].sort();
+  const colorScale = d3.scaleOrdinal<string>()
+    .domain(ontologies)
+    .range(ontologies.map((_, i) => {
+      // Distribute ontologies evenly across the Turbo color ramp [0, 1]
+      // Avoid extreme ends (0.1 to 0.9) for better visibility
+      const t = ontologies.length === 1 ? 0.5 : 0.1 + (i / (ontologies.length - 1)) * 0.8;
+      return d3.interpolateTurbo(t);
+    }));
+
+  // Transform nodes (with grounding strength)
   const nodes: D3Node[] = apiNodes.map(node => ({
     id: node.concept_id,
     label: node.label,
     group: node.ontology,
     size: 10, // Will be updated with degree
     color: colorScale(node.ontology),
+    grounding: node.grounding_strength, // -1.0 to +1.0
   }));
 
-  // Transform links
-  const links: D3Link[] = apiLinks.map(link => ({
-    source: link.from_id,
-    target: link.to_id,
-    type: link.relationship_type,
-    value: link.confidence || 1.0,
-    color: getLinkColor(link.category),
-  }));
+  // Transform links - enrich with vocabulary data from store
+  const links: D3Link[] = apiLinks.map(link => {
+    // Look up category from vocabulary store
+    const category = vocabStore.getCategory(link.relationship_type) || link.category || 'default';
+    const categoryConfidence = vocabStore.getConfidence(link.relationship_type) || 1.0;
+
+    return {
+      source: link.from_id,
+      target: link.to_id,
+      type: link.relationship_type,
+      value: categoryConfidence, // Use category confidence for visualization
+      color: getCategoryColor(category),
+      category, // Store category for info boxes
+    };
+  });
 
   // Calculate node degrees and update sizes
   const degrees = new Map<string, number>();

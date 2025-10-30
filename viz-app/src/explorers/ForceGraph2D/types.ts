@@ -4,7 +4,8 @@
 
 import type { GraphData } from '../../types/graph';
 
-export type ColorMode = 'ontology' | 'degree' | 'centrality';
+export type NodeColorMode = 'ontology' | 'degree' | 'centrality';
+export type EdgeColorMode = 'category' | 'confidence' | 'uniform';
 export type LayoutAlgorithm = 'force' | 'circular' | 'grid';
 
 export interface ForceGraph2DSettings {
@@ -19,9 +20,12 @@ export interface ForceGraph2DSettings {
 
   // Visual appearance
   visual: {
-    colorBy: ColorMode;
+    nodeColorBy: NodeColorMode;
+    edgeColorBy: EdgeColorMode;
     showLabels: boolean;
     showArrows: boolean;
+    showGrid: boolean;
+    showShadows: boolean; // 3D-style shadows and highlights
     nodeSize: number; // Base node size multiplier (0.5-3)
     linkWidth: number; // Base link width (0.5-5)
   };
@@ -59,9 +63,12 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     friction: 0.9,
   },
   visual: {
-    colorBy: 'ontology',
-    showLabels: false, // Disabled by default to avoid clutter
+    nodeColorBy: 'ontology',
+    edgeColorBy: 'category',
+    showLabels: true, // Enabled by default for better readability
     showArrows: true,
+    showGrid: true,
+    showShadows: false, // Disabled by default for performance
     nodeSize: 1,
     linkWidth: 1,
   },

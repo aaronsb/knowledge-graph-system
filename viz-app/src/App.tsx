@@ -5,11 +5,12 @@
  * Follows ADR-034 architecture.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/layout/AppLayout';
 import { SearchBar } from './components/shared/SearchBar';
 import { useGraphStore } from './store/graphStore';
+import { useVocabularyStore } from './store/vocabularyStore';
 import { useSubgraph, useFindConnection } from './hooks/useGraphData';
 import { getExplorer } from './explorers';
 import { apiClient } from './api/client';
@@ -27,6 +28,57 @@ const queryClient = new QueryClient({
 
 const AppContent: React.FC = () => {
   const { selectedExplorer, searchParams, graphData: storeGraphData, setGraphData, queryMode, blockBuilderExpanded } = useGraphStore();
+  const { setTypes, setLoading, setError } = useVocabularyStore();
+
+  // Load vocabulary on mount
+  useEffect(() => {
+    const loadVocabulary = async () => {
+      setLoading(true);
+      try {
+        // First load existing vocabulary (include inactive types that may still be in use)
+        const response = await apiClient.getVocabularyTypes({
+          include_inactive: true, // Include all types, even inactive ones
+          include_builtin: true,
+        });
+        const types = response.types || [];
+
+        // Check if any types (active or inactive but with edge_count > 0) are missing categories
+        const typesWithoutCategory = types.filter((t: any) =>
+          t.edge_count > 0 && !t.category
+        );
+
+        if (typesWithoutCategory.length > 0) {
+          console.log(`⚠️ Found ${typesWithoutCategory.length} types without categories, refreshing...`);
+
+          // Trigger category refresh
+          await apiClient.refreshVocabularyCategories({ only_computed: true });
+
+          // Reload vocabulary after refresh (include inactive again)
+          const refreshedResponse = await apiClient.getVocabularyTypes({
+            include_inactive: true,
+            include_builtin: true,
+          });
+          setTypes(refreshedResponse.types || []);
+          console.log(`✅ Refreshed and loaded ${refreshedResponse.types?.length || 0} vocabulary types`);
+        } else {
+          setTypes(types);
+          console.log(`✅ Loaded ${types.length} vocabulary types (all have categories)`);
+        }
+
+        // Log category distribution
+        const categoryCount: Record<string, number> = {};
+        const currentTypes = useVocabularyStore.getState().types;
+        currentTypes.forEach((t: any) => {
+          categoryCount[t.category] = (categoryCount[t.category] || 0) + 1;
+        });
+        console.log('📊 Category distribution:', categoryCount);
+      } catch (error) {
+        console.error('❌ Failed to load vocabulary:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load vocabulary');
+      }
+    };
+    loadVocabulary();
+  }, []); // Run once on mount
 
   // Resizable SearchBar state
   const BLOCK_BUILDER_MIN_HEIGHT = 500; // Minimum for block builder to show all components
@@ -261,12 +313,21 @@ const AppContent: React.FC = () => {
     }
   }, [isDraggingSearchBar, handleSearchBarMouseMove, handleSearchBarMouseUp]);
 
+  // Stable callback for node clicks to prevent simulation restarts
+  const handleNodeClick = useCallback((nodeId: string) => {
+    // Follow Concept: Load clicked node's neighborhood
+    const store = useGraphStore.getState();
+    store.setFocusedNodeId(nodeId);
+    store.setSearchParams({
+      mode: 'neighborhood',
+      centerConceptId: nodeId,
+      depth: 2, // Default depth for Follow Concept
+      loadMode: 'add', // Add to existing graph
+    });
+  }, []); // Empty deps - uses getState() to avoid stale closures
+
   return (
-    <AppLayout
-      settingsPanel={
-        <SettingsPanelComponent settings={explorerSettings} onChange={setExplorerSettings} />
-      }
-    >
+    <AppLayout>
       <div className="h-full flex flex-col">
         {/* Search Bar */}
         <div
@@ -346,17 +407,8 @@ const AppContent: React.FC = () => {
             <ExplorerComponent
               data={graphData}
               settings={explorerSettings}
-              onNodeClick={(nodeId) => {
-                // Follow Concept: Load clicked node's neighborhood
-                const store = useGraphStore.getState();
-                store.setFocusedNodeId(nodeId);
-                store.setSearchParams({
-                  mode: 'neighborhood',
-                  centerConceptId: nodeId,
-                  depth: 2, // Default depth for Follow Concept
-                  loadMode: 'add', // Add to existing graph
-                });
-              }}
+              onSettingsChange={setExplorerSettings}
+              onNodeClick={handleNodeClick}
             />
           )}
         </div>

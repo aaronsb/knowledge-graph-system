@@ -12,6 +12,7 @@ export interface APIGraphNode {
   search_terms: string[];
   instance_count?: number;
   created_at?: string;
+  grounding_strength?: number; // -1.0 to +1.0, measures truth convergence
 }
 
 export interface APIGraphLink {
@@ -38,6 +39,7 @@ export interface D3Node {
   group: string; // ontology
   size: number; // node size (degree-based)
   color: string;
+  grounding?: number; // grounding strength (-1.0 to +1.0)
   fx?: number; // fixed position X
   fy?: number; // fixed position Y
   x?: number; // computed position X
@@ -50,8 +52,9 @@ export interface D3Link {
   source: string | D3Node;
   target: string | D3Node;
   type: string;
-  value: number; // confidence or weight
+  value: number; // category confidence or weight
   color: string;
+  category?: string; // relationship category from vocabulary
 }
 
 export interface GraphData {

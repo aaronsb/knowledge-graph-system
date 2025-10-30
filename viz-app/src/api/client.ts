@@ -47,19 +47,22 @@ class APIClient {
       ...relatedConcepts.map((rc: any) => rc.concept_id)
     ];
 
-    // Step 3: Fetch details for all concepts in parallel
+    // Step 3: Fetch details for all concepts in parallel (with grounding)
     const conceptDetailsPromises = allConceptIds.map(id =>
-      this.client.get(`/query/concept/${id}`).then(r => r.data).catch(() => null)
+      this.client.get(`/query/concept/${id}`, {
+        params: { include_grounding: true }
+      }).then(r => r.data).catch(() => null)
     );
 
     const allConceptDetails = (await Promise.all(conceptDetailsPromises)).filter(Boolean);
 
-    // Step 4: Build nodes array
+    // Step 4: Build nodes array (with grounding strength)
     const nodes = allConceptDetails.map((concept: any) => ({
       concept_id: concept.concept_id,
       label: concept.label,
-      ontology: 'default',
+      ontology: concept.documents?.[0] || 'Unknown', // Use first document as ontology
       search_terms: concept.search_terms || [],
+      grounding_strength: concept.grounding_strength, // -1.0 to +1.0
     }));
 
     // Step 5: Build links array from ALL concepts' relationships
@@ -189,7 +192,9 @@ class APIClient {
    * Get concept details
    */
   async getConceptDetails(concept_id: string): Promise<any> {
-    const response = await this.client.get(`/query/concept/${concept_id}`);
+    const response = await this.client.get(`/query/concept/${concept_id}`, {
+      params: { include_grounding: true }
+    });
     return response.data;
   }
 
@@ -248,6 +253,35 @@ class APIClient {
     relationship_types?: string[];
   }): Promise<any> {
     const response = await this.client.post('/query/related', params);
+    return response.data;
+  }
+
+  /**
+   * Get vocabulary types with categories and confidence scores
+   */
+  async getVocabularyTypes(params?: {
+    include_inactive?: boolean;
+    include_builtin?: boolean;
+  }): Promise<any> {
+    const response = await this.client.get('/vocabulary/types', {
+      params: {
+        include_inactive: params?.include_inactive ?? false,
+        include_builtin: params?.include_builtin ?? true,
+      },
+    });
+    return response.data;
+  }
+
+  /**
+   * Refresh vocabulary category assignments
+   * Recomputes probabilistic categories based on embeddings
+   */
+  async refreshVocabularyCategories(params?: {
+    only_computed?: boolean;
+  }): Promise<any> {
+    const response = await this.client.post('/vocabulary/refresh-categories', {
+      only_computed: params?.only_computed ?? true,
+    });
     return response.data;
   }
 }

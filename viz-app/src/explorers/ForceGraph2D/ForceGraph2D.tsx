@@ -7,22 +7,513 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight, Plus, ChevronDown, ChevronRight, MapPin, MapPinOff, Pin, PinOff, Circle, Grid3x3, EyeOff } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
+import { useVocabularyStore } from '../../store/vocabularyStore';
+import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
+import { Legend } from './Legend';
+import { CanvasSettingsPanel } from './CanvasSettingsPanel';
+
+/**
+ * Format grounding strength with emoji indicator (matches CLI format)
+ */
+function formatGrounding(grounding: number | undefined | null): { emoji: string; label: string; percentage: string; color: string } | null {
+  if (grounding === undefined || grounding === null) return null;
+
+  const percentage = (grounding * 100).toFixed(0);
+
+  // Color mapping: green (100%) → yellow (50%) → red (0% or negative)
+  let color: string;
+  if (grounding >= 0.8) {
+    color = '#22c55e'; // green
+  } else if (grounding >= 0.6) {
+    color = '#84cc16'; // lime
+  } else if (grounding >= 0.4) {
+    color = '#eab308'; // yellow
+  } else if (grounding >= 0.2) {
+    color = '#f59e0b'; // amber
+  } else if (grounding >= 0.0) {
+    color = '#f97316'; // orange
+  } else if (grounding >= -0.4) {
+    color = '#ef4444'; // red
+  } else {
+    color = '#dc2626'; // deep red
+  }
+
+  if (grounding >= 0.8) {
+    return { emoji: '✓', label: 'Strong', percentage: `${percentage}%`, color };
+  } else if (grounding >= 0.4) {
+    return { emoji: '⚡', label: 'Moderate', percentage: `${percentage}%`, color };
+  } else if (grounding >= 0.0) {
+    return { emoji: '◯', label: 'Weak', percentage: `${percentage}%`, color };
+  } else if (grounding >= -0.4) {
+    return { emoji: '◯', label: 'Contested', percentage: `${percentage}%`, color };
+  } else {
+    return { emoji: '✗', label: 'Contradicted', percentage: `${percentage}%`, color };
+  }
+}
+
+/**
+ * Get brighter color for relationship type text
+ * Uses same category colors as edges but +40% brightness
+ */
+function getRelationshipTextColor(relationshipType: string): string {
+  // Get category from vocabulary store
+  const vocabStore = useVocabularyStore.getState();
+  const category = vocabStore.getCategory(relationshipType) || 'default';
+
+  // Get base color from shared config
+  const baseColor = getCategoryColor(category);
+  return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
+}
+
+/**
+ * Node Info Box - Speech bubble style info display for nodes with collapsible sections
+ */
+interface NodeInfoBoxProps {
+  info: {
+    nodeId: string;
+    label: string;
+    group: string;
+    degree: number;
+    x: number;
+    y: number;
+  };
+  zoomTransform: { x: number; y: number; k: number };
+  onDismiss: () => void;
+}
+
+const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
+  const [detailedData, setDetailedData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch detailed node data on mount
+  useEffect(() => {
+    const fetchDetails = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.getConceptDetails(info.nodeId);
+        setDetailedData(response);
+      } catch (error) {
+        console.error('Failed to fetch node details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetails();
+  }, [info.nodeId]);
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
+
+  // Apply zoom transform to graph coordinates
+  const screenX = info.x * zoomTransform.k + zoomTransform.x;
+  const screenY = info.y * zoomTransform.k + zoomTransform.y;
+
+  return (
+    <div
+      className="absolute pointer-events-auto"
+      style={{
+        left: `${screenX}px`,
+        top: `${screenY}px`,
+        transform: 'translate(-50%, calc(-100% - 20px))', // Position above node with offset
+        zIndex: 9999, // Ensure info box draws on top of everything
+      }}
+    >
+      <div className="relative">
+        {/* Speech bubble pointer - always dark */}
+        <div
+          className="absolute left-1/2 bottom-0 w-0 h-0"
+          style={{
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
+            transform: 'translateX(-50%) translateY(100%)',
+          }}
+        />
+
+        {/* Info box content - always dark theme */}
+        <div
+          className="bg-gray-800 rounded-lg border border-gray-600 cursor-pointer transition-shadow"
+          style={{
+            minWidth: '280px',
+            maxWidth: '400px',
+            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
+          }}
+        >
+          {/* Header - always visible */}
+          <div
+            className="px-4 py-3 border-b border-gray-700"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+          >
+            <div className="font-semibold text-gray-100 text-base">
+              {info.label}
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              Click to dismiss
+            </div>
+          </div>
+
+          {/* Collapsible sections */}
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+            {/* Overview Section */}
+            <div className="border-b border-gray-700">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSection('overview');
+                }}
+                className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
+              >
+                <span className="font-medium text-sm text-gray-300">Overview</span>
+                {expandedSections.has('overview') ? (
+                  <ChevronDown size={16} className="text-gray-500" />
+                ) : (
+                  <ChevronRight size={16} className="text-gray-500" />
+                )}
+              </button>
+              {expandedSections.has('overview') && (
+                <div className="px-4 py-3 space-y-2 text-sm bg-gray-750">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Ontology:</span>
+                    <span className="font-medium text-gray-100">{info.group}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Connections:</span>
+                    <span className="font-medium text-gray-100">{info.degree}</span>
+                  </div>
+                  {detailedData?.grounding_strength !== undefined && detailedData?.grounding_strength !== null && (() => {
+                    const grounding = formatGrounding(detailedData.grounding_strength);
+                    return grounding && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Grounding:</span>
+                        <span className="font-medium" style={{ color: grounding.color }}>
+                          {grounding.emoji} {grounding.label} ({grounding.percentage})
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Relationships Section */}
+            {detailedData?.relationships && (
+              <div className="border-b border-gray-700">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSection('relationships');
+                  }}
+                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
+                >
+                  <span className="font-medium text-sm text-gray-300">
+                    Relationships ({detailedData.relationships.length})
+                  </span>
+                  {expandedSections.has('relationships') ? (
+                    <ChevronDown size={16} className="text-gray-500" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-500" />
+                  )}
+                </button>
+                {expandedSections.has('relationships') && (
+                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
+                    {detailedData.relationships.slice(0, 20).map((rel: any, idx: number) => {
+                      const relType = rel.rel_type || rel.type;
+                      const color = getRelationshipTextColor(relType);
+                      return (
+                        <div key={`${rel.to_id || rel.target_id}-${relType}-${idx}`} className="text-gray-300">
+                          <span className="font-medium" style={{ color }}>{relType}</span> → {rel.to_label || rel.target_label || rel.to_id}
+                        </div>
+                      );
+                    })}
+                    {detailedData.relationships.length > 20 && (
+                      <div className="text-gray-500 italic">
+                        +{detailedData.relationships.length - 20} more
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Evidence Section */}
+            {detailedData?.instances && (
+              <div className="border-b border-gray-700">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSection('evidence');
+                  }}
+                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
+                >
+                  <span className="font-medium text-sm text-gray-300">
+                    Evidence ({detailedData.instances.length})
+                  </span>
+                  {expandedSections.has('evidence') ? (
+                    <ChevronDown size={16} className="text-gray-500" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-500" />
+                  )}
+                </button>
+                {expandedSections.has('evidence') && (
+                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
+                    {detailedData.instances.slice(0, 10).map((instance: any, idx: number) => (
+                      <div key={`${instance.instance_id || instance.id || idx}-${instance.quote?.substring(0, 20) || ''}`} className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
+                        "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
+                      </div>
+                    ))}
+                    {detailedData.instances.length > 10 && (
+                      <div className="text-gray-500 italic">
+                        +{detailedData.instances.length - 10} more
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {loading && (
+              <div className="px-4 py-3 text-center text-sm text-gray-400">
+                Loading details...
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Edge Info Box - Speech bubble style info display for edges
+ */
+interface EdgeInfoBoxProps {
+  info: {
+    linkKey: string;
+    sourceId: string;
+    targetId: string;
+    type: string;
+    confidence: number;
+    category?: string;
+    x: number;
+    y: number;
+  };
+  zoomTransform: { x: number; y: number; k: number };
+  onDismiss: () => void;
+}
+
+const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, zoomTransform, onDismiss }) => {
+  // Apply zoom transform to graph coordinates
+  const screenX = info.x * zoomTransform.k + zoomTransform.x;
+  const screenY = info.y * zoomTransform.k + zoomTransform.y;
+
+  return (
+    <div
+      className="absolute pointer-events-auto"
+      style={{
+        left: `${screenX}px`,
+        top: `${screenY}px`,
+        transform: 'translate(-50%, -100%)', // Position above the edge midpoint
+        zIndex: 9999, // Ensure info box draws on top of everything
+      }}
+    >
+      {/* Speech bubble pointer - always dark */}
+      <div className="relative">
+        <div
+          className="absolute left-1/2 bottom-0 w-0 h-0"
+          style={{
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
+            transform: 'translateX(-50%) translateY(100%)',
+          }}
+        />
+        {/* Info box content - always dark theme */}
+        <div
+          className="bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 cursor-pointer transition-shadow"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss();
+          }}
+          style={{
+            minWidth: '200px',
+            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
+          }}
+        >
+          <div className="space-y-2 text-sm">
+            <div className="font-semibold text-gray-100 border-b border-gray-700 pb-2">
+              Edge Information
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Type:</span>
+                <span className="font-medium text-gray-100">{info.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Confidence:</span>
+                <span className="font-medium text-gray-100">
+                  {(info.confidence * 100).toFixed(1)}%
+                </span>
+              </div>
+              {info.category && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Category:</span>
+                  <span className="font-medium text-gray-100">{info.category}</span>
+                </div>
+              )}
+              <div className="text-xs text-gray-400 pt-2 border-t border-gray-700">
+                Click to dismiss
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Calculate node position for info boxes
+ * Uses override position during drag, otherwise uses node's current position
+ */
+function calculateNodePosition(
+  nodeId: string,
+  nodes: D3Node[],
+  draggedNodeId?: string,
+  draggedNodeX?: number,
+  draggedNodeY?: number
+): { x: number; y: number } {
+  // If this is the dragged node and we have override coordinates, use them
+  if (nodeId === draggedNodeId && draggedNodeX !== undefined && draggedNodeY !== undefined) {
+    return { x: draggedNodeX, y: draggedNodeY };
+  }
+
+  // Otherwise find the node and use its current position
+  const node = nodes.find(n => n.id === nodeId);
+  return {
+    x: node?.x || 0,
+    y: node?.y || 0,
+  };
+}
+
+/**
+ * Calculate edge midpoint position for info boxes
+ * Handles both straight and curved edges (quadratic Bezier)
+ */
+function calculateEdgeMidpoint(
+  link: D3Link,
+  curveOffset: number,
+  draggedNodeId?: string,
+  draggedNodeX?: number,
+  draggedNodeY?: number
+): { x: number; y: number } {
+  const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+  const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+  // Get source position (use drag position if this is the dragged node)
+  const sourceX = sourceId === draggedNodeId && draggedNodeX !== undefined
+    ? draggedNodeX
+    : (typeof link.source === 'object' ? link.source.x || 0 : 0);
+  const sourceY = sourceId === draggedNodeId && draggedNodeY !== undefined
+    ? draggedNodeY
+    : (typeof link.source === 'object' ? link.source.y || 0 : 0);
+
+  // Get target position (use drag position if this is the dragged node)
+  const targetX = targetId === draggedNodeId && draggedNodeX !== undefined
+    ? draggedNodeX
+    : (typeof link.target === 'object' ? link.target.x || 0 : 0);
+  const targetY = targetId === draggedNodeId && draggedNodeY !== undefined
+    ? draggedNodeY
+    : (typeof link.target === 'object' ? link.target.y || 0 : 0);
+
+  let midX, midY;
+
+  if (curveOffset === 0) {
+    // Straight line - simple midpoint
+    midX = (sourceX + targetX) / 2;
+    midY = (sourceY + targetY) / 2;
+  } else {
+    // Curved line - calculate point on quadratic Bezier curve at t=0.5
+    const dx = targetX - sourceX;
+    const dy = targetY - sourceY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < 0.01) {
+      // Guard against zero or very small distance
+      midX = (sourceX + targetX) / 2;
+      midY = (sourceY + targetY) / 2;
+    } else {
+      // Calculate control point
+      const perpX = -dy / distance;
+      const perpY = dx / distance;
+      const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+      const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+
+      // Evaluate quadratic Bezier at t=0.5
+      const t = 0.5;
+      midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+      midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+    }
+  }
+
+  return { x: midX, y: midY };
+}
 
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
-> = ({ data, settings, onNodeClick, className }) => {
+> = ({ data, settings, onSettingsChange, onNodeClick, className }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+
+  // Track zoom transform for info box positioning
+  const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
+
+  // Track active edge info boxes
+  interface EdgeInfo {
+    linkKey: string;
+    sourceId: string;
+    targetId: string;
+    type: string;
+    confidence: number;
+    category?: string;
+    x: number;
+    y: number;
+  }
+  const [activeEdgeInfos, setActiveEdgeInfos] = useState<EdgeInfo[]>([]);
+
+  // Track active node info boxes
+  interface NodeInfo {
+    nodeId: string;
+    label: string;
+    group: string;
+    degree: number;
+    x: number;
+    y: number;
+  }
+  const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfo[]>([]);
 
   // Imperative function to apply gold ring - can be called anytime
   const applyGoldRing = useCallback((nodeId: string) => {
@@ -30,10 +521,14 @@ export const ForceGraph2D: React.FC<
 
     const svg = d3.select(svgRef.current);
 
-    // Remove from previous node
+    // Remove from previous node (restore brighter stroke)
     svg.selectAll('circle.origin-node')
       .interrupt()
-      .attr('stroke', '#fff')
+      .attr('stroke', function() {
+        const d = d3.select(this).datum() as D3Node;
+        const color = nodeColors.get(d.id) || d.color;
+        return d3.color(color)?.brighter(0.4).toString() || color;
+      })
       .attr('stroke-width', 2)
       .attr('stroke-opacity', 1)
       .classed('origin-node', false);
@@ -64,13 +559,23 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.interaction.showOriginNode]);
 
-  // Context menu state
+  // Node context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
     nodeId: string;
     nodeLabel: string;
   } | null>(null);
+
+  // Canvas context menu state
+  const [canvasContextMenu, setCanvasContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // Right-click drag tracking for pan behavior
+  const rightClickStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const [isRightClickDragging, setIsRightClickDragging] = useState(false);
 
   // Get navigation state and settings from store
   const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
@@ -81,6 +586,148 @@ export const ForceGraph2D: React.FC<
     return getNeighbors(hoveredNode, data.links);
   }, [hoveredNode, data.links, settings.interaction.highlightNeighbors]);
 
+  // Calculate node colors based on nodeColorBy setting
+  const nodeColors = useMemo(() => {
+    const colors = new Map<string, string>();
+
+    if (settings.visual.nodeColorBy === 'ontology') {
+      // Color by ontology (default behavior from transformForD3)
+      data.nodes.forEach(node => {
+        colors.set(node.id, node.color);
+      });
+    } else if (settings.visual.nodeColorBy === 'degree') {
+      // Color by degree (number of connections)
+      const degrees = new Map<string, number>();
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
+        degrees.set(targetId, (degrees.get(targetId) || 0) + 1);
+      });
+
+      const maxDegree = Math.max(...Array.from(degrees.values()), 1);
+      const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, maxDegree]);
+
+      data.nodes.forEach(node => {
+        const degree = degrees.get(node.id) || 0;
+        colors.set(node.id, colorScale(degree));
+      });
+    } else if (settings.visual.nodeColorBy === 'centrality') {
+      // Color by centrality (using degree as proxy for now)
+      const degrees = new Map<string, number>();
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
+        degrees.set(targetId, (degrees.get(targetId) || 0) + 1);
+      });
+
+      const maxDegree = Math.max(...Array.from(degrees.values()), 1);
+      const colorScale = d3.scaleSequential(d3.interpolatePlasma).domain([0, maxDegree]);
+
+      data.nodes.forEach(node => {
+        const degree = degrees.get(node.id) || 0;
+        colors.set(node.id, colorScale(degree));
+      });
+    }
+
+    return colors;
+  }, [data.nodes, data.links, settings.visual.nodeColorBy]);
+
+  // Calculate edge colors based on edgeColorBy setting
+  const linkColors = useMemo(() => {
+    const colors = new Map<string, string>();
+
+    if (settings.visual.edgeColorBy === 'confidence') {
+      // Find min/max confidence values in the data for dynamic scaling
+      const confidenceValues = data.links.map(link => link.value || 0.5);
+      const minConfidence = Math.min(...confidenceValues);
+      const maxConfidence = Math.max(...confidenceValues);
+
+      // Use actual data range, or fallback to [0, 1] if all values are the same
+      const domain = minConfidence === maxConfidence
+        ? [0, 1]
+        : [minConfidence, maxConfidence];
+
+      const colorScale = d3.scaleSequential(d3.interpolateTurbo).domain(domain);
+
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        const linkKey = `${sourceId}->${targetId}-${link.type}`;
+        const confidence = link.value || 0.5;
+        colors.set(linkKey, colorScale(confidence));
+      });
+    } else {
+      // Category or uniform coloring
+      data.links.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        const linkKey = `${sourceId}->${targetId}-${link.type}`;
+
+        if (settings.visual.edgeColorBy === 'category') {
+          // Color by category (default from transformForD3)
+          colors.set(linkKey, link.color);
+        } else if (settings.visual.edgeColorBy === 'uniform') {
+          // Uniform gray color
+          colors.set(linkKey, '#6b7280');
+        }
+      });
+    }
+
+    return colors;
+  }, [data.links, settings.visual.edgeColorBy]);
+
+  // Calculate curve offsets for multiple edges between same nodes
+  // This ensures edges don't overlap and their labels are visible
+  const linkCurveOffsets = useMemo(() => {
+    const offsets = new Map<string, number>();
+
+    // Group links by node pair (undirected)
+    const linkGroups = new Map<string, D3Link[]>();
+
+    data.links.forEach(link => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+      // Create a consistent key for the node pair (sorted to treat as undirected)
+      const pairKey = [sourceId, targetId].sort().join('->');
+
+      if (!linkGroups.has(pairKey)) {
+        linkGroups.set(pairKey, []);
+      }
+      linkGroups.get(pairKey)!.push(link);
+    });
+
+    // Assign curve offsets to links in groups with multiple edges
+    linkGroups.forEach(links => {
+      if (links.length > 1) {
+        // Multiple edges between same nodes - distribute them with curves
+        links.forEach((link, index) => {
+          const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+          const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+          const linkKey = `${sourceId}->${targetId}-${link.type}`;
+
+          // Calculate offset: center around 0 and spread evenly
+          const totalLinks = links.length;
+          const offsetMultiplier = index - (totalLinks - 1) / 2;
+          const curveStrength = 30; // Base curve distance
+
+          offsets.set(linkKey, offsetMultiplier * curveStrength);
+        });
+      } else {
+        // Single edge - no curve needed (offset = 0)
+        const link = links[0];
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        const linkKey = `${sourceId}->${targetId}-${link.type}`;
+        offsets.set(linkKey, 0);
+      }
+    });
+
+    return offsets;
+  }, [data.links]);
+
   // Initialize and update force simulation
   useEffect(() => {
     if (!svgRef.current || !data.nodes.length) return;
@@ -89,12 +736,57 @@ export const ForceGraph2D: React.FC<
     const width = dimensions.width;
     const height = dimensions.height;
 
+    // Auto-disable shadows for large graphs (performance protection)
+    const totalElements = data.nodes.length + data.links.length;
+    if (totalElements > 5000 && settings.visual.showShadows) {
+      console.warn(`⚠️ Graph has ${totalElements} elements. Auto-disabling shadows for performance. You can re-enable manually.`);
+      onSettingsChange?.({
+        ...settings,
+        visual: { ...settings.visual, showShadows: false },
+      });
+    }
+
     // Clear previous content
     svg.selectAll('*').remove();
 
-    // Create container groups
+    // Define SVG filters for shadow effects
+    const defs = svg.append('defs');
+    const shadowFilter = defs.append('filter')
+      .attr('id', 'drop-shadow')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%');
+
+    shadowFilter.append('feGaussianBlur')
+      .attr('in', 'SourceAlpha')
+      .attr('stdDeviation', 2);
+
+    shadowFilter.append('feOffset')
+      .attr('dx', 3.6)
+      .attr('dy', 3.6)
+      .attr('result', 'offsetblur');
+
+    shadowFilter.append('feComponentTransfer')
+      .append('feFuncA')
+      .attr('type', 'linear')
+      .attr('slope', 0.8);
+
+    const feMerge = shadowFilter.append('feMerge');
+    feMerge.append('feMergeNode');
+    feMerge.append('feMergeNode')
+      .attr('in', 'SourceGraphic');
+
+    // Create container groups (order determines layering)
     const g = svg.append('g').attr('class', 'graph-container');
+
+    // Create grid group INSIDE graph container so it transforms with the graph
+    const gridGroup = g.append('g').attr('class', 'grid-layer');
+
+    // Shadow layers (rendered below main elements)
+    const edgeShadowsGroup = g.append('g').attr('class', 'edge-shadows');
     const linksGroup = g.append('g').attr('class', 'links');
+    const nodeShadowsGroup = g.append('g').attr('class', 'node-shadows');
     const nodesGroup = g.append('g').attr('class', 'nodes');
 
     // Setup zoom behavior
@@ -102,8 +794,29 @@ export const ForceGraph2D: React.FC<
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 10])
+        .filter((event) => {
+          // Allow zoom/pan with:
+          // - Left mouse button (button 0)
+          // - Right mouse button (button 2) - for right-click+drag pan
+          // - Mouse wheel (type 'wheel')
+          // - Touch events
+          return !event.ctrlKey && (
+            event.type === 'wheel' ||
+            event.type === 'touchstart' ||
+            event.type === 'touchmove' ||
+            event.button === 0 ||
+            event.button === 2
+          );
+        })
         .on('zoom', (event) => {
           g.attr('transform', event.transform);
+
+          // Update zoom transform state for info box positioning
+          setZoomTransform({
+            x: event.transform.x,
+            y: event.transform.y,
+            k: event.transform.k,
+          });
         });
 
       if (settings.interaction.enableZoom && settings.interaction.enablePan) {
@@ -146,31 +859,122 @@ export const ForceGraph2D: React.FC<
       simulation.stop();
     }
 
-    // Draw links
+    // Draw edge shadows if enabled
+    // Edge shadows now handled by SVG filter on the edges themselves
+
+    // Draw links as paths (supports curves for multiple edges)
     const link = linksGroup
-      .selectAll<SVGLineElement, D3Link>('line')
+      .selectAll<SVGPathElement, D3Link>('path')
       .data(data.links)
-      .join('line')
-      .attr('stroke', (d) => d.color)
+      .join('path')
+      .attr('stroke', (d) => {
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
+        return linkColors.get(linkKey) || d.color;
+      })
       .attr('stroke-width', (d) => (d.value || 1) * settings.visual.linkWidth)
       .attr('stroke-opacity', 0.6)
-      .attr('marker-end', settings.visual.showArrows ? 'url(#arrowhead)' : '');
+      .attr('fill', 'none')
+      .attr('marker-end', (d) => {
+        if (!settings.visual.showArrows) return '';
+        // Use category-specific marker
+        const category = d.category || 'default';
+        return `url(#arrowhead-${category})`;
+      })
+      .attr('cursor', 'pointer')
+      .attr('data-link-key', (d) => {
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        return `${sourceId}->${targetId}-${d.type}`;
+      })
+      .style('filter', settings.visual.showShadows ? 'url(#drop-shadow)' : null)
+      .on('mouseenter', (_event, d) => {
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        setHoveredEdge(`${sourceId}->${targetId}-${d.type}`);
+      })
+      .on('mouseleave', () => {
+        setHoveredEdge(null);
+      })
+      .on('click', (event, d) => {
+        event.stopPropagation(); // Prevent triggering background click
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
 
-    // Add arrow marker definition
+        // Use functional setState to ensure we have the latest state
+        setActiveEdgeInfos(prev => {
+          const exists = prev.some(info => info.linkKey === linkKey);
+          if (exists) return prev; // Don't create duplicate
+
+          // Calculate edge midpoint (will be updated during simulation)
+          const sourceX = typeof d.source === 'object' ? d.source.x || 0 : 0;
+          const sourceY = typeof d.source === 'object' ? d.source.y || 0 : 0;
+          const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
+          const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
+
+          const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+          let midX, midY;
+
+          if (curveOffset === 0) {
+            midX = (sourceX + targetX) / 2;
+            midY = (sourceY + targetY) / 2;
+          } else {
+            const dx = targetX - sourceX;
+            const dy = targetY - sourceY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Guard against zero distance
+            if (distance < 0.01) {
+              midX = (sourceX + targetX) / 2;
+              midY = (sourceY + targetY) / 2;
+            } else {
+              const perpX = -dy / distance;
+              const perpY = dx / distance;
+              const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+              const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+              const t = 0.5;
+              midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+              midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+            }
+          }
+
+          // Create new edge info
+          const newInfo: EdgeInfo = {
+            linkKey,
+            sourceId,
+            targetId,
+            type: d.type,
+            confidence: d.value || 1.0,
+            category: d.category, // Vocabulary category (derivation, modification, etc.)
+            x: midX,
+            y: midY,
+          };
+
+          return [...prev, newInfo];
+        });
+      });
+
+    // Add arrow marker definitions - one per category color
     if (settings.visual.showArrows) {
-      svg
-        .append('defs')
-        .append('marker')
-        .attr('id', 'arrowhead')
-        .attr('viewBox', '-0 -5 10 10')
-        .attr('refX', 20)
-        .attr('refY', 0)
-        .attr('orient', 'auto')
-        .attr('markerWidth', 8)
-        .attr('markerHeight', 8)
-        .append('path')
-        .attr('d', 'M 0,-5 L 10,0 L 0,5')
-        .attr('fill', '#999');
+      const defs = svg.append('defs');
+
+      // Create markers for each category (uses shared config)
+      Object.entries(categoryColors).forEach(([category, color]) => {
+        defs
+          .append('marker')
+          .attr('id', `arrowhead-${category}`)
+          .attr('viewBox', '-0 -5 10 10')
+          .attr('refX', 8) // Position arrow tip at node boundary
+          .attr('refY', 0)
+          .attr('orient', 'auto')
+          .attr('markerWidth', 4)
+          .attr('markerHeight', 4)
+          .append('path')
+          .attr('d', 'M 0,-5 L 10,0 L 0,5')
+          .attr('fill', color);
+      });
     }
 
     // Add edge labels showing relationship types
@@ -181,7 +985,11 @@ export const ForceGraph2D: React.FC<
       .text((d) => d.type)
       .attr('font-size', 9)
       .attr('font-weight', 400)
-      .attr('fill', '#aaa')
+      .attr('fill', (d) => {
+        // Use edge color +40% brightness
+        const baseColor = d.color || '#6b7280';
+        return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
+      })
       .attr('stroke', '#1a1a2e')
       .attr('stroke-width', 0.5)
       .attr('paint-order', 'stroke')
@@ -189,26 +997,111 @@ export const ForceGraph2D: React.FC<
       .attr('pointer-events', 'none')
       .style('user-select', 'none');
 
-    // Draw nodes
+    // Render node highlights FIRST (before circles) if shadows enabled, so circles are on top
+    if (settings.visual.showShadows) {
+      // Node shadows now handled by SVG filter on the nodes themselves
+
+      // Node highlights (reflection and shade arcs) - MUST be created before circles
+      nodesGroup
+        .selectAll<SVGPathElement, any>('.highlight-arc')
+        .data(data.nodes.flatMap(d => [
+          { node: d, arcType: 'reflection' },
+          { node: d, arcType: 'shade' }
+        ]))
+        .join('path')
+        .attr('class', 'highlight-arc')
+        .attr('d', (d: any) => {
+          const nodeRadius = ((d.node.size || 10) * settings.visual.nodeSize);
+          const arcRadius = nodeRadius * 0.8; // 80% of node diameter
+
+          // Arc angles in degrees (0° = right/3 o'clock)
+          const isReflection = d.arcType === 'reflection';
+          const startAngle = isReflection ? 290 : 110; // degrees
+          const endAngle = isReflection ? 340 : 160;   // degrees
+
+          // Convert to radians
+          const startRad = (startAngle - 90) * (Math.PI / 180);
+          const endRad = (endAngle - 90) * (Math.PI / 180);
+
+          // Calculate arc path (80% of node radius)
+          const x1 = arcRadius * Math.cos(startRad);
+          const y1 = arcRadius * Math.sin(startRad);
+          const x2 = arcRadius * Math.cos(endRad);
+          const y2 = arcRadius * Math.sin(endRad);
+
+          // Large arc flag: 0 for arcs <= 180°, 1 for arcs > 180°
+          const largeArcFlag = 0;
+
+          return `M ${x1} ${y1} A ${arcRadius} ${arcRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
+        })
+        .attr('fill', 'none')
+        .attr('stroke', (d: any) => {
+          const baseColor = nodeColors.get(d.node.id) || d.node.color;
+          const color = d3.color(baseColor);
+          if (!color) return baseColor;
+
+          if (d.arcType === 'reflection') {
+            // Increase luminance for reflection (nearly white)
+            return color.brighter(2.5).toString();
+          } else {
+            // Decrease luminance for shade (darker)
+            return color.darker(1.5).toString();
+          }
+        })
+        .attr('stroke-width', 3)
+        .attr('stroke-linecap', 'round')
+        .attr('pointer-events', 'none');
+    }
+
+    // Draw nodes (AFTER highlights so they're on top and receive events)
     const node = nodesGroup
       .selectAll<SVGCircleElement, D3Node>('circle')
       .data(data.nodes)
       .join('circle')
       .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
-      .attr('fill', (d) => d.color)
-      .attr('stroke', '#fff')
+      .attr('fill', (d) => nodeColors.get(d.id) || d.color)
+      .attr('stroke', (d) => {
+        const color = nodeColors.get(d.id) || d.color;
+        return d3.color(color)?.brighter(0.4).toString() || color;
+      })
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
       .attr('data-node-id', (d) => d.id) // Add ID for selection
-      .on('click', (_event, d) => {
-        // Left-click: Select node (show gold ring)
-        setOriginNodeId(d.id);
+      .style('filter', settings.visual.showShadows ? 'url(#drop-shadow)' : null)
+      .on('click', (event, d) => {
+        event.stopPropagation();
         setContextMenu(null); // Close any open context menu
-        applyGoldRing(d.id); // Immediate visual feedback
+
+        // Left click: Immediately show info box
+        // Use functional setState to ensure we have the latest state
+        setActiveNodeInfos(prev => {
+          const exists = prev.some(info => info.nodeId === d.id);
+          if (exists) return prev; // Don't create duplicate
+
+          // Calculate degree (number of connections)
+          const degree = data.links.filter(link => {
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            return sourceId === d.id || targetId === d.id;
+          }).length;
+
+          // Create new node info
+          const newInfo: NodeInfo = {
+            nodeId: d.id,
+            label: d.label,
+            group: d.group || 'Unknown',
+            degree,
+            x: d.x || 0,
+            y: d.y || 0,
+          };
+
+          return [...prev, newInfo];
+        });
       })
       .on('contextmenu', (event, d) => {
         // Right-click: Show context menu
         event.preventDefault();
+        event.stopPropagation(); // Prevent canvas context menu from showing
         setContextMenu({
           x: event.clientX,
           y: event.clientY,
@@ -254,6 +1147,42 @@ export const ForceGraph2D: React.FC<
         .on('drag', (event, d) => {
           d.fx = event.x;
           d.fy = event.y;
+
+          // Update node info box position immediately during drag
+          setActiveNodeInfos(prevInfos =>
+            prevInfos.map(info => {
+              const { x, y } = calculateNodePosition(info.nodeId, data.nodes, d.id, event.x, event.y);
+              return { ...info, x, y };
+            })
+          );
+
+          // Update edge info boxes for edges connected to this node
+          if (activeEdgeInfos.length > 0) {
+            setActiveEdgeInfos(prevInfos =>
+              prevInfos.map(info => {
+                // Find the corresponding link
+                const link = data.links.find(l => {
+                  const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+                  const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+                  return `${sourceId}->${targetId}-${l.type}` === info.linkKey;
+                });
+
+                if (!link) return info;
+
+                // Check if this edge is connected to the dragged node
+                const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+                const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+                if (sourceId !== d.id && targetId !== d.id) return info; // Not connected
+
+                // Recalculate edge midpoint with updated node position
+                const curveOffset = linkCurveOffsets.get(info.linkKey) || 0;
+                const { x: midX, y: midY } = calculateEdgeMidpoint(link, curveOffset, d.id, event.x, event.y);
+
+                return { ...info, x: midX, y: midY };
+              })
+            );
+          }
         })
         .on('end', (event, _d) => {
           if (!event.active && settings.physics.enabled) simulation.alphaTarget(0);
@@ -266,11 +1195,74 @@ export const ForceGraph2D: React.FC<
 
     // Update positions on simulation tick
     simulation.on('tick', () => {
-      link
-        .attr('x1', (d) => (typeof d.source === 'object' ? d.source.x || 0 : 0))
-        .attr('y1', (d) => (typeof d.source === 'object' ? d.source.y || 0 : 0))
-        .attr('x2', (d) => (typeof d.target === 'object' ? d.target.x || 0 : 0))
-        .attr('y2', (d) => (typeof d.target === 'object' ? d.target.y || 0 : 0));
+      // Update curved paths for links
+      link.attr('d', (d) => {
+        const sourceNode = typeof d.source === 'object' ? d.source : null;
+        const targetNode = typeof d.target === 'object' ? d.target : null;
+
+        const sourceX = sourceNode?.x || 0;
+        const sourceY = sourceNode?.y || 0;
+        const targetX = targetNode?.x || 0;
+        const targetY = targetNode?.y || 0;
+
+        // Get target node radius (account for node size + stroke width)
+        const targetRadius = targetNode ? ((targetNode.size || 10) * settings.visual.nodeSize) + 2 : 10;
+
+        // Get curve offset for this link
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
+        const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+
+        // Calculate direction and distance
+        const dx = targetX - sourceX;
+        const dy = targetY - sourceY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Guard against zero or very small distance
+        if (distance < 0.01) {
+          return `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
+        }
+
+        if (curveOffset === 0) {
+          // Straight line - shorten to stop at target node boundary + 1 unit gap
+          const unitX = dx / distance;
+          const unitY = dy / distance;
+          const adjustedTargetX = targetX - unitX * (targetRadius + 1);
+          const adjustedTargetY = targetY - unitY * (targetRadius + 1);
+          return `M ${sourceX},${sourceY} L ${adjustedTargetX},${adjustedTargetY}`;
+        } else {
+          // Quadratic curve for multiple edges
+          // Perpendicular unit vector
+          const perpX = -dy / distance;
+          const perpY = dx / distance;
+
+          // Control point at midpoint + perpendicular offset
+          const midX = (sourceX + targetX) / 2;
+          const midY = (sourceY + targetY) / 2;
+          const controlX = midX + perpX * curveOffset;
+          const controlY = midY + perpY * curveOffset;
+
+          // Calculate tangent at curve endpoint (t=1)
+          // For quadratic Bezier, tangent at t=1 is in direction from control point to target
+          const tangentX = targetX - controlX;
+          const tangentY = targetY - controlY;
+          const tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+
+          // Guard against zero-length tangent
+          if (tangentLength < 0.01) {
+            return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
+          }
+
+          // Normalize tangent and shorten curve to stop at target node boundary + 1 unit gap
+          const tangentUnitX = tangentX / tangentLength;
+          const tangentUnitY = tangentY / tangentLength;
+          const adjustedTargetX = targetX - tangentUnitX * (targetRadius + 1);
+          const adjustedTargetY = targetY - tangentUnitY * (targetRadius + 1);
+
+          return `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${adjustedTargetX},${adjustedTargetY}`;
+        }
+      });
 
       node.attr('cx', (d) => d.x || 0).attr('cy', (d) => d.y || 0);
 
@@ -281,12 +1273,51 @@ export const ForceGraph2D: React.FC<
         const targetX = typeof d.target === 'object' ? d.target.x || 0 : 0;
         const targetY = typeof d.target === 'object' ? d.target.y || 0 : 0;
 
-        // Calculate midpoint
-        const midX = (sourceX + targetX) / 2;
-        const midY = (sourceY + targetY) / 2;
+        // Get curve offset for label positioning
+        const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+        const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+        const linkKey = `${sourceId}->${targetId}-${d.type}`;
+        const curveOffset = linkCurveOffsets.get(linkKey) || 0;
 
-        // Calculate angle to rotate text along edge
-        let angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+        let midX, midY, angle;
+
+        if (curveOffset === 0) {
+          // Straight line - position at midpoint
+          midX = (sourceX + targetX) / 2;
+          midY = (sourceY + targetY) / 2;
+          angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+        } else {
+          // Curved line - position at curve midpoint (on the quadratic curve)
+          const dx = targetX - sourceX;
+          const dy = targetY - sourceY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // Guard against zero or very small distance
+          if (distance < 0.01) {
+            // Fallback to straight line positioning
+            midX = (sourceX + targetX) / 2;
+            midY = (sourceY + targetY) / 2;
+            angle = 0;
+          } else {
+            // Perpendicular unit vector
+            const perpX = -dy / distance;
+            const perpY = dx / distance;
+
+            // Control point
+            const controlX = (sourceX + targetX) / 2 + perpX * curveOffset;
+            const controlY = (sourceY + targetY) / 2 + perpY * curveOffset;
+
+            // Point on quadratic curve at t=0.5 (midpoint)
+            const t = 0.5;
+            midX = (1 - t) * (1 - t) * sourceX + 2 * (1 - t) * t * controlX + t * t * targetX;
+            midY = (1 - t) * (1 - t) * sourceY + 2 * (1 - t) * t * controlY + t * t * targetY;
+
+            // Calculate tangent angle at midpoint
+            const tangentX = 2 * (1 - t) * (controlX - sourceX) + 2 * t * (targetX - controlX);
+            const tangentY = 2 * (1 - t) * (controlY - sourceY) + 2 * t * (targetY - controlY);
+            angle = Math.atan2(tangentY, tangentX) * (180 / Math.PI);
+          }
+        }
 
         // Keep text readable (don't flip upside down)
         if (angle > 90 || angle < -90) {
@@ -302,12 +1333,141 @@ export const ForceGraph2D: React.FC<
           .attr('x', (d) => d.x || 0)
           .attr('y', (d) => (d.y || 0) + (d.size || 10) * settings.visual.nodeSize + 14);
       }
+
+      // Update highlight positions if enabled (shadows handled by SVG filter)
+      if (settings.visual.showShadows) {
+        // Update node highlight arc positions
+        nodesGroup.selectAll('.highlight-arc')
+          .attr('transform', (d: any) => `translate(${d.node.x || 0}, ${d.node.y || 0})`);
+      }
+
+      // Update info box positions to follow edges
+      if (activeEdgeInfos.length > 0) {
+        setActiveEdgeInfos(prevInfos =>
+          prevInfos.map(info => {
+            // Find the corresponding link
+            const link = data.links.find(l => {
+              const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+              const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+              return `${sourceId}->${targetId}-${l.type}` === info.linkKey;
+            });
+
+            if (!link) return info; // Link not found, keep old position
+
+            const curveOffset = linkCurveOffsets.get(info.linkKey) || 0;
+            const { x: midX, y: midY } = calculateEdgeMidpoint(link, curveOffset);
+
+            return { ...info, x: midX, y: midY };
+          })
+        );
+      }
+
+      // Update info box positions to follow nodes
+      if (activeNodeInfos.length > 0) {
+        setActiveNodeInfos(prevInfos =>
+          prevInfos.map(info => {
+            const { x, y } = calculateNodePosition(info.nodeId, data.nodes);
+            return { ...info, x, y };
+          })
+        );
+      }
     });
 
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick]);
+  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets]);
+
+  // Helper function to render grid in graph coordinates
+  const renderGrid = useCallback(() => {
+    if (!svgRef.current || !settings.visual.showGrid) return;
+
+    const svg = d3.select(svgRef.current);
+    const g = svg.select('.graph-container');
+    const gridGroup = g.select('.grid-layer');
+
+    if (gridGroup.empty()) return;
+
+    // Clear existing grid
+    gridGroup.selectAll('*').remove();
+
+    // Get canvas background color and derive grid colors
+    const canvasColor = d3.color(
+      window.getComputedStyle(svgRef.current).backgroundColor || '#ffffff'
+    );
+    const mainGridColor = canvasColor ? canvasColor.brighter(2.0).toString() : '#d0d0d0';
+    const subGridColor = canvasColor ? canvasColor.brighter(1.0).toString() : '#e8e8e8';
+
+    // Grid spacing in graph coordinates
+    const mainGridSize = 100;
+    const subGridSize = mainGridSize / 2;
+
+    // Render a large grid centered at origin (will transform with zoom/pan)
+    const gridExtent = 5000; // Large enough to cover any reasonable zoom/pan
+
+    // Draw subdivision grid
+    for (let x = -gridExtent; x <= gridExtent; x += subGridSize) {
+      if (x % mainGridSize !== 0) {
+        gridGroup
+          .append('line')
+          .attr('class', 'sub-grid-line')
+          .attr('x1', x)
+          .attr('y1', -gridExtent)
+          .attr('x2', x)
+          .attr('y2', gridExtent)
+          .attr('stroke', subGridColor)
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.6);
+      }
+    }
+
+    for (let y = -gridExtent; y <= gridExtent; y += subGridSize) {
+      if (y % mainGridSize !== 0) {
+        gridGroup
+          .append('line')
+          .attr('class', 'sub-grid-line')
+          .attr('x1', -gridExtent)
+          .attr('y1', y)
+          .attr('x2', gridExtent)
+          .attr('y2', y)
+          .attr('stroke', subGridColor)
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.6);
+      }
+    }
+
+    // Draw main grid
+    for (let x = -gridExtent; x <= gridExtent; x += mainGridSize) {
+      gridGroup
+        .append('line')
+        .attr('class', 'main-grid-line')
+        .attr('x1', x)
+        .attr('y1', -gridExtent)
+        .attr('x2', x)
+        .attr('y2', gridExtent)
+        .attr('stroke', mainGridColor)
+        .attr('stroke-width', 1)
+        .attr('opacity', 0.8);
+    }
+
+    for (let y = -gridExtent; y <= gridExtent; y += mainGridSize) {
+      gridGroup
+        .append('line')
+        .attr('class', 'main-grid-line')
+        .attr('x1', -gridExtent)
+        .attr('y1', y)
+        .attr('x2', gridExtent)
+        .attr('y2', y)
+        .attr('stroke', mainGridColor)
+        .attr('stroke-width', 1)
+        .attr('opacity', 0.8);
+    }
+  }, [settings.visual.showGrid]);
+
+  // Render grid when visibility changes
+  useEffect(() => {
+    renderGrid();
+  }, [renderGrid]);
 
   // Update highlighting based on hover
   useEffect(() => {
@@ -315,6 +1475,7 @@ export const ForceGraph2D: React.FC<
 
     const svg = d3.select(svgRef.current);
 
+    // Node highlighting
     svg.selectAll<SVGCircleElement, D3Node>('circle').attr('opacity', (d) => {
       if (!d || !hoveredNode) return 1;
       if (d.id === hoveredNode) return 1;
@@ -322,15 +1483,41 @@ export const ForceGraph2D: React.FC<
       return 0.2;
     });
 
-    svg.selectAll<SVGLineElement, D3Link>('line').attr('stroke-opacity', (link) => {
-      if (!hoveredNode) return 0.6;
-      const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
-      const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
-      if (!sourceId || !targetId) return 0.6; // Handle undefined during transition
-      if (sourceId === hoveredNode || targetId === hoveredNode) return 1;
-      return 0.1;
+    // Edge highlighting (paths not lines)
+    svg.selectAll<SVGPathElement, D3Link>('path').each(function(link) {
+      const path = d3.select(this);
+      const linkKey = path.attr('data-link-key');
+
+      // Guard against undefined link data during graph updates
+      if (!link) {
+        return;
+      }
+
+      if (hoveredEdge) {
+        // Edge hover mode
+        if (linkKey === hoveredEdge) {
+          path.attr('stroke-opacity', 1).attr('stroke-width', ((link.value || 1) * settings.visual.linkWidth) * 2);
+        } else {
+          path.attr('stroke-opacity', 0.2).attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
+        }
+      } else if (hoveredNode) {
+        // Node hover mode
+        const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
+        if (!sourceId || !targetId) {
+          path.attr('stroke-opacity', 0.6);
+        } else if (sourceId === hoveredNode || targetId === hoveredNode) {
+          path.attr('stroke-opacity', 1);
+        } else {
+          path.attr('stroke-opacity', 0.1);
+        }
+        path.attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
+      } else {
+        // No hover
+        path.attr('stroke-opacity', 0.6).attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
+      }
     });
-  }, [hoveredNode, neighbors]);
+  }, [hoveredNode, hoveredEdge, neighbors, settings.visual.linkWidth]);
 
   // "You Are Here" highlighting for origin node - async update after DOM ready
   useEffect(() => {
@@ -346,12 +1533,16 @@ export const ForceGraph2D: React.FC<
 
     return () => {
       cancelAnimationFrame(rafId);
-      // Cleanup: remove gold ring
+      // Cleanup: remove gold ring (restore brighter stroke)
       if (svgRef.current) {
         d3.select(svgRef.current)
           .selectAll('circle.origin-node')
           .interrupt()
-          .attr('stroke', '#fff')
+          .attr('stroke', function() {
+            const d = d3.select(this).datum() as D3Node;
+            const color = nodeColors.get(d.id) || d.color;
+            return d3.color(color)?.brighter(0.4).toString() || color;
+          })
           .attr('stroke-width', 2)
           .attr('stroke-opacity', 1)
           .classed('origin-node', false);
@@ -487,9 +1678,111 @@ export const ForceGraph2D: React.FC<
     }
   }, [mergeGraphData, setGraphData, setFocusedNodeId]);
 
+  // Pin/Unpin node functionality
+  const isPinned = useCallback((nodeId: string): boolean => {
+    const node = data.nodes.find(n => n.id === nodeId);
+    return node?.fx !== undefined && node?.fx !== null;
+  }, [data.nodes]);
+
+  const togglePinNode = useCallback((nodeId: string) => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+    const nodeSelection = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
+
+    if (!nodeSelection.empty()) {
+      const nodeData = nodeSelection.datum() as D3Node;
+
+      if (nodeData.fx !== undefined && nodeData.fx !== null) {
+        // Unpin: remove fixed position
+        nodeData.fx = null;
+        nodeData.fy = null;
+      } else {
+        // Pin: set fixed position to current position
+        nodeData.fx = nodeData.x;
+        nodeData.fy = nodeData.y;
+      }
+
+      // Restart simulation briefly to apply changes
+      if (settings.physics.enabled && simulationRef.current) {
+        simulationRef.current.alpha(0.1).restart();
+      }
+    }
+  }, [data.nodes, settings.physics.enabled]);
+
+  const unpinAllNodes = useCallback(() => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Unpin all nodes
+    svg.selectAll<SVGCircleElement, D3Node>('circle[data-node-id]').each(function() {
+      const nodeData = d3.select(this).datum() as D3Node;
+      nodeData.fx = null;
+      nodeData.fy = null;
+    });
+
+    // Restart simulation to let forces take over
+    if (settings.physics.enabled && simulationRef.current) {
+      simulationRef.current.alpha(0.3).restart();
+    }
+  }, [settings.physics.enabled]);
+
   // Context menu items
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? [
+        // Contextual mark/unmark location
+        originNodeId === contextMenu.nodeId
+          ? {
+              label: 'Unmark Location',
+              icon: MapPinOff,
+              onClick: () => {
+                setOriginNodeId(null);
+                setContextMenu(null);
+              },
+            }
+          : {
+              label: 'Mark Location',
+              icon: MapPin,
+              onClick: () => {
+                setOriginNodeId(contextMenu.nodeId);
+                applyGoldRing(contextMenu.nodeId);
+                setContextMenu(null);
+              },
+            },
+        // Node submenu with pin operations
+        {
+          label: 'Node',
+          icon: Circle,
+          submenu: [
+            // Contextual pin/unpin node
+            isPinned(contextMenu.nodeId)
+              ? {
+                  label: 'Unpin Node',
+                  icon: PinOff,
+                  onClick: () => {
+                    togglePinNode(contextMenu.nodeId);
+                    setContextMenu(null);
+                  },
+                }
+              : {
+                  label: 'Pin Node',
+                  icon: Pin,
+                  onClick: () => {
+                    togglePinNode(contextMenu.nodeId);
+                    setContextMenu(null);
+                  },
+                },
+            {
+              label: 'Unpin All',
+              icon: PinOff,
+              onClick: () => {
+                unpinAllNodes();
+                setContextMenu(null);
+              },
+            },
+          ],
+        },
         {
           label: `Follow "${contextMenu.nodeLabel}"`,
           icon: ArrowRight,
@@ -509,6 +1802,16 @@ export const ForceGraph2D: React.FC<
       ]
     : [];
 
+  // Dismiss edge info box
+  const handleDismissEdgeInfo = useCallback((linkKey: string) => {
+    setActiveEdgeInfos(prev => prev.filter(info => info.linkKey !== linkKey));
+  }, []);
+
+  // Dismiss node info box
+  const handleDismissNodeInfo = useCallback((nodeId: string) => {
+    setActiveNodeInfos(prev => prev.filter(info => info.nodeId !== nodeId));
+  }, []);
+
   return (
     <div className={`relative w-full h-full ${className || ''}`}>
       <svg
@@ -516,7 +1819,61 @@ export const ForceGraph2D: React.FC<
         width={dimensions.width}
         height={dimensions.height}
         className="bg-white dark:bg-gray-900"
+        onClick={() => {
+          // Close context menus when clicking on canvas background
+          setContextMenu(null);
+          setCanvasContextMenu(null);
+        }}
+        onMouseDown={(e) => {
+          // Track right-click start position for drag detection
+          if (e.button === 2) { // Right mouse button
+            rightClickStartRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              time: Date.now(),
+            };
+          }
+        }}
+        onMouseMove={(e) => {
+          // Check if right-click is being dragged
+          if (rightClickStartRef.current && e.buttons === 2) { // Right button still pressed
+            const dx = e.clientX - rightClickStartRef.current.x;
+            const dy = e.clientY - rightClickStartRef.current.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // If moved more than 10 pixels, treat as pan (not context menu)
+            if (distance > 10) {
+              setIsRightClickDragging(true);
+            }
+          }
+        }}
+        onMouseUp={(e) => {
+          // Reset right-click drag tracking
+          if (e.button === 2) { // Right mouse button released
+            rightClickStartRef.current = null;
+            setIsRightClickDragging(false);
+          }
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault(); // Always prevent default browser context menu
+
+          // Only show canvas context menu if NOT dragging
+          // (nodes/edges have their own context menu handlers that stopPropagation)
+          if (!isRightClickDragging) {
+            setContextMenu(null); // Close node context menu if open
+            setCanvasContextMenu({
+              x: e.clientX,
+              y: e.clientY,
+            });
+          } else {
+            // Was dragging, so don't show context menu
+            setIsRightClickDragging(false);
+          }
+        }}
       />
+
+      {/* Legend Panel */}
+      <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
 
       {/* Node count indicator */}
       <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg px-3 py-2 text-sm">
@@ -525,7 +1882,12 @@ export const ForceGraph2D: React.FC<
         </div>
       </div>
 
-      {/* Context Menu */}
+      {/* Settings Panel */}
+      {onSettingsChange && (
+        <CanvasSettingsPanel settings={settings} onChange={onSettingsChange} />
+      )}
+
+      {/* Node Context Menu */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
@@ -534,6 +1896,64 @@ export const ForceGraph2D: React.FC<
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* Canvas Context Menu */}
+      {canvasContextMenu && (
+        <ContextMenu
+          x={canvasContextMenu.x}
+          y={canvasContextMenu.y}
+          items={[
+            settings.visual.showGrid
+              ? {
+                  label: 'Hide Grid',
+                  icon: EyeOff,
+                  onClick: () => {
+                    onSettingsChange?.({
+                      ...settings,
+                      visual: { ...settings.visual, showGrid: false },
+                    });
+                    setCanvasContextMenu(null);
+                  },
+                }
+              : {
+                  label: 'Show Grid',
+                  icon: Grid3x3,
+                  onClick: () => {
+                    onSettingsChange?.({
+                      ...settings,
+                      visual: { ...settings.visual, showGrid: true },
+                    });
+                    setCanvasContextMenu(null);
+                  },
+                },
+          ]}
+          onClose={() => setCanvasContextMenu(null)}
+        />
+      )}
+
+      {/* Edge Info Boxes */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
+        {activeEdgeInfos.map(info => (
+          <EdgeInfoBox
+            key={info.linkKey}
+            info={info}
+            zoomTransform={zoomTransform}
+            onDismiss={() => handleDismissEdgeInfo(info.linkKey)}
+          />
+        ))}
+      </div>
+
+      {/* Node Info Boxes */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
+        {activeNodeInfos.map(info => (
+          <NodeInfoBox
+            key={info.nodeId}
+            info={info}
+            zoomTransform={zoomTransform}
+            onDismiss={() => handleDismissNodeInfo(info.nodeId)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
