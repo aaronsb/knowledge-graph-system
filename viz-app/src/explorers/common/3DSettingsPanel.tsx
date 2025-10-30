@@ -46,8 +46,8 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
 
   return (
     <div
-      className="absolute left-4 bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl z-10 flex flex-col"
-      style={{ width: '280px', maxHeight: '95vh', top: '80px' }} // Below stats panel, left side
+      className="absolute right-4 bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl z-10 flex flex-col"
+      style={{ width: '280px', maxHeight: '95vh', top: '400px' }} // Below CanvasSettingsPanel, right side
     >
       {/* Content */}
       <div className="overflow-y-auto overflow-x-hidden p-3 space-y-3">

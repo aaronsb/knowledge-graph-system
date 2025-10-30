@@ -471,20 +471,33 @@ export const ForceGraph3D: React.FC<
     if (!fgRef.current) return;
 
     const controls = fgRef.current.controls();
-    if (!controls) return;
+    const camera = fgRef.current.camera();
+    if (!controls || !camera) return;
 
-    // Lock roll axis by constraining camera up vector to always point up (Y-axis)
+    // Lock roll axis by keeping camera upright relative to ground plane
     // This prevents disorienting camera tilt when rotating around the graph
     if (settings.camera?.lockRoll) {
       const lockCameraRoll = () => {
-        const camera = fgRef.current?.camera();
-        if (!camera) return;
+        // Get camera's current direction
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
 
-        // Force camera's up vector to always be (0, 1, 0) - world up
-        // This keeps the camera upright relative to the ground plane
-        camera.up.set(0, 1, 0);
-        camera.updateProjectionMatrix();
+        // Project camera direction onto horizontal plane (XZ plane)
+        const horizontalDir = new THREE.Vector3(direction.x, 0, direction.z).normalize();
+
+        // Calculate right vector (perpendicular to direction in XZ plane)
+        const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), horizontalDir).normalize();
+
+        // Force up vector to be perpendicular to both direction and right
+        // This keeps the camera upright (no roll)
+        const correctedUp = new THREE.Vector3().crossVectors(right, direction).normalize();
+
+        // Apply corrected up vector
+        camera.up.copy(correctedUp);
       };
+
+      // Initial lock
+      lockCameraRoll();
 
       // Apply roll lock on every control change
       controls.addEventListener('change', lockCameraRoll);
