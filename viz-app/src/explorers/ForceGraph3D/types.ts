@@ -74,7 +74,7 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
     nodeSize: 0.40,      // Smaller default due to volume scaling (radius³)
     linkWidth: 1.0,
     nodeLabelSize: 12,
-    edgeLabelSize: 9,
+    edgeLabelSize: 16,   // Larger text for better readability in 3D space
   },
   interaction: {
     enableDrag: true,
