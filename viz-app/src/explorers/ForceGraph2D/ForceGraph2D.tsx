@@ -611,7 +611,7 @@ export const ForceGraph2D: React.FC<
       .data(data.links)
       .join('text')
       .text((d) => d.type)
-      .attr('font-size', 9)
+      .attr('font-size', settings.visual?.edgeLabelSize ?? 9)
       .attr('font-weight', 400)
       .attr('fill', (d) => {
         // Use edge color +40% brightness
@@ -752,7 +752,7 @@ export const ForceGraph2D: React.FC<
         .data(data.nodes)
         .join('text')
         .text((d) => d.label)
-        .attr('font-size', 11)
+        .attr('font-size', settings.visual?.nodeLabelSize ?? 12)
         .attr('font-weight', 500)
         .attr('fill', '#fff')
         .attr('stroke', '#000')

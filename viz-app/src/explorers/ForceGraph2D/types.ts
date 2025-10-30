@@ -28,6 +28,8 @@ export interface ForceGraph2DSettings {
     showShadows: boolean; // 3D-style shadows and highlights
     nodeSize: number; // Base node size multiplier (0.5-3)
     linkWidth: number; // Base link width (0.5-5)
+    nodeLabelSize: number; // Node label font size (6-20px)
+    edgeLabelSize: number; // Edge label font size (6-20px)
   };
 
   // Interaction
@@ -71,6 +73,8 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     showShadows: false, // Disabled by default for performance
     nodeSize: 1,
     linkWidth: 1,
+    nodeLabelSize: 12,
+    edgeLabelSize: 9,
   },
   interaction: {
     enableDrag: true,
@@ -97,5 +101,7 @@ export const SLIDER_RANGES = {
   visual: {
     nodeSize: { min: 0.5, max: 3, step: 0.1 },
     linkWidth: { min: 0.5, max: 5, step: 0.1 },
+    nodeLabelSize: { min: 6, max: 20, step: 1 },
+    edgeLabelSize: { min: 6, max: 20, step: 1 },
   },
 };

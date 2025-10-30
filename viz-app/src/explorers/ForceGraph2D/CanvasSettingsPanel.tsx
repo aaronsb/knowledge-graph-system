@@ -248,6 +248,36 @@ export const CanvasSettingsPanel: React.FC<CanvasSettingsPanelProps> = ({
                   className="w-full"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs text-gray-300 mb-1">
+                  Node Label Size: {settings.visual.nodeLabelSize}px
+                </label>
+                <input
+                  type="range"
+                  min={SLIDER_RANGES.visual.nodeLabelSize.min}
+                  max={SLIDER_RANGES.visual.nodeLabelSize.max}
+                  step={SLIDER_RANGES.visual.nodeLabelSize.step}
+                  value={settings.visual.nodeLabelSize}
+                  onChange={(e) => updateVisual('nodeLabelSize', parseInt(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-300 mb-1">
+                  Edge Label Size: {settings.visual.edgeLabelSize}px
+                </label>
+                <input
+                  type="range"
+                  min={SLIDER_RANGES.visual.edgeLabelSize.min}
+                  max={SLIDER_RANGES.visual.edgeLabelSize.max}
+                  step={SLIDER_RANGES.visual.edgeLabelSize.step}
+                  value={settings.visual.edgeLabelSize}
+                  onChange={(e) => updateVisual('edgeLabelSize', parseInt(e.target.value))}
+                  className="w-full"
+                />
+              </div>
             </div>
           )}
         </div>

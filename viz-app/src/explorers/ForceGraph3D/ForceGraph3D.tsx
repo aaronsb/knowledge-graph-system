@@ -70,22 +70,24 @@ export const ForceGraph3D: React.FC<
   const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
   // Helper function to create or retrieve edge label texture
-  const getEdgeLabelTexture = useCallback((text: string, color: string): THREE.CanvasTexture => {
-    // Create cache key from text and color
-    const cacheKey = `${text}:${color}`;
+  // NOTE: Font size is NOT a react-force-graph-3d prop because we manually render text
+  // to canvas textures and apply them to 3D plane geometry. This gives us full control
+  // over appearance (font size, stroke, colors) and ensures proper Z-buffering.
+  const getEdgeLabelTexture = useCallback((text: string, color: string, fontSize: number): THREE.CanvasTexture => {
+    // Create cache key from text, color, and font size
+    const cacheKey = `${text}:${color}:${fontSize}`;
 
     // Return cached texture if available
     if (edgeLabelTextureCache.current.has(cacheKey)) {
       return edgeLabelTextureCache.current.get(cacheKey)!;
     }
 
-    // Create new texture
+    // Create new texture by rendering text to a canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
 
-    // Render at 4x resolution for crisp text
+    // Render at 4x resolution for crisp text when scaled to 3D geometry
     const scale = 4;
-    const fontSize = 9;  // Base font size (match 2D graph)
     const padding = 4;   // Base padding
 
     // Measure text at base size first
@@ -498,6 +500,9 @@ export const ForceGraph3D: React.FC<
         backgroundColor="#1a1a2e"
 
         // Node appearance
+        // NOTE: nodeLabel shows HTML tooltips, not 3D geometry, so nodeLabelSize setting
+        // doesn't apply here (unlike edge labels which are custom 3D geometry with textures).
+        // To make nodeLabelSize work, we'd need to implement custom 3D text geometry for nodes.
         nodeLabel={(node: any) => node.label}
         nodeColor={(node: any) => nodeColors.get(node.id) || '#888'}
         nodeVal={(node: any) => {
@@ -603,11 +608,13 @@ export const ForceGraph3D: React.FC<
           }
 
           // Add edge label as 3D geometry (participates in Z-buffering)
-          const labelTexture = getEdgeLabelTexture(link.type, edgeColor);
+          // Font size from settings controls canvas text rendering, not a library prop.
+          // We render text to canvas → convert to texture → apply to PlaneGeometry.
+          const labelTexture = getEdgeLabelTexture(link.type, edgeColor, settings.visual?.edgeLabelSize ?? 9);
 
-          // Create rectangular plane geometry
+          // Create rectangular plane geometry sized to match texture aspect ratio
           const aspectRatio = labelTexture.image.width / labelTexture.image.height;
-          const labelHeight = 10;
+          const labelHeight = 10;  // Fixed 3D world-space height
           const labelWidth = aspectRatio * labelHeight;
           const planeGeometry = new THREE.PlaneGeometry(labelWidth, labelHeight);
 
@@ -616,7 +623,7 @@ export const ForceGraph3D: React.FC<
             transparent: true,
             opacity: 1,
             side: THREE.DoubleSide,  // Visible from both sides
-            depthTest: true,  // Participate in Z-buffering
+            depthTest: true,  // Participate in Z-buffering (occluded by nodes)
             depthWrite: false,  // Don't write to depth buffer (transparency)
           });
 
@@ -775,7 +782,7 @@ export const ForceGraph3D: React.FC<
             const targetId = typeof link.target === 'string' ? link.target : link.target.id;
             const linkKey = `${sourceId}->${targetId}-${link.type}`;
             const currentEdgeColor = linkColors.get(linkKey) || '#999';
-            const newTexture = getEdgeLabelTexture(link.type, currentEdgeColor);
+            const newTexture = getEdgeLabelTexture(link.type, currentEdgeColor, settings.visual?.edgeLabelSize ?? 9);
 
             if (labelMesh.material.map !== newTexture) {
               labelMesh.material.map = newTexture;
