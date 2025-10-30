@@ -478,6 +478,36 @@ export const ForceGraph3D: React.FC<
     camera.updateProjectionMatrix();
   }, [settings.camera?.fov]);
 
+  // Clamp camera to prevent going below floor
+  useEffect(() => {
+    if (!fgRef.current || !settings.camera?.clampToFloor) return;
+
+    const controls = fgRef.current.controls();
+    const camera = fgRef.current.camera();
+    if (!controls || !camera) return;
+
+    // Grid is at y=200 (positive Y is down in our coordinate system)
+    // Prevent camera from going below the floor
+    const floorY = 200;
+    const minDistanceAboveFloor = 10; // Keep camera at least 10 units above floor
+
+    const clampCameraPosition = () => {
+      if (!camera) return;
+
+      // If camera goes below floor (y > floorY), clamp it
+      if (camera.position.y > floorY - minDistanceAboveFloor) {
+        camera.position.y = floorY - minDistanceAboveFloor;
+      }
+    };
+
+    // Clamp on every camera movement
+    controls.addEventListener('change', clampCameraPosition);
+
+    return () => {
+      controls.removeEventListener('change', clampCameraPosition);
+    };
+  }, [settings.camera?.clampToFloor]);
+
   // Auto-level camera when user releases mouse
   useEffect(() => {
     if (!fgRef.current || !settings.camera?.autoLevel) return;

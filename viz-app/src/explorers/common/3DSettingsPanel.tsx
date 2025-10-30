@@ -11,6 +11,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 interface Camera3DSettings {
   fov: number;         // Field of view in degrees (30-120)
   autoLevel: boolean;  // Smoothly return to level ground when releasing mouse
+  clampToFloor: boolean; // Prevent camera from going below grid floor
 }
 
 interface Settings3DPanelProps {
@@ -28,6 +29,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
   const cameraSettings = camera || {
     fov: 75,
     autoLevel: true,
+    clampToFloor: true,
   };
 
   const toggleSection = (section: string) => {
@@ -100,9 +102,19 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
                 <span className="text-gray-200">Auto-Level on Release</span>
               </label>
 
+              <label className="flex items-center space-x-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={cameraSettings.clampToFloor}
+                  onChange={(e) => updateCamera('clampToFloor', e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-gray-200">Keep Camera Above Floor</span>
+              </label>
+
               <div className="mt-3 p-2 bg-gray-700/50 rounded text-xs text-gray-300">
                 <p className="font-medium mb-1">Tip:</p>
-                <p>Auto-Level smoothly returns the camera to level ground when you release the mouse, preventing disorientation while allowing free exploration.</p>
+                <p>Auto-Level smoothly returns the camera to level ground when you release the mouse. Keep Above Floor prevents disorienting upside-down views.</p>
               </div>
             </div>
           )}
