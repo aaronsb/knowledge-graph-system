@@ -660,31 +660,31 @@ export const ForceGraph3D: React.FC<
             const midPoint = curve.getPoint(0.5);
             labelMesh.position.copy(midPoint);
 
-            // Get tangent direction at midpoint
+            // Get tangent direction at midpoint - this is the edge arrow direction
             const tangent = curve.getTangent(0.5);
 
-            // Orient plane perpendicular to tangent (text faces "outward" from curve)
+            // Orient text to read along the edge direction (following the arrow)
             // Create a coordinate system where:
-            // - Z-axis points along the curve tangent
-            // - Y-axis points "up" (world up, or perpendicular to tangent)
-            // - X-axis completes the right-handed system
+            // - X-axis points along the curve tangent (text reads in arrow direction)
+            // - Y-axis points "up" (perpendicular to tangent)
+            // - Z-axis is the plane normal (perpendicular to label, facing outward)
 
-            const up = new THREE.Vector3(0, 0, 1);  // World up
-            const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+            const worldUp = new THREE.Vector3(0, 0, 1);  // World up
+            const normal = new THREE.Vector3().crossVectors(tangent, worldUp).normalize();
 
-            // If tangent is parallel to up, use different up vector
-            if (right.length() < 0.001) {
-              up.set(0, 1, 0);
-              right.crossVectors(tangent, up).normalize();
+            // If tangent is parallel to world up, use different reference
+            if (normal.length() < 0.001) {
+              worldUp.set(0, 1, 0);
+              normal.crossVectors(tangent, worldUp).normalize();
             }
 
-            const actualUp = new THREE.Vector3().crossVectors(right, tangent).normalize();
+            const up = new THREE.Vector3().crossVectors(normal, tangent).normalize();
 
-            // Create rotation matrix with plane normal pointing perpendicular to curve
+            // Create rotation matrix: X=tangent (reading direction), Y=up, Z=normal
             const matrix = new THREE.Matrix4();
-            matrix.makeBasis(right, actualUp, tangent);
+            matrix.makeBasis(tangent, up, normal);
 
-            // Apply rotation so plane faces perpendicular to curve direction
+            // Apply rotation - text reads along edge direction
             labelMesh.setRotationFromMatrix(matrix);
 
             // Update texture if edge color mode changed
