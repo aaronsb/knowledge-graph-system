@@ -508,13 +508,50 @@ export const ForceGraph3D: React.FC<
     };
   }, [settings.camera?.clampToFloor]);
 
+  // Helper function to orient edge labels to face camera
+  const orientLabelsToCamera = useCallback((scene: THREE.Scene, camera: THREE.Camera) => {
+    // Traverse scene to find all edge label meshes
+    scene.traverse((obj: any) => {
+      if (obj.name === 'edge-label-mesh' && obj instanceof THREE.Mesh) {
+        // Get label's world position
+        const labelPos = new THREE.Vector3();
+        obj.getWorldPosition(labelPos);
+
+        // Calculate direction from label to camera
+        const cameraPos = camera.position.clone();
+        const toCamera = new THREE.Vector3().subVectors(cameraPos, labelPos).normalize();
+
+        // Get label's current normal (Z-axis in local space -> world space)
+        const localNormal = new THREE.Vector3(0, 0, 1);
+        const worldNormal = localNormal.clone().applyQuaternion(obj.quaternion).normalize();
+
+        // Check if label is facing away from camera
+        const dotProduct = worldNormal.dot(toCamera);
+
+        // If normal points away from camera (dot < 0), we should flip the label 180°
+        // We rotate around the label's X-axis (tangent/edge direction)
+        if (dotProduct < 0) {
+          // Rotate 180° around X-axis (edge tangent)
+          const flipRotation = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(1, 0, 0), // Local X-axis
+            Math.PI // 180 degrees
+          );
+
+          // Apply rotation in local space
+          obj.quaternion.multiply(flipRotation);
+        }
+      }
+    });
+  }, []);
+
   // Auto-level camera when user releases mouse
   useEffect(() => {
     if (!fgRef.current || !settings.camera?.autoLevel) return;
 
     const controls = fgRef.current.controls();
     const camera = fgRef.current.camera();
-    if (!controls || !camera) return;
+    const scene = fgRef.current.scene();
+    if (!controls || !camera || !scene) return;
 
     let animationFrame: number | null = null;
     let isLeveling = false;
@@ -546,6 +583,11 @@ export const ForceGraph3D: React.FC<
       } else {
         isLeveling = false;
         animationFrame = null;
+
+        // After auto-level completes, orient labels to camera if enabled
+        if (settings.camera?.orientLabels && scene) {
+          orientLabelsToCamera(scene, camera);
+        }
       }
     };
 
@@ -570,7 +612,7 @@ export const ForceGraph3D: React.FC<
         cancelAnimationFrame(animationFrame);
       }
     };
-  }, [settings.camera?.autoLevel]);
+  }, [settings.camera?.autoLevel, settings.camera?.orientLabels, orientLabelsToCamera]);
 
   // Dismiss node info box
   const handleDismissNodeInfo = useCallback((nodeId: string) => {

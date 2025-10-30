@@ -46,6 +46,7 @@ export interface ForceGraph3DSettings {
     fov: number;         // Field of view in degrees (30-120)
     autoLevel: boolean;  // Smoothly return to level ground when releasing mouse
     clampToFloor: boolean; // Prevent camera from going below grid floor
+    orientLabels: boolean; // Rotate labels around edge axis to face camera
   };
 
   // Filters
@@ -91,9 +92,10 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
     showOriginNode: true,
   },
   camera: {
-    fov: 75,           // Default field of view (standard perspective)
-    autoLevel: true,   // Auto-level by default for less disorienting camera
+    fov: 75,            // Default field of view (standard perspective)
+    autoLevel: true,    // Auto-level by default for less disorienting camera
     clampToFloor: true, // Prevent going below floor by default
+    orientLabels: true, // Orient labels to camera by default for readability
   },
   filters: {
     relationshipTypes: [],
