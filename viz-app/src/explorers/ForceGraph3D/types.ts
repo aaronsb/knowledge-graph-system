@@ -117,6 +117,6 @@ export const SLIDER_RANGES = {
     nodeSize: { min: 0.1, max: 1.5, step: 0.05 },  // Tighter range for 3D volume scaling
     linkWidth: { min: 0.5, max: 5, step: 0.1 },
     nodeLabelSize: { min: 6, max: 20, step: 1 },
-    edgeLabelSize: { min: 6, max: 20, step: 1 },
+    edgeLabelSize: { min: 10, max: 40, step: 1 },
   },
 };

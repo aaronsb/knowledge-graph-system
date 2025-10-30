@@ -74,7 +74,7 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     nodeSize: 1,
     linkWidth: 1,
     nodeLabelSize: 12,
-    edgeLabelSize: 9,
+    edgeLabelSize: 10, // Minimum of new range (10-40px)
   },
   interaction: {
     enableDrag: true,
@@ -102,6 +102,6 @@ export const SLIDER_RANGES = {
     nodeSize: { min: 0.5, max: 3, step: 0.1 },
     linkWidth: { min: 0.5, max: 5, step: 0.1 },
     nodeLabelSize: { min: 6, max: 20, step: 1 },
-    edgeLabelSize: { min: 6, max: 20, step: 1 },
+    edgeLabelSize: { min: 10, max: 40, step: 1 },
   },
 };
