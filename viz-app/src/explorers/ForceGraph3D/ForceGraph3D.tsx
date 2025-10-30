@@ -102,7 +102,11 @@ export const ForceGraph3D: React.FC<
 
     // Brighten color by 40% (match 2D implementation)
     const threeColor = new THREE.Color(color);
-    const brightened = threeColor.clone().multiplyScalar(1.4).clampScalar(0, 1);
+    const brightened = threeColor.clone().multiplyScalar(1.4);
+    // Manually clamp RGB components to [0, 1]
+    brightened.r = Math.min(1, brightened.r);
+    brightened.g = Math.min(1, brightened.g);
+    brightened.b = Math.min(1, brightened.b);
 
     // Draw text with stroke outline (paint-order: stroke)
     ctx.strokeStyle = '#1a1a2e';  // Dark background color
