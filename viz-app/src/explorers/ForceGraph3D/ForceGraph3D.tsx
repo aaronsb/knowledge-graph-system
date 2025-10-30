@@ -543,22 +543,27 @@ export const ForceGraph3D: React.FC<
             group.add(sprite);
           }
 
-          // Add edge label sprite (reuses cached texture for memory efficiency)
+          // Add edge label as 3D geometry (participates in Z-buffering)
           const labelTexture = getEdgeLabelTexture(link.type, edgeColor);
 
-          const labelMaterial = new THREE.SpriteMaterial({
+          // Create rectangular plane geometry
+          const aspectRatio = labelTexture.image.width / labelTexture.image.height;
+          const labelHeight = 10;
+          const labelWidth = aspectRatio * labelHeight;
+          const planeGeometry = new THREE.PlaneGeometry(labelWidth, labelHeight);
+
+          const labelMaterial = new THREE.MeshBasicMaterial({
             map: labelTexture,
             transparent: true,
             opacity: 1,
-            depthTest: false,  // Always visible on top
+            side: THREE.DoubleSide,  // Visible from both sides
+            depthTest: true,  // Participate in Z-buffering
+            depthWrite: false,  // Don't write to depth buffer (transparency)
           });
 
-          const labelSprite = new THREE.Sprite(labelMaterial);
-          // Scale based on texture aspect ratio
-          const aspectRatio = labelTexture.image.width / labelTexture.image.height;
-          labelSprite.scale.set(aspectRatio * 10, 10, 1);  // 10 units height
-          labelSprite.name = 'edge-label-sprite';
-          group.add(labelSprite);
+          const labelMesh = new THREE.Mesh(planeGeometry, labelMaterial);
+          labelMesh.name = 'edge-label-mesh';
+          group.add(labelMesh);
 
           return group;
         }}
@@ -648,24 +653,39 @@ export const ForceGraph3D: React.FC<
             arrowSprite.rotation.z = angle;
           }
 
-          // Update edge label sprite position and orientation
-          const labelSprite = obj.getObjectByName('edge-label-sprite');
-          if (labelSprite) {
+          // Update edge label mesh position and orientation
+          const labelMesh = obj.getObjectByName('edge-label-mesh');
+          if (labelMesh) {
             // Get midpoint of curve (t=0.5)
             const midPoint = curve.getPoint(0.5);
-            labelSprite.position.copy(midPoint);
+            labelMesh.position.copy(midPoint);
 
-            // Get tangent direction at midpoint for proper orientation
+            // Get tangent direction at midpoint
             const tangent = curve.getTangent(0.5);
-            const tangentAngle = Math.atan2(tangent.y, tangent.x);
 
-            // Rotate sprite to align with curve direction
-            // Keep text readable - flip if upside down
-            let finalAngle = tangentAngle;
-            if (Math.abs(tangentAngle) > Math.PI / 2) {
-              finalAngle = tangentAngle + Math.PI;  // Flip 180° to keep readable
+            // Orient plane perpendicular to tangent (text faces "outward" from curve)
+            // Create a coordinate system where:
+            // - Z-axis points along the curve tangent
+            // - Y-axis points "up" (world up, or perpendicular to tangent)
+            // - X-axis completes the right-handed system
+
+            const up = new THREE.Vector3(0, 0, 1);  // World up
+            const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+
+            // If tangent is parallel to up, use different up vector
+            if (right.length() < 0.001) {
+              up.set(0, 1, 0);
+              right.crossVectors(tangent, up).normalize();
             }
-            labelSprite.material.rotation = finalAngle;
+
+            const actualUp = new THREE.Vector3().crossVectors(right, tangent).normalize();
+
+            // Create rotation matrix with plane normal pointing perpendicular to curve
+            const matrix = new THREE.Matrix4();
+            matrix.makeBasis(right, actualUp, tangent);
+
+            // Apply rotation so plane faces perpendicular to curve direction
+            labelMesh.setRotationFromMatrix(matrix);
 
             // Update texture if edge color mode changed
             const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
@@ -674,13 +694,17 @@ export const ForceGraph3D: React.FC<
             const currentEdgeColor = linkColors.get(linkKey) || '#999';
             const newTexture = getEdgeLabelTexture(link.type, currentEdgeColor);
 
-            if (labelSprite.material.map !== newTexture) {
-              labelSprite.material.map = newTexture;
-              labelSprite.material.needsUpdate = true;
+            if (labelMesh.material.map !== newTexture) {
+              labelMesh.material.map = newTexture;
+              labelMesh.material.needsUpdate = true;
 
-              // Update scale based on new texture aspect ratio
+              // Update geometry scale based on new texture aspect ratio
               const aspectRatio = newTexture.image.width / newTexture.image.height;
-              labelSprite.scale.set(aspectRatio * 10, 10, 1);
+              const labelHeight = 10;
+              const labelWidth = aspectRatio * labelHeight;
+
+              labelMesh.geometry.dispose();  // Clean up old geometry
+              labelMesh.geometry = new THREE.PlaneGeometry(labelWidth, labelHeight);
             }
           }
         }}
