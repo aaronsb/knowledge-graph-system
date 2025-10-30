@@ -373,7 +373,7 @@ export const ForceGraph3D: React.FC<
       0x222222   // Grid line color
     );
 
-    grid.position.y = -200;  // Position below graph
+    grid.position.y = 200;  // Position below graph (positive Y is down in our coordinate system)
     grid.name = 'ground-grid';
     scene.add(grid);
 
@@ -477,17 +477,18 @@ export const ForceGraph3D: React.FC<
     // Lock roll axis by keeping camera upright relative to ground plane
     // This prevents disorienting camera tilt when rotating around the graph
     if (settings.camera?.lockRoll) {
-      // Force camera up vector to always be world up (Y-axis)
+      // Force camera up vector to always be world up (negative Y-axis)
+      // In our coordinate system, positive Y points DOWN, so up is -Y
       // This prevents roll while still allowing pitch and yaw
-      camera.up.set(0, 1, 0);
+      camera.up.set(0, -1, 0);
 
       // Also ensure controls use the same up vector
       if (controls.object) {
-        controls.object.up.set(0, 1, 0);
+        controls.object.up.set(0, -1, 0);
       }
     } else {
       // Allow free rotation when roll lock is disabled
-      camera.up.set(0, 1, 0); // Still default to Y-up
+      camera.up.set(0, -1, 0); // Still default to -Y up (inverted coordinate system)
     }
   }, [settings.camera?.lockRoll]);
 
