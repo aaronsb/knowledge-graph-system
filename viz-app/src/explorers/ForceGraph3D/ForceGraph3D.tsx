@@ -8,6 +8,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import ForceGraph3DLib from 'react-force-graph-3d';
 import * as THREE from 'three';
+import SpriteText from 'three-spritetext';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
@@ -28,6 +29,11 @@ import {
   PanelStack,
   useGraphNavigation,
   buildContextMenuItems,
+  LABEL_FONTS,
+  LABEL_RENDERING,
+  LABEL_STYLE_3D,
+  ColorTransform,
+  createTextCanvas,
 } from '../common';
 import { SLIDER_RANGES } from './types';
 
@@ -41,9 +47,6 @@ export const ForceGraph3D: React.FC<
 
   // Texture cache for edge labels - reuse textures across sprites for memory efficiency
   const edgeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
-
-  // Texture cache for node labels - reuse textures for memory efficiency
-  const nodeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
 
   // Store camera-facing rotation angles for each edge (rotation around edge axis)
   // Key: linkKey (sourceId->targetId-type), Value: angle in radians
@@ -104,17 +107,18 @@ export const ForceGraph3D: React.FC<
       return edgeLabelTextureCache.current.get(cacheKey)!;
     }
 
+    // Get unified label colors
+    const colors = ColorTransform.getLabelColors(color, 'edge');
+    const scale = LABEL_RENDERING.canvasScale;
+    const padding = LABEL_RENDERING.padding;
+
     // Create new texture by rendering text to a canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
 
-    // Render at 4x resolution for crisp text when scaled to 3D geometry
-    const scale = 4;
-    const padding = 8;   // Increased padding to prevent edge clipping
-
     // Measure text at ACTUAL fontSize to determine canvas dimensions (not max size)
     // This ensures texture tightly fits the rendered text with no wasted space
-    ctx.font = `400 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.font = `${LABEL_STYLE_3D.edge.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
     const metrics = ctx.measureText(text);
     const textWidth = metrics.width;
     const textHeight = fontSize * scale;  // Approximate height from font size
@@ -124,25 +128,14 @@ export const ForceGraph3D: React.FC<
     canvas.height = Math.ceil(textHeight + padding * 2 * scale);
 
     // Re-set font after canvas resize (resize clears state)
-    ctx.font = `400 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';  // Center-align vertically for consistent positioning
+    ctx.font = `${LABEL_STYLE_3D.edge.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
+    ctx.textAlign = LABEL_RENDERING.textAlign;
+    ctx.textBaseline = LABEL_RENDERING.textBaseline;
 
-    // Brighten color by 40% for fill (match 2D implementation)
-    const threeColor = new THREE.Color(color);
-    const brightened = threeColor.clone().multiplyScalar(1.4);
-    // Manually clamp RGB components to [0, 1]
-    brightened.r = Math.min(1, brightened.r);
-    brightened.g = Math.min(1, brightened.g);
-    brightened.b = Math.min(1, brightened.b);
-
-    // Darken color by 60% for stroke (darker shade of same color)
-    const darkened = threeColor.clone().multiplyScalar(0.4);
-
-    // Draw text with stroke outline: horizontally and vertically centered
-    ctx.strokeStyle = `rgb(${Math.floor(darkened.r * 255)}, ${Math.floor(darkened.g * 255)}, ${Math.floor(darkened.b * 255)})`;
-    ctx.lineWidth = 1 * scale;  // Scale stroke width
-    ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
+    // Apply unified color transformation
+    ctx.fillStyle = colors.fill;
+    ctx.strokeStyle = colors.stroke;
+    ctx.lineWidth = LABEL_STYLE_3D.edge.strokeWidth * scale;
 
     // Position text: centered in canvas for maximum geometry utilization
     const x = canvas.width / 2;
@@ -158,61 +151,6 @@ export const ForceGraph3D: React.FC<
     // Cache it
     edgeLabelTextureCache.current.set(cacheKey, texture);
 
-    return texture;
-  }, []);
-
-  // Get or create node label texture (similar to edge labels but simpler - no stroke needed)
-  const getNodeLabelTexture = useCallback((text: string, color: string, fontSize: number): THREE.CanvasTexture => {
-    const cacheKey = `${text}:${color}:${fontSize}`;
-
-    if (nodeLabelTextureCache.current.has(cacheKey)) {
-      return nodeLabelTextureCache.current.get(cacheKey)!;
-    }
-
-    // Create texture by rendering text to canvas
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-
-    const scale = 4;  // 4x resolution for crisp text
-    const padding = 8;
-
-    // Measure text at actual fontSize
-    ctx.font = `600 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    const metrics = ctx.measureText(text);
-    const textWidth = metrics.width;
-    const textHeight = fontSize * scale;
-
-    // Set canvas size based on actual text dimensions
-    canvas.width = Math.ceil(textWidth + padding * 2 * scale);
-    canvas.height = Math.ceil(textHeight + padding * 2 * scale);
-
-    // Re-set font after canvas resize
-    ctx.font = `600 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Brighten color for better visibility
-    const threeColor = new THREE.Color(color);
-    const brightened = threeColor.clone().multiplyScalar(1.6);
-    brightened.r = Math.min(1, brightened.r);
-    brightened.g = Math.min(1, brightened.g);
-    brightened.b = Math.min(1, brightened.b);
-
-    // Draw text with dark stroke for contrast
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.lineWidth = 3 * scale;
-    ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
-
-    const x = canvas.width / 2;
-    const y = canvas.height / 2;
-
-    ctx.strokeText(text, x, y);
-    ctx.fillText(text, x, y);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-
-    nodeLabelTextureCache.current.set(cacheKey, texture);
     return texture;
   }, []);
 
@@ -600,6 +538,7 @@ export const ForceGraph3D: React.FC<
     camera.updateProjectionMatrix();
   }, [settings.camera?.fov]);
 
+
   // Clamp camera to prevent going below floor
   useEffect(() => {
     if (!fgRef.current || !settings.camera?.clampToFloor) return;
@@ -696,12 +635,15 @@ export const ForceGraph3D: React.FC<
     return targets;
   }, [data.links, data.nodes]);
 
+
   // Clear camera angles when orient labels is disabled
   useEffect(() => {
     if (!settings.camera?.orientLabels) {
       labelCameraAngles.current.clear();
     }
   }, [settings.camera?.orientLabels]);
+
+
 
   // Auto-level camera and orient labels when user releases mouse
   useEffect(() => {
@@ -720,7 +662,7 @@ export const ForceGraph3D: React.FC<
 
     // Store animation state
     let cameraStartUp: THREE.Vector3 | null = null;
-    let labelTargetAngles = new Map<string, number>(); // Target rotation angles by linkKey
+    let labelTargetAngles = new Map<string, number>(); // Target rotation angles by linkKey (edges)
 
     // In our coordinate system, positive Y points DOWN, so up is -Y
     const targetUp = new THREE.Vector3(0, -1, 0);
@@ -743,7 +685,7 @@ export const ForceGraph3D: React.FC<
         camera.up.copy(newUp);
       }
 
-      // Orient labels: Interpolate rotation angles and store in ref
+      // Orient edge labels: Interpolate rotation angles and store in ref
       if (settings.camera?.orientLabels) {
         labelTargetAngles.forEach((targetAngle, linkKey) => {
           // Interpolate from 0 to target angle
@@ -774,6 +716,7 @@ export const ForceGraph3D: React.FC<
       // Calculate label target angles if orient labels is enabled
       let shouldOrient = false;
       if (settings.camera?.orientLabels) {
+        // Edge labels: calculate target rotation angles
         labelTargetAngles = calculateTargetCameraRotations(camera);
         shouldOrient = labelTargetAngles.size > 0;
       }
@@ -1280,46 +1223,51 @@ export const ForceGraph3D: React.FC<
         nodeOpacity={0.9}
         nodeResolution={16}  // Sphere detail
 
-        // Node labels - add sprite billboard that always faces camera
-        nodeThreeObjectExtend={settings.visual?.showLabels ?? true}
+        // Node representation - create group with sphere + label (transform together)
+        nodeThreeObjectExtend={false}  // Replace default node entirely
         nodeThreeObject={(node: any) => {
-          if (!settings.visual?.showLabels) return undefined;
+          if (!settings.visual?.showLabels) {
+            // No labels - just return undefined to use default sphere rendering
+            return undefined;
+          }
 
-          // Get node color for label
-          const nodeColor = nodeColors.get(node.id) || '#888';
-          const fontSize = settings.visual?.nodeLabelSize ?? 10;
-
-          // Create label texture
-          const texture = getNodeLabelTexture(node.label, nodeColor, fontSize);
-
-          // Create sprite material with depth testing enabled for proper occlusion
-          const spriteMaterial = new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true,
-            opacity: 1,
-            depthTest: true,    // Enable depth testing so labels behind nodes are hidden
-            depthWrite: false,  // Don't write to depth buffer (allows labels to overlap)
-          });
-
-          const sprite = new THREE.Sprite(spriteMaterial);
-
-          // Calculate sprite scale based on texture aspect ratio
-          const aspectRatio = texture.image.width / texture.image.height;
-          const labelHeight = fontSize * 0.8;  // Scale down slightly
-          const labelWidth = aspectRatio * labelHeight;
-          sprite.scale.set(labelWidth, labelHeight, 1);
-
-          // Position sprite above the node
-          // We'll update this in a separate loop to position on near surface
+          // Calculate node radius
           const baseSize = node.size || 10;
           const sizeMultiplier = settings.visual?.nodeSize ?? 1;
           const radius = baseSize * sizeMultiplier;
           const nodeRadius = Math.cbrt(Math.pow(radius, 3));
 
-          // Offset above node (will be updated to face camera)
-          sprite.position.set(0, nodeRadius + labelHeight / 2, 0);
+          // Get node color
+          const nodeColor = nodeColors.get(node.id) || '#888';
 
-          return sprite;
+          // Create group to hold sphere and text sprite
+          const group = new THREE.Group();
+
+          // Create node sphere
+          const sphereGeometry = new THREE.SphereGeometry(nodeRadius, 16, 16);
+          const sphereMaterial = new THREE.MeshLambertMaterial({
+            color: nodeColor,
+            transparent: true,
+            opacity: 0.9,
+          });
+          const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+          group.add(sphere);
+
+          // Create text sprite (automatically faces camera)
+          const sprite = new SpriteText(node.label);
+
+          // Apply unified label styling
+          const colors = ColorTransform.getLabelColors(nodeColor, 'node');
+          sprite.color = colors.fill;
+          sprite.fontFace = LABEL_FONTS.family;
+          sprite.fontWeight = String(LABEL_FONTS.weights.node3D);
+          sprite.strokeColor = colors.stroke;
+          sprite.strokeWidth = 0.3;  // Relative to font size (similar to 2D: 0.3)
+          sprite.textHeight = settings.visual?.nodeLabelSize ?? 10;
+          sprite.position.set(0, nodeRadius + sprite.textHeight / 2, 0);
+          group.add(sprite);
+
+          return group;
         }}
 
         // Link appearance - custom curved gradient lines (not cylinders)

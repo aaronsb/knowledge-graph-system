@@ -17,8 +17,7 @@ export {
   LABEL_RENDERING,
   LABEL_STYLE_2D,
   LABEL_STYLE_3D,
-  EDGE_LABEL_STYLE,  // Legacy: use LABEL_STYLE_3D.edge
-  NODE_LABEL_STYLE,  // Legacy: use LABEL_STYLE_3D.node
+  LUMINANCE_TRANSFORMS,
   ColorTransform,
   applyEdgeLabelStyle,
   applyNodeLabelStyle,

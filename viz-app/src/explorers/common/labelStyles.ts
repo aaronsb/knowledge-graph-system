@@ -4,14 +4,17 @@
  * Provides consistent text rendering styles across 2D and 3D explorers.
  * Centralizes font families, colors, stroke styles, and text transformations.
  *
- * NOTE: 2D (SVG) and 3D (Canvas) have different rendering approaches:
- * - 2D uses SVG text elements with D3 color transforms
- * - 3D uses canvas textures with THREE.js color math
+ * COLOR PROCESSING PIPELINE:
+ * 1. Base color comes from visual settings (node by ontology/degree, edge by category/confidence)
+ * 2. Text fill: Increase luminance significantly (toward white for readability)
+ * 3. Text stroke: Decrease luminance (toward black for contrast)
+ * 4. Explorer-specific scaling applied via settings
  *
- * This module provides utilities for both approaches while maintaining visual consistency.
+ * NOTE: 2D (SVG) and 3D (Canvas) have different rendering approaches but use the same color rules:
+ * - 2D uses SVG text elements with D3 color transforms
+ * - 3D uses canvas textures with D3 HSL color transforms (rendered to canvas)
  */
 
-import * as THREE from 'three';
 import * as d3 from 'd3';
 
 /**
@@ -46,22 +49,37 @@ export const LABEL_RENDERING = {
 } as const;
 
 /**
+ * Luminance transformation configuration
+ *
+ * Controls how base colors are transformed into text fill and stroke colors.
+ * Unified across 2D and 3D for visual consistency.
+ */
+export const LUMINANCE_TRANSFORMS = {
+  // Node labels: Very light fill (almost white), dark stroke
+  node: {
+    fillLuminance: 0.92,       // Target luminance for fill (92% = nearly white)
+    strokeLuminance: 0.10,     // Target luminance for stroke (10% = very dark)
+  },
+  // Edge labels: Lighter fill (readable), darker stroke
+  edge: {
+    fillLuminance: 0.80,       // Target luminance for fill (80% = light but with color)
+    strokeLuminance: 0.20,     // Target luminance for stroke (20% = dark)
+  },
+} as const;
+
+/**
  * 2D (SVG) label styling configuration
  */
 export const LABEL_STYLE_2D = {
   edge: {
     fontWeight: LABEL_FONTS.weights.edge2D,
-    fillBrightness: 0.4,       // D3 brighter(0.4) - increases lightness by 40%
-    strokeColor: '#1a1a2e',    // Dark blue/black
     strokeWidth: 0.5,
-    paintOrder: 'stroke',      // Render stroke first, then fill
+    paintOrder: 'stroke' as const,  // Render stroke first, then fill
   },
   node: {
     fontWeight: LABEL_FONTS.weights.node2D,
-    fillColor: '#fff',         // White text
-    strokeColor: '#000',       // Black outline
     strokeWidth: 0.3,
-    paintOrder: 'stroke',      // Render stroke first, then fill
+    paintOrder: 'stroke' as const,  // Render stroke first, then fill
   },
 } as const;
 
@@ -71,54 +89,65 @@ export const LABEL_STYLE_2D = {
 export const LABEL_STYLE_3D = {
   edge: {
     fontWeight: LABEL_FONTS.weights.edge3D,
-    fillBrightness: 1.4,       // THREE multiplyScalar(1.4) - 40% brighter
-    strokeDarkness: 0.4,       // THREE multiplyScalar(0.4) - 60% darker
     strokeWidth: 1,            // Will be scaled by canvasScale (4x)
   },
   node: {
     fontWeight: LABEL_FONTS.weights.node3D,
-    fillBrightness: 1.6,       // THREE multiplyScalar(1.6) - 60% brighter for visibility in 3D
-    strokeColor: 'rgba(0, 0, 0, 0.8)',
     strokeWidth: 3,            // Will be scaled by canvasScale (4x)
   },
 } as const;
 
-// Legacy exports for backward compatibility
-export const EDGE_LABEL_STYLE = LABEL_STYLE_3D.edge;
-export const NODE_LABEL_STYLE = LABEL_STYLE_3D.node;
-
 /**
  * Color transformation utilities
+ *
+ * Provides luminance-based color transformations that work consistently
+ * across 2D (D3/SVG) and 3D (THREE.js/Canvas) rendering.
  */
 export const ColorTransform = {
   /**
-   * Brighten a color by a multiplier (clamped to valid RGB range)
+   * Adjust luminance of a color to a target value (0-1 range)
+   * Preserves hue and saturation while adjusting lightness
+   *
+   * @param color - Input color (any CSS color format)
+   * @param targetLuminance - Target luminance (0=black, 1=white)
+   * @returns RGB color string
    */
-  brighten(color: string, multiplier: number): string {
-    const threeColor = new THREE.Color(color);
-    const brightened = threeColor.clone().multiplyScalar(multiplier);
+  setLuminance(color: string, targetLuminance: number): string {
+    // Use D3 to convert to HSL (works with any CSS color)
+    const d3Color = d3.color(color);
+    if (!d3Color) return color; // Fallback if parsing fails
 
-    // Clamp RGB components to [0, 1]
-    brightened.r = Math.min(1, brightened.r);
-    brightened.g = Math.min(1, brightened.g);
-    brightened.b = Math.min(1, brightened.b);
+    const hslColor = d3.hsl(d3Color);
 
-    return `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
+    // Set luminance (L component in HSL)
+    hslColor.l = Math.max(0, Math.min(1, targetLuminance));
+
+    // Convert back to RGB
+    const rgbColor = d3.rgb(hslColor);
+    return `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})`;
   },
 
   /**
-   * Darken a color by a multiplier
+   * Get label colors (fill and stroke) from a base color
+   * Uses luminance transformation rules for consistent appearance
+   *
+   * @param baseColor - Base color from visual settings (node/edge color)
+   * @param type - Label type ('node' or 'edge')
+   * @returns Object with fill and stroke colors
    */
-  darken(color: string, multiplier: number): string {
-    const threeColor = new THREE.Color(color);
-    const darkened = threeColor.clone().multiplyScalar(multiplier);
+  getLabelColors(baseColor: string, type: 'node' | 'edge'): { fill: string; stroke: string } {
+    const transforms = LUMINANCE_TRANSFORMS[type];
 
-    return `rgb(${Math.floor(darkened.r * 255)}, ${Math.floor(darkened.g * 255)}, ${Math.floor(darkened.b * 255)})`;
+    return {
+      fill: this.setLuminance(baseColor, transforms.fillLuminance),
+      stroke: this.setLuminance(baseColor, transforms.strokeLuminance),
+    };
   },
 };
 
 /**
  * Apply edge label styling to a canvas context
+ * Uses luminance-based color transformation for consistent appearance
  */
 export function applyEdgeLabelStyle(
   ctx: CanvasRenderingContext2D,
@@ -126,20 +155,22 @@ export function applyEdgeLabelStyle(
   fontSize: number
 ): void {
   const scale = LABEL_RENDERING.canvasScale;
+  const colors = ColorTransform.getLabelColors(baseColor, 'edge');
 
   // Set font
-  ctx.font = `${EDGE_LABEL_STYLE.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
+  ctx.font = `${LABEL_STYLE_3D.edge.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
   ctx.textAlign = LABEL_RENDERING.textAlign;
   ctx.textBaseline = LABEL_RENDERING.textBaseline;
 
-  // Set colors
-  ctx.fillStyle = ColorTransform.brighten(baseColor, EDGE_LABEL_STYLE.fillBrightness);
-  ctx.strokeStyle = ColorTransform.darken(baseColor, EDGE_LABEL_STYLE.strokeDarkness);
-  ctx.lineWidth = EDGE_LABEL_STYLE.strokeWidth * scale;
+  // Set colors (from luminance transformation)
+  ctx.fillStyle = colors.fill;
+  ctx.strokeStyle = colors.stroke;
+  ctx.lineWidth = LABEL_STYLE_3D.edge.strokeWidth * scale;
 }
 
 /**
  * Apply node label styling to a canvas context
+ * Uses luminance-based color transformation for consistent appearance
  */
 export function applyNodeLabelStyle(
   ctx: CanvasRenderingContext2D,
@@ -147,16 +178,17 @@ export function applyNodeLabelStyle(
   fontSize: number
 ): void {
   const scale = LABEL_RENDERING.canvasScale;
+  const colors = ColorTransform.getLabelColors(baseColor, 'node');
 
   // Set font
-  ctx.font = `${NODE_LABEL_STYLE.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
+  ctx.font = `${LABEL_STYLE_3D.node.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
   ctx.textAlign = LABEL_RENDERING.textAlign;
   ctx.textBaseline = LABEL_RENDERING.textBaseline;
 
-  // Set colors
-  ctx.fillStyle = ColorTransform.brighten(baseColor, NODE_LABEL_STYLE.fillBrightness);
-  ctx.strokeStyle = NODE_LABEL_STYLE.strokeColor;
-  ctx.lineWidth = NODE_LABEL_STYLE.strokeWidth * scale;
+  // Set colors (from luminance transformation)
+  ctx.fillStyle = colors.fill;
+  ctx.strokeStyle = colors.stroke;
+  ctx.lineWidth = LABEL_STYLE_3D.node.strokeWidth * scale;
 }
 
 /**
@@ -165,7 +197,7 @@ export function applyNodeLabelStyle(
 export function measureText(
   text: string,
   fontSize: number,
-  fontWeight: number = LABEL_FONTS.weights.edge
+  fontWeight: number = LABEL_FONTS.weights.edge3D
 ): { width: number; height: number } {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;

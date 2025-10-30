@@ -24,6 +24,9 @@ import {
   useGraphNavigation,
   buildContextMenuItems,
   type GraphContextMenuHandlers,
+  LABEL_FONTS,
+  LABEL_STYLE_2D,
+  ColorTransform,
 } from '../common';
 import { SLIDER_RANGES } from './types';
 
@@ -660,16 +663,23 @@ export const ForceGraph2D: React.FC<
       .data(data.links)
       .join('text')
       .text((d) => d.type)
+      .attr('font-family', LABEL_FONTS.family)
       .attr('font-size', settings.visual?.edgeLabelSize ?? 9)
-      .attr('font-weight', 400)
+      .attr('font-weight', LABEL_STYLE_2D.edge.fontWeight)
       .attr('fill', (d) => {
-        // Use edge color +40% brightness
+        // Use unified color transformation
         const baseColor = d.color || '#6b7280';
-        return d3.color(baseColor)?.brighter(0.4).toString() || baseColor;
+        const colors = ColorTransform.getLabelColors(baseColor, 'edge');
+        return colors.fill;
       })
-      .attr('stroke', '#1a1a2e')
-      .attr('stroke-width', 0.5)
-      .attr('paint-order', 'stroke')
+      .attr('stroke', (d) => {
+        // Use unified color transformation
+        const baseColor = d.color || '#6b7280';
+        const colors = ColorTransform.getLabelColors(baseColor, 'edge');
+        return colors.stroke;
+      })
+      .attr('stroke-width', LABEL_STYLE_2D.edge.strokeWidth)
+      .attr('paint-order', LABEL_STYLE_2D.edge.paintOrder)
       .attr('text-anchor', 'middle')
       .attr('pointer-events', 'none')
       .style('user-select', 'none');
@@ -801,12 +811,23 @@ export const ForceGraph2D: React.FC<
         .data(data.nodes)
         .join('text')
         .text((d) => d.label)
+        .attr('font-family', LABEL_FONTS.family)
         .attr('font-size', settings.visual?.nodeLabelSize ?? 12)
-        .attr('font-weight', 500)
-        .attr('fill', '#fff')
-        .attr('stroke', '#000')
-        .attr('stroke-width', 0.3)
-        .attr('paint-order', 'stroke')
+        .attr('font-weight', LABEL_STYLE_2D.node.fontWeight)
+        .attr('fill', (d) => {
+          // Use unified color transformation
+          const baseColor = d.color || '#6b7280';
+          const colors = ColorTransform.getLabelColors(baseColor, 'node');
+          return colors.fill;
+        })
+        .attr('stroke', (d) => {
+          // Use unified color transformation
+          const baseColor = d.color || '#6b7280';
+          const colors = ColorTransform.getLabelColors(baseColor, 'node');
+          return colors.stroke;
+        })
+        .attr('stroke-width', LABEL_STYLE_2D.node.strokeWidth)
+        .attr('paint-order', LABEL_STYLE_2D.node.paintOrder)
         .attr('text-anchor', 'middle')
         .attr('pointer-events', 'none')
         .style('user-select', 'none');
