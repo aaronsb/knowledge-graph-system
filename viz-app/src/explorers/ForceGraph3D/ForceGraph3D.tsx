@@ -618,7 +618,10 @@ export const ForceGraph3D: React.FC<
         }}
         linkPositionUpdate={(obj: any, { start, end }: any, link: any) => {
           // Update curved line geometry when nodes move
-          if (!start || !end) return;
+          if (!start || !end || !link || !link.type) return;
+
+          // Defensive: wrap in try-catch to prevent simulation crashes
+          try {
 
           // Get node radii for surface offset calculation
           const sourceNode = typeof link.source === 'object' ? link.source : data.nodes.find((n: any) => n.id === link.source);
@@ -771,6 +774,10 @@ export const ForceGraph3D: React.FC<
               labelMesh.geometry.dispose();  // Clean up old geometry
               labelMesh.geometry = new THREE.PlaneGeometry(labelWidth, labelHeight);
             }
+          }
+          } catch (error) {
+            // Silently ignore errors during position update to prevent simulation crashes
+            console.warn('Error in linkPositionUpdate:', error);
           }
         }}
 
