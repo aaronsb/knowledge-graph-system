@@ -14,7 +14,8 @@ import {
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { createClientFromEnv } from './api/client.js';
+import { createClientFromEnv, KnowledgeGraphClient } from './api/client.js';
+import { AuthClient } from './lib/auth/auth-client.js';
 import {
   formatSearchResults,
   formatConceptDetails,
@@ -49,8 +50,61 @@ const server = new Server(
  * Grounding strength (-1.0 to 1.0) shows concept reliability. Negative = contradicted/problem.
  */
 
-// Get API client instance
-const client = createClientFromEnv();
+// JWT token storage for authenticated session
+let jwtToken: string | null = null;
+
+/**
+ * Automatically login if username/password provided in environment
+ * This allows the MCP server to authenticate transparently without
+ * the AI being aware of authentication requirements.
+ */
+async function initializeAuth(): Promise<void> {
+  const username = process.env.KG_USERNAME;
+  const password = process.env.KG_PASSWORD;
+  const apiUrl = process.env.KG_API_URL || 'http://localhost:8000';
+
+  if (username && password) {
+    try {
+      const authClient = new AuthClient(apiUrl);
+      const loginResponse = await authClient.login({ username, password });
+      jwtToken = loginResponse.access_token;
+      console.error(`[MCP Auth] Successfully authenticated as ${username}`);
+
+      // Calculate token expiry time
+      const expiresInMs = loginResponse.expires_in * 1000;
+      const expiryTime = new Date(Date.now() + expiresInMs);
+      console.error(`[MCP Auth] Token expires at ${expiryTime.toISOString()}`);
+
+      // TODO: In the future, we could implement automatic token refresh
+      // before expiry to maintain long-lived sessions
+    } catch (error: any) {
+      console.error(`[MCP Auth] Failed to authenticate: ${error.message}`);
+      console.error('[MCP Auth] The MCP server will operate without authentication.');
+      console.error('[MCP Auth] Some operations may fail with 401 errors.');
+    }
+  } else {
+    console.error('[MCP Auth] No credentials provided (KG_USERNAME/KG_PASSWORD).');
+    console.error('[MCP Auth] The MCP server will operate without authentication.');
+  }
+}
+
+/**
+ * Create an authenticated API client
+ * If we have a JWT token from login, inject it into the client
+ */
+function createAuthenticatedClient(): KnowledgeGraphClient {
+  const client = createClientFromEnv();
+
+  // If we have a JWT token, set it on the client
+  if (jwtToken) {
+    client.setMcpJwtToken(jwtToken);
+  }
+
+  return client;
+}
+
+// Client instance - will be initialized in main() before server starts
+let client: KnowledgeGraphClient;
 
 /**
  * Tool Definitions
@@ -764,6 +818,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
  * Start the MCP server
  */
 async function main() {
+  // Initialize authentication before starting server
+  await initializeAuth();
+  client = createAuthenticatedClient();
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 

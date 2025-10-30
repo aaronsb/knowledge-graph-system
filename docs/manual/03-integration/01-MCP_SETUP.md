@@ -29,8 +29,17 @@ claude mcp add knowledge-graph
 # When prompted, provide:
 # - Server name: knowledge-graph
 # - Command: kg-mcp-server
-# - No additional arguments or environment variables needed
+# - Environment variables (for authentication):
+#   - KG_USERNAME: your username (e.g., admin)
+#   - KG_PASSWORD: your password
 ```
+
+**Authentication:**
+The MCP server requires authentication to access the API. When you add the server, you'll be prompted for environment variables. Add:
+- `KG_USERNAME`: Your username (create one with `kg login` if you don't have one)
+- `KG_PASSWORD`: Your password
+
+The MCP server will automatically login on startup using these credentials, making authentication transparent to Claude.
 
 **Note:** The MCP server connects to the FastAPI server at `http://localhost:8000`. Ensure the API server is running before using the MCP server.
 
@@ -78,7 +87,11 @@ Open the file and add the MCP server configuration:
 {
   "mcpServers": {
     "knowledge-graph": {
-      "command": "kg-mcp-server"
+      "command": "kg-mcp-server",
+      "env": {
+        "KG_USERNAME": "admin",
+        "KG_PASSWORD": "your-password-here"
+      }
     }
   }
 }
@@ -88,6 +101,10 @@ Open the file and add the MCP server configuration:
 - The `kg-mcp-server` command must be globally installed: `cd client && ./install.sh`
 - The MCP server connects to the FastAPI server at `http://localhost:8000`
 - Ensure the API server is running before using the MCP server
+- **Authentication:** Add `KG_USERNAME` and `KG_PASSWORD` environment variables for automatic authentication
+  - The MCP server will automatically login on startup using these credentials
+  - Claude will not be aware of authentication - it happens transparently
+  - Create a user with `kg login` if you don't have one
 
 ### 3. Restart Claude Desktop
 
@@ -186,13 +203,18 @@ docker ps | grep postgres
 
 ### Environment Variable Issues
 
-**No environment variables needed for MCP server!**
+**Required environment variables for MCP server:**
+- `KG_USERNAME`: Your username for authentication
+- `KG_PASSWORD`: Your password for authentication
 
-The MCP server connects to the FastAPI server at `http://localhost:8000`, which handles all database connections and API keys.
+**Optional environment variables:**
+- `KG_API_URL`: API server URL (default: `http://localhost:8000`)
 
-**If you need to change the API URL:**
-- Set `KG_API_URL` environment variable in MCP server config
-- Default: `http://localhost:8000`
+**If you see 401 authentication errors:**
+- Verify `KG_USERNAME` and `KG_PASSWORD` are set in your MCP config
+- Test login with `kg login` using the same credentials
+- Check MCP server logs for authentication messages
+- Ensure the API server is running and accepting connections
 
 ### Permission Errors
 
@@ -283,7 +305,9 @@ The kg CLI uses the same REST API as the MCP server.
     "knowledge-graph-dev": {
       "command": "kg-mcp-server",
       "env": {
-        "KG_API_URL": "http://localhost:8000"
+        "KG_API_URL": "http://localhost:8000",
+        "KG_USERNAME": "admin",
+        "KG_PASSWORD": "dev-password"
       }
     }
   }
@@ -297,14 +321,19 @@ The kg CLI uses the same REST API as the MCP server.
     "knowledge-graph-prod": {
       "command": "kg-mcp-server",
       "env": {
-        "KG_API_URL": "https://api.production-host.com"
+        "KG_API_URL": "https://api.production-host.com",
+        "KG_USERNAME": "admin",
+        "KG_PASSWORD": "prod-password"
       }
     }
   }
 }
 ```
 
-**Note:** The KG_API_URL environment variable is optional. If not set, it defaults to `http://localhost:8000`.
+**Environment Variables:**
+- `KG_API_URL`: API server URL (default: `http://localhost:8000`)
+- `KG_USERNAME`: Username for authentication (required for authenticated APIs)
+- `KG_PASSWORD`: Password for authentication (required for authenticated APIs)
 
 ## Security Considerations
 
@@ -316,9 +345,13 @@ The kg CLI uses the same REST API as the MCP server.
 
 ### API Server Authentication
 
-- The FastAPI server requires authentication (see `docs/guides/01-AUTHENTICATION.md`)
-- MCP server connects to API server via `http://localhost:8000`
-- For production, use HTTPS and proper authentication
+- The FastAPI server requires JWT-based authentication
+- MCP server authenticates automatically using `KG_USERNAME` and `KG_PASSWORD` environment variables
+- JWT tokens are stored in memory during the MCP server session
+- For production, use HTTPS and strong passwords
+- **Never commit** credentials to version control
+- Store credentials securely in Claude Desktop config file (`claude_desktop_config.json`)
+- Consider using separate user accounts for MCP server vs. CLI usage
 
 ### PostgreSQL Security
 
