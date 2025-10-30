@@ -1091,10 +1091,12 @@ export const ForceGraph2D: React.FC<
     }
   }, [settings.visual.showGrid]);
 
-  // Render grid when visibility changes
+  // Render grid when SVG structure is rebuilt or visibility changes
   useEffect(() => {
-    renderGrid();
-  }, [renderGrid]);
+    // Small delay to ensure grid-layer is created
+    const timer = setTimeout(() => renderGrid(), 0);
+    return () => clearTimeout(timer);
+  }, [renderGrid, data, settings, dimensions]);
 
   // Update highlighting based on hover
   useEffect(() => {
