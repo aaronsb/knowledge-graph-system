@@ -57,9 +57,9 @@ export interface ForceGraph3DData extends GraphData {
 export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
   physics: {
     enabled: true,
-    charge: -300,
-    linkDistance: 80,
-    gravity: 0.1,
+    charge: -650,        // Stronger repulsion for 3D space
+    linkDistance: 130,   // Longer links for better 3D depth perception
+    gravity: 0.10,
     friction: 0.9,
   },
   visual: {
@@ -69,8 +69,8 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
     showArrows: true,
     showGrid: true,
     showShadows: false, // Disabled by default for performance
-    nodeSize: 1,
-    linkWidth: 1,
+    nodeSize: 0.40,      // Smaller default due to volume scaling (radius³)
+    linkWidth: 1.0,
   },
   interaction: {
     enableDrag: true,
