@@ -9,9 +9,8 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface Camera3DSettings {
-  lockRoll: boolean;   // Lock camera roll axis (keep upright relative to ground)
-  lockPitch: boolean;  // Lock camera pitch axis (prevent looking up/down)
-  lockYaw: boolean;    // Lock camera yaw axis (prevent rotating left/right)
+  fov: number;         // Field of view in degrees (30-120)
+  autoLevel: boolean;  // Smoothly return to level ground when releasing mouse
 }
 
 interface Settings3DPanelProps {
@@ -27,9 +26,8 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
 
   // Provide default camera settings if undefined (e.g., when switching from 2D)
   const cameraSettings = camera || {
-    lockRoll: true,
-    lockPitch: false,
-    lockYaw: false,
+    fov: 75,
+    autoLevel: true,
   };
 
   const toggleSection = (section: string) => {
@@ -44,7 +42,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
     });
   };
 
-  const updateCamera = (key: keyof Camera3DSettings, value: boolean) => {
+  const updateCamera = (key: keyof Camera3DSettings, value: number | boolean) => {
     onCameraChange({
       ...cameraSettings,
       [key]: value,
@@ -72,40 +70,39 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
             )}
           </button>
           {expandedSections.has('camera') && (
-            <div className="mt-3 space-y-2">
-              <label className="flex items-center space-x-2 text-xs">
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="block text-xs text-gray-300 mb-1">
+                  Field of View: {cameraSettings.fov}°
+                </label>
                 <input
-                  type="checkbox"
-                  checked={cameraSettings.lockRoll}
-                  onChange={(e) => updateCamera('lockRoll', e.target.checked)}
-                  className="rounded"
+                  type="range"
+                  min={30}
+                  max={120}
+                  step={5}
+                  value={cameraSettings.fov}
+                  onChange={(e) => updateCamera('fov', parseInt(e.target.value))}
+                  className="w-full"
                 />
-                <span className="text-gray-200">Lock Roll (Keep Upright)</span>
-              </label>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Narrow (30°)</span>
+                  <span>Wide (120°)</span>
+                </div>
+              </div>
 
               <label className="flex items-center space-x-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={cameraSettings.lockPitch}
-                  onChange={(e) => updateCamera('lockPitch', e.target.checked)}
+                  checked={cameraSettings.autoLevel}
+                  onChange={(e) => updateCamera('autoLevel', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Lock Pitch (No Look Up/Down)</span>
-              </label>
-
-              <label className="flex items-center space-x-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={cameraSettings.lockYaw}
-                  onChange={(e) => updateCamera('lockYaw', e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-gray-200">Lock Yaw (No Rotate Left/Right)</span>
+                <span className="text-gray-200">Auto-Level on Release</span>
               </label>
 
               <div className="mt-3 p-2 bg-gray-700/50 rounded text-xs text-gray-300">
                 <p className="font-medium mb-1">Tip:</p>
-                <p>Lock Roll to prevent disorienting camera tilt when rotating around the graph.</p>
+                <p>Auto-Level smoothly returns the camera to level ground when you release the mouse, preventing disorientation while allowing free exploration.</p>
               </div>
             </div>
           )}

@@ -466,37 +466,81 @@ export const ForceGraph3D: React.FC<
     return () => clearInterval(intervalId);
   }, [data.nodes, data.links, projectToScreen, activeNodeInfos.length, activeEdgeInfos.length]);
 
-  // Apply camera axis locks (roll, pitch, yaw)
+  // Apply camera FOV setting
   useEffect(() => {
     if (!fgRef.current) return;
+
+    const camera = fgRef.current.camera();
+    if (!camera || !(camera instanceof THREE.PerspectiveCamera)) return;
+
+    // Update field of view
+    camera.fov = settings.camera?.fov ?? 75;
+    camera.updateProjectionMatrix();
+  }, [settings.camera?.fov]);
+
+  // Auto-level camera when user releases mouse
+  useEffect(() => {
+    if (!fgRef.current || !settings.camera?.autoLevel) return;
 
     const controls = fgRef.current.controls();
     const camera = fgRef.current.camera();
     if (!controls || !camera) return;
 
-    // OrbitControls inherently prevents roll by:
-    // 1. Maintaining a fixed up vector (camera.up)
-    // 2. Internally setting camera.rotation.z = 0 on every update
-    // We just need to set the up vector correctly and let OrbitControls handle the rest.
+    let animationFrame: number | null = null;
+    let isLeveling = false;
+    let startTime = 0;
+    const levelDuration = 800; // 800ms smooth animation
 
     // In our coordinate system, positive Y points DOWN, so up is -Y
-    const upVector = new THREE.Vector3(0, -1, 0);
-    camera.up.copy(upVector);
+    const targetUp = new THREE.Vector3(0, -1, 0);
 
-    // Ensure controls' camera reference uses the same up vector
-    if (controls.object) {
-      controls.object.up.copy(upVector);
-    }
+    const smoothLevel = (timestamp: number) => {
+      if (!camera) return;
 
-    // Tell controls to apply the constraint
-    if (controls.update) {
-      controls.update();
-    }
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / levelDuration, 1);
 
-    // Note: "lockRoll" setting doesn't actually do anything extra because
-    // OrbitControls ALWAYS prevents roll. We keep the setting for future features
-    // like allowing TrackballControls mode (which permits roll) vs OrbitControls.
-  }, [settings.camera?.lockRoll]);
+      // Ease-in-out curve for smooth acceleration/deceleration
+      const eased = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+      // Interpolate camera up vector toward target
+      const currentUp = camera.up.clone().normalize();
+      const newUp = new THREE.Vector3().lerpVectors(currentUp, targetUp, eased);
+      camera.up.copy(newUp);
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(smoothLevel);
+      } else {
+        isLeveling = false;
+        animationFrame = null;
+      }
+    };
+
+    const startLeveling = () => {
+      if (isLeveling) return; // Already leveling
+
+      // Check if camera needs leveling (up vector not aligned with -Y)
+      const currentUp = camera.up.clone().normalize();
+      if (currentUp.dot(targetUp) < 0.999) { // More than ~2.5 degree off
+        isLeveling = true;
+        startTime = 0;
+        animationFrame = requestAnimationFrame(smoothLevel);
+      }
+    };
+
+    // Listen for end of interaction
+    controls.addEventListener('end', startLeveling);
+
+    return () => {
+      controls.removeEventListener('end', startLeveling);
+      if (animationFrame !== null) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [settings.camera?.autoLevel]);
 
   // Dismiss node info box
   const handleDismissNodeInfo = useCallback((nodeId: string) => {

@@ -43,9 +43,8 @@ export interface ForceGraph3DSettings {
 
   // Camera controls (3D-specific)
   camera: {
-    lockRoll: boolean;   // Lock camera roll axis (keep upright relative to ground)
-    lockPitch: boolean;  // Lock camera pitch axis (prevent looking up/down)
-    lockYaw: boolean;    // Lock camera yaw axis (prevent rotating left/right)
+    fov: number;         // Field of view in degrees (30-120)
+    autoLevel: boolean;  // Smoothly return to level ground when releasing mouse
   };
 
   // Filters
@@ -91,9 +90,8 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
     showOriginNode: true,
   },
   camera: {
-    lockRoll: true,   // Lock roll by default to prevent disorienting tilting
-    lockPitch: false, // Allow looking up/down
-    lockYaw: false,   // Allow rotating around graph
+    fov: 75,          // Default field of view (standard perspective)
+    autoLevel: true,  // Auto-level by default for less disorienting camera
   },
   filters: {
     relationshipTypes: [],
