@@ -762,9 +762,9 @@ export const ForceGraph3D: React.FC<
             labelMesh.setRotationFromMatrix(matrix);
 
             // Offset position so bottom edge of label touches curve (not center)
-            // Shift along the normal (perpendicular to plane) by half label height
+            // Shift along the UP direction (Y-axis in label space) by half label height
             const labelHeight = 10;
-            const offset = normal.clone().multiplyScalar(labelHeight / 2);
+            const offset = up.clone().multiplyScalar(labelHeight / 2);
             labelMesh.position.copy(midPoint.clone().add(offset));
 
             // Update texture if edge color mode changed
