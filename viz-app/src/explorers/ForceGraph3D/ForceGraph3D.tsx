@@ -171,34 +171,31 @@ export const ForceGraph3D: React.FC<
 
     const fg = fgRef.current;
 
-    // Wait for simulation to be ready
-    const timer = setTimeout(() => {
-      try {
-        const chargeForce = fg.d3Force('charge');
-        const linkForce = fg.d3Force('link');
-        const centerForce = fg.d3Force('center');
+    // Immediate force update (no delay on subsequent changes)
+    try {
+      const chargeForce = fg.d3Force('charge');
+      const linkForce = fg.d3Force('link');
+      const centerForce = fg.d3Force('center');
 
-        // Configure forces if they exist
-        if (chargeForce) {
-          chargeForce.strength(settings.physics?.charge ?? -300);
-        }
-        if (linkForce) {
-          linkForce.distance(settings.physics?.linkDistance ?? 80);
-        }
-        if (centerForce) {
-          centerForce.strength(settings.physics?.gravity ?? 0.1);
-        }
-
-        // Reheat simulation to apply new forces
-        if (fg.d3ReheatSimulation) {
-          fg.d3ReheatSimulation();
-        }
-      } catch (e) {
-        console.warn('Failed to configure forces:', e);
+      // Configure forces if they exist
+      if (chargeForce) {
+        chargeForce.strength(settings.physics?.charge ?? -300);
       }
-    }, 100);
+      if (linkForce) {
+        linkForce.distance(settings.physics?.linkDistance ?? 80);
+      }
+      if (centerForce) {
+        centerForce.strength(settings.physics?.gravity ?? 0.1);
+      }
 
-    return () => clearTimeout(timer);
+      // Reheat simulation to keep it active while adjusting sliders
+      // This mimics the behavior of clicking and dragging a node
+      if (fg.d3ReheatSimulation) {
+        fg.d3ReheatSimulation();
+      }
+    } catch (e) {
+      // Silently ignore - simulation might not be ready yet on first render
+    }
   }, [settings.physics?.charge, settings.physics?.linkDistance, settings.physics?.gravity]);
 
   // Add grid helper when enabled
