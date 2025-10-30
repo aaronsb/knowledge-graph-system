@@ -42,6 +42,9 @@ export const ForceGraph3D: React.FC<
   // Texture cache for edge labels - reuse textures across sprites for memory efficiency
   const edgeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
 
+  // Texture cache for node labels - reuse textures for memory efficiency
+  const nodeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
+
   // Store camera-facing rotation angles for each edge (rotation around edge axis)
   // Key: linkKey (sourceId->targetId-type), Value: angle in radians
   const labelCameraAngles = useRef<Map<string, number>>(new Map());
@@ -155,6 +158,61 @@ export const ForceGraph3D: React.FC<
     // Cache it
     edgeLabelTextureCache.current.set(cacheKey, texture);
 
+    return texture;
+  }, []);
+
+  // Get or create node label texture (similar to edge labels but simpler - no stroke needed)
+  const getNodeLabelTexture = useCallback((text: string, color: string, fontSize: number): THREE.CanvasTexture => {
+    const cacheKey = `${text}:${color}:${fontSize}`;
+
+    if (nodeLabelTextureCache.current.has(cacheKey)) {
+      return nodeLabelTextureCache.current.get(cacheKey)!;
+    }
+
+    // Create texture by rendering text to canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+
+    const scale = 4;  // 4x resolution for crisp text
+    const padding = 8;
+
+    // Measure text at actual fontSize
+    ctx.font = `600 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    const metrics = ctx.measureText(text);
+    const textWidth = metrics.width;
+    const textHeight = fontSize * scale;
+
+    // Set canvas size based on actual text dimensions
+    canvas.width = Math.ceil(textWidth + padding * 2 * scale);
+    canvas.height = Math.ceil(textHeight + padding * 2 * scale);
+
+    // Re-set font after canvas resize
+    ctx.font = `600 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Brighten color for better visibility
+    const threeColor = new THREE.Color(color);
+    const brightened = threeColor.clone().multiplyScalar(1.6);
+    brightened.r = Math.min(1, brightened.r);
+    brightened.g = Math.min(1, brightened.g);
+    brightened.b = Math.min(1, brightened.b);
+
+    // Draw text with dark stroke for contrast
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.lineWidth = 3 * scale;
+    ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
+
+    const x = canvas.width / 2;
+    const y = canvas.height / 2;
+
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    nodeLabelTextureCache.current.set(cacheKey, texture);
     return texture;
   }, []);
 
@@ -1221,6 +1279,48 @@ export const ForceGraph3D: React.FC<
         }}
         nodeOpacity={0.9}
         nodeResolution={16}  // Sphere detail
+
+        // Node labels - add sprite billboard that always faces camera
+        nodeThreeObjectExtend={settings.visual?.showLabels ?? true}
+        nodeThreeObject={(node: any) => {
+          if (!settings.visual?.showLabels) return undefined;
+
+          // Get node color for label
+          const nodeColor = nodeColors.get(node.id) || '#888';
+          const fontSize = settings.visual?.nodeLabelSize ?? 10;
+
+          // Create label texture
+          const texture = getNodeLabelTexture(node.label, nodeColor, fontSize);
+
+          // Create sprite material with depth testing enabled for proper occlusion
+          const spriteMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 1,
+            depthTest: true,    // Enable depth testing so labels behind nodes are hidden
+            depthWrite: false,  // Don't write to depth buffer (allows labels to overlap)
+          });
+
+          const sprite = new THREE.Sprite(spriteMaterial);
+
+          // Calculate sprite scale based on texture aspect ratio
+          const aspectRatio = texture.image.width / texture.image.height;
+          const labelHeight = fontSize * 0.8;  // Scale down slightly
+          const labelWidth = aspectRatio * labelHeight;
+          sprite.scale.set(labelWidth, labelHeight, 1);
+
+          // Position sprite above the node
+          // We'll update this in a separate loop to position on near surface
+          const baseSize = node.size || 10;
+          const sizeMultiplier = settings.visual?.nodeSize ?? 1;
+          const radius = baseSize * sizeMultiplier;
+          const nodeRadius = Math.cbrt(Math.pow(radius, 3));
+
+          // Offset above node (will be updated to face camera)
+          sprite.position.set(0, nodeRadius + labelHeight / 2, 0);
+
+          return sprite;
+        }}
 
         // Link appearance - custom curved gradient lines (not cylinders)
         linkLabel={(link: any) => link.type}
