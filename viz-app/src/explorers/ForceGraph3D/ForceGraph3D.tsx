@@ -98,22 +98,23 @@ export const ForceGraph3D: React.FC<
 
     // Render at 4x resolution for crisp text when scaled to 3D geometry
     const scale = 4;
-    const padding = 4;   // Base padding
-    const maxFontSize = 20;  // Fixed canvas size based on max font size
+    const padding = 8;   // Increased padding to prevent edge clipping
 
-    // Measure text at max size to determine canvas dimensions
-    ctx.font = `400 ${maxFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    // Measure text at ACTUAL fontSize to determine canvas dimensions (not max size)
+    // This ensures texture tightly fits the rendered text with no wasted space
+    ctx.font = `400 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     const metrics = ctx.measureText(text);
-    const maxTextWidth = metrics.width;
+    const textWidth = metrics.width;
+    const textHeight = fontSize * scale;  // Approximate height from font size
 
-    // Set canvas size at 4x resolution (fixed regardless of actual fontSize)
-    canvas.width = Math.ceil((maxTextWidth + padding * 2) * scale);
-    canvas.height = (maxFontSize + padding * 2) * scale;
+    // Set canvas size at 4x resolution based on actual text dimensions
+    canvas.width = Math.ceil(textWidth + padding * 2 * scale);
+    canvas.height = Math.ceil(textHeight + padding * 2 * scale);
 
-    // Re-set font after canvas resize (resize clears state) using ACTUAL fontSize (not max)
+    // Re-set font after canvas resize (resize clears state)
     ctx.font = `400 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';  // Bottom-align so smaller text sits at bottom of texture
+    ctx.textBaseline = 'middle';  // Center-align vertically for consistent positioning
 
     // Brighten color by 40% for fill (match 2D implementation)
     const threeColor = new THREE.Color(color);
@@ -126,14 +127,14 @@ export const ForceGraph3D: React.FC<
     // Darken color by 60% for stroke (darker shade of same color)
     const darkened = threeColor.clone().multiplyScalar(0.4);
 
-    // Draw text with stroke outline: horizontally centered, bottom-aligned
+    // Draw text with stroke outline: horizontally and vertically centered
     ctx.strokeStyle = `rgb(${Math.floor(darkened.r * 255)}, ${Math.floor(darkened.g * 255)}, ${Math.floor(darkened.b * 255)})`;
     ctx.lineWidth = 1 * scale;  // Scale stroke width
     ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
 
-    // Position text: center-bottom (smaller fonts sit at bottom, touching edge curve)
+    // Position text: centered in canvas for maximum geometry utilization
     const x = canvas.width / 2;
-    const y = canvas.height;  // Bottom of canvas
+    const y = canvas.height / 2;
 
     ctx.strokeText(text, x, y);
     ctx.fillText(text, x, y);
@@ -362,6 +363,9 @@ export const ForceGraph3D: React.FC<
     });
   }, [settings.visual?.linkWidth]);
 
+  // Track floor position with hysteresis to prevent jitter
+  const floorPosition = useRef<number>(200);  // Initial position
+
   // Add grid helper when enabled
   useEffect(() => {
     if (!fgRef.current || !settings.visual.showGrid) return;
@@ -376,7 +380,7 @@ export const ForceGraph3D: React.FC<
       0x222222   // Grid line color
     );
 
-    grid.position.y = 200;  // Position below graph (positive Y is down in our coordinate system)
+    grid.position.y = floorPosition.current;  // Use tracked position
     grid.name = 'ground-grid';
     scene.add(grid);
 
@@ -385,6 +389,54 @@ export const ForceGraph3D: React.FC<
       if (existingGrid) scene.remove(existingGrid);
     };
   }, [settings.visual.showGrid]);
+
+  // Dynamically position floor below lowest node with hysteresis
+  useEffect(() => {
+    if (!fgRef.current || !settings.visual.showGrid) return;
+
+    const scene = fgRef.current.scene();
+    const grid = scene.getObjectByName('ground-grid');
+    if (!grid) return;
+
+    // Update floor position on each animation frame
+    let animationFrameId: number;
+
+    const updateFloorPosition = () => {
+      // Find the lowest Y position in the graph (highest value since Y+ is down)
+      let lowestY = -100;  // Default starting point above graph center
+
+      data.nodes.forEach(node => {
+        if (node.y !== undefined && node.y > lowestY) {
+          lowestY = node.y;
+        }
+      });
+
+      // Calculate target floor position: lowest node + offset
+      const floorOffset = 100;  // Distance below lowest node
+      const targetFloorY = lowestY + floorOffset;
+
+      // Hysteresis: only update if difference exceeds threshold
+      const hysteresisThreshold = 30;  // Only move floor if > 30 units different
+      const currentFloorY = floorPosition.current;
+
+      if (Math.abs(targetFloorY - currentFloorY) > hysteresisThreshold) {
+        // Smooth interpolation instead of instant jump
+        const lerpFactor = 0.05;  // 5% interpolation per frame
+        const newFloorY = currentFloorY + (targetFloorY - currentFloorY) * lerpFactor;
+
+        floorPosition.current = newFloorY;
+        grid.position.y = newFloorY;
+      }
+
+      animationFrameId = requestAnimationFrame(updateFloorPosition);
+    };
+
+    updateFloorPosition();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [data.nodes, settings.visual.showGrid]);
 
   // Project 3D world coordinates to 2D screen coordinates
   const projectToScreen = useCallback((x: number, y: number, z: number): { x: number; y: number } | null => {
@@ -838,8 +890,9 @@ export const ForceGraph3D: React.FC<
           const labelTexture = getEdgeLabelTexture(link.type, edgeColor, settings.visual?.edgeLabelSize ?? 9);
 
           // Create rectangular plane geometry sized to match texture aspect ratio
+          // Geometry is 20% larger than texture to prevent edge clipping
           const aspectRatio = labelTexture.image.width / labelTexture.image.height;
-          const labelHeight = 10;  // Fixed 3D world-space height
+          const labelHeight = 12;  // Increased from 10 to 12 (20% larger)
           const labelWidth = aspectRatio * labelHeight;
           const planeGeometry = new THREE.PlaneGeometry(labelWidth, labelHeight);
 
@@ -1014,7 +1067,7 @@ export const ForceGraph3D: React.FC<
 
             // Position label: First place center on edge, then offset along rotated local Y-axis
             // This ensures rotation pivot is ON the edge, not offset in space
-            const labelHeight = 10;
+            const labelHeight = 12;  // Match increased geometry size (20% larger)
             labelMesh.position.copy(midPoint);
 
             // Offset along the mesh's LOCAL Y-axis (after all rotations applied)
@@ -1032,8 +1085,9 @@ export const ForceGraph3D: React.FC<
               labelMesh.material.needsUpdate = true;
 
               // Update geometry scale based on new texture aspect ratio
+              // Geometry is 20% larger than base size to prevent edge clipping
               const aspectRatio = newTexture.image.width / newTexture.image.height;
-              const labelHeight = 10;
+              const labelHeight = 12;  // Increased from 10 to 12 (20% larger)
               const labelWidth = aspectRatio * labelHeight;
 
               labelMesh.geometry.dispose();  // Clean up old geometry
