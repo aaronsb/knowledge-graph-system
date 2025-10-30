@@ -165,6 +165,42 @@ export const ForceGraph3D: React.FC<
     };
   }, []);
 
+  // Configure D3 forces when settings change
+  useEffect(() => {
+    if (!fgRef.current) return;
+
+    const fg = fgRef.current;
+
+    // Wait for simulation to be ready
+    const timer = setTimeout(() => {
+      try {
+        const chargeForce = fg.d3Force('charge');
+        const linkForce = fg.d3Force('link');
+        const centerForce = fg.d3Force('center');
+
+        // Configure forces if they exist
+        if (chargeForce) {
+          chargeForce.strength(settings.physics?.charge ?? -300);
+        }
+        if (linkForce) {
+          linkForce.distance(settings.physics?.linkDistance ?? 80);
+        }
+        if (centerForce) {
+          centerForce.strength(settings.physics?.gravity ?? 0.1);
+        }
+
+        // Reheat simulation to apply new forces
+        if (fg.d3ReheatSimulation) {
+          fg.d3ReheatSimulation();
+        }
+      } catch (e) {
+        console.warn('Failed to configure forces:', e);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [settings.physics?.charge, settings.physics?.linkDistance, settings.physics?.gravity]);
+
   // Add grid helper when enabled
   useEffect(() => {
     if (!fgRef.current || !settings.visual.showGrid) return;
@@ -352,13 +388,6 @@ export const ForceGraph3D: React.FC<
           const linkKey = `${sourceId}->${targetId}-${link.type}`;
           return linkColors.get(linkKey) || '#999';
         }}
-
-        // Physics - always enable simulation, respect settings for forces
-        d3AlphaDecay={0.0228}
-        d3VelocityDecay={settings.physics.enabled ? settings.physics.friction : 0.4}
-        warmupTicks={100}
-        cooldownTicks={Infinity}
-        cooldownTime={settings.physics.enabled ? Infinity : 5000}
 
         // Interaction
         enableNodeDrag={settings.interaction.enableDrag}
