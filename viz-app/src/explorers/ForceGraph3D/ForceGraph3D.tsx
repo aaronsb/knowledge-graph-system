@@ -31,6 +31,9 @@ export const ForceGraph3D: React.FC<
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
+  // Texture cache for edge labels - reuse textures across sprites for memory efficiency
+  const edgeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
+
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -65,6 +68,62 @@ export const ForceGraph3D: React.FC<
 
   // Get navigation state from store
   const { originNodeId, setOriginNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
+
+  // Helper function to create or retrieve edge label texture
+  const getEdgeLabelTexture = useCallback((text: string, color: string): THREE.CanvasTexture => {
+    // Create cache key from text and color
+    const cacheKey = `${text}:${color}`;
+
+    // Return cached texture if available
+    if (edgeLabelTextureCache.current.has(cacheKey)) {
+      return edgeLabelTextureCache.current.get(cacheKey)!;
+    }
+
+    // Create new texture
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+
+    // Set canvas size
+    const fontSize = 9;  // Match 2D graph
+    const padding = 4;
+
+    // Measure text
+    ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    const metrics = ctx.measureText(text);
+    const textWidth = metrics.width;
+
+    canvas.width = Math.ceil(textWidth + padding * 2);
+    canvas.height = fontSize + padding * 2;
+
+    // Re-set font after canvas resize (resize clears state)
+    ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Brighten color by 40% (match 2D implementation)
+    const threeColor = new THREE.Color(color);
+    const brightened = threeColor.clone().multiplyScalar(1.4).clampScalar(0, 1);
+
+    // Draw text with stroke outline (paint-order: stroke)
+    ctx.strokeStyle = '#1a1a2e';  // Dark background color
+    ctx.lineWidth = 1;  // Stroke width 0.5 * 2 for canvas scale
+    ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
+
+    const x = canvas.width / 2;
+    const y = canvas.height / 2;
+
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+
+    // Create texture
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    // Cache it
+    edgeLabelTextureCache.current.set(cacheKey, texture);
+
+    return texture;
+  }, []);
 
   // Calculate node colors (match 2D implementation)
   const nodeColors = useMemo(() => {
@@ -397,11 +456,15 @@ export const ForceGraph3D: React.FC<
         linkLabel={(link: any) => link.type}
         linkWidth={0}  // Disable default cylinders, use custom linkThreeObject
         linkThreeObject={(link: any) => {
-          // Get node colors for gradient
+          // Get edge color based on settings (category, confidence, or uniform)
           const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
           const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-          const sourceColor = new THREE.Color(nodeColors.get(sourceId) || '#888');
-          const targetColor = new THREE.Color(nodeColors.get(targetId) || '#888');
+          const linkKey = `${sourceId}->${targetId}-${link.type}`;
+          const edgeColor = linkColors.get(linkKey) || '#999';
+
+          // Use edge color for both source and target (uniform gradient)
+          const sourceColor = new THREE.Color(edgeColor);
+          const targetColor = new THREE.Color(edgeColor);
 
           // Create group to hold line + arrow sprite
           const group = new THREE.Group();
@@ -445,14 +508,14 @@ export const ForceGraph3D: React.FC<
 
           // Add 2D arrow sprite at endpoint (if enabled)
           if (settings.visual.showArrows) {
-            // Create arrow sprite texture
+            // Create arrow sprite texture using edge color
             const canvas = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
             const ctx = canvas.getContext('2d')!;
 
-            // Draw arrow pointing right
-            ctx.fillStyle = `rgb(${Math.floor(targetColor.r * 255)}, ${Math.floor(targetColor.g * 255)}, ${Math.floor(targetColor.b * 255)})`;
+            // Draw arrow pointing right with edge color
+            ctx.fillStyle = `rgb(${Math.floor(sourceColor.r * 255)}, ${Math.floor(sourceColor.g * 255)}, ${Math.floor(sourceColor.b * 255)})`;
             ctx.globalAlpha = linkOpacity;
             ctx.beginPath();
             ctx.moveTo(10, 32);
@@ -475,6 +538,23 @@ export const ForceGraph3D: React.FC<
             sprite.name = 'arrow-sprite';
             group.add(sprite);
           }
+
+          // Add edge label sprite (reuses cached texture for memory efficiency)
+          const labelTexture = getEdgeLabelTexture(link.type, edgeColor);
+
+          const labelMaterial = new THREE.SpriteMaterial({
+            map: labelTexture,
+            transparent: true,
+            opacity: 1,
+            depthTest: false,  // Always visible on top
+          });
+
+          const labelSprite = new THREE.Sprite(labelMaterial);
+          // Scale based on texture aspect ratio
+          const aspectRatio = labelTexture.image.width / labelTexture.image.height;
+          labelSprite.scale.set(aspectRatio * 10, 10, 1);  // 10 units height
+          labelSprite.name = 'edge-label-sprite';
+          group.add(labelSprite);
 
           return group;
         }}
@@ -536,35 +616,68 @@ export const ForceGraph3D: React.FC<
             line.geometry.setPositions(positions);
             line.computeLineDistances();  // Recompute after position update
 
-            // Update gradient colors
-            const sourceNode = typeof link.source === 'object' ? link.source : data.nodes.find((n: any) => n.id === link.source);
-            const targetNode = typeof link.target === 'object' ? link.target : data.nodes.find((n: any) => n.id === link.target);
+            // Update gradient colors based on edge color settings
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            const linkKey = `${sourceId}->${targetId}-${link.type}`;
+            const edgeColor = linkColors.get(linkKey) || '#999';
 
-            if (sourceNode && targetNode) {
-              const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-              const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-              const sourceColor = new THREE.Color(nodeColors.get(sourceId) || '#888');
-              const targetColor = new THREE.Color(nodeColors.get(targetId) || '#888');
+            // Use edge color for uniform gradient
+            const color = new THREE.Color(edgeColor);
 
-              const colors: number[] = [];
-              for (let i = 0; i <= 20; i++) {
-                const t = i / 20;
-                const gradientColor = sourceColor.clone().lerp(targetColor, t);
-                colors.push(gradientColor.r, gradientColor.g, gradientColor.b);
-              }
-
-              line.geometry.setColors(colors);
+            const colors: number[] = [];
+            for (let i = 0; i <= 20; i++) {
+              // Uniform color along the curve (no gradient)
+              colors.push(color.r, color.g, color.b);
             }
+
+            line.geometry.setColors(colors);
           }
 
           // Update arrow sprite position at endpoint
-          const sprite = obj.getObjectByName('arrow-sprite');
-          if (sprite) {
-            sprite.position.copy(surfaceEnd);
+          const arrowSprite = obj.getObjectByName('arrow-sprite');
+          if (arrowSprite) {
+            arrowSprite.position.copy(surfaceEnd);
 
             // Orient sprite to face direction of link
             const angle = Math.atan2(direction.y, direction.x);
-            sprite.rotation.z = angle;
+            arrowSprite.rotation.z = angle;
+          }
+
+          // Update edge label sprite position and orientation
+          const labelSprite = obj.getObjectByName('edge-label-sprite');
+          if (labelSprite) {
+            // Get midpoint of curve (t=0.5)
+            const midPoint = curve.getPoint(0.5);
+            labelSprite.position.copy(midPoint);
+
+            // Get tangent direction at midpoint for proper orientation
+            const tangent = curve.getTangent(0.5);
+            const tangentAngle = Math.atan2(tangent.y, tangent.x);
+
+            // Rotate sprite to align with curve direction
+            // Keep text readable - flip if upside down
+            let finalAngle = tangentAngle;
+            if (Math.abs(tangentAngle) > Math.PI / 2) {
+              finalAngle = tangentAngle + Math.PI;  // Flip 180° to keep readable
+            }
+            labelSprite.material.rotation = finalAngle;
+
+            // Update texture if edge color mode changed
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            const linkKey = `${sourceId}->${targetId}-${link.type}`;
+            const currentEdgeColor = linkColors.get(linkKey) || '#999';
+            const newTexture = getEdgeLabelTexture(link.type, currentEdgeColor);
+
+            if (labelSprite.material.map !== newTexture) {
+              labelSprite.material.map = newTexture;
+              labelSprite.material.needsUpdate = true;
+
+              // Update scale based on new texture aspect ratio
+              const aspectRatio = newTexture.image.width / newTexture.image.height;
+              labelSprite.scale.set(aspectRatio * 10, 10, 1);
+            }
           }
         }}
 
