@@ -13,7 +13,7 @@ export interface ForceGraph2DSettings {
   physics: {
     enabled: boolean;
     charge: number; // Repulsion strength (-100 to -1000)
-    linkDistance: number; // Target link distance (10-200)
+    linkDistance: number; // Target link distance (10-400)
     gravity: number; // Center gravity (0-1)
     friction: number; // Velocity decay (0-1)
   };
@@ -59,8 +59,8 @@ export interface ForceGraph2DData extends GraphData {
 export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
   physics: {
     enabled: true,
-    charge: -300,
-    linkDistance: 80,
+    charge: -750,        // Strong repulsion for clear spacing in 2D
+    linkDistance: 200,   // Longer links for better graph layout
     gravity: 0.1,
     friction: 0.9,
   },
@@ -71,10 +71,10 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     showArrows: true,
     showGrid: true,
     showShadows: false, // Disabled by default for performance
-    nodeSize: 1,
-    linkWidth: 1,
+    nodeSize: 1.9,       // Larger nodes for better visibility
+    linkWidth: 1.0,
     nodeLabelSize: 12,
-    edgeLabelSize: 10, // Minimum of new range (10-40px)
+    edgeLabelSize: 12,   // Consistent with node labels in 2D plane
   },
   interaction: {
     enableDrag: true,
@@ -95,13 +95,13 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
 export const SLIDER_RANGES = {
   physics: {
     charge: { min: -1000, max: -100, step: 50 },
-    linkDistance: { min: 10, max: 200, step: 10 },
+    linkDistance: { min: 10, max: 400, step: 10 },  // Extended range for larger graphs
     gravity: { min: 0, max: 1, step: 0.05 },
   },
   visual: {
     nodeSize: { min: 0.5, max: 3, step: 0.1 },
     linkWidth: { min: 0.5, max: 5, step: 0.1 },
     nodeLabelSize: { min: 6, max: 20, step: 1 },
-    edgeLabelSize: { min: 10, max: 40, step: 1 },
+    edgeLabelSize: { min: 6, max: 20, step: 1 },     // Smaller range for 2D (everything at same viewing distance)
   },
 };
