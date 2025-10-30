@@ -19,9 +19,8 @@ import { useGraphStore } from '../../store/graphStore';
 import { useVocabularyStore } from '../../store/vocabularyStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { Legend } from './Legend';
-import { CanvasSettingsPanel } from './CanvasSettingsPanel';
-import { NodeInfoBox, EdgeInfoBox, StatsPanel, Settings3DPanel } from '../common';
+import { NodeInfoBox, EdgeInfoBox, StatsPanel, Settings3DPanel, GraphSettingsPanel, Legend, PanelStack } from '../common';
+import { SLIDER_RANGES } from './types';
 
 export const ForceGraph3D: React.FC<
   ExplorerProps<ForceGraph3DData, ForceGraph3DSettings>
@@ -1155,27 +1154,30 @@ export const ForceGraph3D: React.FC<
         }}
       />
 
-      {/* Stats Panel */}
-      <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
+      {/* Left-side panel stack */}
+      <PanelStack side="left" gap={16} initialTop={16}>
+        <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+      </PanelStack>
 
-      {/* Legend */}
-      <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+      {/* Right-side panel stack */}
+      <PanelStack side="right" gap={16} initialTop={16}>
+        <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
 
-      {/* Canvas Settings Panel */}
-      {onSettingsChange && (
-        <CanvasSettingsPanel
-          settings={settings}
-          onChange={onSettingsChange}
-        />
-      )}
+        {onSettingsChange && (
+          <GraphSettingsPanel
+            settings={settings}
+            onChange={onSettingsChange}
+            sliderRanges={SLIDER_RANGES}
+          />
+        )}
 
-      {/* 3D Settings Panel */}
-      {onSettingsChange && (
-        <Settings3DPanel
-          camera={settings.camera}
-          onCameraChange={(camera) => onSettingsChange({ ...settings, camera })}
-        />
-      )}
+        {onSettingsChange && (
+          <Settings3DPanel
+            camera={settings.camera}
+            onCameraChange={(camera) => onSettingsChange({ ...settings, camera })}
+          />
+        )}
+      </PanelStack>
 
       {/* Context Menu */}
       {contextMenu && (

@@ -16,9 +16,8 @@ import { useGraphStore } from '../../store/graphStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import { apiClient } from '../../api/client';
-import { Legend } from './Legend';
-import { CanvasSettingsPanel } from './CanvasSettingsPanel';
-import { NodeInfoBox, EdgeInfoBox, StatsPanel } from '../common';
+import { NodeInfoBox, EdgeInfoBox, StatsPanel, GraphSettingsPanel, Legend, PanelStack } from '../common';
+import { SLIDER_RANGES } from './types';
 
 /**
  * Calculate node position for info boxes
@@ -1500,16 +1499,23 @@ export const ForceGraph2D: React.FC<
         }}
       />
 
-      {/* Legend Panel */}
-      <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+      {/* Left-side panel stack */}
+      <PanelStack side="left" gap={16} initialTop={16}>
+        <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+      </PanelStack>
 
-      {/* Stats Panel */}
-      <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
+      {/* Right-side panel stack */}
+      <PanelStack side="right" gap={16} initialTop={16}>
+        <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
 
-      {/* Settings Panel */}
-      {onSettingsChange && (
-        <CanvasSettingsPanel settings={settings} onChange={onSettingsChange} />
-      )}
+        {onSettingsChange && (
+          <GraphSettingsPanel
+            settings={settings}
+            onChange={onSettingsChange}
+            sliderRanges={SLIDER_RANGES}
+          />
+        )}
+      </PanelStack>
 
       {/* Node Context Menu */}
       {contextMenu && (
