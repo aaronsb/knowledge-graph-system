@@ -83,20 +83,22 @@ export const ForceGraph3D: React.FC<
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
 
-    // Set canvas size
-    const fontSize = 9;  // Match 2D graph
-    const padding = 4;
+    // Render at 4x resolution for crisp text
+    const scale = 4;
+    const fontSize = 9;  // Base font size (match 2D graph)
+    const padding = 4;   // Base padding
 
-    // Measure text
+    // Measure text at base size first
     ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     const metrics = ctx.measureText(text);
     const textWidth = metrics.width;
 
-    canvas.width = Math.ceil(textWidth + padding * 2);
-    canvas.height = fontSize + padding * 2;
+    // Set canvas size at 4x resolution
+    canvas.width = Math.ceil((textWidth + padding * 2) * scale);
+    canvas.height = (fontSize + padding * 2) * scale;
 
-    // Re-set font after canvas resize (resize clears state)
-    ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    // Re-set font after canvas resize (resize clears state) at 4x size
+    ctx.font = `400 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -108,9 +110,9 @@ export const ForceGraph3D: React.FC<
     brightened.g = Math.min(1, brightened.g);
     brightened.b = Math.min(1, brightened.b);
 
-    // Draw text with stroke outline (paint-order: stroke)
+    // Draw text with stroke outline (paint-order: stroke) at 4x scale
     ctx.strokeStyle = '#1a1a2e';  // Dark background color
-    ctx.lineWidth = 1;  // Stroke width 0.5 * 2 for canvas scale
+    ctx.lineWidth = 1 * scale;  // Scale stroke width
     ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
 
     const x = canvas.width / 2;
@@ -731,7 +733,6 @@ export const ForceGraph3D: React.FC<
           if (labelMesh) {
             // Get midpoint of curve (t=0.5)
             const midPoint = curve.getPoint(0.5);
-            labelMesh.position.copy(midPoint);
 
             // Get tangent direction at midpoint - this is the edge arrow direction
             const tangent = curve.getTangent(0.5);
@@ -759,6 +760,12 @@ export const ForceGraph3D: React.FC<
 
             // Apply rotation - text reads along edge direction
             labelMesh.setRotationFromMatrix(matrix);
+
+            // Offset position so bottom edge of label touches curve (not center)
+            // Shift along the normal (perpendicular to plane) by half label height
+            const labelHeight = 10;
+            const offset = normal.clone().multiplyScalar(labelHeight / 2);
+            labelMesh.position.copy(midPoint.clone().add(offset));
 
             // Update texture if edge color mode changed
             const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
