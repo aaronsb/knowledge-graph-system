@@ -102,7 +102,7 @@ export const ForceGraph3D: React.FC<
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Brighten color by 40% (match 2D implementation)
+    // Brighten color by 40% for fill (match 2D implementation)
     const threeColor = new THREE.Color(color);
     const brightened = threeColor.clone().multiplyScalar(1.4);
     // Manually clamp RGB components to [0, 1]
@@ -110,8 +110,11 @@ export const ForceGraph3D: React.FC<
     brightened.g = Math.min(1, brightened.g);
     brightened.b = Math.min(1, brightened.b);
 
+    // Darken color by 60% for stroke (darker shade of same color)
+    const darkened = threeColor.clone().multiplyScalar(0.4);
+
     // Draw text with stroke outline (paint-order: stroke) at 4x scale
-    ctx.strokeStyle = '#1a1a2e';  // Dark background color
+    ctx.strokeStyle = `rgb(${Math.floor(darkened.r * 255)}, ${Math.floor(darkened.g * 255)}, ${Math.floor(darkened.b * 255)})`;
     ctx.lineWidth = 1 * scale;  // Scale stroke width
     ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
 
