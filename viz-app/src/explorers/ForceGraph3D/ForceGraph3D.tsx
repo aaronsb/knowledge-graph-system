@@ -167,6 +167,55 @@ export const ForceGraph3D: React.FC<
     return colors;
   }, [data.nodes, data.links, settings.visual.nodeColorBy]);
 
+  // Calculate curve offsets for multiple edges between same nodes (collision avoidance)
+  const linkCurveOffsets = useMemo(() => {
+    const offsets = new Map<string, number>();
+
+    // Group links by node pair (undirected - sorted to treat A→B and B→A as same pair)
+    const linkGroups = new Map<string, any[]>();
+
+    data.links.forEach(link => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+      // Create a consistent key for the node pair (sorted)
+      const pairKey = [sourceId, targetId].sort().join('->');
+
+      if (!linkGroups.has(pairKey)) {
+        linkGroups.set(pairKey, []);
+      }
+      linkGroups.get(pairKey)!.push(link);
+    });
+
+    // Assign curve offsets to links in groups with multiple edges
+    linkGroups.forEach(links => {
+      if (links.length > 1) {
+        // Multiple edges between same nodes - distribute them with curves
+        links.forEach((link, index) => {
+          const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+          const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+          const linkKey = `${sourceId}->${targetId}-${link.type}`;
+
+          // Calculate offset: center around 0 and spread evenly
+          const totalLinks = links.length;
+          const offsetMultiplier = index - (totalLinks - 1) / 2;
+          const curveStrength = 30; // Base curve distance (same as 2D)
+
+          offsets.set(linkKey, offsetMultiplier * curveStrength);
+        });
+      } else {
+        // Single edge - no curve needed (offset = 0, straight line)
+        const link = links[0];
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        const linkKey = `${sourceId}->${targetId}-${link.type}`;
+        offsets.set(linkKey, 0);
+      }
+    });
+
+    return offsets;
+  }, [data.links]);
+
   // Calculate link colors
   const linkColors = useMemo(() => {
     const colors = new Map<string, string>();
@@ -603,11 +652,27 @@ export const ForceGraph3D: React.FC<
           const surfaceStart = startPos.clone().add(direction.clone().multiplyScalar(sourceRadius));
           const surfaceEnd = endPos.clone().sub(direction.clone().multiplyScalar(targetRadius));
 
+          // Get curve offset for collision avoidance
+          const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+          const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+          const linkKey = `${sourceId}->${targetId}-${link.type}`;
+          const curveOffset = linkCurveOffsets.get(linkKey) || 0;
+
           // Calculate control point for curved arc (perpendicular offset)
           const midPoint = new THREE.Vector3().addVectors(surfaceStart, surfaceEnd).multiplyScalar(0.5);
           const perpendicular = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
-          const curvature = distance * 0.15; // 15% arc height
-          const controlPoint = midPoint.clone().add(perpendicular.multiplyScalar(curvature));
+
+          // If no offset (single edge), use straight line (no curvature)
+          // If offset exists (multiple edges), apply offset + base curvature for smooth arc
+          let controlPoint: THREE.Vector3;
+          if (curveOffset === 0) {
+            // Straight line - control point at midpoint
+            controlPoint = midPoint.clone();
+          } else {
+            // Curved line - apply offset for collision avoidance
+            const baseCurvature = distance * 0.15; // 15% arc height for smooth curves
+            controlPoint = midPoint.clone().add(perpendicular.multiplyScalar(curveOffset + baseCurvature));
+          }
 
           // Create curved line
           const curve = new THREE.QuadraticBezierCurve3(surfaceStart, controlPoint, surfaceEnd);
