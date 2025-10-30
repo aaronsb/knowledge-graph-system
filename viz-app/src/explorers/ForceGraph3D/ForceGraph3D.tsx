@@ -474,21 +474,47 @@ export const ForceGraph3D: React.FC<
     const camera = fgRef.current.camera();
     if (!controls || !camera) return;
 
-    // Lock roll axis by keeping camera upright relative to ground plane
-    // This prevents disorienting camera tilt when rotating around the graph
-    if (settings.camera?.lockRoll) {
-      // Force camera up vector to always be world up (negative Y-axis)
-      // In our coordinate system, positive Y points DOWN, so up is -Y
-      // This prevents roll while still allowing pitch and yaw
-      camera.up.set(0, -1, 0);
+    // OrbitControls naturally prevents roll by maintaining a fixed up vector
+    // We just need to set it correctly and call update()
 
-      // Also ensure controls use the same up vector
-      if (controls.object) {
-        controls.object.up.set(0, -1, 0);
-      }
-    } else {
-      // Allow free rotation when roll lock is disabled
-      camera.up.set(0, -1, 0); // Still default to -Y up (inverted coordinate system)
+    // In our coordinate system, positive Y points DOWN, so up is -Y
+    camera.up.set(0, -1, 0);
+
+    // Ensure controls use the same up vector
+    if (controls.object) {
+      controls.object.up.set(0, -1, 0);
+    }
+
+    // Update controls to apply the new up vector constraint
+    // This tells OrbitControls to maintain this orientation
+    if (controls.update) {
+      controls.update();
+    }
+
+    // Lock roll axis by preventing the camera from rotating around its view direction
+    // OrbitControls should handle this automatically with a fixed up vector,
+    // but we can reinforce it by resetting up vector if it drifts
+    if (settings.camera?.lockRoll) {
+      const enforceUpVector = () => {
+        if (!camera || !controls) return;
+
+        // Check if camera.up has drifted from -Y axis
+        const currentUp = camera.up.clone().normalize();
+        const targetUp = new THREE.Vector3(0, -1, 0);
+
+        // If up vector has drifted significantly (dot product < 0.99 means ~8 degree drift)
+        if (currentUp.dot(targetUp) < 0.99) {
+          camera.up.copy(targetUp);
+          if (controls.object) {
+            controls.object.up.copy(targetUp);
+          }
+        }
+      };
+
+      // Check and correct up vector periodically (not every frame to avoid jitter)
+      const intervalId = setInterval(enforceUpVector, 100); // Check every 100ms
+
+      return () => clearInterval(intervalId);
     }
   }, [settings.camera?.lockRoll]);
 
