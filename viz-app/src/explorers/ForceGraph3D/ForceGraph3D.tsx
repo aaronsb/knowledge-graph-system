@@ -73,6 +73,13 @@ export const ForceGraph3D: React.FC<
   // NOTE: Font size is NOT a react-force-graph-3d prop because we manually render text
   // to canvas textures and apply them to 3D plane geometry. This gives us full control
   // over appearance (font size, stroke, colors) and ensures proper Z-buffering.
+  //
+  // Strategy: Always render to FIXED canvas size (based on max fontSize=20px) and center
+  // smaller text within it. This provides:
+  // 1. Consistent texture resolution (no blur when shrinking)
+  // 2. Fixed geometry size (no need to recreate geometry)
+  // 3. Stable memory allocation (no texture size churn)
+  // 4. Real-time updates to existing geometry references
   const getEdgeLabelTexture = useCallback((text: string, color: string, fontSize: number): THREE.CanvasTexture => {
     // Create cache key from text, color, and font size
     const cacheKey = `${text}:${color}:${fontSize}`;
@@ -89,20 +96,21 @@ export const ForceGraph3D: React.FC<
     // Render at 4x resolution for crisp text when scaled to 3D geometry
     const scale = 4;
     const padding = 4;   // Base padding
+    const maxFontSize = 20;  // Fixed canvas size based on max font size
 
-    // Measure text at base size first
-    ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    // Measure text at max size to determine canvas dimensions
+    ctx.font = `400 ${maxFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     const metrics = ctx.measureText(text);
-    const textWidth = metrics.width;
+    const maxTextWidth = metrics.width;
 
-    // Set canvas size at 4x resolution
-    canvas.width = Math.ceil((textWidth + padding * 2) * scale);
-    canvas.height = (fontSize + padding * 2) * scale;
+    // Set canvas size at 4x resolution (fixed regardless of actual fontSize)
+    canvas.width = Math.ceil((maxTextWidth + padding * 2) * scale);
+    canvas.height = (maxFontSize + padding * 2) * scale;
 
-    // Re-set font after canvas resize (resize clears state) at 4x size
+    // Re-set font after canvas resize (resize clears state) using ACTUAL fontSize (not max)
     ctx.font = `400 ${fontSize * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textBaseline = 'bottom';  // Bottom-align so smaller text sits at bottom of texture
 
     // Brighten color by 40% for fill (match 2D implementation)
     const threeColor = new THREE.Color(color);
@@ -115,13 +123,14 @@ export const ForceGraph3D: React.FC<
     // Darken color by 60% for stroke (darker shade of same color)
     const darkened = threeColor.clone().multiplyScalar(0.4);
 
-    // Draw text with stroke outline (paint-order: stroke) at 4x scale
+    // Draw text with stroke outline: horizontally centered, bottom-aligned
     ctx.strokeStyle = `rgb(${Math.floor(darkened.r * 255)}, ${Math.floor(darkened.g * 255)}, ${Math.floor(darkened.b * 255)})`;
     ctx.lineWidth = 1 * scale;  // Scale stroke width
     ctx.fillStyle = `rgb(${Math.floor(brightened.r * 255)}, ${Math.floor(brightened.g * 255)}, ${Math.floor(brightened.b * 255)})`;
 
+    // Position text: center-bottom (smaller fonts sit at bottom, touching edge curve)
     const x = canvas.width / 2;
-    const y = canvas.height / 2;
+    const y = canvas.height;  // Bottom of canvas
 
     ctx.strokeText(text, x, y);
     ctx.fillText(text, x, y);
