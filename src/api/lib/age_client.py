@@ -2084,6 +2084,212 @@ class AGEClient:
             conn.commit()
             self.pool.putconn(conn)
 
+    # =========================================================================
+    # DocumentMeta Operations (ADR-051: Graph-Based Provenance Tracking)
+    # =========================================================================
+
+    def get_document_meta(self, content_hash: str, ontology: str) -> Optional[Dict[str, Any]]:
+        """
+        Check if a document already exists in the graph (ADR-051).
+
+        Used for deduplication: checks graph (persistent state) instead of
+        jobs table (ephemeral log). This prevents job deletion from breaking
+        deduplication.
+
+        Args:
+            content_hash: SHA-256 hash of document content (format: "sha256:abc123...")
+            ontology: Target ontology name
+
+        Returns:
+            Document metadata dict if found, None otherwise
+            {
+                "document_id": "sha256:abc123...",
+                "content_hash": "sha256:abc123...",
+                "ontology": "My Docs",
+                "filename": "chapter1.txt",
+                "source_type": "file",
+                "file_path": "/home/user/docs/chapter1.txt",
+                "hostname": "workstation-01",
+                "ingested_at": "2025-10-31T12:34:56Z",
+                "ingested_by": "user_123",
+                "job_id": "job_xyz",
+                "source_count": 15
+            }
+
+        Example:
+            >>> doc = client.get_document_meta("sha256:abc123...", "My Docs")
+            >>> if doc:
+            >>>     print(f"Document already ingested: {doc['filename']}")
+        """
+        query = """
+        SELECT * FROM cypher('knowledge_graph', $$
+            MATCH (d:DocumentMeta {content_hash: $hash, ontology: $ontology})
+            RETURN d
+        $$, $params) as (doc agtype);
+        """
+
+        try:
+            results = self._execute_cypher(query, {
+                "hash": content_hash,
+                "ontology": ontology
+            })
+
+            if results and len(results) > 0:
+                agtype_result = results[0].get('doc')
+                if agtype_result:
+                    parsed = self._parse_agtype(agtype_result)
+                    return parsed.get('properties', {}) if isinstance(parsed, dict) else None
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to check DocumentMeta for hash {content_hash[:16]}...: {e}")
+            return None
+
+    def create_document_meta(
+        self,
+        document_id: str,
+        content_hash: str,
+        ontology: str,
+        source_count: int,
+        ingested_by: str,
+        job_id: str,
+        filename: Optional[str] = None,
+        source_type: Optional[str] = None,
+        file_path: Optional[str] = None,
+        hostname: Optional[str] = None,
+        ingested_at: Optional[str] = None,
+        source_ids: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Create a DocumentMeta node and link it to Source nodes (ADR-051).
+
+        Tracks successfully ingested documents as first-class graph citizens.
+        Enables deduplication via graph (persistent) instead of jobs table (ephemeral).
+
+        Args:
+            document_id: Unique identifier (typically same as content_hash)
+            content_hash: SHA-256 hash for deduplication
+            ontology: Target ontology name
+            source_count: Number of Source nodes created from this document
+            ingested_by: User ID who submitted the job
+            job_id: Job ID that ingested this document
+            filename: Display name (optional, best-effort)
+            source_type: "file" | "stdin" | "mcp" | "api" (optional)
+            file_path: Full filesystem path (optional, file ingestion only)
+            hostname: Hostname where ingested (optional, CLI only)
+            ingested_at: ISO timestamp (optional, defaults to now())
+            source_ids: List of source_ids to link via HAS_SOURCE relationship (optional)
+
+        Returns:
+            Created DocumentMeta node properties
+
+        Raises:
+            Exception: If node creation or linking fails
+
+        Example:
+            >>> client.create_document_meta(
+            ...     document_id="sha256:abc123...",
+            ...     content_hash="sha256:abc123...",
+            ...     ontology="My Docs",
+            ...     source_count=15,
+            ...     ingested_by="user_123",
+            ...     job_id="job_xyz",
+            ...     filename="chapter1.txt",
+            ...     source_type="file",
+            ...     file_path="/home/user/docs/chapter1.txt",
+            ...     hostname="workstation-01",
+            ...     source_ids=["chapter1_txt_chunk1", "chapter1_txt_chunk2", ...]
+            ... )
+        """
+        from datetime import datetime, timezone
+
+        # Build properties dict (only include non-None values)
+        properties = {
+            "document_id": document_id,
+            "content_hash": content_hash,
+            "ontology": ontology,
+            "source_count": source_count,
+            "ingested_by": ingested_by,
+            "job_id": job_id
+        }
+
+        # Add optional provenance metadata (best-effort)
+        if filename:
+            properties["filename"] = filename
+        if source_type:
+            properties["source_type"] = source_type
+        if file_path:
+            properties["file_path"] = file_path
+        if hostname:
+            properties["hostname"] = hostname
+
+        # Add timestamp (default to now if not provided)
+        if ingested_at:
+            properties["ingested_at"] = ingested_at
+        else:
+            properties["ingested_at"] = datetime.now(timezone.utc).isoformat()
+
+        # Create DocumentMeta node
+        create_query = """
+        SELECT * FROM cypher('knowledge_graph', $$
+            CREATE (d:DocumentMeta $props)
+            RETURN d
+        $$, $params) as (doc agtype);
+        """
+
+        try:
+            results = self._execute_cypher(create_query, {"props": properties})
+
+            if not results:
+                raise Exception("DocumentMeta node creation returned no results")
+
+            # Parse created node
+            agtype_result = results[0].get('doc')
+            parsed = self._parse_agtype(agtype_result)
+            created_doc = parsed.get('properties', {}) if isinstance(parsed, dict) else {}
+
+            # Link to Source nodes if source_ids provided
+            if source_ids and len(source_ids) > 0:
+                link_query = """
+                SELECT * FROM cypher('knowledge_graph', $$
+                    MATCH (d:DocumentMeta {document_id: $doc_id})
+                    MATCH (s:Source)
+                    WHERE s.source_id IN $source_ids
+                    CREATE (d)-[:HAS_SOURCE {
+                        created_at: $created_at
+                    }]->(s)
+                    RETURN count(s) as linked_count
+                $$, $params) as (count agtype);
+                """
+
+                link_results = self._execute_cypher(link_query, {
+                    "doc_id": document_id,
+                    "source_ids": source_ids,
+                    "created_at": properties["ingested_at"]
+                })
+
+                if link_results:
+                    linked_count = self._parse_agtype(link_results[0].get('count'))
+                    logger.info(
+                        f"Created DocumentMeta {document_id[:16]}... and linked "
+                        f"{linked_count}/{len(source_ids)} Source nodes"
+                    )
+                else:
+                    logger.warning(
+                        f"Created DocumentMeta {document_id[:16]}... but failed to link Source nodes"
+                    )
+
+            logger.info(
+                f"✓ Created DocumentMeta: {properties.get('filename', document_id[:16])}... "
+                f"({source_count} sources, type: {source_type or 'unknown'})"
+            )
+
+            return created_doc
+
+        except Exception as e:
+            raise Exception(f"Failed to create DocumentMeta {document_id[:16]}...: {e}")
+
     @property
     def facade(self):
         """

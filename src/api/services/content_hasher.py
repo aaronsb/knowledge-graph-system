@@ -3,22 +3,30 @@ Content hashing service for deduplication.
 
 Prevents re-ingesting the same document multiple times by hashing content
 and checking against previously processed jobs.
+
+ADR-051: Now checks graph (DocumentMeta nodes) as primary source of truth,
+with jobs table as fallback for in-progress jobs.
 """
 
 import hashlib
 from typing import Optional, Dict
 from datetime import datetime, timedelta, timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ContentHasher:
     """Hash content and check for duplicates"""
 
-    def __init__(self, job_queue):
+    def __init__(self, job_queue, age_client=None):
         """
         Args:
             job_queue: JobQueue instance for checking existing jobs
+            age_client: AGEClient instance for checking graph (ADR-051)
         """
         self.job_queue = job_queue
+        self.age_client = age_client
 
     def hash_content(self, content: bytes) -> str:
         """
@@ -39,7 +47,13 @@ class ContentHasher:
         ontology: str
     ) -> Optional[Dict]:
         """
-        Check if content already ingested into this ontology.
+        Check if content already ingested into this ontology (ADR-051).
+
+        Checks two sources:
+        1. Graph (DocumentMeta nodes) - Primary source of truth (persistent)
+        2. Jobs table - Fallback for in-progress jobs (ephemeral)
+
+        This prevents job deletion from breaking deduplication.
 
         Args:
             content_hash: SHA-256 hash from hash_content()
@@ -47,11 +61,52 @@ class ContentHasher:
 
         Returns:
             None: Not seen before, safe to proceed
-            Dict: Existing job info with status/result
+            Dict: Existing job/document info with status/result
+                  Format depends on source:
+                  - From graph: {"source": "graph", "document_id": "...", ...}
+                  - From jobs: {"source": "job", "job_id": "...", "status": "...", ...}
         """
-        # Delegate to job queue's check_duplicate method
-        # (works for both InMemory and PostgreSQL queues)
-        return self.job_queue.check_duplicate(content_hash, ontology)
+        # ADR-051: Check graph first (persistent state)
+        if self.age_client:
+            try:
+                doc_meta = self.age_client.get_document_meta(content_hash, ontology)
+                if doc_meta:
+                    logger.info(
+                        f"✓ Duplicate found in graph: {doc_meta.get('filename', content_hash[:16])}..."
+                    )
+                    # Return in job-compatible format for existing code
+                    return {
+                        "source": "graph",
+                        "job_id": doc_meta.get("job_id", "unknown"),
+                        "status": "completed",
+                        "created_at": doc_meta.get("ingested_at"),
+                        "completed_at": doc_meta.get("ingested_at"),
+                        "result": {
+                            "document_id": doc_meta.get("document_id"),
+                            "filename": doc_meta.get("filename"),
+                            "source_type": doc_meta.get("source_type"),
+                            "source_count": doc_meta.get("source_count")
+                        }
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to check graph for duplicate: {e}")
+                # Fall through to jobs table check
+
+        # Fallback: Check jobs table (for in-progress jobs or if graph check failed)
+        existing_job = self.job_queue.check_duplicate(content_hash, ontology)
+
+        if existing_job:
+            # Only return if job is actually in progress (not completed)
+            # Completed jobs should have created DocumentMeta in graph
+            status = existing_job.get("status")
+            if status in ["running", "queued", "awaiting_approval", "approved"]:
+                logger.info(
+                    f"✓ Duplicate found in jobs table: {existing_job['job_id']} (status: {status})"
+                )
+                return {**existing_job, "source": "job"}
+
+        # No duplicate found
+        return None
 
     def should_allow_reingestion(
         self,
