@@ -196,8 +196,15 @@ def process_chunk(
     Raises:
         Exception: If processing fails
     """
-    # Generate unique source ID using filename (not ontology name)
-    source_id = f"{filename.replace(' ', '_').lower()}_chunk{chunk.chunk_number}"
+    # ADR-051: Generate unique source ID using document hash (not filename)
+    # This ensures source_id is unique per document content, preventing collisions
+    # when multiple documents share the same filename (e.g., "text_input")
+    if document_id:
+        # Use first 12 chars of content hash for brevity while maintaining uniqueness
+        source_id = f"{document_id[:12]}_chunk{chunk.chunk_number}"
+    else:
+        # Fallback to filename (legacy behavior for backward compatibility)
+        source_id = f"{filename.replace(' ', '_').lower()}_chunk{chunk.chunk_number}"
 
     logger.info(f"{'='*70}")
     logger.info(f"[Chunk {chunk.chunk_number}] {chunk.word_count} words, "
