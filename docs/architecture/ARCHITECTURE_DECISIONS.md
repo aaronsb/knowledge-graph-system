@@ -67,6 +67,7 @@ All ADRs follow a consistent format:
 | [ADR-048](ADR-048-vocabulary-metadata-as-graph.md) | Vocabulary Metadata as First-Class Graph | In Progress (Phase 3.1 ✅) | Move vocabulary metadata from SQL tables to Apache AGE graph nodes with namespace safety layer (GraphQueryFacade) - vocabulary becomes part of timeless graph, operations become graph-native traversals |
 | [ADR-049](ADR-049-rate-limiting-and-concurrency.md) | Rate Limiting and Per-Provider Concurrency | Accepted | Exponential backoff retry (8 attempts) + per-provider semaphores (OpenAI=8, Anthropic=4, Ollama=1) with database-first configuration to eliminate 429 errors across concurrent workers |
 | [ADR-050](ADR-050-scheduled-jobs-system.md) | Scheduled Jobs System | Proposed | Simple scheduler loop + launcher pattern extends existing job queue for automated maintenance tasks (category refresh, vocab consolidation) with ownership permissions and polling-based condition checks |
+| [ADR-051](ADR-051-graph-document-deduplication.md) | Graph-Based Provenance Tracking | Proposed | DocumentMeta nodes + edge metadata for complete audit trail (enhances ADR-014) - prevents job deletion from breaking deduplication, tracks source provenance (file/stdin/mcp/api) and relationship origin (who/when/how), MCP silent enrichment maintains ADR-044 compliance |
 
 ## How to Use This Index
 
@@ -140,6 +141,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-10-28
+**Last Updated:** 2025-10-31
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
