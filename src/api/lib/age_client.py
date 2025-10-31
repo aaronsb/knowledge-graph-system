@@ -402,6 +402,41 @@ class AGEClient:
         except Exception as e:
             raise Exception(f"Failed to create Concept node {concept_id}: {e}")
 
+    def find_instance_by_quote_and_source(
+        self,
+        quote: str,
+        source_id: str
+    ) -> Optional[str]:
+        """
+        Find an existing Instance node with the same quote and source.
+
+        This prevents duplicate Instance nodes when the same quote appears
+        in multiple chunks or documents that reference the same source.
+
+        Args:
+            quote: Exact quote to search for
+            source_id: Source node ID to match
+
+        Returns:
+            instance_id if found, None otherwise
+        """
+        query = """
+        MATCH (i:Instance {quote: $quote})-[:FROM_SOURCE]->(s:Source {source_id: $source_id})
+        RETURN i.instance_id as instance_id
+        LIMIT 1
+        """
+
+        try:
+            result = self._execute_cypher(
+                query,
+                params={"quote": quote, "source_id": source_id},
+                fetch_one=True
+            )
+            return result.get('instance_id') if result else None
+        except Exception as e:
+            logger.warning(f"Failed to find existing instance: {e}")
+            return None
+
     def create_instance_node(
         self,
         instance_id: str,

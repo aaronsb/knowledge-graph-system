@@ -348,9 +348,8 @@ def process_chunk(
                 "Check embedding model availability and API connectivity."
             )
 
-    # Step 4: Create Instance nodes
+    # Step 4: Create Instance nodes (with deduplication)
     for instance in extraction["instances"]:
-        instance_id = f"{source_id}_inst_{uuid.uuid4().hex[:8]}"
         llm_concept_id = instance["concept_id"]
         quote = instance["quote"]
 
@@ -361,15 +360,28 @@ def process_chunk(
             continue
 
         try:
-            age_client.create_instance_node(instance_id=instance_id, quote=quote)
+            # Check if instance with same quote and source already exists
+            existing_instance_id = age_client.find_instance_by_quote_and_source(quote, source_id)
+
+            if existing_instance_id:
+                # Reuse existing instance
+                instance_id = existing_instance_id
+                if verbose:
+                    logger.info(f"  ↻ Reusing existing instance: {instance_id[:24]}...")
+            else:
+                # Create new instance
+                instance_id = f"{source_id}_inst_{uuid.uuid4().hex[:8]}"
+                age_client.create_instance_node(instance_id=instance_id, quote=quote)
+                stats.instances_created += 1
+
+            # Link instance to concept and source
             age_client.link_instance_to_concept_and_source(
                 instance_id=instance_id,
                 concept_id=actual_concept_id,
                 source_id=source_id
             )
-            stats.instances_created += 1
         except Exception as e:
-            logger.warning(f"  ⚠ Failed to create Instance: {e}")
+            logger.warning(f"  ⚠ Failed to create/link Instance: {e}")
             continue
 
     # Step 5: Create concept relationships
