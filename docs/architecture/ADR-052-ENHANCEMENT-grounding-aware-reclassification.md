@@ -36,6 +36,135 @@ RETURN avg(source.grounding_strength + target.grounding_strength) / 2 as avg_gro
 
 This reveals empirical usage patterns without additional computational cost for metric generation.
 
+## Vocabulary Classification Architecture
+
+### The State Machine
+
+Vocabulary types flow through a one-way state machine that prevents reclassification loops:
+
+```
+LLM Extraction → llm_generated → Mechanistic Classification → computed → Grounding Validation
+    (ingestion)     (initial)       (kg vocab refresh)        (final)      (quality check)
+```
+
+**State Transitions:**
+
+1. **Initial State: `llm_generated`**
+   - Set during ingestion when LLM discovers new relationship type
+   - Category temporarily set to `"llm_generated"`
+   - Embedding generated immediately for future matching
+   - Example: `add_edge_type(type="ENHANCES", category="llm_generated")`
+
+2. **Mechanistic Classification: `llm_generated` → `computed`**
+   - `kg vocab refresh-categories` computes cosine similarity to seed types
+   - Assigns best-matching category from 11 protected categories
+   - Updates: `category_source = 'computed'`
+   - **One-way transition:** Never reverts to `llm_generated`
+
+3. **Empirical Validation: `computed` (read-only check)**
+   - Proposed enhancement: Query grounding patterns from actual graph usage
+   - Flag mismatches between mechanistic category and empirical role
+   - **Non-destructive:** Does not change category or state
+   - Provides evidence for curator review, does not auto-reclassify
+
+### The Bounded Exploration Model
+
+**Components:**
+
+- **c** = 11 protected categories (causation, composition, logical, evidential, semantic, temporal, dependency, derivation, operation, interaction, modification)
+- **a** = 30 protected seed types distributed across categories
+- **b** = LLM-generated types (unbounded, emergent)
+
+**Static Dictionary (Curator-Controlled):**
+
+```python
+CATEGORY_SEEDS = {
+    'causation': ['CAUSES', 'ENABLES', 'PREVENTS', 'INFLUENCES', 'RESULTS_FROM'],
+    'composition': ['PART_OF', 'CONTAINS', 'COMPOSED_OF', 'SUBSET_OF', 'INSTANCE_OF'],
+    'logical': ['IMPLIES', 'CONTRADICTS', 'PRESUPPOSES', 'EQUIVALENT_TO'],
+    # ... 11 categories, 30 seed types total
+}
+```
+
+**Classification Algorithm:**
+
+```python
+# For each LLM-generated type
+for category, seed_types in CATEGORY_SEEDS.items():
+    similarities = []
+    for seed in seed_types:
+        similarity = cosine_similarity(type_embedding, seed_embedding)
+        similarities.append(similarity)
+
+    # Satisficing: max similarity (not mean)
+    category_scores[category] = max(similarities)
+
+# Assign to best match
+best_category = max(category_scores, key=category_scores.get)
+```
+
+**Semantic Coverage Formula:**
+
+```
+Total Semantic Space = c × (a + b)
+
+Where:
+  c = 11 categories (bounded, curator-controlled dimensionality)
+  a = 30 seed types (bounded, curator-controlled initial coverage)
+  b = LLM-generated types (unbounded, emergent expansion)
+
+Initial space:  a × c = 30 types × 11 categories = 330 "semantic coordinates"
+Exploration:    b types discovered during ingestion (unbounded)
+Organization:   Each b type maps to exactly one c category (via cosine similarity)
+Total coverage: Sum of types per category across all c categories
+```
+
+### Why This Works
+
+**1. Bounded Initial Space (Curator Control)**
+- Protected categories (c=11) define semantic dimensions
+- Protected seed types (a=30) provide grounding for each dimension
+- Changes require manual updates to `CATEGORY_SEEDS` constant
+- Prevents category proliferation
+
+**2. Emergent Expansion (LLM Discovery)**
+- LLM freely generates new relationship types (b) during ingestion
+- No artificial constraints on vocabulary during extraction
+- Each discovered type gets embedding for similarity matching
+- Supports Sutton's Bitter Lesson: general methods > hand-coded vocabulary
+
+**3. One-Way Classification (No Loops)**
+- State transition: `llm_generated` → `computed` (irreversible)
+- Prevents infinite reclassification cycles
+- Default `refresh-categories` behavior only processes `computed` types (with `--computed-only` flag)
+- Re-running refresh updates confidence/scores but not state machine position
+
+**4. Empirical Validation Through Grounding (Quality Check)**
+- Grounding validation operates on `computed` types only
+- Cross-validates mechanistic category against actual usage patterns
+- Flags mismatches for curator review
+- Does **not** auto-reclassify (preserves one-way property)
+- Provides empirical evidence to inform manual decisions
+
+### Integration Point
+
+This enhancement adds empirical validation **after** mechanistic classification completes:
+
+```
+Phase 1 (Existing): llm_generated → computed
+  - Cosine similarity to seed types
+  - Assign best-matching category
+  - Set category_source = 'computed'
+
+Phase 2 (Proposed): computed → grounding validation
+  - Query average grounding for edge type
+  - Classify empirical semantic role
+  - Compare with mechanistic category
+  - Flag mismatches (non-destructive)
+```
+
+The one-way state machine ensures grounding validation cannot trigger reclassification loops. It provides quality monitoring without disrupting the core classification workflow.
+
 ## Decision
 
 Add a second phase to vocabulary refresh workflow that uses grounding metrics to refine category assignments:
