@@ -8,6 +8,7 @@ and vector similarity search using PostgreSQL + Apache AGE extension.
 import os
 import json
 import logging
+from datetime import datetime, timezone
 from typing import List, Dict, Optional, Any
 import psycopg2
 from psycopg2 import pool, extras
@@ -2153,10 +2154,8 @@ class AGEClient:
             >>>     print(f"Document already ingested: {doc['filename']}")
         """
         query = """
-        SELECT * FROM cypher('knowledge_graph', $$
-            MATCH (d:DocumentMeta {content_hash: $hash, ontology: $ontology})
-            RETURN d
-        $$, $params) as (doc agtype);
+        MATCH (d:DocumentMeta {content_hash: $hash, ontology: $ontology})
+        RETURN d
         """
 
         try:
@@ -2166,7 +2165,7 @@ class AGEClient:
             })
 
             if results and len(results) > 0:
-                agtype_result = results[0].get('doc')
+                agtype_result = results[0].get('d')
                 if agtype_result:
                     parsed = self._parse_agtype(agtype_result)
                     return parsed.get('properties', {}) if isinstance(parsed, dict) else None
@@ -2263,10 +2262,8 @@ class AGEClient:
 
         # Create DocumentMeta node
         create_query = """
-        SELECT * FROM cypher('knowledge_graph', $$
-            CREATE (d:DocumentMeta $props)
-            RETURN d
-        $$, $params) as (doc agtype);
+        CREATE (d:DocumentMeta $props)
+        RETURN d
         """
 
         try:
@@ -2276,22 +2273,20 @@ class AGEClient:
                 raise Exception("DocumentMeta node creation returned no results")
 
             # Parse created node
-            agtype_result = results[0].get('doc')
+            agtype_result = results[0].get('d')
             parsed = self._parse_agtype(agtype_result)
             created_doc = parsed.get('properties', {}) if isinstance(parsed, dict) else {}
 
             # Link to Source nodes if source_ids provided
             if source_ids and len(source_ids) > 0:
                 link_query = """
-                SELECT * FROM cypher('knowledge_graph', $$
-                    MATCH (d:DocumentMeta {document_id: $doc_id})
-                    MATCH (s:Source)
-                    WHERE s.source_id IN $source_ids
-                    CREATE (d)-[:HAS_SOURCE {
-                        created_at: $created_at
-                    }]->(s)
-                    RETURN count(s) as linked_count
-                $$, $params) as (count agtype);
+                MATCH (d:DocumentMeta {document_id: $doc_id})
+                MATCH (s:Source)
+                WHERE s.source_id IN $source_ids
+                CREATE (d)-[:HAS_SOURCE {
+                    created_at: $created_at
+                }]->(s)
+                RETURN count(s) as linked_count
                 """
 
                 link_results = self._execute_cypher(link_query, {
@@ -2301,7 +2296,7 @@ class AGEClient:
                 })
 
                 if link_results:
-                    linked_count = self._parse_agtype(link_results[0].get('count'))
+                    linked_count = self._parse_agtype(link_results[0].get('linked_count'))
                     logger.info(
                         f"Created DocumentMeta {document_id[:16]}... and linked "
                         f"{linked_count}/{len(source_ids)} Source nodes"
