@@ -13,6 +13,12 @@ export interface EdgeInfoBoxProps {
     type: string;
     confidence: number;
     category?: string;
+    // ADR-051: Edge provenance metadata
+    created_by?: string;
+    source?: string;
+    job_id?: string;
+    document_id?: string;
+    created_at?: string;
     x: number;
     y: number;
   };
@@ -73,6 +79,50 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   <span className="text-gray-400">Category:</span>
                   <span className="font-medium text-gray-100">{info.category}</span>
                 </div>
+              )}
+              {/* ADR-051: Provenance metadata section */}
+              {(info.created_by || info.source || info.job_id || info.document_id || info.created_at) && (
+                <>
+                  <div className="pt-2 border-t border-gray-700">
+                    <div className="text-xs font-semibold text-gray-300 mb-1">Provenance</div>
+                  </div>
+                  {info.source && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 text-xs">Source:</span>
+                      <span className="font-medium text-gray-100 text-xs">{info.source}</span>
+                    </div>
+                  )}
+                  {info.created_by && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 text-xs">Created By:</span>
+                      <span className="font-medium text-gray-100 text-xs">{info.created_by}</span>
+                    </div>
+                  )}
+                  {info.created_at && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 text-xs">Created:</span>
+                      <span className="font-medium text-gray-100 text-xs">
+                        {new Date(info.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {info.job_id && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 text-xs">Job ID:</span>
+                      <span className="font-mono text-gray-100 text-xs">
+                        {info.job_id.substring(0, 8)}...
+                      </span>
+                    </div>
+                  )}
+                  {info.document_id && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 text-xs">Document:</span>
+                      <span className="font-mono text-gray-100 text-xs">
+                        {info.document_id.substring(0, 8)}...
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
               <div className="text-xs text-gray-400 pt-2 border-t border-gray-700">
                 Click to dismiss

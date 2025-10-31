@@ -69,6 +69,45 @@ class ConceptRelationship(BaseModel):
     to_label: str = Field(..., description="Target concept label")
     rel_type: str = Field(..., description="Relationship type (e.g., IMPLIES, SUPPORTS)")
     confidence: Optional[float] = Field(None, description="Confidence score (0.0-1.0) if available")
+    # ADR-051: Edge provenance metadata
+    created_by: Optional[str] = Field(None, description="User ID who created this relationship")
+    source: Optional[str] = Field(None, description="Source of relationship: llm_extraction, human_curated, inference")
+    job_id: Optional[str] = Field(None, description="Job ID that created this relationship")
+    document_id: Optional[str] = Field(None, description="Document hash (content_hash) that created this relationship")
+    created_at: Optional[str] = Field(None, description="Timestamp when relationship was created")
+
+
+class ProvenanceDocument(BaseModel):
+    """ADR-051: Document provenance information from DocumentMeta nodes"""
+    document_id: str = Field(..., description="Document hash (content_hash)")
+    filename: str = Field(..., description="Original filename")
+    source_type: Optional[str] = Field(None, description="Source type: file, stdin, mcp, api")
+    source_path: Optional[str] = Field(None, description="Full filesystem path (file ingestion only)")
+    hostname: Optional[str] = Field(None, description="Hostname where ingestion initiated")
+    ingested_by: Optional[str] = Field(None, description="User ID who ingested this document")
+    ingested_at: Optional[str] = Field(None, description="Timestamp when document was ingested")
+    job_id: Optional[str] = Field(None, description="Job ID that ingested this document")
+    source_count: Optional[int] = Field(None, description="Number of source nodes created from this document")
+
+
+class ConceptProvenance(BaseModel):
+    """ADR-051: Provenance tracking for concepts and documents.
+
+    For Concept nodes: Lists source documents via DocumentMeta
+    For DocumentMeta nodes: Shows full document metadata
+    """
+    # For DocumentMeta nodes (direct metadata)
+    filename: Optional[str] = Field(None, description="Filename (for DocumentMeta nodes)")
+    source_type: Optional[str] = Field(None, description="Source type (for DocumentMeta nodes)")
+    source_path: Optional[str] = Field(None, description="Full path (for DocumentMeta nodes)")
+    hostname: Optional[str] = Field(None, description="Hostname (for DocumentMeta nodes)")
+    ingested_by: Optional[str] = Field(None, description="User ID (for DocumentMeta nodes)")
+    created_at: Optional[str] = Field(None, description="Ingestion timestamp (for DocumentMeta nodes)")
+    job_id: Optional[str] = Field(None, description="Job ID (for DocumentMeta nodes)")
+    source_count: Optional[int] = Field(None, description="Source node count (for DocumentMeta nodes)")
+
+    # For Concept nodes (list of source documents)
+    documents: Optional[List[ProvenanceDocument]] = Field(None, description="Source documents (for Concept nodes)")
 
 
 class ConceptDetailsResponse(BaseModel):
@@ -85,6 +124,8 @@ class ConceptDetailsResponse(BaseModel):
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-044)")
+    # ADR-051: Provenance tracking
+    provenance: Optional[ConceptProvenance] = Field(None, description="Provenance information (source documents or document metadata)")
 
 
 # Related Concepts Models

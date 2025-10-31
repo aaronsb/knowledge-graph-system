@@ -343,7 +343,7 @@ async def get_concept_details(
             for record in (instances_result or [])
         ]
 
-        # Get relationships
+        # Get relationships with ADR-051 edge provenance metadata
         relationships_result = client._execute_cypher(f"""
             MATCH (c:Concept {{concept_id: '{concept_id}'}})-[r]->(related:Concept)
             RETURN
@@ -358,7 +358,13 @@ async def get_concept_details(
                 to_id=record['to_id'],
                 to_label=record['to_label'],
                 rel_type=record['rel_type'],
-                confidence=record['props'].get('confidence') if record['props'] else None
+                confidence=record['props'].get('confidence') if record['props'] else None,
+                # ADR-051: Edge provenance metadata
+                created_by=record['props'].get('created_by') if record['props'] else None,
+                source=record['props'].get('source') if record['props'] else None,
+                job_id=record['props'].get('job_id') if record['props'] else None,
+                document_id=record['props'].get('document_id') if record['props'] else None,
+                created_at=record['props'].get('created_at') if record['props'] else None
             )
             for record in (relationships_result or [])
         ]
@@ -374,6 +380,49 @@ async def get_concept_details(
             except Exception as e:
                 logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
+        # ADR-051: Query provenance information
+        # This finds DocumentMeta nodes linked to the concept via Source nodes
+        provenance = None
+        try:
+            from ..models.queries import ConceptProvenance, ProvenanceDocument
+
+            # Query for source documents via DocumentMeta nodes
+            provenance_result = client._execute_cypher(f"""
+                MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS_IN]->(s:Source)
+                MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s)
+                RETURN DISTINCT
+                    d.document_id as document_id,
+                    d.filename as filename,
+                    d.source_type as source_type,
+                    d.source_path as source_path,
+                    d.hostname as hostname,
+                    d.ingested_by as ingested_by,
+                    d.created_at as ingested_at,
+                    d.job_id as job_id,
+                    d.source_count as source_count
+            """)
+
+            if provenance_result and len(provenance_result) > 0:
+                # Build provenance documents list
+                prov_docs = [
+                    ProvenanceDocument(
+                        document_id=rec['document_id'],
+                        filename=rec['filename'],
+                        source_type=rec.get('source_type'),
+                        source_path=rec.get('source_path'),
+                        hostname=rec.get('hostname'),
+                        ingested_by=rec.get('ingested_by'),
+                        ingested_at=rec.get('ingested_at'),
+                        job_id=rec.get('job_id'),
+                        source_count=rec.get('source_count')
+                    )
+                    for rec in provenance_result
+                ]
+
+                provenance = ConceptProvenance(documents=prov_docs)
+        except Exception as e:
+            logger.warning(f"Failed to fetch provenance for {concept_id}: {e}")
+
         return ConceptDetailsResponse(
             concept_id=props.get('concept_id', ''),
             label=props.get('label', ''),
@@ -381,7 +430,8 @@ async def get_concept_details(
             documents=documents,
             instances=instances,
             relationships=relationships,
-            grounding_strength=grounding_strength
+            grounding_strength=grounding_strength,
+            provenance=provenance  # ADR-051
         )
 
     except HTTPException:
