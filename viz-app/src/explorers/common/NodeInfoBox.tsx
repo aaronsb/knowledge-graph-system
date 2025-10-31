@@ -296,19 +296,44 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
 
                     {/* Source documents (for Concept nodes) */}
                     {detailedData.provenance.documents && detailedData.provenance.documents.length > 0 && (
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <div className="text-gray-300 font-medium mb-1">Source Documents:</div>
                         {detailedData.provenance.documents.map((doc: any, idx: number) => (
-                          <div key={doc.document_id || idx} className="pl-2 border-l-2 border-gray-600 space-y-1">
-                            <div className="text-gray-300">{doc.filename}</div>
-                            {doc.source_type && (
-                              <div className="text-gray-400">Type: {doc.source_type}</div>
-                            )}
-                            {doc.ingested_at && (
-                              <div className="text-gray-400">
-                                Ingested: {new Date(doc.ingested_at).toLocaleDateString()}
-                              </div>
-                            )}
+                          <div key={doc.document_id || idx} className="pl-2 border-l-2 border-gray-600">
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="text-gray-300 font-medium">{doc.filename}</div>
+                              {doc.source_type && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">
+                                  {doc.source_type}
+                                </span>
+                              )}
+                            </div>
+                            <div className="space-y-0.5 text-xs">
+                              {doc.ingested_at && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>Ingested:</span>
+                                  <span>{new Date(doc.ingested_at).toLocaleString()}</span>
+                                </div>
+                              )}
+                              {doc.ingested_by && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>By:</span>
+                                  <span>User {doc.ingested_by}</span>
+                                </div>
+                              )}
+                              {doc.job_id && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>Job:</span>
+                                  <span className="font-mono">{doc.job_id.substring(0, 12)}...</span>
+                                </div>
+                              )}
+                              {doc.source_count !== null && doc.source_count !== undefined && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>Chunks:</span>
+                                  <span>{doc.source_count}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
