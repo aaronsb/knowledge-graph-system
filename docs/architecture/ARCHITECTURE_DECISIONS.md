@@ -68,6 +68,7 @@ All ADRs follow a consistent format:
 | [ADR-049](ADR-049-rate-limiting-and-concurrency.md) | Rate Limiting and Per-Provider Concurrency | Accepted | Exponential backoff retry (8 attempts) + per-provider semaphores (OpenAI=8, Anthropic=4, Ollama=1) with database-first configuration to eliminate 429 errors across concurrent workers |
 | [ADR-050](ADR-050-scheduled-jobs-system.md) | Scheduled Jobs System | Proposed | Simple scheduler loop + launcher pattern extends existing job queue for automated maintenance tasks (category refresh, vocab consolidation) with ownership permissions and polling-based condition checks |
 | [ADR-051](ADR-051-graph-document-deduplication.md) | Graph-Based Provenance Tracking | Proposed | DocumentMeta nodes + edge metadata for complete audit trail (enhances ADR-014) - prevents job deletion from breaking deduplication, tracks source provenance (file/stdin/mcp/api) and relationship origin (who/when/how), MCP silent enrichment maintains ADR-044 compliance |
+| [ADR-052](ADR-052-vocabulary-expansion-consolidation-cycle.md) | Vocabulary Expansion-Consolidation Cycle | Accepted | Optimistic vocabulary generation + selective pruning mirrors biological memory consolidation - vocabulary must exist before knowledge can be expressed (general methods > prediction, per Sutton's Bitter Lesson) |
 
 ## How to Use This Index
 

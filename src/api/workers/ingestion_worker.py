@@ -184,7 +184,11 @@ def run_ingestion_worker(
                 stats=stats,
                 existing_concepts=existing_concepts,
                 recent_concept_ids=recent_concept_ids,
-                verbose=False  # Suppress detailed output in background
+                verbose=False,  # Suppress detailed output in background
+                # ADR-051: Pass provenance metadata for edge tracking
+                job_id=job_id,
+                document_id=job_data["content_hash"],
+                user_id=job_data.get("user_id")
             )
 
             # Update progress with detailed stats AND save resume checkpoint
@@ -211,6 +215,36 @@ def run_ingestion_worker(
                     "recent_concept_ids": recent_concept_ids[-50:]  # Keep last 50 for context
                 }
             })
+
+        # ADR-051: Create DocumentMeta node after successful ingestion
+        # This makes the graph the source of truth for deduplication,
+        # preventing job deletion from breaking duplicate detection
+        try:
+            # Reconstruct source_ids (deterministic pattern from process_chunk)
+            source_ids = [
+                f"{filename.replace(' ', '_').lower()}_chunk{i}"
+                for i in range(1, len(chunks) + 1)
+            ]
+
+            # Create DocumentMeta node and link to all Source nodes
+            age_client.create_document_meta(
+                document_id=job_data["content_hash"],  # Hash-based ID
+                content_hash=job_data["content_hash"],
+                ontology=ontology,
+                source_count=stats.sources_created,
+                ingested_by=job_data.get("user_id", "unknown"),
+                job_id=job_id,
+                filename=filename,
+                source_type=job_data.get("source_type"),       # "file" | "stdin" | "mcp" | "api"
+                file_path=job_data.get("source_path"),         # Full path (not tmp_path)
+                hostname=job_data.get("source_hostname"),      # Hostname where ingested
+                source_ids=source_ids
+            )
+            logger.info(f"✓ Created DocumentMeta node: {job_data['content_hash'][:16]}... ({stats.sources_created} sources)")
+        except Exception as e:
+            # Log but don't fail the job - graph metadata is nice-to-have
+            logger.warning(f"Failed to create DocumentMeta node: {e}")
+            # Job still succeeds - metadata creation failure shouldn't kill the ingestion
 
         # Close AGE connection
         age_client.close()

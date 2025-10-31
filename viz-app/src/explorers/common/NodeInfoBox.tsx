@@ -219,6 +219,130 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
               </div>
             )}
 
+            {/* ADR-051: Provenance Section */}
+            {detailedData?.provenance && (
+              <div className="border-b border-gray-700">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSection('provenance');
+                  }}
+                  className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-700 transition-colors"
+                >
+                  <span className="font-medium text-sm text-gray-300">
+                    Provenance
+                  </span>
+                  {expandedSections.has('provenance') ? (
+                    <ChevronDown size={16} className="text-gray-500" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-500" />
+                  )}
+                </button>
+                {expandedSections.has('provenance') && (
+                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
+                    {/* Document metadata (for DocumentMeta nodes) */}
+                    {detailedData.provenance.filename && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Filename:</span>
+                          <span className="font-medium text-gray-100">{detailedData.provenance.filename}</span>
+                        </div>
+                        {detailedData.provenance.source_type && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Source Type:</span>
+                            <span className="font-medium text-gray-100">{detailedData.provenance.source_type}</span>
+                          </div>
+                        )}
+                        {detailedData.provenance.source_path && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Path:</span>
+                            <span className="font-mono text-gray-100 text-xs break-all">{detailedData.provenance.source_path}</span>
+                          </div>
+                        )}
+                        {detailedData.provenance.hostname && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Hostname:</span>
+                            <span className="font-medium text-gray-100">{detailedData.provenance.hostname}</span>
+                          </div>
+                        )}
+                        {detailedData.provenance.ingested_by && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Ingested By:</span>
+                            <span className="font-medium text-gray-100">{detailedData.provenance.ingested_by}</span>
+                          </div>
+                        )}
+                        {detailedData.provenance.created_at && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Ingested:</span>
+                            <span className="font-medium text-gray-100">
+                              {new Date(detailedData.provenance.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        {detailedData.provenance.job_id && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Job ID:</span>
+                            <span className="font-mono text-gray-100">{detailedData.provenance.job_id.substring(0, 12)}...</span>
+                          </div>
+                        )}
+                        {detailedData.provenance.source_count && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Source Nodes:</span>
+                            <span className="font-medium text-gray-100">{detailedData.provenance.source_count}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Source documents (for Concept nodes) */}
+                    {detailedData.provenance.documents && detailedData.provenance.documents.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-gray-300 font-medium mb-1">Source Documents:</div>
+                        {detailedData.provenance.documents.map((doc: any, idx: number) => (
+                          <div key={doc.document_id || idx} className="pl-2 border-l-2 border-gray-600">
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="text-gray-300 font-medium">{doc.filename}</div>
+                              {doc.source_type && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">
+                                  {doc.source_type}
+                                </span>
+                              )}
+                            </div>
+                            <div className="space-y-0.5 text-xs">
+                              {doc.ingested_at && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>Ingested:</span>
+                                  <span>{new Date(doc.ingested_at).toLocaleString()}</span>
+                                </div>
+                              )}
+                              {doc.ingested_by && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>By:</span>
+                                  <span>User {doc.ingested_by}</span>
+                                </div>
+                              )}
+                              {doc.job_id && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>Job:</span>
+                                  <span className="font-mono">{doc.job_id.substring(0, 12)}...</span>
+                                </div>
+                              )}
+                              {doc.source_count !== null && doc.source_count !== undefined && (
+                                <div className="flex justify-between text-gray-400">
+                                  <span>Chunks:</span>
+                                  <span>{doc.source_count}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {loading && (
               <div className="px-4 py-3 text-center text-sm text-gray-400">
                 Loading details...

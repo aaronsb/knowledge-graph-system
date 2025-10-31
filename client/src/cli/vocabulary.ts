@@ -198,11 +198,12 @@ export const vocabularyCommand = new Command('vocabulary')
   )
   .addCommand(
     new Command('consolidate')
-      .description('AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations with confidence, and executes or prompts based on mode. Workflow: 1) analyze vocabulary, 2) identify candidates, 3) present recommendations, 4) execute or prompt, 5) apply merges (deprecate source, redirect edges), 6) iterate until target reached. Modes: interactive (default, prompts each), dry-run (shows candidates without executing), AITL auto (auto-executes high confidence). Threshold guidelines: 0.95+ very conservative, 0.90-0.95 balanced AITL, 0.85-0.90 aggressive requires review, <0.85 very aggressive manual review.')
+      .description('AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations with confidence, and executes or prompts based on mode. Workflow: 1) analyze vocabulary, 2) identify candidates, 3) present recommendations, 4) execute or prompt, 5) apply merges (deprecate source, redirect edges), 6) prune unused types (default). Modes: interactive (default, prompts each), dry-run (shows candidates without executing), AITL auto (auto-executes high confidence). Threshold guidelines: 0.95+ very conservative, 0.90-0.95 balanced AITL, 0.85-0.90 aggressive requires review, <0.85 very aggressive manual review.')
       .option('-t, --target <size>', 'Target vocabulary size', '90')
       .option('--threshold <value>', 'Auto-execute threshold (0.0-1.0)', '0.90')
       .option('--dry-run', 'Evaluate candidates without executing merges')
       .option('--auto', 'Auto-execute high confidence merges (AITL mode)')
+      .option('--no-prune-unused', 'Skip pruning vocabulary types with 0 uses (default: prune enabled)')
       .action(async (options) => {
         try {
           const client = createClientFromEnv();
@@ -210,6 +211,7 @@ export const vocabularyCommand = new Command('vocabulary')
           const threshold = parseFloat(options.threshold);
           const dryRun = options.dryRun || false;
           const autoMode = options.auto || false;
+          const pruneUnused = options.pruneUnused !== false;  // Default: true (prune enabled)
 
           // Validate inputs
           if (isNaN(targetSize) || targetSize < 30 || targetSize > 200) {
@@ -237,6 +239,7 @@ export const vocabularyCommand = new Command('vocabulary')
 
           console.log(`${colors.ui.key('Target Size:')} ${coloredCount(targetSize)}`);
           console.log(`${colors.ui.key('Auto-Execute Threshold:')} ${colors.ui.value((threshold * 100).toFixed(0) + '%')}`);
+          console.log(`${colors.ui.key('Prune Unused:')} ${pruneUnused ? colors.status.success('Enabled') : colors.status.dim('Disabled')}`);
 
           // Run consolidation
           console.log('\n' + colors.status.dim('Running LLM-based consolidation workflow...'));
@@ -246,7 +249,8 @@ export const vocabularyCommand = new Command('vocabulary')
             target_size: targetSize,
             batch_size: 1,
             auto_execute_threshold: threshold,
-            dry_run: dryRun || !autoMode  // Dry-run if not in auto mode
+            dry_run: dryRun || !autoMode,  // Dry-run if not in auto mode
+            prune_unused: pruneUnused  // Pass prune flag
           });
 
           // Display results
@@ -264,6 +268,9 @@ export const vocabularyCommand = new Command('vocabulary')
           }
           console.log(`  ${colors.stats.label('Merged:')} ${coloredCount(result.auto_executed.length)}`);
           console.log(`  ${colors.stats.label('Rejected:')} ${coloredCount(result.rejected.length)}`);
+          if (result.pruned_count !== undefined && result.pruned_count > 0) {
+            console.log(`  ${colors.stats.label('Pruned:')} ${colors.status.success(result.pruned_count.toString())}`);
+          }
 
           // Auto-executed merges
           if (result.auto_executed.length > 0) {

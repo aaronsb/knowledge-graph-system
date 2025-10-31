@@ -32,7 +32,7 @@ References:
     - ADR-025: Dynamic Relationship Vocabulary
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
 from datetime import datetime
 import logging
@@ -867,6 +867,99 @@ class VocabularyManager:
         )
 
         return results
+
+    async def prune_unused_concepts(self, dry_run: bool = False) -> Dict[str, Any]:
+        """
+        Prune vocabulary types with 0 uses (excludes protected builtin types).
+
+        This method identifies all vocabulary types that have:
+        - edge_count = 0 (no edges in the graph)
+        - is_builtin = False (not a protected builtin type)
+
+        Args:
+            dry_run: If True, identify candidates but don't execute (default: False)
+
+        Returns:
+            Dict with:
+                - pruned: List of pruned type names
+                - skipped: List of (type, reason) tuples
+                - pruned_count: Number of types pruned
+                - skipped_count: Number of types skipped
+
+        Example:
+            >>> result = await manager.prune_unused_concepts(dry_run=False)
+            >>> print(f"Pruned {result['pruned_count']} unused types")
+        """
+        logger.info(f"Pruning unused vocabulary types (dry_run={dry_run})")
+
+        pruned = []
+        skipped = []
+
+        try:
+            # Get all active edge types
+            edge_types = await self._get_all_edge_types()
+            logger.info(f"Checking {len(edge_types)} active vocabulary types")
+
+            for edge_type in edge_types:
+                # Get detailed info for each type
+                info = self.db.get_edge_type_info(edge_type)
+                if not info:
+                    skipped.append((edge_type, "Info not found"))
+                    continue
+
+                edge_count = info.get('edge_count', 0)
+                is_builtin = info.get('is_builtin', False)
+
+                # Skip if builtin (protected)
+                if is_builtin:
+                    logger.debug(f"Skipping builtin type: {edge_type}")
+                    skipped.append((edge_type, "Builtin (protected)"))
+                    continue
+
+                # Skip if has edges
+                if edge_count > 0:
+                    logger.debug(f"Skipping type with edges: {edge_type} (count: {edge_count})")
+                    skipped.append((edge_type, f"Has {edge_count} edges"))
+                    continue
+
+                # This type can be pruned
+                logger.info(f"Found unused type: {edge_type} (edge_count=0, is_builtin=False)")
+
+                if not dry_run:
+                    # Actually DELETE the vocabulary type
+                    try:
+                        # Delete the VocabType node from the graph
+                        # This permanently removes unused vocabulary
+                        self.db._execute_cypher(
+                            """
+                            MATCH (v:VocabType {name: $type_name})
+                            DETACH DELETE v
+                            """,
+                            params={"type_name": edge_type}
+                        )
+                        logger.info(f"  ✓ Pruned (deleted): {edge_type}")
+                        pruned.append(edge_type)
+                    except Exception as e:
+                        logger.error(f"  ✗ Failed to prune {edge_type}: {e}")
+                        skipped.append((edge_type, f"Prune failed: {str(e)}"))
+                else:
+                    logger.info(f"  [DRY RUN] Would prune: {edge_type}")
+                    pruned.append(edge_type)
+
+            logger.info(
+                f"Prune complete: {len(pruned)} pruned, {len(skipped)} skipped"
+            )
+
+            return {
+                'pruned': pruned,
+                'skipped': skipped,
+                'pruned_count': len(pruned),
+                'skipped_count': len(skipped)
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to prune unused concepts: {e}", exc_info=True)
+            raise
 
     async def _get_minimal_scores(self) -> Dict[str, EdgeTypeScore]:
         """

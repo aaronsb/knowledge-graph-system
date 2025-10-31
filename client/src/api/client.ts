@@ -955,12 +955,14 @@ export class KnowledgeGraphClient {
     batch_size?: number;
     auto_execute_threshold?: number;
     dry_run?: boolean;
+    prune_unused?: boolean;
   }): Promise<any> {
     const response = await this.client.post('/vocabulary/consolidate', {
       target_size: request.target_size ?? 90,
       batch_size: request.batch_size ?? 1,
       auto_execute_threshold: request.auto_execute_threshold ?? 0.90,
-      dry_run: request.dry_run ?? false
+      dry_run: request.dry_run ?? false,
+      prune_unused: request.prune_unused ?? true  // Default: prune unused types
     });
     return response.data;
   }

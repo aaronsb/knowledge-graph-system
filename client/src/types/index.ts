@@ -113,6 +113,10 @@ export interface IngestRequest {
   auto_approve?: boolean;  // ADR-014: Skip approval step
   processing_mode?: string;  // Serial or parallel processing
   options?: IngestionOptions;
+  // ADR-051: Source provenance metadata
+  source_type?: string;      // "file" | "stdin" | "mcp" | "api"
+  source_path?: string;       // Full filesystem path (file ingestion only)
+  source_hostname?: string;   // Hostname where ingestion initiated
 }
 
 export interface ApiConfig {

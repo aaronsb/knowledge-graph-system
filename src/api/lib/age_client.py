@@ -8,6 +8,7 @@ and vector similarity search using PostgreSQL + Apache AGE extension.
 import os
 import json
 import logging
+from datetime import datetime, timezone
 from typing import List, Dict, Optional, Any
 import psycopg2
 from psycopg2 import pool, extras
@@ -536,10 +537,16 @@ class AGEClient:
         to_id: str,
         rel_type: str,
         category: str,
-        confidence: float
+        confidence: float,
+        # ADR-051: Edge metadata for provenance tracking
+        created_by: Optional[str] = None,
+        source: str = "llm_extraction",
+        job_id: Optional[str] = None,
+        document_id: Optional[str] = None,
+        created_at: Optional[str] = None
     ) -> bool:
         """
-        Create a relationship between two concepts with category metadata.
+        Create a relationship between two concepts with category and provenance metadata.
 
         Args:
             from_id: Source concept ID
@@ -547,6 +554,11 @@ class AGEClient:
             rel_type: Canonical relationship type (normalized via Porter Stemmer matcher)
             category: Relationship category (logical_truth, causal, structural, etc.)
             confidence: Confidence score (0.0-1.0)
+            created_by: User ID who created this relationship (optional)
+            source: Origin of relationship ("llm_extraction" or "human_curation", default: "llm_extraction")
+            job_id: Job ID that created this relationship (optional)
+            document_id: Document hash where this relationship originated (optional)
+            created_at: Timestamp (ISO format, defaults to current UTC time)
 
         Returns:
             True if relationship created successfully
@@ -558,19 +570,40 @@ class AGEClient:
         Note:
             Relationship type validation happens in ingestion layer via normalize_relationship_type().
             This method trusts that rel_type has been normalized to one of the 30 canonical types.
+
+            ADR-051: Edge metadata enables:
+            - Audit trail: "Which job created this relationship?"
+            - Human vs LLM distinction: Weight human-curated relationships differently
+            - Cascade delete: Delete all edges from a document
+            - MCP silent storage: Metadata NOT exposed to Claude (ADR-044)
         """
         if not 0.0 <= confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {confidence}")
+
+        # Build properties dict (only include non-None values)
+        properties = {
+            "confidence": confidence,
+            "category": category,
+            "source": source,
+            "created_at": created_at if created_at else datetime.now(timezone.utc).isoformat()
+        }
+
+        if created_by:
+            properties["created_by"] = created_by
+        if job_id:
+            properties["job_id"] = job_id
+        if document_id:
+            properties["document_id"] = document_id
+
+        # Build properties string for Cypher query
+        props_str = ", ".join([f"{k}: ${k}" for k in properties.keys()])
 
         # Note: AGE doesn't support dynamic relationship types in parameterized queries
         # We have to use string interpolation for the relationship type
         query = f"""
         MATCH (c1:Concept {{concept_id: $from_id}})
         MATCH (c2:Concept {{concept_id: $to_id}})
-        MERGE (c1)-[r:{rel_type} {{
-            confidence: $confidence,
-            category: $category
-        }}]->(c2)
+        MERGE (c1)-[r:{rel_type} {{{props_str}}}]->(c2)
         RETURN c1, r, c2
         """
 
@@ -580,8 +613,7 @@ class AGEClient:
                 params={
                     "from_id": from_id,
                     "to_id": to_id,
-                    "confidence": confidence,
-                    "category": category
+                    **properties
                 },
                 fetch_one=True
             )
@@ -2083,6 +2115,212 @@ class AGEClient:
         finally:
             conn.commit()
             self.pool.putconn(conn)
+
+    # =========================================================================
+    # DocumentMeta Operations (ADR-051: Graph-Based Provenance Tracking)
+    # =========================================================================
+
+    def get_document_meta(self, content_hash: str, ontology: str) -> Optional[Dict[str, Any]]:
+        """
+        Check if a document already exists in the graph (ADR-051).
+
+        Used for deduplication: checks graph (persistent state) instead of
+        jobs table (ephemeral log). This prevents job deletion from breaking
+        deduplication.
+
+        Args:
+            content_hash: SHA-256 hash of document content (format: "sha256:abc123...")
+            ontology: Target ontology name
+
+        Returns:
+            Document metadata dict if found, None otherwise
+            {
+                "document_id": "sha256:abc123...",
+                "content_hash": "sha256:abc123...",
+                "ontology": "My Docs",
+                "filename": "chapter1.txt",
+                "source_type": "file",
+                "file_path": "/home/user/docs/chapter1.txt",
+                "hostname": "workstation-01",
+                "ingested_at": "2025-10-31T12:34:56Z",
+                "ingested_by": "user_123",
+                "job_id": "job_xyz",
+                "source_count": 15
+            }
+
+        Example:
+            >>> doc = client.get_document_meta("sha256:abc123...", "My Docs")
+            >>> if doc:
+            >>>     print(f"Document already ingested: {doc['filename']}")
+        """
+        query = """
+        MATCH (d:DocumentMeta {content_hash: $hash, ontology: $ontology})
+        RETURN d
+        """
+
+        try:
+            results = self._execute_cypher(query, {
+                "hash": content_hash,
+                "ontology": ontology
+            })
+
+            if results and len(results) > 0:
+                agtype_result = results[0].get('d')
+                if agtype_result:
+                    parsed = self._parse_agtype(agtype_result)
+                    return parsed.get('properties', {}) if isinstance(parsed, dict) else None
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to check DocumentMeta for hash {content_hash[:16]}...: {e}")
+            return None
+
+    def create_document_meta(
+        self,
+        document_id: str,
+        content_hash: str,
+        ontology: str,
+        source_count: int,
+        ingested_by: str,
+        job_id: str,
+        filename: Optional[str] = None,
+        source_type: Optional[str] = None,
+        file_path: Optional[str] = None,
+        hostname: Optional[str] = None,
+        ingested_at: Optional[str] = None,
+        source_ids: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Create a DocumentMeta node and link it to Source nodes (ADR-051).
+
+        Tracks successfully ingested documents as first-class graph citizens.
+        Enables deduplication via graph (persistent) instead of jobs table (ephemeral).
+
+        Args:
+            document_id: Unique identifier (typically same as content_hash)
+            content_hash: SHA-256 hash for deduplication
+            ontology: Target ontology name
+            source_count: Number of Source nodes created from this document
+            ingested_by: User ID who submitted the job
+            job_id: Job ID that ingested this document
+            filename: Display name (optional, best-effort)
+            source_type: "file" | "stdin" | "mcp" | "api" (optional)
+            file_path: Full filesystem path (optional, file ingestion only)
+            hostname: Hostname where ingested (optional, CLI only)
+            ingested_at: ISO timestamp (optional, defaults to now())
+            source_ids: List of source_ids to link via HAS_SOURCE relationship (optional)
+
+        Returns:
+            Created DocumentMeta node properties
+
+        Raises:
+            Exception: If node creation or linking fails
+
+        Example:
+            >>> client.create_document_meta(
+            ...     document_id="sha256:abc123...",
+            ...     content_hash="sha256:abc123...",
+            ...     ontology="My Docs",
+            ...     source_count=15,
+            ...     ingested_by="user_123",
+            ...     job_id="job_xyz",
+            ...     filename="chapter1.txt",
+            ...     source_type="file",
+            ...     file_path="/home/user/docs/chapter1.txt",
+            ...     hostname="workstation-01",
+            ...     source_ids=["chapter1_txt_chunk1", "chapter1_txt_chunk2", ...]
+            ... )
+        """
+        from datetime import datetime, timezone
+
+        # Build properties dict (only include non-None values)
+        properties = {
+            "document_id": document_id,
+            "content_hash": content_hash,
+            "ontology": ontology,
+            "source_count": source_count,
+            "ingested_by": ingested_by,
+            "job_id": job_id
+        }
+
+        # Add optional provenance metadata (best-effort)
+        if filename:
+            properties["filename"] = filename
+        if source_type:
+            properties["source_type"] = source_type
+        if file_path:
+            properties["file_path"] = file_path
+        if hostname:
+            properties["hostname"] = hostname
+
+        # Add timestamp (default to now if not provided)
+        if ingested_at:
+            properties["ingested_at"] = ingested_at
+        else:
+            properties["ingested_at"] = datetime.now(timezone.utc).isoformat()
+
+        # Create DocumentMeta node with explicit properties
+        # Build property assignments dynamically
+        prop_assignments = []
+        for key, value in properties.items():
+            prop_assignments.append(f"{key}: ${key}")
+        props_str = ", ".join(prop_assignments)
+
+        create_query = f"""
+        CREATE (d:DocumentMeta {{{props_str}}})
+        RETURN d
+        """
+
+        try:
+            results = self._execute_cypher(create_query, properties)
+
+            if not results:
+                raise Exception("DocumentMeta node creation returned no results")
+
+            # Parse created node
+            agtype_result = results[0].get('d')
+            parsed = self._parse_agtype(agtype_result)
+            created_doc = parsed.get('properties', {}) if isinstance(parsed, dict) else {}
+
+            # Link to Source nodes if source_ids provided
+            if source_ids and len(source_ids) > 0:
+                link_query = """
+                MATCH (d:DocumentMeta {document_id: $doc_id})
+                MATCH (s:Source)
+                WHERE s.source_id IN $source_ids
+                CREATE (d)-[:HAS_SOURCE {
+                    created_at: $created_at
+                }]->(s)
+                RETURN count(s) as linked_count
+                """
+
+                link_results = self._execute_cypher(link_query, {
+                    "doc_id": document_id,
+                    "source_ids": source_ids,
+                    "created_at": properties["ingested_at"]
+                })
+
+                if link_results:
+                    linked_count = self._parse_agtype(link_results[0].get('linked_count'))
+                    logger.info(
+                        f"Created DocumentMeta {document_id[:16]}... and linked "
+                        f"{linked_count}/{len(source_ids)} Source nodes"
+                    )
+                else:
+                    logger.warning(
+                        f"Created DocumentMeta {document_id[:16]}... but failed to link Source nodes"
+                    )
+
+            logger.info(
+                f"✓ Created DocumentMeta: {properties.get('filename', document_id[:16])}... "
+                f"({source_count} sources, type: {source_type or 'unknown'})"
+            )
+
+            return created_doc
+
+        except Exception as e:
+            raise Exception(f"Failed to create DocumentMeta {document_id[:16]}...: {e}")
 
     @property
     def facade(self):

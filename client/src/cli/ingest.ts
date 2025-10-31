@@ -6,7 +6,8 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import * as fs from 'fs';
-import * as path from 'path';
+import * as nodePath from 'path';  // Renamed to avoid shadowing with parameter names
+import * as os from 'os';  // ADR-051: Get hostname for provenance
 import { createClientFromEnv } from '../api/client';
 import { IngestRequest, JobStatus, DuplicateJobResponse, JobSubmitResponse } from '../types';
 import { getConfig } from '../lib/config';
@@ -54,6 +55,10 @@ ingestCommand
           target_words: parseInt(options.targetWords),
           overlap_words: parseInt(options.overlapWords),
         },
+        // ADR-051: Source provenance metadata
+        source_type: 'file',
+        source_path: nodePath.resolve(path),  // Convert to absolute path
+        source_hostname: os.hostname(),
       };
 
       console.log(chalk.blue('Submitting document for ingestion...'));
@@ -163,7 +168,7 @@ ingestCommand
       const filesByOntology = new Map<string, string[]>();
       for (const { file, ontologyDir } of filesWithDirs) {
         const ontologyName = options.directoriesAsOntologies
-          ? path.basename(ontologyDir)
+          ? nodePath.basename(ontologyDir)
           : options.ontology;
 
         if (!filesByOntology.has(ontologyName)) {
@@ -179,7 +184,7 @@ ingestCommand
           console.log(chalk.gray(`  • ${ontology}: ${files.length} file(s)`));
         }
       } else {
-        filesWithDirs.forEach(({ file }) => console.log(chalk.gray(`  • ${path.relative(dir, file)}`)));
+        filesWithDirs.forEach(({ file }) => console.log(chalk.gray(`  • ${nodePath.relative(dir, file)}`)));
       }
 
       // Dry-run mode: check duplicates without submitting
@@ -193,15 +198,19 @@ ingestCommand
 
         for (const { file: filePath, ontologyDir } of filesWithDirs) {
           const ontologyName = options.directoriesAsOntologies
-            ? path.basename(ontologyDir)
+            ? nodePath.basename(ontologyDir)
             : options.ontology;
 
           const request: IngestRequest = {
             ontology: ontologyName,
-            filename: path.basename(filePath),
+            filename: nodePath.basename(filePath),
             force: options.force,
             auto_approve: false,  // Don't matter for dry-run, but set conservative
             processing_mode: 'serial',
+            // ADR-051: Source provenance metadata
+            source_type: 'file',
+            source_path: nodePath.resolve(filePath),
+            source_hostname: os.hostname(),
           };
 
           try {
@@ -209,8 +218,8 @@ ingestCommand
             const result = await client.ingestFile(filePath, request);
 
             const displayPath = options.directoriesAsOntologies
-              ? `[${ontologyName}] ${path.basename(filePath)}`
-              : path.relative(dir, filePath);
+              ? `[${ontologyName}] ${nodePath.basename(filePath)}`
+              : nodePath.relative(dir, filePath);
 
             if ('duplicate' in result && result.duplicate) {
               wouldSkip++;
@@ -224,7 +233,7 @@ ingestCommand
             }
           } catch (error: any) {
             wouldSkip++;
-            skipDetails.push(`  ${chalk.red('✗')} ${chalk.gray(path.relative(dir, filePath))} ${chalk.dim(`(${error.message})`)}`);
+            skipDetails.push(`  ${chalk.red('✗')} ${chalk.gray(nodePath.relative(dir, filePath))} ${chalk.dim(`(${error.message})`)}`);
           }
         }
 
@@ -263,11 +272,11 @@ ingestCommand
 
       for (const { file: filePath, ontologyDir } of filesWithDirs) {
         const ontologyName = options.directoriesAsOntologies
-          ? path.basename(ontologyDir)
+          ? nodePath.basename(ontologyDir)
           : options.ontology;
         const request: IngestRequest = {
           ontology: ontologyName,
-          filename: path.basename(filePath),
+          filename: nodePath.basename(filePath),
           force: options.force,
           auto_approve: autoApprove,
           processing_mode: options.parallel ? 'parallel' : 'serial',
@@ -275,6 +284,10 @@ ingestCommand
             target_words: parseInt(options.targetWords),
             overlap_words: parseInt(options.overlapWords),
           },
+          // ADR-051: Source provenance metadata
+          source_type: 'file',
+          source_path: nodePath.resolve(filePath),
+          source_hostname: os.hostname(),
         };
 
         try {
@@ -282,23 +295,23 @@ ingestCommand
 
           if ('duplicate' in result && result.duplicate) {
             const displayPath = options.directoriesAsOntologies
-              ? `[${ontologyName}] ${path.basename(filePath)}`
-              : path.relative(dir, filePath);
+              ? `[${ontologyName}] ${nodePath.basename(filePath)}`
+              : nodePath.relative(dir, filePath);
             console.log(chalk.yellow(`⚠ Skipped (duplicate): ${displayPath}`));
             skipped++;
           } else {
             const submitResult = result as JobSubmitResponse;
             jobIds.push(submitResult.job_id);
             const displayPath = options.directoriesAsOntologies
-              ? `[${ontologyName}] ${path.basename(filePath)}`
-              : path.relative(dir, filePath);
+              ? `[${ontologyName}] ${nodePath.basename(filePath)}`
+              : nodePath.relative(dir, filePath);
             console.log(chalk.green(`✓ Queued: ${displayPath} → ${submitResult.job_id.substring(0, 12)}...`));
             submitted++;
           }
         } catch (error: any) {
           const displayPath = options.directoriesAsOntologies
-            ? `[${ontologyName}] ${path.basename(filePath)}`
-            : path.relative(dir, filePath);
+            ? `[${ontologyName}] ${nodePath.basename(filePath)}`
+            : nodePath.relative(dir, filePath);
           console.log(chalk.red(`✗ Failed: ${displayPath} - ${error.message}`));
           skipped++;
         }
@@ -355,6 +368,8 @@ ingestCommand
         options: {
           target_words: parseInt(options.targetWords),
         },
+        // ADR-051: Source provenance metadata (stdin/direct text input)
+        source_type: 'stdin',
       };
 
       console.log(chalk.blue('Submitting text for ingestion...'));
@@ -403,7 +418,7 @@ function collectFiles(dir: string, patterns: string[], recurse: boolean, maxDept
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
+    const fullPath = nodePath.join(dir, entry.name);
 
     if (entry.isDirectory() && recurse && currentDepth < maxDepth) {
       // Recurse into subdirectory
@@ -449,7 +464,7 @@ function collectFilesWithDirectories(
   const entries = fs.readdirSync(baseDir, { withFileTypes: true });
 
   for (const entry of entries) {
-    const fullPath = path.join(baseDir, entry.name);
+    const fullPath = nodePath.join(baseDir, entry.name);
 
     if (entry.isDirectory() && recurse && currentDepth < maxDepth) {
       // Recurse into subdirectory - subdirectory becomes the ontology

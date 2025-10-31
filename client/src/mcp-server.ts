@@ -830,6 +830,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             target_words: toolArgs.target_words as number || 1000,
             overlap_words: toolArgs.overlap_words as number || 200,
           },
+          // ADR-051: Silent enrichment - MCP server adds source metadata
+          // This metadata is NOT exposed in the tool schema (ADR-044 compliance)
+          source_type: 'mcp',
         });
         return {
           content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],

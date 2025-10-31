@@ -385,6 +385,7 @@ class ConsolidateVocabularyRequest(BaseModel):
     batch_size: int = Field(1, ge=1, le=20, description="Number of candidates per iteration (usually 1)")
     auto_execute_threshold: float = Field(0.90, ge=0.0, le=1.0, description="Auto-execute merges above this similarity")
     dry_run: bool = Field(False, description="Evaluate candidates without executing merges")
+    prune_unused: bool = Field(True, description="Prune vocabulary types with 0 uses (excludes protected builtin types). Use --no-prune-unused to disable.")
 
 
 class MergeResultInfo(BaseModel):
@@ -427,6 +428,8 @@ class ConsolidateVocabularyResponse(BaseModel):
     auto_executed: List[MergeResultInfo]
     needs_review: List[ReviewInfo]
     rejected: List[RejectionInfo]
+    pruned: Optional[List[str]] = None  # List of pruned (deleted) unused types
+    pruned_count: Optional[int] = None  # Number of types pruned
     message: str
 
 

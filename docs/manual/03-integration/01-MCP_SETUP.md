@@ -157,13 +157,7 @@ open -a TextEdit ~/Library/Application\ Support/Claude/claude_desktop_config.jso
 ```json
 {
   "mcpServers": {
-    "knowledge-graph": {
-      "command": "kg-mcp-server",
-      "env": {
-        "KG_USERNAME": "admin",
-        "KG_PASSWORD": "your-password-here"
-      }
-    }
+
   }
 }
 ```
@@ -176,13 +170,15 @@ open -a TextEdit ~/Library/Application\ Support/Claude/claude_desktop_config.jso
     "existing-server": {
       "command": "some-other-mcp-server"
     },
-    "knowledge-graph": {
-      "command": "kg-mcp-server",
-      "env": {
-        "KG_USERNAME": "admin",
-        "KG_PASSWORD": "your-password-here"
-      }
-    }
+    "knowledge-graph": {  
+        "command": "kg-mcp-server",  
+        "args": [],  
+        "env": {  
+          "KG_API_URL": "http://localhost:8000",  
+          "KG_USERNAME": "claude",  
+          "KG_PASSWORD": "Password1!"  
+        }  
+     }
   }
 }
 ```

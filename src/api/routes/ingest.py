@@ -125,6 +125,10 @@ async def ingest_document(
     min_words: Optional[int] = Form(None, description="Minimum words per chunk"),
     max_words: Optional[int] = Form(None, description="Maximum words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
+    # ADR-051: Source metadata (optional, best-effort provenance tracking)
+    source_type: Optional[str] = Form(None, description="Source type: file, stdin, mcp, api"),
+    source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
+    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated"),
     current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
@@ -171,8 +175,11 @@ async def ingest_document(
     }
     ```
     """
+    from ..lib.age_client import AGEClient
+
     queue = get_job_queue()
-    hasher = ContentHasher(queue)
+    age_client = AGEClient()
+    hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
 
     # Read file content
     content = await file.read()
@@ -251,7 +258,11 @@ async def ingest_document(
             "min_words": options.get_min_words(),
             "max_words": options.get_max_words(),
             "overlap_words": options.overlap_words
-        }
+        },
+        # ADR-051: Source metadata (optional, best-effort provenance)
+        "source_type": source_type,
+        "source_path": source_path,
+        "source_hostname": source_hostname
     }
 
     # Enqueue job (status: "pending")
@@ -286,6 +297,10 @@ async def ingest_text(
     processing_mode: str = Form("serial", description="Processing mode: serial or parallel (default: serial for clean concept matching)"),
     target_words: int = Form(1000, description="Target words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
+    # ADR-051: Source metadata (optional, best-effort provenance tracking)
+    source_type: Optional[str] = Form(None, description="Source type: file, stdin, mcp, api"),
+    source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
+    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated"),
     current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
@@ -325,8 +340,11 @@ async def ingest_text(
     - New job: `job_id` and status "pending (analyzing)"
     - Duplicate: Existing `job_id` with `force=true` suggestion
     """
+    from ..lib.age_client import AGEClient
+
     queue = get_job_queue()
-    hasher = ContentHasher(queue)
+    age_client = AGEClient()
+    hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
 
     # Convert text to bytes
     content = text.encode('utf-8')
@@ -362,7 +380,11 @@ async def ingest_text(
             "min_words": int(target_words * 0.8),
             "max_words": int(target_words * 1.5),
             "overlap_words": overlap_words
-        }
+        },
+        # ADR-051: Source metadata (optional, best-effort provenance)
+        "source_type": source_type,
+        "source_path": source_path,
+        "source_hostname": source_hostname
     }
 
     # Enqueue job (status: "pending")
