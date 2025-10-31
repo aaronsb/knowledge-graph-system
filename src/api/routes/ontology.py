@@ -234,6 +234,7 @@ async def delete_ontology(
     Deletes:
     - All Source nodes belonging to the ontology
     - All Instance nodes linked to those sources
+    - All DocumentMeta nodes for this ontology (ADR-051: provenance metadata)
     - Orphaned Concept nodes (concepts with no remaining sources)
     - All job records for this ontology (enables clean re-ingestion)
 
@@ -284,6 +285,18 @@ async def delete_ontology(
         """, fetch_one=True)
 
         sources_deleted = result['deleted_count'] if result else 0
+
+        # ADR-051: Delete DocumentMeta nodes for this ontology
+        # This ensures cascade deletion of provenance metadata
+        doc_meta_result = client._execute_cypher(f"""
+            MATCH (d:DocumentMeta {{ontology: '{ontology_name}'}})
+            DETACH DELETE d
+            RETURN count(d) as deleted_count
+        """, fetch_one=True)
+
+        doc_meta_deleted = doc_meta_result['deleted_count'] if doc_meta_result else 0
+        if doc_meta_deleted > 0:
+            logger.info(f"Deleted {doc_meta_deleted} DocumentMeta nodes for ontology '{ontology_name}'")
 
         # Clean up orphaned concepts (concepts with no sources)
         # AGE doesn't support WHERE NOT with patterns, use OPTIONAL MATCH instead

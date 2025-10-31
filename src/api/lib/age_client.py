@@ -536,10 +536,16 @@ class AGEClient:
         to_id: str,
         rel_type: str,
         category: str,
-        confidence: float
+        confidence: float,
+        # ADR-051: Edge metadata for provenance tracking
+        created_by: Optional[str] = None,
+        source: str = "llm_extraction",
+        job_id: Optional[str] = None,
+        document_id: Optional[str] = None,
+        created_at: Optional[str] = None
     ) -> bool:
         """
-        Create a relationship between two concepts with category metadata.
+        Create a relationship between two concepts with category and provenance metadata.
 
         Args:
             from_id: Source concept ID
@@ -547,6 +553,11 @@ class AGEClient:
             rel_type: Canonical relationship type (normalized via Porter Stemmer matcher)
             category: Relationship category (logical_truth, causal, structural, etc.)
             confidence: Confidence score (0.0-1.0)
+            created_by: User ID who created this relationship (optional)
+            source: Origin of relationship ("llm_extraction" or "human_curation", default: "llm_extraction")
+            job_id: Job ID that created this relationship (optional)
+            document_id: Document hash where this relationship originated (optional)
+            created_at: Timestamp (ISO format, defaults to current UTC time)
 
         Returns:
             True if relationship created successfully
@@ -558,19 +569,40 @@ class AGEClient:
         Note:
             Relationship type validation happens in ingestion layer via normalize_relationship_type().
             This method trusts that rel_type has been normalized to one of the 30 canonical types.
+
+            ADR-051: Edge metadata enables:
+            - Audit trail: "Which job created this relationship?"
+            - Human vs LLM distinction: Weight human-curated relationships differently
+            - Cascade delete: Delete all edges from a document
+            - MCP silent storage: Metadata NOT exposed to Claude (ADR-044)
         """
         if not 0.0 <= confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {confidence}")
+
+        # Build properties dict (only include non-None values)
+        properties = {
+            "confidence": confidence,
+            "category": category,
+            "source": source,
+            "created_at": created_at if created_at else datetime.now(timezone.utc).isoformat()
+        }
+
+        if created_by:
+            properties["created_by"] = created_by
+        if job_id:
+            properties["job_id"] = job_id
+        if document_id:
+            properties["document_id"] = document_id
+
+        # Build properties string for Cypher query
+        props_str = ", ".join([f"{k}: ${k}" for k in properties.keys()])
 
         # Note: AGE doesn't support dynamic relationship types in parameterized queries
         # We have to use string interpolation for the relationship type
         query = f"""
         MATCH (c1:Concept {{concept_id: $from_id}})
         MATCH (c2:Concept {{concept_id: $to_id}})
-        MERGE (c1)-[r:{rel_type} {{
-            confidence: $confidence,
-            category: $category
-        }}]->(c2)
+        MERGE (c1)-[r:{rel_type} {{{props_str}}}]->(c2)
         RETURN c1, r, c2
         """
 
@@ -580,8 +612,7 @@ class AGEClient:
                 params={
                     "from_id": from_id,
                     "to_id": to_id,
-                    "confidence": confidence,
-                    "category": category
+                    **properties
                 },
                 fetch_one=True
             )

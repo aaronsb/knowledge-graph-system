@@ -164,7 +164,11 @@ def process_chunk(
     stats: ChunkedIngestionStats,
     existing_concepts: List[Dict[str, Any]],
     recent_concept_ids: List[str],
-    verbose: bool = True
+    verbose: bool = True,
+    # ADR-051: Provenance metadata for edge tracking
+    job_id: Optional[str] = None,
+    document_id: Optional[str] = None,
+    user_id: Optional[str] = None
 ) -> List[str]:
     """
     Process a single chunk: create source, extract concepts, create graph nodes.
@@ -182,6 +186,9 @@ def process_chunk(
         existing_concepts: List of existing concepts for LLM context
         recent_concept_ids: List to track recent concept IDs
         verbose: Show detailed concept summary
+        job_id: Job ID creating these relationships (ADR-051 provenance)
+        document_id: Document hash (content_hash) for edge metadata (ADR-051)
+        user_id: User who initiated this ingestion (ADR-051 provenance)
 
     Returns:
         Updated list of recent concept IDs
@@ -440,7 +447,12 @@ def process_chunk(
                 to_id=actual_to_id,
                 rel_type=canonical_type,
                 category=category,
-                confidence=confidence
+                confidence=confidence,
+                # ADR-051: Add provenance metadata to edges
+                created_by=user_id,
+                source="llm_extraction",
+                job_id=job_id,
+                document_id=document_id
             )
             stats.relationships_created += 1
         except Exception as e:
