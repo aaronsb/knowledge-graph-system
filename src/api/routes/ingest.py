@@ -175,10 +175,10 @@ async def ingest_document(
     }
     ```
     """
-    from ..lib.age_client import get_age_client
+    from ..lib.age_client import AGEClient
 
     queue = get_job_queue()
-    age_client = get_age_client()
+    age_client = AGEClient()
     hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
 
     # Read file content
@@ -340,10 +340,10 @@ async def ingest_text(
     - New job: `job_id` and status "pending (analyzing)"
     - Duplicate: Existing `job_id` with `force=true` suggestion
     """
-    from ..lib.age_client import get_age_client
+    from ..lib.age_client import AGEClient
 
     queue = get_job_queue()
-    age_client = get_age_client()
+    age_client = AGEClient()
     hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
 
     # Convert text to bytes
