@@ -9,7 +9,7 @@ import os
 import sys
 import uuid
 import logging
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
 
 logger = logging.getLogger(__name__)
 
