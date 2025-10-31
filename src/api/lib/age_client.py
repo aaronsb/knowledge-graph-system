@@ -2260,14 +2260,20 @@ class AGEClient:
         else:
             properties["ingested_at"] = datetime.now(timezone.utc).isoformat()
 
-        # Create DocumentMeta node
-        create_query = """
-        CREATE (d:DocumentMeta $props)
+        # Create DocumentMeta node with explicit properties
+        # Build property assignments dynamically
+        prop_assignments = []
+        for key, value in properties.items():
+            prop_assignments.append(f"{key}: ${key}")
+        props_str = ", ".join(prop_assignments)
+
+        create_query = f"""
+        CREATE (d:DocumentMeta {{{props_str}}})
         RETURN d
         """
 
         try:
-            results = self._execute_cypher(create_query, {"props": properties})
+            results = self._execute_cypher(create_query, properties)
 
             if not results:
                 raise Exception("DocumentMeta node creation returned no results")
