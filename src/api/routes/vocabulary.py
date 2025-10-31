@@ -419,7 +419,23 @@ async def consolidate_vocabulary(request: ConsolidateVocabularyRequest):
                 dry_run=request.dry_run
             )
 
-            # Get final size
+            # Get size after consolidation (before pruning)
+            size_after_consolidation = client.get_vocabulary_size()
+            consolidation_reduction = initial_size - size_after_consolidation
+
+            # Run pruning if requested (default: True)
+            pruned_list = None
+            pruned_count = 0
+            if request.prune_unused and not request.dry_run:
+                logger.info("Running post-consolidation pruning of unused types...")
+                prune_results = await manager.prune_unused_concepts(dry_run=request.dry_run)
+                pruned_list = prune_results['pruned']
+                pruned_count = prune_results['pruned_count']
+                logger.info(f"Pruned {pruned_count} unused types")
+            elif request.prune_unused and request.dry_run:
+                logger.info("Skipping pruning in dry-run mode")
+
+            # Get final size (after consolidation + pruning)
             final_size = client.get_vocabulary_size()
             size_reduction = initial_size - final_size
 
@@ -465,7 +481,10 @@ async def consolidate_vocabulary(request: ConsolidateVocabularyRequest):
             if request.dry_run:
                 message = f"Dry run completed: Evaluated {len(auto_executed) + len(needs_review) + len(rejected)} candidates"
             else:
-                message = f"Consolidation completed: {size_reduction} types reduced ({initial_size} → {final_size})"
+                if pruned_count > 0:
+                    message = f"Consolidation completed: {size_reduction} types reduced ({initial_size} → {final_size}), including {pruned_count} pruned unused types"
+                else:
+                    message = f"Consolidation completed: {size_reduction} types reduced ({initial_size} → {final_size})"
 
             return ConsolidateVocabularyResponse(
                 success=True,
@@ -475,6 +494,8 @@ async def consolidate_vocabulary(request: ConsolidateVocabularyRequest):
                 auto_executed=auto_executed,
                 needs_review=needs_review,
                 rejected=rejected,
+                pruned=pruned_list,
+                pruned_count=pruned_count,
                 message=message
             )
 
