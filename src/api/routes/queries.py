@@ -353,21 +353,28 @@ async def get_concept_details(
                 properties(r) as props
         """)
 
-        relationships = [
-            ConceptRelationship(
+        relationships = []
+        for record in (relationships_result or []):
+            props = record['props'] if record['props'] else {}
+
+            # ADR-051: Convert created_by from int (user ID) to string
+            created_by = props.get('created_by')
+            if created_by is not None:
+                created_by = str(created_by)
+
+            relationships.append(ConceptRelationship(
                 to_id=record['to_id'],
                 to_label=record['to_label'],
                 rel_type=record['rel_type'],
-                confidence=record['props'].get('confidence') if record['props'] else None,
+                confidence=props.get('confidence'),
                 # ADR-051: Edge provenance metadata
-                created_by=record['props'].get('created_by') if record['props'] else None,
-                source=record['props'].get('source') if record['props'] else None,
-                job_id=record['props'].get('job_id') if record['props'] else None,
-                document_id=record['props'].get('document_id') if record['props'] else None,
-                created_at=record['props'].get('created_at') if record['props'] else None
-            )
-            for record in (relationships_result or [])
-        ]
+                created_by=created_by,
+                source=props.get('source'),
+                job_id=props.get('job_id'),
+                document_id=props.get('document_id'),
+                created_at=props.get('created_at')
+            ))
+
 
         # Extract properties from AGE vertex structure: {id, label, properties: {...}}
         props = concept.get('properties', {})
@@ -404,20 +411,24 @@ async def get_concept_details(
 
             if provenance_result and len(provenance_result) > 0:
                 # Build provenance documents list
-                prov_docs = [
-                    ProvenanceDocument(
+                prov_docs = []
+                for rec in provenance_result:
+                    # ADR-051: Convert ingested_by from int (user ID) to string
+                    ingested_by = rec.get('ingested_by')
+                    if ingested_by is not None:
+                        ingested_by = str(ingested_by)
+
+                    prov_docs.append(ProvenanceDocument(
                         document_id=rec['document_id'],
                         filename=rec['filename'],
                         source_type=rec.get('source_type'),
                         source_path=rec.get('source_path'),
                         hostname=rec.get('hostname'),
-                        ingested_by=rec.get('ingested_by'),
+                        ingested_by=ingested_by,
                         ingested_at=rec.get('ingested_at'),
                         job_id=rec.get('job_id'),
                         source_count=rec.get('source_count')
-                    )
-                    for rec in provenance_result
-                ]
+                    ))
 
                 provenance = ConceptProvenance(documents=prov_docs)
         except Exception as e:
