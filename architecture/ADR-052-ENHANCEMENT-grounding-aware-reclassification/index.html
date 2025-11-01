@@ -24,7 +24,7 @@
     
     
       
-        <title>ADR-052 Enhancement: Grounding-Aware Vocabulary Reclassification - Knowledge Graph System</title>
+        <title>ADR-052 Enhancement: Grounding-Aware Vocabulary Classification - Knowledge Graph System</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-052-enhancement-grounding-aware-vocabulary-reclassification" class="md-skip">
+        <a href="#adr-052-enhancement-grounding-aware-vocabulary-classification" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-052 Enhancement: Grounding-Aware Vocabulary Reclassification
+              ADR-052 Enhancement: Grounding-Aware Vocabulary Classification
             
           </span>
         </div>
@@ -3836,7 +3836,7 @@
   
   
   <span class="md-ellipsis">
-    ADR-052 Enhancement: Grounding-Aware Vocabulary Reclassification
+    ADR-052 Enhancement: Grounding-Aware Vocabulary Classification
     
   </span>
   
@@ -3849,7 +3849,7 @@
   
   
   <span class="md-ellipsis">
-    ADR-052 Enhancement: Grounding-Aware Vocabulary Reclassification
+    ADR-052 Enhancement: Grounding-Aware Vocabulary Classification
     
   </span>
   
@@ -3890,15 +3890,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#available-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Available Data
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3932,24 +3923,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#why-this-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      Why This Works
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-point" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integration Point
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3966,71 +3939,20 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#two-phase-classification" class="md-nav__link">
+  <a href="#dual-signal-classification" class="md-nav__link">
     <span class="md-ellipsis">
-      Two-Phase Classification
+      Dual-Signal Classification
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#implementation-strategy" class="md-nav__link">
+  <a href="#implementation" class="md-nav__link">
     <span class="md-ellipsis">
-      Implementation Strategy
+      Implementation
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Implementation Strategy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-query-average-grounding-per-edge-type" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Query Average Grounding Per Edge Type
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-semantic-role-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Semantic Role Classification
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-cross-validation-with-mechanistic-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Cross-Validation with Mechanistic Category
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-database-schema-extensions" class="md-nav__link">
-    <span class="md-ellipsis">
-      4. Database Schema Extensions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-enhanced-kg-vocab-refresh-categories-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Enhanced kg vocab refresh-categories Workflow
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -4040,37 +3962,28 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#computational-feasibility" class="md-nav__link">
+  <a href="#use-cases" class="md-nav__link">
     <span class="md-ellipsis">
-      Computational Feasibility
+      Use Cases
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Computational Feasibility">
+    <nav class="md-nav" aria-label="Use Cases">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#performance-analysis" class="md-nav__link">
+  <a href="#use-case-1-quality-monitoring" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Analysis
+      Use Case 1: Quality Monitoring
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#memory-requirements" class="md-nav__link">
+  <a href="#use-case-2-role-aware-path-filtering" class="md-nav__link">
     <span class="md-ellipsis">
-      Memory Requirements
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scalability" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scalability
+      Use Case 2: Role-Aware Path Filtering
     </span>
   </a>
   
@@ -4124,57 +4037,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      Implementation Plan
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-core-infrastructure" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 1: Core Infrastructure
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-refresh-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 2: Refresh Integration
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-mismatch-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 3: Mismatch Detection
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-scheduled-automation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 4: Scheduled Automation
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       Alternatives Considered
@@ -4185,27 +4047,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-use-llm-to-reclassify-based-on-usage-examples" class="md-nav__link">
+  <a href="#1-node-only-grounding-simpler" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Use LLM to Reclassify Based on Usage Examples
+      1. Node-Only Grounding (Simpler)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-manual-review-only" class="md-nav__link">
+  <a href="#2-llm-based-reclassification" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Manual Review Only
+      2. LLM-Based Reclassification
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-ignore-grounding-use-only-embeddings" class="md-nav__link">
+  <a href="#3-gnn-based-edge-role-prediction" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Ignore Grounding, Use Only Embeddings
+      3. GNN-Based Edge Role Prediction
     </span>
   </a>
   
@@ -4217,37 +4079,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#future-enhancements" class="md-nav__link">
+  <a href="#validation-plan" class="md-nav__link">
     <span class="md-ellipsis">
-      Future Enhancements
+      Validation Plan
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Future Enhancements">
+    <nav class="md-nav" aria-label="Validation Plan">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-time-series-grounding-analysis" class="md-nav__link">
+  <a href="#hypothesis-testing" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Time-Series Grounding Analysis
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-category-drift-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Category Drift Detection
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-automatic-category-creation" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Automatic Category Creation
+      Hypothesis Testing
     </span>
   </a>
   
@@ -4264,30 +4108,6 @@
       Pedagogical Note: The Sleep Cycle Analogy
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Pedagogical Note: The Sleep Cycle Analogy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#two-phase-consolidation-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      Two-Phase Consolidation Pattern
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-this-analogy-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      Why This Analogy Works
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4957,15 +4777,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#available-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Available Data
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -4999,24 +4810,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#why-this-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      Why This Works
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-point" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integration Point
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -5033,71 +4826,20 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#two-phase-classification" class="md-nav__link">
+  <a href="#dual-signal-classification" class="md-nav__link">
     <span class="md-ellipsis">
-      Two-Phase Classification
+      Dual-Signal Classification
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#implementation-strategy" class="md-nav__link">
+  <a href="#implementation" class="md-nav__link">
     <span class="md-ellipsis">
-      Implementation Strategy
+      Implementation
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Implementation Strategy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-query-average-grounding-per-edge-type" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Query Average Grounding Per Edge Type
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-semantic-role-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Semantic Role Classification
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-cross-validation-with-mechanistic-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Cross-Validation with Mechanistic Category
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-database-schema-extensions" class="md-nav__link">
-    <span class="md-ellipsis">
-      4. Database Schema Extensions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-enhanced-kg-vocab-refresh-categories-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Enhanced kg vocab refresh-categories Workflow
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -5107,37 +4849,28 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#computational-feasibility" class="md-nav__link">
+  <a href="#use-cases" class="md-nav__link">
     <span class="md-ellipsis">
-      Computational Feasibility
+      Use Cases
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Computational Feasibility">
+    <nav class="md-nav" aria-label="Use Cases">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#performance-analysis" class="md-nav__link">
+  <a href="#use-case-1-quality-monitoring" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Analysis
+      Use Case 1: Quality Monitoring
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#memory-requirements" class="md-nav__link">
+  <a href="#use-case-2-role-aware-path-filtering" class="md-nav__link">
     <span class="md-ellipsis">
-      Memory Requirements
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scalability" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scalability
+      Use Case 2: Role-Aware Path Filtering
     </span>
   </a>
   
@@ -5191,57 +4924,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      Implementation Plan
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-core-infrastructure" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 1: Core Infrastructure
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-refresh-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 2: Refresh Integration
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-mismatch-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 3: Mismatch Detection
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-scheduled-automation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 4: Scheduled Automation
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       Alternatives Considered
@@ -5252,27 +4934,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-use-llm-to-reclassify-based-on-usage-examples" class="md-nav__link">
+  <a href="#1-node-only-grounding-simpler" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Use LLM to Reclassify Based on Usage Examples
+      1. Node-Only Grounding (Simpler)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-manual-review-only" class="md-nav__link">
+  <a href="#2-llm-based-reclassification" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Manual Review Only
+      2. LLM-Based Reclassification
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-ignore-grounding-use-only-embeddings" class="md-nav__link">
+  <a href="#3-gnn-based-edge-role-prediction" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Ignore Grounding, Use Only Embeddings
+      3. GNN-Based Edge Role Prediction
     </span>
   </a>
   
@@ -5284,37 +4966,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#future-enhancements" class="md-nav__link">
+  <a href="#validation-plan" class="md-nav__link">
     <span class="md-ellipsis">
-      Future Enhancements
+      Validation Plan
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Future Enhancements">
+    <nav class="md-nav" aria-label="Validation Plan">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-time-series-grounding-analysis" class="md-nav__link">
+  <a href="#hypothesis-testing" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Time-Series Grounding Analysis
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-category-drift-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Category Drift Detection
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-automatic-category-creation" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Automatic Category Creation
+      Hypothesis Testing
     </span>
   </a>
   
@@ -5331,30 +4995,6 @@
       Pedagogical Note: The Sleep Cycle Analogy
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Pedagogical Note: The Sleep Cycle Analogy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#two-phase-consolidation-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      Two-Phase Consolidation Pattern
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-this-analogy-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      Why This Analogy Works
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -5386,487 +5026,369 @@
   
 
 
-<h1 id="adr-052-enhancement-grounding-aware-vocabulary-reclassification">ADR-052 Enhancement: Grounding-Aware Vocabulary Reclassification</h1>
+<h1 id="adr-052-enhancement-grounding-aware-vocabulary-classification">ADR-052 Enhancement: Grounding-Aware Vocabulary Classification</h1>
 <p><strong>Status:</strong> Proposed
 <strong>Date:</strong> 2025-10-31
-<strong>Related:</strong> ADR-044 (Grounding), ADR-047 (Category Classification), ADR-052 (Expansion-Consolidation Cycle)</p>
+<strong>Related:</strong> ADR-044 (Grounding), ADR-047 (Mechanistic Classification), ADR-052 (Consolidation Cycle)</p>
 <h2 id="context">Context</h2>
-<p>Current <code>kg vocab refresh-categories</code> uses <strong>mechanistic classification</strong> - pure embedding similarity to hard-coded category prototypes. This approach:
-- ✅ Is fast and stateless (~50-100ms)
-- ✅ Provides consistent initial categorization
+<p>Current <code>kg vocab refresh-categories</code> uses <strong>mechanistic classification</strong> - embedding similarity to category seed types. While fast and consistent, this approach:
 - ❌ Doesn't consider how vocabulary is actually used in the graph
-- ❌ Cannot detect when categories drift from actual usage patterns
-- ❌ Misses opportunities to validate categorization against empirical evidence</p>
-<p>ADR-044 provides <code>grounding_strength</code> (0.0-1.0) for each concept, measuring Bayesian support vs contradiction. This metric is already calculated and stored on :Concept nodes. We can leverage this existing infrastructure to refine vocabulary categorization based on empirical usage patterns.</p>
+- ❌ Cannot detect when edge semantics drift from actual usage patterns
+- ❌ Provides no empirical validation of categorization decisions</p>
+<p>ADR-044 provides <code>grounding_strength</code> (0.0-1.0) on concepts, measuring Bayesian support vs contradiction. This enhancement leverages existing grounding infrastructure to add empirical validation of vocabulary classification.</p>
 <h3 id="problem-static-classification-vs-dynamic-usage">Problem: Static Classification vs Dynamic Usage</h3>
 <p><strong>Example Mismatch:</strong>
-- Vocabulary type <code>CONTRADICTS</code> mechanistically classified as <code>logical_truth</code> (via embedding similarity)
-- In practice, this relationship connects concepts with average grounding of 0.12 (highly refuted)
-- The mechanistic category suggests "well-established truth relationships"
-- The empirical usage suggests "relationships between contradictory/refuted concepts"
-- <strong>Optimization opportunity:</strong> Detect this mismatch and flag for review or reclassification</p>
-<h3 id="available-data">Available Data</h3>
-<p>ADR-044 already calculates and stores grounding for all concepts. We can query:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">source</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">:</span><span class="n">CONTRADICTS</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">avg</span><span class="p">(</span><span class="n">source</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">target</span><span class="p">.</span><span class="n">grounding_strength</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">avg_grounding</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1">// Result: 0.12 (contradictory usage pattern)</span>
-</code></pre></div>
-<p>This reveals empirical usage patterns without additional computational cost for metric generation.</p>
+- Edge type <code>IMPLIES</code> mechanistically categorized as <code>logical</code> (via embedding similarity)
+- But connects concepts with average grounding of 0.55 (contested range)
+- Name suggests: logical, established truth relationships
+- Usage shows: hypothetical or evolving logical connections</p>
+<p><strong>Opportunity:</strong> Cross-validate mechanistic category against empirical usage patterns.</p>
 <h2 id="vocabulary-classification-architecture">Vocabulary Classification Architecture</h2>
 <h3 id="the-state-machine">The State Machine</h3>
-<p>Vocabulary types flow through a one-way state machine that prevents reclassification loops:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>LLM Extraction → llm_generated → Mechanistic Classification → computed → Grounding Validation
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    (ingestion)     (initial)       (kg vocab refresh)        (final)      (quality check)
+<p>Vocabulary flows through a one-way state machine:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>LLM Extraction → llm_generated → Mechanistic Classification → computed → Grounding Validation
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    (ingestion)     (initial)       (kg vocab refresh)        (final)      (quality check)
 </code></pre></div>
 <p><strong>State Transitions:</strong></p>
 <ol>
-<li><strong>Initial State: <code>llm_generated</code></strong></li>
-<li>Set during ingestion when LLM discovers new relationship type</li>
-<li>Category temporarily set to <code>"llm_generated"</code></li>
-<li>Embedding generated immediately for future matching</li>
-<li>
-<p>Example: <code>add_edge_type(type="ENHANCES", category="llm_generated")</code></p>
-</li>
-<li>
-<p><strong>Mechanistic Classification: <code>llm_generated</code> → <code>computed</code></strong></p>
-</li>
-<li><code>kg vocab refresh-categories</code> computes cosine similarity to seed types</li>
-<li>Assigns best-matching category from 11 protected categories</li>
-<li>Updates: <code>category_source = 'computed'</code></li>
-<li>
-<p><strong>One-way transition:</strong> Never reverts to <code>llm_generated</code></p>
-</li>
-<li>
-<p><strong>Empirical Validation: <code>computed</code> (read-only check)</strong></p>
-</li>
-<li>Proposed enhancement: Query grounding patterns from actual graph usage</li>
-<li>Flag mismatches between mechanistic category and empirical role</li>
-<li><strong>Non-destructive:</strong> Does not change category or state</li>
-<li>Provides evidence for curator review, does not auto-reclassify</li>
+<li><strong>Initial:</strong> LLM discovers new type during ingestion → <code>category = "llm_generated"</code></li>
+<li><strong>Classification:</strong> <code>kg vocab refresh-categories</code> assigns category via cosine similarity → <code>category_source = "computed"</code></li>
+<li><strong>Validation:</strong> Grounding check validates classification (read-only, non-destructive)</li>
 </ol>
+<p><strong>One-way property:</strong> <code>llm_generated</code> → <code>computed</code> never reverses, preventing reclassification loops.</p>
 <h3 id="the-bounded-exploration-model">The Bounded Exploration Model</h3>
-<p><strong>Components:</strong></p>
-<ul>
-<li><strong>c</strong> = 11 protected categories (causation, composition, logical, evidential, semantic, temporal, dependency, derivation, operation, interaction, modification)</li>
-<li><strong>a</strong> = 30 protected seed types distributed across categories</li>
-<li><strong>b</strong> = LLM-generated types (unbounded, emergent)</li>
-</ul>
-<p><strong>Static Dictionary (Curator-Controlled):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">CATEGORY_SEEDS</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s1">&#39;causation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CAUSES&#39;</span><span class="p">,</span> <span class="s1">&#39;ENABLES&#39;</span><span class="p">,</span> <span class="s1">&#39;PREVENTS&#39;</span><span class="p">,</span> <span class="s1">&#39;INFLUENCES&#39;</span><span class="p">,</span> <span class="s1">&#39;RESULTS_FROM&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="s1">&#39;composition&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;PART_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTAINS&#39;</span><span class="p">,</span> <span class="s1">&#39;COMPOSED_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;SUBSET_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;INSTANCE_OF&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="s1">&#39;logical&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;IMPLIES&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTRADICTS&#39;</span><span class="p">,</span> <span class="s1">&#39;PRESUPPOSES&#39;</span><span class="p">,</span> <span class="s1">&#39;EQUIVALENT_TO&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="c1"># ... 11 categories, 30 seed types total</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">}</span>
-</code></pre></div>
-<p><strong>Classification Algorithm:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># For each LLM-generated type</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">for</span> <span class="n">category</span><span class="p">,</span> <span class="n">seed_types</span> <span class="ow">in</span> <span class="n">CATEGORY_SEEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">similarities</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">seed_types</span><span class="p">:</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">similarity</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">type_embedding</span><span class="p">,</span> <span class="n">seed_embedding</span><span class="p">)</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">similarities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">similarity</span><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="c1"># Satisficing: max similarity (not mean)</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">category_scores</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># Assign to best match</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">best_category</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">category_scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">category_scores</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Semantic Coverage Formula:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Total Semantic Space = c × (a + b)
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Where:
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  c = 11 categories (bounded, curator-controlled dimensionality)
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  a = 30 seed types (bounded, curator-controlled initial coverage)
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  b = LLM-generated types (unbounded, emergent expansion)
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>Initial space:  a × c = 30 types × 11 categories = 330 &quot;semantic coordinates&quot;
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>Exploration:    b types discovered during ingestion (unbounded)
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>Organization:   Each b type maps to exactly one c category (via cosine similarity)
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>Total coverage: Sum of types per category across all c categories
-</code></pre></div>
-<h3 id="why-this-works">Why This Works</h3>
-<p><strong>1. Bounded Initial Space (Curator Control)</strong>
-- Protected categories (c=11) define semantic dimensions
-- Protected seed types (a=30) provide grounding for each dimension
-- Changes require manual updates to <code>CATEGORY_SEEDS</code> constant
-- Prevents category proliferation</p>
-<p><strong>2. Emergent Expansion (LLM Discovery)</strong>
-- LLM freely generates new relationship types (b) during ingestion
-- No artificial constraints on vocabulary during extraction
-- Each discovered type gets embedding for similarity matching
-- Supports Sutton's Bitter Lesson: general methods &gt; hand-coded vocabulary</p>
-<p><strong>3. One-Way Classification (No Loops)</strong>
-- State transition: <code>llm_generated</code> → <code>computed</code> (irreversible)
-- Prevents infinite reclassification cycles
-- Default <code>refresh-categories</code> behavior only processes <code>computed</code> types (with <code>--computed-only</code> flag)
-- Re-running refresh updates confidence/scores but not state machine position</p>
-<p><strong>4. Empirical Validation Through Grounding (Quality Check)</strong>
-- Grounding validation operates on <code>computed</code> types only
-- Cross-validates mechanistic category against actual usage patterns
-- Flags mismatches for curator review
-- Does <strong>not</strong> auto-reclassify (preserves one-way property)
-- Provides empirical evidence to inform manual decisions</p>
-<h3 id="integration-point">Integration Point</h3>
-<p>This enhancement adds empirical validation <strong>after</strong> mechanistic classification completes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Phase 1 (Existing): llm_generated → computed
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  - Cosine similarity to seed types
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  - Assign best-matching category
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  - Set category_source = &#39;computed&#39;
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>Phase 2 (Proposed): computed → grounding validation
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  - Query average grounding for edge type
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  - Classify empirical semantic role
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  - Compare with mechanistic category
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>  - Flag mismatches (non-destructive)
-</code></pre></div>
-<p>The one-way state machine ensures grounding validation cannot trigger reclassification loops. It provides quality monitoring without disrupting the core classification workflow.</p>
+<p><strong>Components:</strong>
+- <strong>c</strong> = 11 protected categories (causation, composition, logical, evidential, semantic, temporal, dependency, derivation, operation, interaction, modification)
+- <strong>a</strong> = 30 protected seed types (curator-controlled via <code>CATEGORY_SEEDS</code> constant)
+- <strong>b</strong> = LLM-generated types (unbounded, emergent during ingestion)</p>
+<p><strong>Formula:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Total Semantic Space = c × (a + b)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Where:
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  c = bounded dimensionality (11 categories)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  a = bounded initial coverage (30 seed types)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  b = unbounded emergent expansion (LLM-discovered types)
+</code></pre></div></p>
+<p><strong>Why This Works:</strong>
+1. <strong>Bounded initial space:</strong> Curator controls c and a (prevents category proliferation)
+2. <strong>Emergent expansion:</strong> LLM freely generates b (supports general methods over hand-coding)
+3. <strong>One-way classification:</strong> State transition prevents infinite loops
+4. <strong>Empirical validation:</strong> Grounding check operates on <code>computed</code> state only (non-destructive)</p>
 <h2 id="decision">Decision</h2>
-<p>Add a second phase to vocabulary refresh workflow that uses grounding metrics to refine category assignments:</p>
-<h3 id="two-phase-classification">Two-Phase Classification</h3>
-<p><strong>Phase 1: Mechanistic Classification</strong> (current, keep as-is)
-- Uses cosine similarity to category seed embeddings
-- Fast, stateless, embedding-based (~50-100ms)
-- Assigns initial category based on semantic similarity
-- Works for new vocabulary types with no usage history</p>
-<p><strong>Phase 2: Empirical Validation</strong> (new refinement phase)
-- Query average grounding for each vocabulary type from actual graph usage
-- Classify empirical semantic role based on grounding patterns:
-  - <code>AFFIRMATIVE</code> (&gt;0.80): Used between well-supported concepts
-  - <code>CONTESTED</code> (0.40-0.80): Used between concepts with evolving evidence
-  - <code>HISTORICAL</code> (0.20-0.40): Used between outdated/deprecated concepts
-  - <code>CONTRADICTORY</code> (&lt;0.20): Used between refuted/error concepts
-- Cross-validate: Flag for review if grounding contradicts mechanistic category
-- Store grounding metrics alongside category assignment for quality monitoring</p>
-<h3 id="implementation-strategy">Implementation Strategy</h3>
-<h4 id="1-query-average-grounding-per-edge-type">1. Query Average Grounding Per Edge Type</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">source</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">source</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">target</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">edge_type</span><span class="p">,</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">       </span><span class="n">avg</span><span class="p">((</span><span class="n">source</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">target</span><span class="p">.</span><span class="n">grounding_strength</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">avg_grounding</span><span class="p">,</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">       </span><span class="n">stddev</span><span class="p">((</span><span class="n">source</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">target</span><span class="p">.</span><span class="n">grounding_strength</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">grounding_stddev</span><span class="p">,</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">       </span><span class="n">count</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">edge_count</span>
+<p>Add empirical validation to vocabulary classification using <strong>dual-signal approach</strong> with role distribution analogous to ADR-044's grounding formula.</p>
+<h3 id="dual-signal-classification">Dual-Signal Classification</h3>
+<p><strong>Signal 1: Semantic (What the word means)</strong></p>
+<p>One-time setup - generate role prototype embeddings:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">ROLE_PROTOTYPES</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s1">&#39;AFFIRMATIVE&#39;</span><span class="p">:</span> <span class="n">embedding</span><span class="p">(</span><span class="s2">&quot;well-supported, validated, established, confirmed, proven&quot;</span><span class="p">),</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="s1">&#39;CONTESTED&#39;</span><span class="p">:</span> <span class="n">embedding</span><span class="p">(</span><span class="s2">&quot;debated, uncertain, evolving, disputed, questioned&quot;</span><span class="p">),</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="s1">&#39;HISTORICAL&#39;</span><span class="p">:</span> <span class="n">embedding</span><span class="p">(</span><span class="s2">&quot;outdated, deprecated, superseded, obsolete, replaced&quot;</span><span class="p">),</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="s1">&#39;CONTRADICTORY&#39;</span><span class="p">:</span> <span class="n">embedding</span><span class="p">(</span><span class="s2">&quot;refuted, disproven, contradicted, falsified, rejected&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">}</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Store in database, generate once, use forever</span>
 </code></pre></div>
-<p><strong>Cost:</strong> O(edges) - single graph traversal for all types
-<strong>Performance:</strong> ~100-500ms for thousands of edges</p>
-<h4 id="2-semantic-role-classification">2. Semantic Role Classification</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">classify_semantic_role</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="sd">    Classify vocabulary by typical grounding of connected concepts.</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">    All roles are VALUABLE - used for enhanced reasoning, not pruning.</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="k">if</span> <span class="n">avg_grounding</span> <span class="o">&gt;</span> <span class="mf">0.80</span><span class="p">:</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>        <span class="k">return</span> <span class="s2">&quot;AFFIRMATIVE&quot;</span>    <span class="c1"># Well-supported knowledge</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="k">elif</span> <span class="n">avg_grounding</span> <span class="o">&gt;</span> <span class="mf">0.40</span><span class="p">:</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="k">return</span> <span class="s2">&quot;CONTESTED&quot;</span>      <span class="c1"># Evolving understanding</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="k">elif</span> <span class="n">avg_grounding</span> <span class="o">&gt;</span> <span class="mf">0.20</span><span class="p">:</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        <span class="k">return</span> <span class="s2">&quot;HISTORICAL&quot;</span>     <span class="c1"># Past states, outdated knowledge</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>        <span class="k">return</span> <span class="s2">&quot;CONTRADICTORY&quot;</span>  <span class="c1"># Refuted concepts, errors</span>
+<p>Per-type classification:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">semantic_scores</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">prototype</span> <span class="ow">in</span> <span class="n">ROLE_PROTOTYPES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">semantic_scores</span><span class="p">[</span><span class="n">role</span><span class="p">]</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">edge_embedding</span><span class="p">,</span> <span class="n">prototype</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">semantic_role</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">semantic_scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">semantic_scores</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">semantic_confidence</span> <span class="o">=</span> <span class="n">semantic_scores</span><span class="p">[</span><span class="n">semantic_role</span><span class="p">]</span>
 </code></pre></div>
-<h4 id="3-cross-validation-with-mechanistic-category">3. Cross-Validation with Mechanistic Category</h4>
-<p>Some categories should correlate with specific grounding roles:</p>
-<table>
-<thead>
-<tr>
-<th>Category</th>
-<th>Expected Grounding Role</th>
-<th>Flag if Mismatch</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>logical_truth</code></td>
-<td>AFFIRMATIVE</td>
-<td>Yes (should be well-supported)</td>
-</tr>
-<tr>
-<td><code>evidential</code></td>
-<td>AFFIRMATIVE/CONTESTED</td>
-<td>Maybe (depends on evidence quality)</td>
-</tr>
-<tr>
-<td><code>causal</code></td>
-<td>Any</td>
-<td>No (causation can be affirmed or refuted)</td>
-</tr>
-<tr>
-<td><code>temporal</code></td>
-<td>Any</td>
-<td>No (describes relationships, not truth)</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Detection:</strong> Flag vocabulary where mechanistic category strongly implies grounding role but actual usage differs.</p>
-<h4 id="4-database-schema-extensions">4. Database Schema Extensions</h4>
-<p>Add to <code>kg_api.relationship_vocabulary</code>:</p>
+<p><strong>Signal 2: Empirical (How it's used)</strong></p>
+<p>Query grounding distribution for edge type (analogous to ADR-044's <code>support_weight / total_weight</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">:</span><span class="n">IMPLIES</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="n">AND</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">WITH</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">grounding_strength</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">avg_grounding</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">WITH</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">avg_grounding</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">80</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">END</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">affirmative_count</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">     </span><span class="n">count</span><span class="p">(</span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">avg_grounding</span><span class="w"> </span><span class="n">BETWEEN</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">40</span><span class="w"> </span><span class="n">AND</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">80</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">END</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contested_count</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">     </span><span class="n">count</span><span class="p">(</span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">avg_grounding</span><span class="w"> </span><span class="n">BETWEEN</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span><span class="w"> </span><span class="n">AND</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">40</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">END</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">historical_count</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">     </span><span class="n">count</span><span class="p">(</span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">avg_grounding</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">END</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">contradictory_count</span><span class="p">,</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">     </span><span class="n">count</span><span class="p">(*)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">total_count</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="k">RETURN</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="s">&#39;AFFIRMATIVE&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">affirmative_count</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="n">total_count</span><span class="p">,</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span><span class="s">&#39;CONTESTED&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">contested_count</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="n">total_count</span><span class="p">,</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span><span class="s">&#39;HISTORICAL&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">historical_count</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="n">total_count</span><span class="p">,</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">  </span><span class="s">&#39;CONTRADICTORY&#39;</span><span class="p">:</span><span class="w"> </span><span class="n">contradictory_count</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="n">total_count</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="p">}</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">role_distribution</span>
+</code></pre></div>
+<p><strong>Cumulative Satisficing (2σ principle):</strong></p>
+<p>Show only roles accounting for 95% of usage (filters noise in tail):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">satisfice_role_distribution</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.95</span><span class="p">):</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return roles accounting for 95% of usage (analogous to 2σ).&quot;&quot;&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">sorted_roles</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">distribution</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">cumulative</span> <span class="o">=</span> <span class="mf">0.0</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">significant</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">ratio</span> <span class="ow">in</span> <span class="n">sorted_roles</span><span class="p">:</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="n">cumulative</span> <span class="o">+=</span> <span class="n">ratio</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        <span class="n">significant</span><span class="p">[</span><span class="n">role</span><span class="p">]</span> <span class="o">=</span> <span class="n">ratio</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        <span class="k">if</span> <span class="n">cumulative</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">:</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>            <span class="k">break</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="k">return</span> <span class="n">significant</span>
+</code></pre></div>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">full_distribution</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="s1">&#39;CONTESTED&#39;</span><span class="p">:</span> <span class="mf">0.55</span><span class="p">,</span>      <span class="c1"># 55% of edges</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="s1">&#39;AFFIRMATIVE&#39;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>    <span class="c1"># 80% cumulative</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="s1">&#39;CONTRADICTORY&#39;</span><span class="p">:</span> <span class="mf">0.15</span><span class="p">,</span>  <span class="c1"># 95% cumulative ← Stop here</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="s1">&#39;HISTORICAL&#39;</span><span class="p">:</span> <span class="mf">0.05</span>      <span class="c1"># (tail suppressed)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">}</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">empirical_role</span> <span class="o">=</span> <span class="s1">&#39;CONTESTED&#39;</span>  <span class="c1"># Dominant role</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">empirical_confidence</span> <span class="o">=</span> <span class="mf">0.55</span>
+</code></pre></div></p>
+<p><strong>Cross-Validation:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">if</span> <span class="n">semantic_role</span> <span class="o">==</span> <span class="n">empirical_role</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="c1"># Agreement - high confidence</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;VALIDATED&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">elif</span> <span class="nb">abs</span><span class="p">(</span><span class="n">semantic_confidence</span> <span class="o">-</span> <span class="n">empirical_confidence</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.20</span><span class="p">:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="c1"># Weak signals - ambiguous</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;AMBIGUOUS&quot;</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="k">elif</span> <span class="n">semantic_confidence</span> <span class="o">&gt;</span> <span class="n">empirical_confidence</span><span class="p">:</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="c1"># Trust semantic signal</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;SEMANTIC_OVERRIDE&quot;</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">suggestion</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Word suggests </span><span class="si">{</span><span class="n">semantic_role</span><span class="si">}</span><span class="s2">, but usage is </span><span class="si">{</span><span class="n">empirical_role</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="c1"># Trust empirical signal</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;EMPIRICAL_OVERRIDE&quot;</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    <span class="n">suggestion</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Usage suggests </span><span class="si">{</span><span class="n">empirical_role</span><span class="si">}</span><span class="s2">, but word suggests </span><span class="si">{</span><span class="n">semantic_role</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div>
+<h3 id="implementation">Implementation</h3>
+<p><strong>Database Schema:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">avg_grounding</span><span class="w"> </span><span class="nb">FLOAT</span><span class="p">,</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">grounding_stddev</span><span class="w"> </span><span class="nb">FLOAT</span><span class="p">,</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">grounding_role</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span><span class="w">  </span><span class="c1">-- AFFIRMATIVE/CONTESTED/HISTORICAL/CONTRADICTORY</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">grounding_category_mismatch</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">grounding_last_calculated</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="p">;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">role_distribution</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">role_semantic</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">role_empirical</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">role_status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">role_last_calculated</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="p">;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1">-- Graph nodes (ADR-048)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1">-- Add properties to :VocabType nodes:</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1">-- v.role_distribution = {&quot;AFFIRMATIVE&quot;: 0.70, &quot;CONTESTED&quot;: 0.15, ...}</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1">-- v.role_dominant = &quot;AFFIRMATIVE&quot;</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1">-- v.role_confidence = 0.70</span>
 </code></pre></div>
-<p>Add to <code>:VocabType</code> graph nodes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// Properties to add</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">v</span><span class="p">.</span><span class="n">avg_grounding</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">75</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">v</span><span class="p">.</span><span class="n">grounding_stddev</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">15</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">v</span><span class="p">.</span><span class="n">grounding_role</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;CONTESTED&quot;</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">v</span><span class="p">.</span><span class="n">grounding_category_mismatch</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">false</span>
+<p><strong>Enhanced Workflow:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w">  </span><span class="c1"># Grounding validation enabled by default</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--no-grounding<span class="w">  </span><span class="c1"># Disable if needed</span>
 </code></pre></div>
-<h4 id="5-enhanced-kg-vocab-refresh-categories-workflow">5. Enhanced <code>kg vocab refresh-categories</code> Workflow</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--with-grounding
-</code></pre></div>
-<p>Workflow:
-1. <strong>Phase 1 (Mechanistic Classification):</strong>
-   - Calculate embedding similarity to category seeds
-   - Assign initial category based on semantic similarity</p>
 <ol>
-<li><strong>Phase 2 (Empirical Validation):</strong></li>
-<li>Query average grounding for all edge types (single Cypher query, ~100-500ms)</li>
-<li>Classify empirical semantic role based on grounding patterns</li>
-<li>Cross-validate: Detect category-role mismatches</li>
-<li>
-<p>Store grounding metrics for quality monitoring</p>
-</li>
-<li>
-<p><strong>Output:</strong></p>
-</li>
-<li>Show both mechanistic category AND empirical role</li>
-<li>Flag mismatches for curator review</li>
-<li>Statistics on grounding distribution across categories</li>
+<li><strong>Phase 1 (Mechanistic):</strong> Assign category via cosine similarity to seed types</li>
+<li><strong>Phase 2 (Empirical - Default):</strong></li>
+<li>Compute semantic role (compare to 4 prototypes)</li>
+<li>Query empirical role distribution (single Cypher query for all types)</li>
+<li>Apply cumulative satisficing</li>
+<li>Cross-validate signals</li>
+<li>Store role distribution</li>
 </ol>
-<p><strong>Example Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Refreshed 197 vocabulary types with grounding analysis
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>Category-Role Distribution:
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  causal (AFFIRMATIVE):      18 types  [avg grounding: 0.82]
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  causal (CONTESTED):        12 types  [avg grounding: 0.55]
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  logical_truth (AFFIRMATIVE): 8 types  [avg grounding: 0.91]
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>  evidential (CONTESTED):     6 types  [avg grounding: 0.48]
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>Flagged Mismatches (4):
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>  ⚠ CONTRADICTS (logical_truth) - Expected AFFIRMATIVE, got CONTRADICTORY (avg: 0.12)
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>      Reason: This relationship mostly connects refuted claims
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>      Suggestion: Reclassify to &#39;evidential&#39; or review usage
+<p><strong>Performance:</strong> ~150-600ms total (acceptable for periodic maintenance)
+- Category assignment: ~50ms (existing)
+- Grounding query: ~100-500ms (single query for all types)
+- Role classification: ~20ms (4 cosine calcs × 200 types)</p>
+<p><strong>API Endpoint:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">POST</span> <span class="o">/</span><span class="n">vocabulary</span><span class="o">/</span><span class="n">refresh</span><span class="o">-</span><span class="n">categories</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="p">{</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  <span class="s2">&quot;only_computed&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  <span class="s2">&quot;with_grounding&quot;</span><span class="p">:</span> <span class="n">true</span>  <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="n">enabled</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">}</span>
 </code></pre></div>
-<h2 id="computational-feasibility">Computational Feasibility</h2>
-<h3 id="performance-analysis">Performance Analysis</h3>
-<p><strong>Phase 1 (Mechanistic):</strong>
-- ~200 types × 8 categories × 1 cosine calc = ~1600 ops
-- Cost: ~50-100ms</p>
-<p><strong>Phase 2 (Grounding-Aware):</strong>
-- Single Cypher query: <code>MATCH (s:Concept)-[r]-&gt;(t:Concept) RETURN type(r), avg(grounding)...</code>
-- Traverses all edges once: O(edges)
-- Cost: ~100-500ms for 1000-10000 edges</p>
-<p><strong>Total:</strong> ~150-600ms for complete refresh with grounding analysis</p>
-<p><strong>Optimization:</strong> Can be run asynchronously as scheduled job (ADR-050)</p>
-<h3 id="memory-requirements">Memory Requirements</h3>
-<ul>
-<li>Grounding already calculated and stored on :Concept nodes (ADR-044)</li>
-<li>No need to recalculate grounding - just average existing values</li>
-<li>Minimal memory overhead</li>
-</ul>
-<h3 id="scalability">Scalability</h3>
-<table>
-<thead>
-<tr>
-<th>Graph Size</th>
-<th>Edges</th>
-<th>Phase 2 Cost</th>
-<th>Total Refresh</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Small</td>
-<td>1K</td>
-<td>~100ms</td>
-<td>~200ms</td>
-</tr>
-<tr>
-<td>Medium</td>
-<td>10K</td>
-<td>~300ms</td>
-<td>~400ms</td>
-</tr>
-<tr>
-<td>Large</td>
-<td>100K</td>
-<td>~1.5s</td>
-<td>~1.6s</td>
-</tr>
-<tr>
-<td>Very Large</td>
-<td>1M+</td>
-<td>~15s</td>
-<td>~15s</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Acceptable:</strong> Even for very large graphs, ~15s refresh is reasonable for periodic maintenance</p>
+<h2 id="use-cases">Use Cases</h2>
+<h3 id="use-case-1-quality-monitoring">Use Case 1: Quality Monitoring</h3>
+<p>Detect vocabulary misclassifications and category drift:</p>
+<p><strong>Output Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>IMPLIES (logical category):
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  Semantic role:   AFFIRMATIVE (0.88) - &quot;logical inference&quot;
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  Empirical role:  CONTESTED (0.55) - connects debated concepts
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  Status:          EMPIRICAL_OVERRIDE ⚠️
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  Insight: Edge is used for hypothetical/evolving logic,
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>           not just established logical truths.
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>  Suggestion: Consider reclassifying to &#39;evidential&#39; category
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>              or creating &#39;hypothetical_logical&#39; subcategory.
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Identify vocabulary used differently than its name suggests
+- Track category drift as domain knowledge evolves
+- Provide evidence-based recommendations for manual reclassification</p>
+<h3 id="use-case-2-role-aware-path-filtering">Use Case 2: Role-Aware Path Filtering</h3>
+<p>Query graph with semantic role constraints:</p>
+<p><strong>High-confidence knowledge paths:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">*..</span><span class="m">5</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="k">ALL</span><span class="p">(</span><span class="n">rel</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">WHERE</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="n">EXISTS</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="n">type</span><span class="p">(</span><span class="n">rel</span><span class="p">)})</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">role_affirmative</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">60</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">)</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">path</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">reduce</span><span class="p">(</span><span class="n">s</span><span class="p">=</span><span class="m">1</span><span class="p">.</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="n">rel</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="n">vocab_affirmative</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">rel</span><span class="p">)))</span><span class="w"> </span><span class="k">DESC</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="k">LIMIT</span><span class="w"> </span><span class="m">10</span>
+</code></pre></div></p>
+<p><strong>Explore contested knowledge:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">*..</span><span class="m">5</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="k">ALL</span><span class="p">(</span><span class="n">rel</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">vocab_contested</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">rel</span><span class="p">))</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">40</span><span class="p">)</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">path</span>
+</code></pre></div></p>
+<p><strong>Avoid refuted connections:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">*..</span><span class="m">5</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="k">NONE</span><span class="p">(</span><span class="n">rel</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">WHERE</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="n">vocab_contradictory</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">rel</span><span class="p">))</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span><span class="w"> </span><span class="n">OR</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="n">vocab_historical</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">rel</span><span class="p">))</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="p">)</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">path</span>
+</code></pre></div></p>
+<p><strong>Combined edge + node filtering:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// Well-supported paths through well-supported concepts</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">*..</span><span class="m">5</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">WHERE</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span><span class="k">ALL</span><span class="p">(</span><span class="n">rel</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">vocab_affirmative</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">rel</span><span class="p">))</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">60</span><span class="p">)</span><span class="w">  </span><span class="c1">// Edge quality</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span><span class="n">AND</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span><span class="k">ALL</span><span class="p">(</span><span class="n">node</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">70</span><span class="p">)</span><span class="w">  </span><span class="c1">// Node quality</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">path</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Context-aware graph traversal (find high-confidence vs explore contested areas)
+- Confidence scoring for paths (multiplicative role strength)
+- Trace historical evolution (follow HISTORICAL role edges)
+- Semantic filtering without manual edge annotation</p>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
 <ol>
 <li><strong>Empirical Validation</strong></li>
 <li>Categories validated against actual usage, not just embedding similarity</li>
-<li>Detect when vocabulary is used differently than initially classified</li>
+<li>Detects semantic drift as domain knowledge evolves</li>
 <li>
-<p>Cross-validate mechanistic predictions with empirical observations</p>
-</li>
-<li>
-<p><strong>Quality Monitoring</strong></p>
-</li>
-<li>Detect mismatches between category semantics and actual usage</li>
-<li>Flag vocabulary that might be misnamed or misclassified</li>
-<li>
-<p>Alert to category drift over time as usage patterns evolve</p>
-</li>
-<li>
-<p><strong>Enhanced Reasoning Capabilities</strong></p>
-</li>
-<li>Know which relationships describe well-supported vs refuted knowledge</li>
-<li>Dialectical reasoning requires full spectrum of grounding roles</li>
-<li>
-<p>Enable queries like "show me causal relationships between contested concepts"</p>
+<p>Cross-validates mechanistic predictions with graph-based evidence</p>
 </li>
 <li>
 <p><strong>Zero Marginal Cost</strong></p>
 </li>
 <li>Leverages existing grounding infrastructure (ADR-044)</li>
-<li>No need to compute new metrics - just aggregate existing data</li>
+<li>Single O(edges) query provides data for all vocabulary types</li>
 <li>
-<p>Single O(edges) query provides data for all vocabulary types</p>
+<p>No LLM calls during refresh (prototypes generated once)</p>
 </li>
 <li>
-<p><strong>Actionable Insights</strong></p>
+<p><strong>Enhanced Query Capabilities</strong></p>
 </li>
-<li>Provides curator with concrete evidence for reclassification decisions</li>
-<li>Reduces manual review burden via automated mismatch detection</li>
-<li>Suggests specific improvements based on empirical patterns</li>
+<li>Role-aware pathfinding enables semantic graph traversal</li>
+<li>Confidence scoring for paths and connections</li>
+<li>
+<p>Supports diverse query patterns (high-confidence, contested, historical)</p>
+</li>
+<li>
+<p><strong>Aligned with ADR-044</strong></p>
+</li>
+<li>Role distribution uses same ratio approach: <code>role_count / total_count</code></li>
+<li>Cumulative satisficing analogous to probabilistic truth convergence</li>
+<li>Consistent mental model across concept grounding and edge semantics</li>
 </ol>
 <h3 id="negative">Negative</h3>
 <ol>
 <li><strong>Computational Cost</strong></li>
-<li>Adds ~100-500ms to refresh-categories operation</li>
+<li>Adds ~100-500ms to refresh operation</li>
+<li>May be prohibitive for very large graphs (&gt;1M edges)</li>
 <li>
-<p>May be too slow for real-time classification</p>
+<p>Mitigated: Run as scheduled maintenance (weekly/monthly)</p>
 </li>
 <li>
 <p><strong>Complexity</strong></p>
 </li>
-<li>Adds another dimension to vocabulary management</li>
+<li>Adds dual-signal validation layer to categorization</li>
+<li>Requires understanding both embeddings and grounding</li>
 <li>
-<p>Requires understanding both embeddings and grounding</p>
+<p>Mitigated: Clear documentation, optional feature flag</p>
 </li>
 <li>
-<p><strong>Cold Start Problem</strong></p>
+<p><strong>Cold Start</strong></p>
 </li>
-<li>New vocabulary types have no edges yet, so no grounding data</li>
-<li>
-<p>Falls back to mechanistic classification only</p>
-</li>
-<li>
-<p><strong>Dependency on ADR-044</strong></p>
-</li>
-<li>Requires grounding_strength to be calculated and up-to-date</li>
-<li>If grounding disabled, this feature unavailable</li>
+<li>New vocabulary has no edges yet, no empirical signal</li>
+<li>Falls back to semantic signal only</li>
+<li>Mitigated: Natural - empirical validation requires usage</li>
 </ol>
 <h3 id="neutral">Neutral</h3>
 <ol>
-<li><strong>Optional Feature</strong></li>
-<li>Can be enabled via flag: <code>--with-grounding</code></li>
+<li><strong>Default Behavior</strong></li>
+<li>Grounding validation enabled by default</li>
+<li>Can be disabled via <code>--no-grounding</code> flag if needed</li>
 <li>
-<p>Doesn't change default behavior</p>
+<p>Provides richer information without requiring opt-in</p>
 </li>
 <li>
 <p><strong>Storage Requirements</strong></p>
 </li>
-<li>Adds 4-5 columns to vocabulary table</li>
-<li>Negligible space impact (~KB per 200 types)</li>
+<li>Adds role_distribution JSONB column (~1KB per type)</li>
+<li>Negligible impact (~200KB for 200 types)</li>
 </ol>
-<h2 id="implementation-plan">Implementation Plan</h2>
-<h3 id="phase-1-core-infrastructure">Phase 1: Core Infrastructure</h3>
-<ul>
-<li>[ ] Add database columns for grounding metrics</li>
-<li>[ ] Create <code>calculate_grounding_metrics()</code> method</li>
-<li>[ ] Add grounding role classification logic</li>
-</ul>
-<h3 id="phase-2-refresh-integration">Phase 2: Refresh Integration</h3>
-<ul>
-<li>[ ] Add <code>--with-grounding</code> flag to <code>kg vocab refresh-categories</code></li>
-<li>[ ] Integrate grounding query into refresh workflow</li>
-<li>[ ] Store grounding metrics alongside category</li>
-</ul>
-<h3 id="phase-3-mismatch-detection">Phase 3: Mismatch Detection</h3>
-<ul>
-<li>[ ] Define category-role expectations</li>
-<li>[ ] Implement mismatch detection</li>
-<li>[ ] Add review workflow for flagged types</li>
-</ul>
-<h3 id="phase-4-scheduled-automation">Phase 4: Scheduled Automation</h3>
-<ul>
-<li>[ ] Integrate with ADR-050 scheduled jobs</li>
-<li>[ ] Weekly grounding refresh as maintenance task</li>
-</ul>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="1-use-llm-to-reclassify-based-on-usage-examples">1. Use LLM to Reclassify Based on Usage Examples</h3>
+<h3 id="1-node-only-grounding-simpler">1. Node-Only Grounding (Simpler)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">avg_grounding</span> <span class="o">=</span> <span class="n">avg</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">grounding</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">grounding</span><span class="p">)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">empirical_role</span> <span class="o">=</span> <span class="n">threshold_classify</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Pros:</strong> Simpler, faster (no cosine similarity to prototypes)
+<strong>Cons:</strong> No semantic signal, can't detect word-usage mismatches
+<strong>Rejected:</strong> Dual-signal provides richer validation and pathfinding capabilities</p>
+<h3 id="2-llm-based-reclassification">2. LLM-Based Reclassification</h3>
+<p>Generate category via LLM prompt with usage examples.</p>
 <p><strong>Pros:</strong> More sophisticated reasoning
 <strong>Cons:</strong> Expensive (~$0.01 per type), slow (2-5s per type), requires LLM access
-<strong>Rejected:</strong> Grounding-based approach is faster and cheaper</p>
-<h3 id="2-manual-review-only">2. Manual Review Only</h3>
-<p><strong>Pros:</strong> No automation complexity
-<strong>Cons:</strong> Doesn't scale, requires curator time
-<strong>Rejected:</strong> Goal is to reduce manual curation burden</p>
-<h3 id="3-ignore-grounding-use-only-embeddings">3. Ignore Grounding, Use Only Embeddings</h3>
-<p><strong>Pros:</strong> Simpler, faster
-<strong>Cons:</strong> Misses empirical usage patterns, less accurate over time
-<strong>Rejected:</strong> Grounding provides valuable empirical validation</p>
-<h2 id="future-enhancements">Future Enhancements</h2>
-<h3 id="1-time-series-grounding-analysis">1. Time-Series Grounding Analysis</h3>
-<p>Track how grounding evolves over time:
-- Vocabulary that becomes more contested
-- Concepts that shift from supported to refuted</p>
-<h3 id="2-category-drift-detection">2. Category Drift Detection</h3>
-<p>Alert when category assignment becomes stale:
-- Grounding role changes significantly
-- Suggests periodic re-categorization</p>
-<h3 id="3-automatic-category-creation">3. Automatic Category Creation</h3>
-<p>When grounding reveals a cluster of types with unique role:
-- Propose new category based on grounding patterns
-- Example: "refuted_causal" for low-grounding causal relationships</p>
+<strong>Rejected:</strong> Doesn't scale, violates general methods principle (ADR-052)</p>
+<h3 id="3-gnn-based-edge-role-prediction">3. GNN-Based Edge Role Prediction</h3>
+<p>Train GNN model to predict edge roles using node features + edge embeddings.</p>
+<p><strong>Pros:</strong> Potentially higher accuracy (research-backed)
+<strong>Cons:</strong> Requires training data, model deployment, ongoing retraining
+<strong>Rejected:</strong> Adds complexity; dual-signal approach achieves validation without training overhead</p>
+<h2 id="validation-plan">Validation Plan</h2>
+<h3 id="hypothesis-testing">Hypothesis Testing</h3>
+<p>The core hypothesis—that edge semantic roles can be inferred from node grounding distribution—requires empirical validation before full deployment.</p>
+<p><strong>Experiment Design:</strong>
+1. Sample 100-500 edges with diverse types and usage patterns
+2. Manual labeling: Human experts classify edge semantic roles (ground truth)
+3. Method comparison:
+   - <strong>Semantic-only:</strong> Role from prototype similarity
+   - <strong>Empirical-only:</strong> Role from node grounding distribution
+   - <strong>Dual-signal:</strong> Cross-validated approach (proposed)
+4. Metrics: Accuracy, precision, recall, F1 score per role
+5. Analysis: Confusion matrix, agreement rates, failure modes</p>
+<p><strong>Expected Outcomes:</strong>
+- Semantic-only: Good for new types, may drift from usage
+- Empirical-only: Good for established types, fails on cold start
+- Dual-signal: Best overall, detects mismatches, provides confidence</p>
+<p><strong>Decision Criteria:</strong>
+- If dual-signal accuracy &gt;85%: Proceed with implementation
+- If single signal outperforms: Simplify to that approach
+- If both weak (&lt;70%): Revisit role definitions or thresholds</p>
 <h2 id="pedagogical-note-the-sleep-cycle-analogy">Pedagogical Note: The Sleep Cycle Analogy</h2>
-<p>While this enhancement is primarily an optimization technique (empirical validation of mechanistic classification), it can be helpfully understood through the analogy of <strong>sleep-based memory consolidation</strong>:</p>
-<h3 id="two-phase-consolidation-pattern">Two-Phase Consolidation Pattern</h3>
-<p><strong>Phase 1: Deep Sleep (NREM)</strong> → Pruning unused vocabulary
-- Implemented in ADR-052 base
-- Removes vocabulary types with <code>edge_count = 0</code>
-- Analogous to: Synaptic homeostasis during deep sleep (removal of unused connections)</p>
-<p><strong>Phase 2: REM Sleep</strong> → Grounding-aware reclassification
-- This enhancement
+<p>While this enhancement is primarily an optimization technique (empirical validation of mechanistic classification), it complements the sleep-based memory consolidation pattern from ADR-052:</p>
+<p><strong>Phase 1: Deep Sleep (NREM)</strong> → Consolidation/Pruning
+- Removes vocabulary with <code>edge_count = 0</code> (unused synapses)
+- Merges synonyms (consolidates redundant connections)
+- Implemented in ADR-052 base</p>
+<p><strong>Phase 2: REM Sleep</strong> → Grounding-aware validation
 - Tests vocabulary against empirical usage (grounding patterns)
-- Refines categories based on actual experience
-- Analogous to: Active memory rehearsal during REM sleep (strengthening coherent patterns, detecting inconsistencies)</p>
-<h3 id="why-this-analogy-works">Why This Analogy Works</h3>
-<ol>
-<li><strong>Two-phase optimization:</strong> Both systems use sequential phases for different optimization goals</li>
-<li><strong>Empirical testing:</strong> Both validate patterns against observed data (dream rehearsal vs grounding metrics)</li>
-<li><strong>Quality improvement:</strong> Both improve accuracy by detecting and correcting misalignments</li>
-<li><strong>Natural sequencing:</strong> Pruning first (remove noise) then refinement (improve signal)</li>
-</ol>
-<p>However, the analogy should not drive design decisions - the technical optimization benefits are the primary justification. The biological parallel is useful for explaining the pattern to users and developers.</p>
+- Refines semantic understanding based on actual experience
+- Cross-validates predictions with observed data
+- This enhancement</p>
+<p><strong>Why the analogy works:</strong>
+1. Two-phase optimization with different goals (removal vs refinement)
+2. Empirical testing against observed data (dream rehearsal vs grounding)
+3. Quality improvement through pattern detection (coherence vs mismatches)</p>
+<p>However, the analogy should not drive design decisions—the technical optimization benefits are the primary justification. The biological parallel is useful for explaining the pattern to users and developers.</p>
 <h2 id="references">References</h2>
 <p><strong>Technical:</strong>
-- ADR-044: Probabilistic Truth Convergence (grounding_strength metric)
-- ADR-047: Probabilistic Vocabulary Categorization (current mechanistic approach)
-- ADR-052: Vocabulary Expansion-Consolidation Cycle (consolidation/pruning base)
-- Shannon (1948): "A Mathematical Theory of Communication" - noise carries information
-- Hegel (1807): "Phenomenology of Spirit" - dialectical reasoning</p>
+- ADR-044: Probabilistic Truth Convergence (<code>grounding_strength</code> formula)
+- ADR-047: Probabilistic Vocabulary Categorization (mechanistic approach)
+- ADR-052: Vocabulary Expansion-Consolidation Cycle (pruning base)
+- Shannon (1948): "A Mathematical Theory of Communication"
+- Hegel (1807): "Phenomenology of Spirit" (dialectical reasoning)</p>
 <p><strong>Pedagogical:</strong>
-- Walker &amp; Stickgold (2006): "Sleep, Memory, and Plasticity" - REM consolidation research
-- Tononi &amp; Cirelli (2014): "Sleep and the Price of Plasticity" - synaptic homeostasis hypothesis</p>
+- Walker &amp; Stickgold (2006): "Sleep, Memory, and Plasticity"
+- Tononi &amp; Cirelli (2014): "Sleep and the Price of Plasticity"</p>
 <hr />
 <p><strong>Last Updated:</strong> 2025-10-31</p>
 
