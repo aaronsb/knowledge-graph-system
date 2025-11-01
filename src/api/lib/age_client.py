@@ -1505,7 +1505,11 @@ class AGEClient:
                                     asyncio.set_event_loop(loop)
 
                                 assignment = loop.run_until_complete(
-                                    categorizer.assign_category(relationship_type, store=False)
+                                    categorizer.assign_category(
+                                        relationship_type,
+                                        store=False,
+                                        embedding=embedding  # Pass freshly-generated embedding
+                                    )
                                 )
 
                                 # Update category in database

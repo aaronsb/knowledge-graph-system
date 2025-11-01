@@ -101,7 +101,11 @@ class VocabularyCategorizer:
         self.db = db_client
         self.provider = ai_provider
 
-    async def compute_category_scores(self, relationship_type: str) -> Dict[str, float]:
+    async def compute_category_scores(
+        self,
+        relationship_type: str,
+        embedding: Optional[List[float]] = None
+    ) -> Dict[str, float]:
         """
         Compute similarity scores to all categories for a relationship type.
 
@@ -111,18 +115,22 @@ class VocabularyCategorizer:
 
         Args:
             relationship_type: Edge type to categorize (e.g., "ENHANCES")
+            embedding: Optional pre-computed embedding (avoids re-query, useful during creation)
 
         Returns:
             Dict mapping category names to similarity scores (0.0-1.0)
             Example: {'causation': 0.85, 'composition': 0.45, ...}
 
         Raises:
-            ValueError: If relationship_type has no embedding
+            ValueError: If relationship_type has no embedding and none provided
         """
-        # Get embedding for target type
-        type_embedding = await self._get_embedding(relationship_type)
-        if type_embedding is None:
-            raise ValueError(f"No embedding found for relationship type: {relationship_type}")
+        # Get embedding for target type (use provided or query)
+        if embedding is not None:
+            type_embedding = np.array(embedding, dtype=np.float32)
+        else:
+            type_embedding = await self._get_embedding(relationship_type)
+            if type_embedding is None:
+                raise ValueError(f"No embedding found for relationship type: {relationship_type}")
 
         category_scores = {}
 
@@ -147,7 +155,8 @@ class VocabularyCategorizer:
     async def assign_category(
         self,
         relationship_type: str,
-        store: bool = True
+        store: bool = True,
+        embedding: Optional[List[float]] = None
     ) -> CategoryAssignment:
         """
         Assign category to a relationship type based on embedding similarity.
@@ -155,15 +164,16 @@ class VocabularyCategorizer:
         Args:
             relationship_type: Edge type to categorize
             store: If True, store result in database
+            embedding: Optional pre-computed embedding (avoids re-query, useful during creation)
 
         Returns:
             CategoryAssignment with category, confidence, scores, ambiguity
 
         Raises:
-            ValueError: If relationship_type has no embedding
+            ValueError: If relationship_type has no embedding and none provided
         """
         # Compute similarity scores
-        scores = await self.compute_category_scores(relationship_type)
+        scores = await self.compute_category_scores(relationship_type, embedding=embedding)
 
         # Sort by score to find primary and runner-up
         sorted_categories = sorted(scores.items(), key=lambda x: x[1], reverse=True)
