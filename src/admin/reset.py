@@ -256,6 +256,26 @@ class ResetManager:
             if verbose:
                 Console.success(f"✓ Applied {migration_result['applied_count']} migration(s)")
 
+            # Step 7: Explicitly clear ALL graph nodes (safety check)
+            # Even though docker-compose down -v should clear volumes,
+            # this ensures absolute clean state
+            if verbose:
+                Console.info("🧹 Clearing all graph nodes...")
+
+            try:
+                conn = AGEConnection()
+                client = conn.get_client()
+
+                # Delete all nodes (and their relationships cascade)
+                client._execute_cypher("MATCH (n) DETACH DELETE n")
+
+                conn.close()
+                if verbose:
+                    Console.success("✓ Graph cleared")
+            except Exception as e:
+                if verbose:
+                    Console.warning(f"⚠ Graph clear failed (might already be empty): {e}")
+
             # Step 8: Clear log files
             if clear_logs:
                 if verbose:
