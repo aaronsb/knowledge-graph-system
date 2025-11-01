@@ -1091,6 +1091,31 @@ export class KnowledgeGraphClient {
     const response = await this.client.delete(`/admin/keys/${provider}`);
     return response.data;
   }
+
+  /**
+   * Get similar edge types via embedding similarity (ADR-053)
+   */
+  async getSimilarTypes(
+    relationshipType: string,
+    limit: number = 10,
+    reverse: boolean = false
+  ): Promise<any> {
+    const response = await this.client.get(
+      `/vocabulary/similar/${encodeURIComponent(relationshipType)}`,
+      { params: { limit, reverse } }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get detailed vocabulary analysis (ADR-053)
+   */
+  async analyzeVocabularyType(relationshipType: string): Promise<any> {
+    const response = await this.client.get(
+      `/vocabulary/analyze/${encodeURIComponent(relationshipType)}`
+    );
+    return response.data;
+  }
 }
 
 /**
