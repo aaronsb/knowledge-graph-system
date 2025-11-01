@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
     
     
       
@@ -1044,6 +1044,66 @@
   <a href="#generate-embeddings" class="md-nav__link">
     <span class="md-ellipsis">
       Generate Embeddings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vocabulary-quality-analysis-adr-053" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vocabulary Quality Analysis (ADR-053)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vocabulary Quality Analysis (ADR-053)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-similar-types-synonym-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Similar Types (Synonym Detection)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-opposite-types-semantic-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Opposite Types (Semantic Range)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyze-type-quality-miscategorization-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyze Type Quality (Miscategorization Detection)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analysis-workflow-for-consolidation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysis Workflow for Consolidation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
     </span>
   </a>
   
@@ -4307,12 +4367,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-052-ENHANCEMENT-grounding-aware-reclassification/" class="md-nav__link">
+      <a href="../../../architecture/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ADR-052 Enhancement: Grounding-Aware Vocabulary Classification
+    ADR-052: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)
     
   </span>
   
@@ -4330,12 +4390,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../../architecture/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ADR-052: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)
+    ADR-053: Eager Vocabulary Categorization
     
   </span>
   
@@ -5106,6 +5166,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#vocabulary-quality-analysis-adr-053" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vocabulary Quality Analysis (ADR-053)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vocabulary Quality Analysis (ADR-053)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-similar-types-synonym-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Similar Types (Synonym Detection)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-opposite-types-semantic-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Opposite Types (Semantic Range)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyze-type-quality-miscategorization-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyze Type Quality (Miscategorization Detection)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analysis-workflow-for-consolidation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysis Workflow for Consolidation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#parameters-explained" class="md-nav__link">
     <span class="md-ellipsis">
       Parameters Explained
@@ -5670,10 +5790,177 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings
 </code></pre></div></p>
 <p>This is a one-time operation. The consolidation workflow requires embeddings for similarity detection.</p>
+<h2 id="vocabulary-quality-analysis-adr-053">Vocabulary Quality Analysis (ADR-053)</h2>
+<p>Before running consolidation, you can use embedding similarity analysis to understand your vocabulary structure, identify merge candidates, and validate categorization accuracy.</p>
+<h3 id="find-similar-types-synonym-detection">Find Similar Types (Synonym Detection)</h3>
+<p><strong>Identify potential merge candidates:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>similar<span class="w"> </span>IMPLIES<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
+</code></pre></div></p>
+<p><strong>Example output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>📊 Most Similar to IMPLIES
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Type: IMPLIES
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>Category: logical
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>Compared: 33 types
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>──────────────────────────────────────────────────────────────
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>TYPE                      SIMILARITY  CATEGORY          USAGE
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>──────────────────────────────────────────────────────────────
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>DEFINES                   86%         semantic          0
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>SUPPORTS                  82%         evidential        0
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>RESULTS_FROM              81%         causation         0
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>OPPOSITE_OF               81%         semantic          0
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>CAUSES                    80%         causation         0
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>──────────────────────────────────────────────────────────────
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>💡 Similarity ≥90%: Strong merge candidates (ADR-052)
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>   Similarity 75-90%: Review for potential consolidation
+</code></pre></div></p>
+<p><strong>Use cases:</strong>
+- Find types with ≥90% similarity (strong merge candidates)
+- Identify semantic clusters within categories
+- Pre-screen candidates before running <code>kg vocab consolidate --dry-run</code>
+- Understand vocabulary redundancy patterns</p>
+<h3 id="find-opposite-types-semantic-range">Find Opposite Types (Semantic Range)</h3>
+<p><strong>Discover least similar types to understand semantic boundaries:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>opposite<span class="w"> </span>IMPLIES<span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
+</code></pre></div></p>
+<p><strong>Example output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>📊 Least Similar to IMPLIES (Opposites)
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>────────────────────────────────────────────────────────────────────────────────
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>Type: IMPLIES
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>Category: logical
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>Compared: 33 types
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>──────────────────────────────────────────────────────────────
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>TYPE                      SIMILARITY  CATEGORY          USAGE
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>──────────────────────────────────────────────────────────────
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>TRANSFORMS                55%         operation         0
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>PROCESSES                 55%         llm_generated     0
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>STORES                    56%         operation         0
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>GENERATES                 59%         llm_generated     0
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>RELATED_TO                61%         semantic          0
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>──────────────────────────────────────────────────────────────
+</code></pre></div></p>
+<p><strong>Use cases:</strong>
+- Understand the semantic range of your vocabulary
+- Identify types that are genuinely distinct (low merge risk)
+- Explore cross-category semantic differences
+- Validate that "opposite" types make intuitive sense</p>
+<h3 id="analyze-type-quality-miscategorization-detection">Analyze Type Quality (Miscategorization Detection)</h3>
+<p><strong>Get detailed analysis of a vocabulary type:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>analyze<span class="w"> </span>IMPLIES
+</code></pre></div></p>
+<p><strong>Example output (well-categorized type):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>════════════════════════════════════════════════════════════════
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>🔍 Vocabulary Analysis: IMPLIES
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>════════════════════════════════════════════════════════════════
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>Category: logical
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>Category Fit: 100%
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>✓ Category assignment looks good
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>Most Similar in Same Category:
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>  CONTRADICTS               80%    (0 uses)
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>Most Similar in Other Categories:
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>  DEFINES                   86%    semantic        (0 uses)
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>  SUPPORTS                  82%    evidential      (0 uses)
+<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>  RESULTS_FROM              81%    causation       (0 uses)
+<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a>  OPPOSITE_OF               81%    semantic        (0 uses)
+<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a>  CAUSES                    80%    causation       (0 uses)
+<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a>════════════════════════════════════════════════════════════════
+</code></pre></div></p>
+<p><strong>Example output (miscategorized type):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>════════════════════════════════════════════════════════════════
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>🔍 Vocabulary Analysis: PROCESSES
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>════════════════════════════════════════════════════════════════
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>Category: llm_generated
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>Category Fit: 0%
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>⚠️  Potential Miscategorization Detected
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>   Consider reclassifying to &#39;operation&#39; category (more similar to TRANSFORMS: 0.70 vs category fit: 0.00)
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>Most Similar in Same Category:
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>  GENERATES                 70%    (0 uses)
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>Most Similar in Other Categories:
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>────────────────────────────────────────────────────────────────
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a>  TRANSFORMS                70%    operation       (0 uses)
+<a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a>  STORES                    65%    operation       (0 uses)
+<a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a>  RELATED_TO                64%    semantic        (0 uses)
+<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a>  IMPLEMENTED_BY            59%    implementation  (0 uses)
+<a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a>  PRODUCES                  59%    causation       (0 uses)
+<a id="__codelineno-20-24" name="__codelineno-20-24" href="#__codelineno-20-24"></a>════════════════════════════════════════════════════════════════
+</code></pre></div></p>
+<p><strong>What it shows:</strong>
+- <strong>Category Fit</strong>: Similarity to category seed types (0-100%)
+- <strong>Miscategorization Detection</strong>: Warns if top other-category similarity exceeds category fit
+- <strong>Same-category neighbors</strong>: Top 5 most similar types in assigned category
+- <strong>Other-category neighbors</strong>: Top 5 most similar types from different categories
+- <strong>Actionable suggestions</strong>: Recommended reclassification if miscategorized</p>
+<p><strong>Use cases:</strong>
+- Validate auto-categorization from ADR-047/ADR-053
+- Identify types in wrong categories (especially <code>llm_generated</code>)
+- Understand why certain types are grouped together
+- Quality assurance before consolidation
+- Detect when category seeds may need adjustment</p>
+<h3 id="analysis-workflow-for-consolidation">Analysis Workflow for Consolidation</h3>
+<p><strong>Recommended workflow before consolidation:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># 1. Check vocabulary status</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># 2. Find strong merge candidates (≥90% similarity)</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>similar<span class="w"> </span>RELATED_TO<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># 3. Check if top results are truly synonymous (not inverses)</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>analyze<span class="w"> </span>RELATED_TO
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>kg<span class="w"> </span>vocab<span class="w"> </span>analyze<span class="w"> </span>LINKED_TO
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="c1"># 4. If they look like true synonyms, validate with dry-run</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="c1"># 5. If dry-run results are good, execute</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
+</code></pre></div>
+<p><strong>Using similarity analysis for troubleshooting:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># If consolidation rejected a high-similarity pair, understand why:</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>analyze<span class="w"> </span>VERIFIED_BY
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>analyze<span class="w"> </span>VERIFIES
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Look at category fit and semantic neighbors to see the distinction</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1"># If consolidation seems too aggressive, check what got merged:</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>kg<span class="w"> </span>vocab<span class="w"> </span>similar<span class="w"> </span>ASSOCIATED_WITH<span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="c1"># See all types now similar to the consolidated target</span>
+</code></pre></div>
+<h3 id="limitations">Limitations</h3>
+<p><strong>ADR-053 Status:</strong>
+- ✅ Similarity analysis commands implemented
+- ✅ Category fit calculation working
+- ✅ Miscategorization detection functional
+- ❌ Automated reclassification not yet implemented (manual via <code>kg vocab refresh-categories</code>)
+- ❌ No batch analysis across all types (must query one at a time)</p>
+<p><strong>Future enhancements:</strong>
+- <code>kg vocab health</code> - Batch analysis of all types, summary report
+- <code>kg vocab reclassify &lt;type&gt; &lt;new-category&gt;</code> - Manual category override
+- <code>kg vocab similar --category logical</code> - Find similar types within category only</p>
 <h2 id="parameters-explained">Parameters Explained</h2>
 <h3 id="-target-size"><code>--target &lt;size&gt;</code></h3>
 <p><strong>Controls when consolidation stops:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
 </code></pre></div></p>
 <p><strong>Guidance:</strong>
 - <strong>Conservative</strong> (80-90): Keep most distinctions
@@ -5695,7 +5982,7 @@
 <p><strong>Future versions may reintroduce this for HITL mode</strong> (human-in-the-loop) where threshold determines when to ask for human approval.</p>
 <h3 id="-dry-run"><code>--dry-run</code></h3>
 <p><strong>Validation mode - no execution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
 </code></pre></div></p>
 <p><strong>Behavior:</strong>
 - Evaluates top 10 candidates only (not iterative)
@@ -5709,7 +5996,7 @@
 - Documenting vocabulary decisions</p>
 <h3 id="-auto"><code>--auto</code></h3>
 <p><strong>Enables live execution mode:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
 </code></pre></div></p>
 <p><strong>Without <code>--auto</code>:</strong>
 - Defaults to dry-run validation mode
@@ -5729,12 +6016,12 @@
 <ol>
 <li>
 <p><strong>Check current state:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Run dry-run validation:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -5747,58 +6034,58 @@
 </li>
 <li>
 <p><strong>Backup database (optional but recommended):</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Export current graph state</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="s2">&quot;MyOntology&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>backup.json
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Export current graph state</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="s2">&quot;MyOntology&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>backup.json
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Start conservative:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># First run: modest target</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># If results look good, go further</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># First run: modest target</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1"># If results look good, go further</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="domain-specific-guidance">Domain-Specific Guidance</h3>
 <p><strong>Software Development / Technical Docs:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Rich relationship semantics - keep distinctions</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">80</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># KEEP distinct: IMPLEMENTS, REFERENCES, DEPENDS_ON, TESTED_BY, VERIFIED_BY</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1"># MERGE generic: RELATED_TO → ASSOCIATED_WITH</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Rich relationship semantics - keep distinctions</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">80</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="c1"># KEEP distinct: IMPLEMENTS, REFERENCES, DEPENDS_ON, TESTED_BY, VERIFIED_BY</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="c1"># MERGE generic: RELATED_TO → ASSOCIATED_WITH</span>
 </code></pre></div></p>
 <p><strong>Why:</strong> Code relationships have precise meanings. <code>IMPLEMENTS</code> ≠ <code>REFERENCES</code> ≠ <code>MENTIONS</code>.</p>
 <p><strong>General Knowledge / Research:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Broader consolidation acceptable</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">65</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># MERGE: Many generic connection types</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1"># KEEP: Domain-specific relationships</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Broader consolidation acceptable</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">65</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># MERGE: Many generic connection types</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="c1"># KEEP: Domain-specific relationships</span>
 </code></pre></div></p>
 <p><strong>Why:</strong> Research documents use more generic relationship language with fewer technical distinctions.</p>
 <p><strong>Multi-Domain Ontologies:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Preserve cross-domain nuance</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">90</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Risk: Same term means different things in different domains</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="c1"># Example: &quot;SPRINT&quot; in software (iteration) vs. athletics (race)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Preserve cross-domain nuance</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">90</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Risk: Same term means different things in different domains</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="c1"># Example: &quot;SPRINT&quot; in software (iteration) vs. athletics (race)</span>
 </code></pre></div></p>
 <p><strong>Why:</strong> Cross-domain vocabularies need flexibility to represent diverse semantic spaces.</p>
 <h3 id="iterative-consolidation-strategy">Iterative Consolidation Strategy</h3>
 <p><strong>Don't over-consolidate in one pass:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Pass 1: Remove obvious redundancy</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w">  </span><span class="c1"># Check results</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="c1"># Pass 2: Moderate consolidation if Pass 1 looked good</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="c1"># Pass 3: Query graph to verify relationship coherence</span>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;software architecture&quot;</span>
-<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="c1"># Do results still make sense?</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Pass 1: Remove obvious redundancy</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w">  </span><span class="c1"># Check results</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="c1"># Pass 2: Moderate consolidation if Pass 1 looked good</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="c1"># Pass 3: Query graph to verify relationship coherence</span>
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;software architecture&quot;</span>
+<a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a><span class="c1"># Do results still make sense?</span>
 </code></pre></div>
 <p><strong>Stop if:</strong>
 - Queries return unexpected results
@@ -5806,14 +6093,14 @@
 - Vocabulary zone reaches OPTIMAL (30-90)</p>
 <h3 id="monitoring-consolidation-impact">Monitoring Consolidation Impact</h3>
 <p><strong>After consolidation, verify graph coherence:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Check relationship diversity</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Query concepts to see if relationships still make sense</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;your domain keywords&quot;</span>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># Check specific merged types</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>ASSOCIATED_WITH
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Check relationship diversity</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># Query concepts to see if relationships still make sense</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;your domain keywords&quot;</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="c1"># Check specific merged types</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>ASSOCIATED_WITH
 </code></pre></div>
 <p><strong>Red flags:</strong>
 - Too many edges collapsed into single generic type (e.g., 200+ edges → <code>ASSOCIATED_WITH</code>)
@@ -5829,18 +6116,18 @@
 <li><strong>Graph consistency</strong> - Would a unified term improve clarity?</li>
 </ol>
 <p><strong>LLM returns:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span><span class="nt">&quot;should_merge&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Both types represent generic association with no semantic distinction.&quot;</span><span class="p">,</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span><span class="nt">&quot;blended_term&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSOCIATED_WITH&quot;</span><span class="p">,</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">  </span><span class="nt">&quot;blended_description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A generic relationship indicating conceptual association.&quot;</span>
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="p">{</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">  </span><span class="nt">&quot;should_merge&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Both types represent generic association with no semantic distinction.&quot;</span><span class="p">,</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="w">  </span><span class="nt">&quot;blended_term&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSOCIATED_WITH&quot;</span><span class="p">,</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="w">  </span><span class="nt">&quot;blended_description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A generic relationship indicating conceptual association.&quot;</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>If <code>should_merge: false</code>:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="p">{</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span><span class="nt">&quot;should_merge&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;VERIFIED_BY and VERIFIES are directional inverses representing opposite directions of verification.&quot;</span>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="p">{</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">  </span><span class="nt">&quot;should_merge&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;VERIFIED_BY and VERIFIES are directional inverses representing opposite directions of verification.&quot;</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="p">}</span>
 </code></pre></div></p>
 <h3 id="confidence-in-llm-decisions">Confidence in LLM Decisions</h3>
 <p><strong>AITL mode assumes:</strong>
@@ -5858,13 +6145,13 @@
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="no-more-candidates-available-but-not-at-target">"No more candidates available" but not at target</h3>
 <p><strong>Symptom:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>📊 Consolidation Results
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>Summary
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>  Initial Size: 85
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>  Final Size: 82
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>  Reduction: -3
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>No more unprocessed candidates available
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>📊 Consolidation Results
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>Summary
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>  Initial Size: 85
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>  Final Size: 82
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>  Reduction: -3
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>
+<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a>No more unprocessed candidates available
 </code></pre></div></p>
 <p><strong>Cause:</strong> All remaining synonym candidates were rejected by LLM (e.g., all directional inverses).</p>
 <p><strong>Solution:</strong>
@@ -5873,17 +6160,17 @@
 - Lower your target if you want to force more consolidation (not recommended)</p>
 <h3 id="high-similarity-pairs-rejected">High similarity pairs rejected</h3>
 <p><strong>Symptom:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>✗ CREATED_BY + CREATED_AT
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>   Similarity: 91.2%
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>   Reasoning: CREATED_BY indicates creator, CREATED_AT indicates timestamp.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>✗ CREATED_BY + CREATED_AT
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>   Similarity: 91.2%
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>   Reasoning: CREATED_BY indicates creator, CREATED_AT indicates timestamp.
 </code></pre></div></p>
 <p><strong>Explanation:</strong> Embedding similarity detects lexical similarity, but LLM understands semantic differences.</p>
 <p><strong>This is correct behavior</strong> - trust the LLM's semantic reasoning over raw similarity scores.</p>
 <h3 id="same-pair-appearing-multiple-times-historical-bug-fixed">Same pair appearing multiple times (historical bug - fixed)</h3>
 <p><strong>In version 1.0, this should not occur.</strong></p>
 <p>If you see duplicate evaluations:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>✗ VERIFIED_BY + VERIFIES
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>✗ VERIFIED_BY + VERIFIES  (duplicate)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>✗ VERIFIED_BY + VERIFIES
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>✗ VERIFIED_BY + VERIFIES  (duplicate)
 </code></pre></div></p>
 <p><strong>Report this as a bug</strong> - session-based tracking should prevent this.</p>
 <h3 id="consolidation-too-aggressive">Consolidation too aggressive</h3>
@@ -5895,7 +6182,7 @@
 <ol>
 <li>
 <p><strong>Stop and assess:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w">  </span><span class="c1"># Check current state</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status<span class="w">  </span><span class="c1"># Check current state</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -5907,8 +6194,8 @@
 </li>
 <li>
 <p><strong>Adjust target for future runs:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Don&#39;t push target so low</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">90</span><span class="w">  </span><span class="c1"># More conservative</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Don&#39;t push target so low</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">90</span><span class="w">  </span><span class="c1"># More conservative</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -5923,52 +6210,52 @@
 <ol>
 <li>
 <p><strong>Before consolidation:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Export ontology</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="s2">&quot;YourOntology&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>backup.json
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># Export ontology</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="s2">&quot;YourOntology&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>backup.json
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Manual edge type updates:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1">// Update edges back to original type (openCypher query)</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">()</span><span class="o">-[</span><span class="n">r</span><span class="p">:</span><span class="n">MERGED_TYPE</span><span class="o">]-&gt;</span><span class="p">()</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">original_type</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;ORIGINAL_TYPE&#39;</span>
-<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1">// Note: Requires tracking original types (not implemented yet)</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1">// Update edges back to original type (openCypher query)</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">()</span><span class="o">-[</span><span class="n">r</span><span class="p">:</span><span class="n">MERGED_TYPE</span><span class="o">]-&gt;</span><span class="p">()</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">original_type</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;ORIGINAL_TYPE&#39;</span>
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1">// Note: Requires tracking original types (not implemented yet)</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Database restore:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Full PostgreSQL backup/restore</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>knowledge_graph<span class="w"> </span>&gt;<span class="w"> </span>backup.sql
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># Full PostgreSQL backup/restore</span>
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>knowledge_graph<span class="w"> </span>&gt;<span class="w"> </span>backup.sql
 </code></pre></div></p>
 </li>
 </ol>
 <h2 id="technical-details">Technical Details</h2>
 <h3 id="candidate-prioritization">Candidate Prioritization</h3>
 <p><strong>How candidates are ranked:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="n">priority</span> <span class="o">=</span> <span class="p">(</span><span class="n">similarity</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">min_edge_count</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="n">priority</span> <span class="o">=</span> <span class="p">(</span><span class="n">similarity</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">min_edge_count</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Favors:</strong>
 - High embedding similarity (80%+ cosine similarity)
 - Low-usage types (&lt; 20 edges) - safer to merge
 - Balance between similarity confidence and impact</p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>Candidate: RELATED_TO (2 edges) + LINKED_TO (5 edges)
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>Similarity: 0.887 (88.7%)
-<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>Priority: (0.887 * 2) - (2 / 100) = 1.774 - 0.02 = 1.754
-<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>
-<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>Candidate: VERIFIED_BY (50 edges) + VERIFIES (48 edges)
-<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>Similarity: 0.923 (92.3%)
-<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a>Priority: (0.923 * 2) - (48 / 100) = 1.846 - 0.48 = 1.366
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>Candidate: RELATED_TO (2 edges) + LINKED_TO (5 edges)
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>Similarity: 0.887 (88.7%)
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>Priority: (0.887 * 2) - (2 / 100) = 1.774 - 0.02 = 1.754
+<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>
+<a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>Candidate: VERIFIED_BY (50 edges) + VERIFIES (48 edges)
+<a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>Similarity: 0.923 (92.3%)
+<a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a>Priority: (0.923 * 2) - (48 / 100) = 1.846 - 0.48 = 1.366
 </code></pre></div></p>
 <p>First candidate is prioritized despite lower similarity (safer merge with fewer edges).</p>
 <h3 id="embedding-generation">Embedding Generation</h3>
 <p><strong>Vocabulary types need embeddings for similarity detection:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># Each relationship type gets an embedding</span>
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="n">text</span> <span class="o">=</span> <span class="n">relationship_type</span>  <span class="c1"># e.g., &quot;IMPLEMENTS&quot;</span>
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="n">embedding</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;text-embedding-3-small&quot;</span><span class="p">,</span>
-<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>    <span class="nb">input</span><span class="o">=</span><span class="n">text</span>
-<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">embedding</span>  <span class="c1"># 1536 dimensions</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a><span class="c1"># Each relationship type gets an embedding</span>
+<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="n">text</span> <span class="o">=</span> <span class="n">relationship_type</span>  <span class="c1"># e.g., &quot;IMPLEMENTS&quot;</span>
+<a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="n">embedding</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;text-embedding-3-small&quot;</span><span class="p">,</span>
+<a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a>    <span class="nb">input</span><span class="o">=</span><span class="n">text</span>
+<a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a><span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">embedding</span>  <span class="c1"># 1536 dimensions</span>
 </code></pre></div>
 <p><strong>Stored in:</strong> <code>kg_api.relationship_vocabulary.embedding</code></p>
 <p><strong>Generated:</strong>
@@ -5979,28 +6266,28 @@
 <ol>
 <li>
 <p><strong>Update all edges:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">:</span><span class="n">DEPRECATED_TYPE</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">)</span><span class="o">-[</span><span class="n">new_r</span><span class="p">:</span><span class="n">TARGET_TYPE</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="k">SET</span><span class="w"> </span><span class="n">new_r</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">properties</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="k">DELETE</span><span class="w"> </span><span class="n">r</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">:</span><span class="n">DEPRECATED_TYPE</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">)</span><span class="o">-[</span><span class="n">new_r</span><span class="p">:</span><span class="n">TARGET_TYPE</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
+<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a><span class="k">SET</span><span class="w"> </span><span class="n">new_r</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">properties</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+<a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a><span class="k">DELETE</span><span class="w"> </span><span class="n">r</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Mark deprecated type inactive:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">is_active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">    </span><span class="n">merged_into</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;TARGET_TYPE&#39;</span><span class="p">,</span>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">    </span><span class="n">performed_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;aitl_consolidation&#39;</span>
-<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;DEPRECATED_TYPE&#39;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">is_active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
+<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a><span class="w">    </span><span class="n">merged_into</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;TARGET_TYPE&#39;</span><span class="p">,</span>
+<a id="__codelineno-49-4" name="__codelineno-49-4" href="#__codelineno-49-4"></a><span class="w">    </span><span class="n">performed_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;aitl_consolidation&#39;</span>
+<a id="__codelineno-49-5" name="__codelineno-49-5" href="#__codelineno-49-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;DEPRECATED_TYPE&#39;</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Return edge count:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="p">{</span>
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>    <span class="s1">&#39;deprecated&#39;</span><span class="p">:</span> <span class="s1">&#39;RELATED_TO&#39;</span><span class="p">,</span>
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>    <span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="s1">&#39;ASSOCIATED_WITH&#39;</span><span class="p">,</span>
-<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a>    <span class="s1">&#39;edges_updated&#39;</span><span class="p">:</span> <span class="mi">42</span>
-<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a><span class="p">}</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="p">{</span>
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>    <span class="s1">&#39;deprecated&#39;</span><span class="p">:</span> <span class="s1">&#39;RELATED_TO&#39;</span><span class="p">,</span>
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>    <span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="s1">&#39;ASSOCIATED_WITH&#39;</span><span class="p">,</span>
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>    <span class="s1">&#39;edges_updated&#39;</span><span class="p">:</span> <span class="mi">42</span>
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a><span class="p">}</span>
 </code></pre></div></p>
 </li>
 </ol>
@@ -6029,68 +6316,68 @@
 <h2 id="real-world-example">Real-World Example</h2>
 <h3 id="scenario-software-development-ontology">Scenario: Software Development Ontology</h3>
 <p><strong>Starting state:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>Vocabulary<span class="w"> </span>Size:<span class="w"> </span><span class="m">120</span>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a>Zone:<span class="w"> </span>TOO_LARGE
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>Custom<span class="w"> </span>Types:<span class="w"> </span><span class="m">92</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>
+<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>Vocabulary<span class="w"> </span>Size:<span class="w"> </span><span class="m">120</span>
+<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>Zone:<span class="w"> </span>TOO_LARGE
+<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>Custom<span class="w"> </span>Types:<span class="w"> </span><span class="m">92</span>
 </code></pre></div></p>
 <p><strong>Consolidation run:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># Step 1: Validate</span>
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
-<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1"># Review output:</span>
-<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a><span class="c1"># - Would merge 15 pairs (generic types)</span>
-<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a><span class="c1"># - Would reject 8 pairs (directional inverses)</span>
-<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># - Looks reasonable</span>
-<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>
-<a id="__codelineno-43-9" name="__codelineno-43-9" href="#__codelineno-43-9"></a><span class="c1"># Step 2: Execute</span>
-<a id="__codelineno-43-10" name="__codelineno-43-10" href="#__codelineno-43-10"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
-<a id="__codelineno-43-11" name="__codelineno-43-11" href="#__codelineno-43-11"></a>
-<a id="__codelineno-43-12" name="__codelineno-43-12" href="#__codelineno-43-12"></a><span class="c1"># Results:</span>
-<a id="__codelineno-43-13" name="__codelineno-43-13" href="#__codelineno-43-13"></a><span class="c1"># Initial: 120</span>
-<a id="__codelineno-43-14" name="__codelineno-43-14" href="#__codelineno-43-14"></a><span class="c1"># Final: 102</span>
-<a id="__codelineno-43-15" name="__codelineno-43-15" href="#__codelineno-43-15"></a><span class="c1"># Merged: 18</span>
-<a id="__codelineno-43-16" name="__codelineno-43-16" href="#__codelineno-43-16"></a><span class="c1"># Rejected: 12</span>
-<a id="__codelineno-43-17" name="__codelineno-43-17" href="#__codelineno-43-17"></a><span class="c1"># Edges updated: 234</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># Step 1: Validate</span>
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
+<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
+<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># Review output:</span>
+<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a><span class="c1"># - Would merge 15 pairs (generic types)</span>
+<a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a><span class="c1"># - Would reject 8 pairs (directional inverses)</span>
+<a id="__codelineno-52-7" name="__codelineno-52-7" href="#__codelineno-52-7"></a><span class="c1"># - Looks reasonable</span>
+<a id="__codelineno-52-8" name="__codelineno-52-8" href="#__codelineno-52-8"></a>
+<a id="__codelineno-52-9" name="__codelineno-52-9" href="#__codelineno-52-9"></a><span class="c1"># Step 2: Execute</span>
+<a id="__codelineno-52-10" name="__codelineno-52-10" href="#__codelineno-52-10"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">85</span>
+<a id="__codelineno-52-11" name="__codelineno-52-11" href="#__codelineno-52-11"></a>
+<a id="__codelineno-52-12" name="__codelineno-52-12" href="#__codelineno-52-12"></a><span class="c1"># Results:</span>
+<a id="__codelineno-52-13" name="__codelineno-52-13" href="#__codelineno-52-13"></a><span class="c1"># Initial: 120</span>
+<a id="__codelineno-52-14" name="__codelineno-52-14" href="#__codelineno-52-14"></a><span class="c1"># Final: 102</span>
+<a id="__codelineno-52-15" name="__codelineno-52-15" href="#__codelineno-52-15"></a><span class="c1"># Merged: 18</span>
+<a id="__codelineno-52-16" name="__codelineno-52-16" href="#__codelineno-52-16"></a><span class="c1"># Rejected: 12</span>
+<a id="__codelineno-52-17" name="__codelineno-52-17" href="#__codelineno-52-17"></a><span class="c1"># Edges updated: 234</span>
 </code></pre></div></p>
 <p><strong>Key merges:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>RELATED_TO → ASSOCIATED_WITH (42 edges)
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>LINKED_TO → ASSOCIATED_WITH (29 edges)
-<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>REFERENCES → MENTIONS (18 edges)
-<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a>CITES → MENTIONS (12 edges)
-<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>APPLIES_TO → RELEVANT_TO (8 edges)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>RELATED_TO → ASSOCIATED_WITH (42 edges)
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>LINKED_TO → ASSOCIATED_WITH (29 edges)
+<a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>REFERENCES → MENTIONS (18 edges)
+<a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a>CITES → MENTIONS (12 edges)
+<a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a>APPLIES_TO → RELEVANT_TO (8 edges)
 </code></pre></div></p>
 <p><strong>Key rejects (preserved distinctions):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>IMPLEMENTS ≠ REFERENCES (implementation vs mention)
-<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>TESTED_BY ≠ VERIFIED_BY (testing vs verification)
-<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>DEPENDS_ON ≠ REQUIRES (dependency vs requirement)
-<a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a>PART_OF ≠ HAS_PART (directional inverse)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>IMPLEMENTS ≠ REFERENCES (implementation vs mention)
+<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>TESTED_BY ≠ VERIFIED_BY (testing vs verification)
+<a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a>DEPENDS_ON ≠ REQUIRES (dependency vs requirement)
+<a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a>PART_OF ≠ HAS_PART (directional inverse)
 </code></pre></div></p>
 <p><strong>Post-consolidation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
-<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>
-<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>Vocabulary<span class="w"> </span>Size:<span class="w"> </span><span class="m">102</span>
-<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>Zone:<span class="w"> </span>MIXED
-<a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>Custom<span class="w"> </span>Types:<span class="w"> </span><span class="m">74</span>
-<a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>
-<a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a><span class="c1"># Still above optimal, run again</span>
-<a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">90</span>
-<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>
-<a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a><span class="c1"># Final state:</span>
-<a id="__codelineno-46-11" name="__codelineno-46-11" href="#__codelineno-46-11"></a>Vocabulary<span class="w"> </span>Size:<span class="w"> </span><span class="m">90</span>
-<a id="__codelineno-46-12" name="__codelineno-46-12" href="#__codelineno-46-12"></a>Zone:<span class="w"> </span>OPTIMAL
-<a id="__codelineno-46-13" name="__codelineno-46-13" href="#__codelineno-46-13"></a>Custom<span class="w"> </span>Types:<span class="w"> </span><span class="m">62</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>status
+<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a>Vocabulary<span class="w"> </span>Size:<span class="w"> </span><span class="m">102</span>
+<a id="__codelineno-55-4" name="__codelineno-55-4" href="#__codelineno-55-4"></a>Zone:<span class="w"> </span>MIXED
+<a id="__codelineno-55-5" name="__codelineno-55-5" href="#__codelineno-55-5"></a>Custom<span class="w"> </span>Types:<span class="w"> </span><span class="m">74</span>
+<a id="__codelineno-55-6" name="__codelineno-55-6" href="#__codelineno-55-6"></a>
+<a id="__codelineno-55-7" name="__codelineno-55-7" href="#__codelineno-55-7"></a><span class="c1"># Still above optimal, run again</span>
+<a id="__codelineno-55-8" name="__codelineno-55-8" href="#__codelineno-55-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">90</span>
+<a id="__codelineno-55-9" name="__codelineno-55-9" href="#__codelineno-55-9"></a>
+<a id="__codelineno-55-10" name="__codelineno-55-10" href="#__codelineno-55-10"></a><span class="c1"># Final state:</span>
+<a id="__codelineno-55-11" name="__codelineno-55-11" href="#__codelineno-55-11"></a>Vocabulary<span class="w"> </span>Size:<span class="w"> </span><span class="m">90</span>
+<a id="__codelineno-55-12" name="__codelineno-55-12" href="#__codelineno-55-12"></a>Zone:<span class="w"> </span>OPTIMAL
+<a id="__codelineno-55-13" name="__codelineno-55-13" href="#__codelineno-55-13"></a>Custom<span class="w"> </span>Types:<span class="w"> </span><span class="m">62</span>
 </code></pre></div></p>
 <p><strong>Impact on queries:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a><span class="c1">// Before: Must check 5 variants</span>
-<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="o">[</span><span class="s">&#39;RELATED_TO&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;LINKED_TO&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;ASSOCIATED_WITH&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;CONNECTED_TO&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;TIES_TO&#39;</span><span class="o">]</span>
-<a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
-<a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a>
-<a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a><span class="c1">// After: Single unified type</span>
-<a id="__codelineno-47-7" name="__codelineno-47-7" href="#__codelineno-47-7"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">ASSOCIATED_WITH</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-47-8" name="__codelineno-47-8" href="#__codelineno-47-8"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a><span class="c1">// Before: Must check 5 variants</span>
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="o">[</span><span class="s">&#39;RELATED_TO&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;LINKED_TO&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;ASSOCIATED_WITH&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;CONNECTED_TO&#39;</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;TIES_TO&#39;</span><span class="o">]</span>
+<a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
+<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a>
+<a id="__codelineno-56-6" name="__codelineno-56-6" href="#__codelineno-56-6"></a><span class="c1">// After: Single unified type</span>
+<a id="__codelineno-56-7" name="__codelineno-56-7" href="#__codelineno-56-7"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">ASSOCIATED_WITH</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-56-8" name="__codelineno-56-8" href="#__codelineno-56-8"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
 </code></pre></div></p>
 <h2 id="related-documentation">Related Documentation</h2>
 <ul>
