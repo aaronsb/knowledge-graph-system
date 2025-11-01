@@ -3205,6 +3205,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#superseded-notice" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚠️ Superseded Notice
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       Context
@@ -3392,9 +3401,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#future-oauth-integration-phase-2" class="md-nav__link">
+  <a href="#future-oauth-integration-phase-2-superseded-by-adr-054" class="md-nav__link">
     <span class="md-ellipsis">
-      Future OAuth Integration (Phase 2)
+      ~~Future OAuth Integration (Phase 2)~~ → Superseded by ADR-054
     </span>
   </a>
   
@@ -4339,6 +4348,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../ADR-054-oauth-client-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -4460,6 +4492,29 @@
   
   <span class="md-ellipsis">
     Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OAUTH_CLIENT_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OAuth Client Management - Feasibility Analysis
     
   </span>
   
@@ -4939,6 +4994,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#superseded-notice" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚠️ Superseded Notice
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       Context
@@ -5126,9 +5190,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#future-oauth-integration-phase-2" class="md-nav__link">
+  <a href="#future-oauth-integration-phase-2-superseded-by-adr-054" class="md-nav__link">
     <span class="md-ellipsis">
-      Future OAuth Integration (Phase 2)
+      ~~Future OAuth Integration (Phase 2)~~ → Superseded by ADR-054
     </span>
   </a>
   
@@ -5387,10 +5451,24 @@
 
 
 <h1 id="adr-027-user-management-api-with-lightweight-jwt-authentication">ADR-027: User Management API with Lightweight JWT Authentication</h1>
-<p><strong>Status:</strong> Accepted
+<p><strong>Status:</strong> Superseded by ADR-054 (OAuth 2.0 Client Management)
 <strong>Date:</strong> 2025-10-11
+<strong>Superseded Date:</strong> 2025-11-01
 <strong>Author:</strong> Aaron Bockelie
-<strong>Related ADRs:</strong> ADR-024 (Multi-Schema PostgreSQL Architecture)</p>
+<strong>Related ADRs:</strong> ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-054 (OAuth 2.0 Client Management)</p>
+<hr />
+<h2 id="superseded-notice">⚠️ Superseded Notice</h2>
+<p><strong>This ADR described a JWT password flow implementation that has been replaced by a comprehensive OAuth 2.0 system (ADR-054).</strong></p>
+<p><strong>Key Changes:</strong>
+- JWT password flow (<code>POST /auth/login</code>) → OAuth 2.0 flows (authorization code, device, client credentials)
+- API keys (<code>kg_auth.api_keys</code>) → OAuth client credentials for machine-to-machine auth
+- Single authentication method → Multiple flows appropriate for each client type (web, CLI, MCP)</p>
+<p><strong>See ADR-054</strong> for the current OAuth 2.0 implementation which provides:
+- Authorization Code + PKCE for web applications
+- Device Authorization Grant for CLI tools
+- Client Credentials for machine-to-machine (MCP server)</p>
+<p><strong>This document is retained for historical context.</strong></p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The knowledge graph system requires user authentication and authorization to:
 - Control access to API endpoints based on role permissions
@@ -5671,58 +5749,19 @@
 </tr>
 </tbody>
 </table>
-<h3 id="future-oauth-integration-phase-2">Future OAuth Integration (Phase 2)</h3>
-<p>When ready to add OAuth providers:</p>
-<p><strong>1. Add SessionMiddleware</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.sessions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SessionMiddleware</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">app</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">SessionMiddleware</span><span class="p">,</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">secret_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;SESSION_SECRET_KEY&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">)</span>
-</code></pre></div></p>
-<p><strong>2. Register OAuth Providers</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">authlib.integrations.starlette_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">oauth</span> <span class="o">=</span> <span class="n">OAuth</span><span class="p">()</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">oauth</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;github&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">client_id</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;GITHUB_CLIENT_ID&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="n">client_secret</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;GITHUB_CLIENT_SECRET&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="n">authorize_url</span><span class="o">=</span><span class="s1">&#39;https://github.com/login/oauth/authorize&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="n">access_token_url</span><span class="o">=</span><span class="s1">&#39;https://github.com/login/oauth/access_token&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="n">api_base_url</span><span class="o">=</span><span class="s1">&#39;https://api.github.com/&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">client_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;scope&#39;</span><span class="p">:</span> <span class="s1">&#39;user:email&#39;</span><span class="p">},</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="p">)</span>
-</code></pre></div></p>
-<p><strong>3. OAuth Endpoints</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>GET  /auth/github           -&gt; Redirect to GitHub
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>GET  /auth/github/callback  -&gt; Handle OAuth response
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>POST /auth/google           -&gt; Redirect to Google
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>GET  /auth/google/callback  -&gt; Handle OAuth response
-</code></pre></div></p>
-<p><strong>4. OAuth Flow</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>User clicks &quot;Login with GitHub&quot;
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  ↓
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>GET /auth/github (redirect to GitHub)
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  ↓
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>User authorizes on GitHub
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  ↓
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>GET /auth/github/callback (GitHub returns user info)
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>  ↓
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>Find or create user in kg_auth.users
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>  ↓
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>Store OAuth token in kg_auth.oauth_tokens
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>  ↓
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>Issue standard JWT token (same format as password login)
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>  ↓
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>User authenticated (JWT works for all API calls)
-</code></pre></div></p>
-<p><strong>Key Points:</strong>
-- OAuth is an <strong>alternative login path</strong>, not a replacement
-- Both OAuth and password login issue the <strong>same JWT format</strong>
-- No changes to existing JWT validation logic
-- <code>kg_auth.oauth_tokens</code> table already defined in schema</p>
+<h3 id="future-oauth-integration-phase-2-superseded-by-adr-054">~~Future OAuth Integration (Phase 2)~~ → Superseded by ADR-054</h3>
+<p><strong>⚠️ This section described a plan for external OAuth providers (Login with GitHub/Google). This has been superseded by ADR-054 which implements:</strong></p>
+<ol>
+<li><strong>OAuth 2.0 Server</strong> - Our system issues OAuth tokens to client applications</li>
+<li><strong>Multiple Grant Types</strong> - Authorization code (web), device (CLI), client credentials (MCP)</li>
+<li><strong>Client Registration</strong> - Register client applications (<code>kg-cli</code>, <code>kg-viz</code>, <code>kg-mcp</code>)</li>
+<li><strong>Proper Token Management</strong> - Access tokens, refresh tokens, authorization codes</li>
+</ol>
+<p><strong>For external OAuth providers (Login with GitHub/Google):</strong>
+- The <code>kg_auth.oauth_external_provider_tokens</code> table (renamed from <code>oauth_tokens</code>) can store these
+- This is orthogonal to ADR-054 (our OAuth server)
+- Can be implemented later if needed</p>
+<p><strong>See ADR-054</strong> for complete OAuth 2.0 architecture.</p>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <h3 id="1-fastapi-users">1. FastAPI Users</h3>
 <p><strong>Pros:</strong>
@@ -5801,7 +5840,7 @@
 <h2 id="implementation-plan">Implementation Plan</h2>
 <h3 id="phase-1-core-authentication-week-1">Phase 1: Core Authentication (Week 1)</h3>
 <p><strong>Dependencies:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pip<span class="w"> </span>install<span class="w"> </span>passlib<span class="o">[</span>bcrypt<span class="o">]</span><span class="w"> </span>python-jose<span class="o">[</span>cryptography<span class="o">]</span><span class="w"> </span>python-multipart
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pip<span class="w"> </span>install<span class="w"> </span>passlib<span class="o">[</span>bcrypt<span class="o">]</span><span class="w"> </span>python-jose<span class="o">[</span>cryptography<span class="o">]</span><span class="w"> </span>python-multipart
 </code></pre></div></p>
 <p><strong>Implementation Order:</strong>
 1. Create <code>src/api/lib/auth.py</code> - Password hashing, JWT utilities
@@ -5820,7 +5859,7 @@
 6. Update kg CLI to support API keys</p>
 <h3 id="phase-3-oauth-integration-future">Phase 3: OAuth Integration (Future)</h3>
 <p><strong>Dependencies:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pip<span class="w"> </span>install<span class="w"> </span>authlib<span class="w"> </span>itsdangerous
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pip<span class="w"> </span>install<span class="w"> </span>authlib<span class="w"> </span>itsdangerous
 </code></pre></div></p>
 <p><strong>Implementation Order:</strong>
 1. Add SessionMiddleware
@@ -5855,29 +5894,29 @@
 <li>Invalid signature rejection</li>
 </ul>
 <h3 id="manual-testing">Manual Testing</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># 1. Register user</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/register<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;username&quot;: &quot;alice&quot;, &quot;password&quot;: &quot;SecurePass123!&quot;, &quot;role&quot;: &quot;contributor&quot;}&#39;</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># 2. Login</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/login<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/x-www-form-urlencoded&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;username=alice&amp;password=SecurePass123!&quot;</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="c1"># 3. Access protected endpoint</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/auth/me<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token_from_step_2&gt;&quot;</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>
-<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="c1"># 4. Create API key</span>
-<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/api-keys<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;: &quot;Test Key&quot;, &quot;scopes&quot;: [&quot;read:concepts&quot;]}&#39;</span>
-<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>
-<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="c1"># 5. Use API key</span>
-<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/concepts<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;api_key_from_step_4&gt;&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># 1. Register user</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/register<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;username&quot;: &quot;alice&quot;, &quot;password&quot;: &quot;SecurePass123!&quot;, &quot;role&quot;: &quot;contributor&quot;}&#39;</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="c1"># 2. Login</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/login<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/x-www-form-urlencoded&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;username=alice&amp;password=SecurePass123!&quot;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="c1"># 3. Access protected endpoint</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/auth/me<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token_from_step_2&gt;&quot;</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="c1"># 4. Create API key</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/api-keys<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;: &quot;Test Key&quot;, &quot;scopes&quot;: [&quot;read:concepts&quot;]}&#39;</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="c1"># 5. Use API key</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/concepts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;api_key_from_step_4&gt;&quot;</span>
 </code></pre></div>
 <h2 id="references">References</h2>
 <h3 id="external-documentation">External Documentation</h3>

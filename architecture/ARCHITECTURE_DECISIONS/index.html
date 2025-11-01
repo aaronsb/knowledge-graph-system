@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../ADR-053-eager-vocabulary-categorization/">
+        <link rel="prev" href="../ADR-054-oauth-client-management/">
       
       
         <link rel="next" href="../ARCHITECTURE_OVERVIEW/">
@@ -3865,6 +3865,29 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-054-oauth-client-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -4118,6 +4141,29 @@
   
   <span class="md-ellipsis">
     Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OAUTH_CLIENT_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OAuth Client Management - Feasibility Analysis
     
   </span>
   
@@ -4883,8 +4929,8 @@
 <tr>
 <td><a href="../ADR-027-user-management-api/">ADR-027</a></td>
 <td>User Management API</td>
-<td>Accepted</td>
-<td>Lightweight JWT authentication with bcrypt password hashing and API keys</td>
+<td>Superseded by ADR-054</td>
+<td>Lightweight JWT authentication with bcrypt password hashing and API keys - replaced by OAuth 2.0</td>
 </tr>
 <tr>
 <td><a href="../ADR-028-dynamic-rbac-system/">ADR-028</a></td>
@@ -5035,6 +5081,18 @@
 <td>Vocabulary Expansion-Consolidation Cycle</td>
 <td>Accepted</td>
 <td>Optimistic vocabulary generation + selective pruning mirrors biological memory consolidation - vocabulary must exist before knowledge can be expressed (general methods &gt; prediction, per Sutton's Bitter Lesson)</td>
+</tr>
+<tr>
+<td><a href="../ADR-053-eager-vocabulary-categorization/">ADR-053</a></td>
+<td>Eager Vocabulary Categorization</td>
+<td>Implemented</td>
+<td>Automatically categorize edge types during ingestion using embedding similarity to category seeds (~65-90% confidence) - eliminates manual refresh step, includes similarity analysis tools (similar/opposite/analyze commands)</td>
+</tr>
+<tr>
+<td><a href="../ADR-054-oauth-client-management/">ADR-054</a></td>
+<td>OAuth 2.0 Client Management</td>
+<td>Accepted</td>
+<td>OAuth 2.0 server with client registration and three grant types: authorization code + PKCE (web), device authorization (CLI), client credentials (MCP) - replaces JWT password flow and API keys for proper multi-client authentication</td>
 </tr>
 </tbody>
 </table>
