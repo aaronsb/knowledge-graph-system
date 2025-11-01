@@ -1,8 +1,11 @@
 # ADR-053: Eager Vocabulary Categorization
 
-**Status:** Proposed
+**Status:** Implemented
 **Date:** 2025-11-01
+**Implemented:** 2025-11-01
 **Related:** ADR-052 (Vocabulary Expansion-Consolidation Cycle), ADR-047 (Probabilistic Vocabulary Categorization)
+
+**Implementation Summary:** Core eager categorization was already functional in ADR-047. Fixed transaction isolation bug preventing auto-categorization. Edge types now automatically categorized during ingestion with ~65-90% confidence. Similarity analysis tools (kg vocab similar/opposite/analyze) remain as future enhancements.
 
 ## Context
 
