@@ -480,7 +480,7 @@ export const vocabularyCommand = new Command('vocabulary')
   )
   .addCommand(
     new Command('refresh-categories')
-      .description('Refresh category assignments for vocabulary types using latest embeddings (ADR-047). Identifies types needing category refresh, recalculates similarity to all category seeds, assigns best-matching category, updates confidence scores, and flags ambiguous assignments. Use after embedding model changes (recalculate with new model), category definition updates (refresh after changing seed terms), periodic maintenance (quarterly review), or quality improvement (re-evaluate low confidence). This is a non-destructive operation (doesn\'t affect edges), preserves manual assignments, and records audit trail per type.')
+      .description('Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053). As of ADR-053, new edge types are automatically categorized during ingestion, so this command is primarily needed when category seeds change. Use when category seed definitions are updated (seeds currently defined in code, future: database-configurable), after embedding model changes, or for migrating pre-ADR-053 uncategorized types. This is a non-destructive operation (doesn\'t affect edges), preserves manual assignments, and records audit trail per type.')
       .option('--computed-only', 'Refresh only types with category_source=computed (excludes manual assignments)')
       .action(async (options) => {
         try {
