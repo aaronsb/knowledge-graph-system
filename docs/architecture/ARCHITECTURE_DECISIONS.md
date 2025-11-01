@@ -43,7 +43,7 @@ All ADRs follow a consistent format:
 | [ADR-024](ADR-024-multi-schema-postgresql-architecture.md) | Multi-Schema PostgreSQL | Proposed | Four-schema organization (ag_catalog, kg_api, kg_auth, kg_logs) for separation of concerns |
 | [ADR-025](ADR-025-dynamic-relationship-vocabulary.md) | Dynamic Relationship Vocabulary | Proposed | Curator-driven vocabulary expansion with skipped relationships tracking |
 | [ADR-026](ADR-026-autonomous-vocabulary-curation.md) | Autonomous Vocabulary Curation | Proposed | LLM-assisted vocabulary management with ontology versioning and analytics |
-| [ADR-027](ADR-027-user-management-api.md) | User Management API | Accepted | Lightweight JWT authentication with bcrypt password hashing and API keys |
+| [ADR-027](ADR-027-user-management-api.md) | User Management API | Superseded by ADR-054 | Lightweight JWT authentication with bcrypt password hashing and API keys - replaced by OAuth 2.0 |
 | [ADR-028](ADR-028-dynamic-rbac-system.md) | Dynamic RBAC System | Proposed | Three-tier RBAC with dynamic resource registration and scoped permissions |
 | [ADR-029](ADR-029-cli-theory-of-operation.md) | CLI Theory of Operation | Proposed | Hybrid Unix/domain-specific design with verb shortcuts and universal JSON mode |
 | [ADR-030](ADR-030-concept-deduplication-validation.md) | Concept Deduplication Validation | Accepted | Quality test suite for embedding-based concept matching |
@@ -69,6 +69,8 @@ All ADRs follow a consistent format:
 | [ADR-050](ADR-050-scheduled-jobs-system.md) | Scheduled Jobs System | Proposed | Simple scheduler loop + launcher pattern extends existing job queue for automated maintenance tasks (category refresh, vocab consolidation) with ownership permissions and polling-based condition checks |
 | [ADR-051](ADR-051-graph-document-deduplication.md) | Graph-Based Provenance Tracking | Proposed | DocumentMeta nodes + edge metadata for complete audit trail (enhances ADR-014) - prevents job deletion from breaking deduplication, tracks source provenance (file/stdin/mcp/api) and relationship origin (who/when/how), MCP silent enrichment maintains ADR-044 compliance |
 | [ADR-052](ADR-052-vocabulary-expansion-consolidation-cycle.md) | Vocabulary Expansion-Consolidation Cycle | Accepted | Optimistic vocabulary generation + selective pruning mirrors biological memory consolidation - vocabulary must exist before knowledge can be expressed (general methods > prediction, per Sutton's Bitter Lesson) |
+| [ADR-053](ADR-053-eager-vocabulary-categorization.md) | Eager Vocabulary Categorization | Implemented | Automatically categorize edge types during ingestion using embedding similarity to category seeds (~65-90% confidence) - eliminates manual refresh step, includes similarity analysis tools (similar/opposite/analyze commands) |
+| [ADR-054](ADR-054-oauth-client-management.md) | OAuth 2.0 Client Management | Accepted | OAuth 2.0 server with client registration and three grant types: authorization code + PKCE (web), device authorization (CLI), client credentials (MCP) - replaces JWT password flow and API keys for proper multi-client authentication |
 
 ## How to Use This Index
 

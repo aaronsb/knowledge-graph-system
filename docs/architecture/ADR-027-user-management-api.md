@@ -1,9 +1,30 @@
 # ADR-027: User Management API with Lightweight JWT Authentication
 
-**Status:** Accepted
+**Status:** Superseded by ADR-054 (OAuth 2.0 Client Management)
 **Date:** 2025-10-11
+**Superseded Date:** 2025-11-01
 **Author:** Aaron Bockelie
-**Related ADRs:** ADR-024 (Multi-Schema PostgreSQL Architecture)
+**Related ADRs:** ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-054 (OAuth 2.0 Client Management)
+
+---
+
+## ⚠️ Superseded Notice
+
+**This ADR described a JWT password flow implementation that has been replaced by a comprehensive OAuth 2.0 system (ADR-054).**
+
+**Key Changes:**
+- JWT password flow (`POST /auth/login`) → OAuth 2.0 flows (authorization code, device, client credentials)
+- API keys (`kg_auth.api_keys`) → OAuth client credentials for machine-to-machine auth
+- Single authentication method → Multiple flows appropriate for each client type (web, CLI, MCP)
+
+**See ADR-054** for the current OAuth 2.0 implementation which provides:
+- Authorization Code + PKCE for web applications
+- Device Authorization Grant for CLI tools
+- Client Credentials for machine-to-machine (MCP server)
+
+**This document is retained for historical context.**
+
+---
 
 ## Context
 
@@ -283,68 +304,21 @@ All authentication events logged to `kg_logs.audit_trail`:
 | `password_changed` | `user` | user_id | {changed_by: self/admin} |
 | `role_changed` | `user` | user_id | {old_role, new_role, changed_by} |
 
-### Future OAuth Integration (Phase 2)
+### ~~Future OAuth Integration (Phase 2)~~ → Superseded by ADR-054
 
-When ready to add OAuth providers:
+**⚠️ This section described a plan for external OAuth providers (Login with GitHub/Google). This has been superseded by ADR-054 which implements:**
 
-**1. Add SessionMiddleware**
-```python
-from starlette.middleware.sessions import SessionMiddleware
+1. **OAuth 2.0 Server** - Our system issues OAuth tokens to client applications
+2. **Multiple Grant Types** - Authorization code (web), device (CLI), client credentials (MCP)
+3. **Client Registration** - Register client applications (`kg-cli`, `kg-viz`, `kg-mcp`)
+4. **Proper Token Management** - Access tokens, refresh tokens, authorization codes
 
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET_KEY")
-)
-```
+**For external OAuth providers (Login with GitHub/Google):**
+- The `kg_auth.oauth_external_provider_tokens` table (renamed from `oauth_tokens`) can store these
+- This is orthogonal to ADR-054 (our OAuth server)
+- Can be implemented later if needed
 
-**2. Register OAuth Providers**
-```python
-from authlib.integrations.starlette_client import OAuth
-
-oauth = OAuth()
-oauth.register(
-    name='github',
-    client_id=os.getenv('GITHUB_CLIENT_ID'),
-    client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
-    authorize_url='https://github.com/login/oauth/authorize',
-    access_token_url='https://github.com/login/oauth/access_token',
-    api_base_url='https://api.github.com/',
-    client_kwargs={'scope': 'user:email'},
-)
-```
-
-**3. OAuth Endpoints**
-```
-GET  /auth/github           -> Redirect to GitHub
-GET  /auth/github/callback  -> Handle OAuth response
-POST /auth/google           -> Redirect to Google
-GET  /auth/google/callback  -> Handle OAuth response
-```
-
-**4. OAuth Flow**
-```
-User clicks "Login with GitHub"
-  ↓
-GET /auth/github (redirect to GitHub)
-  ↓
-User authorizes on GitHub
-  ↓
-GET /auth/github/callback (GitHub returns user info)
-  ↓
-Find or create user in kg_auth.users
-  ↓
-Store OAuth token in kg_auth.oauth_tokens
-  ↓
-Issue standard JWT token (same format as password login)
-  ↓
-User authenticated (JWT works for all API calls)
-```
-
-**Key Points:**
-- OAuth is an **alternative login path**, not a replacement
-- Both OAuth and password login issue the **same JWT format**
-- No changes to existing JWT validation logic
-- `kg_auth.oauth_tokens` table already defined in schema
+**See ADR-054** for complete OAuth 2.0 architecture.
 
 ## Alternatives Considered
 

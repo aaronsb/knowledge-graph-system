@@ -156,4 +156,12 @@ BEGIN
     RAISE NOTICE '  5. Update kg CLI and MCP server to send source metadata';
 END $$;
 
+-- ============================================================================
+-- Record Migration
+-- ============================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (21, 'graph_provenance_tracking')
+ON CONFLICT (version) DO NOTHING;
+
 COMMIT;

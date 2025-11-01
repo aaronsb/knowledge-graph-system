@@ -208,3 +208,11 @@ BEGIN
 
     RAISE NOTICE 'Migration 019: Scheduled jobs system installed successfully';
 END $$;
+
+-- ============================================================================
+-- Record Migration
+-- ============================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (19, 'scheduled_jobs_system')
+ON CONFLICT (version) DO NOTHING;

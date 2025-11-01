@@ -57,4 +57,12 @@ CREATE INDEX idx_jobs_user_id ON kg_api.jobs(user_id);
 -- Add comment for documentation
 COMMENT ON COLUMN kg_api.jobs.user_id IS 'User who submitted the job (FK to kg_auth.users.id)';
 
+-- ============================================================================
+-- Record Migration
+-- ============================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (20, 'track_authenticated_users_in_jobs')
+ON CONFLICT (version) DO NOTHING;
+
 COMMIT;
