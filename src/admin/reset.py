@@ -256,22 +256,25 @@ class ResetManager:
             if verbose:
                 Console.success(f"✓ Applied {migration_result['applied_count']} migration(s)")
 
-            # Step 7: Explicitly clear ALL graph nodes (safety check)
-            # Even though docker-compose down -v should clear volumes,
-            # this ensures absolute clean state
+            # Step 7: Clear user data nodes (but preserve system nodes like :VocabType)
+            # Migrations create system nodes (:VocabType, :VocabCategory) that should persist
+            # Only clear user-created content: :Concept, :Source, :Instance, :DocumentMeta
             if verbose:
-                Console.info("🧹 Clearing all graph nodes...")
+                Console.info("🧹 Clearing user data nodes...")
 
             try:
                 conn = AGEConnection()
                 client = conn.get_client()
 
-                # Delete all nodes (and their relationships cascade)
-                client._execute_cypher("MATCH (n) DETACH DELETE n")
+                # Delete only user content nodes (system vocabulary nodes persist)
+                client._execute_cypher(
+                    "MATCH (n) WHERE n:Concept OR n:Source OR n:Instance OR n:DocumentMeta "
+                    "DETACH DELETE n"
+                )
 
                 conn.close()
                 if verbose:
-                    Console.success("✓ Graph cleared")
+                    Console.success("✓ User data cleared (vocabulary preserved)")
             except Exception as e:
                 if verbose:
                     Console.warning(f"⚠ Graph clear failed (might already be empty): {e}")
