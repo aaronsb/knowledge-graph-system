@@ -309,6 +309,206 @@ kg vocab generate-embeddings
 
 This is a one-time operation. The consolidation workflow requires embeddings for similarity detection.
 
+## Vocabulary Quality Analysis (ADR-053)
+
+Before running consolidation, you can use embedding similarity analysis to understand your vocabulary structure, identify merge candidates, and validate categorization accuracy.
+
+### Find Similar Types (Synonym Detection)
+
+**Identify potential merge candidates:**
+```bash
+kg vocab similar IMPLIES --limit 10
+```
+
+**Example output:**
+```
+────────────────────────────────────────────────────────────────────────────────
+📊 Most Similar to IMPLIES
+────────────────────────────────────────────────────────────────────────────────
+
+Type: IMPLIES
+Category: logical
+Compared: 33 types
+
+──────────────────────────────────────────────────────────────
+TYPE                      SIMILARITY  CATEGORY          USAGE
+──────────────────────────────────────────────────────────────
+DEFINES                   86%         semantic          0
+SUPPORTS                  82%         evidential        0
+RESULTS_FROM              81%         causation         0
+OPPOSITE_OF               81%         semantic          0
+CAUSES                    80%         causation         0
+──────────────────────────────────────────────────────────────
+
+💡 Similarity ≥90%: Strong merge candidates (ADR-052)
+   Similarity 75-90%: Review for potential consolidation
+```
+
+**Use cases:**
+- Find types with ≥90% similarity (strong merge candidates)
+- Identify semantic clusters within categories
+- Pre-screen candidates before running `kg vocab consolidate --dry-run`
+- Understand vocabulary redundancy patterns
+
+### Find Opposite Types (Semantic Range)
+
+**Discover least similar types to understand semantic boundaries:**
+```bash
+kg vocab opposite IMPLIES --limit 5
+```
+
+**Example output:**
+```
+────────────────────────────────────────────────────────────────────────────────
+📊 Least Similar to IMPLIES (Opposites)
+────────────────────────────────────────────────────────────────────────────────
+
+Type: IMPLIES
+Category: logical
+Compared: 33 types
+
+──────────────────────────────────────────────────────────────
+TYPE                      SIMILARITY  CATEGORY          USAGE
+──────────────────────────────────────────────────────────────
+TRANSFORMS                55%         operation         0
+PROCESSES                 55%         llm_generated     0
+STORES                    56%         operation         0
+GENERATES                 59%         llm_generated     0
+RELATED_TO                61%         semantic          0
+──────────────────────────────────────────────────────────────
+```
+
+**Use cases:**
+- Understand the semantic range of your vocabulary
+- Identify types that are genuinely distinct (low merge risk)
+- Explore cross-category semantic differences
+- Validate that "opposite" types make intuitive sense
+
+### Analyze Type Quality (Miscategorization Detection)
+
+**Get detailed analysis of a vocabulary type:**
+```bash
+kg vocab analyze IMPLIES
+```
+
+**Example output (well-categorized type):**
+```
+════════════════════════════════════════════════════════════════
+🔍 Vocabulary Analysis: IMPLIES
+════════════════════════════════════════════════════════════════
+
+Category: logical
+Category Fit: 100%
+
+✓ Category assignment looks good
+
+────────────────────────────────────────────────────────────────
+Most Similar in Same Category:
+────────────────────────────────────────────────────────────────
+  CONTRADICTS               80%    (0 uses)
+
+────────────────────────────────────────────────────────────────
+Most Similar in Other Categories:
+────────────────────────────────────────────────────────────────
+  DEFINES                   86%    semantic        (0 uses)
+  SUPPORTS                  82%    evidential      (0 uses)
+  RESULTS_FROM              81%    causation       (0 uses)
+  OPPOSITE_OF               81%    semantic        (0 uses)
+  CAUSES                    80%    causation       (0 uses)
+════════════════════════════════════════════════════════════════
+```
+
+**Example output (miscategorized type):**
+```
+════════════════════════════════════════════════════════════════
+🔍 Vocabulary Analysis: PROCESSES
+════════════════════════════════════════════════════════════════
+
+Category: llm_generated
+Category Fit: 0%
+
+⚠️  Potential Miscategorization Detected
+   Consider reclassifying to 'operation' category (more similar to TRANSFORMS: 0.70 vs category fit: 0.00)
+
+────────────────────────────────────────────────────────────────
+Most Similar in Same Category:
+────────────────────────────────────────────────────────────────
+  GENERATES                 70%    (0 uses)
+
+────────────────────────────────────────────────────────────────
+Most Similar in Other Categories:
+────────────────────────────────────────────────────────────────
+  TRANSFORMS                70%    operation       (0 uses)
+  STORES                    65%    operation       (0 uses)
+  RELATED_TO                64%    semantic        (0 uses)
+  IMPLEMENTED_BY            59%    implementation  (0 uses)
+  PRODUCES                  59%    causation       (0 uses)
+════════════════════════════════════════════════════════════════
+```
+
+**What it shows:**
+- **Category Fit**: Similarity to category seed types (0-100%)
+- **Miscategorization Detection**: Warns if top other-category similarity exceeds category fit
+- **Same-category neighbors**: Top 5 most similar types in assigned category
+- **Other-category neighbors**: Top 5 most similar types from different categories
+- **Actionable suggestions**: Recommended reclassification if miscategorized
+
+**Use cases:**
+- Validate auto-categorization from ADR-047/ADR-053
+- Identify types in wrong categories (especially `llm_generated`)
+- Understand why certain types are grouped together
+- Quality assurance before consolidation
+- Detect when category seeds may need adjustment
+
+### Analysis Workflow for Consolidation
+
+**Recommended workflow before consolidation:**
+
+```bash
+# 1. Check vocabulary status
+kg vocab status
+
+# 2. Find strong merge candidates (≥90% similarity)
+kg vocab similar RELATED_TO --limit 10
+
+# 3. Check if top results are truly synonymous (not inverses)
+kg vocab analyze RELATED_TO
+kg vocab analyze LINKED_TO
+
+# 4. If they look like true synonyms, validate with dry-run
+kg vocab consolidate --dry-run --target 85
+
+# 5. If dry-run results are good, execute
+kg vocab consolidate --auto --target 85
+```
+
+**Using similarity analysis for troubleshooting:**
+
+```bash
+# If consolidation rejected a high-similarity pair, understand why:
+kg vocab analyze VERIFIED_BY
+kg vocab analyze VERIFIES
+# Look at category fit and semantic neighbors to see the distinction
+
+# If consolidation seems too aggressive, check what got merged:
+kg vocab similar ASSOCIATED_WITH --limit 20
+# See all types now similar to the consolidated target
+```
+
+### Limitations
+
+**ADR-053 Status:**
+- ✅ Similarity analysis commands implemented
+- ✅ Category fit calculation working
+- ✅ Miscategorization detection functional
+- ❌ Automated reclassification not yet implemented (manual via `kg vocab refresh-categories`)
+- ❌ No batch analysis across all types (must query one at a time)
+
+**Future enhancements:**
+- `kg vocab health` - Batch analysis of all types, summary report
+- `kg vocab reclassify <type> <new-category>` - Manual category override
+- `kg vocab similar --category logical` - Find similar types within category only
+
 ## Parameters Explained
 
 ### `--target <size>`

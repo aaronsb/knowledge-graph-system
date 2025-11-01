@@ -256,6 +256,29 @@ class ResetManager:
             if verbose:
                 Console.success(f"✓ Applied {migration_result['applied_count']} migration(s)")
 
+            # Step 7: Clear user data nodes (but preserve system nodes like :VocabType)
+            # Migrations create system nodes (:VocabType, :VocabCategory) that should persist
+            # Only clear user-created content: :Concept, :Source, :Instance, :DocumentMeta
+            if verbose:
+                Console.info("🧹 Clearing user data nodes...")
+
+            try:
+                conn = AGEConnection()
+                client = conn.get_client()
+
+                # Delete only user content nodes (system vocabulary nodes persist)
+                client._execute_cypher(
+                    "MATCH (n) WHERE n:Concept OR n:Source OR n:Instance OR n:DocumentMeta "
+                    "DETACH DELETE n"
+                )
+
+                conn.close()
+                if verbose:
+                    Console.success("✓ User data cleared (vocabulary preserved)")
+            except Exception as e:
+                if verbose:
+                    Console.warning(f"⚠ Graph clear failed (might already be empty): {e}")
+
             # Step 8: Clear log files
             if clear_logs:
                 if verbose:

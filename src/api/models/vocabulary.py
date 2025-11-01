@@ -464,3 +464,33 @@ class RefreshCategoriesResponse(BaseModel):
     failed_count: int
     assignments: List[CategoryScoresResponse]
     message: str
+
+
+# ========== Similarity Analysis (ADR-053) ==========
+
+class SimilarEdgeType(BaseModel):
+    """Edge type with similarity score"""
+    relationship_type: str
+    similarity: float
+    category: str
+    is_builtin: bool
+    usage_count: int
+
+
+class VocabularySimilarityResponse(BaseModel):
+    """Response for similarity analysis (ADR-053)"""
+    relationship_type: str
+    category: str
+    similar_types: List[SimilarEdgeType]
+    total_compared: int
+
+
+class VocabularyAnalysisDetailResponse(BaseModel):
+    """Detailed analysis of a vocabulary type (ADR-053)"""
+    relationship_type: str
+    category: str
+    category_fit: float  # Similarity to category seeds
+    most_similar_same_category: List[SimilarEdgeType]
+    most_similar_other_categories: List[SimilarEdgeType]
+    potential_miscategorization: bool
+    suggestion: Optional[str]

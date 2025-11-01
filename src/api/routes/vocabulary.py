@@ -48,6 +48,11 @@ from ..models.vocabulary import (
 
     # Embeddings
     GenerateEmbeddingsRequest,
+
+    # Similarity Analysis (ADR-053)
+    SimilarEdgeType,
+    VocabularySimilarityResponse,
+    VocabularyAnalysisDetailResponse,
     GenerateEmbeddingsResponse,
 
     # Category Scoring (ADR-047)
@@ -744,3 +749,215 @@ async def refresh_categories(request: RefreshCategoriesRequest):
     except Exception as e:
         logger.error(f"Failed to refresh categories: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to refresh categories: {str(e)}")
+
+
+# ========== Similarity Analysis Endpoints (ADR-053) ==========
+
+@router.get("/similar/{relationship_type}", response_model=VocabularySimilarityResponse)
+async def get_similar_types(
+    relationship_type: str,
+    limit: int = Query(10, ge=1, le=100, description="Number of results to return"),
+    reverse: bool = Query(False, description="If True, return least similar (opposites)")
+):
+    """
+    Find similar (or opposite) edge types based on embedding similarity (ADR-053).
+
+    Uses cosine similarity between embeddings to find:
+    - Similar types (high similarity): Potential synonyms for consolidation
+    - Opposite types (low similarity): Semantic antonyms
+
+    Args:
+        relationship_type: Edge type to analyze
+        limit: Number of results (1-100, default 10)
+        reverse: If True, return least similar instead of most similar
+
+    Returns:
+        VocabularySimilarityResponse with sorted list of similar types
+
+    Example:
+        GET /vocabulary/similar/IMPLIES?limit=10
+
+        Response:
+        {
+            "relationship_type": "IMPLIES",
+            "category": "logical",
+            "similar_types": [
+                {"relationship_type": "SUGGESTS", "similarity": 0.92, "category": "logical", ...},
+                {"relationship_type": "LEADS_TO", "similarity": 0.87, "category": "causation", ...}
+            ],
+            "total_compared": 171
+        }
+
+        GET /vocabulary/similar/IMPLIES?limit=5&reverse=true  # Get opposites
+    """
+    try:
+        from src.api.lib.age_client import AGEClient
+        from src.api.lib.vocabulary_categorizer import VocabularyCategorizer
+        import numpy as np
+
+        db_client = AGEClient()
+        categorizer = VocabularyCategorizer(db_client)
+
+        # Get target embedding
+        target_embedding = await categorizer._get_embedding(relationship_type)
+        if target_embedding is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No embedding found for relationship type: {relationship_type}"
+            )
+
+        # Get target category
+        query = """
+            SELECT category
+            FROM kg_api.relationship_vocabulary
+            WHERE relationship_type = %s
+        """
+        result = await db_client.execute_query(query, (relationship_type,))
+        target_category = result[0]['category'] if result else "unknown"
+
+        # Get all other types with embeddings
+        query = """
+            SELECT relationship_type, category, is_builtin, embedding,
+                   COALESCE(usage_count, 0) as usage_count
+            FROM kg_api.relationship_vocabulary
+            WHERE embedding IS NOT NULL
+              AND relationship_type != %s
+              AND is_active = TRUE
+        """
+        all_types = await db_client.execute_query(query, (relationship_type,))
+
+        # Compute similarities
+        similarities = []
+        for row in all_types:
+            other_embedding = np.array(row['embedding'], dtype=np.float32)
+            similarity = categorizer._cosine_similarity(target_embedding, other_embedding)
+
+            similarities.append(SimilarEdgeType(
+                relationship_type=row['relationship_type'],
+                similarity=float(similarity),
+                category=row['category'],
+                is_builtin=row['is_builtin'],
+                usage_count=row['usage_count']
+            ))
+
+        # Sort by similarity (descending for similar, ascending for opposite)
+        similarities.sort(key=lambda x: x.similarity, reverse=not reverse)
+
+        # Return top N
+        return VocabularySimilarityResponse(
+            relationship_type=relationship_type,
+            category=target_category,
+            similar_types=similarities[:limit],
+            total_compared=len(similarities)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to compute similarities for {relationship_type}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to compute similarities: {str(e)}")
+
+
+@router.get("/analyze/{relationship_type}", response_model=VocabularyAnalysisDetailResponse)
+async def analyze_vocabulary_type(relationship_type: str):
+    """
+    Detailed analysis of vocabulary type for quality assurance (ADR-053).
+
+    Provides comprehensive similarity analysis:
+    - Category fit (similarity to category seeds)
+    - Most similar types in same category
+    - Most similar types in other categories
+    - Potential miscategorization detection
+
+    Use this to:
+    - Verify auto-categorization makes sense
+    - Identify miscategorized types
+    - Understand semantic structure
+    - Find potential category changes
+
+    Args:
+        relationship_type: Edge type to analyze
+
+    Returns:
+        VocabularyAnalysisDetailResponse with detailed analysis
+
+    Example:
+        GET /vocabulary/analyze/IMPLIES
+
+        Response:
+        {
+            "relationship_type": "IMPLIES",
+            "category": "logical",
+            "category_fit": 0.89,
+            "most_similar_same_category": [
+                {"relationship_type": "ENTAILS", "similarity": 0.91, ...}
+            ],
+            "most_similar_other_categories": [
+                {"relationship_type": "CAUSES", "similarity": 0.76, "category": "causation", ...}
+            ],
+            "potential_miscategorization": false,
+            "suggestion": null
+        }
+    """
+    try:
+        from src.api.lib.age_client import AGEClient
+        from src.api.lib.vocabulary_categorizer import VocabularyCategorizer, CATEGORY_SEEDS
+        import numpy as np
+
+        db_client = AGEClient()
+        categorizer = VocabularyCategorizer(db_client)
+
+        # Get target info
+        query = """
+            SELECT category, category_confidence
+            FROM kg_api.relationship_vocabulary
+            WHERE relationship_type = %s
+        """
+        result = await db_client.execute_query(query, (relationship_type,))
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Relationship type not found: {relationship_type}")
+
+        target_category = result[0]['category']
+        category_confidence = result[0].get('category_confidence', 0.0)
+
+        # Get category fit (max similarity to any seed in assigned category)
+        category_scores = await categorizer.compute_category_scores(relationship_type)
+        category_fit = category_scores.get(target_category, 0.0)
+
+        # Get all similarities
+        similarity_response = await get_similar_types(relationship_type, limit=100, reverse=False)
+        all_similar = similarity_response.similar_types
+
+        # Split by category
+        same_category = [s for s in all_similar if s.category == target_category][:5]
+        other_categories = [s for s in all_similar if s.category != target_category][:5]
+
+        # Detect potential miscategorization
+        # If most similar type is in different category with high similarity
+        potential_misc = False
+        suggestion = None
+
+        if other_categories and other_categories[0].similarity > category_fit:
+            potential_misc = True
+            top_other = other_categories[0]
+            suggestion = (
+                f"Consider reclassifying to '{top_other.category}' category "
+                f"(more similar to {top_other.relationship_type}: {top_other.similarity:.2f} "
+                f"vs category fit: {category_fit:.2f})"
+            )
+
+        return VocabularyAnalysisDetailResponse(
+            relationship_type=relationship_type,
+            category=target_category,
+            category_fit=category_fit,
+            most_similar_same_category=same_category,
+            most_similar_other_categories=other_categories,
+            potential_miscategorization=potential_misc,
+            suggestion=suggestion
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to analyze {relationship_type}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to analyze vocabulary type: {str(e)}")
