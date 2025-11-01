@@ -123,8 +123,11 @@ for migration_file in "$MIGRATIONS_DIR"/*.sql; do
     VERSION=$(echo "$FILENAME" | cut -d_ -f1)
     NAME=$(echo "$FILENAME" | sed 's/^[0-9]*_//' | sed 's/\.sql$//')
 
+    # Strip leading zeros for comparison with INTEGER database column
+    VERSION_NUM=$((10#$VERSION))
+
     # Check if already applied
-    if echo "$APPLIED" | grep -q "^$VERSION$"; then
+    if echo "$APPLIED" | grep -q "^$VERSION_NUM$"; then
         if [ "$VERBOSE" = true ]; then
             echo -e "${GRAY}✓ Migration $VERSION ($NAME) - already applied${NC}"
         fi
@@ -214,6 +217,9 @@ FAILED_COUNT=0
 for pending in "${PENDING_MIGRATIONS[@]}"; do
     IFS='|' read -r VERSION NAME FILE <<< "$pending"
 
+    # Strip leading zeros for database operations
+    VERSION_NUM=$((10#$VERSION))
+
     echo -e "${YELLOW}→ Applying migration $VERSION${NC} ($NAME)..."
 
     # Show SQL if verbose
@@ -250,9 +256,9 @@ for pending in "${PENDING_MIGRATIONS[@]}"; do
     echo -e "${GREEN}  ✅ Migration $VERSION applied successfully${NC}"
     APPLIED_COUNT=$((APPLIED_COUNT + 1))
 
-    # Verify it was recorded in schema_migrations
+    # Verify it was recorded in schema_migrations (use VERSION_NUM for INTEGER comparison)
     RECORDED=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
-      "SELECT version FROM public.schema_migrations WHERE version = $VERSION" 2>/dev/null || echo "")
+      "SELECT version FROM public.schema_migrations WHERE version = $VERSION_NUM" 2>/dev/null || echo "")
 
     if [ -z "$RECORDED" ]; then
         echo -e "${YELLOW}  ⚠️  Warning: Migration $VERSION not recorded in schema_migrations table${NC}"

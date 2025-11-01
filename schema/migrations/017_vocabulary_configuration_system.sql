@@ -152,3 +152,11 @@ CREATE INDEX IF NOT EXISTS idx_aggressiveness_profiles_builtin
 
 GRANT SELECT ON kg_api.vocabulary_config TO PUBLIC;
 GRANT SELECT ON kg_api.aggressiveness_profiles TO PUBLIC;
+
+-- ============================================================================
+-- Record Migration
+-- ============================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (17, 'vocabulary_configuration_system')
+ON CONFLICT (version) DO NOTHING;
