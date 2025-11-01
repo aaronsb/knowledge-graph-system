@@ -1,46 +1,33 @@
-# ADR-052 Enhancement: Grounding-Aware Vocabulary Reclassification
+# ADR-052 Enhancement: Grounding-Aware Vocabulary Classification
 
 **Status:** Proposed
 **Date:** 2025-10-31
-**Related:** ADR-044 (Grounding), ADR-047 (Category Classification), ADR-052 (Expansion-Consolidation Cycle)
+**Related:** ADR-044 (Grounding), ADR-047 (Mechanistic Classification), ADR-052 (Consolidation Cycle)
 
 ## Context
 
-Current `kg vocab refresh-categories` uses **mechanistic classification** - pure embedding similarity to hard-coded category prototypes. This approach:
-- ✅ Is fast and stateless (~50-100ms)
-- ✅ Provides consistent initial categorization
+Current `kg vocab refresh-categories` uses **mechanistic classification** - embedding similarity to category seed types. While fast and consistent, this approach:
 - ❌ Doesn't consider how vocabulary is actually used in the graph
-- ❌ Cannot detect when categories drift from actual usage patterns
-- ❌ Misses opportunities to validate categorization against empirical evidence
+- ❌ Cannot detect when edge semantics drift from actual usage patterns
+- ❌ Provides no empirical validation of categorization decisions
 
-ADR-044 provides `grounding_strength` (0.0-1.0) for each concept, measuring Bayesian support vs contradiction. This metric is already calculated and stored on :Concept nodes. We can leverage this existing infrastructure to refine vocabulary categorization based on empirical usage patterns.
+ADR-044 provides `grounding_strength` (0.0-1.0) on concepts, measuring Bayesian support vs contradiction. This enhancement leverages existing grounding infrastructure to add empirical validation of vocabulary classification.
 
 ### Problem: Static Classification vs Dynamic Usage
 
 **Example Mismatch:**
-- Vocabulary type `CONTRADICTS` mechanistically classified as `logical_truth` (via embedding similarity)
-- In practice, this relationship connects concepts with average grounding of 0.12 (highly refuted)
-- The mechanistic category suggests "well-established truth relationships"
-- The empirical usage suggests "relationships between contradictory/refuted concepts"
-- **Optimization opportunity:** Detect this mismatch and flag for review or reclassification
+- Edge type `IMPLIES` mechanistically categorized as `logical` (via embedding similarity)
+- But connects concepts with average grounding of 0.55 (contested range)
+- Name suggests: logical, established truth relationships
+- Usage shows: hypothetical or evolving logical connections
 
-### Available Data
-
-ADR-044 already calculates and stores grounding for all concepts. We can query:
-
-```cypher
-MATCH (source:Concept)-[r:CONTRADICTS]->(target:Concept)
-RETURN avg(source.grounding_strength + target.grounding_strength) / 2 as avg_grounding
-// Result: 0.12 (contradictory usage pattern)
-```
-
-This reveals empirical usage patterns without additional computational cost for metric generation.
+**Opportunity:** Cross-validate mechanistic category against empirical usage patterns.
 
 ## Vocabulary Classification Architecture
 
 ### The State Machine
 
-Vocabulary types flow through a one-way state machine that prevents reclassification loops:
+Vocabulary flows through a one-way state machine:
 
 ```
 LLM Extraction → llm_generated → Mechanistic Classification → computed → Grounding Validation
@@ -49,287 +36,266 @@ LLM Extraction → llm_generated → Mechanistic Classification → computed →
 
 **State Transitions:**
 
-1. **Initial State: `llm_generated`**
-   - Set during ingestion when LLM discovers new relationship type
-   - Category temporarily set to `"llm_generated"`
-   - Embedding generated immediately for future matching
-   - Example: `add_edge_type(type="ENHANCES", category="llm_generated")`
+1. **Initial:** LLM discovers new type during ingestion → `category = "llm_generated"`
+2. **Classification:** `kg vocab refresh-categories` assigns category via cosine similarity → `category_source = "computed"`
+3. **Validation:** Grounding check validates classification (read-only, non-destructive)
 
-2. **Mechanistic Classification: `llm_generated` → `computed`**
-   - `kg vocab refresh-categories` computes cosine similarity to seed types
-   - Assigns best-matching category from 11 protected categories
-   - Updates: `category_source = 'computed'`
-   - **One-way transition:** Never reverts to `llm_generated`
-
-3. **Empirical Validation: `computed` (read-only check)**
-   - Proposed enhancement: Query grounding patterns from actual graph usage
-   - Flag mismatches between mechanistic category and empirical role
-   - **Non-destructive:** Does not change category or state
-   - Provides evidence for curator review, does not auto-reclassify
+**One-way property:** `llm_generated` → `computed` never reverses, preventing reclassification loops.
 
 ### The Bounded Exploration Model
 
 **Components:**
-
 - **c** = 11 protected categories (causation, composition, logical, evidential, semantic, temporal, dependency, derivation, operation, interaction, modification)
-- **a** = 30 protected seed types distributed across categories
-- **b** = LLM-generated types (unbounded, emergent)
+- **a** = 30 protected seed types (curator-controlled via `CATEGORY_SEEDS` constant)
+- **b** = LLM-generated types (unbounded, emergent during ingestion)
 
-**Static Dictionary (Curator-Controlled):**
-
-```python
-CATEGORY_SEEDS = {
-    'causation': ['CAUSES', 'ENABLES', 'PREVENTS', 'INFLUENCES', 'RESULTS_FROM'],
-    'composition': ['PART_OF', 'CONTAINS', 'COMPOSED_OF', 'SUBSET_OF', 'INSTANCE_OF'],
-    'logical': ['IMPLIES', 'CONTRADICTS', 'PRESUPPOSES', 'EQUIVALENT_TO'],
-    # ... 11 categories, 30 seed types total
-}
-```
-
-**Classification Algorithm:**
-
-```python
-# For each LLM-generated type
-for category, seed_types in CATEGORY_SEEDS.items():
-    similarities = []
-    for seed in seed_types:
-        similarity = cosine_similarity(type_embedding, seed_embedding)
-        similarities.append(similarity)
-
-    # Satisficing: max similarity (not mean)
-    category_scores[category] = max(similarities)
-
-# Assign to best match
-best_category = max(category_scores, key=category_scores.get)
-```
-
-**Semantic Coverage Formula:**
-
+**Formula:**
 ```
 Total Semantic Space = c × (a + b)
 
 Where:
-  c = 11 categories (bounded, curator-controlled dimensionality)
-  a = 30 seed types (bounded, curator-controlled initial coverage)
-  b = LLM-generated types (unbounded, emergent expansion)
-
-Initial space:  a × c = 30 types × 11 categories = 330 "semantic coordinates"
-Exploration:    b types discovered during ingestion (unbounded)
-Organization:   Each b type maps to exactly one c category (via cosine similarity)
-Total coverage: Sum of types per category across all c categories
+  c = bounded dimensionality (11 categories)
+  a = bounded initial coverage (30 seed types)
+  b = unbounded emergent expansion (LLM-discovered types)
 ```
 
-### Why This Works
-
-**1. Bounded Initial Space (Curator Control)**
-- Protected categories (c=11) define semantic dimensions
-- Protected seed types (a=30) provide grounding for each dimension
-- Changes require manual updates to `CATEGORY_SEEDS` constant
-- Prevents category proliferation
-
-**2. Emergent Expansion (LLM Discovery)**
-- LLM freely generates new relationship types (b) during ingestion
-- No artificial constraints on vocabulary during extraction
-- Each discovered type gets embedding for similarity matching
-- Supports Sutton's Bitter Lesson: general methods > hand-coded vocabulary
-
-**3. One-Way Classification (No Loops)**
-- State transition: `llm_generated` → `computed` (irreversible)
-- Prevents infinite reclassification cycles
-- Default `refresh-categories` behavior only processes `computed` types (with `--computed-only` flag)
-- Re-running refresh updates confidence/scores but not state machine position
-
-**4. Empirical Validation Through Grounding (Quality Check)**
-- Grounding validation operates on `computed` types only
-- Cross-validates mechanistic category against actual usage patterns
-- Flags mismatches for curator review
-- Does **not** auto-reclassify (preserves one-way property)
-- Provides empirical evidence to inform manual decisions
-
-### Integration Point
-
-This enhancement adds empirical validation **after** mechanistic classification completes:
-
-```
-Phase 1 (Existing): llm_generated → computed
-  - Cosine similarity to seed types
-  - Assign best-matching category
-  - Set category_source = 'computed'
-
-Phase 2 (Proposed): computed → grounding validation
-  - Query average grounding for edge type
-  - Classify empirical semantic role
-  - Compare with mechanistic category
-  - Flag mismatches (non-destructive)
-```
-
-The one-way state machine ensures grounding validation cannot trigger reclassification loops. It provides quality monitoring without disrupting the core classification workflow.
+**Why This Works:**
+1. **Bounded initial space:** Curator controls c and a (prevents category proliferation)
+2. **Emergent expansion:** LLM freely generates b (supports general methods over hand-coding)
+3. **One-way classification:** State transition prevents infinite loops
+4. **Empirical validation:** Grounding check operates on `computed` state only (non-destructive)
 
 ## Decision
 
-Add a second phase to vocabulary refresh workflow that uses grounding metrics to refine category assignments:
+Add empirical validation to vocabulary classification using **dual-signal approach** with role distribution analogous to ADR-044's grounding formula.
 
-### Two-Phase Classification
+### Dual-Signal Classification
 
-**Phase 1: Mechanistic Classification** (current, keep as-is)
-- Uses cosine similarity to category seed embeddings
-- Fast, stateless, embedding-based (~50-100ms)
-- Assigns initial category based on semantic similarity
-- Works for new vocabulary types with no usage history
+**Signal 1: Semantic (What the word means)**
 
-**Phase 2: Empirical Validation** (new refinement phase)
-- Query average grounding for each vocabulary type from actual graph usage
-- Classify empirical semantic role based on grounding patterns:
-  - `AFFIRMATIVE` (>0.80): Used between well-supported concepts
-  - `CONTESTED` (0.40-0.80): Used between concepts with evolving evidence
-  - `HISTORICAL` (0.20-0.40): Used between outdated/deprecated concepts
-  - `CONTRADICTORY` (<0.20): Used between refuted/error concepts
-- Cross-validate: Flag for review if grounding contradicts mechanistic category
-- Store grounding metrics alongside category assignment for quality monitoring
-
-### Implementation Strategy
-
-#### 1. Query Average Grounding Per Edge Type
-
-```cypher
-MATCH (source:Concept)-[r]->(target:Concept)
-WHERE source.grounding_strength IS NOT NULL
-  AND target.grounding_strength IS NOT NULL
-RETURN type(r) as edge_type,
-       avg((source.grounding_strength + target.grounding_strength) / 2) as avg_grounding,
-       stddev((source.grounding_strength + target.grounding_strength) / 2) as grounding_stddev,
-       count(r) as edge_count
-```
-
-**Cost:** O(edges) - single graph traversal for all types
-**Performance:** ~100-500ms for thousands of edges
-
-#### 2. Semantic Role Classification
+One-time setup - generate role prototype embeddings:
 
 ```python
-def classify_semantic_role(avg_grounding: float) -> str:
-    """
-    Classify vocabulary by typical grounding of connected concepts.
-    All roles are VALUABLE - used for enhanced reasoning, not pruning.
-    """
-    if avg_grounding > 0.80:
-        return "AFFIRMATIVE"    # Well-supported knowledge
-    elif avg_grounding > 0.40:
-        return "CONTESTED"      # Evolving understanding
-    elif avg_grounding > 0.20:
-        return "HISTORICAL"     # Past states, outdated knowledge
-    else:
-        return "CONTRADICTORY"  # Refuted concepts, errors
+ROLE_PROTOTYPES = {
+    'AFFIRMATIVE': embedding("well-supported, validated, established, confirmed, proven"),
+    'CONTESTED': embedding("debated, uncertain, evolving, disputed, questioned"),
+    'HISTORICAL': embedding("outdated, deprecated, superseded, obsolete, replaced"),
+    'CONTRADICTORY': embedding("refuted, disproven, contradicted, falsified, rejected")
+}
+# Store in database, generate once, use forever
 ```
 
-#### 3. Cross-Validation with Mechanistic Category
+Per-type classification:
 
-Some categories should correlate with specific grounding roles:
+```python
+semantic_scores = {}
+for role, prototype in ROLE_PROTOTYPES.items():
+    semantic_scores[role] = cosine_similarity(edge_embedding, prototype)
 
-| Category | Expected Grounding Role | Flag if Mismatch |
-|----------|------------------------|------------------|
-| `logical_truth` | AFFIRMATIVE | Yes (should be well-supported) |
-| `evidential` | AFFIRMATIVE/CONTESTED | Maybe (depends on evidence quality) |
-| `causal` | Any | No (causation can be affirmed or refuted) |
-| `temporal` | Any | No (describes relationships, not truth) |
+semantic_role = max(semantic_scores, key=semantic_scores.get)
+semantic_confidence = semantic_scores[semantic_role]
+```
 
-**Detection:** Flag vocabulary where mechanistic category strongly implies grounding role but actual usage differs.
+**Signal 2: Empirical (How it's used)**
 
-#### 4. Database Schema Extensions
+Query grounding distribution for edge type (analogous to ADR-044's `support_weight / total_weight`):
 
-Add to `kg_api.relationship_vocabulary`:
+```cypher
+MATCH (s:Concept)-[r:IMPLIES]->(t:Concept)
+WHERE s.grounding_strength IS NOT NULL AND t.grounding_strength IS NOT NULL
+WITH (s.grounding_strength + t.grounding_strength) / 2 as avg_grounding
+
+WITH count(CASE WHEN avg_grounding > 0.80 THEN 1 END) as affirmative_count,
+     count(CASE WHEN avg_grounding BETWEEN 0.40 AND 0.80 THEN 1 END) as contested_count,
+     count(CASE WHEN avg_grounding BETWEEN 0.20 AND 0.40 THEN 1 END) as historical_count,
+     count(CASE WHEN avg_grounding < 0.20 THEN 1 END) as contradictory_count,
+     count(*) as total_count
+
+RETURN {
+  'AFFIRMATIVE': affirmative_count / total_count,
+  'CONTESTED': contested_count / total_count,
+  'HISTORICAL': historical_count / total_count,
+  'CONTRADICTORY': contradictory_count / total_count
+} as role_distribution
+```
+
+**Cumulative Satisficing (2σ principle):**
+
+Show only roles accounting for 95% of usage (filters noise in tail):
+
+```python
+def satisfice_role_distribution(distribution, threshold=0.95):
+    """Return roles accounting for 95% of usage (analogous to 2σ)."""
+    sorted_roles = sorted(distribution.items(), key=lambda x: x[1], reverse=True)
+    cumulative = 0.0
+    significant = {}
+
+    for role, ratio in sorted_roles:
+        cumulative += ratio
+        significant[role] = ratio
+        if cumulative >= threshold:
+            break
+
+    return significant
+```
+
+**Example:**
+```python
+full_distribution = {
+    'CONTESTED': 0.55,      # 55% of edges
+    'AFFIRMATIVE': 0.25,    # 80% cumulative
+    'CONTRADICTORY': 0.15,  # 95% cumulative ← Stop here
+    'HISTORICAL': 0.05      # (tail suppressed)
+}
+
+empirical_role = 'CONTESTED'  # Dominant role
+empirical_confidence = 0.55
+```
+
+**Cross-Validation:**
+
+```python
+if semantic_role == empirical_role:
+    # Agreement - high confidence
+    status = "VALIDATED"
+elif abs(semantic_confidence - empirical_confidence) < 0.20:
+    # Weak signals - ambiguous
+    status = "AMBIGUOUS"
+elif semantic_confidence > empirical_confidence:
+    # Trust semantic signal
+    status = "SEMANTIC_OVERRIDE"
+    suggestion = f"Word suggests {semantic_role}, but usage is {empirical_role}"
+else:
+    # Trust empirical signal
+    status = "EMPIRICAL_OVERRIDE"
+    suggestion = f"Usage suggests {empirical_role}, but word suggests {semantic_role}"
+```
+
+### Implementation
+
+**Database Schema:**
 
 ```sql
 ALTER TABLE kg_api.relationship_vocabulary
-ADD COLUMN avg_grounding FLOAT,
-ADD COLUMN grounding_stddev FLOAT,
-ADD COLUMN grounding_role VARCHAR(20),  -- AFFIRMATIVE/CONTESTED/HISTORICAL/CONTRADICTORY
-ADD COLUMN grounding_category_mismatch BOOLEAN DEFAULT FALSE,
-ADD COLUMN grounding_last_calculated TIMESTAMP;
+ADD COLUMN role_distribution JSONB,
+ADD COLUMN role_semantic VARCHAR(20),
+ADD COLUMN role_empirical VARCHAR(20),
+ADD COLUMN role_status VARCHAR(20),
+ADD COLUMN role_last_calculated TIMESTAMP;
+
+-- Graph nodes (ADR-048)
+-- Add properties to :VocabType nodes:
+-- v.role_distribution = {"AFFIRMATIVE": 0.70, "CONTESTED": 0.15, ...}
+-- v.role_dominant = "AFFIRMATIVE"
+-- v.role_confidence = 0.70
 ```
 
-Add to `:VocabType` graph nodes:
-
-```cypher
-// Properties to add
-v.avg_grounding = 0.75
-v.grounding_stddev = 0.15
-v.grounding_role = "CONTESTED"
-v.grounding_category_mismatch = false
-```
-
-#### 5. Enhanced `kg vocab refresh-categories` Workflow
+**Enhanced Workflow:**
 
 ```bash
-kg vocab refresh-categories --with-grounding
+kg vocab refresh-categories  # Grounding validation enabled by default
+kg vocab refresh-categories --no-grounding  # Disable if needed
 ```
 
-Workflow:
-1. **Phase 1 (Mechanistic Classification):**
-   - Calculate embedding similarity to category seeds
-   - Assign initial category based on semantic similarity
+1. **Phase 1 (Mechanistic):** Assign category via cosine similarity to seed types
+2. **Phase 2 (Empirical - Default):**
+   - Compute semantic role (compare to 4 prototypes)
+   - Query empirical role distribution (single Cypher query for all types)
+   - Apply cumulative satisficing
+   - Cross-validate signals
+   - Store role distribution
 
-2. **Phase 2 (Empirical Validation):**
-   - Query average grounding for all edge types (single Cypher query, ~100-500ms)
-   - Classify empirical semantic role based on grounding patterns
-   - Cross-validate: Detect category-role mismatches
-   - Store grounding metrics for quality monitoring
+**Performance:** ~150-600ms total (acceptable for periodic maintenance)
+- Category assignment: ~50ms (existing)
+- Grounding query: ~100-500ms (single query for all types)
+- Role classification: ~20ms (4 cosine calcs × 200 types)
 
-3. **Output:**
-   - Show both mechanistic category AND empirical role
-   - Flag mismatches for curator review
-   - Statistics on grounding distribution across categories
+**API Endpoint:**
 
-**Example Output:**
-
-```
-Refreshed 197 vocabulary types with grounding analysis
-
-Category-Role Distribution:
-  causal (AFFIRMATIVE):      18 types  [avg grounding: 0.82]
-  causal (CONTESTED):        12 types  [avg grounding: 0.55]
-  logical_truth (AFFIRMATIVE): 8 types  [avg grounding: 0.91]
-  evidential (CONTESTED):     6 types  [avg grounding: 0.48]
-
-Flagged Mismatches (4):
-  ⚠ CONTRADICTS (logical_truth) - Expected AFFIRMATIVE, got CONTRADICTORY (avg: 0.12)
-      Reason: This relationship mostly connects refuted claims
-      Suggestion: Reclassify to 'evidential' or review usage
+```python
+POST /vocabulary/refresh-categories
+{
+  "only_computed": true,
+  "with_grounding": true  // Default: enabled
+}
 ```
 
-## Computational Feasibility
+## Use Cases
 
-### Performance Analysis
+### Use Case 1: Quality Monitoring
 
-**Phase 1 (Mechanistic):**
-- ~200 types × 8 categories × 1 cosine calc = ~1600 ops
-- Cost: ~50-100ms
+Detect vocabulary misclassifications and category drift:
 
-**Phase 2 (Grounding-Aware):**
-- Single Cypher query: `MATCH (s:Concept)-[r]->(t:Concept) RETURN type(r), avg(grounding)...`
-- Traverses all edges once: O(edges)
-- Cost: ~100-500ms for 1000-10000 edges
+**Output Example:**
+```
+IMPLIES (logical category):
+  Semantic role:   AFFIRMATIVE (0.88) - "logical inference"
+  Empirical role:  CONTESTED (0.55) - connects debated concepts
+  Status:          EMPIRICAL_OVERRIDE ⚠️
 
-**Total:** ~150-600ms for complete refresh with grounding analysis
+  Insight: Edge is used for hypothetical/evolving logic,
+           not just established logical truths.
 
-**Optimization:** Can be run asynchronously as scheduled job (ADR-050)
+  Suggestion: Consider reclassifying to 'evidential' category
+              or creating 'hypothetical_logical' subcategory.
+```
 
-### Memory Requirements
+**Benefits:**
+- Identify vocabulary used differently than its name suggests
+- Track category drift as domain knowledge evolves
+- Provide evidence-based recommendations for manual reclassification
 
-- Grounding already calculated and stored on :Concept nodes (ADR-044)
-- No need to recalculate grounding - just average existing values
-- Minimal memory overhead
+### Use Case 2: Role-Aware Path Filtering
 
-### Scalability
+Query graph with semantic role constraints:
 
-| Graph Size | Edges | Phase 2 Cost | Total Refresh |
-|-----------|-------|-------------|---------------|
-| Small | 1K | ~100ms | ~200ms |
-| Medium | 10K | ~300ms | ~400ms |
-| Large | 100K | ~1.5s | ~1.6s |
-| Very Large | 1M+ | ~15s | ~15s |
+**High-confidence knowledge paths:**
+```cypher
+MATCH path = (a:Concept)-[r*..5]->(b:Concept)
+WHERE ALL(rel in r WHERE
+  EXISTS {
+    MATCH (v:VocabType {name: type(rel)})
+    WHERE v.role_affirmative > 0.60
+  }
+)
+RETURN path
+ORDER BY reduce(s=1.0, rel in r | s * vocab_affirmative(type(rel))) DESC
+LIMIT 10
+```
 
-**Acceptable:** Even for very large graphs, ~15s refresh is reasonable for periodic maintenance
+**Explore contested knowledge:**
+```cypher
+MATCH path = (a)-[r*..5]->(b)
+WHERE ALL(rel in r WHERE vocab_contested(type(rel)) > 0.40)
+RETURN path
+```
+
+**Avoid refuted connections:**
+```cypher
+MATCH path = (a)-[r*..5]->(b)
+WHERE NONE(rel in r WHERE
+  vocab_contradictory(type(rel)) > 0.50 OR
+  vocab_historical(type(rel)) > 0.50
+)
+RETURN path
+```
+
+**Combined edge + node filtering:**
+```cypher
+// Well-supported paths through well-supported concepts
+MATCH path = (a)-[r*..5]->(b)
+WHERE
+  ALL(rel in r WHERE vocab_affirmative(type(rel)) > 0.60)  // Edge quality
+  AND
+  ALL(node in nodes(path) WHERE node.grounding_strength > 0.70)  // Node quality
+RETURN path
+```
+
+**Benefits:**
+- Context-aware graph traversal (find high-confidence vs explore contested areas)
+- Confidence scoring for paths (multiplicative role strength)
+- Trace historical evolution (follow HISTORICAL role edges)
+- Semantic filtering without manual edge annotation
 
 ## Consequences
 
@@ -337,150 +303,141 @@ Flagged Mismatches (4):
 
 1. **Empirical Validation**
    - Categories validated against actual usage, not just embedding similarity
-   - Detect when vocabulary is used differently than initially classified
-   - Cross-validate mechanistic predictions with empirical observations
+   - Detects semantic drift as domain knowledge evolves
+   - Cross-validates mechanistic predictions with graph-based evidence
 
-2. **Quality Monitoring**
-   - Detect mismatches between category semantics and actual usage
-   - Flag vocabulary that might be misnamed or misclassified
-   - Alert to category drift over time as usage patterns evolve
-
-3. **Enhanced Reasoning Capabilities**
-   - Know which relationships describe well-supported vs refuted knowledge
-   - Dialectical reasoning requires full spectrum of grounding roles
-   - Enable queries like "show me causal relationships between contested concepts"
-
-4. **Zero Marginal Cost**
+2. **Zero Marginal Cost**
    - Leverages existing grounding infrastructure (ADR-044)
-   - No need to compute new metrics - just aggregate existing data
    - Single O(edges) query provides data for all vocabulary types
+   - No LLM calls during refresh (prototypes generated once)
 
-5. **Actionable Insights**
-   - Provides curator with concrete evidence for reclassification decisions
-   - Reduces manual review burden via automated mismatch detection
-   - Suggests specific improvements based on empirical patterns
+3. **Enhanced Query Capabilities**
+   - Role-aware pathfinding enables semantic graph traversal
+   - Confidence scoring for paths and connections
+   - Supports diverse query patterns (high-confidence, contested, historical)
+
+4. **Aligned with ADR-044**
+   - Role distribution uses same ratio approach: `role_count / total_count`
+   - Cumulative satisficing analogous to probabilistic truth convergence
+   - Consistent mental model across concept grounding and edge semantics
 
 ### Negative
 
 1. **Computational Cost**
-   - Adds ~100-500ms to refresh-categories operation
-   - May be too slow for real-time classification
+   - Adds ~100-500ms to refresh operation
+   - May be prohibitive for very large graphs (>1M edges)
+   - Mitigated: Run as scheduled maintenance (weekly/monthly)
 
 2. **Complexity**
-   - Adds another dimension to vocabulary management
+   - Adds dual-signal validation layer to categorization
    - Requires understanding both embeddings and grounding
+   - Mitigated: Clear documentation, optional feature flag
 
-3. **Cold Start Problem**
-   - New vocabulary types have no edges yet, so no grounding data
-   - Falls back to mechanistic classification only
-
-4. **Dependency on ADR-044**
-   - Requires grounding_strength to be calculated and up-to-date
-   - If grounding disabled, this feature unavailable
+3. **Cold Start**
+   - New vocabulary has no edges yet, no empirical signal
+   - Falls back to semantic signal only
+   - Mitigated: Natural - empirical validation requires usage
 
 ### Neutral
 
-1. **Optional Feature**
-   - Can be enabled via flag: `--with-grounding`
-   - Doesn't change default behavior
+1. **Default Behavior**
+   - Grounding validation enabled by default
+   - Can be disabled via `--no-grounding` flag if needed
+   - Provides richer information without requiring opt-in
 
 2. **Storage Requirements**
-   - Adds 4-5 columns to vocabulary table
-   - Negligible space impact (~KB per 200 types)
-
-## Implementation Plan
-
-### Phase 1: Core Infrastructure
-- [ ] Add database columns for grounding metrics
-- [ ] Create `calculate_grounding_metrics()` method
-- [ ] Add grounding role classification logic
-
-### Phase 2: Refresh Integration
-- [ ] Add `--with-grounding` flag to `kg vocab refresh-categories`
-- [ ] Integrate grounding query into refresh workflow
-- [ ] Store grounding metrics alongside category
-
-### Phase 3: Mismatch Detection
-- [ ] Define category-role expectations
-- [ ] Implement mismatch detection
-- [ ] Add review workflow for flagged types
-
-### Phase 4: Scheduled Automation
-- [ ] Integrate with ADR-050 scheduled jobs
-- [ ] Weekly grounding refresh as maintenance task
+   - Adds role_distribution JSONB column (~1KB per type)
+   - Negligible impact (~200KB for 200 types)
 
 ## Alternatives Considered
 
-### 1. Use LLM to Reclassify Based on Usage Examples
+### 1. Node-Only Grounding (Simpler)
+
+```python
+avg_grounding = avg(source.grounding, target.grounding)
+empirical_role = threshold_classify(avg_grounding)
+```
+
+**Pros:** Simpler, faster (no cosine similarity to prototypes)
+**Cons:** No semantic signal, can't detect word-usage mismatches
+**Rejected:** Dual-signal provides richer validation and pathfinding capabilities
+
+### 2. LLM-Based Reclassification
+
+Generate category via LLM prompt with usage examples.
+
 **Pros:** More sophisticated reasoning
 **Cons:** Expensive (~$0.01 per type), slow (2-5s per type), requires LLM access
-**Rejected:** Grounding-based approach is faster and cheaper
+**Rejected:** Doesn't scale, violates general methods principle (ADR-052)
 
-### 2. Manual Review Only
-**Pros:** No automation complexity
-**Cons:** Doesn't scale, requires curator time
-**Rejected:** Goal is to reduce manual curation burden
+### 3. GNN-Based Edge Role Prediction
 
-### 3. Ignore Grounding, Use Only Embeddings
-**Pros:** Simpler, faster
-**Cons:** Misses empirical usage patterns, less accurate over time
-**Rejected:** Grounding provides valuable empirical validation
+Train GNN model to predict edge roles using node features + edge embeddings.
 
-## Future Enhancements
+**Pros:** Potentially higher accuracy (research-backed)
+**Cons:** Requires training data, model deployment, ongoing retraining
+**Rejected:** Adds complexity; dual-signal approach achieves validation without training overhead
 
-### 1. Time-Series Grounding Analysis
-Track how grounding evolves over time:
-- Vocabulary that becomes more contested
-- Concepts that shift from supported to refuted
+## Validation Plan
 
-### 2. Category Drift Detection
-Alert when category assignment becomes stale:
-- Grounding role changes significantly
-- Suggests periodic re-categorization
+### Hypothesis Testing
 
-### 3. Automatic Category Creation
-When grounding reveals a cluster of types with unique role:
-- Propose new category based on grounding patterns
-- Example: "refuted_causal" for low-grounding causal relationships
+The core hypothesis—that edge semantic roles can be inferred from node grounding distribution—requires empirical validation before full deployment.
+
+**Experiment Design:**
+1. Sample 100-500 edges with diverse types and usage patterns
+2. Manual labeling: Human experts classify edge semantic roles (ground truth)
+3. Method comparison:
+   - **Semantic-only:** Role from prototype similarity
+   - **Empirical-only:** Role from node grounding distribution
+   - **Dual-signal:** Cross-validated approach (proposed)
+4. Metrics: Accuracy, precision, recall, F1 score per role
+5. Analysis: Confusion matrix, agreement rates, failure modes
+
+**Expected Outcomes:**
+- Semantic-only: Good for new types, may drift from usage
+- Empirical-only: Good for established types, fails on cold start
+- Dual-signal: Best overall, detects mismatches, provides confidence
+
+**Decision Criteria:**
+- If dual-signal accuracy >85%: Proceed with implementation
+- If single signal outperforms: Simplify to that approach
+- If both weak (<70%): Revisit role definitions or thresholds
 
 ## Pedagogical Note: The Sleep Cycle Analogy
 
-While this enhancement is primarily an optimization technique (empirical validation of mechanistic classification), it can be helpfully understood through the analogy of **sleep-based memory consolidation**:
+While this enhancement is primarily an optimization technique (empirical validation of mechanistic classification), it complements the sleep-based memory consolidation pattern from ADR-052:
 
-### Two-Phase Consolidation Pattern
-
-**Phase 1: Deep Sleep (NREM)** → Pruning unused vocabulary
+**Phase 1: Deep Sleep (NREM)** → Consolidation/Pruning
+- Removes vocabulary with `edge_count = 0` (unused synapses)
+- Merges synonyms (consolidates redundant connections)
 - Implemented in ADR-052 base
-- Removes vocabulary types with `edge_count = 0`
-- Analogous to: Synaptic homeostasis during deep sleep (removal of unused connections)
 
-**Phase 2: REM Sleep** → Grounding-aware reclassification
-- This enhancement
+**Phase 2: REM Sleep** → Grounding-aware validation
 - Tests vocabulary against empirical usage (grounding patterns)
-- Refines categories based on actual experience
-- Analogous to: Active memory rehearsal during REM sleep (strengthening coherent patterns, detecting inconsistencies)
+- Refines semantic understanding based on actual experience
+- Cross-validates predictions with observed data
+- This enhancement
 
-### Why This Analogy Works
+**Why the analogy works:**
+1. Two-phase optimization with different goals (removal vs refinement)
+2. Empirical testing against observed data (dream rehearsal vs grounding)
+3. Quality improvement through pattern detection (coherence vs mismatches)
 
-1. **Two-phase optimization:** Both systems use sequential phases for different optimization goals
-2. **Empirical testing:** Both validate patterns against observed data (dream rehearsal vs grounding metrics)
-3. **Quality improvement:** Both improve accuracy by detecting and correcting misalignments
-4. **Natural sequencing:** Pruning first (remove noise) then refinement (improve signal)
-
-However, the analogy should not drive design decisions - the technical optimization benefits are the primary justification. The biological parallel is useful for explaining the pattern to users and developers.
+However, the analogy should not drive design decisions—the technical optimization benefits are the primary justification. The biological parallel is useful for explaining the pattern to users and developers.
 
 ## References
 
 **Technical:**
-- ADR-044: Probabilistic Truth Convergence (grounding_strength metric)
-- ADR-047: Probabilistic Vocabulary Categorization (current mechanistic approach)
-- ADR-052: Vocabulary Expansion-Consolidation Cycle (consolidation/pruning base)
-- Shannon (1948): "A Mathematical Theory of Communication" - noise carries information
-- Hegel (1807): "Phenomenology of Spirit" - dialectical reasoning
+- ADR-044: Probabilistic Truth Convergence (`grounding_strength` formula)
+- ADR-047: Probabilistic Vocabulary Categorization (mechanistic approach)
+- ADR-052: Vocabulary Expansion-Consolidation Cycle (pruning base)
+- Shannon (1948): "A Mathematical Theory of Communication"
+- Hegel (1807): "Phenomenology of Spirit" (dialectical reasoning)
 
 **Pedagogical:**
-- Walker & Stickgold (2006): "Sleep, Memory, and Plasticity" - REM consolidation research
-- Tononi & Cirelli (2014): "Sleep and the Price of Plasticity" - synaptic homeostasis hypothesis
+- Walker & Stickgold (2006): "Sleep, Memory, and Plasticity"
+- Tononi & Cirelli (2014): "Sleep and the Price of Plasticity"
 
 ---
 
