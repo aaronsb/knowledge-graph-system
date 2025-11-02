@@ -33,7 +33,7 @@ from .workers.restore_worker import run_restore_worker
 from .workers.vocab_refresh_worker import run_vocab_refresh_worker
 from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher
-from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction
+from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -305,6 +305,7 @@ async def shutdown_event():
 # Include routers
 app.include_router(auth.router)  # ADR-027: Authentication endpoints
 app.include_router(auth.admin_router)  # ADR-027: Admin user management
+app.include_router(oauth.router)  # ADR-054: OAuth 2.0 client management and token flows
 app.include_router(rbac.router)  # ADR-028: RBAC management endpoints
 app.include_router(ingest.router)
 app.include_router(jobs.router)
