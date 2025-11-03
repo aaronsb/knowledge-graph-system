@@ -409,22 +409,90 @@ else
     echo -e "${YELLOW}   - POST /admin/extraction/config${NC}"
 fi
 
-# Embedding Provider Configuration Note
+# Embedding Provider Selection (ADR-039)
 echo ""
 echo -e "${BOLD}Embedding Provider Configuration${NC}"
-echo -e "${YELLOW}Configure embedding provider after logging in (ADR-039)${NC}"
+echo -e "${YELLOW}Select embedding provider for concept similarity (ADR-039)${NC}"
+echo -e "${YELLOW}This configures cold-start before first API startup${NC}"
 echo ""
 echo "Available providers:"
-echo "  • OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
-echo "  • Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
+echo "  1) OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
+echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
+echo "  3) Skip (use OpenAI default)"
 echo ""
-echo -e "${YELLOW}Default: OpenAI (will be used until you configure otherwise)${NC}"
+read -p "Choice [1-3]: " -n 1 -r EMBEDDING_CHOICE
 echo ""
-echo "To configure embedding provider:"
-echo "  1. Login: ${BOLD}kg login${NC}"
-echo "  2. List options: ${BOLD}kg admin embedding list${NC}"
-echo "  3. Activate: ${BOLD}kg admin embedding activate --provider <provider>${NC}"
 echo ""
+
+if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then
+    if [ "$EMBEDDING_CHOICE" = "1" ]; then
+        EMBEDDING_PROVIDER="openai"
+        EMBEDDING_MODEL="text-embedding-3-small"
+        EMBEDDING_DISPLAY="OpenAI (text-embedding-3-small)"
+        EMBEDDING_DIMS=1536
+    else
+        EMBEDDING_PROVIDER="local"
+        EMBEDDING_MODEL="nomic-ai/nomic-embed-text-v1.5"
+        EMBEDDING_DISPLAY="Nomic (nomic-embed-text-v1.5)"
+        EMBEDDING_DIMS=768
+    fi
+
+    echo -e "${BLUE}→${NC} Configuring ${EMBEDDING_DISPLAY}..."
+
+    set +e
+    EMBEDDING_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" EMBEDDING_PROVIDER_CONFIG="$EMBEDDING_PROVIDER" EMBEDDING_MODEL_CONFIG="$EMBEDDING_MODEL" EMBEDDING_DIMS_CONFIG="$EMBEDDING_DIMS" $PYTHON << 'EOF' 2>&1
+import sys
+import os
+sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
+
+from src.api.lib.embedding_config import save_embedding_config
+
+provider = os.getenv("EMBEDDING_PROVIDER_CONFIG")
+model = os.getenv("EMBEDDING_MODEL_CONFIG")
+dims = int(os.getenv("EMBEDDING_DIMS_CONFIG"))
+
+config = {
+    "provider": provider,
+    "model_name": model,
+    "embedding_dimensions": dims,
+    "precision": "float16" if provider == "local" else None,
+    "supports_batch": True
+}
+
+try:
+    config_id = save_embedding_config(config, created_by="initialize-auth.sh")
+    if config_id:
+        # Activate the config
+        from src.api.lib.embedding_config import activate_embedding_config
+        activate_embedding_config(config_id)
+        print("SUCCESS")
+    else:
+        print("ERROR:Failed to save configuration")
+        sys.exit(1)
+except Exception as e:
+    print(f"ERROR:{e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+EOF
+)
+    set -e
+
+    if echo "$EMBEDDING_RESULT" | grep -q "^SUCCESS"; then
+        echo -e "${GREEN}✓${NC} ${EMBEDDING_DISPLAY} configured"
+        echo -e "${YELLOW}   Cold-start will use ${EMBEDDING_DISPLAY} for builtin vocabulary${NC}"
+        EMBEDDING_CONFIGURED=true
+    else
+        ERROR_MSG=$(echo "$EMBEDDING_RESULT" | grep "^ERROR:" | cut -d: -f2-)
+        echo -e "${YELLOW}⚠${NC}  Failed to configure embedding provider: $ERROR_MSG"
+        echo -e "${YELLOW}   Configure after startup via: kg admin embedding activate $EMBEDDING_CHOICE --force${NC}"
+        EMBEDDING_CONFIGURED=false
+    fi
+else
+    echo -e "${YELLOW}⚠${NC}  Using OpenAI default embedding provider"
+    echo -e "${YELLOW}   Configure later via: kg admin embedding activate 2 --force${NC}"
+    EMBEDDING_CONFIGURED=false
+fi
 
 # Success message
 echo ""
@@ -459,9 +527,17 @@ if [ "$DEV_MODE" = true ]; then
     echo -e "    ${YELLOW}For production, run: ./scripts/setup/initialize-auth.sh (without --dev)${NC}"
 fi
 echo ""
-echo -e "${YELLOW}Configuration Management:${NC}"
-echo -e "  • Embedding provider: ${BOLD}kg admin embedding activate --provider <provider>${NC}"
+echo -e "${YELLOW}Configuration:${NC}"
+if [ "${EMBEDDING_CONFIGURED:-false}" = true ]; then
+    echo -e "  • Embedding provider: ${GREEN}${EMBEDDING_DISPLAY}${NC}"
+else
+    echo -e "  • Embedding provider: ${GREEN}OpenAI (default)${NC}"
+    echo -e "    Change via: ${BOLD}kg admin embedding activate 2 --force${NC} (for Nomic local)"
+fi
+echo ""
+echo -e "${YELLOW}Management Commands:${NC}"
+echo -e "  • Switch embeddings: ${BOLD}kg admin embedding activate <config_id> --force${NC}"
+echo -e "  • Reload after switch: ${BOLD}kg admin embedding reload${NC}"
 echo -e "  • AI extraction config: ${BOLD}kg admin extraction set --provider <provider> --model <model>${NC}"
 echo -e "  • API key management: ${BOLD}kg admin keys list${NC}"
-echo -e "  • View system status: ${BOLD}kg admin status${NC}"
 echo ""
