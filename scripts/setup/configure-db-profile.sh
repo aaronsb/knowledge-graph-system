@@ -225,71 +225,41 @@ apply_profile() {
 
     echo -e "\n${BLUE}→${NC} Applying ${YELLOW}${profile^^}${NC} profile settings..."
 
-    # Apply settings via ALTER SYSTEM (capture output to check for errors)
-    local sql_output=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph 2>&1 <<EOSQL
--- Core parallelism settings
-ALTER SYSTEM SET max_worker_processes = $MAX_WORKERS;
-ALTER SYSTEM SET max_parallel_workers = $MAX_PARALLEL;
-ALTER SYSTEM SET max_parallel_workers_per_gather = $MAX_PARALLEL_PER_GATHER;
-ALTER SYSTEM SET max_parallel_maintenance_workers = $((MAX_PARALLEL_PER_GATHER > 4 ? 4 : MAX_PARALLEL_PER_GATHER));
+    # Store expected values for verification after restart
+    export EXPECTED_SHARED_BUFFERS="$SHARED_BUFFERS"
+    export EXPECTED_WORK_MEM="$WORK_MEM"
+    export EXPECTED_MAINTENANCE_WORK_MEM="$MAINTENANCE_WORK_MEM"
+    export EXPECTED_EFFECTIVE_CACHE="$EFFECTIVE_CACHE"
+    export EXPECTED_MAX_WORKERS="$MAX_WORKERS"
+    export EXPECTED_MAX_PARALLEL="$MAX_PARALLEL"
+    export EXPECTED_MAX_PARALLEL_PER_GATHER="$MAX_PARALLEL_PER_GATHER"
 
--- Memory settings
-ALTER SYSTEM SET shared_buffers = '$SHARED_BUFFERS';
-ALTER SYSTEM SET work_mem = '$WORK_MEM';
-ALTER SYSTEM SET maintenance_work_mem = '$MAINTENANCE_WORK_MEM';
-ALTER SYSTEM SET effective_cache_size = '$EFFECTIVE_CACHE';
+    # Apply settings via ALTER SYSTEM using individual -c commands (more reliable than heredoc)
+    docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph \
+        -c "ALTER SYSTEM SET max_worker_processes = $MAX_WORKERS;" \
+        -c "ALTER SYSTEM SET max_parallel_workers = $MAX_PARALLEL;" \
+        -c "ALTER SYSTEM SET max_parallel_workers_per_gather = $MAX_PARALLEL_PER_GATHER;" \
+        -c "ALTER SYSTEM SET max_parallel_maintenance_workers = $((MAX_PARALLEL_PER_GATHER > 4 ? 4 : MAX_PARALLEL_PER_GATHER));" \
+        -c "ALTER SYSTEM SET shared_buffers = '$SHARED_BUFFERS';" \
+        -c "ALTER SYSTEM SET work_mem = '$WORK_MEM';" \
+        -c "ALTER SYSTEM SET maintenance_work_mem = '$MAINTENANCE_WORK_MEM';" \
+        -c "ALTER SYSTEM SET effective_cache_size = '$EFFECTIVE_CACHE';" \
+        -c "ALTER SYSTEM SET parallel_tuple_cost = 0.01;" \
+        -c "ALTER SYSTEM SET parallel_setup_cost = 100;" \
+        -c "ALTER SYSTEM SET wal_buffers = '16MB';" \
+        -c "ALTER SYSTEM SET checkpoint_timeout = '15min';" \
+        -c "ALTER SYSTEM SET max_wal_size = '4GB';" \
+        -c "ALTER SYSTEM SET min_wal_size = '1GB';" \
+        -c "ALTER SYSTEM SET track_io_timing = on;" \
+        -c "ALTER SYSTEM SET log_min_duration_statement = 1000;" > /dev/null 2>&1
 
--- Parallel query cost optimization
-ALTER SYSTEM SET parallel_tuple_cost = 0.01;
-ALTER SYSTEM SET parallel_setup_cost = 100;
-
--- WAL settings (same for all profiles)
-ALTER SYSTEM SET wal_buffers = '16MB';
-ALTER SYSTEM SET checkpoint_timeout = '15min';
-ALTER SYSTEM SET max_wal_size = '4GB';
-ALTER SYSTEM SET min_wal_size = '1GB';
-
--- Monitoring
-ALTER SYSTEM SET track_io_timing = on;
-ALTER SYSTEM SET log_min_duration_statement = 1000;
-
--- Verify settings were written
-SELECT 'VERIFICATION_CHECK' as status;
-EOSQL
-)
-
-    # Check if any errors occurred
-    if echo "$sql_output" | grep -i "error" > /dev/null; then
+    if [ $? -ne 0 ]; then
         echo -e "${RED}✗ Failed to apply settings${NC}"
-        echo "$sql_output" | grep -i "error"
-        return 1
-    fi
-
-    # Check if verification query succeeded
-    if ! echo "$sql_output" | grep -q "VERIFICATION_CHECK"; then
-        echo -e "${RED}✗ Failed to verify settings${NC}"
-        echo "Output: $sql_output"
+        echo -e "   Check PostgreSQL logs for details"
         return 1
     fi
 
     echo -e "${GREEN}✓${NC} Settings written to postgresql.auto.conf"
-
-    # Verify the auto.conf file exists and contains settings
-    echo -e "${BLUE}→${NC} Verifying configuration file..."
-    local autoconf_check=$(docker exec knowledge-graph-postgres cat /var/lib/postgresql/data/postgresql.auto.conf 2>&1)
-
-    if echo "$autoconf_check" | grep -q "shared_buffers"; then
-        echo -e "${GREEN}✓${NC} Configuration file contains settings"
-        # Show a sample of what was written
-        echo -e "${GRAY}Sample settings in postgresql.auto.conf:${NC}"
-        echo "$autoconf_check" | grep -E "(shared_buffers|max_worker_processes|work_mem)" | head -n 3 | sed 's/^/  /'
-    else
-        echo -e "${RED}✗ Configuration file doesn't contain expected settings${NC}"
-        echo -e "File contents:"
-        echo "$autoconf_check" | head -n 10 | sed 's/^/  /'
-        return 1
-    fi
-
     echo ""
     echo -e "${YELLOW}⚠${NC}  ${BOLD}Database restart required to apply changes${NC}"
     echo -e "   Use option 5 to restart database"
@@ -326,18 +296,33 @@ restart_database() {
                 echo -e "${GREEN}✓${NC} Database is ready"
                 CHANGES_PENDING=false
 
-                # Verify settings were actually applied
-                echo -e "${BLUE}→${NC} Verifying settings were applied..."
-                local shared_buffers_check=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "SELECT setting, source FROM pg_settings WHERE name = 'shared_buffers'" 2>/dev/null)
-                local shared_value=$(echo "$shared_buffers_check" | cut -d'|' -f1)
-                local shared_source=$(echo "$shared_buffers_check" | cut -d'|' -f2)
+                # Verify settings were actually applied by comparing values
+                if [ -n "$EXPECTED_SHARED_BUFFERS" ]; then
+                    echo -e "${BLUE}→${NC} Verifying settings were applied..."
 
-                if [ "$shared_source" = "configuration file" ]; then
-                    echo -e "${GREEN}✓${NC} Settings applied successfully (source: configuration file)"
-                    echo -e "${GRAY}  shared_buffers: $shared_value blocks${NC}"
-                else
-                    echo -e "${YELLOW}⚠${NC}  Settings may not have been applied (source: $shared_source)"
-                    echo -e "   Try viewing current settings (option 1) to verify"
+                    # Get actual values from database
+                    local actual_shared_buffers=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "SELECT current_setting('shared_buffers')" 2>/dev/null | xargs)
+                    local actual_work_mem=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "SELECT current_setting('work_mem')" 2>/dev/null | xargs)
+                    local actual_max_workers=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "SELECT current_setting('max_worker_processes')" 2>/dev/null | xargs)
+
+                    # Compare (normalize to lowercase for comparison)
+                    local expected_sb=$(echo "$EXPECTED_SHARED_BUFFERS" | tr '[:upper:]' '[:lower:]')
+                    local actual_sb=$(echo "$actual_shared_buffers" | tr '[:upper:]' '[:lower:]')
+
+                    if [ "$expected_sb" = "$actual_sb" ]; then
+                        echo -e "${GREEN}✓${NC} Settings applied successfully"
+                        echo -e "${GRAY}  shared_buffers: $actual_shared_buffers (expected: $EXPECTED_SHARED_BUFFERS)${NC}"
+                        echo -e "${GRAY}  work_mem: $actual_work_mem (expected: $EXPECTED_WORK_MEM)${NC}"
+                        echo -e "${GRAY}  max_worker_processes: $actual_max_workers (expected: $EXPECTED_MAX_WORKERS)${NC}"
+                    else
+                        echo -e "${YELLOW}⚠${NC}  Settings don't match expected values"
+                        echo -e "   Expected shared_buffers: $EXPECTED_SHARED_BUFFERS"
+                        echo -e "   Actual shared_buffers: $actual_shared_buffers"
+                        echo -e "   Use option 1 to view all current settings"
+                    fi
+
+                    # Clear expected values
+                    unset EXPECTED_SHARED_BUFFERS EXPECTED_WORK_MEM EXPECTED_MAINTENANCE_WORK_MEM EXPECTED_EFFECTIVE_CACHE EXPECTED_MAX_WORKERS EXPECTED_MAX_PARALLEL EXPECTED_MAX_PARALLEL_PER_GATHER
                 fi
 
                 if [ "$api_was_running" = true ]; then
