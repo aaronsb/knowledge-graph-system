@@ -68,14 +68,20 @@ fi
 
 # Check and install required Python packages
 echo -e "${BLUE}→${NC} Checking Python dependencies..."
-MISSING_PACKAGES=()
 
-# Check for required packages
-for package in passlib psycopg2 cryptography python_dotenv; do
-    if ! $PYTHON -c "import ${package/psycopg2/psycopg2}" &>/dev/null 2>&1; then
-        MISSING_PACKAGES+=("$package")
-    fi
-done
+# Function to check if packages are importable
+check_packages() {
+    local missing=()
+    # Check actual import names (not package names)
+    for import_name in passlib psycopg2 cryptography dotenv; do
+        if ! $PYTHON -c "import $import_name" &>/dev/null 2>&1; then
+            missing+=("$import_name")
+        fi
+    done
+    echo "${missing[@]}"
+}
+
+MISSING_PACKAGES=($(check_packages))
 
 if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
     echo -e "${YELLOW}⚠${NC}  Missing required packages: ${MISSING_PACKAGES[*]}"
@@ -89,15 +95,21 @@ if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
     $PIP install --upgrade pip -q 2>&1 | grep -v "Requirement already satisfied" || true
 
     echo -e "${BLUE}→${NC} Installing dependencies from requirements.txt..."
-    $PIP install -r "$PROJECT_ROOT/requirements.txt" -q 2>&1
+    $PIP install -r "$PROJECT_ROOT/requirements.txt" 2>&1 | grep -E "(Successfully installed|Requirement already satisfied|ERROR)" || true
 
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓${NC} Dependencies installed successfully"
-    else
-        echo -e "${RED}✗${NC} Failed to install dependencies"
-        echo -e "${YELLOW}   Try manually: source venv/bin/activate && pip install -r requirements.txt${NC}"
+    # Verify installation worked
+    echo -e "${BLUE}→${NC} Verifying installation..."
+    STILL_MISSING=($(check_packages))
+
+    if [ ${#STILL_MISSING[@]} -gt 0 ]; then
+        echo -e "${RED}✗${NC} Failed to install: ${STILL_MISSING[*]}"
+        echo -e "${YELLOW}   Try manually:${NC}"
+        echo -e "${YELLOW}   source venv/bin/activate${NC}"
+        echo -e "${YELLOW}   pip install -r requirements.txt${NC}"
         exit 1
     fi
+
+    echo -e "${GREEN}✓${NC} Dependencies installed and verified"
 else
     echo -e "${GREEN}✓${NC} All required dependencies installed"
 fi
