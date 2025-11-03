@@ -188,27 +188,39 @@ case $option in
     1)
         # Test current extraction provider
         if [ "$EXTRACTION_PROVIDER" = "not configured" ]; then
+            echo ""
             echo -e "${RED}✗ No extraction provider configured${NC}"
             echo -e "${YELLOW}  Run: ./scripts/setup/initialize-platform.sh (option 3)${NC}"
-            exit 1
+            echo ""
+            echo -e "${BLUE}Press Enter to return to menu...${NC}"
+            read
+            exec "$0"  # Return to menu
         fi
         test_provider "$EXTRACTION_PROVIDER"
         ;;
     2)
         # Test OpenAI
         if [ "$OPENAI_KEY_STATUS" != "valid" ]; then
+            echo ""
             echo -e "${YELLOW}⚠ OpenAI API key not configured or invalid${NC}"
-            echo -e "Configure API key with option 6 first"
-            exit 1
+            echo -e "  Configure API key with option 6 first"
+            echo ""
+            echo -e "${BLUE}Press Enter to return to menu...${NC}"
+            read
+            exec "$0"  # Return to menu
         fi
         test_provider "openai"
         ;;
     3)
         # Test Anthropic
         if [ "$ANTHROPIC_KEY_STATUS" != "valid" ]; then
+            echo ""
             echo -e "${YELLOW}⚠ Anthropic API key not configured or invalid${NC}"
-            echo -e "Configure API key with option 6 first"
-            exit 1
+            echo -e "  Configure API key with option 6 first"
+            echo ""
+            echo -e "${BLUE}Press Enter to return to menu...${NC}"
+            read
+            exec "$0"  # Return to menu
         fi
         test_provider "anthropic"
         ;;
@@ -238,7 +250,13 @@ case $option in
                     2) MODEL="gpt-4o-mini" ;;
                     3) MODEL="o1-preview" ;;
                     4) MODEL="o1-mini" ;;
-                    *) echo -e "${RED}Invalid choice${NC}"; exit 1 ;;
+                    *)
+                        echo ""
+                        echo -e "${RED}Invalid choice${NC}"
+                        echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                        read
+                        exec "$0"
+                        ;;
                 esac
                 ;;
             2)
@@ -254,12 +272,21 @@ case $option in
                     1) MODEL="claude-sonnet-4-20250514" ;;
                     2) MODEL="claude-3-5-sonnet-20241022" ;;
                     3) MODEL="claude-3-opus-20240229" ;;
-                    *) echo -e "${RED}Invalid choice${NC}"; exit 1 ;;
+                    *)
+                        echo ""
+                        echo -e "${RED}Invalid choice${NC}"
+                        echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                        read
+                        exec "$0"
+                        ;;
                 esac
                 ;;
             *)
+                echo ""
                 echo -e "${RED}Invalid provider choice${NC}"
-                exit 1
+                echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                read
+                exec "$0"
                 ;;
         esac
 
@@ -278,8 +305,12 @@ case $option in
             test_provider "$PROVIDER"
         else
             ERROR=$(echo "$RESPONSE" | python -c "import sys, json; print(json.load(sys.stdin).get('detail', 'Unknown error'))" 2>/dev/null)
+            echo ""
             echo -e "${RED}✗ Failed to update config: ${ERROR}${NC}"
-            exit 1
+            echo ""
+            echo -e "${BLUE}Press Enter to return to menu...${NC}"
+            read
+            exec "$0"
         fi
         ;;
     5)
@@ -306,8 +337,11 @@ case $option in
                 echo -e "  ${CYAN}kg admin embedding activate <config-id>${NC}"
                 ;;
             *)
+                echo ""
                 echo -e "${RED}Invalid choice${NC}"
-                exit 1
+                echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                read
+                exec "$0"
                 ;;
         esac
         ;;
@@ -348,8 +382,11 @@ case $option in
                 echo -e "  ${CYAN}kg admin keys delete anthropic${NC}"
                 ;;
             *)
+                echo ""
                 echo -e "${RED}Invalid choice${NC}"
-                exit 1
+                echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                read
+                exec "$0"
                 ;;
         esac
         ;;
@@ -365,8 +402,11 @@ case $option in
         exit 0
         ;;
     *)
+        echo ""
         echo -e "${RED}Invalid option${NC}"
-        exit 1
+        echo -e "${BLUE}Press Enter to return to menu...${NC}"
+        read
+        exec "$0"
         ;;
 esac
 
