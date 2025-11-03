@@ -37,12 +37,47 @@ done
 # Use venv Python if available, otherwise system python3
 if [ -f "$PROJECT_ROOT/venv/bin/python" ]; then
     PYTHON="$PROJECT_ROOT/venv/bin/python"
+    PIP="$PROJECT_ROOT/venv/bin/pip"
 elif [ -f "$PROJECT_ROOT/venv/bin/python3" ]; then
     PYTHON="$PROJECT_ROOT/venv/bin/python3"
+    PIP="$PROJECT_ROOT/venv/bin/pip"
 else
     PYTHON="python3"
+    PIP="pip3"
     echo -e "${YELLOW}⚠${NC}  Virtual environment not found, using system Python"
-    echo -e "${YELLOW}   Run: python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
+fi
+
+# Check and install required Python packages
+echo -e "${BLUE}→${NC} Checking Python dependencies..."
+MISSING_PACKAGES=()
+
+# Check for required packages
+for package in passlib psycopg2 cryptography; do
+    if ! $PYTHON -c "import ${package/psycopg2/psycopg2}" &>/dev/null; then
+        MISSING_PACKAGES+=("$package")
+    fi
+done
+
+if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+    echo -e "${YELLOW}⚠${NC}  Missing required packages: ${MISSING_PACKAGES[*]}"
+    echo -e "${BLUE}→${NC} Installing missing packages..."
+
+    if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
+        $PIP install -r "$PROJECT_ROOT/requirements.txt" -q
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓${NC} Dependencies installed successfully"
+        else
+            echo -e "${RED}✗${NC} Failed to install dependencies"
+            echo -e "${YELLOW}   Please run: pip install -r requirements.txt${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}✗${NC} requirements.txt not found"
+        echo -e "${YELLOW}   Please install required packages manually${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}✓${NC} All required dependencies installed"
 fi
 
 echo -e "${BLUE}${BOLD}"
@@ -58,7 +93,7 @@ fi
 
 echo "This script will configure:"
 echo "  • Admin user credentials (create or reset)"
-echo "  • JWT secret key (for OAuth tokens)"
+echo "  • OAuth signing key (for access tokens)"
 echo "  • Encryption key (for API key storage)"
 echo "  • AI provider (OpenAI or Anthropic)"
 echo "  • Embedding provider (OpenAI or Nomic local)"
