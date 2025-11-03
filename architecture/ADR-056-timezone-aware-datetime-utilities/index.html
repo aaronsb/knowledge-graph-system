@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-053-eager-vocabulary-categorization/">
+        <link rel="prev" href="../ADR-055-cdn-serverless-deployment-model/">
       
       
-        <link rel="next" href="../ADR-055-cdn-serverless-deployment-model/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication - Knowledge Graph System</title>
+        <title>ADR-056: Timezone-Aware Datetime Utilities - Knowledge Graph System</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-054-oauth-20-client-management-for-multi-client-authentication" class="md-skip">
+        <a href="#adr-056-timezone-aware-datetime-utilities" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+              ADR-056: Timezone-Aware Datetime Utilities
             
           </span>
         </div>
@@ -3934,32 +3934,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -3970,380 +3948,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      Context
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#current-authentication-limitations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Current Authentication Limitations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-oauth-20" class="md-nav__link">
-    <span class="md-ellipsis">
-      Why OAuth 2.0?
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      Decision
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#database-schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      Database Schema
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#new-tables-5-tables" class="md-nav__link">
-    <span class="md-ellipsis">
-      New Tables (5 tables)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#existing-table-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Existing Table Changes
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Endpoints
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#client-registration-admin-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      Client Registration (Admin Only)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#oauth-flows" class="md-nav__link">
-    <span class="md-ellipsis">
-      OAuth Flows
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user-management-updated" class="md-nav__link">
-    <span class="md-ellipsis">
-      User Management (Updated)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#flow-implementations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Flow Implementations
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Flow Implementations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-authorization-code-pkce-web-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Authorization Code + PKCE (Web App)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-device-authorization-grant-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Device Authorization Grant (CLI)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-client-credentials-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Client Credentials (MCP Server)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#builtin-clients" class="md-nav__link">
-    <span class="md-ellipsis">
-      Builtin Clients
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-lifetimes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Token Lifetimes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scopes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scopes
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      Consequences
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      Positive
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      Negative
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      Neutral
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      Alternatives Considered
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternative-1-keep-jwt-password-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      Alternative 1: Keep JWT Password Flow
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-2-api-keys-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      Alternative 2: API Keys Only
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-3-external-oauth-provider-auth0-okta" class="md-nav__link">
-    <span class="md-ellipsis">
-      Alternative 3: External OAuth Provider (Auth0, Okta)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-4-session-based-auth-cookies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Alternative 4: Session-Based Auth (Cookies)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      Implementation Plan
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-database-schema-1-week-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 1: Database Schema (1 week) ✅ COMPLETED
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-api-endpoints-1-week-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 2: API Endpoints (1 week) ✅ COMPLETED
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-client-libraries-1-week-in-progress" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-cli-commands-3-days" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 4: CLI Commands (3 days)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-testing-documentation-1-week" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 5: Testing &amp; Documentation (1 week)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      References
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -4376,10 +3980,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-056: Timezone-Aware Datetime Utilities
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4390,6 +4016,296 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recent-incidents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recent Incidents
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#root-cause" class="md-nav__link">
+    <span class="md-ellipsis">
+      Root Cause
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-keeps-happening" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Keeps Happening
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-central-datetime-utility-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Create Central Datetime Utility Module
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-deprecate-direct-datetimeutcnow-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Deprecate Direct datetime.utcnow() Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-migration-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Migration Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-update-oauth-utils-immediate-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Update OAuth Utils (Immediate Fix)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Changes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trade-offs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives Considered
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-use-third-party-library-pendulum-arrow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 1: Use Third-Party Library (pendulum, arrow)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-custom-datetime-subclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 2: Custom datetime Subclass
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-postgresql-timestamp-without-time-zone" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 3: PostgreSQL TIMESTAMP WITHOUT TIME ZONE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-4-configure-mypy-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 4: Configure mypy Plugin
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Checklist
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Checklist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#immediate-adr-056-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Immediate (ADR-056 Implementation)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#short-term-next-sprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      Short-term (Next Sprint)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#long-term-next-quarter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Long-term (Next Quarter)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision Log
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -5035,18 +4951,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#current-authentication-limitations" class="md-nav__link">
+  <a href="#recent-incidents" class="md-nav__link">
     <span class="md-ellipsis">
-      Current Authentication Limitations
+      Recent Incidents
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#why-oauth-20" class="md-nav__link">
+  <a href="#root-cause" class="md-nav__link">
     <span class="md-ellipsis">
-      Why OAuth 2.0?
+      Root Cause
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-keeps-happening" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Keeps Happening
     </span>
   </a>
   
@@ -5068,70 +4993,36 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#database-schema" class="md-nav__link">
+  <a href="#1-create-central-datetime-utility-module" class="md-nav__link">
     <span class="md-ellipsis">
-      Database Schema
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#new-tables-5-tables" class="md-nav__link">
-    <span class="md-ellipsis">
-      New Tables (5 tables)
+      1. Create Central Datetime Utility Module
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#existing-table-changes" class="md-nav__link">
+  <a href="#2-deprecate-direct-datetimeutcnow-usage" class="md-nav__link">
     <span class="md-ellipsis">
-      Existing Table Changes
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Endpoints
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#client-registration-admin-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      Client Registration (Admin Only)
+      2. Deprecate Direct datetime.utcnow() Usage
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#oauth-flows" class="md-nav__link">
+  <a href="#3-migration-strategy" class="md-nav__link">
     <span class="md-ellipsis">
-      OAuth Flows
+      3. Migration Strategy
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#user-management-updated" class="md-nav__link">
+  <a href="#4-update-oauth-utils-immediate-fix" class="md-nav__link">
     <span class="md-ellipsis">
-      User Management (Updated)
+      4. Update OAuth Utils (Immediate Fix)
     </span>
   </a>
   
@@ -5141,71 +5032,30 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#flow-implementations" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
     <span class="md-ellipsis">
-      Flow Implementations
+      Implementation
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Flow Implementations">
+    <nav class="md-nav" aria-label="Implementation">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-authorization-code-pkce-web-app" class="md-nav__link">
+  <a href="#file-changes" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Authorization Code + PKCE (Web App)
+      File Changes
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-device-authorization-grant-cli" class="md-nav__link">
+  <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Device Authorization Grant (CLI)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-client-credentials-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Client Credentials (MCP Server)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#builtin-clients" class="md-nav__link">
-    <span class="md-ellipsis">
-      Builtin Clients
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-lifetimes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Token Lifetimes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scopes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Scopes
+      Testing
     </span>
   </a>
   
@@ -5227,27 +5077,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
+  <a href="#benefits" class="md-nav__link">
     <span class="md-ellipsis">
-      Positive
+      Benefits
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
+  <a href="#trade-offs" class="md-nav__link">
     <span class="md-ellipsis">
-      Negative
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      Neutral
+      Trade-offs
     </span>
   </a>
   
@@ -5269,36 +5110,36 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#alternative-1-keep-jwt-password-flow" class="md-nav__link">
+  <a href="#alternative-1-use-third-party-library-pendulum-arrow" class="md-nav__link">
     <span class="md-ellipsis">
-      Alternative 1: Keep JWT Password Flow
+      Alternative 1: Use Third-Party Library (pendulum, arrow)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-2-api-keys-only" class="md-nav__link">
+  <a href="#alternative-2-custom-datetime-subclass" class="md-nav__link">
     <span class="md-ellipsis">
-      Alternative 2: API Keys Only
+      Alternative 2: Custom datetime Subclass
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-3-external-oauth-provider-auth0-okta" class="md-nav__link">
+  <a href="#alternative-3-postgresql-timestamp-without-time-zone" class="md-nav__link">
     <span class="md-ellipsis">
-      Alternative 3: External OAuth Provider (Auth0, Okta)
+      Alternative 3: PostgreSQL TIMESTAMP WITHOUT TIME ZONE
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-4-session-based-auth-cookies" class="md-nav__link">
+  <a href="#alternative-4-configure-mypy-plugin" class="md-nav__link">
     <span class="md-ellipsis">
-      Alternative 4: Session-Based Auth (Cookies)
+      Alternative 4: Configure mypy Plugin
     </span>
   </a>
   
@@ -5310,55 +5151,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
+  <a href="#migration-checklist" class="md-nav__link">
     <span class="md-ellipsis">
-      Implementation Plan
+      Migration Checklist
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Implementation Plan">
+    <nav class="md-nav" aria-label="Migration Checklist">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-database-schema-1-week-completed" class="md-nav__link">
+  <a href="#immediate-adr-056-implementation" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 1: Database Schema (1 week) ✅ COMPLETED
+      Immediate (ADR-056 Implementation)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-api-endpoints-1-week-completed" class="md-nav__link">
+  <a href="#short-term-next-sprint" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 2: API Endpoints (1 week) ✅ COMPLETED
+      Short-term (Next Sprint)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-client-libraries-1-week-in-progress" class="md-nav__link">
+  <a href="#long-term-next-quarter" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-cli-commands-3-days" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 4: CLI Commands (3 days)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-testing-documentation-1-week" class="md-nav__link">
-    <span class="md-ellipsis">
-      Phase 5: Testing &amp; Documentation (1 week)
+      Long-term (Next Quarter)
     </span>
   </a>
   
@@ -5373,6 +5196,15 @@
   <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       References
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision Log
     </span>
   </a>
   
@@ -5397,504 +5229,576 @@
   
 
 
-<h1 id="adr-054-oauth-20-client-management-for-multi-client-authentication">ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication</h1>
-<p><strong>Status:</strong> Accepted
-<strong>Date:</strong> 2025-11-01
-<strong>Supersedes:</strong> ADR-027 (OAuth future work) - Now implements OAuth properly
-<strong>Related:</strong> ADR-027 (User Management), ADR-028 (RBAC), ADR-024 (Multi-Schema Architecture)</p>
+<h1 id="adr-056-timezone-aware-datetime-utilities">ADR-056: Timezone-Aware Datetime Utilities</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2025-11-03
+<strong>Related ADRs:</strong> ADR-054 (OAuth Client Management), ADR-055 (CDN/Serverless Deployment)</p>
 <h2 id="context">Context</h2>
-<p>The knowledge graph system currently uses JWT tokens (password flow) and API keys for authentication. This works for the CLI but creates security problems for other client types:</p>
-<h3 id="current-authentication-limitations">Current Authentication Limitations</h3>
-<p><strong>Web Application (viz-app):</strong>
-- Would require password flow (username/password sent to JavaScript)
-- <strong>Security risk:</strong> Credentials exposed to browser environment
-- No standard way to handle browser-based authentication
-- No refresh tokens for long-lived sessions</p>
-<p><strong>CLI (kg):</strong>
-- JWT works but lacks client application identity
-- Can't distinguish <code>kg</code> CLI from other tools using the API
-- No refresh mechanism (user must re-login after 60 minutes)
-- No audit trail per client application</p>
-<p><strong>MCP Server:</strong>
-- No dedicated machine-to-machine authentication
-- Currently shares user's JWT or API key (not ideal)
-- No service account concept
-- Requires user to be logged in (doesn't work for background services)</p>
-<h3 id="why-oauth-20">Why OAuth 2.0?</h3>
-<p>OAuth 2.0 provides <strong>appropriate authentication flows for each client type:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Client</th>
-<th>OAuth Flow</th>
-<th>Client Type</th>
-<th>Why</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>viz-app</strong></td>
-<td>Authorization Code + PKCE</td>
-<td>Public (no secret)</td>
-<td>Standard for browser apps, no password exposure</td>
-</tr>
-<tr>
-<td><strong>kg CLI</strong></td>
-<td>Device Authorization Grant</td>
-<td>Public (no secret)</td>
-<td>User-friendly, works on headless machines</td>
-</tr>
-<tr>
-<td><strong>MCP Server</strong></td>
-<td>Client Credentials</td>
-<td>Confidential (has secret)</td>
-<td>Machine-to-machine, no user interaction</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Key benefits:</strong>
-1. <strong>Client identification</strong> - Know which app/tool accessed the API
-2. <strong>Audit trail</strong> - "User X via web app" vs. "User X via CLI"
-3. <strong>Per-client revocation</strong> - Revoke web app without affecting CLI
-4. <strong>Refresh tokens</strong> - Long-lived sessions without re-authentication
-5. <strong>Industry standard</strong> - Well-understood security properties</p>
+<p>The knowledge graph system has repeatedly encountered datetime comparison errors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ne">TypeError</span><span class="p">:</span> <span class="n">can</span><span class="s1">&#39;t compare offset-naive and offset-aware datetimes</span>
+</code></pre></div>
+<h3 id="recent-incidents">Recent Incidents</h3>
+<ol>
+<li><strong>OAuth Token Exchange (ADR-055 Implementation):</strong></li>
+<li><code>src/api/lib/oauth_utils.py:253</code> - <code>is_token_expired()</code> function</li>
+<li>Used <code>datetime.utcnow()</code> (naive) to compare with PostgreSQL timestamps (aware)</li>
+<li>Result: 500 errors on <code>POST /auth/oauth/token</code></li>
+<li>
+<p>Fixed: Replaced all <code>datetime.utcnow()</code> → <code>datetime.now(timezone.utc)</code></p>
+</li>
+<li>
+<p><strong>Previous Incidents (Pattern Recognition):</strong></p>
+</li>
+<li>User reported: "we seem to run into timezone errors a lot"</li>
+<li>Similar fixes likely applied in other parts of codebase</li>
+<li>No systematic prevention mechanism</li>
+</ol>
+<h3 id="root-cause">Root Cause</h3>
+<p><strong>Python's <code>datetime</code> module has two datetime types:</strong></p>
+<ol>
+<li>
+<p><strong>Naive datetimes</strong> (no timezone info):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>  <span class="c1"># 2025-11-03 12:00:00 (no timezone)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>     <span class="c1"># 2025-11-03 07:00:00 (local time, no timezone)</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Aware datetimes</strong> (with timezone info):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>  <span class="c1"># 2025-11-03 12:00:00+00:00</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="s1">&#39;2025-11-03T12:00:00+00:00&#39;</span><span class="p">)</span>
+</code></pre></div></p>
+</li>
+</ol>
+<p><strong>PostgreSQL's <code>TIMESTAMP WITH TIME ZONE</code>:</strong>
+- Always returns timezone-aware datetimes to Python via psycopg2
+- <code>created_at</code>, <code>updated_at</code>, <code>expires_at</code> columns all have timezone info
+- Cannot be compared with naive Python datetimes</p>
+<p><strong>The problem:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># ❌ BREAKS: Comparing naive (left) vs aware (right)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;expires_at&#39;</span><span class="p">]</span>  <span class="c1"># TypeError</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># ✅ WORKS: Both timezone-aware</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;expires_at&#39;</span><span class="p">]</span>
+</code></pre></div></p>
+<h3 id="why-this-keeps-happening">Why This Keeps Happening</h3>
+<ol>
+<li><strong><code>datetime.utcnow()</code> is a footgun:</strong></li>
+<li>Commonly used pattern in Python docs</li>
+<li>Returns naive datetime despite "utc" in name</li>
+<li>
+<p>Easy to forget <code>.replace(tzinfo=timezone.utc)</code></p>
+</li>
+<li>
+<p><strong>No linting or type checking:</strong></p>
+</li>
+<li><code>mypy</code> cannot detect naive vs aware datetimes (both are <code>datetime</code> type)</li>
+<li>No runtime warnings until comparison happens</li>
+<li>
+<p>Error surfaces in production, not development</p>
+</li>
+<li>
+<p><strong>Inconsistent patterns across codebase:</strong></p>
+</li>
+<li>Some modules use <code>datetime.utcnow()</code></li>
+<li>Some use <code>datetime.now(timezone.utc)</code></li>
+<li>Some use <code>datetime.now()</code> (local time, also naive)</li>
+<li>No single source of truth</li>
+</ol>
 <h2 id="decision">Decision</h2>
-<p>Implement <strong>OAuth 2.0 client registration and token management</strong> with support for three grant types:</p>
-<ol>
-<li><strong>Authorization Code + PKCE</strong> (web apps)</li>
-<li><strong>Device Authorization Grant</strong> (CLI tools)</li>
-<li><strong>Client Credentials</strong> (background services)</li>
-</ol>
-<p><strong>Key principle:</strong> OAuth 2.0 <strong>replaces</strong> JWT password flow and API keys as the primary authentication mechanism. Legacy systems removed immediately (no users to migrate).</p>
-<h3 id="database-schema">Database Schema</h3>
-<h4 id="new-tables-5-tables">New Tables (5 tables)</h4>
-<p><strong><code>kg_auth.oauth_clients</code> - Registered client applications</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="n">client_secret_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span><span class="w">  </span><span class="c1">-- bcrypt hash, NULL for public clients</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="n">client_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">client_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- &#39;public&#39; or &#39;confidential&#39;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="n">grant_types</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[]</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Allowed grant types</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="n">redirect_uris</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span><span class="w">  </span><span class="c1">-- For authorization code flow</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span><span class="w">  </span><span class="c1">-- Allowed scopes</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="n">is_active</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="n">created_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="n">metadata</span><span class="w"> </span><span class="n">JSONB</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_authorization_codes</code> - Temporary codes (authorization code flow)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_authorization_codes</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">code</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="n">redirect_uri</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="n">code_challenge</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span><span class="w">  </span><span class="c1">-- PKCE</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="n">code_challenge_method</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;S256&#39; or &#39;plain&#39;</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 10 minutes</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="n">used</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_device_codes</code> - Device authorization codes (CLI flow)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_device_codes</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">device_code</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="n">user_code</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Human-friendly: ABCD-1234</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span><span class="w">  </span><span class="c1">-- NULL until authorized</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="n">status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;pending&#39;</span><span class="p">,</span><span class="w">  </span><span class="c1">-- pending, authorized, denied, expired</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 10 minutes</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_access_tokens</code> - Issued access tokens</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_access_tokens</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">token_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span><span class="w">  </span><span class="c1">-- NULL for client_credentials</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 1 hour</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">revoked</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_refresh_tokens</code> - Long-lived refresh tokens</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_refresh_tokens</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">token_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="n">access_token_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_access_tokens</span><span class="p">(</span><span class="n">token_hash</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 7-30 days</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="n">revoked</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="n">last_used</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">);</span>
-</code></pre></div></p>
-<h4 id="existing-table-changes">Existing Table Changes</h4>
-<p><strong>Rename <code>kg_auth.oauth_tokens</code> to clarify purpose:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_tokens</span><span class="w"> </span><span class="k">RENAME</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="n">oauth_external_provider_tokens</span><span class="p">;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_external_provider_tokens</span><span class="w"> </span><span class="k">IS</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="s1">&#39;OAuth tokens FROM external providers (Google, GitHub, etc.) - not tokens issued by our system&#39;</span><span class="p">;</span>
-</code></pre></div></p>
-<p><strong>Remove legacy auth tables (no migration needed - no users exist):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">DROP</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">api_keys</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">;</span><span class="w">  </span><span class="c1">-- Replaced by OAuth</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1">-- Keep kg_auth.users table (still needed for user accounts)</span>
-</code></pre></div></p>
-<h3 id="api-endpoints">API Endpoints</h3>
-<h4 id="client-registration-admin-only">Client Registration (Admin Only)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>POST   /auth/oauth/clients          # Register new client
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>GET    /auth/oauth/clients          # List clients
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>GET    /auth/oauth/clients/{id}     # Get client details
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>PATCH  /auth/oauth/clients/{id}     # Update client
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>DELETE /auth/oauth/clients/{id}     # Delete client
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>POST   /auth/oauth/clients/{id}/rotate-secret  # Rotate confidential client secret
+<h3 id="1-create-central-datetime-utility-module">1. Create Central Datetime Utility Module</h3>
+<p><strong>New file: <code>src/api/lib/datetime_utils.py</code></strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="sd">Timezone-Aware Datetime Utilities (ADR-056)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="sd">Centralized datetime helpers to prevent naive/aware comparison errors.</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="sd">All functions return timezone-aware datetimes in UTC.</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">utcnow</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="sd">    Get current UTC time as timezone-aware datetime.</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="sd">        Current UTC time with timezone info</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="sd">    Example:</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="sd">        &gt;&gt;&gt; now = utcnow()</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="sd">        &gt;&gt;&gt; now.tzinfo</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="sd">        datetime.timezone.utc</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="k">def</span><span class="w"> </span><span class="nf">utc_from_timestamp</span><span class="p">(</span><span class="n">timestamp</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="sd">    Convert Unix timestamp to timezone-aware UTC datetime.</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="sd">    Args:</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="sd">        timestamp: Unix timestamp (seconds since epoch)</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="sd">        Timezone-aware datetime in UTC</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a><span class="sd">    Example:</span>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a><span class="sd">        &gt;&gt;&gt; dt = utc_from_timestamp(1699027200.0)</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a><span class="sd">        &gt;&gt;&gt; dt.tzinfo</span>
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a><span class="sd">        datetime.timezone.utc</span>
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a><span class="k">def</span><span class="w"> </span><span class="nf">utc_from_iso</span><span class="p">(</span><span class="n">iso_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a><span class="sd">    Parse ISO 8601 string to timezone-aware UTC datetime.</span>
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>
+<a id="__codelineno-4-49" name="__codelineno-4-49" href="#__codelineno-4-49"></a><span class="sd">    If input has no timezone, assumes UTC.</span>
+<a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a><span class="sd">    If input has different timezone, converts to UTC.</span>
+<a id="__codelineno-4-51" name="__codelineno-4-51" href="#__codelineno-4-51"></a>
+<a id="__codelineno-4-52" name="__codelineno-4-52" href="#__codelineno-4-52"></a><span class="sd">    Args:</span>
+<a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a><span class="sd">        iso_string: ISO 8601 datetime string</span>
+<a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a>
+<a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-4-56" name="__codelineno-4-56" href="#__codelineno-4-56"></a><span class="sd">        Timezone-aware datetime in UTC</span>
+<a id="__codelineno-4-57" name="__codelineno-4-57" href="#__codelineno-4-57"></a>
+<a id="__codelineno-4-58" name="__codelineno-4-58" href="#__codelineno-4-58"></a><span class="sd">    Example:</span>
+<a id="__codelineno-4-59" name="__codelineno-4-59" href="#__codelineno-4-59"></a><span class="sd">        &gt;&gt;&gt; dt = utc_from_iso(&#39;2025-11-03T12:00:00Z&#39;)</span>
+<a id="__codelineno-4-60" name="__codelineno-4-60" href="#__codelineno-4-60"></a><span class="sd">        &gt;&gt;&gt; dt.tzinfo</span>
+<a id="__codelineno-4-61" name="__codelineno-4-61" href="#__codelineno-4-61"></a><span class="sd">        datetime.timezone.utc</span>
+<a id="__codelineno-4-62" name="__codelineno-4-62" href="#__codelineno-4-62"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-63" name="__codelineno-4-63" href="#__codelineno-4-63"></a>    <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">iso_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;+00:00&#39;</span><span class="p">))</span>
+<a id="__codelineno-4-64" name="__codelineno-4-64" href="#__codelineno-4-64"></a>
+<a id="__codelineno-4-65" name="__codelineno-4-65" href="#__codelineno-4-65"></a>    <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-66" name="__codelineno-4-66" href="#__codelineno-4-66"></a>        <span class="c1"># Assume UTC if no timezone info</span>
+<a id="__codelineno-4-67" name="__codelineno-4-67" href="#__codelineno-4-67"></a>        <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<a id="__codelineno-4-68" name="__codelineno-4-68" href="#__codelineno-4-68"></a>
+<a id="__codelineno-4-69" name="__codelineno-4-69" href="#__codelineno-4-69"></a>    <span class="c1"># Convert to UTC if in different timezone</span>
+<a id="__codelineno-4-70" name="__codelineno-4-70" href="#__codelineno-4-70"></a>    <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<a id="__codelineno-4-71" name="__codelineno-4-71" href="#__codelineno-4-71"></a>
+<a id="__codelineno-4-72" name="__codelineno-4-72" href="#__codelineno-4-72"></a>
+<a id="__codelineno-4-73" name="__codelineno-4-73" href="#__codelineno-4-73"></a><span class="k">def</span><span class="w"> </span><span class="nf">ensure_utc</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-4-74" name="__codelineno-4-74" href="#__codelineno-4-74"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-75" name="__codelineno-4-75" href="#__codelineno-4-75"></a><span class="sd">    Ensure datetime is timezone-aware and in UTC.</span>
+<a id="__codelineno-4-76" name="__codelineno-4-76" href="#__codelineno-4-76"></a>
+<a id="__codelineno-4-77" name="__codelineno-4-77" href="#__codelineno-4-77"></a><span class="sd">    - If naive, assumes UTC</span>
+<a id="__codelineno-4-78" name="__codelineno-4-78" href="#__codelineno-4-78"></a><span class="sd">    - If aware but not UTC, converts to UTC</span>
+<a id="__codelineno-4-79" name="__codelineno-4-79" href="#__codelineno-4-79"></a><span class="sd">    - If already UTC, returns as-is</span>
+<a id="__codelineno-4-80" name="__codelineno-4-80" href="#__codelineno-4-80"></a>
+<a id="__codelineno-4-81" name="__codelineno-4-81" href="#__codelineno-4-81"></a><span class="sd">    Args:</span>
+<a id="__codelineno-4-82" name="__codelineno-4-82" href="#__codelineno-4-82"></a><span class="sd">        dt: Input datetime (naive or aware)</span>
+<a id="__codelineno-4-83" name="__codelineno-4-83" href="#__codelineno-4-83"></a>
+<a id="__codelineno-4-84" name="__codelineno-4-84" href="#__codelineno-4-84"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-4-85" name="__codelineno-4-85" href="#__codelineno-4-85"></a><span class="sd">        Timezone-aware datetime in UTC</span>
+<a id="__codelineno-4-86" name="__codelineno-4-86" href="#__codelineno-4-86"></a>
+<a id="__codelineno-4-87" name="__codelineno-4-87" href="#__codelineno-4-87"></a><span class="sd">    Example:</span>
+<a id="__codelineno-4-88" name="__codelineno-4-88" href="#__codelineno-4-88"></a><span class="sd">        &gt;&gt;&gt; naive = datetime(2025, 11, 3, 12, 0, 0)</span>
+<a id="__codelineno-4-89" name="__codelineno-4-89" href="#__codelineno-4-89"></a><span class="sd">        &gt;&gt;&gt; aware = ensure_utc(naive)</span>
+<a id="__codelineno-4-90" name="__codelineno-4-90" href="#__codelineno-4-90"></a><span class="sd">        &gt;&gt;&gt; aware.tzinfo</span>
+<a id="__codelineno-4-91" name="__codelineno-4-91" href="#__codelineno-4-91"></a><span class="sd">        datetime.timezone.utc</span>
+<a id="__codelineno-4-92" name="__codelineno-4-92" href="#__codelineno-4-92"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-93" name="__codelineno-4-93" href="#__codelineno-4-93"></a>    <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-94" name="__codelineno-4-94" href="#__codelineno-4-94"></a>        <span class="c1"># Naive datetime - assume UTC</span>
+<a id="__codelineno-4-95" name="__codelineno-4-95" href="#__codelineno-4-95"></a>        <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<a id="__codelineno-4-96" name="__codelineno-4-96" href="#__codelineno-4-96"></a>
+<a id="__codelineno-4-97" name="__codelineno-4-97" href="#__codelineno-4-97"></a>    <span class="c1"># Already aware - convert to UTC</span>
+<a id="__codelineno-4-98" name="__codelineno-4-98" href="#__codelineno-4-98"></a>    <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<a id="__codelineno-4-99" name="__codelineno-4-99" href="#__codelineno-4-99"></a>
+<a id="__codelineno-4-100" name="__codelineno-4-100" href="#__codelineno-4-100"></a>
+<a id="__codelineno-4-101" name="__codelineno-4-101" href="#__codelineno-4-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-4-102" name="__codelineno-4-102" href="#__codelineno-4-102"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-103" name="__codelineno-4-103" href="#__codelineno-4-103"></a><span class="sd">    Check if a datetime has passed (timezone-safe).</span>
+<a id="__codelineno-4-104" name="__codelineno-4-104" href="#__codelineno-4-104"></a>
+<a id="__codelineno-4-105" name="__codelineno-4-105" href="#__codelineno-4-105"></a><span class="sd">    Args:</span>
+<a id="__codelineno-4-106" name="__codelineno-4-106" href="#__codelineno-4-106"></a><span class="sd">        expires_at: Expiration datetime (naive or aware)</span>
+<a id="__codelineno-4-107" name="__codelineno-4-107" href="#__codelineno-4-107"></a><span class="sd">        now: Current time (defaults to utcnow())</span>
+<a id="__codelineno-4-108" name="__codelineno-4-108" href="#__codelineno-4-108"></a>
+<a id="__codelineno-4-109" name="__codelineno-4-109" href="#__codelineno-4-109"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-4-110" name="__codelineno-4-110" href="#__codelineno-4-110"></a><span class="sd">        True if expired, False otherwise</span>
+<a id="__codelineno-4-111" name="__codelineno-4-111" href="#__codelineno-4-111"></a>
+<a id="__codelineno-4-112" name="__codelineno-4-112" href="#__codelineno-4-112"></a><span class="sd">    Example:</span>
+<a id="__codelineno-4-113" name="__codelineno-4-113" href="#__codelineno-4-113"></a><span class="sd">        &gt;&gt;&gt; past = utcnow() - timedelta(hours=1)</span>
+<a id="__codelineno-4-114" name="__codelineno-4-114" href="#__codelineno-4-114"></a><span class="sd">        &gt;&gt;&gt; is_expired(past)</span>
+<a id="__codelineno-4-115" name="__codelineno-4-115" href="#__codelineno-4-115"></a><span class="sd">        True</span>
+<a id="__codelineno-4-116" name="__codelineno-4-116" href="#__codelineno-4-116"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-117" name="__codelineno-4-117" href="#__codelineno-4-117"></a>    <span class="k">if</span> <span class="n">now</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-118" name="__codelineno-4-118" href="#__codelineno-4-118"></a>        <span class="n">now</span> <span class="o">=</span> <span class="n">utcnow</span><span class="p">()</span>
+<a id="__codelineno-4-119" name="__codelineno-4-119" href="#__codelineno-4-119"></a>
+<a id="__codelineno-4-120" name="__codelineno-4-120" href="#__codelineno-4-120"></a>    <span class="c1"># Ensure both datetimes are timezone-aware</span>
+<a id="__codelineno-4-121" name="__codelineno-4-121" href="#__codelineno-4-121"></a>    <span class="n">expires_at_utc</span> <span class="o">=</span> <span class="n">ensure_utc</span><span class="p">(</span><span class="n">expires_at</span><span class="p">)</span>
+<a id="__codelineno-4-122" name="__codelineno-4-122" href="#__codelineno-4-122"></a>    <span class="n">now_utc</span> <span class="o">=</span> <span class="n">ensure_utc</span><span class="p">(</span><span class="n">now</span><span class="p">)</span>
+<a id="__codelineno-4-123" name="__codelineno-4-123" href="#__codelineno-4-123"></a>
+<a id="__codelineno-4-124" name="__codelineno-4-124" href="#__codelineno-4-124"></a>    <span class="k">return</span> <span class="n">now_utc</span> <span class="o">&gt;</span> <span class="n">expires_at_utc</span>
+<a id="__codelineno-4-125" name="__codelineno-4-125" href="#__codelineno-4-125"></a>
+<a id="__codelineno-4-126" name="__codelineno-4-126" href="#__codelineno-4-126"></a>
+<a id="__codelineno-4-127" name="__codelineno-4-127" href="#__codelineno-4-127"></a><span class="k">def</span><span class="w"> </span><span class="nf">timedelta_from_now</span><span class="p">(</span>
+<a id="__codelineno-4-128" name="__codelineno-4-128" href="#__codelineno-4-128"></a>    <span class="n">days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-4-129" name="__codelineno-4-129" href="#__codelineno-4-129"></a>    <span class="n">hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-4-130" name="__codelineno-4-130" href="#__codelineno-4-130"></a>    <span class="n">minutes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-4-131" name="__codelineno-4-131" href="#__codelineno-4-131"></a>    <span class="n">seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-4-132" name="__codelineno-4-132" href="#__codelineno-4-132"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-4-133" name="__codelineno-4-133" href="#__codelineno-4-133"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-134" name="__codelineno-4-134" href="#__codelineno-4-134"></a><span class="sd">    Get timezone-aware UTC datetime offset from now.</span>
+<a id="__codelineno-4-135" name="__codelineno-4-135" href="#__codelineno-4-135"></a>
+<a id="__codelineno-4-136" name="__codelineno-4-136" href="#__codelineno-4-136"></a><span class="sd">    Args:</span>
+<a id="__codelineno-4-137" name="__codelineno-4-137" href="#__codelineno-4-137"></a><span class="sd">        days: Days to add</span>
+<a id="__codelineno-4-138" name="__codelineno-4-138" href="#__codelineno-4-138"></a><span class="sd">        hours: Hours to add</span>
+<a id="__codelineno-4-139" name="__codelineno-4-139" href="#__codelineno-4-139"></a><span class="sd">        minutes: Minutes to add</span>
+<a id="__codelineno-4-140" name="__codelineno-4-140" href="#__codelineno-4-140"></a><span class="sd">        seconds: Seconds to add</span>
+<a id="__codelineno-4-141" name="__codelineno-4-141" href="#__codelineno-4-141"></a>
+<a id="__codelineno-4-142" name="__codelineno-4-142" href="#__codelineno-4-142"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-4-143" name="__codelineno-4-143" href="#__codelineno-4-143"></a><span class="sd">        Timezone-aware datetime in UTC</span>
+<a id="__codelineno-4-144" name="__codelineno-4-144" href="#__codelineno-4-144"></a>
+<a id="__codelineno-4-145" name="__codelineno-4-145" href="#__codelineno-4-145"></a><span class="sd">    Example:</span>
+<a id="__codelineno-4-146" name="__codelineno-4-146" href="#__codelineno-4-146"></a><span class="sd">        &gt;&gt;&gt; future = timedelta_from_now(hours=1)</span>
+<a id="__codelineno-4-147" name="__codelineno-4-147" href="#__codelineno-4-147"></a><span class="sd">        &gt;&gt;&gt; future &gt; utcnow()</span>
+<a id="__codelineno-4-148" name="__codelineno-4-148" href="#__codelineno-4-148"></a><span class="sd">        True</span>
+<a id="__codelineno-4-149" name="__codelineno-4-149" href="#__codelineno-4-149"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-150" name="__codelineno-4-150" href="#__codelineno-4-150"></a>    <span class="k">return</span> <span class="n">utcnow</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span>
+<a id="__codelineno-4-151" name="__codelineno-4-151" href="#__codelineno-4-151"></a>        <span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">,</span>
+<a id="__codelineno-4-152" name="__codelineno-4-152" href="#__codelineno-4-152"></a>        <span class="n">hours</span><span class="o">=</span><span class="n">hours</span><span class="p">,</span>
+<a id="__codelineno-4-153" name="__codelineno-4-153" href="#__codelineno-4-153"></a>        <span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">,</span>
+<a id="__codelineno-4-154" name="__codelineno-4-154" href="#__codelineno-4-154"></a>        <span class="n">seconds</span><span class="o">=</span><span class="n">seconds</span>
+<a id="__codelineno-4-155" name="__codelineno-4-155" href="#__codelineno-4-155"></a>    <span class="p">)</span>
 </code></pre></div>
-<h4 id="oauth-flows">OAuth Flows</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GET    /auth/oauth/authorize        # Authorization endpoint (web flow)
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>POST   /auth/oauth/device           # Device authorization request (CLI flow)
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>POST   /auth/oauth/token            # Token endpoint (all flows)
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>POST   /auth/oauth/revoke           # Revoke token
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>GET    /auth/oauth/device-status    # Check device code status (for UI)
+<h3 id="2-deprecate-direct-datetimeutcnow-usage">2. Deprecate Direct <code>datetime.utcnow()</code> Usage</h3>
+<p><strong>Add linter rule to detect unsafe patterns:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># scripts/lint_datetimes.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="sd">Lint for unsafe datetime patterns (ADR-056).</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="sd">Detects:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="sd">- datetime.utcnow() - should use datetime_utils.utcnow()</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="sd">- datetime.now() without timezone - should use datetime_utils.utcnow()</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="n">UNSAFE_PATTERNS</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\bdatetime\.utcnow\(\)&#39;</span><span class="p">,</span> <span class="s1">&#39;Use datetime_utils.utcnow() instead&#39;</span><span class="p">),</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>    <span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\bdatetime\.now\(\)(?!\s*\()&#39;</span><span class="p">,</span> <span class="s1">&#39;Use datetime_utils.utcnow() instead&#39;</span><span class="p">),</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>    <span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\bdatetime\.fromtimestamp\([^,)]+\)&#39;</span><span class="p">,</span> <span class="s1">&#39;Use datetime_utils.utc_from_timestamp() instead&#39;</span><span class="p">),</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="p">]</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="k">def</span><span class="w"> </span><span class="nf">lint_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Lint a Python file for unsafe datetime patterns.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>    <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>        <span class="k">for</span> <span class="n">line_num</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>            <span class="c1"># Skip comments and imports</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;import&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>                <span class="k">continue</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>            <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">UNSAFE_PATTERNS</span><span class="p">:</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>                <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">line_num</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">message</span><span class="p">))</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>    <span class="k">return</span> <span class="n">errors</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>    <span class="n">src_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;src/api&#39;</span><span class="p">)</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>    <span class="n">errors_found</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>    <span class="k">for</span> <span class="n">py_file</span> <span class="ow">in</span> <span class="n">src_path</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s1">&#39;*.py&#39;</span><span class="p">):</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>        <span class="c1"># Skip datetime_utils.py itself</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>        <span class="k">if</span> <span class="n">py_file</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;datetime_utils.py&#39;</span><span class="p">:</span>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a>            <span class="k">continue</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>
+<a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a>        <span class="n">errors</span> <span class="o">=</span> <span class="n">lint_file</span><span class="p">(</span><span class="n">py_file</span><span class="p">)</span>
+<a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a>        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+<a id="__codelineno-5-50" name="__codelineno-5-50" href="#__codelineno-5-50"></a>            <span class="n">errors_found</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-5-51" name="__codelineno-5-51" href="#__codelineno-5-51"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">py_file</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-52" name="__codelineno-5-52" href="#__codelineno-5-52"></a>            <span class="k">for</span> <span class="n">line_num</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+<a id="__codelineno-5-53" name="__codelineno-5-53" href="#__codelineno-5-53"></a>                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Line </span><span class="si">{</span><span class="n">line_num</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-54" name="__codelineno-5-54" href="#__codelineno-5-54"></a>                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-55" name="__codelineno-5-55" href="#__codelineno-5-55"></a>
+<a id="__codelineno-5-56" name="__codelineno-5-56" href="#__codelineno-5-56"></a>    <span class="k">if</span> <span class="n">errors_found</span><span class="p">:</span>
+<a id="__codelineno-5-57" name="__codelineno-5-57" href="#__codelineno-5-57"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">❌ Found unsafe datetime patterns&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-58" name="__codelineno-5-58" href="#__codelineno-5-58"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   See ADR-056 for migration guide&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-59" name="__codelineno-5-59" href="#__codelineno-5-59"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-5-60" name="__codelineno-5-60" href="#__codelineno-5-60"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-5-61" name="__codelineno-5-61" href="#__codelineno-5-61"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ No unsafe datetime patterns found&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-62" name="__codelineno-5-62" href="#__codelineno-5-62"></a>
+<a id="__codelineno-5-63" name="__codelineno-5-63" href="#__codelineno-5-63"></a>
+<a id="__codelineno-5-64" name="__codelineno-5-64" href="#__codelineno-5-64"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<a id="__codelineno-5-65" name="__codelineno-5-65" href="#__codelineno-5-65"></a>    <span class="n">main</span><span class="p">()</span>
 </code></pre></div>
-<h4 id="user-management-updated">User Management (Updated)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>POST   /auth/register               # Create user (unchanged)
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>DELETE /auth/login                  # REMOVED (use OAuth flows instead)
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>DELETE /auth/me                     # REMOVED (get user from OAuth token)
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>GET    /users/me                    # Get current user from OAuth token
-</code></pre></div>
-<h3 id="flow-implementations">Flow Implementations</h3>
-<h4 id="1-authorization-code-pkce-web-app">1. Authorization Code + PKCE (Web App)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>┌─────────┐                                  ┌─────────┐
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>│ Browser │                                  │   API   │
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>└────┬────┘                                  └────┬────┘
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>     │                                             │
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>     │ 1. User clicks &quot;Login&quot;                     │
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>     │                                             │
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>     │ 2. Redirect to /auth/oauth/authorize       │
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>     │    ?client_id=viz-app                      │
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>     │    &amp;redirect_uri=https://viz.../callback   │
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>     │    &amp;code_challenge=&lt;hash&gt;                  │
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>     │                                             │
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>     │ 3. User enters credentials                 │
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>     │                                             │
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>     │ 4. Redirect with authorization code        │
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>     │    ?code=xyz123                            │
-<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>     │                                             │
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>     │ 5. Exchange code for tokens                │
-<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>     │    POST /auth/oauth/token                  │
-<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>     │                                             │
-<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>     │ 6. access_token + refresh_token            │
-<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>     │◀────────────────────────────────────────────
-</code></pre></div>
-<h4 id="2-device-authorization-grant-cli">2. Device Authorization Grant (CLI)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>┌─────────┐                                  ┌─────────┐
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>│   CLI   │                                  │   API   │
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>└────┬────┘                                  └────┬────┘
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>     │                                             │
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>     │ 1. kg login                                │
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>     │                                             │
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>     │ 2. device_code + user_code                 │
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>     │    &quot;Visit https://.../device&quot;              │
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>     │    &quot;Enter code: ABCD-1234&quot;                 │
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>     │                                             │
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>     │ [User opens browser, enters code]          │
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>     │                                             │
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>     │ 3. Poll /auth/oauth/token every 5s         │
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>     │                                             │
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>     │ 4. authorization_pending...                │
-<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>     │                                             │
-<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>     │ [User completes auth in browser]           │
-<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>     │                                             │
-<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>     │ 5. access_token + refresh_token            │
-<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>     │◀────────────────────────────────────────────
-</code></pre></div>
-<h4 id="3-client-credentials-mcp-server">3. Client Credentials (MCP Server)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>┌─────────┐                                  ┌─────────┐
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>│   MCP   │                                  │   API   │
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>└────┬────┘                                  └────┬────┘
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>     │                                             │
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>     │ 1. POST /auth/oauth/token                  │
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>     │    grant_type=client_credentials           │
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>     │    client_id=mcp-server-123                │
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>     │    client_secret=&lt;secret&gt;                  │
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>     │                                             │
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>     │ 2. access_token (no refresh token)         │
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>     │                                             │
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>     │ [Use token until expiry, then re-auth]     │
-</code></pre></div>
-<h3 id="builtin-clients">Builtin Clients</h3>
-<p>The system will include three pre-registered clients:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="w"> </span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span><span class="w"> </span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">client_type</span><span class="p">,</span><span class="w"> </span><span class="n">grant_types</span><span class="p">,</span><span class="w"> </span><span class="n">redirect_uris</span><span class="p">,</span><span class="w"> </span><span class="n">scopes</span><span class="p">)</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">VALUES</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="p">(</span><span class="s1">&#39;kg-cli&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Knowledge Graph CLI&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;urn:ietf:params:oauth:grant-type:device_code&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;refresh_token&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">   </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read:*&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write:*&#39;</span><span class="p">]),</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">  </span><span class="p">(</span><span class="s1">&#39;kg-viz&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Knowledge Graph Visualizer&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;authorization_code&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;refresh_token&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;http://localhost:3000/callback&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;https://viz.kg.example.com/callback&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read:*&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write:*&#39;</span><span class="p">]),</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="p">(</span><span class="s1">&#39;kg-mcp&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Knowledge Graph MCP Server&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;confidential&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;client_credentials&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">   </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read:*&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write:*&#39;</span><span class="p">]);</span>
-</code></pre></div>
-<p><strong>Note:</strong> For <code>kg-mcp</code> confidential client, a client secret must be generated during setup:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>oauth<span class="w"> </span>clients<span class="w"> </span>rotate-secret<span class="w"> </span>kg-mcp
+<h3 id="3-migration-strategy">3. Migration Strategy</h3>
+<p><strong>Phase 1: Add utility module (immediate)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Create datetime_utils.py</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Update oauth_utils.py to use new utilities</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Verify OAuth flow works</span>
 </code></pre></div></p>
-<h3 id="token-lifetimes">Token Lifetimes</h3>
-<table>
-<thead>
-<tr>
-<th>Token Type</th>
-<th>Lifetime</th>
-<th>Rationale</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Authorization Code</td>
-<td>10 minutes</td>
-<td>Single-use, short-lived</td>
-</tr>
-<tr>
-<td>Device Code</td>
-<td>10 minutes</td>
-<td>User must act quickly</td>
-</tr>
-<tr>
-<td>Access Token</td>
-<td>1 hour</td>
-<td>Balance security vs. UX</td>
-</tr>
-<tr>
-<td>Refresh Token (CLI)</td>
-<td>7 days</td>
-<td>Weekly re-auth acceptable</td>
-</tr>
-<tr>
-<td>Refresh Token (Web)</td>
-<td>30 days</td>
-<td>Monthly re-auth acceptable</td>
-</tr>
-<tr>
-<td>Client Credentials Token</td>
-<td>1 hour</td>
-<td>Can re-auth automatically</td>
-</tr>
-</tbody>
-</table>
-<h3 id="scopes">Scopes</h3>
-<p>Initial scope set (aligned with RBAC resources from ADR-028):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>read:concepts       - Read concept graph
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>write:concepts      - Create/modify concepts
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>delete:concepts     - Delete concepts
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>read:vocabulary     - Read edge vocabulary
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>write:vocabulary    - Manage edge vocabulary
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>approve:vocabulary  - Approve vocabulary changes
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>read:jobs           - View ingestion jobs
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>write:jobs          - Submit ingestion jobs
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>approve:jobs        - Approve job execution
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>read:users          - List users (admin)
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>write:users         - Manage users (admin)
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>delete:users        - Delete users (admin)
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>admin:*             - Full administrative access
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>read:*              - Read-only access to everything
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>write:*             - Read + write access to everything
+<p><strong>Phase 2: Incremental migration (ongoing)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Run linter to find all unsafe patterns</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>python<span class="w"> </span>scripts/lint_datetimes.py
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Migrate module by module</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Test after each migration</span>
+</code></pre></div></p>
+<p><strong>Phase 3: Enforce in CI (future)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># .github/workflows/lint.yml</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Lint datetime usage</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python scripts/lint_datetimes.py</span>
+</code></pre></div></p>
+<h3 id="4-update-oauth-utils-immediate-fix">4. Update OAuth Utils (Immediate Fix)</h3>
+<p><strong>Before (ADR-055 fix):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_token_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">expires_at</span>
+</code></pre></div></p>
+<p><strong>After (ADR-056 pattern):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">utcnow</span><span class="p">,</span> <span class="n">is_expired</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_token_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="k">return</span> <span class="n">is_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Even better (semantic naming):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># oauth_utils.py</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">timedelta_from_now</span><span class="p">,</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">is_expired</span> <span class="k">as</span> <span class="n">is_datetime_expired</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">)</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_authorization_code_expiry</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get expiration datetime for authorization codes (10 minutes).&quot;&quot;&quot;</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="k">return</span> <span class="n">timedelta_from_now</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_access_token_expiry</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get expiration datetime for access tokens (1 hour).&quot;&quot;&quot;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    <span class="k">return</span> <span class="n">timedelta_from_now</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_refresh_token_expiry</span><span class="p">(</span><span class="n">client_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get expiration datetime for refresh tokens (client-type dependent).&quot;&quot;&quot;</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>    <span class="k">if</span> <span class="n">client_type</span> <span class="o">==</span> <span class="s2">&quot;confidential&quot;</span><span class="p">:</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>        <span class="k">return</span> <span class="n">timedelta_from_now</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>        <span class="k">return</span> <span class="n">timedelta_from_now</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_token_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a token has expired.&quot;&quot;&quot;</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>    <span class="k">return</span> <span class="n">is_datetime_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">)</span>
+</code></pre></div></p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="file-changes">File Changes</h3>
+<p><strong>New files:</strong>
+- <code>src/api/lib/datetime_utils.py</code> - Central datetime utilities
+- <code>scripts/lint_datetimes.py</code> - Linter for unsafe patterns</p>
+<p><strong>Modified files:</strong>
+- <code>src/api/lib/oauth_utils.py</code> - Use datetime_utils instead of direct datetime calls</p>
+<h3 id="testing">Testing</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># tests/test_datetime_utils.py</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span><span class="p">,</span> <span class="n">timedelta</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">utcnow</span><span class="p">,</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">ensure_utc</span><span class="p">,</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">is_expired</span><span class="p">,</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="n">timedelta_from_now</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="p">)</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_utcnow_returns_aware</span><span class="p">():</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;utcnow() returns timezone-aware datetime.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>    <span class="n">now</span> <span class="o">=</span> <span class="n">utcnow</span><span class="p">()</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>    <span class="k">assert</span> <span class="n">now</span><span class="o">.</span><span class="n">tzinfo</span> <span class="o">==</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_ensure_utc_with_naive</span><span class="p">():</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;ensure_utc() adds UTC timezone to naive datetime.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>    <span class="n">naive</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>    <span class="n">aware</span> <span class="o">=</span> <span class="n">ensure_utc</span><span class="p">(</span><span class="n">naive</span><span class="p">)</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>    <span class="k">assert</span> <span class="n">aware</span><span class="o">.</span><span class="n">tzinfo</span> <span class="o">==</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span>
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_ensure_utc_with_aware</span><span class="p">():</span>
+<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;ensure_utc() converts to UTC from other timezone.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>    <span class="c1"># Create datetime in PST (UTC-8)</span>
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span> <span class="k">as</span> <span class="n">tz</span>
+<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>    <span class="n">pst</span> <span class="o">=</span> <span class="n">tz</span><span class="p">(</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=-</span><span class="mi">8</span><span class="p">))</span>
+<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>    <span class="n">dt_pst</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">pst</span><span class="p">)</span>  <span class="c1"># 4am PST</span>
+<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>
+<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>    <span class="n">dt_utc</span> <span class="o">=</span> <span class="n">ensure_utc</span><span class="p">(</span><span class="n">dt_pst</span><span class="p">)</span>
+<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>    <span class="k">assert</span> <span class="n">dt_utc</span><span class="o">.</span><span class="n">tzinfo</span> <span class="o">==</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span>
+<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>    <span class="k">assert</span> <span class="n">dt_utc</span><span class="o">.</span><span class="n">hour</span> <span class="o">==</span> <span class="mi">12</span>  <span class="c1"># 4am PST = 12pm UTC</span>
+<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>
+<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>
+<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_is_expired_past</span><span class="p">():</span>
+<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;is_expired() returns True for past datetime.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>    <span class="n">past</span> <span class="o">=</span> <span class="n">utcnow</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>    <span class="k">assert</span> <span class="n">is_expired</span><span class="p">(</span><span class="n">past</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span>
+<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a>
+<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>
+<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_is_expired_future</span><span class="p">():</span>
+<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;is_expired() returns False for future datetime.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a>    <span class="n">future</span> <span class="o">=</span> <span class="n">utcnow</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a>    <span class="k">assert</span> <span class="n">is_expired</span><span class="p">(</span><span class="n">future</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span>
+<a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a>
+<a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a>
+<a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_timedelta_from_now</span><span class="p">():</span>
+<a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;timedelta_from_now() creates future datetime.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a>    <span class="n">future</span> <span class="o">=</span> <span class="n">timedelta_from_now</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a>    <span class="n">now</span> <span class="o">=</span> <span class="n">utcnow</span><span class="p">()</span>
+<a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a>
+<a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a>    <span class="k">assert</span> <span class="n">future</span> <span class="o">&gt;</span> <span class="n">now</span>
+<a id="__codelineno-12-55" name="__codelineno-12-55" href="#__codelineno-12-55"></a>    <span class="k">assert</span> <span class="n">future</span><span class="o">.</span><span class="n">tzinfo</span> <span class="o">==</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span>
 </code></pre></div>
-<p><strong>Wildcard support:</strong> <code>*</code> can be used for "all actions on all resources"</p>
 <h2 id="consequences">Consequences</h2>
-<h3 id="positive">Positive</h3>
+<h3 id="benefits">Benefits</h3>
 <ol>
-<li><strong>Security</strong></li>
-<li>Web app no longer exposes passwords to JavaScript</li>
-<li>Each client type uses appropriate flow</li>
+<li><strong>Prevents Naive/Aware Errors:</strong></li>
+<li>✅ All datetimes from utilities are timezone-aware</li>
+<li>✅ <code>ensure_utc()</code> safely handles mixed inputs</li>
 <li>
-<p>PKCE prevents authorization code interception</p>
+<p>✅ <code>is_expired()</code> handles comparisons safely</p>
 </li>
 <li>
-<p><strong>Client Identification</strong></p>
+<p><strong>Consistent Patterns:</strong></p>
 </li>
-<li>Audit trail shows which app accessed API</li>
-<li>Per-client token revocation</li>
+<li>✅ Single import: <code>from src.api.lib.datetime_utils import utcnow</code></li>
+<li>✅ Semantic function names (<code>is_expired</code> vs manual comparison)</li>
 <li>
-<p>Usage statistics per client</p>
-</li>
-<li>
-<p><strong>Token Management</strong></p>
-</li>
-<li>Refresh tokens enable long-lived sessions</li>
-<li>Automatic token expiry and cleanup</li>
-<li>
-<p>Token revocation per client or user</p>
+<p>✅ Clear intent in code</p>
 </li>
 <li>
-<p><strong>Standards Compliance</strong></p>
+<p><strong>Easier Testing:</strong></p>
 </li>
-<li>OAuth 2.0 is industry standard (RFC 6749)</li>
-<li>Well-understood security properties</li>
+<li>✅ Mock <code>datetime_utils.utcnow()</code> in tests (single point)</li>
+<li>✅ <code>is_expired(dt, now=mock_now)</code> for deterministic tests</li>
 <li>
-<p>Many libraries and tools available</p>
+<p>✅ No need to patch <code>datetime.datetime</code></p>
 </li>
 <li>
-<p><strong>User Experience</strong></p>
+<p><strong>Linting and CI:</strong></p>
 </li>
-<li>CLI: User-friendly device flow (enter code in browser)</li>
-<li>Web: Standard redirect-based flow</li>
-<li>MCP: Automatic machine-to-machine auth</li>
+<li>✅ Automated detection of unsafe patterns</li>
+<li>✅ Prevents regressions</li>
+<li>✅ Educational for new contributors</li>
 </ol>
-<h3 id="negative">Negative</h3>
+<h3 id="trade-offs">Trade-offs</h3>
 <ol>
-<li><strong>Complexity</strong></li>
-<li>More database tables (5 new tables)</li>
-<li>More API endpoints (6 new endpoints)</li>
+<li><strong>Migration Effort:</strong></li>
+<li>⚠️ Need to update existing code incrementally</li>
+<li>⚠️ Linter will initially find many violations</li>
 <li>
-<p>More flows to implement and test</p>
+<p>⚠️ Requires discipline to use new utilities</p>
 </li>
 <li>
-<p><strong>Breaking Changes</strong></p>
+<p><strong>Import Overhead:</strong></p>
 </li>
-<li>Removes JWT password flow (<code>POST /auth/login</code>)</li>
-<li>Removes API keys (<code>kg_auth.api_keys</code> table)</li>
-<li>Clients must adopt OAuth flows</li>
+<li>⚠️ Adds import statement to files</li>
+<li>⚠️ Not a Python built-in (custom module)</li>
 <li>
-<p><strong>Mitigation:</strong> No existing users, can make immediate changes</p>
-</li>
-<li>
-<p><strong>Token Storage</strong></p>
-</li>
-<li>More database records (codes, tokens)</li>
-<li>Cleanup jobs required</li>
-<li>
-<p>Monitoring token usage</p>
+<p>✅ But clearer than remembering <code>datetime.now(timezone.utc)</code></p>
 </li>
 <li>
-<p><strong>Implementation Effort</strong></p>
+<p><strong>Learning Curve:</strong></p>
 </li>
-<li>Estimated 2-3 weeks development</li>
-<li>Testing all flows thoroughly</li>
-<li>Client library updates</li>
-<li>Documentation</li>
-</ol>
-<h3 id="neutral">Neutral</h3>
-<ol>
-<li><strong>RBAC Integration</strong></li>
-<li>OAuth scopes map to RBAC permissions</li>
-<li>Token contains scopes, API checks against RBAC</li>
-<li>
-<p>No changes to RBAC system (ADR-028)</p>
-</li>
-<li>
-<p><strong>External OAuth Providers</strong></p>
-</li>
-<li>Table already exists (<code>oauth_external_provider_tokens</code>)</li>
-<li>Can add "Login with Google/GitHub" later</li>
-<li>Orthogonal to our OAuth server implementation</li>
+<li>⚠️ New contributors need to learn datetime_utils</li>
+<li>✅ But simpler than understanding naive vs aware</li>
+<li>✅ Linter guides them to correct pattern</li>
 </ol>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="alternative-1-keep-jwt-password-flow">Alternative 1: Keep JWT Password Flow</h3>
-<p><strong>Pros:</strong> No changes needed, already works
-<strong>Cons:</strong> Insecure for web apps, no client identification, not following standards
-<strong>Verdict:</strong> ❌ Not suitable for web application</p>
-<h3 id="alternative-2-api-keys-only">Alternative 2: API Keys Only</h3>
-<p><strong>Pros:</strong> Simple, already implemented
-<strong>Cons:</strong> No user interaction flow, no refresh mechanism, no client identification
-<strong>Verdict:</strong> ❌ Not suitable for interactive applications</p>
-<h3 id="alternative-3-external-oauth-provider-auth0-okta">Alternative 3: External OAuth Provider (Auth0, Okta)</h3>
-<p><strong>Pros:</strong> Professionally maintained, advanced features (MFA, SSO)
-<strong>Cons:</strong> External dependency, cost, less control, privacy concerns
-<strong>Verdict:</strong> ⚠️ Consider for enterprise, overkill for most users</p>
-<h3 id="alternative-4-session-based-auth-cookies">Alternative 4: Session-Based Auth (Cookies)</h3>
-<p><strong>Pros:</strong> Simple for web apps, no token management
-<strong>Cons:</strong> Doesn't work for CLI/MCP, not RESTful, CSRF concerns
-<strong>Verdict:</strong> ❌ Not suitable for multi-client architecture</p>
-<h2 id="implementation-plan">Implementation Plan</h2>
-<h3 id="phase-1-database-schema-1-week-completed">Phase 1: Database Schema (1 week) ✅ COMPLETED</h3>
+<h3 id="alternative-1-use-third-party-library-pendulum-arrow">Alternative 1: Use Third-Party Library (pendulum, arrow)</h3>
+<p><strong>Example with Pendulum:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pendulum</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">now</span> <span class="o">=</span> <span class="n">pendulum</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="s1">&#39;UTC&#39;</span><span class="p">)</span>  <span class="c1"># Always timezone-aware</span>
+</code></pre></div></p>
+<p><strong>Rejected because:</strong>
+- ❌ Adds dependency for simple problem
+- ❌ Pendulum is heavier (more features than needed)
+- ❌ Standard library solution is cleaner
+- ❌ Team familiarity with stdlib <code>datetime</code></p>
+<h3 id="alternative-2-custom-datetime-subclass">Alternative 2: Custom <code>datetime</code> Subclass</h3>
+<p><strong>Enforce timezone-aware at type level:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">UTCDatetime</span><span class="p">(</span><span class="n">datetime</span><span class="p">):</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>        <span class="k">if</span> <span class="s1">&#39;tzinfo&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;tzinfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Rejected because:</strong>
+- ❌ Breaks isinstance(obj, datetime) checks
+- ❌ Not compatible with PostgreSQL drivers
+- ❌ Overengineered for the problem
+- ❌ Confusing inheritance semantics</p>
+<h3 id="alternative-3-postgresql-timestamp-without-time-zone">Alternative 3: PostgreSQL <code>TIMESTAMP WITHOUT TIME ZONE</code></h3>
+<p><strong>Store naive datetimes in database:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">-- All timestamps without timezone</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">created_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">WITHOUT</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span>
+</code></pre></div></p>
+<p><strong>Rejected because:</strong>
+- ❌ Loses timezone information (dangerous)
+- ❌ Assumes all times are UTC (not enforceable)
+- ❌ Harder to work with multi-timezone data later
+- ❌ Best practice is to use <code>WITH TIME ZONE</code></p>
+<h3 id="alternative-4-configure-mypy-plugin">Alternative 4: Configure mypy Plugin</h3>
+<p><strong>Use mypy plugin to detect naive datetimes:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># mypy.ini</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">[mypy]</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="na">plugins</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">mypy_naive_datetime_plugin</span>
+</code></pre></div></p>
+<p><strong>Considered but not primary solution:</strong>
+- ⚠️ No official mypy plugin for this
+- ⚠️ Would require writing custom plugin
+- ⚠️ Runtime linter is simpler for this case
+- ✅ Could be added later as enhancement</p>
+<h2 id="migration-checklist">Migration Checklist</h2>
+<h3 id="immediate-adr-056-implementation">Immediate (ADR-056 Implementation)</h3>
 <ul>
-<li>[x] Create 5 new OAuth tables</li>
-<li>[x] Rename <code>oauth_tokens</code> → <code>oauth_external_provider_tokens</code></li>
-<li>[x] Drop <code>api_keys</code> table</li>
-<li>[x] Add indexes for performance</li>
-<li>[x] Seed builtin clients</li>
+<li>[x] Create <code>src/api/lib/datetime_utils.py</code></li>
+<li>[ ] Update <code>src/api/lib/oauth_utils.py</code> to use datetime_utils</li>
+<li>[ ] Create <code>scripts/lint_datetimes.py</code></li>
+<li>[ ] Add tests for datetime_utils</li>
+<li>[ ] Document in <code>docs/guides/DEVELOPMENT.md</code></li>
 </ul>
-<h3 id="phase-2-api-endpoints-1-week-completed">Phase 2: API Endpoints (1 week) ✅ COMPLETED</h3>
+<h3 id="short-term-next-sprint">Short-term (Next Sprint)</h3>
 <ul>
-<li>[x] Client registration API (admin)</li>
-<li>[x] Authorization endpoint (<code>GET /auth/oauth/authorize</code>) - Placeholder</li>
-<li>[x] Device authorization endpoint (<code>POST /auth/oauth/device</code>)</li>
-<li>[x] Token endpoint (<code>POST /auth/oauth/token</code>) - all grant types</li>
-<li>[x] Token revocation endpoint (<code>POST /auth/oauth/revoke</code>)</li>
-<li>[x] Remove legacy endpoints (<code>/auth/login</code>)</li>
+<li>[ ] Run linter on entire codebase</li>
+<li>[ ] Create issue for each module with violations</li>
+<li>[ ] Migrate high-priority modules (auth, jobs, ingestion)</li>
+<li>[ ] Add linter to pre-commit hook (optional)</li>
 </ul>
-<h3 id="phase-3-client-libraries-1-week-in-progress">Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS</h3>
-<p><strong>Priority:</strong> CLI (device flow) and MCP (client credentials) first</p>
+<h3 id="long-term-next-quarter">Long-term (Next Quarter)</h3>
 <ul>
-<li>[ ] Update <code>KnowledgeGraphClient</code> to support OAuth</li>
-<li>[ ] Implement device flow for CLI (<code>DeviceAuthFlow</code> class)</li>
-<li>[ ] Implement client credentials for MCP (<code>ClientCredentialsAuth</code> class)</li>
-<li>[ ] Add token refresh logic</li>
-<li>[ ] Update token storage in config</li>
+<li>[ ] Migrate all remaining modules</li>
+<li>[ ] Add linter to CI pipeline</li>
+<li>[ ] Update contributor guidelines</li>
+<li>[ ] Consider mypy plugin for additional safety</li>
 </ul>
-<p><strong>Deferred to future:</strong> viz-app Authorization Code + PKCE flow will be implemented once CLI and MCP are stable and tested. The <code>kg-viz</code> client is pre-registered in the database and the backend endpoints are ready, but the frontend implementation is postponed.</p>
-<h3 id="phase-4-cli-commands-3-days">Phase 4: CLI Commands (3 days)</h3>
-<ul>
-<li>[ ] Update <code>kg login</code> to use device flow</li>
-<li>[ ] Update <code>kg logout</code> to revoke tokens</li>
-<li>[ ] Add <code>kg admin oauth clients</code> commands</li>
-<li>[ ] Add <code>kg admin oauth tokens</code> commands (list/revoke)</li>
-</ul>
-<h3 id="phase-5-testing-documentation-1-week">Phase 5: Testing &amp; Documentation (1 week)</h3>
-<ul>
-<li>[ ] Unit tests for all flows</li>
-<li>[ ] Integration tests</li>
-<li>[ ] Security tests (PKCE, token validation, etc.)</li>
-<li>[ ] Update authentication guide</li>
-<li>[ ] Create OAuth integration guides (web/CLI/MCP)</li>
-<li>[ ] API reference documentation</li>
-</ul>
-<p><strong>Total estimated time:</strong> 4-5 weeks (excluding viz-app frontend)</p>
 <h2 id="references">References</h2>
-<p><strong>OAuth 2.0 Specifications:</strong>
-- RFC 6749: OAuth 2.0 Authorization Framework
-- RFC 7636: Proof Key for Code Exchange (PKCE)
-- RFC 8628: OAuth 2.0 Device Authorization Grant
-- RFC 7009: OAuth 2.0 Token Revocation</p>
-<p><strong>Related:</strong>
-- ADR-027: User Management API (superseded for OAuth)
-- ADR-028: Dynamic RBAC System (unchanged)
-- ADR-024: Multi-Schema PostgreSQL Architecture (kg_auth schema)</p>
-<p><strong>Implementation Resources:</strong>
-- https://oauth.net/2/
-- https://www.oauth.com/
-- https://auth0.com/docs/authenticate/protocols/oauth
-- https://github.com/panva/oauth4webapi (JavaScript OAuth library)
-- https://authlib.org/ (Python OAuth library)</p>
+<ul>
+<li><strong>Python datetime module:</strong> https://docs.python.org/3/library/datetime.html</li>
+<li><strong>Timezone Best Practices:</strong> https://blog.ganssle.io/articles/2019/11/utcnow.html</li>
+<li><strong>PostgreSQL TIMESTAMP:</strong> https://www.postgresql.org/docs/current/datatype-datetime.html</li>
+<li><strong>ISO 8601:</strong> https://en.wikipedia.org/wiki/ISO_8601</li>
+<li><strong>RFC 3339:</strong> https://datatracker.ietf.org/doc/html/rfc3339</li>
+</ul>
+<h2 id="decision-log">Decision Log</h2>
+<ul>
+<li><strong>2025-11-03:</strong> ADR created after third timezone error in OAuth implementation</li>
+<li><strong>2025-11-03:</strong> Decided on utility module approach (simple, no dependencies)</li>
+<li><strong>2025-11-03:</strong> Linter chosen over mypy plugin (faster to implement)</li>
+</ul>
 <hr />
-<p><strong>Decision Date:</strong> 2025-11-01
-<strong>Implementation Status:</strong> Accepted, Ready for Implementation
-<strong>Breaking Changes:</strong> Yes (removes JWT password flow and API keys)
-<strong>Migration Required:</strong> No (no existing users)</p>
+<p><strong>Next Actions:</strong></p>
+<ol>
+<li>Implement <code>datetime_utils.py</code> module</li>
+<li>Update <code>oauth_utils.py</code> to use new utilities</li>
+<li>Verify OAuth flow still works</li>
+<li>Create linter script</li>
+<li>Run linter baseline and document violations</li>
+</ol>
 
 
 
