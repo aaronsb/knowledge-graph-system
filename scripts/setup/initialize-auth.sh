@@ -324,6 +324,18 @@ echo ""
 echo -e "${BOLD}AI Provider Configuration${NC}"
 echo -e "${YELLOW}Configure AI provider for concept extraction (ADR-041)${NC}"
 echo ""
+
+# Check current provider configuration
+CURRENT_PROVIDER=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
+    "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+
+if [ -n "$CURRENT_PROVIDER" ]; then
+    echo -e "${BLUE}→${NC} Current provider: ${BOLD}${CURRENT_PROVIDER}${NC}"
+else
+    echo -e "${BLUE}→${NC} Current provider: ${YELLOW}unconfigured${NC}"
+fi
+echo ""
+
 echo "Select AI provider:"
 echo "  1) OpenAI (GPT-4o) - Recommended"
 echo "  2) Anthropic (Claude Sonnet 4)"
@@ -485,6 +497,18 @@ echo -e "${BOLD}Embedding Provider Configuration${NC}"
 echo -e "${YELLOW}Select embedding provider for concept similarity (ADR-039)${NC}"
 echo -e "${YELLOW}This configures cold-start before first API startup${NC}"
 echo ""
+
+# Check current embedding provider configuration
+CURRENT_EMBEDDING=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
+    "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+
+if [ -n "$CURRENT_EMBEDDING" ]; then
+    echo -e "${BLUE}→${NC} Current embedding provider: ${BOLD}${CURRENT_EMBEDDING}${NC}"
+else
+    echo -e "${BLUE}→${NC} Current embedding provider: ${YELLOW}unconfigured${NC}"
+fi
+echo ""
+
 echo "Available providers:"
 echo "  1) OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
 echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
