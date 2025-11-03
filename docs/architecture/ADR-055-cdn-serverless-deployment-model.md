@@ -711,7 +711,7 @@ await axios.post('/api/login', { username, password });
 
 **No breaking changes needed**
 
-### Phase 2: Multi-App Refactor (Q1 2026)
+### Phase 2: Multi-App Refactor
 
 1. Create `web-apps/` monorepo structure
 2. Move current viz-app → `web-apps/viz-app/`
@@ -722,7 +722,7 @@ await axios.post('/api/login', { username, password });
 - Import paths change (use workspace references)
 - Separate build commands per app
 
-### Phase 3: CDN Deployment (Q1-Q2 2026)
+### Phase 3: CDN Deployment
 
 1. Create config.js generation scripts
 2. Document deployment process per CDN provider
@@ -731,7 +731,7 @@ await axios.post('/api/login', { username, password });
 
 **No code changes needed** (runtime config already supported)
 
-### Phase 4: Additional Web Apps (Q2-Q3 2026)
+### Phase 4: Additional Web Apps
 
 1. Build admin-dashboard app
 2. Build public-explorer app
@@ -740,7 +740,7 @@ await axios.post('/api/login', { username, password });
 
 **Benefits become clear:** Shared auth, independent deployments
 
-### Phase 5: Serverless Backend (Q3-Q4 2026)
+### Phase 5: Serverless Backend
 
 1. Benchmark cold starts with current architecture
 2. Separate embedding service (always-on or pre-warmed)
