@@ -1171,43 +1171,65 @@ logger.info(
 
 ---
 
-## Migration Path
+## Implementation Checklist
 
-### Phase 1: Foundation (Week 1-2)
+### Infrastructure
 - [ ] Add MinIO to docker-compose
+- [ ] Create initialization script (create bucket, set policy)
+- [ ] Pull Ollama models (granite-vision-3.3:2b, nomic-embed-vision)
+
+### Database Schema
 - [ ] Create image_assets table with vector index
-- [ ] Implement ImageAsset node creation
-- [ ] Test MinIO connectivity and storage
+- [ ] Add text_embedding column to sources table
+- [ ] Create source_images relationship table
+- [ ] Run database migration
 
-### Phase 2: Embeddings (Week 3-4)
-- [ ] Integrate Nomic vision embeddings
-- [ ] Implement image similarity search
-- [ ] Add ontology-aware boosting
-- [ ] Test visual similarity search
+### Vision Backend
+- [ ] Implement VisionBackend abstract class
+- [ ] Implement GraniteVisionBackend (Ollama)
+- [ ] Implement OpenAIVisionBackend (GPT-4o)
+- [ ] Implement AnthropicVisionBackend (Claude)
+- [ ] Add provider factory function
 
-### Phase 3: Vision Model (Week 5-6)
-- [ ] Integrate Granite Vision 3.3 2B
+### Core Pipeline
+- [ ] Implement image embedding generation (Nomic Vision)
+- [ ] Implement visual similarity search with ontology awareness
+- [ ] Implement visual context builder
 - [ ] Implement image → prose description
-- [ ] Add visual context building
-- [ ] Test end-to-end image ingestion
+- [ ] Integrate visual context injection into existing upsert
+- [ ] Test hairpin pattern with existing text pipeline
 
-### Phase 4: Unified Pipeline (Week 7-8)
-- [ ] Implement visual context injection
-- [ ] Test hairpin pattern with existing upsert
-- [ ] Verify relationship creation
-- [ ] Integration testing
+### Storage
+- [ ] Implement MinIO client wrapper
+- [ ] Implement image upload/compression
+- [ ] Implement image retrieval (full + thumbnail)
+- [ ] Implement presigned URL generation
 
-### Phase 5: API & UI (Week 9-10)
-- [ ] Add image ingestion endpoint
-- [ ] Add multimodal search endpoints
-- [ ] Add image retrieval endpoint
-- [ ] Update CLI commands
+### API Routes
+- [ ] POST /api/ingest/image (image ingestion)
+- [ ] GET /api/sources/{id}/image (image retrieval)
+- [ ] GET /api/sources/{id}/image/presigned (presigned URL)
+- [ ] POST /api/search/images/by-image (visual similarity)
+- [ ] POST /api/search/images/by-text (cross-modal)
+- [ ] POST /api/search/concepts/by-image (visual to semantic)
 
-### Phase 6: Production (Week 11-12)
-- [ ] Performance optimization
-- [ ] Load testing
-- [ ] Documentation
-- [ ] Deployment guide
+### CLI Commands
+- [ ] kg ingest image (upload image)
+- [ ] kg search images --by-image (visual similarity)
+- [ ] kg search images --by-text (cross-modal)
+- [ ] kg search concepts --by-image (visual to semantic)
+
+### Testing
+- [ ] Unit tests for vision backend
+- [ ] Unit tests for visual similarity search
+- [ ] Integration test for full pipeline
+- [ ] Load test for concurrent ingestion
+
+### Documentation
+- [ ] Update QUICKSTART.md with image ingestion
+- [ ] Add image ingestion guide
+- [ ] Update API documentation
+- [ ] Add troubleshooting guide
 
 ---
 
