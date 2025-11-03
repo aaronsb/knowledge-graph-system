@@ -1,25 +1,27 @@
 """
-Authentication Routes (ADR-027)
+Authentication Routes (ADR-027, updated by ADR-054)
 
 API endpoints for user authentication and management.
 
 Public endpoints:
 - POST /auth/register - Create new user
-- POST /auth/login - User login
 
 Authenticated endpoints:
-- GET /auth/me - Get current user profile
 - PUT /auth/me - Update own profile
-- POST /auth/logout - Logout (optional)
-- GET /auth/api-keys - List own API keys
-- POST /auth/api-keys - Create API key
-- DELETE /auth/api-keys/{key_id} - Revoke API key
 
-Admin endpoints:
+Admin endpoints (requires OAuth token):
+- GET /users/me - Get current user from OAuth token
 - GET /users - List all users
 - GET /users/{user_id} - Get user details
 - PUT /users/{user_id} - Update user
 - DELETE /users/{user_id} - Delete user
+
+REMOVED ENDPOINTS (ADR-054 - OAuth 2.0 Migration):
+- POST /auth/login -> Use OAuth device flow or authorization code flow
+- GET /auth/me -> Use GET /users/me instead
+- GET/POST/DELETE /auth/api-keys -> Use OAuth token endpoints
+
+For OAuth endpoints, see src/api/routes/oauth.py
 """
 
 import os
@@ -124,109 +126,26 @@ async def register_user(user: UserCreate):
         conn.close()
 
 
-@router.post("/login", response_model=LoginResponse)
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    """
-    User login with username and password.
-
-    Returns JWT access token and user details.
-
-    OAuth2 password flow compatible (for OpenAPI docs).
-    """
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            # Get user from database
-            cur.execute("""
-                SELECT id, username, password_hash, primary_role, created_at, last_login, disabled
-                FROM kg_auth.users
-                WHERE username = %s
-            """, (form_data.username,))
-
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid username or password",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-
-            user = UserInDB(
-                id=row[0],
-                username=row[1],
-                password_hash=row[2],
-                role=row[3],
-                created_at=row[4],
-                last_login=row[5],
-                disabled=row[6]
-            )
-
-            # Verify password
-            if not verify_password(form_data.password, user.password_hash):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid username or password",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-
-            # Check if user is disabled
-            if user.disabled:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="User account is disabled"
-                )
-
-            # Update last_login timestamp
-            cur.execute("""
-                UPDATE kg_auth.users
-                SET last_login = NOW()
-                WHERE id = %s
-            """, (user.id,))
-            conn.commit()
-
-            # Create JWT token
-            access_token = create_access_token(
-                data={"sub": user.username, "role": user.role}
-            )
-
-            return LoginResponse(
-                access_token=access_token,
-                token_type="bearer",
-                expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-                user=UserRead(
-                    id=user.id,
-                    username=user.username,
-                    role=user.role,
-                    created_at=user.created_at,
-                    last_login=datetime.now(),
-                    disabled=user.disabled
-                )
-            )
-    finally:
-        conn.close()
+# =============================================================================
+# REMOVED: POST /auth/login (ADR-054)
+# =============================================================================
+# The legacy JWT password flow has been removed and replaced by OAuth 2.0 flows:
+# - Device Authorization Grant (CLI): POST /auth/oauth/device + POST /auth/oauth/token
+# - Authorization Code + PKCE (Web): GET /auth/oauth/authorize + POST /auth/oauth/token
+# - Client Credentials (MCP): POST /auth/oauth/token (grant_type=client_credentials)
+#
+# See ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
 
 
 # =============================================================================
-# Authenticated Endpoints (Require JWT Token)
+# Authenticated Endpoints (Require OAuth Token)
 # =============================================================================
 
-@router.get("/me", response_model=UserRead)
-async def get_current_user_profile(
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
-):
-    """
-    Get current user profile.
-
-    Returns user details for the authenticated user.
-    """
-    return UserRead(
-        id=current_user.id,
-        username=current_user.username,
-        role=current_user.role,
-        created_at=current_user.created_at,
-        last_login=current_user.last_login,
-        disabled=current_user.disabled
-    )
+# =============================================================================
+# REMOVED: GET /auth/me (ADR-054)
+# =============================================================================
+# Replaced by GET /users/me which uses OAuth token authentication
+# See admin_router.get("/me") below
 
 
 @router.put("/me", response_model=UserRead)
@@ -292,120 +211,46 @@ async def update_current_user_profile(
 # API Key Management
 # =============================================================================
 
-@router.get("/api-keys", response_model=List[APIKeyRead])
-async def list_api_keys(
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
-):
-    """
-    List current user's API keys.
-
-    Returns list of API keys (plaintext key NOT included).
-    """
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, name, scopes, created_at, last_used, expires_at
-                FROM kg_auth.api_keys
-                WHERE user_id = %s
-                ORDER BY created_at DESC
-            """, (current_user.id,))
-
-            keys = []
-            for row in cur.fetchall():
-                keys.append(APIKeyRead(
-                    id=row[0],
-                    name=row[1],
-                    scopes=row[2],
-                    created_at=row[3],
-                    last_used=row[4],
-                    expires_at=row[5]
-                ))
-            return keys
-    finally:
-        conn.close()
-
-
-@router.post("/api-keys", response_model=APIKeyResponse, status_code=status.HTTP_201_CREATED)
-async def create_api_key(
-    key_data: APIKeyCreate,
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
-):
-    """
-    Create a new API key.
-
-    Returns the plaintext API key (shown ONCE - save it!).
-    """
-    # Generate API key
-    api_key = generate_api_key()
-    key_hash = hash_api_key(api_key)
-
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO kg_auth.api_keys (key_hash, user_id, name, scopes, created_at, expires_at)
-                VALUES (%s, %s, %s, %s, NOW(), %s)
-                RETURNING id, name, scopes, created_at, last_used, expires_at
-            """, (key_hash, current_user.id, key_data.name, key_data.scopes, key_data.expires_at))
-
-            row = cur.fetchone()
-            conn.commit()
-
-            return APIKeyResponse(
-                id=row[0],
-                key=api_key,  # Plaintext key (shown once!)
-                name=row[1],
-                scopes=row[2],
-                created_at=row[3],
-                last_used=row[4],
-                expires_at=row[5]
-            )
-    finally:
-        conn.close()
-
-
-@router.delete("/api-keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def revoke_api_key(
-    key_id: int,
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
-):
-    """
-    Revoke (delete) an API key.
-
-    Users can only revoke their own API keys.
-    """
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            # Check ownership
-            cur.execute("""
-                SELECT user_id FROM kg_auth.api_keys WHERE id = %s
-            """, (key_id,))
-            row = cur.fetchone()
-
-            if not row:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="API key not found"
-                )
-
-            if row[0] != current_user.id and current_user.role != 'admin':
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Can only revoke own API keys"
-                )
-
-            # Delete API key
-            cur.execute("DELETE FROM kg_auth.api_keys WHERE id = %s", (key_id,))
-            conn.commit()
-    finally:
-        conn.close()
+# =============================================================================
+# REMOVED: API Key Endpoints (ADR-054)
+# =============================================================================
+# API keys have been removed and replaced by OAuth 2.0 tokens:
+# - GET /auth/api-keys -> GET /auth/oauth/tokens (admin)
+# - POST /auth/api-keys -> OAuth token flows (device, authorization code, client credentials)
+# - DELETE /auth/api-keys/{key_id} -> POST /auth/oauth/revoke
+#
+# OAuth tokens provide:
+# - Client identification (know which app/tool accessed the API)
+# - Per-client revocation (revoke web app without affecting CLI)
+# - Refresh tokens (long-lived sessions without re-authentication)
+# - Industry standard security properties
+#
+# See ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
 
 
 # =============================================================================
 # Admin User Management Endpoints
 # =============================================================================
+
+@admin_router.get("/me", response_model=UserRead)
+async def get_current_user_from_oauth(
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+):
+    """
+    Get current user profile from OAuth token.
+
+    Replaces GET /auth/me (ADR-054).
+    Returns user details for the authenticated user.
+    """
+    return UserRead(
+        id=current_user.id,
+        username=current_user.username,
+        role=current_user.role,
+        created_at=current_user.created_at,
+        last_login=current_user.last_login,
+        disabled=current_user.disabled
+    )
+
 
 @admin_router.get("", response_model=UserListResponse)
 async def list_users(
