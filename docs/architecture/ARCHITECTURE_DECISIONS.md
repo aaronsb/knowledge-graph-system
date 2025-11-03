@@ -73,7 +73,7 @@ All ADRs follow a consistent format:
 | [ADR-054](ADR-054-oauth-client-management.md) | OAuth 2.0 Client Management | Accepted | OAuth 2.0 server with client registration and three grant types: authorization code + PKCE (web), device authorization (CLI), client credentials (MCP) - replaces JWT password flow and API keys for proper multi-client authentication |
 | [ADR-055](ADR-055-cdn-serverless-deployment-model.md) | CDN and Serverless Deployment Model | Proposed | Runtime configuration via `/config.json` for CDN-deployed static apps - enables single build deployed to multiple environments with OAuth 2.0 PKCE flow and proper redirect URI validation |
 | [ADR-056](ADR-056-timezone-aware-datetime-utilities.md) | Timezone-Aware Datetime Utilities | Proposed | Centralized datetime utilities with strict UTC enforcement - eliminates naive/aware comparison errors via explicit UTC conversions and timezone-aware PostgreSQL queries |
-| [ADR-057](ADR-057-pdf-preprocessing-pipeline.md) | PDF Preprocessing Pipeline | Proposed | Vision-model-based PDF conversion to markdown via high-DPI bitmap rendering - enables secure ingestion of non-prose documents (PDFs, future: PowerPoint, scanned docs) with page-by-page LLM descriptions, cost approval workflow, and markdown as ground truth |
+| [ADR-057](ADR-057-multimodal-image-ingestion.md) | Multimodal Image Ingestion | Proposed | Single unified upsert with visual context injection - images follow "hairpin" through existing text pipeline with ontology-aware visual similarity search, dual embeddings (image + text), MinIO storage, and support for Granite Vision/GPT-4V/Claude backends |
 
 ## How to Use This Index
 
