@@ -56,6 +56,16 @@ if [ "$DEV_MODE" = true ]; then
     echo ""
 fi
 
+echo "This script will configure:"
+echo "  • Admin user credentials (create or reset)"
+echo "  • JWT secret key (for OAuth tokens)"
+echo "  • Encryption key (for API key storage)"
+echo "  • AI provider (OpenAI or Anthropic)"
+echo "  • Embedding provider (OpenAI or Nomic local)"
+echo ""
+echo -e "${YELLOW}Note: Existing configuration can be kept or updated${NC}"
+echo ""
+
 # Check if PostgreSQL is running
 echo -e "${BLUE}→${NC} Checking PostgreSQL connection..."
 if ! docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT 1" > /dev/null 2>&1; then
@@ -72,48 +82,68 @@ ADMIN_EXISTS=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_g
 
 if [ "$ADMIN_EXISTS" -gt "0" ]; then
     echo -e "${YELLOW}⚠${NC}  Admin user already exists"
-    read -p "Do you want to reset the admin password? [y/N]: " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    echo "What would you like to do?"
+    echo "  1) Reset admin password"
+    echo "  2) Skip password setup (keep existing)"
+    echo "  3) Cancel initialization"
+    echo ""
+    read -p "Choice [1-3]: " -n 1 -r ADMIN_CHOICE
+    echo ""
+    echo ""
+
+    if [ "$ADMIN_CHOICE" = "1" ]; then
+        RESET_MODE=true
+    elif [ "$ADMIN_CHOICE" = "2" ]; then
+        echo -e "${YELLOW}→${NC} Keeping existing admin password"
+        RESET_MODE=false
+        SKIP_PASSWORD_SETUP=true
+    else
         echo -e "${YELLOW}Initialization cancelled${NC}"
         exit 0
     fi
-    RESET_MODE=true
 else
     echo -e "${GREEN}✓${NC} No admin user found (fresh installation)"
     RESET_MODE=false
+    SKIP_PASSWORD_SETUP=false
 fi
 
 # Set admin password using dedicated script
-echo ""
-echo -e "${BOLD}Admin Password Setup${NC}"
+if [ "${SKIP_PASSWORD_SETUP:-false}" = false ]; then
+    echo ""
+    echo -e "${BOLD}Admin Password Setup${NC}"
 
-# Call set-admin-password.sh to handle password setup
-if [ "$DEV_MODE" = true ]; then
-    # Development mode: Use known password Password1!
-    export ADMIN_PASSWORD="Password1!"
-    if [ "$RESET_MODE" = true ]; then
-        "$SCRIPT_DIR/set-admin-password.sh" --quiet --non-interactive
+    # Call set-admin-password.sh to handle password setup
+    SET_ADMIN_PASSWORD_SCRIPT="$PROJECT_ROOT/scripts/admin/set-admin-password.sh"
+
+    if [ "$DEV_MODE" = true ]; then
+        # Development mode: Use known password Password1!
+        export ADMIN_PASSWORD="Password1!"
+        if [ "$RESET_MODE" = true ]; then
+            "$SET_ADMIN_PASSWORD_SCRIPT" --quiet --non-interactive
+        else
+            "$SET_ADMIN_PASSWORD_SCRIPT" --quiet --create --non-interactive
+        fi
+        echo -e "${GREEN}✓${NC} Admin password set to: ${BOLD}Password1!${NC} (dev mode)"
     else
-        "$SCRIPT_DIR/set-admin-password.sh" --quiet --create --non-interactive
+        # Production mode: Interactive password prompt
+        if [ "$RESET_MODE" = true ]; then
+            "$SET_ADMIN_PASSWORD_SCRIPT" --quiet
+        else
+            "$SET_ADMIN_PASSWORD_SCRIPT" --quiet --create
+        fi
     fi
-    echo -e "${GREEN}✓${NC} Admin password set to: ${BOLD}Password1!${NC} (dev mode)"
+
+    # Check if password was set successfully
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}✗ Failed to set admin password${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}✓${NC} Admin password configured"
 else
-    # Production mode: Interactive password prompt
-    if [ "$RESET_MODE" = true ]; then
-        "$SCRIPT_DIR/set-admin-password.sh" --quiet
-    else
-        "$SCRIPT_DIR/set-admin-password.sh" --quiet --create
-    fi
+    echo -e "${GREEN}✓${NC} Skipped admin password setup (keeping existing)"
 fi
-
-# Check if password was set successfully
-if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ Failed to set admin password${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✓${NC} Admin password configured"
 
 # Generate or check JWT_SECRET_KEY
 echo ""
