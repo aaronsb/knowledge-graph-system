@@ -1,0 +1,8 @@
+# PDF to Image Conversion
+pdf2image>=1.16.0
+
+# Ollama client for Granite Vision testing
+ollama>=0.1.0
+
+# Image utilities
+Pillow>=10.0.0
