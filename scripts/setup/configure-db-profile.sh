@@ -72,16 +72,29 @@ SELECT
 
 # Function to detect current profile based on settings
 detect_current_profile() {
-    local shared_buffers=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "SELECT setting FROM pg_settings WHERE name = 'shared_buffers'" 2>/dev/null | head -n 1)
+    local shared_buffers=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "SELECT setting FROM pg_settings WHERE name = 'shared_buffers'" 2>/dev/null | xargs)
+
+    if [ -z "$shared_buffers" ] || [ "$shared_buffers" = "0" ]; then
+        echo "unknown"
+        return
+    fi
 
     # Convert 8kB blocks to GB (shared_buffers is stored in 8kB blocks)
-    local shared_gb=$(echo "scale=0; $shared_buffers * 8 / 1024 / 1024" | bc 2>/dev/null || echo "0")
+    # shared_buffers is stored as number of 8KB blocks
+    # To convert to GB: blocks * 8KB / 1024KB/MB / 1024MB/GB
+    local shared_gb=$(echo "scale=1; $shared_buffers * 8 / 1024 / 1024" | bc 2>/dev/null)
 
-    if [ "$shared_gb" -ge 7 ] && [ "$shared_gb" -le 9 ]; then
+    if [ -z "$shared_gb" ]; then
+        echo "unknown"
+        return
+    fi
+
+    # Use bc for floating point comparison
+    if [ $(echo "$shared_gb >= 7.0" | bc) -eq 1 ]; then
         echo "large"
-    elif [ "$shared_gb" -ge 3 ] && [ "$shared_gb" -le 5 ]; then
+    elif [ $(echo "$shared_gb >= 3.0" | bc) -eq 1 ]; then
         echo "medium"
-    elif [ "$shared_gb" -ge 1 ] && [ "$shared_gb" -le 3 ]; then
+    elif [ $(echo "$shared_gb >= 1.5" | bc) -eq 1 ]; then
         echo "small"
     else
         echo "custom"
@@ -252,22 +265,83 @@ EOSQL
     CHANGES_PENDING=true
 }
 
+# Function to check if API server is running
+check_api_server() {
+    curl -s http://localhost:8000/health > /dev/null 2>&1
+    return $?
+}
+
 # Function to restart database
 restart_database() {
+    local api_was_running=false
+
+    # Check if API server is running
+    if check_api_server; then
+        api_was_running=true
+        echo -e "\n${YELLOW}⚠${NC}  API server is running and will need to be restarted"
+        echo -e "   (Database connections will be stale after restart)"
+    fi
+
     echo -e "\n${YELLOW}→${NC} Restarting database container..."
 
-    docker restart knowledge-graph-postgres
+    docker restart knowledge-graph-postgres > /dev/null 2>&1
 
     # Wait for database to be ready
     echo -e "${YELLOW}→${NC} Waiting for database to be ready..."
     for i in {1..30}; do
         if docker exec knowledge-graph-postgres pg_isready -U admin -d knowledge_graph > /dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Database is ready"
-            CHANGES_PENDING=false
-            return 0
+            # Additional check - try to actually query the database
+            if docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT 1" > /dev/null 2>&1; then
+                echo -e "${GREEN}✓${NC} Database is ready"
+                CHANGES_PENDING=false
+
+                if [ "$api_was_running" = true ]; then
+                    echo ""
+                    echo -e "${YELLOW}${BOLD}⚠  IMPORTANT: API server must be restarted${NC}"
+                    echo -e "   ${CYAN}./scripts/stop-api.sh && ./scripts/start-api.sh${NC}"
+                    echo -e "   Or use option 6 to restart API automatically"
+                fi
+                return 0
+            fi
         fi
         if [ $i -eq 30 ]; then
             echo -e "${RED}✗ Database failed to become ready${NC}"
+            return 1
+        fi
+        sleep 1
+    done
+}
+
+# Function to restart API server
+restart_api_server() {
+    echo -e "\n${YELLOW}→${NC} Checking API server status..."
+
+    if ! check_api_server; then
+        echo -e "${YELLOW}○${NC} API server is not running"
+        echo -e "   Start it with: ${CYAN}./scripts/start-api.sh${NC}"
+        return 0
+    fi
+
+    echo -e "${GREEN}✓${NC} API server is running"
+    echo -e "\n${YELLOW}→${NC} Restarting API server..."
+
+    # Stop API
+    ./scripts/stop-api.sh > /dev/null 2>&1
+    sleep 2
+
+    # Start API
+    ./scripts/start-api.sh -y > /dev/null 2>&1
+
+    # Wait for API to be ready
+    echo -e "${YELLOW}→${NC} Waiting for API to be ready..."
+    for i in {1..30}; do
+        if check_api_server; then
+            echo -e "${GREEN}✓${NC} API server is ready"
+            return 0
+        fi
+        if [ $i -eq 30 ]; then
+            echo -e "${RED}✗ API server failed to become ready${NC}"
+            echo -e "   Check logs: ${CYAN}tail -f logs/api_*.log${NC}"
             return 1
         fi
         sleep 1
@@ -291,14 +365,16 @@ while true; do
     echo -e "  ${GREEN}3)${NC} Apply MEDIUM profile (16GB RAM, 16 cores)"
     echo -e "  ${GREEN}4)${NC} Apply LARGE profile (32GB+ RAM, 32 cores)"
     echo -e "  ${GREEN}5)${NC} Restart database (apply pending changes)"
-    echo -e "  ${GREEN}6)${NC} View profile details"
-    echo -e "  ${RED}7)${NC} Exit"
+    echo -e "  ${GREEN}6)${NC} Restart API server (fix stale connections)"
+    echo -e "  ${GREEN}7)${NC} View profile details"
+    echo -e "  ${RED}8)${NC} Exit"
     echo ""
 
-    read -p "Select option [1-7]: " option
+    read -p "Select option [1-8]: " option
 
     case $option in
         1)
+            # Always refresh settings from database
             show_current_settings
             ;;
         2)
@@ -352,6 +428,9 @@ while true; do
             restart_database
             ;;
         6)
+            restart_api_server
+            ;;
+        7)
             echo -e "\n${BOLD}${CYAN}Available Profiles${NC}"
             echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
@@ -361,7 +440,7 @@ while true; do
             echo ""
             show_profile_details "large"
             ;;
-        7)
+        8)
             if [ "$CHANGES_PENDING" = true ]; then
                 echo ""
                 echo -e "${YELLOW}⚠${NC}  ${BOLD}You have pending changes that have not been applied${NC}"
