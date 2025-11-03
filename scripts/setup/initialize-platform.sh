@@ -218,8 +218,51 @@ configure_oauth_key() {
     echo -e "${YELLOW}Used to sign OAuth 2.0 access tokens (ADR-054)${NC}"
     echo ""
 
-    # Implementation here - call to original script section
-    echo -e "${YELLOW}⚠${NC}  This feature is being implemented..."
+    local GENERATE_SECRET=false
+
+    if [ -f "$PROJECT_ROOT/.env" ] && grep -q "^OAUTH_SIGNING_KEY=" "$PROJECT_ROOT/.env"; then
+        local EXISTING_SECRET=$(grep "^OAUTH_SIGNING_KEY=" "$PROJECT_ROOT/.env" | cut -d'=' -f2)
+        if [[ "$EXISTING_SECRET" == *"CHANGE_THIS"* ]]; then
+            echo -e "${YELLOW}⚠${NC}  Insecure signing key found in .env"
+            GENERATE_SECRET=true
+        else
+            echo -e "${GREEN}✓${NC} OAuth signing key already configured in .env"
+            read -p "Generate new signing key? [y/N]: " -n 1 -r
+            echo ""
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                GENERATE_SECRET=true
+            fi
+        fi
+    else
+        echo -e "${BLUE}→${NC} No OAuth signing key found in .env"
+        GENERATE_SECRET=true
+    fi
+
+    if [ "$GENERATE_SECRET" = true ]; then
+        # Try openssl first, fall back to Python
+        local OAUTH_SIGNING_KEY
+        if command -v openssl &> /dev/null; then
+            OAUTH_SIGNING_KEY=$(openssl rand -hex 32)
+            echo -e "${GREEN}✓${NC} Generated OAuth signing key using openssl"
+        else
+            OAUTH_SIGNING_KEY=$($PYTHON -c "import secrets; print(secrets.token_hex(32))")
+            echo -e "${GREEN}✓${NC} Generated OAuth signing key using Python"
+        fi
+
+        # Update or create .env file
+        if [ -f "$PROJECT_ROOT/.env" ]; then
+            if grep -q "^OAUTH_SIGNING_KEY=" "$PROJECT_ROOT/.env"; then
+                sed "s/^OAUTH_SIGNING_KEY=.*/OAUTH_SIGNING_KEY=$OAUTH_SIGNING_KEY/" "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp" && mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
+            else
+                echo "OAUTH_SIGNING_KEY=$OAUTH_SIGNING_KEY" >> "$PROJECT_ROOT/.env"
+            fi
+        else
+            cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env" 2>/dev/null || true
+            echo "OAUTH_SIGNING_KEY=$OAUTH_SIGNING_KEY" >> "$PROJECT_ROOT/.env"
+        fi
+        echo -e "${GREEN}✓${NC} OAuth signing key saved to .env"
+    fi
+
     echo ""
     read -p "Press Enter to continue..."
 }
@@ -230,8 +273,48 @@ configure_encryption_key() {
     echo -e "${YELLOW}Used for encrypting API keys at rest (ADR-031)${NC}"
     echo ""
 
-    # Implementation here - call to original script section
-    echo -e "${YELLOW}⚠${NC}  This feature is being implemented..."
+    local GENERATE_ENCRYPTION_KEY=false
+
+    if [ -f "$PROJECT_ROOT/.env" ] && grep -q "^ENCRYPTION_KEY=" "$PROJECT_ROOT/.env"; then
+        echo -e "${GREEN}✓${NC} Encryption key already configured in .env"
+        read -p "Generate new encryption key? [y/N]: " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${RED}⚠${NC}  Warning: Existing encrypted API keys will become unreadable!"
+            read -p "Continue? [y/N]: " -n 1 -r
+            echo ""
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                GENERATE_ENCRYPTION_KEY=true
+            fi
+        fi
+    else
+        echo -e "${BLUE}→${NC} No encryption key found in .env"
+        GENERATE_ENCRYPTION_KEY=true
+    fi
+
+    if [ "$GENERATE_ENCRYPTION_KEY" = true ]; then
+        # Generate Fernet-compatible key (32 bytes, base64-encoded)
+        local ENCRYPTION_KEY=$($PYTHON -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+        echo -e "${GREEN}✓${NC} Generated encryption key using Fernet"
+
+        # Update or create .env file
+        if [ -f "$PROJECT_ROOT/.env" ]; then
+            if grep -q "^ENCRYPTION_KEY=" "$PROJECT_ROOT/.env"; then
+                sed "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=$ENCRYPTION_KEY|" "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp" && mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
+            else
+                echo "" >> "$PROJECT_ROOT/.env"
+                echo "# Master encryption key for API keys (ADR-031)" >> "$PROJECT_ROOT/.env"
+                echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> "$PROJECT_ROOT/.env"
+            fi
+        else
+            cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env" 2>/dev/null || true
+            echo "" >> "$PROJECT_ROOT/.env"
+            echo "# Master encryption key for API keys (ADR-031)" >> "$PROJECT_ROOT/.env"
+            echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> "$PROJECT_ROOT/.env"
+        fi
+        echo -e "${GREEN}✓${NC} Encryption key saved to .env"
+    fi
+
     echo ""
     read -p "Press Enter to continue..."
 }
@@ -242,8 +325,130 @@ configure_ai_provider() {
     echo -e "${YELLOW}For concept extraction (ADR-041)${NC}"
     echo ""
 
-    # Implementation here - call to original script section
-    echo -e "${YELLOW}⚠${NC}  This feature is being implemented..."
+    # Check current provider
+    local CURRENT_PROVIDER=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
+        "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+
+    if [ -n "$CURRENT_PROVIDER" ]; then
+        echo -e "${BLUE}→${NC} Current provider: ${BOLD}${CURRENT_PROVIDER}${NC}"
+    else
+        echo -e "${BLUE}→${NC} Current provider: ${YELLOW}unconfigured${NC}"
+    fi
+    echo ""
+
+    echo "Select AI provider:"
+    echo "  1) OpenAI (GPT-4o) - Recommended"
+    echo "  2) Anthropic (Claude Sonnet 4)"
+    echo "  3) Skip (configure later via API)"
+    echo ""
+    read -p "Choice [1-3]: " -n 1 -r
+    echo ""
+    echo ""
+
+    if [[ $REPLY =~ ^[12]$ ]]; then
+        local PROVIDER_NAME PROVIDER_DISPLAY DEFAULT_MODEL
+
+        if [ "$REPLY" = "1" ]; then
+            PROVIDER_NAME="openai"
+            PROVIDER_DISPLAY="OpenAI"
+            DEFAULT_MODEL="gpt-4o"
+        else
+            PROVIDER_NAME="anthropic"
+            PROVIDER_DISPLAY="Anthropic"
+            DEFAULT_MODEL="claude-sonnet-4-20250514"
+        fi
+
+        echo -e "${BOLD}${PROVIDER_DISPLAY} API Key${NC}"
+        echo -e "${YELLOW}Note: Keys are encrypted at rest (Fernet AES-128)${NC}"
+        echo ""
+        read -s -p "Enter ${PROVIDER_DISPLAY} API key: " API_KEY
+        echo ""
+
+        if [ -z "$API_KEY" ]; then
+            echo -e "${YELLOW}⚠${NC}  No API key provided, skipping AI configuration"
+        else
+            echo -e "${BLUE}→${NC} Validating and storing ${PROVIDER_DISPLAY} API key..."
+
+            set +e
+            local STORE_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" API_KEY_TO_STORE="$API_KEY" PROVIDER_NAME_TO_STORE="$PROVIDER_NAME" $PYTHON << 'EOF' 2>&1
+import sys
+import os
+sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
+from src.api.lib.age_client import AGEClient
+from src.api.lib.encrypted_keys import EncryptedKeyStore
+try:
+    provider = os.getenv("PROVIDER_NAME_TO_STORE")
+    api_key = os.getenv("API_KEY_TO_STORE")
+    if not provider or not api_key:
+        print("ERROR:Missing provider or API key")
+        sys.exit(1)
+    client = AGEClient()
+    conn = client.pool.getconn()
+    try:
+        key_store = EncryptedKeyStore(conn)
+        key_store.store_key(provider, api_key)
+        key_store.update_validation_status(provider, "valid")
+        print("SUCCESS")
+    finally:
+        client.pool.putconn(conn)
+except Exception as e:
+    print(f"ERROR:{e}")
+    sys.exit(1)
+EOF
+)
+            set -e
+
+            if echo "$STORE_RESULT" | grep -q "^SUCCESS"; then
+                echo -e "${GREEN}✓${NC} ${PROVIDER_DISPLAY} API key stored and validated"
+
+                # Initialize AI extraction configuration
+                echo -e "${BLUE}→${NC} Initializing AI extraction configuration..."
+
+                set +e
+                local CONFIG_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" PROVIDER_NAME_CONFIG="$PROVIDER_NAME" DEFAULT_MODEL_CONFIG="$DEFAULT_MODEL" $PYTHON << 'EOF' 2>&1
+import sys
+import os
+sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
+from src.api.lib.ai_extraction_config import save_extraction_config
+provider = os.getenv("PROVIDER_NAME_CONFIG")
+model = os.getenv("DEFAULT_MODEL_CONFIG")
+config = {
+    "provider": provider,
+    "model_name": model,
+    "supports_vision": True,
+    "supports_json_mode": True,
+    "max_tokens": 16384 if provider == "openai" else 8192
+}
+try:
+    success = save_extraction_config(config, updated_by="initialize-platform.sh")
+    if success:
+        print("SUCCESS")
+    else:
+        print("ERROR:Failed to save configuration")
+        sys.exit(1)
+except Exception as e:
+    print(f"ERROR:{e}")
+    sys.exit(1)
+EOF
+)
+                set -e
+
+                if echo "$CONFIG_RESULT" | grep -q "^SUCCESS"; then
+                    echo -e "${GREEN}✓${NC} AI extraction configured: $PROVIDER_DISPLAY / $DEFAULT_MODEL"
+                else
+                    local ERROR_MSG=$(echo "$CONFIG_RESULT" | grep "^ERROR:" | cut -d: -f2-)
+                    echo -e "${YELLOW}⚠${NC}  Failed to configure AI extraction: $ERROR_MSG"
+                fi
+            else
+                local ERROR_MSG=$(echo "$STORE_RESULT" | grep "^ERROR:" | cut -d: -f2-)
+                echo -e "${RED}✗${NC} Failed to store API key: $ERROR_MSG"
+                echo -e "${YELLOW}   You can configure this later via: POST /admin/keys/$PROVIDER_NAME${NC}"
+            fi
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC}  Skipping AI provider configuration"
+    fi
+
     echo ""
     read -p "Press Enter to continue..."
 }
@@ -252,10 +457,90 @@ configure_embedding_provider() {
     echo ""
     echo -e "${BOLD}Configure Embedding Provider${NC}"
     echo -e "${YELLOW}For concept similarity (ADR-039)${NC}"
+    echo -e "${YELLOW}This configures cold-start before first API startup${NC}"
     echo ""
 
-    # Implementation here - call to original script section
-    echo -e "${YELLOW}⚠${NC}  This feature is being implemented..."
+    # Check current embedding provider
+    local CURRENT_EMBEDDING=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
+        "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+
+    if [ -n "$CURRENT_EMBEDDING" ]; then
+        echo -e "${BLUE}→${NC} Current embedding provider: ${BOLD}${CURRENT_EMBEDDING}${NC}"
+    else
+        echo -e "${BLUE}→${NC} Current embedding provider: ${YELLOW}unconfigured${NC}"
+    fi
+    echo ""
+
+    echo "Available providers:"
+    echo "  1) OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
+    echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
+    echo "  3) Skip (use OpenAI default)"
+    echo ""
+    read -p "Choice [1-3]: " -n 1 -r
+    echo ""
+    echo ""
+
+    if [[ $REPLY =~ ^[12]$ ]]; then
+        local EMBEDDING_PROVIDER EMBEDDING_MODEL EMBEDDING_DISPLAY EMBEDDING_DIMS
+
+        if [ "$REPLY" = "1" ]; then
+            EMBEDDING_PROVIDER="openai"
+            EMBEDDING_MODEL="text-embedding-3-small"
+            EMBEDDING_DISPLAY="OpenAI (text-embedding-3-small)"
+            EMBEDDING_DIMS=1536
+        else
+            EMBEDDING_PROVIDER="local"
+            EMBEDDING_MODEL="nomic-ai/nomic-embed-text-v1.5"
+            EMBEDDING_DISPLAY="Nomic (nomic-embed-text-v1.5)"
+            EMBEDDING_DIMS=768
+        fi
+
+        echo -e "${BLUE}→${NC} Configuring ${EMBEDDING_DISPLAY}..."
+
+        set +e
+        local EMBEDDING_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" EMBEDDING_PROVIDER_CONFIG="$EMBEDDING_PROVIDER" EMBEDDING_MODEL_CONFIG="$EMBEDDING_MODEL" EMBEDDING_DIMS_CONFIG="$EMBEDDING_DIMS" $PYTHON << 'EOF' 2>&1
+import sys
+import os
+sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
+from src.api.lib.embedding_config import save_embedding_config
+provider = os.getenv("EMBEDDING_PROVIDER_CONFIG")
+model = os.getenv("EMBEDDING_MODEL_CONFIG")
+dims = int(os.getenv("EMBEDDING_DIMS_CONFIG"))
+config = {
+    "provider": provider,
+    "model_name": model,
+    "embedding_dimensions": dims,
+    "precision": "float16" if provider == "local" else None,
+    "supports_batch": True
+}
+try:
+    config_id = save_embedding_config(config, created_by="initialize-platform.sh")
+    if config_id:
+        from src.api.lib.embedding_config import activate_embedding_config
+        activate_embedding_config(config_id)
+        print("SUCCESS")
+    else:
+        print("ERROR:Failed to save configuration")
+        sys.exit(1)
+except Exception as e:
+    print(f"ERROR:{e}")
+    sys.exit(1)
+EOF
+)
+        set -e
+
+        if echo "$EMBEDDING_RESULT" | grep -q "^SUCCESS"; then
+            echo -e "${GREEN}✓${NC} ${EMBEDDING_DISPLAY} configured"
+            echo -e "${YELLOW}   Cold-start will use ${EMBEDDING_DISPLAY} for builtin vocabulary${NC}"
+        else
+            local ERROR_MSG=$(echo "$EMBEDDING_RESULT" | grep "^ERROR:" | cut -d: -f2-)
+            echo -e "${YELLOW}⚠${NC}  Failed to configure embedding provider: $ERROR_MSG"
+            echo -e "${YELLOW}   Configure after startup via: kg admin embedding activate ${REPLY} --force${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC}  Using OpenAI default embedding provider"
+    fi
+
     echo ""
     read -p "Press Enter to continue..."
 }
