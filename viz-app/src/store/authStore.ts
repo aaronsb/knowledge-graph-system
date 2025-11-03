@@ -37,7 +37,7 @@ interface AuthStore {
   error: string | null;
 
   // Actions
-  login: () => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   handleCallback: (code: string, state?: string) => Promise<void>;
   refreshToken: () => Promise<void>;
@@ -54,13 +54,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   error: null,
 
   /**
-   * Start OAuth login flow
-   * Redirects to authorization endpoint
+   * Start OAuth login flow with credentials
+   * Calls login-and-authorize endpoint, then redirects to callback
    */
-  login: async () => {
+  login: async (username: string, password: string) => {
     try {
       set({ isLoading: true, error: null });
-      await startAuthorizationFlow({
+      await startAuthorizationFlow(username, password, {
         scope: 'read:* write:*',
       });
       // Note: User will be redirected, so this function won't return
@@ -69,6 +69,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoading: false,
         error: error instanceof Error ? error.message : 'Login failed',
       });
+      throw error; // Re-throw so LoginModal can handle it
     }
   },
 

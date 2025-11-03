@@ -958,6 +958,179 @@ async def authorize(
     )
 
 
+@router.post("/login-and-authorize")
+async def login_and_authorize(
+    username: str = Form(..., description="Username"),
+    password: str = Form(..., description="Password"),
+    client_id: str = Form(..., description="OAuth client ID"),
+    redirect_uri: str = Form(..., description="Redirect URI"),
+    scope: str = Form("read:* write:*", description="Requested scopes"),
+    code_challenge: str = Form(..., description="PKCE code challenge"),
+    code_challenge_method: str = Form("S256", description="PKCE method (S256 or plain)"),
+    state: Optional[str] = Form(None, description="Client state for CSRF protection")
+):
+    """
+    Combined login and authorization endpoint for first-party web apps.
+
+    Simplified OAuth flow that combines authentication and authorization in one step:
+    1. Verifies user credentials
+    2. Validates OAuth client and redirect URI
+    3. Generates authorization code with PKCE
+    4. Returns code (client handles redirect)
+
+    This is a simplified alternative to traditional OAuth with separate login/consent pages.
+    Suitable for first-party applications (viz-app, mobile apps) where we trust the client.
+
+    **Security:**
+    - Requires PKCE (code_challenge) for public clients
+    - Validates redirect_uri against registered URIs
+    - Returns authorization code (short-lived, single-use)
+    - Client must exchange code for token via /auth/oauth/token
+
+    **Example:**
+    ```bash
+    curl -X POST http://localhost:8000/auth/oauth/login-and-authorize \\
+      -F "username=admin" \\
+      -F "password=secret" \\
+      -F "client_id=kg-viz" \\
+      -F "redirect_uri=http://localhost:3000/callback" \\
+      -F "scope=read:* write:*" \\
+      -F "code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM" \\
+      -F "code_challenge_method=S256"
+    ```
+
+    Returns:
+    ```json
+    {
+      "code": "auth_abc123...",
+      "state": "client-provided-state"
+    }
+    ```
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Step 1: Verify user credentials
+            cur.execute(
+                "SELECT id, username, password_hash, primary_role, disabled FROM kg_auth.users WHERE username = %s",
+                (username,)
+            )
+            user_row = cur.fetchone()
+
+            if not user_row:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid username or password"
+                )
+
+            user_id, db_username, password_hash, role, disabled = user_row
+
+            if disabled:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User account is disabled"
+                )
+
+            if not verify_password(password, password_hash):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid username or password"
+                )
+
+            # Step 2: Validate OAuth client
+            cur.execute("""
+                SELECT client_type, grant_types, redirect_uris, scopes, is_active
+                FROM kg_auth.oauth_clients
+                WHERE client_id = %s
+            """, (client_id,))
+
+            client_row = cur.fetchone()
+            if not client_row:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"OAuth client '{client_id}' not found"
+                )
+
+            client_type, grant_types, allowed_redirect_uris, allowed_scopes, is_active = client_row
+
+            if not is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"OAuth client '{client_id}' is inactive"
+                )
+
+            # Step 3: Validate grant type
+            if "authorization_code" not in grant_types:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Client '{client_id}' does not support authorization_code grant"
+                )
+
+            # Step 4: Validate redirect_uri
+            if redirect_uri not in allowed_redirect_uris:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Redirect URI '{redirect_uri}' not registered for client '{client_id}'"
+                )
+
+            # Step 5: Validate scopes
+            requested_scopes = parse_scope_string(scope)
+            is_valid, granted_scopes = validate_scopes(requested_scopes, allowed_scopes)
+
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Requested scopes not allowed for this client"
+                )
+
+            # Step 6: Validate PKCE (required for public clients)
+            if client_type == "public" and not code_challenge:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="PKCE code_challenge required for public clients"
+                )
+
+            # Step 7: Generate authorization code
+            auth_code = generate_authorization_code()
+            expires_at = get_authorization_code_expiry()
+
+            # Step 8: Store authorization code
+            cur.execute("""
+                INSERT INTO kg_auth.oauth_authorization_codes
+                (code, client_id, user_id, redirect_uri, scopes, code_challenge, code_challenge_method, expires_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                auth_code,
+                client_id,
+                user_id,
+                redirect_uri,
+                granted_scopes,
+                code_challenge,
+                code_challenge_method,
+                expires_at
+            ))
+
+            conn.commit()
+
+            # Step 9: Return authorization code
+            return {
+                "code": auth_code,
+                "state": state  # Echo back client's state for CSRF protection
+            }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to authorize: {str(e)}"
+        )
+    finally:
+        conn.close()
+
+
 # =============================================================================
 # OAuth Device Authorization Flow (CLI)
 # =============================================================================

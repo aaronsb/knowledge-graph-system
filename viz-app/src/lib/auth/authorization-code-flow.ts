@@ -16,9 +16,30 @@ import {
   type StoredAuthState,
 } from './oauth-utils';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const CLIENT_ID = 'kg-viz'; // Builtin OAuth client for viz app
-const REDIRECT_URI = `${window.location.origin}/oauth/callback`;
+// OAuth configuration - runtime config takes precedence over build-time env vars
+// This enables CDN deployment without rebuilding
+declare global {
+  interface Window {
+    APP_CONFIG?: {
+      apiUrl: string;
+      oauth: {
+        clientId: string;
+        redirectUri?: string | null;
+      };
+      app?: {
+        name?: string;
+        version?: string;
+      };
+    };
+  }
+}
+
+const API_BASE_URL = window.APP_CONFIG?.apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const CLIENT_ID = window.APP_CONFIG?.oauth?.clientId || import.meta.env.VITE_OAUTH_CLIENT_ID || 'kg-viz';
+const REDIRECT_URI =
+  window.APP_CONFIG?.oauth?.redirectUri ||
+  import.meta.env.VITE_OAUTH_REDIRECT_URI ||
+  `${window.location.origin}/callback`;
 
 export interface AuthorizationFlowConfig {
   scope?: string;
@@ -26,10 +47,12 @@ export interface AuthorizationFlowConfig {
 }
 
 /**
- * Start OAuth authorization flow
- * Generates PKCE challenge and redirects to authorization endpoint
+ * Start OAuth authorization flow - Combined login and authorization
+ * Generates PKCE challenge and calls login-and-authorize endpoint
  */
 export async function startAuthorizationFlow(
+  username: string,
+  password: string,
   config: AuthorizationFlowConfig = {}
 ): Promise<void> {
   // Generate PKCE parameters
@@ -39,24 +62,37 @@ export async function startAuthorizationFlow(
   // Store verifier for later use in callback
   storePKCEVerifier(codeVerifier);
 
-  // Build authorization URL
-  const params = new URLSearchParams({
-    response_type: 'code',
+  // Call combined login-and-authorize endpoint
+  const formData = new URLSearchParams({
+    username,
+    password,
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
+    scope: config.scope || 'read:* write:*',
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
-    scope: config.scope || 'read:* write:*',
   });
 
   if (config.state) {
-    params.append('state', config.state);
+    formData.append('state', config.state);
   }
 
-  const authUrl = `${API_BASE_URL}/auth/oauth/authorize?${params.toString()}`;
+  const response = await axios.post(`${API_BASE_URL}/auth/oauth/login-and-authorize`, formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
 
-  // Redirect to authorization endpoint
-  window.location.href = authUrl;
+  const { code, state } = response.data;
+
+  // Redirect to callback with authorization code
+  const callbackUrl = new URL(REDIRECT_URI);
+  callbackUrl.searchParams.set('code', code);
+  if (state) {
+    callbackUrl.searchParams.set('state', state);
+  }
+
+  window.location.href = callbackUrl.toString();
 }
 
 /**

@@ -7,7 +7,7 @@ Helper functions for OAuth token generation, validation, and PKCE.
 import hashlib
 import secrets
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Tuple
 
 
@@ -199,7 +199,7 @@ def get_authorization_code_expiry() -> datetime:
     Returns:
         Datetime 10 minutes from now
     """
-    return datetime.utcnow() + timedelta(minutes=10)
+    return datetime.now(timezone.utc) + timedelta(minutes=10)
 
 
 def get_device_code_expiry() -> datetime:
@@ -209,7 +209,7 @@ def get_device_code_expiry() -> datetime:
     Returns:
         Datetime 10 minutes from now
     """
-    return datetime.utcnow() + timedelta(minutes=10)
+    return datetime.now(timezone.utc) + timedelta(minutes=10)
 
 
 def get_access_token_expiry() -> datetime:
@@ -219,7 +219,7 @@ def get_access_token_expiry() -> datetime:
     Returns:
         Datetime 1 hour from now
     """
-    return datetime.utcnow() + timedelta(hours=1)
+    return datetime.now(timezone.utc) + timedelta(hours=1)
 
 
 def get_refresh_token_expiry(client_type: str) -> datetime:
@@ -234,10 +234,10 @@ def get_refresh_token_expiry(client_type: str) -> datetime:
     """
     if client_type == "confidential":
         # Confidential clients get 30-day refresh tokens
-        return datetime.utcnow() + timedelta(days=30)
+        return datetime.now(timezone.utc) + timedelta(days=30)
     else:
         # Public clients get 7-day refresh tokens
-        return datetime.utcnow() + timedelta(days=7)
+        return datetime.now(timezone.utc) + timedelta(days=7)
 
 
 def is_token_expired(expires_at: datetime) -> bool:
@@ -250,7 +250,7 @@ def is_token_expired(expires_at: datetime) -> bool:
     Returns:
         True if expired, False otherwise
     """
-    return datetime.utcnow() > expires_at
+    return datetime.now(timezone.utc) > expires_at
 
 
 # =============================================================================

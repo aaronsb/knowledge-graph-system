@@ -2,12 +2,16 @@
  * REST API Client
  *
  * Communicates with the Knowledge Graph System API at localhost:8000
+ * Automatically includes OAuth Bearer token in requests
  */
 
-import axios, { type AxiosInstance } from 'axios';
+import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type { SubgraphResponse } from '../types/graph';
+import { getAuthState } from '../lib/auth/oauth-utils';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// API configuration - runtime config takes precedence over build-time env vars
+// This enables CDN deployment without rebuilding
+const API_BASE_URL = window.APP_CONFIG?.apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 class APIClient {
   private client: AxiosInstance;
@@ -20,6 +24,20 @@ class APIClient {
       },
       timeout: 30000, // 30 seconds
     });
+
+    // Add auth interceptor to automatically include Bearer token
+    this.client.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        const authState = getAuthState();
+        if (authState && authState.access_token) {
+          config.headers.Authorization = `Bearer ${authState.access_token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
   }
 
   /**
