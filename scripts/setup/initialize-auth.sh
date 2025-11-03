@@ -34,7 +34,27 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Use venv Python if available, otherwise system python3
+# Check for Python venv, create if missing
+if [ ! -d "$PROJECT_ROOT/venv" ]; then
+    echo -e "${BLUE}→${NC} Virtual environment not found, creating..."
+
+    # Check if python3 is available
+    if ! command -v python3 &> /dev/null; then
+        echo -e "${RED}✗${NC} python3 not found. Please install Python 3.11+"
+        exit 1
+    fi
+
+    # Create venv
+    python3 -m venv "$PROJECT_ROOT/venv"
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} Virtual environment created"
+    else
+        echo -e "${RED}✗${NC} Failed to create virtual environment"
+        exit 1
+    fi
+fi
+
+# Use venv Python
 if [ -f "$PROJECT_ROOT/venv/bin/python" ]; then
     PYTHON="$PROJECT_ROOT/venv/bin/python"
     PIP="$PROJECT_ROOT/venv/bin/pip"
@@ -42,9 +62,8 @@ elif [ -f "$PROJECT_ROOT/venv/bin/python3" ]; then
     PYTHON="$PROJECT_ROOT/venv/bin/python3"
     PIP="$PROJECT_ROOT/venv/bin/pip"
 else
-    PYTHON="python3"
-    PIP="pip3"
-    echo -e "${YELLOW}⚠${NC}  Virtual environment not found, using system Python"
+    echo -e "${RED}✗${NC} Virtual environment exists but Python not found"
+    exit 1
 fi
 
 # Check and install required Python packages
@@ -52,28 +71,31 @@ echo -e "${BLUE}→${NC} Checking Python dependencies..."
 MISSING_PACKAGES=()
 
 # Check for required packages
-for package in passlib psycopg2 cryptography; do
-    if ! $PYTHON -c "import ${package/psycopg2/psycopg2}" &>/dev/null; then
+for package in passlib psycopg2 cryptography python_dotenv; do
+    if ! $PYTHON -c "import ${package/psycopg2/psycopg2}" &>/dev/null 2>&1; then
         MISSING_PACKAGES+=("$package")
     fi
 done
 
 if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
     echo -e "${YELLOW}⚠${NC}  Missing required packages: ${MISSING_PACKAGES[*]}"
-    echo -e "${BLUE}→${NC} Installing missing packages..."
 
-    if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
-        $PIP install -r "$PROJECT_ROOT/requirements.txt" -q
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}✓${NC} Dependencies installed successfully"
-        else
-            echo -e "${RED}✗${NC} Failed to install dependencies"
-            echo -e "${YELLOW}   Please run: pip install -r requirements.txt${NC}"
-            exit 1
-        fi
-    else
+    if [ ! -f "$PROJECT_ROOT/requirements.txt" ]; then
         echo -e "${RED}✗${NC} requirements.txt not found"
-        echo -e "${YELLOW}   Please install required packages manually${NC}"
+        exit 1
+    fi
+
+    echo -e "${BLUE}→${NC} Upgrading pip..."
+    $PIP install --upgrade pip -q 2>&1 | grep -v "Requirement already satisfied" || true
+
+    echo -e "${BLUE}→${NC} Installing dependencies from requirements.txt..."
+    $PIP install -r "$PROJECT_ROOT/requirements.txt" -q 2>&1
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} Dependencies installed successfully"
+    else
+        echo -e "${RED}✗${NC} Failed to install dependencies"
+        echo -e "${YELLOW}   Try manually: source venv/bin/activate && pip install -r requirements.txt${NC}"
         exit 1
     fi
 else
