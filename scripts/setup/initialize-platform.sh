@@ -177,6 +177,38 @@ if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
     echo -e "${GREEN}✓${NC} Dependencies installed and verified"
 fi
 
+# PostgreSQL connection details (load from .env if exists)
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    source "$PROJECT_ROOT/.env"
+fi
+POSTGRES_HOST=${POSTGRES_HOST:-localhost}
+POSTGRES_PORT=${POSTGRES_PORT:-5432}
+POSTGRES_DB=${POSTGRES_DB:-knowledge_graph}
+POSTGRES_USER=${POSTGRES_USER:-admin}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+
+# Detect environment: Docker vs Local PostgreSQL
+DEPLOYMENT_MODE="unknown"
+if command -v docker &> /dev/null; then
+    # Docker is installed - check if container exists and is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-postgres$"; then
+        DEPLOYMENT_MODE="docker"
+        DEPLOYMENT_DESC="Docker Container (knowledge-graph-postgres)"
+    elif [ "$POSTGRES_HOST" = "localhost" ] || [ "$POSTGRES_HOST" = "127.0.0.1" ]; then
+        # Docker not running but localhost - could be local PostgreSQL
+        DEPLOYMENT_MODE="local"
+        DEPLOYMENT_DESC="Local PostgreSQL ($POSTGRES_HOST:$POSTGRES_PORT)"
+    else
+        # Remote PostgreSQL server
+        DEPLOYMENT_MODE="remote"
+        DEPLOYMENT_DESC="Remote PostgreSQL ($POSTGRES_HOST:$POSTGRES_PORT)"
+    fi
+else
+    # Docker not installed
+    DEPLOYMENT_MODE="local"
+    DEPLOYMENT_DESC="Local PostgreSQL ($POSTGRES_HOST:$POSTGRES_PORT)"
+fi
+
 # Banner
 clear
 echo -e "${BLUE}${BOLD}"
@@ -184,30 +216,47 @@ echo "╔═══════════════════════�
 echo "║   Knowledge Graph System - Configuration Manager          ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
+echo ""
+echo -e "${BOLD}Environment:${NC} $DEPLOYMENT_DESC"
+echo ""
 
-# Check PostgreSQL
+# Check PostgreSQL connection
 echo -e "${BLUE}→${NC} Checking PostgreSQL connection..."
-if ! docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT 1" > /dev/null 2>&1; then
-    echo -e "${RED}✗ PostgreSQL is not running${NC}"
-    echo -e "${YELLOW}  Run: docker-compose up -d${NC}"
-    exit 1
+
+if [ "$DEPLOYMENT_MODE" = "docker" ]; then
+    # Docker deployment - use docker exec
+    if ! docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT 1" > /dev/null 2>&1; then
+        echo -e "${RED}✗ PostgreSQL container is not responding${NC}"
+        echo -e "${YELLOW}  Run: docker-compose up -d${NC}"
+        exit 1
+    fi
+else
+    # Local/remote deployment - use psql with host/port
+    if ! PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1" > /dev/null 2>&1; then
+        echo -e "${RED}✗ PostgreSQL is not responding at $POSTGRES_HOST:$POSTGRES_PORT${NC}"
+        echo -e "${YELLOW}  Check that PostgreSQL is running and accessible${NC}"
+        echo -e "${YELLOW}  Verify POSTGRES_HOST, POSTGRES_PORT in .env${NC}"
+        exit 1
+    fi
 fi
 echo -e "${GREEN}✓${NC} PostgreSQL is running"
 echo ""
 
-# PostgreSQL connection details
-POSTGRES_HOST=${POSTGRES_HOST:-localhost}
-POSTGRES_PORT=${POSTGRES_PORT:-5432}
-POSTGRES_DB=${POSTGRES_DB:-knowledge_graph}
-POSTGRES_USER=${POSTGRES_USER:-admin}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+# Helper function: Execute PostgreSQL query (works with both Docker and local)
+pg_query() {
+    local query="$1"
+    if [ "$DEPLOYMENT_MODE" = "docker" ]; then
+        docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "$query" 2>/dev/null
+    else
+        PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c "$query" 2>/dev/null
+    fi
+}
 
 # Check current configuration status with indicators
 # ✓ = configured, ⚠ = needs attention, ○ = not configured
 
 get_admin_status() {
-    local exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
-        "SELECT COUNT(*) FROM kg_auth.users WHERE username = 'admin'" 2>/dev/null | xargs)
+    local exists=$(pg_query "SELECT COUNT(*) FROM kg_auth.users WHERE username = 'admin'" | xargs)
     if [ "$exists" -gt "0" ]; then
         echo -e "${GREEN}✓${NC} configured"
     else
@@ -237,8 +286,7 @@ get_encryption_key_status() {
 }
 
 get_ai_provider_status() {
-    local provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
-        "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+    local provider=$(pg_query "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" | xargs)
     if [ -n "$provider" ]; then
         echo -e "${GREEN}✓${NC} ${provider}"
     else
@@ -247,8 +295,7 @@ get_ai_provider_status() {
 }
 
 get_embedding_provider_status() {
-    local provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
-        "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+    local provider=$(pg_query "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" | xargs)
     if [ -n "$provider" ]; then
         echo -e "${GREEN}✓${NC} ${provider}"
     else
@@ -258,8 +305,7 @@ get_embedding_provider_status() {
 
 get_api_keys_status() {
     # Query which providers have API keys configured
-    local keys=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
-        "SELECT provider FROM kg_api.system_api_keys ORDER BY provider" 2>/dev/null | tr '\n' ' ' | xargs)
+    local keys=$(pg_query "SELECT provider FROM kg_api.system_api_keys ORDER BY provider" | tr '\n' ' ' | xargs)
     if [ -n "$keys" ]; then
         echo -e "${GREEN}✓${NC} ${keys}"
     else
@@ -293,8 +339,7 @@ configure_single_api_key() {
     echo ""
 
     # Check if key already exists
-    local key_exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
-        "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = '$provider'" 2>/dev/null | xargs)
+    local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = '$provider'" | xargs)
 
     if [ "$key_exists" -gt "0" ]; then
         echo -e "${GREEN}✓${NC} ${provider_display} API key already configured and tested"
@@ -365,8 +410,7 @@ configure_admin() {
     export PROJECT_ROOT
     export PYTHON
 
-    local admin_exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
-        "SELECT COUNT(*) FROM kg_auth.users WHERE username = 'admin'" 2>/dev/null | xargs)
+    local admin_exists=$(pg_query "SELECT COUNT(*) FROM kg_auth.users WHERE username = 'admin'" | xargs)
 
     if [ "$admin_exists" -gt "0" ]; then
         echo -e "${YELLOW}⚠${NC}  Admin user already exists"
@@ -698,16 +742,12 @@ configure_api_keys() {
 
     # Query existing API keys
     echo -e "${BLUE}→${NC} Checking configured API keys..."
-    local openai_exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
-        "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'openai'" 2>/dev/null | xargs)
-    local anthropic_exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
-        "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'anthropic'" 2>/dev/null | xargs)
+    local openai_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'openai'" | xargs)
+    local anthropic_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'anthropic'" | xargs)
 
     # Query provider configuration for context
-    local extraction_provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
-        "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
-    local embedding_provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
-        "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+    local extraction_provider=$(pg_query "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" | xargs)
+    local embedding_provider=$(pg_query "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" | xargs)
 
     echo ""
     echo -e "${BOLD}Current Configuration:${NC}"
