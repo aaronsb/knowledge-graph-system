@@ -225,8 +225,8 @@ apply_profile() {
 
     echo -e "\n${BLUE}→${NC} Applying ${YELLOW}${profile^^}${NC} profile settings..."
 
-    # Apply settings via ALTER SYSTEM
-    docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph <<EOSQL 2>/dev/null
+    # Apply settings via ALTER SYSTEM (capture output to check for errors)
+    local sql_output=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph 2>&1 <<EOSQL
 -- Core parallelism settings
 ALTER SYSTEM SET max_worker_processes = $MAX_WORKERS;
 ALTER SYSTEM SET max_parallel_workers = $MAX_PARALLEL;
@@ -252,14 +252,45 @@ ALTER SYSTEM SET min_wal_size = '1GB';
 -- Monitoring
 ALTER SYSTEM SET track_io_timing = on;
 ALTER SYSTEM SET log_min_duration_statement = 1000;
-EOSQL
 
-    if [ $? -ne 0 ]; then
+-- Verify settings were written
+SELECT 'VERIFICATION_CHECK' as status;
+EOSQL
+)
+
+    # Check if any errors occurred
+    if echo "$sql_output" | grep -i "error" > /dev/null; then
         echo -e "${RED}✗ Failed to apply settings${NC}"
+        echo "$sql_output" | grep -i "error"
         return 1
     fi
 
-    echo -e "${GREEN}✓${NC} Settings written to configuration"
+    # Check if verification query succeeded
+    if ! echo "$sql_output" | grep -q "VERIFICATION_CHECK"; then
+        echo -e "${RED}✗ Failed to verify settings${NC}"
+        echo "Output: $sql_output"
+        return 1
+    fi
+
+    echo -e "${GREEN}✓${NC} Settings written to postgresql.auto.conf"
+
+    # Verify the auto.conf file exists and contains settings
+    echo -e "${BLUE}→${NC} Verifying configuration file..."
+    local autoconf_check=$(docker exec knowledge-graph-postgres cat /var/lib/postgresql/data/postgresql.auto.conf 2>&1)
+
+    if echo "$autoconf_check" | grep -q "shared_buffers"; then
+        echo -e "${GREEN}✓${NC} Configuration file contains settings"
+        # Show a sample of what was written
+        echo -e "${GRAY}Sample settings in postgresql.auto.conf:${NC}"
+        echo "$autoconf_check" | grep -E "(shared_buffers|max_worker_processes|work_mem)" | head -n 3 | sed 's/^/  /'
+    else
+        echo -e "${RED}✗ Configuration file doesn't contain expected settings${NC}"
+        echo -e "File contents:"
+        echo "$autoconf_check" | head -n 10 | sed 's/^/  /'
+        return 1
+    fi
+
+    echo ""
     echo -e "${YELLOW}⚠${NC}  ${BOLD}Database restart required to apply changes${NC}"
     echo -e "   Use option 5 to restart database"
     CHANGES_PENDING=true
@@ -294,6 +325,20 @@ restart_database() {
             if docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT 1" > /dev/null 2>&1; then
                 echo -e "${GREEN}✓${NC} Database is ready"
                 CHANGES_PENDING=false
+
+                # Verify settings were actually applied
+                echo -e "${BLUE}→${NC} Verifying settings were applied..."
+                local shared_buffers_check=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c "SELECT setting, source FROM pg_settings WHERE name = 'shared_buffers'" 2>/dev/null)
+                local shared_value=$(echo "$shared_buffers_check" | cut -d'|' -f1)
+                local shared_source=$(echo "$shared_buffers_check" | cut -d'|' -f2)
+
+                if [ "$shared_source" = "configuration file" ]; then
+                    echo -e "${GREEN}✓${NC} Settings applied successfully (source: configuration file)"
+                    echo -e "${GRAY}  shared_buffers: $shared_value blocks${NC}"
+                else
+                    echo -e "${YELLOW}⚠${NC}  Settings may not have been applied (source: $shared_source)"
+                    echo -e "   Try viewing current settings (option 1) to verify"
+                fi
 
                 if [ "$api_was_running" = true ]; then
                     echo ""
