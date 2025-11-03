@@ -273,4 +273,18 @@ kg search connect "ADR-044" "Pull Request 66"
 
 ---
 
+## Related Documentation
+
+**How This Fits Into the Code Intelligence Ecosystem:**
+
+See [Code Intelligence Platforms Comparison](../../../docs/research/code-intelligence-platforms-comparison.md) for strategic context on how this example demonstrates our complementary role alongside structural code analysis platforms (Sourcegraph, GitHub Copilot, Tabnine, etc.).
+
+**Key insights from that analysis:**
+- **Structural vs. Narrative Intelligence:** We focus on understanding human collaboration narrative, not code structure
+- **AI Agent Future:** As AI coding agents proliferate, they generate high-quality narrative at scale - our system aggregates these "derivative summations" across thousands of sessions
+- **MCP Integration:** When coupled with structural code analysis tools via MCP, enables queries that span both narrative (why) and structure (where)
+- **Self-Demonstrating:** This example shows how the system ingests its own development history
+
+---
+
 **This use case demonstrates:** Knowledge graph construction from unstructured development artifacts, semantic search across commits/PRs/docs, and contradiction detection in evolving decisions.
