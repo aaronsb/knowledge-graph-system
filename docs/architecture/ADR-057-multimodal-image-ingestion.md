@@ -832,44 +832,289 @@ services:
     networks:
       - kg-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   minio-data:
     driver: local
 ```
 
-### Initialization Script
+### Management Scripts (PostgreSQL Pattern)
 
+#### scripts/start-minio.sh
 ```bash
 #!/bin/bash
-# scripts/initialize-minio.sh
+# Start MinIO object storage
 
-# Wait for MinIO to be ready
-until curl -sf http://localhost:9000/minio/health/live; do
-  echo "Waiting for MinIO..."
-  sleep 2
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}Starting MinIO object storage...${NC}"
+
+# Check if MinIO is already running
+if docker ps | grep -q knowledge-graph-minio; then
+    echo -e "${YELLOW}MinIO is already running${NC}"
+    echo "MinIO console: http://localhost:9001"
+    echo "MinIO API: http://localhost:9000"
+    exit 0
+fi
+
+# Start MinIO
+cd "$PROJECT_ROOT"
+docker-compose up -d minio
+
+# Wait for MinIO to be healthy
+echo "Waiting for MinIO to be ready..."
+RETRIES=30
+until docker exec knowledge-graph-minio curl -sf http://localhost:9000/minio/health/live > /dev/null 2>&1; do
+    RETRIES=$((RETRIES - 1))
+    if [ $RETRIES -eq 0 ]; then
+        echo -e "${RED}MinIO failed to start${NC}"
+        exit 1
+    fi
+    sleep 2
 done
 
-# Create bucket
-mc alias set kg http://localhost:9000 minioadmin minioadmin
-mc mb kg/knowledge-graph-images --ignore-existing
+echo -e "${GREEN}MinIO started successfully${NC}"
+echo "MinIO console: http://localhost:9001"
+echo "MinIO API: http://localhost:9000"
+echo "Credentials: minioadmin / minioadmin"
 
-# Set bucket policy (public read for development)
-mc anonymous set download kg/knowledge-graph-images
-
-echo "MinIO initialized successfully"
+# Run initialization
+"$SCRIPT_DIR/initialize-minio.sh"
 ```
 
-### Ollama Model Setup
+#### scripts/stop-minio.sh
+```bash
+#!/bin/bash
+# Stop MinIO object storage
+
+set -e
+
+# Colors
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${YELLOW}Stopping MinIO object storage...${NC}"
+
+# Check if MinIO is running
+if ! docker ps | grep -q knowledge-graph-minio; then
+    echo "MinIO is not running"
+    exit 0
+fi
+
+# Stop MinIO (keep data)
+docker-compose stop minio
+
+echo -e "${GREEN}MinIO stopped successfully${NC}"
+echo "Note: Data persists in docker volume 'minio-data'"
+echo "To remove data: docker volume rm knowledge-graph-system_minio-data"
+```
+
+#### scripts/initialize-minio.sh
+```bash
+#!/bin/bash
+# Initialize MinIO buckets and policies
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e "${GREEN}Initializing MinIO...${NC}"
+
+# Check if MinIO is running
+if ! docker ps | grep -q knowledge-graph-minio; then
+    echo -e "${RED}MinIO is not running. Start it first with: ./scripts/start-minio.sh${NC}"
+    exit 1
+fi
+
+# Install MinIO client (mc) in the container if needed
+docker exec knowledge-graph-minio sh -c "
+    # Configure alias
+    mc alias set local http://localhost:9000 minioadmin minioadmin 2>/dev/null || true
+
+    # Create bucket
+    if ! mc ls local/knowledge-graph-images >/dev/null 2>&1; then
+        echo 'Creating bucket: knowledge-graph-images'
+        mc mb local/knowledge-graph-images
+        echo 'Bucket created successfully'
+    else
+        echo 'Bucket already exists: knowledge-graph-images'
+    fi
+
+    # Set versioning (optional, for data protection)
+    mc version enable local/knowledge-graph-images
+
+    # Set lifecycle policy (optional, auto-delete old thumbnails)
+    # This is commented out by default - uncomment if you want auto-cleanup
+    # mc ilm add --expiry-days 30 --prefix 'thumbnails/' local/knowledge-graph-images
+
+    echo 'MinIO initialization complete'
+"
+
+echo -e "${GREEN}MinIO initialized successfully${NC}"
+echo ""
+echo "Bucket: knowledge-graph-images"
+echo "Web console: http://localhost:9001"
+echo "Credentials: minioadmin / minioadmin"
+```
+
+#### scripts/start-storage.sh (Combined)
+```bash
+#!/bin/bash
+# Start all storage services (PostgreSQL + MinIO)
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Colors
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${GREEN}Starting all storage services...${NC}"
+echo ""
+
+# Start PostgreSQL
+echo "=== Starting PostgreSQL ==="
+"$SCRIPT_DIR/start-database.sh"
+echo ""
+
+# Start MinIO
+echo "=== Starting MinIO ==="
+"$SCRIPT_DIR/start-minio.sh"
+echo ""
+
+echo -e "${GREEN}All storage services started successfully${NC}"
+echo ""
+echo "PostgreSQL: localhost:5432"
+echo "MinIO API: http://localhost:9000"
+echo "MinIO Console: http://localhost:9001"
+```
+
+#### scripts/stop-storage.sh (Combined)
+```bash
+#!/bin/bash
+# Stop all storage services (PostgreSQL + MinIO)
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Colors
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${YELLOW}Stopping all storage services...${NC}"
+
+# Stop MinIO
+"$SCRIPT_DIR/stop-minio.sh"
+
+# Stop PostgreSQL
+"$SCRIPT_DIR/stop-database.sh"
+
+echo -e "${GREEN}All storage services stopped${NC}"
+```
+
+### Development Mode Quick Start
 
 ```bash
-# Pull required models
+# Complete fresh setup (first time)
+./scripts/start-storage.sh      # Start PostgreSQL + MinIO
+./scripts/initialize-auth.sh    # Set up authentication
+./scripts/start-api.sh -y       # Start API server
+
+# Pull vision models
 docker exec kg-ollama ollama pull granite-vision-3.3:2b
 docker exec kg-ollama ollama pull nomic-embed-vision:latest
 docker exec kg-ollama ollama pull nomic-embed-text:latest
 
+# Verify everything is running
+kg health                       # Check API
+kg database stats               # Check database
+curl http://localhost:9001      # Check MinIO console
+
+# Ingest first image
+kg ingest image my-diagram.jpg -o "Test Ontology"
+```
+
+### Daily Development Workflow
+
+```bash
+# Start everything
+./scripts/start-storage.sh      # PostgreSQL + MinIO
+./scripts/start-api.sh -y       # API server
+
+# Work...
+kg ingest image diagram.jpg -o "My Project"
+kg search images --by-text "architecture diagram"
+
+# Stop everything
+./scripts/stop-api.sh
+./scripts/stop-storage.sh       # PostgreSQL + MinIO (data persists)
+```
+
+### Ollama Model Management
+
+```bash
+# scripts/setup-vision-models.sh
+#!/bin/bash
+# Pull all required vision and embedding models
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${GREEN}Setting up vision models...${NC}"
+
+# Check if Ollama is running
+if ! docker ps | grep -q kg-ollama; then
+    echo "Ollama is not running. Starting..."
+    docker-compose up -d ollama
+    sleep 5
+fi
+
+# Pull vision model
+echo "Pulling Granite Vision 3.3 2B..."
+docker exec kg-ollama ollama pull granite-vision-3.3:2b
+
+# Pull embedding models
+echo "Pulling Nomic Embed Vision..."
+docker exec kg-ollama ollama pull nomic-embed-vision:latest
+
+echo "Pulling Nomic Embed Text..."
+docker exec kg-ollama ollama pull nomic-embed-text:latest
+
 # Verify
+echo ""
+echo -e "${GREEN}Models installed:${NC}"
 docker exec kg-ollama ollama list
+
+echo ""
+echo "Vision model ready: granite-vision-3.3:2b"
+echo "Embedding models ready: nomic-embed-vision, nomic-embed-text"
 ```
 
 ---
