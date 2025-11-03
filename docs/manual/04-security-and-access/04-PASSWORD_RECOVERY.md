@@ -106,7 +106,7 @@ Success! You're back in. The login command creates OAuth client credentials that
 If you need to reset the admin password AND regenerate OAuth token signing keys, use the more comprehensive initialize script:
 
 ```bash
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 ```
 
 This script:
@@ -118,7 +118,7 @@ This script:
 
 **When to use which:**
 - **`reset-password.sh`**: Quick password reset for any user
-- **`initialize-auth.sh`**: Full authentication setup or admin password + token signing key regeneration
+- **`initialize-platform.sh`**: Full authentication setup or admin password + token signing key regeneration
 
 ## What This Does Under the Hood
 
@@ -184,12 +184,12 @@ docker ps  # Verify container is running
 **Error:**
 ```
 ✗ No users found in database
-  Run: ./scripts/setup/initialize-auth.sh to create admin user
+  Run: ./scripts/setup/initialize-platform.sh to create admin user
 ```
 
 **Fix:**
 ```bash
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 # Creates initial admin user
 ```
 

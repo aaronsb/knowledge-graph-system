@@ -119,7 +119,7 @@ When deploying the knowledge graph system for the first time, you need to initia
 **Run the initialization script:**
 
 ```bash
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 ```
 
 **What this does:**
@@ -441,7 +441,7 @@ kg admin user update 3 --role admin
 kg admin user update 3 --password
 
 # Or use the out-of-band reset script
-./scripts/setup/initialize-auth.sh  # Select existing admin user
+./scripts/setup/initialize-platform.sh  # Select existing admin user
 ```
 
 ---
@@ -483,7 +483,7 @@ kg login
 Use the initialization script to reset:
 
 ```bash
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 ```
 
 The script detects existing admin user and offers password reset.

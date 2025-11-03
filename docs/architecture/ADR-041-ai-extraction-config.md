@@ -751,7 +751,7 @@ system_api_keys (encrypted, ADR-031)
 
 ### Initial Setup Flow
 
-**Fresh installation** via `./scripts/setup/initialize-auth.sh` (enhanced):
+**Fresh installation** via `./scripts/setup/initialize-platform.sh` (enhanced):
 
 ```bash
 ╔════════════════════════════════════════════════════════════╗
@@ -809,7 +809,7 @@ docker-compose up -d
 ```
 
 **Effect:** All secrets erased:
-- ✗ Admin password → Must reset via `./scripts/setup/initialize-auth.sh`
+- ✗ Admin password → Must reset via `./scripts/setup/initialize-platform.sh`
 - ✗ API keys (OpenAI, Anthropic) → Must re-enter
 - ✗ Provider configs → Must reconfigure
 - ✗ All ontology data → Lost
@@ -1296,7 +1296,7 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
         if not config:
             raise RuntimeError(
                 "No AI extraction config in database. "
-                "Initialize via: ./scripts/setup/initialize-auth.sh"
+                "Initialize via: ./scripts/setup/initialize-platform.sh"
             )
 
         provider = config['provider']

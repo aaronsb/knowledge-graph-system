@@ -37,7 +37,7 @@ Schema Validation:
 - After reset, if API server is running, it will attempt to generate embeddings for vocabulary prototypes
 - It will use persisted API keys (not cleared by reset)
 - However, user accounting is cleared, so authentication fails
-- This triggers need to re-run `scripts/initialize-auth.sh`
+- This triggers need to re-run `scripts/initialize-platform.sh`
 
 ### Database Statistics
 ✅ **Command:** `kg database stats`
@@ -68,7 +68,7 @@ Schema Validation:
 - **Inactive:** Local nomic-embed-text-v1.5 (768 dimensions)
 
 ### Authentication & AI Provider Initialization
-✅ **Script:** `scripts/initialize-auth.sh`
+✅ **Script:** `scripts/initialize-platform.sh`
 
 **Key Characteristics:**
 - **Does NOT require API server running** - operates directly on database
@@ -111,11 +111,11 @@ Schema Validation:
 3. **Proper cold start sequence:**
    - Step 1: `kg admin reset` (clears graph data)
    - Step 2: Restart API server (picks up clean state)
-   - Step 3: `scripts/initialize-auth.sh` (sets up auth + AI provider)
+   - Step 3: `scripts/initialize-platform.sh` (sets up auth + AI provider)
    - Step 4: Ready to ingest content
 4. **Hot reload mode:** API server can run in hot reload mode during testing
 5. **Protection flags:** Active embedding configurations are protected by default
-6. **initialize-auth.sh independence:** Script operates directly on database, doesn't require API server running
+6. **initialize-platform.sh independence:** Script operates directly on database, doesn't require API server running
 
 ---
 
@@ -137,14 +137,14 @@ Schema Validation:
 
 **Result:** ✅ **PASS - System fails gracefully**
 - API server remains operational
-- User can fix API key via `scripts/initialize-auth.sh` or API endpoints
+- User can fix API key via `scripts/initialize-platform.sh` or API endpoints
 - No crash or hang
 - Clear error messages in logs
 
 **Key Finding:** The system doesn't require valid API keys to start - this allows recovery from configuration errors without needing to restart services.
 
 ### Missing Embeddings After Invalid Key Recovery
-✅ **Scenario:** After cold start fails with invalid key (0/30 initialized), user runs `scripts/initialize-auth.sh` with valid key and restarts API
+✅ **Scenario:** After cold start fails with invalid key (0/30 initialized), user runs `scripts/initialize-platform.sh` with valid key and restarts API
 
 **Observed Behavior:**
 - System checks `system_initialization_status` table: `initialized = true`
