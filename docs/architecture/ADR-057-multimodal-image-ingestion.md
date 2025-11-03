@@ -1242,6 +1242,243 @@ echo "Embedding models ready: nomic-embed-vision, nomic-embed-text"
 
 ## Security Considerations
 
+### MinIO Credential Management (PostgreSQL Pattern)
+
+Like PostgreSQL, MinIO credentials are **never hardcoded** in docker-compose.yml:
+
+#### Development (.env file)
+```bash
+# .env (gitignored)
+
+# PostgreSQL credentials
+POSTGRES_USER=kg_user
+POSTGRES_PASSWORD=securepassword123
+
+# MinIO credentials (mirroring PostgreSQL pattern)
+MINIO_ROOT_USER=${MINIO_ROOT_USER:-kg_minio_admin}
+MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-generate_this_on_first_run}
+
+# API server needs both
+DATABASE_URL=postgresql://kg_user:securepassword123@localhost:5432/knowledge_graph
+MINIO_ENDPOINT=http://minio:9000
+MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+```
+
+#### Docker Compose (No Hardcoded Credentials)
+```yaml
+# docker-compose.yml
+
+services:
+  postgres:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # No hardcoded passwords!
+
+  minio:
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    # No hardcoded passwords!
+
+  api:
+    environment:
+      # API server trusts both storage backends
+      DATABASE_URL: ${DATABASE_URL}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+```
+
+#### Initialize Credentials (First Run)
+```bash
+# scripts/initialize-storage-credentials.sh
+#!/bin/bash
+# Generate secure credentials for PostgreSQL and MinIO
+
+set -e
+
+ENV_FILE=".env"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${GREEN}Initializing storage credentials...${NC}"
+
+# Check if .env exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Creating .env from .env.example..."
+    cp .env.example .env
+fi
+
+# Generate MinIO credentials if not set
+if ! grep -q "MINIO_ROOT_PASSWORD=" "$ENV_FILE" || grep -q "MINIO_ROOT_PASSWORD=\${" "$ENV_FILE"; then
+    MINIO_PASSWORD=$(openssl rand -base64 32)
+    echo ""
+    echo -e "${YELLOW}Generated MinIO credentials:${NC}"
+    echo "MINIO_ROOT_USER=kg_minio_admin"
+    echo "MINIO_ROOT_PASSWORD=$MINIO_PASSWORD"
+    echo ""
+
+    # Update .env
+    sed -i.bak "s|MINIO_ROOT_USER=.*|MINIO_ROOT_USER=kg_minio_admin|" "$ENV_FILE"
+    sed -i.bak "s|MINIO_ROOT_PASSWORD=.*|MINIO_ROOT_PASSWORD=$MINIO_PASSWORD|" "$ENV_FILE"
+    sed -i.bak "s|MINIO_ACCESS_KEY=.*|MINIO_ACCESS_KEY=kg_minio_admin|" "$ENV_FILE"
+    sed -i.bak "s|MINIO_SECRET_KEY=.*|MINIO_SECRET_KEY=$MINIO_PASSWORD|" "$ENV_FILE"
+    rm -f "$ENV_FILE.bak"
+fi
+
+echo -e "${GREEN}Storage credentials configured${NC}"
+echo "Credentials are stored in .env (gitignored)"
+```
+
+### MinIO API Server Trust
+
+API server authenticates to MinIO using credentials from environment:
+
+```python
+# src/api/lib/minio_client.py
+
+import os
+from minio import Minio
+from minio.error import S3Error
+
+class MinIOClient:
+    """MinIO client for image storage with secure credential handling."""
+
+    def __init__(self):
+        # Load from environment (like PostgreSQL connection)
+        self.endpoint = os.getenv("MINIO_ENDPOINT", "minio:9000")
+        self.access_key = os.getenv("MINIO_ACCESS_KEY")
+        self.secret_key = os.getenv("MINIO_SECRET_KEY")
+        self.secure = os.getenv("MINIO_USE_SSL", "false").lower() == "true"
+        self.bucket = os.getenv("MINIO_BUCKET", "knowledge-graph-images")
+
+        if not self.access_key or not self.secret_key:
+            raise ValueError(
+                "MinIO credentials not found. Set MINIO_ACCESS_KEY and MINIO_SECRET_KEY "
+                "in environment (like DATABASE_URL for PostgreSQL)"
+            )
+
+        # Create MinIO client
+        self.client = Minio(
+            self.endpoint,
+            access_key=self.access_key,
+            secret_key=self.secret_key,
+            secure=self.secure
+        )
+
+        # Verify connection
+        try:
+            if not self.client.bucket_exists(self.bucket):
+                raise ValueError(f"Bucket '{self.bucket}' does not exist")
+        except S3Error as e:
+            raise ValueError(f"Failed to connect to MinIO: {e}")
+
+    async def upload_image(self, object_name: str, data: bytes, content_type: str = "image/jpeg"):
+        """Upload image to MinIO (authenticated)."""
+        self.client.put_object(
+            self.bucket,
+            object_name,
+            io.BytesIO(data),
+            length=len(data),
+            content_type=content_type
+        )
+
+    async def get_image(self, object_name: str) -> bytes:
+        """Retrieve image from MinIO (authenticated)."""
+        response = self.client.get_object(self.bucket, object_name)
+        return response.read()
+```
+
+### Production Considerations
+
+#### Docker Secrets (Production)
+```yaml
+# docker-compose.prod.yml
+
+services:
+  minio:
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+    secrets:
+      - minio_root_user
+      - minio_root_password
+
+secrets:
+  minio_root_user:
+    external: true
+  minio_root_password:
+    external: true
+```
+
+#### IAM Policies (Advanced)
+For production, create a dedicated "application user" with scoped access:
+
+```bash
+# Create application user with limited permissions
+mc admin user add myminio kg_api_user <generated-password>
+
+# Create policy for API server (read/write to images bucket only)
+mc admin policy create myminio kg_api_policy /tmp/api-policy.json
+
+# api-policy.json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::knowledge-graph-images/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::knowledge-graph-images"
+    }
+  ]
+}
+
+# Assign policy to user
+mc admin policy attach myminio kg_api_policy --user kg_api_user
+```
+
+### Security Trust Model
+
+```
+Development:
+┌──────────┐ .env creds  ┌────────────┐
+│ API      │─────────────▶│ PostgreSQL │
+│ Server   │             └────────────┘
+│          │ .env creds  ┌────────────┐
+│          │─────────────▶│ MinIO      │
+└──────────┘             └────────────┘
+
+Production:
+┌──────────┐ secrets     ┌────────────┐
+│ API      │─────────────▶│ PostgreSQL │
+│ Server   │             └────────────┘
+│          │ IAM policy  ┌────────────┐
+│          │─────────────▶│ MinIO      │
+└──────────┘             └────────────┘
+```
+
+**Key principles**:
+1. **No hardcoded credentials** (like PostgreSQL pattern)
+2. **Environment-based config** (dev: .env, prod: secrets)
+3. **Least privilege** (prod: scoped IAM policies)
+4. **API mediates all access** (users never directly access storage)
+
 ### Input Validation
 - File type validation (JPEG, PNG only)
 - File size limits (max 10MB per image)
@@ -1253,6 +1490,7 @@ echo "Embedding models ready: nomic-embed-vision, nomic-embed-text"
 - Presigned URLs for time-limited access
 - API server mediates all image access
 - No direct public access to MinIO
+- Ontology-based authorization (users only access their ontologies)
 
 ### Rate Limiting
 - Max 10 images per minute per user
