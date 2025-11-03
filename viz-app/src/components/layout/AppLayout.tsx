@@ -7,10 +7,10 @@
  * - Settings panel (collapsible)
  */
 
-import React, { useState } from 'react';
-import { User, ChevronRight } from 'lucide-react';
+import React from 'react';
 import { useGraphStore } from '../../store/graphStore';
 import { getAllExplorers } from '../../explorers';
+import { UserProfile } from '../shared/UserProfile';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -86,13 +86,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </h2>
           </div>
 
-          <button
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
-            title="User Profile (Coming Soon)"
-          >
-            <User className="w-4 h-4" />
-            <span>Profile</span>
-          </button>
+          <UserProfile />
         </header>
 
         {/* Visualization Area */}

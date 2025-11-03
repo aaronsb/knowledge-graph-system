@@ -1,73 +1,190 @@
-# React + TypeScript + Vite
+# Knowledge Graph Visualizer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web-based visualization interface for the Knowledge Graph System. Explore concepts, relationships, and evidence in an interactive graph visualization.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🔐 **OAuth 2.0 Authentication** - Secure login with PKCE flow
+- 📊 **Multiple Explorers** - 2D force graph, 3D visualization, and more
+- 🔍 **Advanced Search** - Find concepts by semantic similarity
+- 🎨 **Category Colors** - Visual categorization of relationship types
+- 🌐 **CDN-Ready** - Deploy to serverless platforms without rebuilding
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Development
 
-## Expanding the ESLint configuration
+```bash
+# 1. Install dependencies
+npm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# 2. Configure environment
+cp .env.example .env
+# Edit .env if needed (defaults work for local development)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# 3. Start API server (in parent directory)
+cd .. && ./scripts/start-api.sh
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# 4. Start dev server
+npm run dev
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 5. Open browser
+# http://localhost:3000
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Production Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Build for production
+npm run build
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Preview production build locally
+npm run preview
 ```
+
+## Deployment
+
+The viz-app supports multiple deployment strategies. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+
+### CDN Deployment (Netlify, Vercel, Cloudflare Pages)
+
+```bash
+npm run build
+cp public/config.example.js dist/config.js
+# Edit dist/config.js with production values
+# Deploy dist/ folder to your CDN
+```
+
+### Docker Deployment
+
+```bash
+docker build -t kg-viz-app .
+docker run -d -p 3000:80 \
+  -e VITE_API_URL=http://api.example.com:8000 \
+  -e VITE_OAUTH_REDIRECT_URI=http://localhost:3000/callback \
+  kg-viz-app
+```
+
+## Configuration
+
+The app uses **runtime configuration** for deployment flexibility:
+
+1. **Runtime config** (`public/config.js`) - highest priority
+2. **Build-time env vars** (`.env`) - fallback
+3. **Hardcoded defaults** - last resort
+
+See [.env.example](./.env.example) for available configuration options.
+
+## Architecture
+
+- **Framework:** React 18 + TypeScript
+- **Build Tool:** Vite
+- **State Management:** Zustand
+- **Data Fetching:** TanStack Query (React Query)
+- **Routing:** React Router v7
+- **Auth:** OAuth 2.0 with PKCE
+- **Styling:** Tailwind CSS
+- **Visualization:** D3.js, Force-Graph, Three.js
+
+## Project Structure
+
+```
+viz-app/
+├── public/
+│   ├── config.js         # Runtime configuration
+│   └── config.example.js # Config template
+├── src/
+│   ├── api/              # API client
+│   ├── components/       # React components
+│   │   ├── auth/         # OAuth callback
+│   │   ├── layout/       # App layout
+│   │   └── shared/       # Reusable components
+│   ├── explorers/        # Visualization explorers
+│   │   ├── ForceGraph2D/
+│   │   ├── ForceGraph3D/
+│   │   └── common/
+│   ├── hooks/            # React hooks
+│   ├── lib/              # Utilities
+│   │   └── auth/         # OAuth utilities
+│   ├── store/            # Zustand stores
+│   ├── types/            # TypeScript types
+│   └── main.tsx          # App entry point
+├── Dockerfile            # Multi-stage Docker build
+├── nginx.conf            # Nginx config for SPA routing
+├── docker-entrypoint.sh  # Runtime config generation
+└── DEPLOYMENT.md         # Deployment guide
+```
+
+## Development
+
+### Prerequisites
+
+- Node.js 20+
+- API server running on http://localhost:8000
+- OAuth client `kg-viz` configured in database
+
+### Available Scripts
+
+- `npm run dev` - Start dev server (hot reload)
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript compiler check
+
+### Adding a New Explorer
+
+1. Create explorer directory: `src/explorers/MyExplorer/`
+2. Implement explorer component and settings panel
+3. Register in `src/explorers/index.ts`
+4. Add data transformer for your visualization library
+
+See existing explorers (ForceGraph2D, ForceGraph3D) for examples.
+
+## OAuth Configuration
+
+The viz-app uses the `kg-viz` OAuth client (public client with PKCE).
+
+**Database Configuration:**
+```sql
+SELECT * FROM kg_auth.oauth_clients WHERE client_id = 'kg-viz';
+
+-- Update redirect URIs for production:
+UPDATE kg_auth.oauth_clients
+SET redirect_uris = ARRAY[
+  'http://localhost:3000/callback',
+  'https://viz.example.com/callback'
+]
+WHERE client_id = 'kg-viz';
+```
+
+**API CORS Configuration:**
+```python
+# src/api/main.py
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "https://viz.example.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+## Troubleshooting
+
+### OAuth Redirect Mismatch
+- Ensure redirect URI in `config.js` matches database `redirect_uris`
+- Check browser console for actual redirect URI in error message
+
+### API Connection Failed
+- Verify API server is running: `curl http://localhost:8000/health`
+- Check `VITE_API_URL` in config.js or .env
+- Check API CORS allows viz-app origin
+
+### Config Not Loading
+- Development: Check `window.APP_CONFIG` in browser console
+- Docker: Check `docker logs <container>` for config generation
+- CDN: Verify `config.js` exists in deployed files
+
+## License
+
+MIT - see parent project LICENSE file

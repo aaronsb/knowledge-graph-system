@@ -7,10 +7,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { SearchBar } from './components/shared/SearchBar';
+import { OAuthCallback } from './components/auth/OAuthCallback';
 import { useGraphStore } from './store/graphStore';
 import { useVocabularyStore } from './store/vocabularyStore';
+import { useAuthStore } from './store/authStore';
 import { useSubgraph, useFindConnection } from './hooks/useGraphData';
 import { getExplorer } from './explorers';
 import { apiClient } from './api/client';
@@ -29,6 +32,12 @@ const queryClient = new QueryClient({
 const AppContent: React.FC = () => {
   const { selectedExplorer, searchParams, graphData: storeGraphData, rawGraphData, setGraphData, setRawGraphData, queryMode, blockBuilderExpanded } = useGraphStore();
   const { setTypes, setLoading, setError } = useVocabularyStore();
+  const { checkAuth } = useAuthStore();
+
+  // Check authentication status on mount
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   // Load vocabulary on mount
   useEffect(() => {
@@ -437,7 +446,12 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<AppContent />} />
+          <Route path="/callback" element={<OAuthCallback />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }
