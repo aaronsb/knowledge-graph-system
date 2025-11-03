@@ -4,5 +4,11 @@ pdf2image>=1.16.0
 # Ollama client for Granite Vision testing
 ollama>=0.1.0
 
+# OpenAI client for GPT-4o Vision comparison
+openai>=1.0.0
+
+# Environment variable loading
+python-dotenv>=1.0.0
+
 # Image utilities
 Pillow>=10.0.0
