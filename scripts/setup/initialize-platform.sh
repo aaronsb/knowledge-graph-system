@@ -283,6 +283,80 @@ show_menu() {
     echo ""
 }
 
+configure_single_api_key() {
+    local provider=$1
+    local provider_display=$2
+
+    echo ""
+    echo -e "${BOLD}${provider_display} API Key Configuration${NC}"
+    echo -e "${YELLOW}Keys are encrypted at rest (ADR-031)${NC}"
+    echo ""
+
+    # Check if key already exists
+    local key_exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
+        "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = '$provider'" 2>/dev/null | xargs)
+
+    if [ "$key_exists" -gt "0" ]; then
+        echo -e "${GREEN}✓${NC} ${provider_display} API key already configured and tested"
+        return 0
+    fi
+
+    # Key doesn't exist - prompt to configure it
+    echo -e "${YELLOW}→${NC} No ${provider_display} API key found"
+    echo ""
+    read -p "Configure ${provider_display} API key now? [Y/n]: " -n 1 -r
+    echo ""
+
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        echo -e "${YELLOW}⚠${NC}  Skipping API key configuration"
+        echo -e "${YELLOW}   Provider will be configured but may fail without API key${NC}"
+        return 1
+    fi
+
+    # Call Python helper to configure just this provider
+    echo ""
+    echo -e "${BLUE}→${NC} Configuring ${provider_display} API key..."
+    echo ""
+
+    # Create temporary script that configures only this provider
+    local temp_script=$(mktemp)
+    cat > "$temp_script" << EOF
+#!/usr/bin/env python3
+import sys
+import os
+sys.path.insert(0, "$PROJECT_ROOT")
+from scripts.admin.manage_api_keys import add_key_interactive, EncryptedKeyStore
+from src.api.lib.age_client import AGEClient
+
+try:
+    client = AGEClient()
+    conn = client.pool.getconn()
+    try:
+        key_store = EncryptedKeyStore(conn)
+        success = add_key_interactive(key_store, "$provider")
+        sys.exit(0 if success else 1)
+    finally:
+        client.pool.putconn(conn)
+except Exception as e:
+    print(f"ERROR: {e}", file=sys.stderr)
+    sys.exit(1)
+EOF
+
+    $PYTHON "$temp_script"
+    local result=$?
+    rm -f "$temp_script"
+
+    if [ $result -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}✓${NC} ${provider_display} API key configured successfully"
+        return 0
+    else
+        echo ""
+        echo -e "${RED}✗${NC} Failed to configure ${provider_display} API key"
+        return 1
+    fi
+}
+
 configure_admin() {
     echo ""
     echo -e "${BOLD}Configure Admin Password${NC}"
@@ -455,54 +529,17 @@ configure_ai_provider() {
             DEFAULT_MODEL="claude-sonnet-4-20250514"
         fi
 
-        echo -e "${BOLD}${PROVIDER_DISPLAY} API Key${NC}"
-        echo -e "${YELLOW}Note: Keys are encrypted at rest (Fernet AES-128)${NC}"
-        echo ""
-        read -s -p "Enter ${PROVIDER_DISPLAY} API key: " API_KEY
-        echo ""
+        # Check if API key exists, configure if needed
+        configure_single_api_key "$PROVIDER_NAME" "$PROVIDER_DISPLAY"
+        local key_result=$?
 
-        if [ -z "$API_KEY" ]; then
-            echo -e "${YELLOW}⚠${NC}  No API key provided, skipping AI configuration"
-        else
-            echo -e "${BLUE}→${NC} Validating and storing ${PROVIDER_DISPLAY} API key..."
+        if [ $key_result -eq 0 ]; then
+            # Key is configured (either pre-existing or just added) - proceed with provider setup
+            echo ""
+            echo -e "${BLUE}→${NC} Initializing AI extraction configuration..."
 
             set +e
-            local STORE_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" API_KEY_TO_STORE="$API_KEY" PROVIDER_NAME_TO_STORE="$PROVIDER_NAME" $PYTHON << 'EOF' 2>&1
-import sys
-import os
-sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
-from src.api.lib.age_client import AGEClient
-from src.api.lib.encrypted_keys import EncryptedKeyStore
-try:
-    provider = os.getenv("PROVIDER_NAME_TO_STORE")
-    api_key = os.getenv("API_KEY_TO_STORE")
-    if not provider or not api_key:
-        print("ERROR:Missing provider or API key")
-        sys.exit(1)
-    client = AGEClient()
-    conn = client.pool.getconn()
-    try:
-        key_store = EncryptedKeyStore(conn)
-        key_store.store_key(provider, api_key)
-        key_store.update_validation_status(provider, "valid")
-        print("SUCCESS")
-    finally:
-        client.pool.putconn(conn)
-except Exception as e:
-    print(f"ERROR:{e}")
-    sys.exit(1)
-EOF
-)
-            set -e
-
-            if echo "$STORE_RESULT" | grep -q "^SUCCESS"; then
-                echo -e "${GREEN}✓${NC} ${PROVIDER_DISPLAY} API key stored and validated"
-
-                # Initialize AI extraction configuration
-                echo -e "${BLUE}→${NC} Initializing AI extraction configuration..."
-
-                set +e
-                local CONFIG_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" PROVIDER_NAME_CONFIG="$PROVIDER_NAME" DEFAULT_MODEL_CONFIG="$DEFAULT_MODEL" $PYTHON << 'EOF' 2>&1
+            local CONFIG_RESULT=$(PROJECT_ROOT="$PROJECT_ROOT" PROVIDER_NAME_CONFIG="$PROVIDER_NAME" DEFAULT_MODEL_CONFIG="$DEFAULT_MODEL" $PYTHON << 'EOF' 2>&1
 import sys
 import os
 sys.path.insert(0, os.getenv("PROJECT_ROOT", "."))
@@ -530,17 +567,15 @@ EOF
 )
                 set -e
 
-                if echo "$CONFIG_RESULT" | grep -q "^SUCCESS"; then
-                    echo -e "${GREEN}✓${NC} AI extraction configured: $PROVIDER_DISPLAY / $DEFAULT_MODEL"
-                else
-                    local ERROR_MSG=$(echo "$CONFIG_RESULT" | grep "^ERROR:" | cut -d: -f2-)
-                    echo -e "${YELLOW}⚠${NC}  Failed to configure AI extraction: $ERROR_MSG"
-                fi
+            if echo "$CONFIG_RESULT" | grep -q "^SUCCESS"; then
+                echo -e "${GREEN}✓${NC} AI extraction configured: $PROVIDER_DISPLAY / $DEFAULT_MODEL"
             else
-                local ERROR_MSG=$(echo "$STORE_RESULT" | grep "^ERROR:" | cut -d: -f2-)
-                echo -e "${RED}✗${NC} Failed to store API key: $ERROR_MSG"
-                echo -e "${YELLOW}   You can configure this later via: POST /admin/keys/$PROVIDER_NAME${NC}"
+                local ERROR_MSG=$(echo "$CONFIG_RESULT" | grep "^ERROR:" | cut -d: -f2-)
+                echo -e "${YELLOW}⚠${NC}  Failed to configure AI extraction: $ERROR_MSG"
             fi
+        else
+            # Key configuration was skipped
+            echo -e "${YELLOW}⚠${NC}  Skipping AI provider configuration (no API key)"
         fi
     else
         echo -e "${YELLOW}⚠${NC}  Skipping AI provider configuration"
@@ -585,13 +620,26 @@ configure_embedding_provider() {
             EMBEDDING_MODEL="text-embedding-3-small"
             EMBEDDING_DISPLAY="OpenAI (text-embedding-3-small)"
             EMBEDDING_DIMS=1536
+
+            # OpenAI embeddings require API key - check and configure if needed
+            configure_single_api_key "openai" "OpenAI"
+            local key_result=$?
+
+            if [ $key_result -ne 0 ]; then
+                echo -e "${YELLOW}⚠${NC}  Cannot configure OpenAI embeddings without API key"
+                echo ""
+                read -p "Press Enter to continue..."
+                return
+            fi
         else
             EMBEDDING_PROVIDER="local"
             EMBEDDING_MODEL="nomic-ai/nomic-embed-text-v1.5"
             EMBEDDING_DISPLAY="Nomic (nomic-embed-text-v1.5)"
             EMBEDDING_DIMS=768
+            # Local embeddings don't need API keys
         fi
 
+        echo ""
         echo -e "${BLUE}→${NC} Configuring ${EMBEDDING_DISPLAY}..."
 
         set +e
