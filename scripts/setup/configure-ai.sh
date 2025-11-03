@@ -231,8 +231,9 @@ case $option in
         echo -e "\n${YELLOW}Select provider:${NC}"
         echo "  1) OpenAI"
         echo "  2) Anthropic"
+        echo "  3) Cancel (return to menu)"
         echo ""
-        read -p "Choice [1-2]: " provider_choice
+        read -p "Choice [1-3]: " provider_choice
 
         case $provider_choice in
             1)
@@ -242,14 +243,21 @@ case $option in
                 echo "  2) gpt-4o-mini - Faster, cheaper (~$0.38/1M tokens)"
                 echo "  3) o1-preview - Reasoning model (~$30/1M tokens)"
                 echo "  4) o1-mini - Smaller reasoning (~$5.50/1M tokens)"
+                echo "  5) Cancel (return to menu)"
                 echo ""
-                read -p "Model [1-4]: " model_choice
+                read -p "Model [1-5]: " model_choice
 
                 case $model_choice in
                     1) MODEL="gpt-4o" ;;
                     2) MODEL="gpt-4o-mini" ;;
                     3) MODEL="o1-preview" ;;
                     4) MODEL="o1-mini" ;;
+                    5)
+                        echo -e "${YELLOW}Cancelled${NC}"
+                        echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                        read
+                        exec "$0"
+                        ;;
                     *)
                         echo ""
                         echo -e "${RED}Invalid choice${NC}"
@@ -265,13 +273,20 @@ case $option in
                 echo "  1) claude-sonnet-4-20250514 - Latest Sonnet 4.5 (~$9/1M tokens, SOTA)"
                 echo "  2) claude-3-5-sonnet-20241022 - Claude 3.5 Sonnet"
                 echo "  3) claude-3-opus-20240229 - Claude 3 Opus"
+                echo "  4) Cancel (return to menu)"
                 echo ""
-                read -p "Model [1-3]: " model_choice
+                read -p "Model [1-4]: " model_choice
 
                 case $model_choice in
                     1) MODEL="claude-sonnet-4-20250514" ;;
                     2) MODEL="claude-3-5-sonnet-20241022" ;;
                     3) MODEL="claude-3-opus-20240229" ;;
+                    4)
+                        echo -e "${YELLOW}Cancelled${NC}"
+                        echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                        read
+                        exec "$0"
+                        ;;
                     *)
                         echo ""
                         echo -e "${RED}Invalid choice${NC}"
@@ -280,6 +295,13 @@ case $option in
                         exec "$0"
                         ;;
                 esac
+                ;;
+            3)
+                # Cancel - return to menu
+                echo -e "${YELLOW}Cancelled${NC}"
+                echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                read
+                exec "$0"
                 ;;
             *)
                 echo ""
@@ -320,8 +342,9 @@ case $option in
         echo -e "\n${YELLOW}Available providers:${NC}"
         echo "  1) OpenAI (text-embedding-3-small) - 1536 dims, cloud-based"
         echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dims, local inference"
+        echo "  3) Cancel (return to menu)"
         echo ""
-        read -p "Choice [1-2]: " emb_choice
+        read -p "Choice [1-3]: " emb_choice
 
         case $emb_choice in
             1)
@@ -335,6 +358,13 @@ case $option in
                 echo -e "${YELLOW}Use kg CLI for embedding configuration:${NC}"
                 echo -e "  ${CYAN}kg admin embedding create --provider nomic --model nomic-embed-text-v1.5${NC}"
                 echo -e "  ${CYAN}kg admin embedding activate <config-id>${NC}"
+                ;;
+            3)
+                # Cancel - return to menu
+                echo -e "${YELLOW}Cancelled${NC}"
+                echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                read
+                exec "$0"
                 ;;
             *)
                 echo ""
@@ -355,8 +385,9 @@ case $option in
         echo "  3) Set/Update Anthropic key"
         echo "  4) Delete OpenAI key"
         echo "  5) Delete Anthropic key"
+        echo "  6) Cancel (return to menu)"
         echo ""
-        read -p "Choice [1-5]: " key_choice
+        read -p "Choice [1-6]: " key_choice
 
         case $key_choice in
             1)
@@ -380,6 +411,13 @@ case $option in
             5)
                 echo -e "\n${BLUE}→${NC} Use kg CLI to delete Anthropic key:"
                 echo -e "  ${CYAN}kg admin keys delete anthropic${NC}"
+                ;;
+            6)
+                # Cancel - return to menu
+                echo -e "${YELLOW}Cancelled${NC}"
+                echo -e "${BLUE}Press Enter to return to menu...${NC}"
+                read
+                exec "$0"
                 ;;
             *)
                 echo ""
