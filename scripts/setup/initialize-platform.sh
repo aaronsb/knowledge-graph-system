@@ -692,78 +692,124 @@ EOF
 
 configure_api_keys() {
     echo ""
-    echo -e "${BOLD}Configure API Keys${NC}"
-    echo -e "${YELLOW}Store encrypted API keys for configured providers (ADR-031)${NC}"
+    echo -e "${BOLD}Manage API Keys${NC}"
+    echo -e "${YELLOW}View, add, or replace encrypted API keys (ADR-031)${NC}"
     echo ""
 
-    # Check which providers are configured
+    # Query existing API keys
+    echo -e "${BLUE}→${NC} Checking configured API keys..."
+    local openai_exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
+        "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'openai'" 2>/dev/null | xargs)
+    local anthropic_exists=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -c \
+        "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'anthropic'" 2>/dev/null | xargs)
+
+    # Query provider configuration for context
     local extraction_provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
         "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
     local embedding_provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
         "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
 
-    echo -e "${BOLD}Provider Configuration:${NC}"
-    echo -e "  AI Extraction:  ${extraction_provider:-not configured}"
-    echo -e "  Embedding:      ${embedding_provider:-not configured}"
+    echo ""
+    echo -e "${BOLD}Current Configuration:${NC}"
     echo ""
 
-    # Determine which API keys are needed
+    # Show provider config
+    echo -e "${BOLD}Providers:${NC}"
+    if [ -n "$extraction_provider" ] || [ -n "$embedding_provider" ]; then
+        echo -e "  AI Extraction:  ${extraction_provider:-${YELLOW}not configured${NC}}"
+        echo -e "  Embedding:      ${embedding_provider:-${YELLOW}not configured${NC}}"
+    else
+        echo -e "  ${YELLOW}No providers configured yet${NC}"
+    fi
+    echo ""
+
+    # Show API key status
+    echo -e "${BOLD}API Keys:${NC}"
+    if [ "$openai_exists" -gt "0" ]; then
+        echo -e "  OpenAI:     ${GREEN}✓ configured${NC}"
+    else
+        echo -e "  OpenAI:     ${YELLOW}○ not configured${NC}"
+    fi
+
+    if [ "$anthropic_exists" -gt "0" ]; then
+        echo -e "  Anthropic:  ${GREEN}✓ configured${NC}"
+    else
+        echo -e "  Anthropic:  ${YELLOW}○ not configured${NC}"
+    fi
+    echo ""
+
+    # Show which keys are needed (if providers configured)
     local needs_openai=false
     local needs_anthropic=false
-
     if [ "$extraction_provider" = "openai" ] || [ "$embedding_provider" = "openai" ]; then
         needs_openai=true
     fi
     if [ "$extraction_provider" = "anthropic" ]; then
         needs_anthropic=true
     fi
-    # Note: Local embeddings and Ollama don't need API keys
 
-    if [ "$needs_openai" = false ] && [ "$needs_anthropic" = false ]; then
-        echo -e "${GREEN}✓${NC} No API keys required for current configuration"
-        echo -e "${YELLOW}   (Ollama/Local providers don't need API keys)${NC}"
+    if [ "$needs_openai" = true ] || [ "$needs_anthropic" = true ]; then
+        echo -e "${BOLD}Keys Needed for Current Providers:${NC}"
+        [ "$needs_openai" = true ] && echo -e "  • OpenAI (for ${extraction_provider:-}${embedding_provider:+ / }${embedding_provider:-})"
+        [ "$needs_anthropic" = true ] && echo -e "  • Anthropic (for extraction)"
         echo ""
-        read -p "Press Enter to continue..."
-        return
     fi
 
-    echo -e "${BOLD}API Keys Needed:${NC}"
-    [ "$needs_openai" = true ] && echo -e "  • OpenAI (for ${extraction_provider:-}${embedding_provider:+ / }${embedding_provider:-})"
-    [ "$needs_anthropic" = true ] && echo -e "  • Anthropic (for extraction)"
+    # Always offer key management options
+    echo -e "${BOLD}What would you like to do?${NC}"
+    echo "  1) View detailed key status (masked values, validation)"
+    echo "  2) Add/Replace OpenAI API key"
+    echo "  3) Add/Replace Anthropic API key"
+    echo "  4) Configure all needed keys (based on providers)"
+    echo "  5) Return to main menu"
+    echo ""
+    read -p "Choice [1-5]: " -n 1 -r
+    echo ""
     echo ""
 
-    echo -e "${YELLOW}Note:${NC} API keys are independent. If using:"
-    echo "  • OpenAI extraction + local embedding → only OpenAI key needed"
-    echo "  • Anthropic extraction + OpenAI embedding → both keys needed"
-    echo "  • Ollama extraction + local embedding → no keys needed"
-    echo ""
-
-    # Call Python helper script for interactive configuration
     export PROJECT_ROOT
     export PYTHON
 
-    echo -e "${BLUE}→${NC} Launching interactive API key configuration..."
-    echo ""
-
-    "$PYTHON" "$PROJECT_ROOT/scripts/admin/manage-api-keys.py" --interactive
-
-    if [ $? -eq 0 ]; then
-        echo ""
-        echo -e "${GREEN}✓${NC} API key configuration complete"
-    else
-        echo ""
-        echo -e "${YELLOW}⚠${NC}  API key configuration failed or incomplete"
-        echo ""
-        echo "You can configure keys manually after startup:"
-        if [ "$needs_openai" = true ]; then
-            echo -e "${BOLD}OpenAI:${NC}"
-            echo "  curl -X POST http://localhost:8000/admin/keys/openai -F \"api_key=sk-...\""
-        fi
-        if [ "$needs_anthropic" = true ]; then
-            echo -e "${BOLD}Anthropic:${NC}"
-            echo "  curl -X POST http://localhost:8000/admin/keys/anthropic -F \"api_key=sk-ant-...\""
-        fi
-    fi
+    case $REPLY in
+        1)
+            # List keys with details
+            echo -e "${BLUE}→${NC} Fetching key details..."
+            echo ""
+            "$PYTHON" "$PROJECT_ROOT/scripts/admin/manage-api-keys.py" --list
+            ;;
+        2)
+            # Configure OpenAI key
+            configure_single_api_key "openai" "OpenAI"
+            ;;
+        3)
+            # Configure Anthropic key
+            configure_single_api_key "anthropic" "Anthropic"
+            ;;
+        4)
+            # Configure all needed keys
+            if [ "$needs_openai" = false ] && [ "$needs_anthropic" = false ]; then
+                echo -e "${YELLOW}⚠${NC}  No API keys required for current provider configuration"
+                echo -e "${YELLOW}   (Configure providers first, or use options 2-3 to add keys anyway)${NC}"
+            else
+                echo -e "${BLUE}→${NC} Configuring keys for current providers..."
+                echo ""
+                if [ "$needs_openai" = true ]; then
+                    configure_single_api_key "openai" "OpenAI"
+                    echo ""
+                fi
+                if [ "$needs_anthropic" = true ]; then
+                    configure_single_api_key "anthropic" "Anthropic"
+                fi
+            fi
+            ;;
+        5)
+            # Return to main menu
+            return
+            ;;
+        *)
+            echo -e "${YELLOW}Invalid choice${NC}"
+            ;;
+    esac
 
     echo ""
     read -p "Press Enter to continue..."
