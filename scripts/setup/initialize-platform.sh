@@ -153,7 +153,7 @@ get_encryption_key_status() {
 }
 
 get_ai_provider_status() {
-    local provider=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
+    local provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
         "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
     if [ -n "$provider" ]; then
         echo -e "${GREEN}✓${NC} ${provider}"
@@ -163,7 +163,7 @@ get_ai_provider_status() {
 }
 
 get_embedding_provider_status() {
-    local provider=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
+    local provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
         "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
     if [ -n "$provider" ]; then
         echo -e "${GREEN}✓${NC} ${provider}"
