@@ -63,7 +63,7 @@ Image → Visual Analysis → Text Description + Visual Context → Existing Tex
 **Key architectural decisions**:
 
 1. **Storage separation**: MinIO for heavy image blobs, PostgreSQL for lightweight embeddings and metadata
-2. **Vision backend**: Granite Vision 3.3 2B (local, Apache 2.0) with fallback to GPT-4V/Claude
+2. **Vision backend**: Granite Vision 3.3 2B (local, Apache 2.0) or GPT-4V/Claude to support non-compute capable nodes.
 3. **Dual embeddings**: Nomic Vision for image embeddings, Nomic Text for description embeddings
 4. **Visual context injection**: Similar images provide context during concept extraction
 5. **Ontology-aware search**: Boost same-ontology results, enable cross-domain discovery
