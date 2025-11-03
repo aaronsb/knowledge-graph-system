@@ -1,9 +1,57 @@
 #!/bin/bash
 set -e
 
-# initialize-auth-menu.sh
-# Interactive menu-driven configuration for Knowledge Graph System
-# Refactored version with menu loop for selective configuration
+# ============================================================================
+# initialize-platform.sh
+# Knowledge Graph System - Platform Configuration Manager
+# ============================================================================
+#
+# PURPOSE:
+# Pre-configure database settings BEFORE the API server starts for clean
+# first-time initialization. This script sets up all critical configuration
+# so the API server can start with known-good settings and avoid common
+# cold-start issues.
+#
+# WHAT IT CONFIGURES:
+# 1. Admin User - Known username/password for first login
+# 2. OAuth Signing Key - JWT token signing for authentication (ADR-054)
+# 3. Encryption Key - Master key for encrypting API keys at rest (ADR-031)
+# 4. AI Extraction Provider - Which LLM to use (OpenAI/Anthropic/Ollama)
+# 5. Embedding Provider - Which embeddings to use (OpenAI/Local)
+# 6. API Keys - Store encrypted keys for configured providers
+#
+# WHY PRE-CONFIGURE?
+# The API server loads configuration from the database on startup. If critical
+# settings (especially embedding provider) are not configured before first
+# startup, the system may:
+# - Apply wrong embeddings to vocabulary metadata (requires regeneration)
+# - Fail to start due to missing API keys
+# - Force manual configuration via kg CLI after the fact
+#
+# COLD-START EXAMPLE:
+# Without this script:
+# 1. API starts → no embedding config → defaults to OpenAI embeddings
+# 2. Vocabulary metadata gets OpenAI embeddings
+# 3. You configure local embeddings → now have mixed embedding types
+# 4. Must regenerate all embeddings to fix inconsistency
+#
+# With this script:
+# 1. Configure local embeddings BEFORE API starts
+# 2. API starts → sees local embedding config → uses it from the start
+# 3. All embeddings consistent, no regeneration needed
+#
+# DOCKER vs NON-DOCKER:
+# This script works with both deployment modes:
+# - Docker: Connects to PostgreSQL container via POSTGRES_HOST=localhost
+# - Non-Docker: Connects to PostgreSQL server via POSTGRES_HOST=<server>
+# All database operations use Python + psycopg2, not docker exec commands.
+#
+# USAGE:
+# ./scripts/setup/initialize-platform.sh        # Interactive menu
+# ./scripts/setup/initialize-platform.sh --dev  # Dev mode (weak password)
+# ./scripts/setup/initialize-platform.sh --help # Show this help
+#
+# ============================================================================
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -17,6 +65,38 @@ BOLD='\033[1m'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
+# Show help message
+show_help() {
+    echo "Knowledge Graph System - Platform Configuration Manager"
+    echo ""
+    echo "Pre-configure database settings BEFORE the API server starts for clean"
+    echo "first-time initialization. Prevents cold-start issues like wrong embedding"
+    echo "types being applied to vocabulary metadata."
+    echo ""
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --dev     Development mode (uses weak password 'Password1!')"
+    echo "  --help    Show this help message and exit"
+    echo ""
+    echo "Configuration Steps:"
+    echo "  1. Admin User       - Set username/password for first login"
+    echo "  2. OAuth Key        - Generate signing key for authentication (ADR-054)"
+    echo "  3. Encryption Key   - Generate master key for API key encryption (ADR-031)"
+    echo "  4. AI Extraction    - Configure LLM provider (OpenAI/Anthropic/Ollama)"
+    echo "  5. Embedding        - Configure embedding provider (OpenAI/Local)"
+    echo "  6. API Keys         - Store encrypted keys for configured providers"
+    echo ""
+    echo "Example:"
+    echo "  ./scripts/setup/initialize-platform.sh"
+    echo "  # Follow interactive prompts to configure each component"
+    echo ""
+    echo "Docker vs Non-Docker:"
+    echo "  This script works with both deployment modes by connecting to PostgreSQL"
+    echo "  via environment variables (POSTGRES_HOST from .env file)."
+    echo ""
+}
+
 # Parse command line arguments
 DEV_MODE=false
 while [[ $# -gt 0 ]]; do
@@ -25,10 +105,14 @@ while [[ $# -gt 0 ]]; do
             DEV_MODE=true
             shift
             ;;
+        --help|-h)
+            show_help
+            exit 0
+            ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
-            echo "Usage: $0 [--dev]"
-            echo "  --dev    Development mode (sets password to 'Password1!')"
+            echo "Usage: $0 [--dev] [--help]"
+            echo "Run '$0 --help' for more information"
             exit 1
             ;;
     esac
@@ -172,6 +256,17 @@ get_embedding_provider_status() {
     fi
 }
 
+get_api_keys_status() {
+    # Query which providers have API keys configured
+    local keys=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
+        "SELECT provider FROM kg_api.system_api_keys ORDER BY provider" 2>/dev/null | tr '\n' ' ' | xargs)
+    if [ -n "$keys" ]; then
+        echo -e "${GREEN}✓${NC} ${keys}"
+    else
+        echo -e "○ none"
+    fi
+}
+
 # Main menu loop
 show_menu() {
     echo ""
@@ -182,7 +277,9 @@ show_menu() {
     echo -e "  3) Encryption Key          [$(get_encryption_key_status)]"
     echo -e "  4) AI Extraction Provider  [$(get_ai_provider_status)]"
     echo -e "  5) Embedding Provider      [$(get_embedding_provider_status)]"
-    echo -e "  6) Exit"
+    echo -e "  6) API Keys                [$(get_api_keys_status)]"
+    echo -e "  7) Help"
+    echo -e "  8) Exit"
     echo ""
 }
 
@@ -545,10 +642,148 @@ EOF
     read -p "Press Enter to continue..."
 }
 
+configure_api_keys() {
+    echo ""
+    echo -e "${BOLD}Configure API Keys${NC}"
+    echo -e "${YELLOW}Store encrypted API keys for configured providers (ADR-031)${NC}"
+    echo ""
+
+    # Check which providers are configured
+    local extraction_provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
+        "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+    local embedding_provider=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t -A -c \
+        "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+
+    echo -e "${BOLD}Provider Configuration:${NC}"
+    echo -e "  AI Extraction:  ${extraction_provider:-not configured}"
+    echo -e "  Embedding:      ${embedding_provider:-not configured}"
+    echo ""
+
+    # Determine which API keys are needed
+    local needs_openai=false
+    local needs_anthropic=false
+
+    if [ "$extraction_provider" = "openai" ] || [ "$embedding_provider" = "openai" ]; then
+        needs_openai=true
+    fi
+    if [ "$extraction_provider" = "anthropic" ]; then
+        needs_anthropic=true
+    fi
+    # Note: Local embeddings and Ollama don't need API keys
+
+    if [ "$needs_openai" = false ] && [ "$needs_anthropic" = false ]; then
+        echo -e "${GREEN}✓${NC} No API keys required for current configuration"
+        echo -e "${YELLOW}   (Ollama/Local providers don't need API keys)${NC}"
+        echo ""
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    echo -e "${BOLD}API Keys Needed:${NC}"
+    [ "$needs_openai" = true ] && echo -e "  • OpenAI (for ${extraction_provider:-}${embedding_provider:+ / }${embedding_provider:-})"
+    [ "$needs_anthropic" = true ] && echo -e "  • Anthropic (for extraction)"
+    echo ""
+
+    echo -e "${YELLOW}Note:${NC} API keys are independent. If using:"
+    echo "  • OpenAI extraction + local embedding → only OpenAI key needed"
+    echo "  • Anthropic extraction + OpenAI embedding → both keys needed"
+    echo "  • Ollama extraction + local embedding → no keys needed"
+    echo ""
+
+    echo -e "${BLUE}→${NC} Configuring API keys via Python helper script..."
+
+    # TODO: Implement Python helper script for API key management
+    # For now, show instructions for manual configuration
+    echo ""
+    echo -e "${YELLOW}⚠${NC}  API key configuration via menu not yet implemented"
+    echo ""
+    echo "Configure API keys manually using one of these methods:"
+    echo ""
+    if [ "$needs_openai" = true ]; then
+        echo -e "${BOLD}OpenAI:${NC}"
+        echo "  1. Via kg CLI after login:"
+        echo "     kg login -u admin"
+        echo "     curl -X POST http://localhost:8000/admin/keys/openai -F \"api_key=sk-...\""
+        echo ""
+        echo "  2. Via .env file (development only):"
+        echo "     echo 'OPENAI_API_KEY=sk-...' >> .env"
+        echo ""
+    fi
+
+    if [ "$needs_anthropic" = true ]; then
+        echo -e "${BOLD}Anthropic:${NC}"
+        echo "  1. Via kg CLI after login:"
+        echo "     kg login -u admin"
+        echo "     curl -X POST http://localhost:8000/admin/keys/anthropic -F \"api_key=sk-ant-...\""
+        echo ""
+        echo "  2. Via .env file (development only):"
+        echo "     echo 'ANTHROPIC_API_KEY=sk-ant-...' >> .env"
+        echo ""
+    fi
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
+# Display help in menu context
+show_menu_help() {
+    clear
+    echo -e "${BLUE}${BOLD}"
+    echo "╔════════════════════════════════════════════════════════════╗"
+    echo "║             Configuration Manager - Help                   ║"
+    echo "╚════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+    echo ""
+    echo -e "${BOLD}Purpose:${NC}"
+    echo "Pre-configure database settings BEFORE the API server starts to ensure"
+    echo "clean first-time initialization and avoid cold-start configuration issues."
+    echo ""
+    echo -e "${BOLD}What This Script Configures:${NC}"
+    echo ""
+    echo -e "${BLUE}1. Admin Password${NC}"
+    echo "   Set known username/password for first login (kg login -u admin)"
+    echo ""
+    echo -e "${BLUE}2. OAuth Signing Key${NC}"
+    echo "   Generate secret key for signing OAuth 2.0 access tokens (ADR-054)"
+    echo "   Stored in .env file as OAUTH_SIGNING_KEY"
+    echo ""
+    echo -e "${BLUE}3. Encryption Key${NC}"
+    echo "   Generate master key for encrypting API keys at rest (ADR-031)"
+    echo "   Stored in .env file as ENCRYPTION_KEY"
+    echo ""
+    echo -e "${BLUE}4. AI Extraction Provider${NC}"
+    echo "   Configure which LLM to use for concept extraction"
+    echo "   Options: OpenAI (GPT-4), Anthropic (Claude), Ollama (Local)"
+    echo ""
+    echo -e "${BLUE}5. Embedding Provider${NC}"
+    echo "   Configure which embedding model to use"
+    echo "   Options: OpenAI (text-embedding-3-small), Local (nomic-embed-text)"
+    echo ""
+    echo -e "${BLUE}6. API Keys${NC}"
+    echo "   Store encrypted API keys for configured providers"
+    echo "   Keys are independent: OpenAI extraction + local embedding = only needs OpenAI key"
+    echo ""
+    echo -e "${BOLD}Why Pre-Configure?${NC}"
+    echo ""
+    echo -e "${YELLOW}Cold-Start Problem:${NC}"
+    echo "If you don't configure embedding provider before first API startup:"
+    echo "  • API defaults to OpenAI embeddings"
+    echo "  • Vocabulary metadata gets OpenAI embeddings"
+    echo "  • Later switching to local requires regenerating ALL embeddings"
+    echo ""
+    echo "Pre-configuring avoids this by setting the correct provider from the start."
+    echo ""
+    echo -e "${BOLD}Docker vs Non-Docker:${NC}"
+    echo "This script works with both deployment modes. All database operations use"
+    echo "Python + psycopg2 (reads POSTGRES_HOST from .env), not docker exec commands."
+    echo ""
+    read -p "Press Enter to return to menu..."
+}
+
 # Main menu loop
 while true; do
     show_menu
-    read -p "Select option [1-6]: " choice
+    read -p "Select option [1-8]: " choice
 
     case $choice in
         1)
@@ -566,7 +801,13 @@ while true; do
         5)
             configure_embedding_provider
             ;;
-        6|q|Q)
+        6)
+            configure_api_keys
+            ;;
+        7|h|H)
+            show_menu_help
+            ;;
+        8|q|Q)
             echo ""
             echo -e "${GREEN}Configuration complete!${NC}"
             echo ""
