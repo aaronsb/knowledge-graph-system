@@ -286,7 +286,7 @@ get_encryption_key_status() {
 }
 
 get_ai_provider_status() {
-    local provider=$(pg_query "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" | xargs)
+    local provider=$(pg_query "SELECT provider FROM kg_api.ai_extraction_config WHERE active = true LIMIT 1" | xargs)
     if [ -n "$provider" ]; then
         echo -e "${GREEN}✓${NC} ${provider}"
     else
@@ -295,7 +295,7 @@ get_ai_provider_status() {
 }
 
 get_embedding_provider_status() {
-    local provider=$(pg_query "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" | xargs)
+    local provider=$(pg_query "SELECT provider FROM kg_api.embedding_config WHERE active = true LIMIT 1" | xargs)
     if [ -n "$provider" ]; then
         echo -e "${GREEN}✓${NC} ${provider}"
     else
@@ -541,8 +541,7 @@ configure_ai_provider() {
     echo ""
 
     # Check current provider
-    local CURRENT_PROVIDER=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
-        "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+    local CURRENT_PROVIDER=$(pg_query "SELECT provider FROM kg_api.ai_extraction_config WHERE active = true LIMIT 1" | xargs)
 
     if [ -n "$CURRENT_PROVIDER" ]; then
         echo -e "${BLUE}→${NC} Current provider: ${BOLD}${CURRENT_PROVIDER}${NC}"
@@ -637,8 +636,7 @@ configure_embedding_provider() {
     echo ""
 
     # Check current embedding provider
-    local CURRENT_EMBEDDING=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c \
-        "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" 2>/dev/null | xargs)
+    local CURRENT_EMBEDDING=$(pg_query "SELECT provider FROM kg_api.embedding_config WHERE active = true LIMIT 1" | xargs)
 
     if [ -n "$CURRENT_EMBEDDING" ]; then
         echo -e "${BLUE}→${NC} Current embedding provider: ${BOLD}${CURRENT_EMBEDDING}${NC}"
@@ -746,8 +744,8 @@ configure_api_keys() {
     local anthropic_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'anthropic'" | xargs)
 
     # Query provider configuration for context
-    local extraction_provider=$(pg_query "SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1" | xargs)
-    local embedding_provider=$(pg_query "SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1" | xargs)
+    local extraction_provider=$(pg_query "SELECT provider FROM kg_api.ai_extraction_config WHERE active = true LIMIT 1" | xargs)
+    local embedding_provider=$(pg_query "SELECT provider FROM kg_api.embedding_config WHERE active = true LIMIT 1" | xargs)
 
     echo ""
     echo -e "${BOLD}Current Configuration:${NC}"
