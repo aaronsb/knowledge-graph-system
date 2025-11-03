@@ -89,7 +89,7 @@ if [ "$ADMIN_EXISTS" -eq "0" ]; then
     else
         echo -e "${RED}✗ Admin user not found${NC}"
         echo -e "${YELLOW}  Run with --create flag to create admin user${NC}"
-        echo -e "${YELLOW}  Or run: ./scripts/setup/initialize-auth.sh${NC}"
+        echo -e "${YELLOW}  Or run: ./scripts/setup/initialize-platform.sh${NC}"
         exit 1
     fi
 else
