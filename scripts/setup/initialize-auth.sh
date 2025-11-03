@@ -145,18 +145,19 @@ else
     echo -e "${GREEN}✓${NC} Skipped admin password setup (keeping existing)"
 fi
 
-# Generate or check JWT_SECRET_KEY
+# Generate or check OAUTH_SIGNING_KEY
 echo ""
-echo -e "${BOLD}JWT Secret Key Setup${NC}"
+echo -e "${BOLD}OAuth Token Signing Key Setup${NC}"
+echo -e "${YELLOW}Used to sign OAuth 2.0 access tokens (ADR-054)${NC}"
 
-if [ -f "$PROJECT_ROOT/.env" ] && grep -q "^JWT_SECRET_KEY=" "$PROJECT_ROOT/.env"; then
-    EXISTING_SECRET=$(grep "^JWT_SECRET_KEY=" "$PROJECT_ROOT/.env" | cut -d'=' -f2)
+if [ -f "$PROJECT_ROOT/.env" ] && grep -q "^OAUTH_SIGNING_KEY=" "$PROJECT_ROOT/.env"; then
+    EXISTING_SECRET=$(grep "^OAUTH_SIGNING_KEY=" "$PROJECT_ROOT/.env" | cut -d'=' -f2)
     if [[ "$EXISTING_SECRET" == *"CHANGE_THIS"* ]]; then
-        echo -e "${YELLOW}⚠${NC}  Insecure JWT secret found in .env"
+        echo -e "${YELLOW}⚠${NC}  Insecure signing key found in .env"
         GENERATE_SECRET=true
     else
-        echo -e "${GREEN}✓${NC} JWT secret already configured in .env"
-        read -p "Generate new JWT secret? [y/N]: " -n 1 -r
+        echo -e "${GREEN}✓${NC} OAuth signing key already configured in .env"
+        read -p "Generate new signing key? [y/N]: " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             GENERATE_SECRET=true
@@ -165,35 +166,35 @@ if [ -f "$PROJECT_ROOT/.env" ] && grep -q "^JWT_SECRET_KEY=" "$PROJECT_ROOT/.env
         fi
     fi
 else
-    echo -e "${BLUE}→${NC} No JWT secret found in .env"
+    echo -e "${BLUE}→${NC} No OAuth signing key found in .env"
     GENERATE_SECRET=true
 fi
 
 if [ "$GENERATE_SECRET" = true ]; then
     # Try openssl first, fall back to Python
     if command -v openssl &> /dev/null; then
-        JWT_SECRET=$(openssl rand -hex 32)
-        echo -e "${GREEN}✓${NC} Generated JWT secret using openssl"
+        OAUTH_SIGNING_KEY=$(openssl rand -hex 32)
+        echo -e "${GREEN}✓${NC} Generated OAuth signing key using openssl"
     else
-        JWT_SECRET=$($PYTHON -c "import secrets; print(secrets.token_hex(32))")
-        echo -e "${GREEN}✓${NC} Generated JWT secret using Python"
+        OAUTH_SIGNING_KEY=$($PYTHON -c "import secrets; print(secrets.token_hex(32))")
+        echo -e "${GREEN}✓${NC} Generated OAuth signing key using Python"
     fi
 
     # Update or create .env file
     if [ -f "$PROJECT_ROOT/.env" ]; then
-        if grep -q "^JWT_SECRET_KEY=" "$PROJECT_ROOT/.env"; then
+        if grep -q "^OAUTH_SIGNING_KEY=" "$PROJECT_ROOT/.env"; then
             # Update existing (cross-platform sed)
-            sed "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=$JWT_SECRET/" "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp" && mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
+            sed "s/^OAUTH_SIGNING_KEY=.*/OAUTH_SIGNING_KEY=$OAUTH_SIGNING_KEY/" "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp" && mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
         else
             # Append new
-            echo "JWT_SECRET_KEY=$JWT_SECRET" >> "$PROJECT_ROOT/.env"
+            echo "OAUTH_SIGNING_KEY=$OAUTH_SIGNING_KEY" >> "$PROJECT_ROOT/.env"
         fi
     else
         # Create new .env
         cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env" 2>/dev/null || true
-        echo "JWT_SECRET_KEY=$JWT_SECRET" >> "$PROJECT_ROOT/.env"
+        echo "OAUTH_SIGNING_KEY=$OAUTH_SIGNING_KEY" >> "$PROJECT_ROOT/.env"
     fi
-    echo -e "${GREEN}✓${NC} JWT secret saved to .env"
+    echo -e "${GREEN}✓${NC} OAuth signing key saved to .env"
 fi
 
 # Generate or check ENCRYPTION_KEY (ADR-031)

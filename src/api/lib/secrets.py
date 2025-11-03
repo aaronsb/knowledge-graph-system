@@ -3,8 +3,8 @@ Secrets management with Docker/Podman secrets support (ADR-031).
 
 Provides fallback chain for loading secrets:
 1. Docker/Podman secrets (/run/secrets/<name>)
-2. Environment variable file paths (e.g., JWT_SECRET_FILE)
-3. Direct environment variables (e.g., JWT_SECRET_KEY)
+2. Environment variable file paths (e.g., OAUTH_SIGNING_KEY_FILE)
+3. Direct environment variables (e.g., OAUTH_SIGNING_KEY)
 4. .env file (development fallback)
 
 This maintains backward compatibility while supporting production secret management.
@@ -27,8 +27,8 @@ class SecretManager:
         Load secret from multiple sources in priority order.
 
         Args:
-            secret_name: Name of the Docker/Podman secret (e.g., "jwt_secret")
-            env_var: Optional environment variable name (e.g., "JWT_SECRET_KEY")
+            secret_name: Name of the Docker/Podman secret (e.g., "oauth_signing_key")
+            env_var: Optional environment variable name (e.g., "OAUTH_SIGNING_KEY")
             required: Whether to raise ValueError if secret not found (default: True)
 
         Returns:
@@ -39,8 +39,8 @@ class SecretManager:
 
         Priority order:
         1. Docker/Podman secret file (/run/secrets/<secret_name>)
-        2. Environment variable file path (e.g., JWT_SECRET_FILE)
-        3. Environment variable value (e.g., JWT_SECRET_KEY)
+        2. Environment variable file path (e.g., OAUTH_SIGNING_KEY_FILE)
+        3. Environment variable value (e.g., OAUTH_SIGNING_KEY)
         4. .env file (development only)
         """
         # Try Docker/Podman secrets first (production)
@@ -107,11 +107,11 @@ class SecretManager:
 _secrets_cache = {}
 
 
-def get_jwt_secret() -> str:
-    """Get JWT secret for authentication (ADR-027)"""
-    if 'jwt_secret' not in _secrets_cache:
-        _secrets_cache['jwt_secret'] = SecretManager.load_secret("jwt_secret", "JWT_SECRET_KEY")
-    return _secrets_cache['jwt_secret']
+def get_oauth_signing_key() -> str:
+    """Get OAuth signing key for access token generation (ADR-054)"""
+    if 'oauth_signing_key' not in _secrets_cache:
+        _secrets_cache['oauth_signing_key'] = SecretManager.load_secret("oauth_signing_key", "OAUTH_SIGNING_KEY")
+    return _secrets_cache['oauth_signing_key']
 
 
 def get_encryption_key() -> str:
@@ -142,11 +142,11 @@ def get_internal_key_service_secret() -> str:
 # These will raise ValueError on import if secrets not available
 # For optional loading, use the get_*() functions instead
 try:
-    JWT_SECRET = get_jwt_secret()
+    OAUTH_SIGNING_KEY = get_oauth_signing_key()
 except ValueError:
-    # Allow import to succeed even if JWT not configured (for setup scripts)
-    logger.warning("JWT_SECRET not configured - authentication will not work")
-    JWT_SECRET = None
+    # Allow import to succeed even if OAuth not configured (for setup scripts)
+    logger.warning("OAUTH_SIGNING_KEY not configured - authentication will not work")
+    OAUTH_SIGNING_KEY = None
 
 try:
     ENCRYPTION_KEY = get_encryption_key()
