@@ -6675,7 +6675,7 @@
 - After reset, if API server is running, it will attempt to generate embeddings for vocabulary prototypes
 - It will use persisted API keys (not cleared by reset)
 - However, user accounting is cleared, so authentication fails
-- This triggers need to re-run <code>scripts/initialize-auth.sh</code></p>
+- This triggers need to re-run <code>scripts/initialize-platform.sh</code></p>
 <h3 id="database-statistics">Database Statistics</h3>
 <p>✅ <strong>Command:</strong> <code>kg database stats</code>
 - Shows 0 concepts, 0 sources, 0 instances, 0 relationships after reset
@@ -6700,7 +6700,7 @@
 - <strong>Active:</strong> OpenAI text-embedding-3-small (1536 dimensions) - protected
 - <strong>Inactive:</strong> Local nomic-embed-text-v1.5 (768 dimensions)</p>
 <h3 id="authentication-ai-provider-initialization">Authentication &amp; AI Provider Initialization</h3>
-<p>✅ <strong>Script:</strong> <code>scripts/initialize-auth.sh</code></p>
+<p>✅ <strong>Script:</strong> <code>scripts/initialize-platform.sh</code></p>
 <p><strong>Key Characteristics:</strong>
 - <strong>Does NOT require API server running</strong> - operates directly on database
 - Can be used in Docker container initialization
@@ -6737,11 +6737,11 @@
 <li><strong>Proper cold start sequence:</strong></li>
 <li>Step 1: <code>kg admin reset</code> (clears graph data)</li>
 <li>Step 2: Restart API server (picks up clean state)</li>
-<li>Step 3: <code>scripts/initialize-auth.sh</code> (sets up auth + AI provider)</li>
+<li>Step 3: <code>scripts/initialize-platform.sh</code> (sets up auth + AI provider)</li>
 <li>Step 4: Ready to ingest content</li>
 <li><strong>Hot reload mode:</strong> API server can run in hot reload mode during testing</li>
 <li><strong>Protection flags:</strong> Active embedding configurations are protected by default</li>
-<li><strong>initialize-auth.sh independence:</strong> Script operates directly on database, doesn't require API server running</li>
+<li><strong>initialize-platform.sh independence:</strong> Script operates directly on database, doesn't require API server running</li>
 </ol>
 <hr />
 <h2 id="phase-1-edge-case-testing">Phase 1 Edge Case Testing</h2>
@@ -6758,12 +6758,12 @@
 - API server reports ready: "🎉 API ready!"</p>
 <p><strong>Result:</strong> ✅ <strong>PASS - System fails gracefully</strong>
 - API server remains operational
-- User can fix API key via <code>scripts/initialize-auth.sh</code> or API endpoints
+- User can fix API key via <code>scripts/initialize-platform.sh</code> or API endpoints
 - No crash or hang
 - Clear error messages in logs</p>
 <p><strong>Key Finding:</strong> The system doesn't require valid API keys to start - this allows recovery from configuration errors without needing to restart services.</p>
 <h3 id="missing-embeddings-after-invalid-key-recovery">Missing Embeddings After Invalid Key Recovery</h3>
-<p>✅ <strong>Scenario:</strong> After cold start fails with invalid key (0/30 initialized), user runs <code>scripts/initialize-auth.sh</code> with valid key and restarts API</p>
+<p>✅ <strong>Scenario:</strong> After cold start fails with invalid key (0/30 initialized), user runs <code>scripts/initialize-platform.sh</code> with valid key and restarts API</p>
 <p><strong>Observed Behavior:</strong>
 - System checks <code>system_initialization_status</code> table: <code>initialized = true</code>
 - Logs: "Cold start already completed, skipping"

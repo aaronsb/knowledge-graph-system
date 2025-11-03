@@ -5076,9 +5076,9 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>./scripts/services/start-api.sh<span class="w"> </span>-y
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># 4. Initialize auth + configure embeddings (interactive, 60 seconds)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>./scripts/setup/initialize-auth.sh<span class="w">          </span><span class="c1"># Production mode (interactive password)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>./scripts/setup/initialize-platform.sh<span class="w">          </span><span class="c1"># Production mode (interactive password)</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># OR for development (uses default password &#39;Password1!&#39;):</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>./scripts/setup/initialize-auth.sh<span class="w"> </span>--dev<span class="w">    </span><span class="c1"># Development mode (quick start)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>./scripts/setup/initialize-platform.sh<span class="w"> </span>--dev<span class="w">    </span><span class="c1"># Development mode (quick start)</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Steps:</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1"># → Set admin password (or uses Password1! in dev mode)</span>
@@ -5099,16 +5099,16 @@
 <h2 id="configuration-notes">Configuration Notes</h2>
 <h3 id="development-vs-production-mode">Development vs Production Mode</h3>
 <p><strong>Development Mode (<code>--dev</code> flag):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./scripts/setup/initialize-auth.sh<span class="w"> </span>--dev
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./scripts/setup/initialize-platform.sh<span class="w"> </span>--dev
 </code></pre></div>
 - Sets admin password to <code>Password1!</code> (no prompts)
 - Fastest cold start (~30 seconds)
 - Perfect for local development, testing, demos
 - ⚠️ <strong>NEVER use in production!</strong></p>
 <p><strong>Production Mode (default):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/setup/initialize-auth.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/setup/initialize-platform.sh
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># OR in Docker with environment variable:</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">ADMIN_PASSWORD</span><span class="o">=</span><span class="s1">&#39;YourSecurePassword!&#39;</span><span class="w"> </span>./scripts/setup/initialize-auth.sh<span class="w"> </span>--non-interactive
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">ADMIN_PASSWORD</span><span class="o">=</span><span class="s1">&#39;YourSecurePassword!&#39;</span><span class="w"> </span>./scripts/setup/initialize-platform.sh<span class="w"> </span>--non-interactive
 </code></pre></div>
 - Prompts for secure password (interactive)
 - OR accepts password via <code>ADMIN_PASSWORD</code> environment variable (Docker)
@@ -5117,13 +5117,13 @@
   - Minimum 8 characters
   - Uppercase, lowercase, digit, special character</p>
 <h3 id="openai-api-key-recommended-for-quick-start">OpenAI API Key (Recommended for Quick Start)</h3>
-<p>When running <code>initialize-auth.sh</code>, <strong>paste your OpenAI API key directly</strong> when prompted:
+<p>When running <code>initialize-platform.sh</code>, <strong>paste your OpenAI API key directly</strong> when prompted:
 - Uses OpenAI embeddings (1536 dimensions)
 - Fast and reliable
 - Costs ~$0.01 per 1000 concepts</p>
 <h3 id="local-embeddings-no-api-key-required">Local Embeddings (No API Key Required)</h3>
 <p>Alternative if you don't have OpenAI API key:
-- Select option 2 during <code>initialize-auth.sh</code>
+- Select option 2 during <code>initialize-platform.sh</code>
 - Uses Nomic embeddings (768 dimensions)
 - Runs locally via Ollama
 - Free but requires more setup</p>
@@ -5161,7 +5161,7 @@
 </code></pre></div></p>
 <h3 id="api-server-errors-about-openai-key">API server errors about OpenAI key</h3>
 <p>If you see API key errors after starting the server:
-1. Run <code>./scripts/setup/initialize-auth.sh</code> to configure embeddings
+1. Run <code>./scripts/setup/initialize-platform.sh</code> to configure embeddings
 2. Paste your OpenAI API key when prompted
 3. OR choose option 2 for local embeddings</p>
 <h3 id="dimension-mismatch-when-restoring">Dimension mismatch when restoring</h3>
@@ -5189,7 +5189,7 @@
 - Installed all dependencies from requirements.txt
 - Started FastAPI server in background
 - Logs: <code>logs/api_*.log</code></p>
-<p><strong>Auth Setup (initialize-auth.sh):</strong>
+<p><strong>Auth Setup (initialize-platform.sh):</strong>
 - Created admin user in database
 - Generated OAuth infrastructure (ADR-054)
 - Generated encryption keys in <code>.env</code>
@@ -5206,7 +5206,7 @@
 1. Deleted entire repository (<code>rm -rf knowledge-graph-system</code>)
 2. Fresh clone from GitHub
 3. Followed 5-command quick start
-4. Pasted OpenAI API key into <code>initialize-auth.sh</code>
+4. Pasted OpenAI API key into <code>initialize-platform.sh</code>
 5. Switched to Nomic embeddings (to match backup)
 6. Restored production backup (3,436 concepts)</p>
 <p><strong>Results:</strong>
@@ -5257,7 +5257,7 @@
 <p><strong>Scripts:</strong>
 - <code>./scripts/database/start-database.sh</code> - Start database
 - <code>./scripts/services/start-api.sh</code> - Start API server
-- <code>./scripts/setup/initialize-auth.sh</code> - Configure auth + embeddings
+- <code>./scripts/setup/initialize-platform.sh</code> - Configure auth + embeddings
 - <code>./scripts/services/stop-api.sh</code> - Stop API server
 - <code>./scripts/database/stop-database.sh</code> - Stop database</p>
 <p><strong>Documentation:</strong>

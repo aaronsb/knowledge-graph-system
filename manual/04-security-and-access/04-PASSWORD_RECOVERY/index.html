@@ -5344,7 +5344,7 @@
 <p>Success! You're back in. The login command creates OAuth client credentials that don't expire.</p>
 <h2 id="alternative-initialize-auth-script">Alternative: Initialize Auth Script</h2>
 <p>If you need to reset the admin password AND regenerate OAuth token signing keys, use the more comprehensive initialize script:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./scripts/setup/initialize-auth.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./scripts/setup/initialize-platform.sh
 </code></pre></div>
 <p>This script:
 - Detects if admin user exists
@@ -5354,7 +5354,7 @@
 - Provides full setup instructions</p>
 <p><strong>When to use which:</strong>
 - <strong><code>reset-password.sh</code></strong>: Quick password reset for any user
-- <strong><code>initialize-auth.sh</code></strong>: Full authentication setup or admin password + token signing key regeneration</p>
+- <strong><code>initialize-platform.sh</code></strong>: Full authentication setup or admin password + token signing key regeneration</p>
 <h2 id="what-this-does-under-the-hood">What This Does Under the Hood</h2>
 <h3 id="1-direct-database-access">1. <strong>Direct Database Access</strong></h3>
 <p>The script bypasses the API and talks directly to PostgreSQL:</p>
@@ -5396,10 +5396,10 @@
 <h3 id="no-users-found">No Users Found</h3>
 <p><strong>Error:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>✗ No users found in database
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  Run: ./scripts/setup/initialize-auth.sh to create admin user
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  Run: ./scripts/setup/initialize-platform.sh to create admin user
 </code></pre></div></p>
 <p><strong>Fix:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./scripts/setup/initialize-auth.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./scripts/setup/initialize-platform.sh
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Creates initial admin user</span>
 </code></pre></div></p>
 <h3 id="python-import-errors">Python Import Errors</h3>
