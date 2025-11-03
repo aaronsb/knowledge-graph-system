@@ -409,43 +409,22 @@ else
     echo -e "${YELLOW}   - POST /admin/extraction/config${NC}"
 fi
 
-# Embedding Provider Selection (ADR-039)
+# Embedding Provider Configuration Note
 echo ""
 echo -e "${BOLD}Embedding Provider Configuration${NC}"
-echo -e "${YELLOW}Select embedding provider for concept similarity (ADR-039)${NC}"
+echo -e "${YELLOW}Configure embedding provider after logging in (ADR-039)${NC}"
 echo ""
 echo "Available providers:"
-echo "  1) OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
-echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
-echo "  3) Skip (keep default)"
+echo "  • OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
+echo "  • Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
 echo ""
-read -p "Choice [1-3]: " -n 1 -r EMBEDDING_CHOICE
+echo -e "${YELLOW}Default: OpenAI (will be used until you configure otherwise)${NC}"
 echo ""
+echo "To configure embedding provider:"
+echo "  1. Login: ${BOLD}kg login${NC}"
+echo "  2. List options: ${BOLD}kg admin embedding list${NC}"
+echo "  3. Activate: ${BOLD}kg admin embedding activate --provider <provider>${NC}"
 echo ""
-
-if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then
-    if [ "$EMBEDDING_CHOICE" = "1" ]; then
-        EMBEDDING_PROVIDER="openai"
-        EMBEDDING_DISPLAY="OpenAI (text-embedding-3-small)"
-    else
-        EMBEDDING_PROVIDER="local"
-        EMBEDDING_DISPLAY="Nomic (nomic-embed-text-v1.5)"
-    fi
-
-    echo -e "${BLUE}→${NC} Activating ${EMBEDDING_DISPLAY}..."
-
-    # Use kg CLI to activate the embedding provider (handles deactivation of old config)
-    set +e
-    if kg admin embedding activate --provider "$EMBEDDING_PROVIDER" > /dev/null 2>&1; then
-        echo -e "${GREEN}✓${NC} ${EMBEDDING_DISPLAY} activated"
-    else
-        echo -e "${YELLOW}⚠${NC}  Failed to activate embedding provider"
-        echo -e "${YELLOW}   You can activate later via: kg admin embedding activate --provider $EMBEDDING_PROVIDER${NC}"
-    fi
-    set -e
-else
-    echo -e "${YELLOW}⚠${NC}  Keeping default embedding provider (OpenAI)"
-fi
 
 # Success message
 echo ""
@@ -480,14 +459,9 @@ if [ "$DEV_MODE" = true ]; then
     echo -e "    ${YELLOW}For production, run: ./scripts/setup/initialize-auth.sh (without --dev)${NC}"
 fi
 echo ""
-echo -e "${YELLOW}Configuration:${NC}"
-if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then
-    echo -e "  • Embedding provider: ${GREEN}${EMBEDDING_DISPLAY}${NC}"
-else
-    echo -e "  • Embedding provider: ${GREEN}OpenAI (default)${NC}"
-fi
-echo -e "  • AI provider configuration: ${BOLD}POST /admin/extraction/config${NC}"
-echo -e "  • API key management: ${BOLD}GET/POST/DELETE /admin/keys/{provider}${NC}"
-echo -e "  • View key status: ${BOLD}GET /admin/keys${NC}"
-echo -e "  • Switch embedding provider: ${BOLD}kg admin embedding activate --provider <provider>${NC}"
+echo -e "${YELLOW}Configuration Management:${NC}"
+echo -e "  • Embedding provider: ${BOLD}kg admin embedding activate --provider <provider>${NC}"
+echo -e "  • AI extraction config: ${BOLD}kg admin extraction set --provider <provider> --model <model>${NC}"
+echo -e "  • API key management: ${BOLD}kg admin keys list${NC}"
+echo -e "  • View system status: ${BOLD}kg admin status${NC}"
 echo ""
