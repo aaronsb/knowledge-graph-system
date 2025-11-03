@@ -690,35 +690,31 @@ configure_api_keys() {
     echo "  • Ollama extraction + local embedding → no keys needed"
     echo ""
 
-    echo -e "${BLUE}→${NC} Configuring API keys via Python helper script..."
+    # Call Python helper script for interactive configuration
+    export PROJECT_ROOT
+    export PYTHON
 
-    # TODO: Implement Python helper script for API key management
-    # For now, show instructions for manual configuration
+    echo -e "${BLUE}→${NC} Launching interactive API key configuration..."
     echo ""
-    echo -e "${YELLOW}⚠${NC}  API key configuration via menu not yet implemented"
-    echo ""
-    echo "Configure API keys manually using one of these methods:"
-    echo ""
-    if [ "$needs_openai" = true ]; then
-        echo -e "${BOLD}OpenAI:${NC}"
-        echo "  1. Via kg CLI after login:"
-        echo "     kg login -u admin"
-        echo "     curl -X POST http://localhost:8000/admin/keys/openai -F \"api_key=sk-...\""
-        echo ""
-        echo "  2. Via .env file (development only):"
-        echo "     echo 'OPENAI_API_KEY=sk-...' >> .env"
-        echo ""
-    fi
 
-    if [ "$needs_anthropic" = true ]; then
-        echo -e "${BOLD}Anthropic:${NC}"
-        echo "  1. Via kg CLI after login:"
-        echo "     kg login -u admin"
-        echo "     curl -X POST http://localhost:8000/admin/keys/anthropic -F \"api_key=sk-ant-...\""
+    "$PYTHON" "$PROJECT_ROOT/scripts/admin/manage-api-keys.py" --interactive
+
+    if [ $? -eq 0 ]; then
         echo ""
-        echo "  2. Via .env file (development only):"
-        echo "     echo 'ANTHROPIC_API_KEY=sk-ant-...' >> .env"
+        echo -e "${GREEN}✓${NC} API key configuration complete"
+    else
         echo ""
+        echo -e "${YELLOW}⚠${NC}  API key configuration failed or incomplete"
+        echo ""
+        echo "You can configure keys manually after startup:"
+        if [ "$needs_openai" = true ]; then
+            echo -e "${BOLD}OpenAI:${NC}"
+            echo "  curl -X POST http://localhost:8000/admin/keys/openai -F \"api_key=sk-...\""
+        fi
+        if [ "$needs_anthropic" = true ]; then
+            echo -e "${BOLD}Anthropic:${NC}"
+            echo "  curl -X POST http://localhost:8000/admin/keys/anthropic -F \"api_key=sk-ant-...\""
+        fi
     fi
 
     echo ""
