@@ -488,7 +488,7 @@ Ontology: "Watts Lectures"
 Concepts extracted: ["ego transcendence", "recursive awareness", "self-reference"]
 ```
 
-**Step 2**: User converts `watts_lecture_1.pdf` to images, ingests page 1
+**Step 2**: User converts slide deck `watts_lecture_1.pdf` to images, ingests page 1
 ```
 Ontology: "Watts Lectures"
 Visual search: No similar images yet
@@ -1217,21 +1217,20 @@ echo "Embedding models ready: nomic-embed-vision, nomic-embed-text"
 
 ## Future Enhancements
 
-### Near-Term (Next 3-6 months)
+### Near-Term
 - [ ] Thumbnail generation for faster UI loading
 - [ ] Batch image ingestion (multiple images per API call)
 - [ ] Image compression options (JPEG quality slider)
-- [ ] GPT-4V and Claude 3.5 Sonnet backend support
+- [ ] GPT-4V and Claude 4.5 Sonnet backend support
 - [ ] MinIO replication for HA
 
-### Medium-Term (6-12 months)
-- [ ] PDF→image conversion integrated (using pdf.js or similar permissive library)
+### Medium-Term
 - [ ] Multi-page document grouping (one Source, multiple ImageAssets)
 - [ ] OCR fallback for text-heavy images
 - [ ] Image annotation in UI (draw bounding boxes, add notes)
 - [ ] Visual concept clustering (k-means on image embeddings)
 
-### Long-Term (12+ months)
+### Long-Term
 - [ ] Video frame extraction and analysis
 - [ ] Temporal relationships between video frames (PRECEDES, FOLLOWS)
 - [ ] Interactive image exploration (zoom to region, extract sub-concepts)
