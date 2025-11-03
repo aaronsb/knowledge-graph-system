@@ -1215,6 +1215,48 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#93-kg-oauth-oauth-client-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3 kg oauth - OAuth Client Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9.3 kg oauth - OAuth Client Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#931-kg-oauth-clients-alias-kg-oauth-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3.1 kg oauth clients (alias: kg oauth list)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#932-kg-oauth-create-mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3.2 kg oauth create-mcp
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#933-kg-oauth-revoke-client-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3.3 kg oauth revoke &lt;client-id&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2360,6 +2402,75 @@
   
   <span class="md-ellipsis">
     kg job
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
     
   </span>
   
@@ -5788,6 +5899,48 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#93-kg-oauth-oauth-client-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3 kg oauth - OAuth Client Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9.3 kg oauth - OAuth Client Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#931-kg-oauth-clients-alias-kg-oauth-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3.1 kg oauth clients (alias: kg oauth list)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#932-kg-oauth-create-mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3.2 kg oauth create-mcp
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#933-kg-oauth-revoke-client-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3.3 kg oauth revoke &lt;client-id&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5830,7 +5983,6 @@
 <ul>
 <li><code>--api-url &lt;url&gt;</code> - Override API base URL (default: http://localhost:8000)</li>
 <li><code>--client-id &lt;id&gt;</code> - Client ID for multi-tenancy (env: KG_CLIENT_ID)</li>
-<li><code>--api-key &lt;key&gt;</code> - API key for authentication (env: KG_API_KEY)</li>
 </ul>
 <h3 id="command-naming-convention">Command Naming Convention</h3>
 <p>Commands use <strong>singular</strong> names with optional <strong>aliases</strong> for convenience:</p>
@@ -6471,30 +6623,154 @@
 <hr />
 <h2 id="9-authentication-commands">9. Authentication Commands</h2>
 <blockquote>
-<p><strong>Note:</strong> Detailed authentication documentation is in <a href="../../04-security-and-access/01-AUTHENTICATION/">01-AUTHENTICATION.md</a> (ADR-027)</p>
+<p><strong>Note:</strong> Detailed authentication documentation is in <a href="../../04-security-and-access/01-AUTHENTICATION/">01-AUTHENTICATION.md</a> (ADR-054: OAuth 2.0)</p>
 </blockquote>
+<p>The Knowledge Graph System uses OAuth 2.0 client credentials for authentication. All authenticated commands automatically handle token refresh.</p>
 <h3 id="91-kg-login">9.1 <code>kg login</code></h3>
 <p><strong>Command:</strong> <code>kg login [options]</code></p>
-<p><strong>Purpose:</strong> Authenticate with username and password</p>
+<p><strong>Purpose:</strong> Authenticate and create personal OAuth client credentials</p>
 <p><strong>Options:</strong>
-- <code>-u, --username &lt;username&gt;</code> - Username for authentication</p>
+- <code>-u, --username &lt;username&gt;</code> - Username (will prompt if not provided)</p>
 <p><strong>Flow:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg login
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>  → Prompt for username (if not provided)
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>  → Prompt for username (if not provided or saved)
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>  → Prompt for password (hidden input)
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>  → POST /auth/login
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>  → Save auth token to config
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>  → Display success message
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>  → POST /auth/oauth/clients/personal
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>  → Save OAuth client credentials to ~/.kg/config.json
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>  → Display success message with client info
+</code></pre></div></p>
+<p><strong>What it does:</strong>
+- Authenticates with username/password
+- Creates a long-lived OAuth client (client_id + client_secret)
+- Stores OAuth credentials locally (NOT the password)
+- Future API requests use OAuth client credentials grant</p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>login
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Username: admin</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="c1"># Password: ********</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="c1">#</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1"># ✓ Creating personal OAuth client credentials...</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="c1"># ✓ Login successful</span>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="c1">#</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="c1"># Logged in as: admin (role: admin)</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="c1"># OAuth Client: kg-cli-admin-20251102</span>
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="c1"># Scopes: read:*, write:*</span>
 </code></pre></div></p>
 <h3 id="92-kg-logout">9.2 <code>kg logout</code></h3>
 <p><strong>Command:</strong> <code>kg logout [options]</code></p>
-<p><strong>Purpose:</strong> End authentication session</p>
+<p><strong>Purpose:</strong> Revoke OAuth client and clear credentials</p>
 <p><strong>Options:</strong>
-- <code>-a, --all</code> - Clear all tokens (not just current)</p>
+- <code>--forget</code> - Also forget saved username</p>
 <p><strong>Flow:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg logout
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>  → Remove auth token from config
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>  → Display success message
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg logout
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>  → Get OAuth client credentials from config
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>  → DELETE /auth/oauth/clients/personal/{client_id}
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>  → Remove OAuth credentials from config
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>  → Display success message
+</code></pre></div></p>
+<p><strong>What it does:</strong>
+- Revokes the OAuth client at the server (invalidates credentials)
+- Clears local OAuth credentials from config
+- Optionally clears saved username (with <code>--forget</code>)</p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg<span class="w"> </span><span class="nb">logout</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="c1"># ✓ OAuth client revoked</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="c1"># ✓ Logged out successfully</span>
+</code></pre></div></p>
+<h3 id="93-kg-oauth-oauth-client-management">9.3 <code>kg oauth</code> - OAuth Client Management</h3>
+<p><strong>Command:</strong> <code>kg oauth &lt;subcommand&gt;</code></p>
+<p><strong>Purpose:</strong> Manage personal OAuth clients (list, create for MCP, revoke)</p>
+<h4 id="931-kg-oauth-clients-alias-kg-oauth-list">9.3.1 <code>kg oauth clients</code> (alias: <code>kg oauth list</code>)</h4>
+<p><strong>Purpose:</strong> List all personal OAuth clients</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg oauth clients
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>  → GET /auth/oauth/clients/personal
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>  → Display table of OAuth clients
+</code></pre></div></p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>clients
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Personal OAuth Clients</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="c1">#</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="c1"># Client ID                 Name                 Scopes          Created              Status</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># ────────────────────────────────────────────────────────────────────────────────────────────</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a><span class="c1"># kg-cli-admin-20251102     kg CLI (admin)       read:*, write:* 2 hours ago          ✓ Active</span>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="c1"># kg-mcp-server-admin       kg MCP Server (a...  read:*, write:* 1 day ago            ✓ Active</span>
+</code></pre></div></p>
+<h4 id="932-kg-oauth-create-mcp">9.3.2 <code>kg oauth create-mcp</code></h4>
+<p><strong>Purpose:</strong> Create OAuth client for MCP server and display ready-to-paste config</p>
+<p><strong>Options:</strong>
+- <code>--name &lt;name&gt;</code> - Custom client name (default: "kg MCP Server (username)")</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kg oauth create-mcp
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>  → POST /auth/oauth/clients/personal/new
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>  → Display OAuth credentials
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>  → Display Claude Desktop config (ready to paste)
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>  → Display claude CLI command
+</code></pre></div></p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>create-mcp
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># 🔐 Creating OAuth client for MCP server...</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="c1">#</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="c1"># ✅ OAuth client created successfully!</span>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="c1">#</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a><span class="c1"># ════════════════════════════════════════════════════════════════════════════════</span>
+<a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a><span class="c1"># CLAUDE DESKTOP CONFIG</span>
+<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a><span class="c1"># ════════════════════════════════════════════════════════════════════════════════</span>
+<a id="__codelineno-34-11" name="__codelineno-34-11" href="#__codelineno-34-11"></a><span class="c1">#</span>
+<a id="__codelineno-34-12" name="__codelineno-34-12" href="#__codelineno-34-12"></a><span class="c1"># Add this to your Claude Desktop config:</span>
+<a id="__codelineno-34-13" name="__codelineno-34-13" href="#__codelineno-34-13"></a><span class="c1">#</span>
+<a id="__codelineno-34-14" name="__codelineno-34-14" href="#__codelineno-34-14"></a><span class="c1">#   &quot;knowledge-graph&quot;: {</span>
+<a id="__codelineno-34-15" name="__codelineno-34-15" href="#__codelineno-34-15"></a><span class="c1">#     &quot;command&quot;: &quot;kg-mcp-server&quot;,</span>
+<a id="__codelineno-34-16" name="__codelineno-34-16" href="#__codelineno-34-16"></a><span class="c1">#     &quot;env&quot;: {</span>
+<a id="__codelineno-34-17" name="__codelineno-34-17" href="#__codelineno-34-17"></a><span class="c1">#       &quot;KG_OAUTH_CLIENT_ID&quot;: &quot;kg-mcp-server-admin-20251102&quot;,</span>
+<a id="__codelineno-34-18" name="__codelineno-34-18" href="#__codelineno-34-18"></a><span class="c1">#       &quot;KG_OAUTH_CLIENT_SECRET&quot;: &quot;oauth_secret_abc123...&quot;,</span>
+<a id="__codelineno-34-19" name="__codelineno-34-19" href="#__codelineno-34-19"></a><span class="c1">#       &quot;KG_API_URL&quot;: &quot;http://localhost:8000&quot;</span>
+<a id="__codelineno-34-20" name="__codelineno-34-20" href="#__codelineno-34-20"></a><span class="c1">#     }</span>
+<a id="__codelineno-34-21" name="__codelineno-34-21" href="#__codelineno-34-21"></a><span class="c1">#   }</span>
+<a id="__codelineno-34-22" name="__codelineno-34-22" href="#__codelineno-34-22"></a><span class="c1">#</span>
+<a id="__codelineno-34-23" name="__codelineno-34-23" href="#__codelineno-34-23"></a><span class="c1"># ⚠️  IMPORTANT:</span>
+<a id="__codelineno-34-24" name="__codelineno-34-24" href="#__codelineno-34-24"></a><span class="c1">#   • Keep these credentials secure!</span>
+<a id="__codelineno-34-25" name="__codelineno-34-25" href="#__codelineno-34-25"></a><span class="c1">#   • Client secret is shown only once</span>
+<a id="__codelineno-34-26" name="__codelineno-34-26" href="#__codelineno-34-26"></a><span class="c1">#   • To revoke: kg oauth revoke kg-mcp-server-admin-20251102</span>
+</code></pre></div></p>
+<h4 id="933-kg-oauth-revoke-client-id">9.3.3 <code>kg oauth revoke &lt;client-id&gt;</code></h4>
+<p><strong>Purpose:</strong> Revoke an OAuth client</p>
+<p><strong>Options:</strong>
+- <code>--force</code> - Force revocation even if it's your current CLI client</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kg oauth revoke &lt;client-id&gt;
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>  → Check if revoking current CLI client
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>  → DELETE /auth/oauth/clients/personal/{client_id}
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>  → Display success message
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>  → If current CLI client: clear config and logout
+</code></pre></div></p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># Revoke MCP server client</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kg<span class="w"> </span>oauth<span class="w"> </span>revoke<span class="w"> </span>kg-mcp-server-admin-20251102
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># Output:</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="c1"># 🗑️  Revoking OAuth client kg-mcp-server-admin-20251102...</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="c1">#</span>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="c1"># ✅ OAuth client revoked successfully!</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a><span class="c1"># Try to revoke current CLI client (protected)</span>
+<a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a>kg<span class="w"> </span>oauth<span class="w"> </span>revoke<span class="w"> </span>kg-cli-admin-20251102
+<a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a>
+<a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a><span class="c1"># Output:</span>
+<a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a><span class="c1"># ⚠️  Warning: This is your current CLI OAuth client</span>
+<a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a><span class="c1">#    Client ID: kg-cli-admin-20251102</span>
+<a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a><span class="c1">#    Revoking this will log you out.</span>
+<a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a><span class="c1">#</span>
+<a id="__codelineno-36-17" name="__codelineno-36-17" href="#__codelineno-36-17"></a><span class="c1">#    To proceed, use: kg oauth revoke kg-cli-admin-20251102 --force</span>
+<a id="__codelineno-36-18" name="__codelineno-36-18" href="#__codelineno-36-18"></a><span class="c1">#    Or use: kg logout</span>
 </code></pre></div></p>
 <hr />
 

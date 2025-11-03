@@ -1314,9 +1314,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#view-active-sessions" class="md-nav__link">
+  <a href="#view-active-oauth-clients" class="md-nav__link">
     <span class="md-ellipsis">
-      View Active Sessions
+      View Active OAuth Clients
     </span>
   </a>
   
@@ -2030,6 +2030,75 @@
   
   <span class="md-ellipsis">
     kg job
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
     
   </span>
   
@@ -5120,9 +5189,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#view-active-sessions" class="md-nav__link">
+  <a href="#view-active-oauth-clients" class="md-nav__link">
     <span class="md-ellipsis">
-      View Active Sessions
+      View Active OAuth Clients
     </span>
   </a>
   
@@ -5213,30 +5282,33 @@
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  Password: (the password you just set)
 </code></pre></div>
 <p><strong>Step 5: Test login</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/login<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/x-www-form-urlencoded&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;username=admin&amp;password=YourNewPassword123!&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>login
 </code></pre></div>
-<p>Response:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;access_token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">&quot;token_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bearer&quot;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">}</span>
+<p>Output:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Username: admin
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Password: ********
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>✓ Creating personal OAuth client credentials...
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>✓ Login successful
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Logged in as: admin (role: admin)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>OAuth Client: kg-cli-admin-20251102
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>Scopes: read:*, write:*
 </code></pre></div></p>
-<p>Success! You're back in.</p>
+<p>Success! You're back in. The login command creates OAuth client credentials that don't expire.</p>
 <h2 id="alternative-initialize-auth-script">Alternative: Initialize Auth Script</h2>
-<p>If you need to reset the admin password AND regenerate JWT secrets, use the more comprehensive initialize script:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./scripts/initialize-auth.sh
+<p>If you need to reset the admin password AND regenerate OAuth token signing keys, use the more comprehensive initialize script:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./scripts/setup/initialize-auth.sh
 </code></pre></div>
 <p>This script:
 - Detects if admin user exists
 - Offers to reset admin password
-- Optionally regenerates JWT secret key
+- Optionally regenerates JWT_SECRET_KEY (used to sign OAuth access tokens)
 - Updates <code>.env</code> file with new secrets
 - Provides full setup instructions</p>
 <p><strong>When to use which:</strong>
 - <strong><code>reset-password.sh</code></strong>: Quick password reset for any user
-- <strong><code>initialize-auth.sh</code></strong>: Full authentication setup or admin password + JWT secret regeneration</p>
+- <strong><code>initialize-auth.sh</code></strong>: Full authentication setup or admin password + token signing key regeneration</p>
 <h2 id="what-this-does-under-the-hood">What This Does Under the Hood</h2>
 <h3 id="1-direct-database-access">1. <strong>Direct Database Access</strong></h3>
 <p>The script bypasses the API and talks directly to PostgreSQL:</p>
@@ -5278,10 +5350,10 @@
 <h3 id="no-users-found">No Users Found</h3>
 <p><strong>Error:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>✗ No users found in database
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  Run: ./scripts/initialize-auth.sh to create admin user
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  Run: ./scripts/setup/initialize-auth.sh to create admin user
 </code></pre></div></p>
 <p><strong>Fix:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./scripts/initialize-auth.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./scripts/setup/initialize-auth.sh
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Creates initial admin user</span>
 </code></pre></div></p>
 <h3 id="python-import-errors">Python Import Errors</h3>
@@ -5436,10 +5508,16 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span><span class="s2">&quot;UPDATE kg_auth.users SET primary_role = &#39;curator&#39; WHERE username = &#39;alice&#39;;&quot;</span>
 </code></pre></div>
-<h3 id="view-active-sessions">View Active Sessions</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Sessions are stored in JWT tokens (stateless)</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="c1"># No session table to query</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="c1"># Users stay logged in until token expires (default: 60 minutes)</span>
+<h3 id="view-active-oauth-clients">View Active OAuth Clients</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># OAuth client credentials are long-lived and stored in database</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="c1"># Access tokens are short-lived (1 hour) and not persisted</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># List all OAuth clients for a user</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="w">  </span><span class="s2">&quot;SELECT client_id, client_name, scopes, created_at</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="s2">   FROM kg_auth.oauth_clients</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="s2">   WHERE metadata-&gt;&gt;&#39;personal&#39; = &#39;true&#39;</span>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="s2">     AND (metadata-&gt;&gt;&#39;user_id&#39;)::int = (SELECT id FROM kg_auth.users WHERE username = &#39;admin&#39;);&quot;</span>
 </code></pre></div>
 <hr />
 <p><strong>Last Updated:</strong> 2025-10-14</p>

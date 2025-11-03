@@ -1713,6 +1713,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -7185,7 +7254,7 @@
 </code></pre></div>
 <h3 id="manual-testing">Manual Testing</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a><span class="c1"># 1. Start API (single worker for initial testing)</span>
-<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>./scripts/start-api.sh<span class="w"> </span>-y
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>./scripts/services/start-api.sh<span class="w"> </span>-y
 <a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>
 <a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="c1"># 2. Check scheduled jobs</span>
 <a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>psql<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT * FROM kg_api.scheduled_jobs&quot;</span>

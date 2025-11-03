@@ -362,6 +362,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#development-vs-production-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development vs Production Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#openai-api-key-recommended-for-quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       OpenAI API Key (Recommended for Quick Start)
@@ -1914,6 +1923,75 @@
   
   <span class="md-ellipsis">
     kg job
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
     
   </span>
   
@@ -4758,6 +4836,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#development-vs-production-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development vs Production Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#openai-api-key-recommended-for-quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       OpenAI API Key (Recommended for Quick Start)
@@ -4937,21 +5024,26 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># 2. Start database - auto-applies schema + migrations (15 seconds)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>./scripts/start-database.sh
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>./scripts/database/start-database.sh
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># 3. Start API server - auto-creates venv + installs deps (15 seconds)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>./scripts/start-api.sh<span class="w"> </span>-y
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>./scripts/services/start-api.sh<span class="w"> </span>-y
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># 4. Initialize auth + configure embeddings (interactive, 60 seconds)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>./scripts/initialize-auth.sh
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># → Set admin password</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># → Auto-generates JWT secrets</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># → Choose embedding option:</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1">#    Option 1: OpenAI (paste your API key when prompted)</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">#    Option 2: Local embeddings (Nomic - no API key needed)</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># 5. Install kg CLI (20 seconds)</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="nb">cd</span><span class="w"> </span>client<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./install.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>./scripts/setup/initialize-auth.sh<span class="w">          </span><span class="c1"># Production mode (interactive password)</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># OR for development (uses default password &#39;Password1!&#39;):</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>./scripts/setup/initialize-auth.sh<span class="w"> </span>--dev<span class="w">    </span><span class="c1"># Development mode (quick start)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Steps:</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1"># → Set admin password (or uses Password1! in dev mode)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="c1"># → Auto-generates JWT secrets</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># → Auto-generates encryption key</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># → Choose embedding option:</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1">#    Option 1: OpenAI (paste your API key when prompted)</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1">#    Option 2: Local embeddings (Nomic - no API key needed)</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1"># 5. Install kg CLI (20 seconds)</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="nb">cd</span><span class="w"> </span>client<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./install.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
 </code></pre></div>
 <p><strong>Verify it worked:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>health<span class="w">          </span><span class="c1"># Should show: API healthy</span>
@@ -4959,6 +5051,25 @@
 </code></pre></div></p>
 <p><strong>Total time:</strong> ~3-4 minutes for fresh system! 🚀</p>
 <h2 id="configuration-notes">Configuration Notes</h2>
+<h3 id="development-vs-production-mode">Development vs Production Mode</h3>
+<p><strong>Development Mode (<code>--dev</code> flag):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./scripts/setup/initialize-auth.sh<span class="w"> </span>--dev
+</code></pre></div>
+- Sets admin password to <code>Password1!</code> (no prompts)
+- Fastest cold start (~30 seconds)
+- Perfect for local development, testing, demos
+- ⚠️ <strong>NEVER use in production!</strong></p>
+<p><strong>Production Mode (default):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/setup/initialize-auth.sh
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># OR in Docker with environment variable:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">ADMIN_PASSWORD</span><span class="o">=</span><span class="s1">&#39;YourSecurePassword!&#39;</span><span class="w"> </span>./scripts/setup/initialize-auth.sh<span class="w"> </span>--non-interactive
+</code></pre></div>
+- Prompts for secure password (interactive)
+- OR accepts password via <code>ADMIN_PASSWORD</code> environment variable (Docker)
+- Required for production deployments
+- Password must meet requirements:
+  - Minimum 8 characters
+  - Uppercase, lowercase, digit, special character</p>
 <h3 id="openai-api-key-recommended-for-quick-start">OpenAI API Key (Recommended for Quick Start)</h3>
 <p>When running <code>initialize-auth.sh</code>, <strong>paste your OpenAI API key directly</strong> when prompted:
 - Uses OpenAI embeddings (1536 dimensions)
@@ -4974,12 +5085,12 @@
 <p>If you have an existing backup to restore:</p>
 <p><strong>Step 1: Match embedder to backup</strong></p>
 <p>Check your backup's embedding dimensions:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># If backup was created with Nomic (768 dims):</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>activate<span class="w"> </span><span class="m">2</span><span class="w"> </span>--force<span class="w">  </span><span class="c1"># Activate Nomic</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># If backup was created with Nomic (768 dims):</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>activate<span class="w"> </span><span class="m">2</span><span class="w"> </span>--force<span class="w">  </span><span class="c1"># Activate Nomic</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
 </code></pre></div></p>
 <p><strong>Step 2: Restore</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>~/.local/share/kg/backups/your_backup.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>~/.local/share/kg/backups/your_backup.json
 </code></pre></div></p>
 <p><strong>Expected timing:</strong> ~5 minutes for 30k items (3,436 concepts, 814 sources, 5,535 instances)</p>
 <p><strong>What you'll see:</strong>
@@ -4992,34 +5103,34 @@
 1. Restart Claude Desktop after installation (to detect new MCP server)
 2. MCP tools will appear automatically (search_concepts, get_database_stats, etc.)</p>
 <p>Test it works:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># In Claude Desktop, try:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="s2">&quot;Show me database statistics&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s2">&quot;Search for concepts related to parallel processing&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># In Claude Desktop, try:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s2">&quot;Show me database statistics&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s2">&quot;Search for concepts related to parallel processing&quot;</span>
 </code></pre></div></p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="kg-command-not-found">"kg: command not found"</h3>
 <p>Add <code>~/.local/bin</code> to your PATH:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export PATH=&quot;$HOME/.local/bin:$PATH&quot;&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">source</span><span class="w"> </span>~/.bashrc
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export PATH=&quot;$HOME/.local/bin:$PATH&quot;&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">source</span><span class="w"> </span>~/.bashrc
 </code></pre></div></p>
 <h3 id="api-server-errors-about-openai-key">API server errors about OpenAI key</h3>
 <p>If you see API key errors after starting the server:
-1. Run <code>./scripts/initialize-auth.sh</code> to configure embeddings
+1. Run <code>./scripts/setup/initialize-auth.sh</code> to configure embeddings
 2. Paste your OpenAI API key when prompted
 3. OR choose option 2 for local embeddings</p>
 <h3 id="dimension-mismatch-when-restoring">Dimension mismatch when restoring</h3>
 <p>Your backup uses different embeddings than active config:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Check what embedders are available</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Switch to match backup (use --force if database is empty)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>activate<span class="w"> </span>&lt;config-id&gt;<span class="w"> </span>--force
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Check what embedders are available</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Switch to match backup (use --force if database is empty)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>activate<span class="w"> </span>&lt;config-id&gt;<span class="w"> </span>--force
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
 </code></pre></div></p>
 <h3 id="database-wont-start">Database won't start</h3>
 <p>Hard reset:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>docker-compose<span class="w"> </span>down<span class="w"> </span>-v
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./scripts/start-database.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>docker-compose<span class="w"> </span>down<span class="w"> </span>-v
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./scripts/database/start-database.sh
 </code></pre></div></p>
 <h2 id="what-just-happened">What Just Happened?</h2>
 <p><strong>Database (start-database.sh):</strong>
@@ -5034,9 +5145,11 @@
 - Logs: <code>logs/api_*.log</code></p>
 <p><strong>Auth Setup (initialize-auth.sh):</strong>
 - Created admin user in database
-- Generated JWT secrets in <code>.env</code>
+- Generated OAuth infrastructure (ADR-054)
+- Generated encryption keys in <code>.env</code>
 - Configured embedding provider (OpenAI or Nomic)
-- System ready for production use</p>
+- <strong>Dev mode (<code>--dev</code>)</strong>: Uses password <code>Password1!</code> for quick start
+- <strong>Production mode</strong>: Prompts for secure password or uses <code>ADMIN_PASSWORD</code> env var</p>
 <p><strong>CLI Install (client/install.sh):</strong>
 - Built TypeScript client
 - Linked <code>kg</code> command to <code>~/.local/bin/kg</code>
@@ -5062,16 +5175,16 @@
 <h2 id="next-steps">Next Steps</h2>
 <p>Once system is running:</p>
 <p><strong>Ingest your first document:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>document.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>document.txt
 </code></pre></div></p>
 <p><strong>Search the graph:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;your search term&quot;</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;concept A&quot;</span><span class="w"> </span><span class="s2">&quot;concept B&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;your search term&quot;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;concept A&quot;</span><span class="w"> </span><span class="s2">&quot;concept B&quot;</span>
 </code></pre></div></p>
 <p><strong>Backup your data:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Creates: ~/.local/share/kg/backups/full_backup_YYYYMMDD_HHMMSS.json</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Creates: ~/.local/share/kg/backups/full_backup_YYYYMMDD_HHMMSS.json</span>
 </code></pre></div></p>
 <p><strong>Explore via MCP (Claude Desktop):</strong>
 - Search concepts semantically
@@ -5096,11 +5209,11 @@
 - Backups: <code>~/.local/share/kg/backups/</code>
 - Logs: <code>logs/api_*.log</code></p>
 <p><strong>Scripts:</strong>
-- <code>./scripts/start-database.sh</code> - Start database
-- <code>./scripts/start-api.sh</code> - Start API server
-- <code>./scripts/initialize-auth.sh</code> - Configure auth + embeddings
-- <code>./scripts/stop-api.sh</code> - Stop API server
-- <code>./scripts/stop-database.sh</code> - Stop database</p>
+- <code>./scripts/database/start-database.sh</code> - Start database
+- <code>./scripts/services/start-api.sh</code> - Start API server
+- <code>./scripts/setup/initialize-auth.sh</code> - Configure auth + embeddings
+- <code>./scripts/services/stop-api.sh</code> - Stop API server
+- <code>./scripts/database/stop-database.sh</code> - Stop database</p>
 <p><strong>Documentation:</strong>
 - <code>docs/guides/QUICKSTART.md</code> - User quickstart guide
 - <code>CLAUDE.md</code> - Developer guide for Claude Code

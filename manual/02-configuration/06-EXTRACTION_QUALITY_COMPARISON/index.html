@@ -2185,6 +2185,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -6367,28 +6436,28 @@
 <a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>
 <a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="c1"># 3. Test Qwen3 14B (MOST concepts, 16GB VRAM)</span>
 <a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen3:14b
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
 <a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
 <a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results (~60s per chunk)</span>
 <a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>
 <a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="c1"># 4. Test Qwen 2.5 14B (highest canonical, 16GB VRAM)</span>
 <a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
-<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
 <a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
 <a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results</span>
 <a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a>
 <a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a><span class="c1"># 5. Test GPT-OSS 20B (densest graph, 20GB+ VRAM)</span>
 <a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>gpt-oss:20b
-<a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-23-31" name="__codelineno-23-31" href="#__codelineno-23-31"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
 <a id="__codelineno-23-32" name="__codelineno-23-32" href="#__codelineno-23-32"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
 <a id="__codelineno-23-33" name="__codelineno-23-33" href="#__codelineno-23-33"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results</span>
 <a id="__codelineno-23-34" name="__codelineno-23-34" href="#__codelineno-23-34"></a>
 <a id="__codelineno-23-35" name="__codelineno-23-35" href="#__codelineno-23-35"></a><span class="c1"># 6. Test Mistral 7B (optional - not recommended)</span>
 <a id="__codelineno-23-36" name="__codelineno-23-36" href="#__codelineno-23-36"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-23-37" name="__codelineno-23-37" href="#__codelineno-23-37"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-23-37" name="__codelineno-23-37" href="#__codelineno-23-37"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-23-38" name="__codelineno-23-38" href="#__codelineno-23-38"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span>
 <a id="__codelineno-23-39" name="__codelineno-23-39" href="#__codelineno-23-39"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;test_comparison&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
 <a id="__codelineno-23-40" name="__codelineno-23-40" href="#__codelineno-23-40"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Record results</span>

@@ -1751,6 +1751,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#login" class="md-nav__link">
+    <span class="md-ellipsis">
+      login
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logout" class="md-nav__link">
+    <span class="md-ellipsis">
+      logout
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oauth" class="md-nav__link">
+    <span class="md-ellipsis">
+      oauth
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oauth">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clients-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      clients (list)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      create-mcp
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      revoke
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ingest" class="md-nav__link">
     <span class="md-ellipsis">
       ingest
@@ -2528,7 +2588,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#revoke" class="md-nav__link">
+  <a href="#revoke_1" class="md-nav__link">
     <span class="md-ellipsis">
       revoke
     </span>
@@ -2921,6 +2981,75 @@
   
   <span class="md-ellipsis">
     kg job
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
     
   </span>
   
@@ -5920,6 +6049,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#login" class="md-nav__link">
+    <span class="md-ellipsis">
+      login
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logout" class="md-nav__link">
+    <span class="md-ellipsis">
+      logout
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oauth" class="md-nav__link">
+    <span class="md-ellipsis">
+      oauth
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oauth">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clients-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      clients (list)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      create-mcp
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      revoke
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ingest" class="md-nav__link">
     <span class="md-ellipsis">
       ingest
@@ -6697,7 +6886,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#revoke" class="md-nav__link">
+  <a href="#revoke_1" class="md-nav__link">
     <span class="md-ellipsis">
       revoke
     </span>
@@ -6938,13 +7127,16 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from CLI source code.
-Last updated: 2025-11-01</p>
+Last updated: 2025-11-03</p>
 </blockquote>
 <hr />
 <h2 id="commands">Commands</h2>
 <ul>
 <li><a href="#health"><code>health</code></a> - Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.</li>
 <li><a href="#config"><code>config</code> (cfg)</a> - Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).</li>
+<li><a href="#login"><code>login</code></a> - Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)</li>
+<li><a href="#logout"><code>logout</code></a> - End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)</li>
+<li><a href="#oauth"><code>oauth</code></a> - Manage OAuth clients (list, create for MCP, revoke)</li>
 <li><a href="#ingest"><code>ingest</code></a> - Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.</li>
 <li><a href="#job"><code>job</code> (jobs)</a> - Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)</li>
 <li><a href="#search"><code>search</code></a> - Search and explore the knowledge graph using vector similarity, graph traversal, and path finding</li>
@@ -7225,10 +7417,119 @@ Last updated: 2025-11-01</p>
 <p><strong>Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>dto<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
+<h2 id="login">login</h2>
+<p>Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>login<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-u, --username &lt;username&gt;</code></td>
+<td>Username (will prompt if not provided - can be saved for future logins)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h2 id="logout">logout</h2>
+<p>End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span><span class="nb">logout</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--forget</code></td>
+<td>Also forget saved username (requires username prompt on next login)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h2 id="oauth">oauth</h2>
+<p>Manage OAuth clients (list, create for MCP, revoke)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Subcommands:</strong></p>
+<ul>
+<li><code>clients</code> (<code>list</code>) - List your personal OAuth clients</li>
+<li><code>create-mcp</code> - Create OAuth client for MCP server and display config</li>
+<li><code>revoke</code> - Revoke an OAuth client</li>
+</ul>
+<hr />
+<h3 id="clients-list">clients (list)</h3>
+<p>List your personal OAuth clients</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>clients<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h3 id="create-mcp">create-mcp</h3>
+<p>Create OAuth client for MCP server and display config</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg<span class="w"> </span>create-mcp<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--name &lt;name&gt;</code></td>
+<td>Custom client name</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="revoke">revoke</h3>
+<p>Revoke an OAuth client</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;client-id&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;client-id&gt;</code> - Required</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--force</code></td>
+<td>Force revocation even if it's your current CLI client</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 <h2 id="ingest">ingest</h2>
 <p>Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -7240,7 +7541,7 @@ Last updated: 2025-11-01</p>
 <h3 id="file">file</h3>
 <p>Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-014), -w to wait for completion (polls until complete, shows progress).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>file<span class="w"> </span>&lt;path&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg<span class="w"> </span>file<span class="w"> </span>&lt;path&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7301,7 +7602,7 @@ Last updated: 2025-11-01</p>
 <h3 id="directory">directory</h3>
 <p>Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default <em>.md </em>.txt), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>directory<span class="w"> </span>&lt;dir&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg<span class="w"> </span>directory<span class="w"> </span>&lt;dir&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7377,7 +7678,7 @@ Last updated: 2025-11-01</p>
 <h3 id="text">text</h3>
 <p>Ingest raw text directly without a file. Submits text content as ingestion job, useful for quick testing/prototyping, ingesting programmatically generated text, API/script integration, and processing text from other commands. Can pipe command output via xargs or use multiline text with heredoc syntax. Text is chunked (default 1000 words per chunk) and processed like file ingestion. Use --filename to customize displayed name in ontology files list (default: text_input). Behavior same as file ingestion: auto-approves by default, detects duplicates, supports --wait for synchronous completion.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>text<span class="w"> </span>&lt;text&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>text<span class="w"> </span>&lt;text&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7433,7 +7734,7 @@ Last updated: 2025-11-01</p>
 <h2 id="job-jobs">job (jobs)</h2>
 <p>Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg<span class="w"> </span>job<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>job<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -7447,7 +7748,7 @@ Last updated: 2025-11-01</p>
 <h3 id="status">status</h3>
 <p>Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kg<span class="w"> </span>status<span class="w"> </span>&lt;job-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>status<span class="w"> </span>&lt;job-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7473,7 +7774,7 @@ Last updated: 2025-11-01</p>
 <h3 id="list_1">list</h3>
 <p>List recent jobs with optional filtering by status or user - includes subcommands for common filters</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7524,7 +7825,7 @@ Last updated: 2025-11-01</p>
 <h4 id="pending">pending</h4>
 <p>List jobs awaiting approval</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg<span class="w"> </span>pending<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg<span class="w"> </span>pending<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7556,7 +7857,7 @@ Last updated: 2025-11-01</p>
 <h4 id="approved">approved</h4>
 <p>List approved jobs (queued or processing)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg<span class="w"> </span>approved<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kg<span class="w"> </span>approved<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7588,7 +7889,7 @@ Last updated: 2025-11-01</p>
 <h4 id="done">done</h4>
 <p>List completed jobs</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span><span class="k">done</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kg<span class="w"> </span><span class="k">done</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7620,7 +7921,7 @@ Last updated: 2025-11-01</p>
 <h4 id="failed">failed</h4>
 <p>List failed jobs</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>failed<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>failed<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7652,7 +7953,7 @@ Last updated: 2025-11-01</p>
 <h4 id="cancelled">cancelled</h4>
 <p>List cancelled jobs</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>cancelled<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kg<span class="w"> </span>cancelled<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7684,7 +7985,7 @@ Last updated: 2025-11-01</p>
 <h3 id="approve">approve</h3>
 <p>Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg<span class="w"> </span>approve<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kg<span class="w"> </span>approve<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -7696,7 +7997,7 @@ Last updated: 2025-11-01</p>
 <h4 id="job">job</h4>
 <p>Approve a specific job by ID after reviewing cost estimates</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg<span class="w"> </span>job<span class="w"> </span>&lt;job-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kg<span class="w"> </span>job<span class="w"> </span>&lt;job-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7705,7 +8006,7 @@ Last updated: 2025-11-01</p>
 <h4 id="pending_1">pending</h4>
 <p>Approve all jobs awaiting approval (batch operation with confirmation)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kg<span class="w"> </span>pending<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kg<span class="w"> </span>pending<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7732,7 +8033,7 @@ Last updated: 2025-11-01</p>
 <h4 id="filter">filter</h4>
 <p>Approve all jobs matching status filter</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kg<span class="w"> </span>filter<span class="w"> </span>&lt;status&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kg<span class="w"> </span>filter<span class="w"> </span>&lt;status&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7758,7 +8059,7 @@ Last updated: 2025-11-01</p>
 <h3 id="cancel">cancel</h3>
 <p>Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>cancel<span class="w"> </span>&lt;job-id-or-filter&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kg<span class="w"> </span>cancel<span class="w"> </span>&lt;job-id-or-filter&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7789,7 +8090,7 @@ Last updated: 2025-11-01</p>
 <h3 id="clear">clear</h3>
 <p>Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kg<span class="w"> </span>clear<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kg<span class="w"> </span>clear<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7811,7 +8112,7 @@ Last updated: 2025-11-01</p>
 <h2 id="search">search</h2>
 <p>Search and explore the knowledge graph using vector similarity, graph traversal, and path finding</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -7824,7 +8125,7 @@ Last updated: 2025-11-01</p>
 <h3 id="query">query</h3>
 <p>Search for concepts using vector similarity (embeddings) - use specific phrases for best results</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kg<span class="w"> </span>query<span class="w"> </span>&lt;query&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span>query<span class="w"> </span>&lt;query&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7870,7 +8171,7 @@ Last updated: 2025-11-01</p>
 <h3 id="details">details</h3>
 <p>Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kg<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7901,7 +8202,7 @@ Last updated: 2025-11-01</p>
 <h3 id="related">related</h3>
 <p>Find concepts related through graph traversal (breadth-first search) - groups results by distance</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kg<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7937,7 +8238,7 @@ Last updated: 2025-11-01</p>
 <h3 id="connect">connect</h3>
 <p>Find shortest path between two concepts using IDs or semantic phrase matching</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kg<span class="w"> </span>connect<span class="w"> </span>&lt;from&gt;<span class="w"> </span>&lt;to&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>connect<span class="w"> </span>&lt;from&gt;<span class="w"> </span>&lt;to&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -7984,7 +8285,7 @@ Last updated: 2025-11-01</p>
 <h2 id="database-db">database (db)</h2>
 <p>Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kg<span class="w"> </span>database<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>database<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -7996,22 +8297,22 @@ Last updated: 2025-11-01</p>
 <h3 id="stats">stats</h3>
 <p>Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>stats<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>stats<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="info">info</h3>
 <p>Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span>info<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>info<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="health_1">health</h3>
 <p>Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kg<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h2 id="ontology-onto">ontology (onto)</h2>
 <p>Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8025,12 +8326,12 @@ Last updated: 2025-11-01</p>
 <h3 id="list_2">list</h3>
 <p>List all ontologies in the knowledge graph. Shows a table with ontology name, file count, chunk count, and concept count. Use this to get a bird's-eye view of all knowledge domains, verify ingestion results, and understand how knowledge is distributed.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="info_1">info</h3>
 <p>Get detailed information about a specific ontology. Shows statistics (files, chunks, concepts, evidence, relationships) and lists all source files. Use this to understand ontology composition, verify expected files are present, and troubleshoot ingestion issues.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8039,7 +8340,7 @@ Last updated: 2025-11-01</p>
 <h3 id="files">files</h3>
 <p>List files in a specific ontology with per-file statistics (chunks and concepts). Shows which files contributed most concepts and helps identify files that may need re-ingestion. Original file paths are preserved, though temporary paths may appear for text-based ingestion.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>files<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kg<span class="w"> </span>files<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8048,7 +8349,7 @@ Last updated: 2025-11-01</p>
 <h3 id="rename">rename</h3>
 <p>Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>rename<span class="w"> </span>&lt;old-name&gt;<span class="w"> </span>&lt;new-name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kg<span class="w"> </span>rename<span class="w"> </span>&lt;old-name&gt;<span class="w"> </span>&lt;new-name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8075,7 +8376,7 @@ Last updated: 2025-11-01</p>
 <h3 id="delete_1">delete</h3>
 <p>Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8101,7 +8402,7 @@ Last updated: 2025-11-01</p>
 <h2 id="vocabulary-vocab">vocabulary (vocab)</h2>
 <p>Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-032), and auto-categorization (probabilistic via embeddings - ADR-047). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-049).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8126,12 +8427,12 @@ Last updated: 2025-11-01</p>
 <h3 id="status_1">status</h3>
 <p>Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness (growth above minimum), and thresholds. Shows breakdown of builtin types, custom types, and categories. Use this to monitor vocabulary health, check zone before consolidation, track growth over time, and trigger consolidation workflows when needed.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="list_3">list</h3>
 <p>List all edge types with statistics, categories, and confidence scores (ADR-047). Shows TYPE (colored by semantic), CATEGORY (composition, causation, logical, etc.), CONF (confidence score with ⚠ for ambiguous), EDGES (usage count), STATUS (active ✓), and [B] flag for builtin types. Use this for vocabulary overview, finding consolidation candidates, reviewing auto-categorization accuracy, identifying unused types, and auditing quality.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8158,7 +8459,7 @@ Last updated: 2025-11-01</p>
 <h3 id="consolidate">consolidate</h3>
 <p>AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations with confidence, and executes or prompts based on mode. Workflow: 1) analyze vocabulary, 2) identify candidates, 3) present recommendations, 4) execute or prompt, 5) apply merges (deprecate source, redirect edges), 6) prune unused types (default). Modes: interactive (default, prompts each), dry-run (shows candidates without executing), AITL auto (auto-executes high confidence). Threshold guidelines: 0.95+ very conservative, 0.90-0.95 balanced AITL, 0.85-0.90 aggressive requires review, &lt;0.85 very aggressive manual review.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kg<span class="w"> </span>consolidate<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kg<span class="w"> </span>consolidate<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8200,7 +8501,7 @@ Last updated: 2025-11-01</p>
 <h3 id="merge">merge</h3>
 <p>Manually merge one edge type into another for consolidation or correction. Validates both types exist, redirects all edges from deprecated type to target type, marks deprecated type as inactive, records audit trail (reason, user, timestamp), and preserves edge provenance. This is a non-destructive, atomic operation useful for manual consolidation, fixing misnamed types from extraction, bulk scripted operations, and targeted category cleanup. Safety: edges preserved, atomic transaction, audit trail for compliance, can be reviewed in inactive types list.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kg<span class="w"> </span>merge<span class="w"> </span>&lt;deprecated-type&gt;<span class="w"> </span>&lt;target-type&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>kg<span class="w"> </span>merge<span class="w"> </span>&lt;deprecated-type&gt;<span class="w"> </span>&lt;target-type&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8232,7 +8533,7 @@ Last updated: 2025-11-01</p>
 <h3 id="generate-embeddings">generate-embeddings</h3>
 <p>Generate vector embeddings for vocabulary types (required for consolidation and categorization). Identifies types without embeddings, generates embeddings using configured embedding model, stores embeddings for similarity comparison, and enables consolidation and auto-categorization. Use after fresh install (bootstrap vocabulary embeddings), after ingestion introduces new custom types, when switching embedding models (regenerate), or for inconsistency fixes (force regeneration if corrupted). Performance: ~100-200ms per embedding (OpenAI), ~20-50ms per embedding (local models), parallel generation (batches of 10).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kg<span class="w"> </span>generate-embeddings<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>kg<span class="w"> </span>generate-embeddings<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8259,7 +8560,7 @@ Last updated: 2025-11-01</p>
 <h3 id="category-scores">category-scores</h3>
 <p>Show category similarity scores for a specific relationship type (ADR-047). Displays assigned category, confidence score (calculated as max_score/second_max_score * 100), ambiguous flag (set when runner-up within 20% of winner), runner-up category if ambiguous, and similarity to all category seeds (0-100%) sorted by similarity with visual bar chart. Use this to verify auto-categorization makes sense, debug low confidence assignments, understand why confidence is low, resolve ambiguity between close categories, and audit all types for misassignments.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kg<span class="w"> </span>category-scores<span class="w"> </span>&lt;type&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kg<span class="w"> </span>category-scores<span class="w"> </span>&lt;type&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8268,7 +8569,7 @@ Last updated: 2025-11-01</p>
 <h3 id="refresh-categories">refresh-categories</h3>
 <p>Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053). As of ADR-053, new edge types are automatically categorized during ingestion, so this command is primarily needed when category seeds change. Use when category seed definitions are updated (seeds currently defined in code, future: database-configurable), after embedding model changes, or for migrating pre-ADR-053 uncategorized types. This is a non-destructive operation (doesn't affect edges), preserves manual assignments, and records audit trail per type.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kg<span class="w"> </span>refresh-categories<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kg<span class="w"> </span>refresh-categories<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8290,7 +8591,7 @@ Last updated: 2025-11-01</p>
 <h3 id="similar">similar</h3>
 <p>Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation. Use --limit to control results (1-100, default 10). Similar types with high similarity (&gt;0.90) are strong merge candidates for vocabulary consolidation (ADR-052).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kg<span class="w"> </span>similar<span class="w"> </span>&lt;type&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kg<span class="w"> </span>similar<span class="w"> </span>&lt;type&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8316,7 +8617,7 @@ Last updated: 2025-11-01</p>
 <h3 id="opposite">opposite</h3>
 <p>Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity - useful for understanding semantic range and antonyms. Use --limit to control results (1-100, default 5).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kg<span class="w"> </span>opposite<span class="w"> </span>&lt;type&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>kg<span class="w"> </span>opposite<span class="w"> </span>&lt;type&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8342,7 +8643,7 @@ Last updated: 2025-11-01</p>
 <h3 id="analyze">analyze</h3>
 <p>Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit, similar types in same/other categories, and detects potential miscategorization. Use this to verify auto-categorization accuracy and identify types that may need reclassification.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>kg<span class="w"> </span>analyze<span class="w"> </span>&lt;type&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>kg<span class="w"> </span>analyze<span class="w"> </span>&lt;type&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8351,7 +8652,7 @@ Last updated: 2025-11-01</p>
 <h3 id="config">config</h3>
 <p>Show or update vocabulary configuration. No args: display config table. With args: update properties directly using database key names (e.g., "kg vocab config vocab_max 275 vocab_emergency 350"). Property names shown in config table.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>properties<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>properties<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8360,7 +8661,7 @@ Last updated: 2025-11-01</p>
 <h3 id="config-update">config-update</h3>
 <p>[DEPRECATED: Use <code>kg vocab config &lt;property&gt; &lt;value&gt;</code> instead] Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kg<span class="w"> </span>config-update<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>kg<span class="w"> </span>config-update<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8432,12 +8733,12 @@ Last updated: 2025-11-01</p>
 <h3 id="profiles">profiles</h3>
 <p>List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kg<span class="w"> </span>profiles<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>kg<span class="w"> </span>profiles<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="profiles-show">profiles-show</h3>
 <p>Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kg<span class="w"> </span>profiles-show<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>kg<span class="w"> </span>profiles-show<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8446,7 +8747,7 @@ Last updated: 2025-11-01</p>
 <h3 id="profiles-create">profiles-create</h3>
 <p>Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>kg<span class="w"> </span>profiles-create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a>kg<span class="w"> </span>profiles-create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8493,7 +8794,7 @@ Last updated: 2025-11-01</p>
 <h3 id="profiles-delete">profiles-delete</h3>
 <p>Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>kg<span class="w"> </span>profiles-delete<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>kg<span class="w"> </span>profiles-delete<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8502,7 +8803,7 @@ Last updated: 2025-11-01</p>
 <h2 id="admin">admin</h2>
 <p>System administration and management - health monitoring, backup/restore, database operations, user/RBAC management, AI model configuration (requires authentication for destructive operations)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>kg<span class="w"> </span>admin<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>kg<span class="w"> </span>admin<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8523,12 +8824,12 @@ Last updated: 2025-11-01</p>
 <h3 id="status_2">status</h3>
 <p>Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="backup">backup</h3>
 <p>Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>kg<span class="w"> </span>backup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>kg<span class="w"> </span>backup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8565,12 +8866,12 @@ Last updated: 2025-11-01</p>
 <h3 id="list-backups">list-backups</h3>
 <p>List available backup files from configured directory</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>kg<span class="w"> </span>list-backups<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>kg<span class="w"> </span>list-backups<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="restore">restore</h3>
 <p>Restore a database backup (requires authentication)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a>kg<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>kg<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8607,7 +8908,7 @@ Last updated: 2025-11-01</p>
 <h3 id="reset_1">reset</h3>
 <p>Reset database - PERMANENTLY DELETES ALL DATA (requires 3-second confirmation hold + authentication) - wipes graph, reapplies migrations, clears logs/checkpoints</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>kg<span class="w"> </span>reset<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>kg<span class="w"> </span>reset<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8634,7 +8935,7 @@ Last updated: 2025-11-01</p>
 <h3 id="scheduler">scheduler</h3>
 <p>Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>kg<span class="w"> </span>scheduler<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>kg<span class="w"> </span>scheduler<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8645,17 +8946,17 @@ Last updated: 2025-11-01</p>
 <h4 id="status_3">status</h4>
 <p>Show job scheduler status and configuration</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h4 id="cleanup">cleanup</h4>
 <p>Manually trigger scheduler cleanup (cancels expired jobs, deletes old jobs)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>kg<span class="w"> </span>cleanup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>kg<span class="w"> </span>cleanup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="regenerate-embeddings">regenerate-embeddings</h3>
 <p>Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>kg<span class="w"> </span>regenerate-embeddings<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>kg<span class="w"> </span>regenerate-embeddings<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8692,7 +8993,7 @@ Last updated: 2025-11-01</p>
 <h3 id="user">user</h3>
 <p>User management commands (admin only)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>kg<span class="w"> </span>user<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>kg<span class="w"> </span>user<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8706,7 +9007,7 @@ Last updated: 2025-11-01</p>
 <h4 id="list_4">list</h4>
 <p>List all users</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8738,7 +9039,7 @@ Last updated: 2025-11-01</p>
 <h4 id="get_2">get</h4>
 <p>Get user details by ID</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>kg<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>kg<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8747,7 +9048,7 @@ Last updated: 2025-11-01</p>
 <h4 id="create">create</h4>
 <p>Create new user</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>kg<span class="w"> </span>create<span class="w"> </span>&lt;username&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>kg<span class="w"> </span>create<span class="w"> </span>&lt;username&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8778,7 +9079,7 @@ Last updated: 2025-11-01</p>
 <h4 id="update">update</h4>
 <p>Update user details</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>kg<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>kg<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8819,7 +9120,7 @@ Last updated: 2025-11-01</p>
 <h4 id="delete_2">delete</h4>
 <p>Delete user (requires re-authentication)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;user_id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8845,7 +9146,7 @@ Last updated: 2025-11-01</p>
 <h3 id="rbac">rbac</h3>
 <p>Manage roles, permissions, and access control (ADR-028)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>kg<span class="w"> </span>rbac<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>kg<span class="w"> </span>rbac<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8858,7 +9159,7 @@ Last updated: 2025-11-01</p>
 <h4 id="resource-resources-res">resource (resources, res)</h4>
 <p>Manage resource types</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>kg<span class="w"> </span>resource<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a>kg<span class="w"> </span>resource<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8869,12 +9170,12 @@ Last updated: 2025-11-01</p>
 <h5 id="list_5">list</h5>
 <p>List all registered resource types</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h5 id="create_1">create</h5>
 <p>Register a new resource type</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-93-1" name="__codelineno-93-1" href="#__codelineno-93-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8916,7 +9217,7 @@ Last updated: 2025-11-01</p>
 <h4 id="role-roles">role (roles)</h4>
 <p>Manage roles</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>kg<span class="w"> </span>role<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>kg<span class="w"> </span>role<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -8929,7 +9230,7 @@ Last updated: 2025-11-01</p>
 <h5 id="list_6">list</h5>
 <p>List all roles</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8951,7 +9252,7 @@ Last updated: 2025-11-01</p>
 <h5 id="show">show</h5>
 <p>Show role details</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;role&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-96-1" name="__codelineno-96-1" href="#__codelineno-96-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;role&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -8960,7 +9261,7 @@ Last updated: 2025-11-01</p>
 <h5 id="create_2">create</h5>
 <p>Create a new role</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -8997,7 +9298,7 @@ Last updated: 2025-11-01</p>
 <h5 id="delete_3">delete</h5>
 <p>Delete a role</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;role&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;role&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9023,7 +9324,7 @@ Last updated: 2025-11-01</p>
 <h4 id="permission-permissions-perm">permission (permissions, perm)</h4>
 <p>Manage permissions</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-93-1" name="__codelineno-93-1" href="#__codelineno-93-1"></a>kg<span class="w"> </span>permission<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-99-1" name="__codelineno-99-1" href="#__codelineno-99-1"></a>kg<span class="w"> </span>permission<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -9035,7 +9336,7 @@ Last updated: 2025-11-01</p>
 <h5 id="list_7">list</h5>
 <p>List permissions</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-100-1" name="__codelineno-100-1" href="#__codelineno-100-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -9062,7 +9363,7 @@ Last updated: 2025-11-01</p>
 <h5 id="grant">grant</h5>
 <p>Grant a permission to a role</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a>kg<span class="w"> </span>grant<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-101-1" name="__codelineno-101-1" href="#__codelineno-101-1"></a>kg<span class="w"> </span>grant<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -9106,10 +9407,10 @@ Last updated: 2025-11-01</p>
 </tr>
 </tbody>
 </table>
-<h5 id="revoke">revoke</h5>
+<h5 id="revoke_1">revoke</h5>
 <p>Revoke a permission (use permission ID from list)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-96-1" name="__codelineno-96-1" href="#__codelineno-96-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;permission-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-102-1" name="__codelineno-102-1" href="#__codelineno-102-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;permission-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9118,7 +9419,7 @@ Last updated: 2025-11-01</p>
 <h4 id="assign">assign</h4>
 <p>Assign roles to users</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a>kg<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-103-1" name="__codelineno-103-1" href="#__codelineno-103-1"></a>kg<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -9130,7 +9431,7 @@ Last updated: 2025-11-01</p>
 <h5 id="list_8">list</h5>
 <p>List role assignments for a user</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a>kg<span class="w"> </span>list<span class="w"> </span>&lt;user-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-104-1" name="__codelineno-104-1" href="#__codelineno-104-1"></a>kg<span class="w"> </span>list<span class="w"> </span>&lt;user-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9139,7 +9440,7 @@ Last updated: 2025-11-01</p>
 <h5 id="add">add</h5>
 <p>Assign a role to a user</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-99-1" name="__codelineno-99-1" href="#__codelineno-99-1"></a>kg<span class="w"> </span>add<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-105-1" name="__codelineno-105-1" href="#__codelineno-105-1"></a>kg<span class="w"> </span>add<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -9176,7 +9477,7 @@ Last updated: 2025-11-01</p>
 <h5 id="remove">remove</h5>
 <p>Remove a role assignment (use assignment ID from list)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-100-1" name="__codelineno-100-1" href="#__codelineno-100-1"></a>kg<span class="w"> </span>remove<span class="w"> </span>&lt;assignment-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-106-1" name="__codelineno-106-1" href="#__codelineno-106-1"></a>kg<span class="w"> </span>remove<span class="w"> </span>&lt;assignment-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9185,7 +9486,7 @@ Last updated: 2025-11-01</p>
 <h3 id="embedding">embedding</h3>
 <p>Manage embedding model configuration (ADR-039)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-101-1" name="__codelineno-101-1" href="#__codelineno-101-1"></a>kg<span class="w"> </span>embedding<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-107-1" name="__codelineno-107-1" href="#__codelineno-107-1"></a>kg<span class="w"> </span>embedding<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -9201,12 +9502,12 @@ Last updated: 2025-11-01</p>
 <h4 id="list_9">list</h4>
 <p>List all embedding configurations</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-102-1" name="__codelineno-102-1" href="#__codelineno-102-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-108-1" name="__codelineno-108-1" href="#__codelineno-108-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h4 id="create_3">create</h4>
 <p>Create a new embedding configuration (inactive)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-103-1" name="__codelineno-103-1" href="#__codelineno-103-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-109-1" name="__codelineno-109-1" href="#__codelineno-109-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -9263,7 +9564,7 @@ Last updated: 2025-11-01</p>
 <h4 id="activate">activate</h4>
 <p>Activate an embedding configuration (with automatic protection)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-104-1" name="__codelineno-104-1" href="#__codelineno-104-1"></a>kg<span class="w"> </span>activate<span class="w"> </span>&lt;config-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>kg<span class="w"> </span>activate<span class="w"> </span>&lt;config-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9289,12 +9590,12 @@ Last updated: 2025-11-01</p>
 <h4 id="reload">reload</h4>
 <p>Hot reload embedding model (zero-downtime)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-105-1" name="__codelineno-105-1" href="#__codelineno-105-1"></a>kg<span class="w"> </span>reload<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a>kg<span class="w"> </span>reload<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h4 id="protect">protect</h4>
 <p>Enable protection flags on an embedding configuration</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-106-1" name="__codelineno-106-1" href="#__codelineno-106-1"></a>kg<span class="w"> </span>protect<span class="w"> </span>&lt;config-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>kg<span class="w"> </span>protect<span class="w"> </span>&lt;config-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9325,7 +9626,7 @@ Last updated: 2025-11-01</p>
 <h4 id="unprotect">unprotect</h4>
 <p>Disable protection flags on an embedding configuration</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-107-1" name="__codelineno-107-1" href="#__codelineno-107-1"></a>kg<span class="w"> </span>unprotect<span class="w"> </span>&lt;config-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-113-1" name="__codelineno-113-1" href="#__codelineno-113-1"></a>kg<span class="w"> </span>unprotect<span class="w"> </span>&lt;config-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9356,7 +9657,7 @@ Last updated: 2025-11-01</p>
 <h4 id="delete_4">delete</h4>
 <p>Delete an embedding configuration</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-108-1" name="__codelineno-108-1" href="#__codelineno-108-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;config-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-114-1" name="__codelineno-114-1" href="#__codelineno-114-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;config-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9365,7 +9666,7 @@ Last updated: 2025-11-01</p>
 <h3 id="extraction">extraction</h3>
 <p>Manage AI extraction model configuration (ADR-041)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-109-1" name="__codelineno-109-1" href="#__codelineno-109-1"></a>kg<span class="w"> </span>extraction<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-115-1" name="__codelineno-115-1" href="#__codelineno-115-1"></a>kg<span class="w"> </span>extraction<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -9376,12 +9677,12 @@ Last updated: 2025-11-01</p>
 <h4 id="config_1">config</h4>
 <p>Show current AI extraction configuration</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-116-1" name="__codelineno-116-1" href="#__codelineno-116-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h4 id="set_2">set</h4>
 <p>Update AI extraction configuration</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-117-1" name="__codelineno-117-1" href="#__codelineno-117-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -9463,7 +9764,7 @@ Last updated: 2025-11-01</p>
 <h3 id="keys">keys</h3>
 <p>Manage API keys for AI providers (ADR-031, ADR-041)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>kg<span class="w"> </span>keys<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-118-1" name="__codelineno-118-1" href="#__codelineno-118-1"></a>kg<span class="w"> </span>keys<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -9475,12 +9776,12 @@ Last updated: 2025-11-01</p>
 <h4 id="list_10">list</h4>
 <p>List API keys with validation status</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-113-1" name="__codelineno-113-1" href="#__codelineno-113-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-119-1" name="__codelineno-119-1" href="#__codelineno-119-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h4 id="set_3">set</h4>
 <p>Set API key for a provider (validates before storing)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-114-1" name="__codelineno-114-1" href="#__codelineno-114-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-120-1" name="__codelineno-120-1" href="#__codelineno-120-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9506,7 +9807,7 @@ Last updated: 2025-11-01</p>
 <h4 id="delete_5">delete</h4>
 <p>Delete API key for a provider</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-115-1" name="__codelineno-115-1" href="#__codelineno-115-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-121-1" name="__codelineno-121-1" href="#__codelineno-121-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>

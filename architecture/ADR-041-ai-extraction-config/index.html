@@ -1713,6 +1713,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -6108,7 +6177,7 @@
 </tbody>
 </table>
 <h3 id="initial-setup-flow">Initial Setup Flow</h3>
-<p><strong>Fresh installation</strong> via <code>./scripts/initialize-auth.sh</code> (enhanced):</p>
+<p><strong>Fresh installation</strong> via <code>./scripts/setup/initialize-auth.sh</code> (enhanced):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>╔════════════════════════════════════════════════════════════╗
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>║<span class="w">   </span>Knowledge<span class="w"> </span>Graph<span class="w"> </span>System<span class="w"> </span>-<span class="w"> </span>Initial<span class="w"> </span>Setup<span class="w">                  </span>║
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>╚════════════════════════════════════════════════════════════╝
@@ -6149,7 +6218,7 @@
 <a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="w">  </span>Embeddings:<span class="w"> </span>Local<span class="w"> </span>/<span class="w"> </span>nomic-ai/nomic-embed-text-v1.5<span class="w"> </span><span class="o">(</span>no<span class="w"> </span>API<span class="w"> </span>cost!<span class="o">)</span>
 <a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a>
 <a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a>Next<span class="w"> </span>Steps:
-<a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">  </span><span class="m">1</span>.<span class="w"> </span>Start<span class="w"> </span>API:<span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">  </span><span class="m">1</span>.<span class="w"> </span>Start<span class="w"> </span>API:<span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a><span class="w">  </span><span class="m">2</span>.<span class="w"> </span>Login:<span class="w"> </span>kg<span class="w"> </span>auth<span class="w"> </span>login
 <a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a><span class="w">  </span><span class="m">3</span>.<span class="w"> </span>Ingest<span class="w"> </span>docs:<span class="w"> </span>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Ontology&quot;</span><span class="w"> </span>document.txt
 </code></pre></div>
@@ -6159,7 +6228,7 @@
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
 <p><strong>Effect:</strong> All secrets erased:
-- ✗ Admin password → Must reset via <code>./scripts/initialize-auth.sh</code>
+- ✗ Admin password → Must reset via <code>./scripts/setup/initialize-auth.sh</code>
 - ✗ API keys (OpenAI, Anthropic) → Must re-enter
 - ✗ Provider configs → Must reconfigure
 - ✗ All ontology data → Lost</p>
@@ -6638,7 +6707,7 @@
 <a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="p">:</span>
 <a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
 <a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a>                <span class="s2">&quot;No AI extraction config in database. &quot;</span>
-<a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a>                <span class="s2">&quot;Initialize via: ./scripts/initialize-auth.sh&quot;</span>
+<a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a>                <span class="s2">&quot;Initialize via: ./scripts/setup/initialize-auth.sh&quot;</span>
 <a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a>            <span class="p">)</span>
 <a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a>
 <a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a>        <span class="n">provider</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;provider&#39;</span><span class="p">]</span>

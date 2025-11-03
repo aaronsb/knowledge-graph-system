@@ -1713,6 +1713,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -5133,7 +5202,7 @@
 <strong>Risk:</strong> LOW - Additive changes only, no breaking modifications</p>
 <ol>
 <li><strong>Apply Migration 011:</strong> Grounding Metrics
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./scripts/migrate-db.sh
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./scripts/database/migrate-db.sh
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Applies: 011_add_grounding_metrics.sql</span>
 </code></pre></div></li>
 </ol>
@@ -5154,7 +5223,7 @@
 </code></pre></div></p>
 <ol>
 <li><strong>Apply Migration 012:</strong> Embedding Worker Support
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./scripts/migrate-db.sh
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./scripts/database/migrate-db.sh
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Applies: 012_add_embedding_worker_support.sql</span>
 </code></pre></div></li>
 </ol>
@@ -5194,7 +5263,7 @@
 </ol>
 <p><strong>Testing:</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Start API in test mode</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./scripts/start-api.sh
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./scripts/services/start-api.sh
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Test cold start initialization</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>curl<span class="w"> </span>http://localhost:8000/admin/embeddings/initialize
@@ -5210,7 +5279,7 @@
 </ol>
 <p><strong>Testing:</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Restart API and check logs</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/api_*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;embedding&quot;</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Should see: &quot;Cold start: Generated embeddings for 30 builtin types&quot;</span>
@@ -5363,13 +5432,13 @@
 <h3 id="rollback-phase-2-4-python-implementation">Rollback Phase 2-4 (Python Implementation)</h3>
 <p><strong>Simpler approach:</strong> Revert to main branch
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Stop API</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./scripts/stop-api.sh
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./scripts/services/stop-api.sh
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Switch back to main</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>git<span class="w"> </span>checkout<span class="w"> </span>main
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>./scripts/start-api.sh
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>./scripts/services/start-api.sh
 </code></pre></div></p>
 <p><strong>Note:</strong> Schema changes remain in database but are unused by main branch code.</p>
 <h2 id="testing-strategy">Testing Strategy</h2>
@@ -5393,7 +5462,7 @@
 <li>
 <p><strong>Schema Validation:</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Run migration</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>./scripts/database/migrate-db.sh<span class="w"> </span>-y
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Verify schema</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\d kg_api.relationship_vocabulary&quot;</span>

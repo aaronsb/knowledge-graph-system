@@ -2137,6 +2137,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -5404,7 +5473,7 @@
 </li>
 <li>
 <p><strong>Restart API:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 </code></pre></div></p>
 </li>
 <li>
@@ -5437,7 +5506,7 @@
 </li>
 <li>
 <p><strong>Restart API:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 </code></pre></div></p>
 </li>
 <li>
@@ -5521,10 +5590,10 @@
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    3. Test extraction: kg admin extraction test
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>  ⚠️  API restart required to apply changes
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>  Run: ./scripts/stop-api.sh &amp;&amp; ./scripts/start-api.sh
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>  Run: ./scripts/services/stop-api.sh &amp;&amp; ./scripts/services/start-api.sh
 </code></pre></div></p>
 <h4 id="step-4-restart-api">Step 4: Restart API</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 </code></pre></div>
 <h4 id="step-5-test-it">Step 5: Test It</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config<span class="w">  </span><span class="c1"># Should show &quot;ollama&quot;</span>
@@ -5540,7 +5609,7 @@
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># 2. Restart API</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># 3. Optional: Stop Ollama to free resources</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
@@ -5552,7 +5621,7 @@
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4-20250514
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># 2. Restart API</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
 <a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># 3. Optional: Stop Ollama</span>
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
@@ -5568,12 +5637,12 @@
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 </code></pre></div>
 <p><strong>Want fastest local?</strong> Try a smaller model:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>phi3.5:3.8b-mini-instruct
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>phi3.5:3.8b-mini-instruct
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 </code></pre></div>
 <hr />
 <h2 id="scenario-7-using-reasoning-models-with-thinking-mode">Scenario 7: Using Reasoning Models with Thinking Mode</h2>
@@ -5601,7 +5670,7 @@
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>low
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
 <a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="c1"># 3. Restart API</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>
 <a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="c1"># 4. Test it</span>
 <a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>complex-document.txt
@@ -5681,7 +5750,7 @@
 <a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>high
 <a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 </code></pre></div>
 <h3 id="performance-comparison">Performance Comparison</h3>
 <p><strong>Example: 10,000-word complex document</strong></p>
@@ -5800,7 +5869,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Use smaller model</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 </code></pre></div>
 <hr />
 <h2 id="the-complete-switch-workflow">The Complete Switch Workflow</h2>
@@ -5812,14 +5881,14 @@
 <a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
 <a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
 <a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>
 <a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="c1"># Test it</span>
 <a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test.txt<span class="w">  </span><span class="c1"># Slower, but free</span>
 <a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>
 <a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="c1"># Go back to OpenAI (need speed)</span>
 <a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
-<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y<span class="w">  </span><span class="c1"># Free up resources</span>
 <a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>
 <a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="c1"># Test it</span>
@@ -5832,17 +5901,17 @@
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Switch to OpenAI</span>
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>
 <a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="c1"># Switch to Anthropic</span>
 <a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4-20250514
-<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>
 <a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># Switch to Ollama (local)</span>
 <a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
 <a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
 <a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a>./scripts/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/start-api.sh
+<a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
 <a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a>
 <a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a><span class="c1"># Stop Ollama (free resources)</span>
 <a id="__codelineno-27-19" name="__codelineno-27-19" href="#__codelineno-27-19"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y

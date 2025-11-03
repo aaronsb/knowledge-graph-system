@@ -2191,6 +2191,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -5459,7 +5528,7 @@
 <p>The knowledge graph system implements <strong>defense-in-depth</strong> security with multiple protection layers:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────────┐
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                      HTTP API Layer                              │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  • Authentication (JWT tokens, API keys)                         │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  • Authentication (OAuth 2.0)                                    │
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  • RBAC authorization                                            │
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  • Rate limiting (future)                                        │
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>└────────────────────┬────────────────────────────────────────────┘
@@ -5791,7 +5860,7 @@
 - Mitigation: Strong authentication, audit logging, RBAC</p>
 <h3 id="threat-model-summary">Threat Model Summary</h3>
 <p><strong>Attacker needs to compromise ALL of:</strong>
-1. HTTP API authentication (bypass JWT/RBAC)
+1. HTTP API authentication (bypass OAuth/RBAC)
 2. Job queue isolation (inject malicious job)
 3. Worker thread execution (run arbitrary code)
 4. Capability token (present valid internal secret)

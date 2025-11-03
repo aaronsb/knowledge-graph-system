@@ -2041,6 +2041,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -5384,10 +5453,10 @@
 <h3 id="schema-evolution-via-migrations">Schema Evolution via Migrations</h3>
 <p>After initial setup, schema changes are managed via <strong>migrations</strong> (ADR-040).</p>
 <p><strong>Apply pending migrations:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./scripts/database/migrate-db.sh<span class="w"> </span>-y
 </code></pre></div></p>
 <p><strong>Check migration status:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./scripts/migrate-db.sh<span class="w"> </span>--dry-run
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./scripts/database/migrate-db.sh<span class="w"> </span>--dry-run
 </code></pre></div></p>
 <p><strong>See:</strong> <code>docs/guides/02-DATABASE_MIGRATIONS.md</code> for complete migration guide</p>
 <h3 id="verify-seeded-data">Verify Seeded Data</h3>
@@ -5427,7 +5496,7 @@
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>&lt;<span class="w"> </span>backup.sql
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
 <a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Apply any pending migrations</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>./scripts/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>./scripts/database/migrate-db.sh<span class="w"> </span>-y
 </code></pre></div></p>
 </li>
 <li>

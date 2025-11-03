@@ -1713,6 +1713,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
@@ -4213,27 +4282,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-database-schema-1-week" class="md-nav__link">
+  <a href="#phase-1-database-schema-1-week-completed" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 1: Database Schema (1 week)
+      Phase 1: Database Schema (1 week) ✅ COMPLETED
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-api-endpoints-1-week" class="md-nav__link">
+  <a href="#phase-2-api-endpoints-1-week-completed" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 2: API Endpoints (1 week)
+      Phase 2: API Endpoints (1 week) ✅ COMPLETED
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-client-libraries-1-week" class="md-nav__link">
+  <a href="#phase-3-client-libraries-1-week-in-progress" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 3: Client Libraries (1 week)
+      Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS
     </span>
   </a>
   
@@ -5205,27 +5274,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-database-schema-1-week" class="md-nav__link">
+  <a href="#phase-1-database-schema-1-week-completed" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 1: Database Schema (1 week)
+      Phase 1: Database Schema (1 week) ✅ COMPLETED
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-api-endpoints-1-week" class="md-nav__link">
+  <a href="#phase-2-api-endpoints-1-week-completed" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 2: API Endpoints (1 week)
+      Phase 2: API Endpoints (1 week) ✅ COMPLETED
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-client-libraries-1-week" class="md-nav__link">
+  <a href="#phase-3-client-libraries-1-week-in-progress" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 3: Client Libraries (1 week)
+      Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS
     </span>
   </a>
   
@@ -5715,24 +5784,25 @@
 <strong>Cons:</strong> Doesn't work for CLI/MCP, not RESTful, CSRF concerns
 <strong>Verdict:</strong> ❌ Not suitable for multi-client architecture</p>
 <h2 id="implementation-plan">Implementation Plan</h2>
-<h3 id="phase-1-database-schema-1-week">Phase 1: Database Schema (1 week)</h3>
+<h3 id="phase-1-database-schema-1-week-completed">Phase 1: Database Schema (1 week) ✅ COMPLETED</h3>
 <ul>
-<li>[ ] Create 5 new OAuth tables</li>
-<li>[ ] Rename <code>oauth_tokens</code> → <code>oauth_external_provider_tokens</code></li>
-<li>[ ] Drop <code>api_keys</code> table</li>
-<li>[ ] Add indexes for performance</li>
-<li>[ ] Seed builtin clients</li>
+<li>[x] Create 5 new OAuth tables</li>
+<li>[x] Rename <code>oauth_tokens</code> → <code>oauth_external_provider_tokens</code></li>
+<li>[x] Drop <code>api_keys</code> table</li>
+<li>[x] Add indexes for performance</li>
+<li>[x] Seed builtin clients</li>
 </ul>
-<h3 id="phase-2-api-endpoints-1-week">Phase 2: API Endpoints (1 week)</h3>
+<h3 id="phase-2-api-endpoints-1-week-completed">Phase 2: API Endpoints (1 week) ✅ COMPLETED</h3>
 <ul>
-<li>[ ] Client registration API (admin)</li>
-<li>[ ] Authorization endpoint (<code>GET /auth/oauth/authorize</code>)</li>
-<li>[ ] Device authorization endpoint (<code>POST /auth/oauth/device</code>)</li>
-<li>[ ] Token endpoint (<code>POST /auth/oauth/token</code>) - all grant types</li>
-<li>[ ] Token revocation endpoint (<code>POST /auth/oauth/revoke</code>)</li>
-<li>[ ] Remove legacy endpoints (<code>/auth/login</code>)</li>
+<li>[x] Client registration API (admin)</li>
+<li>[x] Authorization endpoint (<code>GET /auth/oauth/authorize</code>) - Placeholder</li>
+<li>[x] Device authorization endpoint (<code>POST /auth/oauth/device</code>)</li>
+<li>[x] Token endpoint (<code>POST /auth/oauth/token</code>) - all grant types</li>
+<li>[x] Token revocation endpoint (<code>POST /auth/oauth/revoke</code>)</li>
+<li>[x] Remove legacy endpoints (<code>/auth/login</code>)</li>
 </ul>
-<h3 id="phase-3-client-libraries-1-week">Phase 3: Client Libraries (1 week)</h3>
+<h3 id="phase-3-client-libraries-1-week-in-progress">Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS</h3>
+<p><strong>Priority:</strong> CLI (device flow) and MCP (client credentials) first</p>
 <ul>
 <li>[ ] Update <code>KnowledgeGraphClient</code> to support OAuth</li>
 <li>[ ] Implement device flow for CLI (<code>DeviceAuthFlow</code> class)</li>
@@ -5740,6 +5810,7 @@
 <li>[ ] Add token refresh logic</li>
 <li>[ ] Update token storage in config</li>
 </ul>
+<p><strong>Deferred to future:</strong> viz-app Authorization Code + PKCE flow will be implemented once CLI and MCP are stable and tested. The <code>kg-viz</code> client is pre-registered in the database and the backend endpoints are ready, but the frontend implementation is postponed.</p>
 <h3 id="phase-4-cli-commands-3-days">Phase 4: CLI Commands (3 days)</h3>
 <ul>
 <li>[ ] Update <code>kg login</code> to use device flow</li>
@@ -5756,7 +5827,7 @@
 <li>[ ] Create OAuth integration guides (web/CLI/MCP)</li>
 <li>[ ] API reference documentation</li>
 </ul>
-<p><strong>Total estimated time:</strong> 4-5 weeks</p>
+<p><strong>Total estimated time:</strong> 4-5 weeks (excluding viz-app frontend)</p>
 <h2 id="references">References</h2>
 <p><strong>OAuth 2.0 Specifications:</strong>
 - RFC 6749: OAuth 2.0 Authorization Framework
