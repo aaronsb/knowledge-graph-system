@@ -1586,7 +1586,7 @@ def test_scheduled_job_end_to_end():
 ### Manual Testing
 ```bash
 # 1. Start API (single worker for initial testing)
-./scripts/start-api.sh -y
+./scripts/services/start-api.sh -y
 
 # 2. Check scheduled jobs
 psql -c "SELECT * FROM kg_api.scheduled_jobs"

@@ -75,7 +75,7 @@ echo ""
 # Check if container is running
 if ! docker ps --format '{{.Names}}' | grep -q $CONTAINER; then
     echo -e "${RED}✗ Database container not running${NC}"
-    echo -e "${YELLOW}Start it with:${NC} ./scripts/start-db.sh"
+    echo -e "${YELLOW}Start it with:${NC} ./scripts/database/start-database.sh"
     exit 1
 fi
 
@@ -185,12 +185,12 @@ if [ "$AUTO_CONFIRM" = false ]; then
         # Default to Yes if Enter is pressed (empty response)
         if [[ -z $REPLY ]] || [[ $REPLY =~ ^[Yy]$ ]]; then
             echo ""
-            if [ -f "./scripts/snapshot-db.sh" ]; then
-                ./scripts/snapshot-db.sh
+            if [ -f "./scripts/database/backup-database.sh" ]; then
+                ./scripts/database/backup-database.sh -y
                 echo ""
             else
-                echo -e "${RED}✗ Snapshot script not found at ./scripts/snapshot-db.sh${NC}"
-                echo -e "${YELLOW}Continuing without snapshot...${NC}"
+                echo -e "${RED}✗ Backup script not found at ./scripts/database/backup-database.sh${NC}"
+                echo -e "${YELLOW}Continuing without backup...${NC}"
                 echo ""
             fi
         fi

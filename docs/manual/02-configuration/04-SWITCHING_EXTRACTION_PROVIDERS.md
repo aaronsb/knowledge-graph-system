@@ -56,7 +56,7 @@ You'll see something like:
 
 3. **Restart API:**
    ```bash
-   ./scripts/stop-api.sh && ./scripts/start-api.sh
+   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
    ```
 
 4. **Test it:**
@@ -91,7 +91,7 @@ You'll see something like:
 
 4. **Restart API:**
    ```bash
-   ./scripts/stop-api.sh && ./scripts/start-api.sh
+   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
    ```
 
 5. **Test it:**
@@ -171,13 +171,13 @@ kg admin extraction set --provider ollama --model mistral:7b-instruct
     3. Test extraction: kg admin extraction test
 
   ⚠️  API restart required to apply changes
-  Run: ./scripts/stop-api.sh && ./scripts/start-api.sh
+  Run: ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 #### Step 4: Restart API
 
 ```bash
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 #### Step 5: Test It
@@ -204,7 +204,7 @@ kg ingest file -o "Test" -y test-document.txt
 kg admin extraction set --provider openai --model gpt-4o
 
 # 2. Restart API
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 
 # 3. Optional: Stop Ollama to free resources
 ./scripts/stop-ollama.sh -y
@@ -221,7 +221,7 @@ kg admin extraction set --provider openai --model gpt-4o
 kg admin extraction set --provider anthropic --model claude-sonnet-4-20250514
 
 # 2. Restart API
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 
 # 3. Optional: Stop Ollama
 ./scripts/stop-ollama.sh -y
@@ -243,7 +243,7 @@ docker exec kg-ollama ollama pull qwen2.5:14b-instruct
 kg admin extraction set --provider ollama --model qwen2.5:14b-instruct
 
 # Restart API
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 **Want fastest local?** Try a smaller model:
@@ -251,7 +251,7 @@ kg admin extraction set --provider ollama --model qwen2.5:14b-instruct
 ```bash
 docker exec kg-ollama ollama pull phi3.5:3.8b-mini-instruct
 kg admin extraction set --provider ollama --model phi3.5:3.8b-mini-instruct
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 ---
@@ -287,7 +287,7 @@ kg admin extraction set \
   --thinking-mode low
 
 # 3. Restart API
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 
 # 4. Test it
 kg ingest file -o "Test" -y complex-document.txt
@@ -338,7 +338,7 @@ kg admin extraction set \
   --model gpt-oss:20b \
   --thinking-mode high
 
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 ### Performance Comparison
@@ -423,7 +423,7 @@ nvidia-smi  # Should show ollama process
 # Use smaller model
 docker exec kg-ollama ollama pull mistral:7b-instruct
 kg admin extraction set --provider ollama --model mistral:7b-instruct
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 ---
@@ -440,14 +440,14 @@ kg admin extraction config  # Shows: openai, gpt-4o
 ./scripts/start-ollama.sh -y
 docker exec kg-ollama ollama pull mistral:7b-instruct
 kg admin extraction set --provider ollama --model mistral:7b-instruct
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 
 # Test it
 kg ingest file -o "Test" -y test.txt  # Slower, but free
 
 # Go back to OpenAI (need speed)
 kg admin extraction set --provider openai --model gpt-4o
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ./scripts/stop-ollama.sh -y  # Free up resources
 
 # Test it
@@ -464,17 +464,17 @@ kg admin extraction config
 
 # Switch to OpenAI
 kg admin extraction set --provider openai --model gpt-4o
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 
 # Switch to Anthropic
 kg admin extraction set --provider anthropic --model claude-sonnet-4-20250514
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 
 # Switch to Ollama (local)
 ./scripts/start-ollama.sh -y
 docker exec kg-ollama ollama pull mistral:7b-instruct
 kg admin extraction set --provider ollama --model mistral:7b-instruct
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 
 # Stop Ollama (free resources)
 ./scripts/stop-ollama.sh -y

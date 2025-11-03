@@ -1,14 +1,19 @@
 """
-Authentication Dependencies (ADR-027, ADR-028)
+Authentication Dependencies (ADR-027, ADR-028, ADR-054)
 
 FastAPI dependency injection for authentication and authorization.
 
 Provides:
-- get_current_user: Extract and validate JWT token
+- get_current_user: Validate OAuth 2.0 access token (ADR-054)
 - get_current_active_user: Ensure user is not disabled
 - require_role: Check user has required role (legacy - use require_permission for dynamic RBAC)
 - require_permission: Dynamic permission checking with scoping support
 - get_api_key_user: Authenticate via API key
+
+ADR-054: OAuth 2.0 Authentication
+- All authentication uses OAuth 2.0 flows (client credentials, device code, personal clients)
+- Single middleware validates OAuth access tokens
+- JWT support removed (OAuth-only since Phase 4 completion)
 """
 
 import os
@@ -18,6 +23,7 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorization
 import psycopg2
 
 from src.api.lib.auth import decode_access_token, verify_api_key
+from src.api.lib.oauth_utils import hash_token
 from src.api.models.auth import UserInDB, TokenData
 
 
@@ -134,18 +140,74 @@ def get_user_by_id(user_id: int) -> Optional[UserInDB]:
         conn.close()
 
 
+def validate_oauth_access_token(token: str) -> Optional[UserInDB]:
+    """
+    Validate OAuth 2.0 access token and return associated user (ADR-054).
+
+    Checks the kg_auth.oauth_access_tokens table for a valid, non-expired token.
+    Tokens are stored as hashes for security.
+
+    Args:
+        token: OAuth access token from Authorization header
+
+    Returns:
+        UserInDB instance if token is valid, None otherwise
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Hash the token to look it up (tokens are stored as hashes)
+            token_hash_value = hash_token(token)
+
+            # Find token in database and join with user
+            cur.execute("""
+                SELECT
+                    u.id, u.username, u.password_hash, u.primary_role,
+                    u.created_at, u.last_login, u.disabled,
+                    t.expires_at
+                FROM kg_auth.oauth_access_tokens t
+                JOIN kg_auth.users u ON t.user_id = u.id
+                WHERE t.token_hash = %s
+                  AND t.revoked = false
+            """, (token_hash_value,))
+
+            row = cur.fetchone()
+            if row is None:
+                return None
+
+            # Check if token is expired
+            from datetime import datetime, timezone
+            expires_at = row[7]
+            if expires_at and datetime.now(timezone.utc) > expires_at:
+                return None
+
+            # Return user
+            return UserInDB(
+                id=row[0],
+                username=row[1],
+                password_hash=row[2],
+                role=row[3],
+                created_at=row[4],
+                last_login=row[5],
+                disabled=row[6]
+            )
+    finally:
+        conn.close()
+
+
 # =============================================================================
-# JWT Token Authentication
+# OAuth 2.0 Authentication (ADR-054)
 # =============================================================================
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserInDB:
     """
-    Get current user from JWT token.
+    Get current user from OAuth 2.0 access token (ADR-054).
 
-    Validates JWT token and retrieves user from database.
+    Validates OAuth access token and retrieves user from database.
+    All authentication now uses OAuth 2.0 - JWT support has been removed.
 
     Args:
-        token: JWT token from Authorization header
+        token: OAuth 2.0 access token from Authorization header
 
     Returns:
         UserInDB instance
@@ -159,22 +221,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Decode JWT token
-    payload = decode_access_token(token)
-    if payload is None:
-        raise credentials_exception
+    # Validate OAuth access token (ADR-054)
+    user = validate_oauth_access_token(token)
+    if user is not None:
+        return user
 
-    # Extract username from token
-    username: str = payload.get("sub")
-    if username is None:
-        raise credentials_exception
-
-    # Get user from database
-    user = get_user_by_username(username)
-    if user is None:
-        raise credentials_exception
-
-    return user
+    # Token validation failed
+    raise credentials_exception
 
 
 async def get_current_active_user(
@@ -281,53 +334,6 @@ async def get_api_key_user(
             )
     finally:
         conn.close()
-
-
-# =============================================================================
-# Flexible Authentication (JWT or API Key)
-# =============================================================================
-
-async def get_current_user_flexible(
-    token: Annotated[str, Depends(oauth2_scheme)] = None
-) -> UserInDB:
-    """
-    Get current user from either JWT token or API key.
-
-    Tries JWT first, falls back to API key if JWT fails and token looks like API key.
-
-    Args:
-        token: JWT token or API key from Authorization header
-
-    Returns:
-        UserInDB instance
-
-    Raises:
-        HTTPException 401: If authentication fails
-    """
-    # Try JWT first
-    try:
-        payload = decode_access_token(token)
-        if payload is not None:
-            username = payload.get("sub")
-            if username:
-                user = get_user_by_username(username)
-                if user:
-                    return user
-    except:
-        pass
-
-    # If token looks like API key, try API key auth
-    if token and token.startswith("kg_sk_"):
-        from fastapi.security import HTTPAuthorizationCredentials
-        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-        return await get_api_key_user(credentials)
-
-    # Both failed
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
 
 
 # =============================================================================

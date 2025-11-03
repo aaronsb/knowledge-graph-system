@@ -6,83 +6,57 @@ The Knowledge Graph MCP (Model Context Protocol) server enables Claude to query 
 
 - Node.js 18+ installed
 - PostgreSQL + Apache AGE database running (see `docs/guides/01-QUICKSTART.md`)
-- FastAPI server running (`./scripts/start-api.sh`)
+- FastAPI server running (`./scripts/services/start-api.sh`)
 - kg CLI installed globally (`cd client && ./install.sh`)
 - **User account created** - Run `kg login` to create an admin account if you haven't already
 
-## Important: Authentication Required
+## Authentication
 
-**The MCP server now requires authentication.** You must configure username and password in your MCP server settings. The server will automatically login on startup, making authentication transparent to Claude.
+The MCP server uses OAuth 2.0 client credentials for authentication. You configure OAuth client ID and secret (`KG_OAUTH_CLIENT_ID` and `KG_OAUTH_CLIENT_SECRET`) in your MCP server settings. The server automatically obtains and refreshes access tokens, making authentication transparent to Claude.
 
 **Features:**
-- ✅ Automatic login on startup
-- ✅ Automatic token refresh before expiry (refreshes 5 minutes before token expires)
-- ✅ Long-lived sessions without manual re-authentication
+- ✅ OAuth 2.0 client credentials grant
+- ✅ Automatic access token refresh before expiry
+- ✅ Long-lived OAuth client credentials
 - ✅ Transparent to Claude - the AI is never aware of authentication
-
-If you previously configured the MCP server without authentication, you'll need to **remove and re-add it** with the new configuration (see below).
 
 ## Setup for Claude Code (CLI)
 
 Claude Code uses the `claude` CLI for MCP server management.
 
-### Step 1: Create a User Account (If You Haven't Already)
+### Step 1: Login and Create OAuth Client
+
+First, authenticate and create OAuth credentials for the MCP server:
 
 ```bash
-# Login to create your admin account
+# Login with your admin credentials
 kg login
 
-# Follow the prompts to:
-# 1. Create a new admin user (first time)
-# 2. Set your username (e.g., "admin")
-# 3. Set your password
-#
-# After successful login, you'll see:
-# ✓ Login successful
-# ✓ Logged in as: admin (role: admin)
+# Create OAuth client specifically for MCP server
+kg oauth create-mcp
 ```
 
-### Step 2: Remove Old MCP Server (If Previously Configured)
+The `kg oauth create-mcp` command will output your OAuth credentials and provide both manual configuration instructions and a `claude mcp add` command. **Save these credentials securely** - the client secret is shown only once!
 
-If you had the MCP server configured without authentication, remove it first:
+### Step 2: Add the Knowledge Graph MCP Server
+
+Use the `claude mcp add` command shown in the output from Step 1, or manually configure:
 
 ```bash
-claude mcp remove knowledge-graph
+claude mcp add knowledge-graph kg-mcp-server \
+  --env KG_OAUTH_CLIENT_ID=your-client-id-from-step-1 \
+  --env KG_OAUTH_CLIENT_SECRET=your-client-secret-from-step-1 \
+  --env KG_API_URL=http://localhost:8000 \
+  -s local
 ```
 
-### Step 3: Add the Knowledge Graph MCP Server
+**Result:** The MCP server is configured with OAuth 2.0 and automatically obtains access tokens on startup.
 
-```bash
-claude mcp add knowledge-graph
-```
-
-You'll be prompted for configuration. Here's what to enter:
-
-```
-Server name: knowledge-graph
-Command: kg-mcp-server
-Arguments (optional): [press Enter to skip]
-
-Do you want to add environment variables? (y/n): y
-
-Environment variable name: KG_USERNAME
-Environment variable value: admin
-
-Add another? (y/n): y
-
-Environment variable name: KG_PASSWORD
-Environment variable value: [your-password-here]
-
-Add another? (y/n): n
-```
-
-**Result:** The MCP server is now configured with authentication. It will automatically login on startup.
-
-### Step 4: Restart Claude Code
+### Step 3: Restart Claude Code
 
 Close and reopen Claude Code to reload the MCP server configuration.
 
-### Step 5: Verify Installation
+### Step 4: Verify Installation
 
 ```bash
 # List configured MCP servers
@@ -94,20 +68,21 @@ claude mcp list
 
 Check the MCP server logs (visible in Claude Code stderr) for authentication confirmation:
 ```
-[MCP Auth] Successfully authenticated as admin
+[MCP Auth] Successfully authenticated with OAuth client
+[MCP Auth] Client ID: kg-mcp-server-username
 [MCP Auth] Token expires at 2025-10-31T12:34:56.789Z
-[MCP Auth] Token refresh scheduled in 55 minutes
 Knowledge Graph MCP Server running on stdio
 ```
 
-**Authentication Lifecycle:**
-- The MCP server automatically logs in on startup
-- JWT tokens are long-lived (typically 1 hour)
-- The server automatically refreshes the token 5 minutes before expiry
+**OAuth Authentication Lifecycle:**
+- The MCP server uses long-lived OAuth client credentials (client_id + client_secret)
+- On startup, it obtains a short-lived access token (typically 1 hour) via OAuth 2.0 client credentials grant
+- Access tokens are automatically refreshed before expiry (every ~55 minutes)
 - You'll see `[MCP Auth] Refreshing authentication token...` in the logs before token expires
+- OAuth client credentials never expire and don't require manual renewal
 - This ensures uninterrupted access without manual intervention
 
-### Step 6: Test Connection
+### Step 5: Test Connection
 
 Start a new Claude Code conversation and try:
 
@@ -121,15 +96,19 @@ Claude should use the `list_ontologies` tool to query your graph. You should **n
 
 Claude Desktop requires manual configuration file editing.
 
-### Step 1: Create a User Account (If You Haven't Already)
+### Step 1: Login and Create OAuth Client
+
+From your terminal, authenticate and create OAuth credentials for Claude Desktop:
 
 ```bash
-# From your terminal, login to create your admin account
+# Login with your admin credentials
 kg login
 
-# Follow the prompts to create a user account
-# Remember your username and password - you'll need them for Step 3
+# Create OAuth client specifically for MCP server
+kg oauth create-mcp
 ```
+
+The command will display your OAuth credentials with ready-to-paste configuration. **Save these credentials securely** - the client secret is shown only once!
 
 ### Step 2: Locate Configuration File
 
@@ -194,7 +173,7 @@ open -a TextEdit ~/Library/Application\ Support/Claude/claude_desktop_config.jso
 - ✅ Replace `your-password-here` with your actual password
 - ✅ Ensure JSON syntax is valid (use a JSON validator if needed)
 - ✅ The `kg-mcp-server` command must be globally installed: `cd client && ./install.sh`
-- ✅ The API server must be running: `./scripts/start-api.sh`
+- ✅ The API server must be running: `./scripts/services/start-api.sh`
 
 ### Step 4: Restart Claude Desktop
 
@@ -219,7 +198,8 @@ What ontologies are available in the knowledge graph?
 - There should be **no 401 authentication errors**
 
 **If you see authentication errors:**
-- Check that `KG_USERNAME` and `KG_PASSWORD` are correct in the config file
+- Check that `KG_OAUTH_CLIENT_ID` and `KG_OAUTH_CLIENT_SECRET` are correct in the config file
+- Verify the OAuth client exists: `kg oauth clients`
 - Verify the API server is running: `curl http://localhost:8000/health`
 - Check Claude Desktop logs (see Troubleshooting section below)
 
@@ -295,7 +275,7 @@ curl http://localhost:8000/health
 
 **Start API server if needed:**
 ```bash
-./scripts/start-api.sh
+./scripts/services/start-api.sh
 ```
 
 **Check PostgreSQL is running:**
@@ -307,15 +287,16 @@ docker ps | grep postgres
 ### Environment Variable Issues
 
 **Required environment variables for MCP server:**
-- `KG_USERNAME`: Your username for authentication
-- `KG_PASSWORD`: Your password for authentication
+- `KG_OAUTH_CLIENT_ID`: OAuth client ID (from `kg oauth create-mcp`)
+- `KG_OAUTH_CLIENT_SECRET`: OAuth client secret (shown once during creation)
 
 **Optional environment variables:**
 - `KG_API_URL`: API server URL (default: `http://localhost:8000`)
 
 **If you see 401 authentication errors:**
-- Verify `KG_USERNAME` and `KG_PASSWORD` are set in your MCP config
-- Test login with `kg login` using the same credentials
+- Verify `KG_OAUTH_CLIENT_ID` and `KG_OAUTH_CLIENT_SECRET` are set in your MCP config
+- Verify the OAuth client exists: `kg oauth clients`
+- Test that credentials work: `kg login` should show you're already logged in
 - Check MCP server logs for authentication messages
 - Ensure the API server is running and accepting connections
 
@@ -409,8 +390,8 @@ The kg CLI uses the same REST API as the MCP server.
       "command": "kg-mcp-server",
       "env": {
         "KG_API_URL": "http://localhost:8000",
-        "KG_USERNAME": "admin",
-        "KG_PASSWORD": "dev-password"
+        "KG_OAUTH_CLIENT_ID": "dev-oauth-client-id",
+        "KG_OAUTH_CLIENT_SECRET": "dev-oauth-client-secret"
       }
     }
   }
@@ -425,8 +406,8 @@ The kg CLI uses the same REST API as the MCP server.
       "command": "kg-mcp-server",
       "env": {
         "KG_API_URL": "https://api.production-host.com",
-        "KG_USERNAME": "admin",
-        "KG_PASSWORD": "prod-password"
+        "KG_OAUTH_CLIENT_ID": "prod-oauth-client-id",
+        "KG_OAUTH_CLIENT_SECRET": "prod-oauth-client-secret"
       }
     }
   }
@@ -435,8 +416,8 @@ The kg CLI uses the same REST API as the MCP server.
 
 **Environment Variables:**
 - `KG_API_URL`: API server URL (default: `http://localhost:8000`)
-- `KG_USERNAME`: Username for authentication (required for authenticated APIs)
-- `KG_PASSWORD`: Password for authentication (required for authenticated APIs)
+- `KG_OAUTH_CLIENT_ID`: OAuth client ID (required - create with `kg oauth create-mcp`)
+- `KG_OAUTH_CLIENT_SECRET`: OAuth client secret (required - shown once during creation)
 
 ## Security Considerations
 
@@ -448,13 +429,15 @@ The kg CLI uses the same REST API as the MCP server.
 
 ### API Server Authentication
 
-- The FastAPI server requires JWT-based authentication
-- MCP server authenticates automatically using `KG_USERNAME` and `KG_PASSWORD` environment variables
-- JWT tokens are stored in memory during the MCP server session
-- For production, use HTTPS and strong passwords
+- The FastAPI server requires OAuth 2.0 authentication
+- MCP server authenticates automatically using OAuth client credentials grant
+- OAuth client credentials (`KG_OAUTH_CLIENT_ID` + `KG_OAUTH_CLIENT_SECRET`) are long-lived and don't expire
+- Access tokens are short-lived (1 hour) and refreshed automatically before expiry
+- OAuth tokens are stored in memory during the MCP server session
+- For production, use HTTPS and protect OAuth credentials
 - **Never commit** credentials to version control
 - Store credentials securely in Claude Desktop config file (`claude_desktop_config.json`)
-- Consider using separate user accounts for MCP server vs. CLI usage
+- Consider creating separate OAuth clients for different environments (dev, prod)
 
 ### PostgreSQL Security
 

@@ -424,27 +424,31 @@ write:*             - Read + write access to everything
 
 ## Implementation Plan
 
-### Phase 1: Database Schema (1 week)
-- [ ] Create 5 new OAuth tables
-- [ ] Rename `oauth_tokens` → `oauth_external_provider_tokens`
-- [ ] Drop `api_keys` table
-- [ ] Add indexes for performance
-- [ ] Seed builtin clients
+### Phase 1: Database Schema (1 week) ✅ COMPLETED
+- [x] Create 5 new OAuth tables
+- [x] Rename `oauth_tokens` → `oauth_external_provider_tokens`
+- [x] Drop `api_keys` table
+- [x] Add indexes for performance
+- [x] Seed builtin clients
 
-### Phase 2: API Endpoints (1 week)
-- [ ] Client registration API (admin)
-- [ ] Authorization endpoint (`GET /auth/oauth/authorize`)
-- [ ] Device authorization endpoint (`POST /auth/oauth/device`)
-- [ ] Token endpoint (`POST /auth/oauth/token`) - all grant types
-- [ ] Token revocation endpoint (`POST /auth/oauth/revoke`)
-- [ ] Remove legacy endpoints (`/auth/login`)
+### Phase 2: API Endpoints (1 week) ✅ COMPLETED
+- [x] Client registration API (admin)
+- [x] Authorization endpoint (`GET /auth/oauth/authorize`) - Placeholder
+- [x] Device authorization endpoint (`POST /auth/oauth/device`)
+- [x] Token endpoint (`POST /auth/oauth/token`) - all grant types
+- [x] Token revocation endpoint (`POST /auth/oauth/revoke`)
+- [x] Remove legacy endpoints (`/auth/login`)
 
-### Phase 3: Client Libraries (1 week)
+### Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS
+**Priority:** CLI (device flow) and MCP (client credentials) first
+
 - [ ] Update `KnowledgeGraphClient` to support OAuth
 - [ ] Implement device flow for CLI (`DeviceAuthFlow` class)
 - [ ] Implement client credentials for MCP (`ClientCredentialsAuth` class)
 - [ ] Add token refresh logic
 - [ ] Update token storage in config
+
+**Deferred to future:** viz-app Authorization Code + PKCE flow will be implemented once CLI and MCP are stable and tested. The `kg-viz` client is pre-registered in the database and the backend endpoints are ready, but the frontend implementation is postponed.
 
 ### Phase 4: CLI Commands (3 days)
 - [ ] Update `kg login` to use device flow
@@ -460,7 +464,7 @@ write:*             - Read + write access to everything
 - [ ] Create OAuth integration guides (web/CLI/MCP)
 - [ ] API reference documentation
 
-**Total estimated time:** 4-5 weeks
+**Total estimated time:** 4-5 weeks (excluding viz-app frontend)
 
 ## References
 

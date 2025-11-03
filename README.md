@@ -114,10 +114,10 @@ You've invested time (and API tokens) extracting knowledge from documents. Tradi
 ./scripts/setup.sh
 
 # 2. Configure AI provider
-./scripts/configure-ai.sh
+./scripts/setup/configure-ai.sh
 
 # 3. Start API server
-./scripts/start-api.sh
+./scripts/services/start-api.sh
 # API docs: http://localhost:8000/docs
 # ReDoc API: http://localhost:8000/redoc
 

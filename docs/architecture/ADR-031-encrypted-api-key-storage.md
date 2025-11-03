@@ -336,7 +336,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Update docker-compose.yml to use secrets"
 echo "  2. Run: docker-compose up -d"
-echo "  3. Initialize database: ./scripts/initialize-auth.sh"
+echo "  3. Initialize database: ./scripts/setup/initialize-auth.sh"
 ```
 
 **Usage:**

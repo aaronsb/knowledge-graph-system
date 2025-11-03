@@ -157,7 +157,7 @@ Enforce reasonable limits to prevent misconfiguration:
 **Migration Dependency:**
 - Existing installations must run migration 018
 - No automatic migration on API startup
-- Requires manual `./scripts/migrate-db.sh`
+- Requires manual `./scripts/database/migrate-db.sh`
 
 ## Implementation
 

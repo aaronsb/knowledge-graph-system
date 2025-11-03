@@ -6,6 +6,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { OAuthTokenResponse } from './oauth-types.js';
 
 // ========== Request/Response Types ==========
 
@@ -78,6 +79,35 @@ export interface APIKeyListResponse {
   count: number;
 }
 
+// ========== OAuth 2.0 Types (ADR-054) ==========
+
+export interface OAuthClientCreateRequest {
+  username: string;
+  password: string;
+  client_name?: string;
+  scope?: string;
+}
+
+export interface OAuthClientResponse {
+  client_id: string;
+  client_secret: string;
+  client_name: string;
+  client_type: string;
+  grant_types: string[];
+  scopes: string[];
+  created_at: string;
+  created_by: number;
+}
+
+export interface OAuthTokenRequest {
+  grant_type: 'client_credentials';
+  client_id: string;
+  client_secret: string;
+  scope?: string;
+}
+
+// Note: OAuthTokenResponse is imported from './oauth-types.js'
+
 // ========== Auth Client Class ==========
 
 export class AuthClient {
@@ -97,6 +127,7 @@ export class AuthClient {
   /**
    * Login with username/password (OAuth2 password flow)
    *
+   * @deprecated Use createPersonalOAuthClient() instead (ADR-054 unified OAuth)
    * @param request Username and password
    * @returns JWT token and user details
    * @throws 401 if credentials invalid, 400 if validation fails
@@ -114,6 +145,98 @@ export class AuthClient {
     });
 
     return response.data;
+  }
+
+  /**
+   * Create a personal OAuth client (ADR-054 - GitHub CLI-style authentication)
+   *
+   * This is the preferred authentication method for CLI tools.
+   * Flow:
+   * 1. User provides username + password
+   * 2. Server creates long-lived OAuth client credentials
+   * 3. Client stores client_id + client_secret
+   * 4. Future requests use client credentials grant
+   *
+   * @param request Username, password, and optional client name/scope
+   * @returns OAuth client credentials (client_secret shown only once!)
+   * @throws 401 if credentials invalid, 400 if validation fails
+   */
+  async createPersonalOAuthClient(request: OAuthClientCreateRequest): Promise<OAuthClientResponse> {
+    // OAuth endpoint requires application/x-www-form-urlencoded
+    const formData = new URLSearchParams();
+    formData.append('username', request.username);
+    formData.append('password', request.password);
+
+    if (request.client_name) {
+      formData.append('client_name', request.client_name);
+    }
+
+    if (request.scope) {
+      formData.append('scope', request.scope);
+    }
+
+    const response = await this.client.post<OAuthClientResponse>(
+      '/auth/oauth/clients/personal',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get OAuth access token using client credentials grant (ADR-054)
+   *
+   * Use this after creating a personal OAuth client to get access tokens.
+   * Access tokens are short-lived and should be refreshed as needed.
+   *
+   * @param request Client credentials (client_id, client_secret)
+   * @returns OAuth access token
+   * @throws 401 if client credentials invalid
+   */
+  async getOAuthToken(request: OAuthTokenRequest): Promise<OAuthTokenResponse> {
+    const formData = new URLSearchParams();
+    formData.append('grant_type', 'client_credentials');
+    formData.append('client_id', request.client_id);
+    formData.append('client_secret', request.client_secret);
+
+    if (request.scope) {
+      formData.append('scope', request.scope);
+    }
+
+    const response = await this.client.post<OAuthTokenResponse>(
+      '/auth/oauth/token',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Delete a personal OAuth client (ADR-054)
+   *
+   * Called by `kg logout` to revoke OAuth credentials.
+   * Requires authentication with a valid access token.
+   *
+   * @param token Access token for authentication
+   * @param clientId Client ID to delete
+   * @throws 401 if token invalid, 403 if not owner, 404 if client not found
+   */
+  async deletePersonalOAuthClient(token: string, clientId: string): Promise<void> {
+    await this.client.delete(`/auth/oauth/clients/personal/${clientId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
   }
 
   /**

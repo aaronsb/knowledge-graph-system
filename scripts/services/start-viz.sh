@@ -55,7 +55,7 @@ echo "=========================================="
 if ! curl -s http://localhost:8000/health > /dev/null 2>&1; then
     echo -e "${YELLOW}⚠ API server not detected on port 8000${NC}"
     echo -e "${YELLOW}  The visualization app requires the API server to be running${NC}"
-    echo -e "${YELLOW}  Start it with: ./scripts/start-api.sh -y${NC}"
+    echo -e "${YELLOW}  Start it with: ./scripts/services/start-api.sh -y${NC}"
     echo ""
 
     # If -y flag was used, just warn and continue

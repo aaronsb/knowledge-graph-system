@@ -1,44 +1,132 @@
 # Authentication Guide
 
-**Operational guide for Knowledge Graph System authentication (ADR-027)**
+**Operational guide for Knowledge Graph System authentication (ADR-054: OAuth 2.0)**
 
-This guide shows you how to use the authentication system - from cold start initialization to day-to-day user management.
+This guide shows you how to use the OAuth 2.0 authentication system - from cold start initialization to day-to-day operations.
 
 ## Table of Contents
 
+- [Overview](#overview)
 - [Cold Start: First-Time Setup](#cold-start-first-time-setup)
-- [User Registration](#user-registration)
-- [Login & JWT Tokens](#login--jwt-tokens)
+- [Login & OAuth Client Creation](#login--oauth-client-creation)
+- [OAuth Client Management](#oauth-client-management)
 - [Using Protected Endpoints](#using-protected-endpoints)
-- [API Keys (Programmatic Access)](#api-keys-programmatic-access)
+- [Token Lifecycle](#token-lifecycle)
 - [User Management (Admin)](#user-management-admin)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
+## Overview
+
+The Knowledge Graph System uses **OAuth 2.0 client credentials grant** for authentication:
+
+- **kg CLI**: Creates personal OAuth client credentials during login
+- **MCP Server**: Uses dedicated OAuth client credentials
+- **Programmatic access**: Create OAuth clients via API
+
+**Key Concepts:**
+
+| Component | What it is | Lifetime |
+|-----------|------------|----------|
+| **OAuth Client** | Long-lived credentials (client_id + client_secret) | Never expires |
+| **Access Token** | Short-lived token for API requests | 1 hour (refreshed automatically) |
+| **User Account** | Username + password (only for creating OAuth clients) | Permanent |
+
+**Authentication Flow:**
+
+```
+1. User logs in → Creates OAuth client credentials
+2. Client stores credentials → client_id + client_secret
+3. API requests → Exchange credentials for access token
+4. Access token → Used in Authorization: Bearer header
+5. Token expires → Automatically refresh using client credentials
+```
+
+**Visual Flow:**
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI as kg CLI
+    participant API as API Server
+    participant DB as Database
+
+    %% Initial Login - Create OAuth Client
+    rect rgb(200, 220, 240)
+        Note over User,DB: Initial Login (kg login)
+        User->>CLI: kg login
+        CLI->>User: Prompt for username/password
+        User->>CLI: Enter credentials
+        CLI->>API: POST /auth/oauth/clients/personal<br/>(username + password)
+        API->>DB: Verify password hash
+        DB-->>API: User authenticated
+        API->>DB: Create OAuth client
+        DB-->>API: client_id + client_secret
+        API-->>CLI: OAuth credentials
+        CLI->>CLI: Save to ~/.kg/config.json
+        CLI->>User: ✓ Login successful
+    end
+
+    %% Making API Requests
+    rect rgb(220, 240, 200)
+        Note over User,DB: API Request (any kg command)
+        User->>CLI: kg admin user list
+        CLI->>CLI: Read OAuth credentials
+        CLI->>API: POST /auth/oauth/token<br/>(client credentials grant)
+        API->>DB: Verify client credentials
+        DB-->>API: Client valid
+        API->>API: Sign JWT access token
+        API-->>CLI: access_token (expires in 1h)
+        CLI->>API: GET /admin/users<br/>Authorization: Bearer {token}
+        API->>API: Verify access token signature
+        API->>DB: Fetch users
+        DB-->>API: User list
+        API-->>CLI: User data
+        CLI->>User: Display formatted output
+    end
+
+    %% Token Refresh
+    rect rgb(240, 220, 200)
+        Note over User,DB: Automatic Token Refresh (after ~55min)
+        User->>CLI: kg ontology list
+        CLI->>CLI: Check token expiry<br/>(expires in 3 min)
+        CLI->>API: POST /auth/oauth/token<br/>(refresh using client credentials)
+        API->>DB: Verify client credentials
+        DB-->>API: Client valid
+        API->>API: Sign new JWT access token
+        API-->>CLI: new access_token (expires in 1h)
+        CLI->>API: GET /ontology/list<br/>Authorization: Bearer {new_token}
+        API-->>CLI: Ontology list
+        CLI->>User: Display ontologies
+    end
+```
+
+---
+
 ## Cold Start: First-Time Setup
 
-When deploying the knowledge graph system for the first time, there's no admin user in the database. You need to initialize authentication.
+When deploying the knowledge graph system for the first time, you need to initialize authentication and create the admin user.
 
 ### Prerequisites
 
-1. PostgreSQL container running: `docker-compose up -d`
-2. Database schema initialized (happens automatically on first run)
-3. Python virtual environment active: `source venv/bin/activate`
+1. PostgreSQL container running: `./scripts/database/start-database.sh`
+2. API server running: `./scripts/services/start-api.sh`
+3. kg CLI installed: `cd client && ./install.sh`
 
 ### Initialization Steps
 
 **Run the initialization script:**
 
 ```bash
-./scripts/initialize-auth.sh
+./scripts/setup/initialize-auth.sh
 ```
 
 **What this does:**
 
 1. ✅ Checks if admin user already exists
 2. 🔐 Prompts for admin password (with strength validation)
-3. 🔑 Generates cryptographically secure JWT_SECRET_KEY
+3. 🔑 Generates cryptographically secure JWT_SECRET_KEY (for OAuth token signing)
 4. 💾 Saves JWT_SECRET_KEY to `.env` file
 5. 👤 Creates admin user in database with bcrypt-hashed password
 
@@ -84,525 +172,414 @@ Admin Credentials:
   Password: (the password you just set)
 
 Next Steps:
-  1. Start API server: ./scripts/start-api.sh
-  2. Login: curl -X POST http://localhost:8000/auth/login \
-           -d 'username=admin&password=YOUR_PASSWORD'
-  3. View docs: http://localhost:8000/docs
+  1. Restart API server: ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+  2. Login: kg login
+  3. View users: kg admin user list
 ```
 
-### Manual Initialization (CI/Automated Environments)
+**Why JWT_SECRET_KEY?**
 
-If you need to script the initialization:
+Despite using OAuth 2.0, we still use JWT (JSON Web Tokens) for the access tokens. The JWT_SECRET_KEY signs these tokens to prevent tampering.
+
+---
+
+## Login & OAuth Client Creation
+
+### Interactive Login (kg CLI)
+
+The `kg login` command creates a personal OAuth client for CLI usage:
 
 ```bash
-# 1. Generate JWT secret
-JWT_SECRET=$(openssl rand -hex 32)
-echo "JWT_SECRET_KEY=$JWT_SECRET" >> .env
+kg login
+```
 
-# 2. Create admin user with pgcrypto
-docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "
-  INSERT INTO kg_auth.users (username, password_hash, role, created_at)
-  VALUES ('admin', crypt('YOUR_SECURE_PASSWORD', gen_salt('bf', 12)), 'admin', NOW())"
+**What happens:**
+
+```
+Knowledge Graph Login
+
+Username: admin
+Password: ********
+
+✓ Creating personal OAuth client credentials...
+✓ Login successful
+
+Logged in as: admin (role: admin)
+OAuth Client: kg-cli-admin-20251102
+Scopes: read:*, write:*
+
+✓ Credentials saved to ~/.kg/config.json
+```
+
+**Behind the scenes:**
+
+1. Authenticates with username/password
+2. Creates OAuth client via `POST /auth/oauth/clients/personal`
+3. Returns `client_id` + `client_secret`
+4. Stores credentials in `~/.kg/config.json` (not the password!)
+5. Future API requests use client credentials grant to get access tokens
+
+### Check Login Status
+
+```bash
+kg config list
+```
+
+Output:
+```
+Configuration
+
+API URL:     http://localhost:8000
+Auto-Approve: false
+
+Authentication:
+  Client ID:     kg-cli-admin-20251102
+  Client Name:   kg CLI (admin)
+  Username:      admin
+  Scopes:        read:*, write:*
+  Created:       2025-11-02T10:30:00Z
 ```
 
 ---
 
-## User Registration
+## OAuth Client Management
 
-Anyone can register a new account (or restrict to admin-only in production).
-
-### Endpoint
-
-```
-POST /auth/register
-Content-Type: application/json
-```
-
-### Request Body
-
-```json
-{
-  "username": "alice",
-  "password": "SecurePass123!",
-  "role": "contributor"
-}
-```
-
-**Roles:**
-- `read_only` - View concepts, vocabulary, jobs
-- `contributor` - Create concepts and jobs
-- `curator` - Approve vocabulary changes and jobs
-- `admin` - Full system access including user management
-
-### Password Requirements
-
-- Minimum 8 characters
-- At least one uppercase letter
-- At least one lowercase letter
-- At least one digit
-- At least one special character (`!@#$%^&*()_+-=[]{}|;:,.<>?`)
-
-### Example (curl)
+### List Your OAuth Clients
 
 ```bash
-curl -X POST http://localhost:8000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "alice",
-    "password": "SecurePass123!",
-    "role": "contributor"
-  }'
+kg oauth clients
 ```
 
-### Response (201 Created)
+Output:
+```
+Personal OAuth Clients
 
-```json
-{
-  "id": 2,
-  "username": "alice",
-  "role": "contributor",
-  "created_at": "2025-10-11T12:00:00Z",
-  "last_login": null,
-  "disabled": false
-}
+Client ID                 Name                 Scopes          Created              Status
+────────────────────────────────────────────────────────────────────────────────────────────
+kg-cli-admin-20251102     kg CLI (admin)       read:*, write:* 2 hours ago          ✓ Active
+kg-mcp-server-admin       kg MCP Server (a...  read:*, write:* 1 day ago            ✓ Active
+
+Showing 2 client(s)
 ```
 
-**Note:** Password hash is NOT returned (security).
-
-### Errors
-
-| Code | Reason |
-|------|--------|
-| 422 | Password doesn't meet requirements |
-| 409 | Username already exists |
-
----
-
-## Login & JWT Tokens
-
-Get a JWT access token to authenticate API requests.
-
-### Endpoint
-
-```
-POST /auth/login
-Content-Type: application/x-www-form-urlencoded
-```
-
-**OAuth2 password flow compatible** (works with OpenAPI docs).
-
-### Request Body (form data)
-
-```
-username=alice&password=SecurePass123!
-```
-
-### Example (curl)
+### Create OAuth Client for MCP Server
 
 ```bash
-curl -X POST http://localhost:8000/auth/login \
-  -d "username=alice&password=SecurePass123!"
+kg oauth create-mcp
 ```
 
-### Response (200 OK)
+Output:
+```
+🔐 Creating OAuth client for MCP server...
 
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer",
-  "expires_in": 3600,
-  "user": {
-    "id": 2,
-    "username": "alice",
-    "role": "contributor",
-    "created_at": "2025-10-11T12:00:00Z",
-    "last_login": "2025-10-11T12:30:00Z",
-    "disabled": false
+✅ OAuth client created successfully!
+
+════════════════════════════════════════════════════════════════════════════════
+CLAUDE DESKTOP CONFIG
+════════════════════════════════════════════════════════════════════════════════
+
+Add this to your Claude Desktop config:
+
+  "knowledge-graph": {
+    "command": "kg-mcp-server",
+    "env": {
+      "KG_OAUTH_CLIENT_ID": "kg-mcp-server-admin-20251102",
+      "KG_OAUTH_CLIENT_SECRET": "oauth_secret_abc123...",
+      "KG_API_URL": "http://localhost:8000"
+    }
   }
-}
+
+════════════════════════════════════════════════════════════════════════════════
+
+⚠️  IMPORTANT:
+  • Keep these credentials secure!
+  • Client secret is shown only once
+  • To revoke: kg oauth revoke kg-mcp-server-admin-20251102
+
+Or add using claude CLI:
+
+  claude mcp add knowledge-graph kg-mcp-server \
+    --env KG_OAUTH_CLIENT_ID=kg-mcp-server-admin-20251102 \
+    --env KG_OAUTH_CLIENT_SECRET=oauth_secret_abc123... \
+    --env KG_API_URL=http://localhost:8000 \
+    -s local
 ```
 
-### JWT Token Details
+### Revoke OAuth Client
 
-**Format:**
-```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJjdXJhdG9yIiwiZXhwIjoxNjk2ODc2NTQzfQ.signature
-```
-
-**Payload (decoded):**
-```json
-{
-  "sub": "alice",      // Username
-  "role": "curator",   // User role
-  "exp": 1696876543    // Expiration timestamp
-}
+```bash
+kg oauth revoke kg-cli-admin-20251102
 ```
 
-**Expiration:** 60 minutes by default (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES` in `.env`)
+If you try to revoke your current CLI client:
 
-### Errors
+```
+⚠️  Warning: This is your current CLI OAuth client
+   Client ID: kg-cli-admin-20251102
+   Revoking this will log you out.
 
-| Code | Reason |
-|------|--------|
-| 401 | Invalid username or password |
-| 403 | User account is disabled |
+   To proceed, use: kg oauth revoke kg-cli-admin-20251102 --force
+   Or use: kg logout
+```
 
 ---
 
 ## Using Protected Endpoints
 
-Most API endpoints require authentication via JWT token.
+### CLI Automatic Authentication
 
-### Authorization Header
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### Example: Get Current User
+The kg CLI automatically handles authentication:
 
 ```bash
-# 1. Login and save token
-TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
-  -d "username=alice&password=SecurePass123!" \
-  | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
-
-# 2. Use token for authenticated request
-curl http://localhost:8000/auth/me \
-  -H "Authorization: Bearer $TOKEN"
+# All commands automatically use your OAuth credentials
+kg admin user list
+kg ontology list
+kg search query "linear thinking"
 ```
 
-### Response
+**How it works:**
 
+1. kg reads OAuth credentials from `~/.kg/config.json`
+2. Exchanges client credentials for access token via OAuth 2.0 grant
+3. Includes `Authorization: Bearer <access_token>` in API requests
+4. Automatically refreshes token when it expires
+
+### Manual API Requests (curl)
+
+If you're not using kg CLI, authenticate manually:
+
+**Step 1: Get access token**
+
+```bash
+curl -X POST http://localhost:8000/auth/oauth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=kg-cli-admin-20251102" \
+  -d "client_secret=your-client-secret" \
+  -d "scope=read:* write:*"
+```
+
+Response:
 ```json
 {
-  "id": 2,
-  "username": "alice",
-  "role": "contributor",
-  "created_at": "2025-10-11T12:00:00Z",
-  "last_login": "2025-10-11T12:30:00Z",
-  "disabled": false
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "scope": "read:* write:*"
 }
 ```
 
-### Token Expired?
+**Step 2: Use access token**
 
-Tokens expire after 60 minutes. When you get a `401 Unauthorized`, just login again to get a fresh token.
+```bash
+curl http://localhost:8000/admin/users \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
 
 ---
 
-## API Keys (Programmatic Access)
+## Token Lifecycle
 
-For long-lived access (CLI tools, CI/CD, integrations), use API keys instead of JWT tokens.
+### OAuth Client Credentials (Long-Lived)
 
-### Create API Key
+- **Created**: During `kg login` or `kg oauth create-mcp`
+- **Stored**: In `~/.kg/config.json` (CLI) or Claude Desktop config (MCP)
+- **Lifetime**: Never expires (until explicitly revoked)
+- **Revocation**: `kg oauth revoke <client-id>` or `kg logout`
 
-```bash
-# Login first
-TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
-  -d "username=alice&password=SecurePass123!" \
-  | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+### Access Tokens (Short-Lived)
 
-# Create API key
-curl -X POST http://localhost:8000/auth/api-keys \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "CI/CD Pipeline",
-    "scopes": ["read:concepts", "write:ingest"],
-    "expires_at": "2026-01-01T00:00:00Z"
-  }'
+- **Created**: On-demand via OAuth 2.0 client credentials grant
+- **Stored**: In memory (not persisted to disk)
+- **Lifetime**: 1 hour (configurable in API server)
+- **Refresh**: Automatic (kg CLI and MCP server handle this)
+
+**Token Refresh Flow:**
+
+```
+Time 0:00 → Get access token (expires at 1:00)
+Time 0:55 → Token refresh triggered (5 min before expiry)
+Time 0:55 → New access token obtained (expires at 1:55)
 ```
 
-### Response (201 Created)
+**Security Properties:**
 
-```json
-{
-  "id": 1,
-  "key": "kg_sk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
-  "name": "CI/CD Pipeline",
-  "scopes": ["read:concepts", "write:ingest"],
-  "created_at": "2025-10-11T12:00:00Z",
-  "last_used": null,
-  "expires_at": "2026-01-01T00:00:00Z"
-}
-```
-
-**⚠️ SAVE THE KEY! It's shown only once.**
-
-### Use API Key
-
-API keys work exactly like JWT tokens:
-
-```bash
-curl http://localhost:8000/auth/me \
-  -H "Authorization: Bearer kg_sk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6"
-```
-
-### List Your API Keys
-
-```bash
-curl http://localhost:8000/auth/api-keys \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-**Note:** Plaintext keys are NOT returned (only key ID, name, scopes).
-
-### Revoke API Key
-
-```bash
-curl -X DELETE http://localhost:8000/auth/api-keys/1 \
-  -H "Authorization: Bearer $TOKEN"
-```
+- **OAuth credentials**: Never transmitted except during initial creation
+- **Access tokens**: Short-lived, minimizes exposure if compromised
+- **Passwords**: Never stored, only used during OAuth client creation
 
 ---
 
 ## User Management (Admin)
 
-Admin users can manage all user accounts.
-
-### List All Users
+### Create Additional Users
 
 ```bash
-curl http://localhost:8000/users \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
+# Interactive (prompts for password)
+kg admin user create alice --role contributor
+
+# Non-interactive (provide password)
+kg admin user create bob --role curator --password "SecurePass123!"
 ```
 
-**Query parameters:**
-- `skip=0` - Pagination offset
-- `limit=100` - Max results
-- `role=curator` - Filter by role
-
-### Response
-
-```json
-{
-  "users": [
-    {
-      "id": 1,
-      "username": "admin",
-      "role": "admin",
-      "created_at": "2025-10-11T00:00:00Z",
-      "last_login": "2025-10-11T12:00:00Z",
-      "disabled": false
-    },
-    {
-      "id": 2,
-      "username": "alice",
-      "role": "curator",
-      "created_at": "2025-10-11T12:00:00Z",
-      "last_login": "2025-10-11T15:30:00Z",
-      "disabled": false
-    }
-  ],
-  "total": 2,
-  "skip": 0,
-  "limit": 100
-}
-```
-
-### Get User Details
+### List Users
 
 ```bash
-curl http://localhost:8000/users/2 \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
+kg admin user list
 ```
 
-### Update User
+### Grant Admin Role
 
 ```bash
-# Change role
-curl -X PUT http://localhost:8000/users/2 \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "role": "curator"
-  }'
-
-# Disable account
-curl -X PUT http://localhost:8000/users/2 \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "disabled": true
-  }'
-
-# Reset password (admin can do this)
-curl -X PUT http://localhost:8000/users/2 \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "password": "NewSecurePass456!"
-  }'
+kg admin user update 3 --role admin
 ```
 
-### Delete User
+### Reset User Password
 
 ```bash
-curl -X DELETE http://localhost:8000/users/2 \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-```
+# Interactive password prompt
+kg admin user update 3 --password
 
-**Note:** Cannot delete yourself (safety check).
+# Or use the out-of-band reset script
+./scripts/setup/initialize-auth.sh  # Select existing admin user
+```
 
 ---
 
 ## Troubleshooting
 
-### Problem: `401 Unauthorized` on protected endpoints
-
-**Cause:** Missing, invalid, or expired token
-
-**Solution:**
-```bash
-# Check if token is in Authorization header
-curl -v http://localhost:8000/auth/me \
-  -H "Authorization: Bearer $TOKEN"
-
-# Look for: Authorization: Bearer eyJhbGci...
-
-# If token expired (>60 min old), login again
-TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
-  -d "username=alice&password=SecurePass123!" \
-  | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
-```
-
-### Problem: `403 Forbidden` - permission denied
-
-**Cause:** Your role doesn't have permission for this action
-
-**Solution:** Contact admin to upgrade your role:
-```bash
-# Admin upgrades alice to curator
-curl -X PUT http://localhost:8000/users/2 \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"role": "curator"}'
-```
-
-### Problem: Forgot admin password
-
-**Solution 1:** Reset via init script
-```bash
-./scripts/initialize-auth.sh
-# Choose "yes" when asked to reset admin password
-```
-
-**Solution 2:** Manual database reset
-```bash
-# Generate new password hash
-python3 << EOF
-from src.api.lib.auth import get_password_hash
-print(get_password_hash("NewAdminPassword123!"))
-EOF
-
-# Update in database
-docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "
-  UPDATE kg_auth.users
-  SET password_hash = '\$2b\$12\$...'
-  WHERE username = 'admin'"
-```
-
-### Problem: JWT_SECRET_KEY warnings on startup
+### "Not authenticated" Errors
 
 **Symptom:**
 ```
-⚠️  Auth Configuration: JWT_SECRET_KEY is using default value - INSECURE!
+❌ Authentication required
+   Please login first: kg login
 ```
-
-**Cause:** Using the example JWT_SECRET_KEY from `.env.example`
 
 **Solution:**
 ```bash
-# Generate secure secret
-openssl rand -hex 32
-
-# Add to .env
-echo "JWT_SECRET_KEY=<generated_secret>" >> .env
-
-# Or run init script
-./scripts/initialize-auth.sh
+kg login
 ```
 
-### Problem: Can't create users (registration disabled)
+### "Invalid client credentials" Errors
 
-If you want **admin-only user creation**, modify the endpoint to check permissions:
-
-```python
-# In src/api/routes/auth.py
-@router.post("/register", response_model=UserRead, dependencies=[Depends(require_role("admin"))])
-async def register_user(user: UserCreate):
-    # Now only admins can register users
-    ...
+**Symptom:**
+```bash
+kg admin user list
+# Error: 401 Unauthorized - Invalid client credentials
 ```
+
+**Cause:** OAuth client was revoked or credentials corrupted
+
+**Solution:**
+```bash
+# Clear config and re-login
+kg logout --force
+kg login
+```
+
+### Forgot Admin Password
+
+Use the initialization script to reset:
+
+```bash
+./scripts/setup/initialize-auth.sh
+```
+
+The script detects existing admin user and offers password reset.
+
+### OAuth Client Not Working
+
+**Verify client exists:**
+
+```bash
+kg oauth clients
+```
+
+**Check client credentials in config:**
+
+```bash
+kg config list
+```
+
+**Test authentication:**
+
+```bash
+# Should work without errors
+kg admin user list
+```
+
+### MCP Server Authentication Failures
+
+**Check MCP server logs** for specific error:
+
+**macOS:**
+```bash
+tail -f ~/Library/Logs/Claude/mcp*.log
+```
+
+**Common issues:**
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Invalid client credentials` | Wrong client_id or client_secret | Verify credentials in Claude Desktop config |
+| `Client not found` | OAuth client was revoked | Create new client: `kg oauth create-mcp` |
+| `401 Unauthorized` | API server not running | Start API: `./scripts/services/start-api.sh` |
 
 ---
 
 ## Security Best Practices
 
-### ✅ DO:
+### Do's ✅
 
-- Use strong, unique passwords
-- Rotate JWT_SECRET_KEY periodically
-- Set API key expiration dates
-- Revoke API keys when no longer needed
-- Use HTTPS in production (prevents token theft)
-- Log all authentication events
-- Implement rate limiting on login endpoint
-- Store JWT tokens securely in client (HttpOnly cookies for web apps)
+- ✅ Create separate OAuth clients for different environments (dev, prod)
+- ✅ Revoke OAuth clients when no longer needed
+- ✅ Use strong passwords (enforced by validation)
+- ✅ Store OAuth credentials securely (kg CLI handles this)
+- ✅ Use HTTPS in production
+- ✅ Rotate user passwords periodically
 
-### ❌ DON'T:
+### Don'ts ❌
 
-- Commit `.env` to git (it's in `.gitignore`)
-- Share JWT tokens or API keys
-- Use default passwords in production
-- Log JWT tokens or passwords in plaintext
-- Store tokens in localStorage (web apps - use HttpOnly cookies)
-- Use weak passwords (enable stronger validation if needed)
+- ❌ Never commit `~/.kg/config.json` to version control
+- ❌ Never commit Claude Desktop config with OAuth credentials
+- ❌ Never share OAuth client secrets
+- ❌ Never reuse passwords across users
+- ❌ Never disable password requirements in production
 
 ---
 
-## Quick Reference
+## API Reference
 
-### Endpoints
+### OAuth Endpoints
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/auth/register` | POST | None | Create user account |
-| `/auth/login` | POST | None | Get JWT token |
-| `/auth/me` | GET | JWT | Get current user |
-| `/auth/me` | PUT | JWT | Update own password |
-| `/auth/api-keys` | GET | JWT | List own API keys |
-| `/auth/api-keys` | POST | JWT | Create API key |
-| `/auth/api-keys/{id}` | DELETE | JWT | Revoke API key |
-| `/users` | GET | Admin | List all users |
-| `/users/{id}` | GET | Admin | Get user details |
-| `/users/{id}` | PUT | Admin | Update user |
-| `/users/{id}` | DELETE | Admin | Delete user |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `POST /auth/oauth/token` | POST | Get access token (client credentials grant) |
+| `GET /auth/oauth/clients/personal` | GET | List personal OAuth clients |
+| `POST /auth/oauth/clients/personal/new` | POST | Create additional OAuth client |
+| `DELETE /auth/oauth/clients/personal/{client_id}` | DELETE | Revoke OAuth client |
 
-### Roles & Permissions
+### User Endpoints
 
-| Role | Permissions |
-|------|-------------|
-| `read_only` | View concepts, vocabulary, jobs |
-| `contributor` | + Create concepts, submit jobs |
-| `curator` | + Approve vocabulary, approve jobs |
-| `admin` | + Full user management |
-
-### Environment Variables
-
-```bash
-# Required
-JWT_SECRET_KEY=<openssl rand -hex 32>
-
-# Optional
-ACCESS_TOKEN_EXPIRE_MINUTES=60  # Token lifetime (default: 60)
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /admin/users` | GET | List all users (admin only) |
+| `POST /admin/users` | POST | Create user (admin only) |
+| `GET /admin/users/{user_id}` | GET | Get user details |
+| `PATCH /admin/users/{user_id}` | PATCH | Update user |
+| `DELETE /admin/users/{user_id}` | DELETE | Delete user |
 
 ---
 
-## Next Steps
+## Related Documentation
 
-- [../01-getting-started/01-QUICKSTART.md](../01-getting-started/01-QUICKSTART.md) - System overview
-- [ADR-027](../../architecture/ADR-027-user-management-api.md) - Architecture decisions
-- [OpenAPI Docs](http://localhost:8000/docs) - Interactive API documentation
+- **ADR-054**: [OAuth 2.0 Unified Architecture](../../architecture/ADR-054-oauth-client-management.md)
+- **ADR-027**: [User Management API](../../architecture/ADR-027-user-management-api.md)
+- **Password Recovery**: [04-PASSWORD_RECOVERY.md](04-PASSWORD_RECOVERY.md)
+- **RBAC**: [02-RBAC.md](02-RBAC.md)
+
+---
+
+**Last Updated:** 2025-11-02
+**Authentication Version:** OAuth 2.0 (ADR-054)

@@ -819,28 +819,28 @@ kg database stats  # Record results
 
 # 3. Test Qwen3 14B (MOST concepts, 16GB VRAM)
 kg admin extraction set --provider ollama --model qwen3:14b
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 kg ontology delete "test_comparison"
 kg ingest file -o "test_comparison" -y your-document.txt
 kg database stats  # Record results (~60s per chunk)
 
 # 4. Test Qwen 2.5 14B (highest canonical, 16GB VRAM)
 kg admin extraction set --provider ollama --model qwen2.5:14b-instruct
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 kg ontology delete "test_comparison"
 kg ingest file -o "test_comparison" -y your-document.txt
 kg database stats  # Record results
 
 # 5. Test GPT-OSS 20B (densest graph, 20GB+ VRAM)
 kg admin extraction set --provider ollama --model gpt-oss:20b
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 kg ontology delete "test_comparison"
 kg ingest file -o "test_comparison" -y your-document.txt
 kg database stats  # Record results
 
 # 6. Test Mistral 7B (optional - not recommended)
 kg admin extraction set --provider ollama --model mistral:7b-instruct
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 kg ontology delete "test_comparison"
 kg ingest file -o "test_comparison" -y your-document.txt
 kg database stats  # Record results

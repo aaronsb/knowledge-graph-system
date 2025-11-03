@@ -1,15 +1,19 @@
 /**
- * kg login - Authenticate with username/password
+ * kg login - Authenticate with username/password (OAuth 2.0)
  *
- * Prompts for username and password, calls /auth/login endpoint,
- * and stores JWT token in config file.
+ * Creates a personal OAuth client using GitHub CLI-style authentication.
+ * Stores long-lived client credentials (client_id + client_secret) in config file.
+ *
+ * ADR-054: Unified OAuth Architecture
+ * - All clients use OAuth 2.0 flows (no JWT sessions)
+ * - kg CLI uses personal OAuth clients (client credentials grant)
+ * - Similar to: gh auth login, gcloud auth login, aws configure
  */
 
 import { Command } from 'commander';
 import prompts from 'prompts';
 import { getConfig } from '../lib/config.js';
 import { AuthClient } from '../lib/auth/auth-client.js';
-import { TokenManager } from '../lib/auth/token-manager.js';
 
 interface LoginOptions {
   username?: string;
@@ -20,19 +24,16 @@ interface LoginOptions {
  */
 async function loginCommand(options: LoginOptions) {
   const config = getConfig();
-  const tokenManager = new TokenManager(config);
 
-  // Check if already logged in
-  if (tokenManager.isLoggedIn()) {
-    const currentUsername = tokenManager.getUsername();
-    const currentRole = tokenManager.getRole();
-    const expiresIn = tokenManager.getMinutesUntilExpiration();
-
+  // Check if already logged in (has OAuth client credentials)
+  const existingCreds = config.getOAuthCredentials();
+  if (existingCreds) {
     console.log('');
     console.log('\x1b[33m⚠️  Already logged in\x1b[0m');
-    console.log(`   Username: ${currentUsername}`);
-    console.log(`   Role: ${currentRole}`);
-    console.log(`   Token expires in: ${expiresIn} minutes`);
+    console.log(`   Username: ${existingCreds.username || 'unknown'}`);
+    console.log(`   Client: ${existingCreds.client_name}`);
+    console.log(`   Client ID: ${existingCreds.client_id}`);
+    console.log(`   Scopes: ${existingCreds.scopes.join(', ')}`);
     console.log('');
     console.log('   To login as a different user, logout first:');
     console.log('     \x1b[36mkg logout\x1b[0m');
@@ -89,19 +90,30 @@ async function loginCommand(options: LoginOptions) {
     process.exit(1);
   }
 
-  // Attempt login
+  // Create personal OAuth client
   console.log('');
-  console.log('Authenticating...');
+  console.log('Creating OAuth client credentials...');
 
   try {
     const apiUrl = config.getApiUrl();
     const authClient = new AuthClient(apiUrl);
 
-    const loginResponse = await authClient.login({ username, password });
+    // Create personal OAuth client (GitHub CLI-style)
+    const oauthClient = await authClient.createPersonalOAuthClient({
+      username,
+      password,
+      scope: 'read:* write:*'
+    });
 
-    // Store token
-    const tokenInfo = TokenManager.fromLoginResponse(loginResponse);
-    tokenManager.storeToken(tokenInfo);
+    // Store OAuth client credentials
+    config.storeOAuthCredentials({
+      client_id: oauthClient.client_id,
+      client_secret: oauthClient.client_secret,
+      client_name: oauthClient.client_name,
+      scopes: oauthClient.scopes,
+      created_at: oauthClient.created_at,
+      username: username
+    });
 
     // Ask to remember username if it's not already saved
     const savedUsername = config.get('username');
@@ -121,11 +133,18 @@ async function loginCommand(options: LoginOptions) {
     // Display success message
     console.log('');
     console.log('\x1b[32m✅ Logged in successfully!\x1b[0m');
-    console.log(`   Username: ${loginResponse.user.username}`);
-    console.log(`   Role: ${loginResponse.user.role}`);
-    console.log(`   Token expires: ${tokenManager.getExpirationString()} (in ${loginResponse.expires_in / 60} minutes)`);
+    console.log(`   Username: ${username}`);
+    console.log(`   Client ID: ${oauthClient.client_id}`);
+    console.log(`   Client Name: ${oauthClient.client_name}`);
+    console.log(`   Scopes: ${oauthClient.scopes.join(', ')}`);
     console.log('');
-    console.log('   Run \x1b[36mkg logout\x1b[0m to end your session.');
+    console.log('   \x1b[1mIMPORTANT:\x1b[0m Your credentials are stored securely in:');
+    console.log(`   ${config.getConfigPath()}`);
+    console.log('');
+    console.log('   \x1b[33m⚠️  Keep your client credentials secure!\x1b[0m');
+    console.log('   • These credentials provide full access to your account');
+    console.log('   • Run \x1b[36mkg logout\x1b[0m to revoke this client');
+    console.log('   • If compromised, logout and login again to rotate credentials');
     console.log('');
   } catch (error: any) {
     if (error.response?.status === 401) {
@@ -154,12 +173,16 @@ async function loginCommand(options: LoginOptions) {
 }
 
 /**
+ * Login command object (for documentation generation)
+ */
+export const loginCommand_obj = new Command('login')
+  .description('Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)')
+  .option('-u, --username <username>', 'Username (will prompt if not provided - can be saved for future logins)')
+  .action(loginCommand);
+
+/**
  * Register login command
  */
 export function registerLoginCommand(program: Command): void {
-  program
-    .command('login')
-    .description('Authenticate with username and password - stores JWT token for session (required for admin commands)')
-    .option('-u, --username <username>', 'Username (will prompt if not provided - can be saved for future logins)')
-    .action(loginCommand);
+  program.addCommand(loginCommand_obj);
 }

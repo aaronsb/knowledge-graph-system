@@ -17,6 +17,7 @@ import { adminCommand } from './admin';
 import { vocabularyCommand } from './vocabulary';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
+import { registerOAuthCommand } from './oauth';
 import { createVerbRouter } from './verb-router';
 import { createClientFromEnv } from '../api/client';
 import { VERSION_INFO } from '../version';
@@ -104,6 +105,9 @@ export async function registerCommands(program: Command) {
   // ADR-027: Register authentication commands (login, logout)
   registerLoginCommand(program);
   registerLogoutCommand(program);
+
+  // ADR-054: Register OAuth client management commands
+  registerOAuthCommand(program);
 
   // ADR-029: Register Unix-style verb shortcuts (ls, rm, stat, cat)
   const verbCommands = createVerbRouter(program);

@@ -575,7 +575,7 @@ kg admin user update <user_id> --password "NewTempPass123!"
 **Recovery**:
 1. Use the initialization script to reset admin account:
    ```bash
-   ./scripts/initialize-auth.sh
+   ./scripts/setup/initialize-auth.sh
    ```
 
 2. This will prompt to reset the admin password

@@ -295,12 +295,12 @@ After initial setup, schema changes are managed via **migrations** (ADR-040).
 
 **Apply pending migrations:**
 ```bash
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 ```
 
 **Check migration status:**
 ```bash
-./scripts/migrate-db.sh --dry-run
+./scripts/database/migrate-db.sh --dry-run
 ```
 
 **See:** `docs/guides/02-DATABASE_MIGRATIONS.md` for complete migration guide
@@ -350,7 +350,7 @@ python -m src.admin.reset --auto-confirm
 docker exec -i knowledge-graph-postgres psql -U admin -d knowledge_graph < backup.sql
 
 # Apply any pending migrations
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 ```
 
 3. **Or use migration system:**

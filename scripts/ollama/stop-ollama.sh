@@ -77,5 +77,5 @@ fi
 echo ""
 echo -e "${GREEN}✅ Ollama Stopped Successfully${NC}"
 echo ""
-echo -e "${GRAY}To restart: ./scripts/start-ollama.sh -y${NC}"
+echo -e "${GRAY}To restart: ./scripts/ollama/start-ollama.sh -y${NC}"
 echo ""

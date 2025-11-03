@@ -50,39 +50,46 @@ const server = new Server(
  * Grounding strength (-1.0 to 1.0) shows concept reliability. Negative = contradicted/problem.
  */
 
-// JWT token storage for authenticated session
-let jwtToken: string | null = null;
+// OAuth access token storage for authenticated session (ADR-054)
+let oauthAccessToken: string | null = null;
 let tokenRefreshTimer: NodeJS.Timeout | null = null;
 
 /**
- * Perform login and get JWT token
+ * Get OAuth access token using client credentials grant (ADR-054)
  * Returns the token and expiry time in milliseconds
  */
-async function performLogin(): Promise<{ token: string; expiresInMs: number } | null> {
-  const username = process.env.KG_USERNAME;
-  const password = process.env.KG_PASSWORD;
+async function getOAuthAccessToken(): Promise<{ token: string; expiresInMs: number } | null> {
+  const clientId = process.env.KG_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.KG_OAUTH_CLIENT_SECRET;
   const apiUrl = process.env.KG_API_URL || 'http://localhost:8000';
 
-  if (!username || !password) {
+  if (!clientId || !clientSecret) {
+    console.error('[MCP Auth] Missing OAuth credentials: KG_OAUTH_CLIENT_ID and KG_OAUTH_CLIENT_SECRET required');
     return null;
   }
 
   try {
     const authClient = new AuthClient(apiUrl);
-    const loginResponse = await authClient.login({ username, password });
+    const tokenResponse = await authClient.getOAuthToken({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: 'read:* write:*'
+    });
 
-    const expiresInMs = loginResponse.expires_in * 1000;
+    const expiresInMs = tokenResponse.expires_in * 1000;
     const expiryTime = new Date(Date.now() + expiresInMs);
 
-    console.error(`[MCP Auth] Successfully authenticated as ${username}`);
+    console.error(`[MCP Auth] Successfully authenticated with OAuth client`);
+    console.error(`[MCP Auth] Client ID: ${clientId}`);
     console.error(`[MCP Auth] Token expires at ${expiryTime.toISOString()}`);
 
     return {
-      token: loginResponse.access_token,
+      token: tokenResponse.access_token,
       expiresInMs
     };
   } catch (error: any) {
-    console.error(`[MCP Auth] Failed to authenticate: ${error.message}`);
+    console.error(`[MCP Auth] Failed to get OAuth token: ${error.message}`);
     return null;
   }
 }
@@ -104,11 +111,11 @@ function scheduleTokenRefresh(expiresInMs: number): void {
   console.error(`[MCP Auth] Token refresh scheduled in ${Math.round(refreshInMs / 1000 / 60)} minutes`);
 
   tokenRefreshTimer = setTimeout(async () => {
-    console.error('[MCP Auth] Refreshing authentication token...');
+    console.error('[MCP Auth] Refreshing OAuth access token...');
 
-    const result = await performLogin();
+    const result = await getOAuthAccessToken();
     if (result) {
-      jwtToken = result.token;
+      oauthAccessToken = result.token;
 
       // Update the token in the client
       if (client) {
@@ -119,46 +126,52 @@ function scheduleTokenRefresh(expiresInMs: number): void {
       scheduleTokenRefresh(result.expiresInMs);
     } else {
       console.error('[MCP Auth] Token refresh failed! Operations may fail with 401 errors.');
-      console.error('[MCP Auth] Please restart the MCP server to re-authenticate.');
+      console.error('[MCP Auth] Please restart the MCP server or check OAuth credentials.');
     }
   }, refreshInMs);
 }
 
 /**
- * Automatically login if username/password provided in environment
+ * Initialize OAuth authentication using client credentials (ADR-054)
+ *
+ * Requires KG_OAUTH_CLIENT_ID and KG_OAUTH_CLIENT_SECRET environment variables.
  * This allows the MCP server to authenticate transparently without
  * the AI being aware of authentication requirements.
  */
 async function initializeAuth(): Promise<void> {
-  const username = process.env.KG_USERNAME;
-  const password = process.env.KG_PASSWORD;
+  const clientId = process.env.KG_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.KG_OAUTH_CLIENT_SECRET;
 
-  if (username && password) {
-    const result = await performLogin();
+  if (clientId && clientSecret) {
+    const result = await getOAuthAccessToken();
 
     if (result) {
-      jwtToken = result.token;
+      oauthAccessToken = result.token;
       scheduleTokenRefresh(result.expiresInMs);
     } else {
       console.error('[MCP Auth] The MCP server will operate without authentication.');
       console.error('[MCP Auth] Some operations may fail with 401 errors.');
     }
   } else {
-    console.error('[MCP Auth] No credentials provided (KG_USERNAME/KG_PASSWORD).');
+    console.error('[MCP Auth] No OAuth credentials provided (KG_OAUTH_CLIENT_ID/KG_OAUTH_CLIENT_SECRET).');
     console.error('[MCP Auth] The MCP server will operate without authentication.');
+    console.error('[MCP Auth] To authenticate:');
+    console.error('[MCP Auth]   1. Create a personal OAuth client: kg login');
+    console.error('[MCP Auth]   2. Copy client credentials from ~/.config/kg/config.json');
+    console.error('[MCP Auth]   3. Add to Claude Desktop config as KG_OAUTH_CLIENT_ID and KG_OAUTH_CLIENT_SECRET');
   }
 }
 
 /**
  * Create an authenticated API client
- * If we have a JWT token from login, inject it into the client
+ * If we have an OAuth access token, inject it into the client (ADR-054)
  */
 function createAuthenticatedClient(): KnowledgeGraphClient {
   const client = createClientFromEnv();
 
-  // If we have a JWT token, set it on the client
-  if (jwtToken) {
-    client.setMcpJwtToken(jwtToken);
+  // If we have an OAuth access token, set it on the client
+  if (oauthAccessToken) {
+    client.setMcpJwtToken(oauthAccessToken);
   }
 
   return client;

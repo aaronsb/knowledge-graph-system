@@ -83,39 +83,42 @@ Updated Credentials:
 **Step 5: Test login**
 
 ```bash
-curl -X POST http://localhost:8000/auth/login \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=YourNewPassword123!"
+kg login
 ```
 
-Response:
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer"
-}
+Output:
+```
+Username: admin
+Password: ********
+
+✓ Creating personal OAuth client credentials...
+✓ Login successful
+
+Logged in as: admin (role: admin)
+OAuth Client: kg-cli-admin-20251102
+Scopes: read:*, write:*
 ```
 
-Success! You're back in.
+Success! You're back in. The login command creates OAuth client credentials that don't expire.
 
 ## Alternative: Initialize Auth Script
 
-If you need to reset the admin password AND regenerate JWT secrets, use the more comprehensive initialize script:
+If you need to reset the admin password AND regenerate OAuth token signing keys, use the more comprehensive initialize script:
 
 ```bash
-./scripts/initialize-auth.sh
+./scripts/setup/initialize-auth.sh
 ```
 
 This script:
 - Detects if admin user exists
 - Offers to reset admin password
-- Optionally regenerates JWT secret key
+- Optionally regenerates JWT_SECRET_KEY (used to sign OAuth access tokens)
 - Updates `.env` file with new secrets
 - Provides full setup instructions
 
 **When to use which:**
 - **`reset-password.sh`**: Quick password reset for any user
-- **`initialize-auth.sh`**: Full authentication setup or admin password + JWT secret regeneration
+- **`initialize-auth.sh`**: Full authentication setup or admin password + token signing key regeneration
 
 ## What This Does Under the Hood
 
@@ -181,12 +184,12 @@ docker ps  # Verify container is running
 **Error:**
 ```
 ✗ No users found in database
-  Run: ./scripts/initialize-auth.sh to create admin user
+  Run: ./scripts/setup/initialize-auth.sh to create admin user
 ```
 
 **Fix:**
 ```bash
-./scripts/initialize-auth.sh
+./scripts/setup/initialize-auth.sh
 # Creates initial admin user
 ```
 
@@ -390,12 +393,18 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
   "UPDATE kg_auth.users SET primary_role = 'curator' WHERE username = 'alice';"
 ```
 
-### View Active Sessions
+### View Active OAuth Clients
 
 ```bash
-# Sessions are stored in JWT tokens (stateless)
-# No session table to query
-# Users stay logged in until token expires (default: 60 minutes)
+# OAuth client credentials are long-lived and stored in database
+# Access tokens are short-lived (1 hour) and not persisted
+
+# List all OAuth clients for a user
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
+  "SELECT client_id, client_name, scopes, created_at
+   FROM kg_auth.oauth_clients
+   WHERE metadata->>'personal' = 'true'
+     AND (metadata->>'user_id')::int = (SELECT id FROM kg_auth.users WHERE username = 'admin');"
 ```
 
 ---

@@ -62,7 +62,7 @@ fi
 # Check if database container exists
 if ! docker ps -a --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
     echo -e "${RED}✗ Database container not found${NC}"
-    echo -e "${YELLOW}  Run: ./scripts/start-db.sh${NC}"
+    echo -e "${YELLOW}  Run: ./scripts/database/start-database.sh${NC}"
     exit 1
 fi
 
@@ -212,6 +212,6 @@ echo -e "${CYAN}System Resources:${NC}"
 echo -e "  CPU Cores:      $(nproc)"
 echo -e "  Total RAM:      $(free -h | awk '/^Mem:/ {print $2}')"
 echo ""
-echo -e "${YELLOW}Monitor performance with:${NC} ./scripts/monitor-db.sh"
-echo -e "${YELLOW}Change profile with:${NC}      ./scripts/configure-db-profile.sh <small|medium|large>"
+echo -e "${YELLOW}Monitor performance with:${NC} ./scripts/diagnostics/monitor-db.sh"
+echo -e "${YELLOW}Change profile with:${NC}      ./scripts/setup/configure-db-profile.sh <small|medium|large>"
 echo ""

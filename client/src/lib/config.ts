@@ -2,6 +2,12 @@
  * Configuration Manager for kg CLI
  *
  * Manages user configuration stored at ~/.config/kg/config.json
+ *
+ * ADR-054: OAuth 2.0 Authentication
+ * - All authentication uses personal OAuth clients (GitHub CLI-style)
+ * - Client credentials (client_id + client_secret) are long-lived
+ * - Fresh access tokens obtained on-demand via client credentials grant
+ * - JWT support removed (OAuth-only)
  */
 
 import * as fs from 'fs';
@@ -19,11 +25,17 @@ export interface McpConfig {
 }
 
 export interface AuthTokenConfig {
-  token?: string;           // JWT access token
-  token_type?: string;      // Token type (usually "bearer")
-  expires_at?: number;      // Unix timestamp (seconds)
-  username?: string;        // Cached username from token
-  role?: string;            // Cached role from token
+  // ADR-054: OAuth 2.0 Client Credentials (Personal OAuth Client)
+  oauth_client_id?: string;        // OAuth client ID (kg-cli-username-random)
+  oauth_client_secret?: string;    // OAuth client secret (hashed on server)
+  oauth_client_name?: string;      // Client name for display
+  oauth_scopes?: string[];         // OAuth scopes granted
+  oauth_created_at?: string;       // ISO 8601 timestamp
+
+  // Metadata
+  token_type?: string;             // Always "bearer"
+  username?: string;               // Cached username
+  role?: string;                   // Cached role
 }
 
 export interface KgConfig {
@@ -32,7 +44,7 @@ export interface KgConfig {
   api_url?: string;
   backup_dir?: string;
   auto_approve?: boolean;  // ADR-014: Auto-approve all jobs by default
-  auth?: AuthTokenConfig;   // ADR-027: JWT token storage
+  auth?: AuthTokenConfig;   // ADR-054: OAuth 2.0 client credentials
   mcp?: McpConfig;
   aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
 }
@@ -323,55 +335,75 @@ export class ConfigManager {
     this.save();
   }
 
-  // ========== Authentication Methods (ADR-027) ==========
+  // ========== Authentication Methods (ADR-027, updated by ADR-054) ==========
 
   /**
-   * Store authentication token
+   * Store OAuth client credentials (ADR-054 - personal OAuth clients)
    *
-   * @param tokenInfo Token information including access token, expiration, user details
+   * Stores long-lived client_id + client_secret for client credentials grant.
+   * This is the preferred authentication method for CLI tools.
+   *
+   * @param credentials OAuth client credentials
    */
-  storeAuthToken(tokenInfo: {
-    access_token: string;
-    token_type: string;
-    expires_at: number;
-    username: string;
-    role: string;
+  storeOAuthCredentials(credentials: {
+    client_id: string;
+    client_secret: string;
+    client_name: string;
+    scopes: string[];
+    created_at: string;
+    username?: string;
   }): void {
-    this.set('auth.token', tokenInfo.access_token);
-    this.set('auth.token_type', tokenInfo.token_type);
-    this.set('auth.expires_at', tokenInfo.expires_at);
-    this.set('auth.username', tokenInfo.username);
-    this.set('auth.role', tokenInfo.role);
+    this.set('auth.oauth_client_id', credentials.client_id);
+    this.set('auth.oauth_client_secret', credentials.client_secret);
+    this.set('auth.oauth_client_name', credentials.client_name);
+    this.set('auth.oauth_scopes', credentials.scopes);
+    this.set('auth.oauth_created_at', credentials.created_at);
+    this.set('auth.token_type', 'bearer');
 
-    // Also update top-level username for backwards compatibility
-    this.set('username', tokenInfo.username);
+    if (credentials.username) {
+      this.set('auth.username', credentials.username);
+      this.set('username', credentials.username);  // Backwards compatibility
+    }
+
+    // Clear any legacy fields
+    this.delete('auth.token');
+    this.delete('auth.access_token');
+    this.delete('auth.refresh_token');
+    this.delete('auth.expires_at');
+    this.delete('auth.client_id');
+    this.delete('auth.scope');
   }
 
   /**
-   * Retrieve authentication token
+   * Get OAuth client credentials (ADR-054)
    *
-   * @returns Token information or null if not authenticated
+   * @returns OAuth client credentials or null if not stored
    */
-  getAuthToken(): {
-    access_token: string;
-    token_type: string;
-    expires_at: number;
-    username: string;
-    role: string;
+  getOAuthCredentials(): {
+    client_id: string;
+    client_secret: string;
+    client_name: string;
+    scopes: string[];
+    created_at: string;
+    username?: string;
   } | null {
-    const token = this.get('auth.token');
-    if (!token) {
+    const clientId = this.get('auth.oauth_client_id');
+    const clientSecret = this.get('auth.oauth_client_secret');
+
+    if (!clientId || !clientSecret) {
       return null;
     }
 
     return {
-      access_token: token,
-      token_type: this.get('auth.token_type') || 'bearer',
-      expires_at: this.get('auth.expires_at') || 0,
-      username: this.get('auth.username') || '',
-      role: this.get('auth.role') || ''
+      client_id: clientId,
+      client_secret: clientSecret,
+      client_name: this.get('auth.oauth_client_name') || 'kg-cli',
+      scopes: this.get('auth.oauth_scopes') || [],
+      created_at: this.get('auth.oauth_created_at') || new Date().toISOString(),
+      username: this.get('auth.username')
     };
   }
+
 
   /**
    * Clear authentication token
@@ -381,20 +413,15 @@ export class ConfigManager {
   }
 
   /**
-   * Check if user is authenticated (has valid, non-expired token)
+   * Check if user is authenticated (has OAuth client credentials)
    *
-   * @returns true if user has a valid token
+   * OAuth client credentials are long-lived and do not expire.
+   * Fresh access tokens are obtained on-demand via client credentials grant.
+   *
+   * @returns true if user has OAuth client credentials
    */
   isAuthenticated(): boolean {
-    const tokenInfo = this.getAuthToken();
-    if (!tokenInfo) {
-      return false;
-    }
-
-    const now = Math.floor(Date.now() / 1000);
-    const BUFFER_SECONDS = 5 * 60;  // 5-minute buffer
-
-    return tokenInfo.expires_at > now + BUFFER_SECONDS;
+    return this.getOAuthCredentials() !== null;
   }
 
   // ========== Alias Methods (ADR-029) ==========

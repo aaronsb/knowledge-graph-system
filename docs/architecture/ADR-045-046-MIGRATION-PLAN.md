@@ -24,7 +24,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
 
 1. **Apply Migration 011:** Grounding Metrics
    ```bash
-   ./scripts/migrate-db.sh
+   ./scripts/database/migrate-db.sh
    # Applies: 011_add_grounding_metrics.sql
    ```
 
@@ -48,7 +48,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
 
 2. **Apply Migration 012:** Embedding Worker Support
    ```bash
-   ./scripts/migrate-db.sh
+   ./scripts/database/migrate-db.sh
    # Applies: 012_add_embedding_worker_support.sql
    ```
 
@@ -91,7 +91,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
    **Testing:**
    ```bash
    # Start API in test mode
-   ./scripts/start-api.sh
+   ./scripts/services/start-api.sh
 
    # Test cold start initialization
    curl http://localhost:8000/admin/embeddings/initialize
@@ -108,7 +108,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
    **Testing:**
    ```bash
    # Restart API and check logs
-   ./scripts/stop-api.sh && ./scripts/start-api.sh
+   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
    tail -f logs/api_*.log | grep -i "embedding"
 
    # Should see: "Cold start: Generated embeddings for 30 builtin types"
@@ -286,13 +286,13 @@ COMMIT;
 **Simpler approach:** Revert to main branch
 ```bash
 # Stop API
-./scripts/stop-api.sh
+./scripts/services/stop-api.sh
 
 # Switch back to main
 git checkout main
 
 # Restart API
-./scripts/start-api.sh
+./scripts/services/start-api.sh
 ```
 
 **Note:** Schema changes remain in database but are unused by main branch code.
@@ -318,7 +318,7 @@ git checkout main
 1. **Schema Validation:**
    ```bash
    # Run migration
-   ./scripts/migrate-db.sh -y
+   ./scripts/database/migrate-db.sh -y
 
    # Verify schema
    docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "\d kg_api.relationship_vocabulary"
