@@ -19,11 +19,17 @@ export interface McpConfig {
 }
 
 export interface AuthTokenConfig {
-  token?: string;           // JWT access token
+  token?: string;           // Legacy JWT access token (ADR-027, deprecated)
   token_type?: string;      // Token type (usually "bearer")
   expires_at?: number;      // Unix timestamp (seconds)
   username?: string;        // Cached username from token
   role?: string;            // Cached role from token
+
+  // ADR-054: OAuth 2.0 token fields
+  access_token?: string;    // OAuth access token
+  refresh_token?: string;   // OAuth refresh token (for device flow)
+  client_id?: string;       // OAuth client ID (kg-cli, kg-mcp, etc.)
+  scope?: string;           // Space-separated OAuth scopes
 }
 
 export interface KgConfig {
@@ -323,11 +329,50 @@ export class ConfigManager {
     this.save();
   }
 
-  // ========== Authentication Methods (ADR-027) ==========
+  // ========== Authentication Methods (ADR-027, updated by ADR-054) ==========
 
   /**
-   * Store authentication token
+   * Store OAuth 2.0 token (ADR-054)
    *
+   * @param tokenInfo OAuth token information
+   */
+  storeOAuthToken(tokenInfo: {
+    access_token: string;
+    token_type: string;
+    expires_at: number;
+    refresh_token?: string;
+    client_id: string;
+    scope: string;
+    username?: string;
+    role?: string;
+  }): void {
+    this.set('auth.access_token', tokenInfo.access_token);
+    this.set('auth.token_type', tokenInfo.token_type);
+    this.set('auth.expires_at', tokenInfo.expires_at);
+    this.set('auth.client_id', tokenInfo.client_id);
+    this.set('auth.scope', tokenInfo.scope);
+
+    if (tokenInfo.refresh_token) {
+      this.set('auth.refresh_token', tokenInfo.refresh_token);
+    }
+
+    if (tokenInfo.username) {
+      this.set('auth.username', tokenInfo.username);
+      this.set('username', tokenInfo.username);  // Backwards compatibility
+    }
+
+    if (tokenInfo.role) {
+      this.set('auth.role', tokenInfo.role);
+    }
+
+    // Clear legacy JWT token field
+    this.delete('auth.token');
+  }
+
+  /**
+   * Store authentication token (Legacy JWT, ADR-027 - deprecated)
+   *
+   * @deprecated Use storeOAuthToken() instead (ADR-054)
    * @param tokenInfo Token information including access token, expiration, user details
    */
   storeAuthToken(tokenInfo: {
@@ -348,7 +393,43 @@ export class ConfigManager {
   }
 
   /**
-   * Retrieve authentication token
+   * Retrieve OAuth 2.0 token (ADR-054)
+   *
+   * @returns OAuth token information or null if not authenticated
+   */
+  getOAuthToken(): {
+    access_token: string;
+    token_type: string;
+    expires_at: number;
+    refresh_token?: string;
+    client_id: string;
+    scope: string;
+    username?: string;
+    role?: string;
+  } | null {
+    const accessToken = this.get('auth.access_token');
+    const clientId = this.get('auth.client_id');
+
+    if (!accessToken || !clientId) {
+      return null;
+    }
+
+    return {
+      access_token: accessToken,
+      token_type: this.get('auth.token_type') || 'Bearer',
+      expires_at: this.get('auth.expires_at') || 0,
+      refresh_token: this.get('auth.refresh_token'),
+      client_id: clientId,
+      scope: this.get('auth.scope') || '',
+      username: this.get('auth.username'),
+      role: this.get('auth.role')
+    };
+  }
+
+  /**
+   * Retrieve authentication token (supports both OAuth and legacy JWT)
+   *
+   * Returns OAuth token if available, otherwise falls back to legacy JWT.
    *
    * @returns Token information or null if not authenticated
    */
@@ -359,6 +440,19 @@ export class ConfigManager {
     username: string;
     role: string;
   } | null {
+    // Try OAuth token first (ADR-054)
+    const oauthToken = this.getOAuthToken();
+    if (oauthToken) {
+      return {
+        access_token: oauthToken.access_token,
+        token_type: oauthToken.token_type,
+        expires_at: oauthToken.expires_at,
+        username: oauthToken.username || '',
+        role: oauthToken.role || ''
+      };
+    }
+
+    // Fall back to legacy JWT token (ADR-027)
     const token = this.get('auth.token');
     if (!token) {
       return null;
