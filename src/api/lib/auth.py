@@ -1,11 +1,12 @@
 """
-Authentication Utilities (ADR-027)
+Authentication Utilities (ADR-054 - OAuth 2.0)
 
-Core utilities for password hashing and JWT token management.
+Core utilities for password hashing and OAuth token management.
+OAuth access tokens are implemented as JWTs signed with OAUTH_SIGNING_KEY.
 
 Dependencies:
 - passlib[bcrypt] - Password hashing
-- python-jose[cryptography] - JWT token generation/validation
+- python-jose[cryptography] - OAuth token generation/validation (JWT format)
 """
 
 import os
@@ -33,8 +34,9 @@ from jose import JWTError, jwt
 # Configuration
 # =============================================================================
 
-# JWT Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "CHANGE_THIS_IN_PRODUCTION_GENERATE_WITH_openssl_rand_hex_32")
+# OAuth Token Signing Configuration
+# OAuth access tokens are JWTs signed with HS256
+SECRET_KEY = os.getenv("OAUTH_SIGNING_KEY", "CHANGE_THIS_IN_PRODUCTION_GENERATE_WITH_openssl_rand_hex_32")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
@@ -293,31 +295,31 @@ def verify_api_key(plain_key: str, key_hash: str) -> bool:
 # Configuration Validation
 # =============================================================================
 
-def validate_jwt_configuration() -> tuple[bool, list[str]]:
+def validate_oauth_configuration() -> tuple[bool, list[str]]:
     """
-    Validate JWT configuration is production-ready.
+    Validate OAuth configuration is production-ready.
 
     Checks:
-    - SECRET_KEY is not the default value
-    - SECRET_KEY is sufficiently long (>= 32 characters)
+    - OAUTH_SIGNING_KEY is not the default value
+    - OAUTH_SIGNING_KEY is sufficiently long (>= 32 characters)
     - ACCESS_TOKEN_EXPIRE_MINUTES is reasonable (between 5 and 1440 minutes)
 
     Returns:
         Tuple of (is_valid, list_of_warnings)
 
     Example:
-        >>> validate_jwt_configuration()
-        (False, ['JWT_SECRET_KEY is using default value - INSECURE!'])
+        >>> validate_oauth_configuration()
+        (False, ['OAUTH_SIGNING_KEY is using default value - INSECURE!'])
     """
     warnings = []
 
     # Check SECRET_KEY is not default
     if "CHANGE_THIS" in SECRET_KEY:
-        warnings.append("JWT_SECRET_KEY is using default value - INSECURE!")
+        warnings.append("OAUTH_SIGNING_KEY is using default value - INSECURE!")
 
     # Check SECRET_KEY length
     if len(SECRET_KEY) < 32:
-        warnings.append(f"JWT_SECRET_KEY is too short ({len(SECRET_KEY)} chars, minimum 32)")
+        warnings.append(f"OAUTH_SIGNING_KEY is too short ({len(SECRET_KEY)} chars, minimum 32)")
 
     # Check token expiration is reasonable
     if ACCESS_TOKEN_EXPIRE_MINUTES < 5:
@@ -336,7 +338,7 @@ def validate_jwt_configuration() -> tuple[bool, list[str]]:
 
 # Validate configuration on module import (development safety check)
 if __name__ != "__main__":
-    is_valid, warnings = validate_jwt_configuration()
+    is_valid, warnings = validate_oauth_configuration()
     if not is_valid:
         import logging
         logger = logging.getLogger(__name__)

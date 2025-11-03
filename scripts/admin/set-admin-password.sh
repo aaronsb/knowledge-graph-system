@@ -15,7 +15,7 @@ BOLD='\033[1m'
 
 # Get script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
 # Use venv Python if available, otherwise system python3
 if [ -f "$PROJECT_ROOT/venv/bin/python" ]; then
@@ -89,7 +89,7 @@ if [ "$ADMIN_EXISTS" -eq "0" ]; then
     else
         echo -e "${RED}✗ Admin user not found${NC}"
         echo -e "${YELLOW}  Run with --create flag to create admin user${NC}"
-        echo -e "${YELLOW}  Or run: ./scripts/setup/initialize-auth.sh${NC}"
+        echo -e "${YELLOW}  Or run: ./scripts/setup/initialize-platform.sh${NC}"
         exit 1
     fi
 else

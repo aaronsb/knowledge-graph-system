@@ -60,7 +60,7 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 - `scripts/stop-database.sh` - Stop database container
 - `scripts/start-api.sh` - Start FastAPI server
 - `scripts/stop-api.sh` - Stop API server
-- `scripts/initialize-auth.sh` - Initialize admin user, JWT secrets, API keys
+- `scripts/initialize-platform.sh` - Initialize admin user, JWT secrets, API keys
 - `scripts/migrate-db.sh` - Apply database schema migrations
 - `scripts/configure-ai.sh` - AI provider configuration (legacy)
 - `client/install.sh` - Install kg CLI globally
@@ -97,7 +97,7 @@ cd client && ./install.sh && cd ..
 ./scripts/services/start-api.sh -y
 
 # 6. Initialize authentication (interactive: sets admin password, JWT secrets, API keys)
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 
 # 7. Verify system is ready
 kg database stats
@@ -147,7 +147,7 @@ kg admin reset
 ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh -y
 
 # 3. Re-initialize authentication and secrets
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 
 # 4. System is now ready for fresh data
 kg ingest file -o "My Ontology" document.txt
@@ -169,7 +169,7 @@ docker-compose down -v
 ./scripts/services/start-api.sh -y
 
 # 5. Initialize authentication
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 
 # 6. System is now ready
 kg database stats

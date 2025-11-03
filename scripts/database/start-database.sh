@@ -128,7 +128,7 @@ fi
 echo ""
 echo -e "${BOLD}Next Steps:${NC}"
 echo -e "  1. Start API server: ${BLUE}./scripts/services/start-api.sh${NC}"
-echo -e "  2. Initialize auth: ${BLUE}./scripts/setup/initialize-auth.sh${NC}"
+echo -e "  2. Initialize auth: ${BLUE}./scripts/setup/initialize-platform.sh${NC}"
 echo -e "  3. Use kg CLI: ${BLUE}kg database stats${NC}"
 echo ""
 echo -e "${BOLD}Logs:${NC} ${BLUE}docker logs -f knowledge-graph-postgres${NC}"

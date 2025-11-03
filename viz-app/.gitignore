@@ -17,6 +17,9 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Runtime config (user creates from config.example.js)
+public/config.js
+
 # Docker (viz-app will be added to main docker-compose.yml, not separate file)
 docker-compose.yml
 docker-compose.override.yml

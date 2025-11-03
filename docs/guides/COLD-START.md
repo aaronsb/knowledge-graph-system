@@ -24,9 +24,9 @@ cd knowledge-graph-system
 ./scripts/services/start-api.sh -y
 
 # 4. Initialize auth + configure embeddings (interactive, 60 seconds)
-./scripts/setup/initialize-auth.sh          # Production mode (interactive password)
+./scripts/setup/initialize-platform.sh          # Production mode (interactive password)
 # OR for development (uses default password 'Password1!'):
-./scripts/setup/initialize-auth.sh --dev    # Development mode (quick start)
+./scripts/setup/initialize-platform.sh --dev    # Development mode (quick start)
 
 # Steps:
 # → Set admin password (or uses Password1! in dev mode)
@@ -54,7 +54,7 @@ kg database stats  # Should show: 0 concepts (empty database ready)
 
 **Development Mode (`--dev` flag):**
 ```bash
-./scripts/setup/initialize-auth.sh --dev
+./scripts/setup/initialize-platform.sh --dev
 ```
 - Sets admin password to `Password1!` (no prompts)
 - Fastest cold start (~30 seconds)
@@ -63,9 +63,9 @@ kg database stats  # Should show: 0 concepts (empty database ready)
 
 **Production Mode (default):**
 ```bash
-./scripts/setup/initialize-auth.sh
+./scripts/setup/initialize-platform.sh
 # OR in Docker with environment variable:
-ADMIN_PASSWORD='YourSecurePassword!' ./scripts/setup/initialize-auth.sh --non-interactive
+ADMIN_PASSWORD='YourSecurePassword!' ./scripts/setup/initialize-platform.sh --non-interactive
 ```
 - Prompts for secure password (interactive)
 - OR accepts password via `ADMIN_PASSWORD` environment variable (Docker)
@@ -76,7 +76,7 @@ ADMIN_PASSWORD='YourSecurePassword!' ./scripts/setup/initialize-auth.sh --non-in
 
 ### OpenAI API Key (Recommended for Quick Start)
 
-When running `initialize-auth.sh`, **paste your OpenAI API key directly** when prompted:
+When running `initialize-platform.sh`, **paste your OpenAI API key directly** when prompted:
 - Uses OpenAI embeddings (1536 dimensions)
 - Fast and reliable
 - Costs ~$0.01 per 1000 concepts
@@ -84,7 +84,7 @@ When running `initialize-auth.sh`, **paste your OpenAI API key directly** when p
 ### Local Embeddings (No API Key Required)
 
 Alternative if you don't have OpenAI API key:
-- Select option 2 during `initialize-auth.sh`
+- Select option 2 during `initialize-platform.sh`
 - Uses Nomic embeddings (768 dimensions)
 - Runs locally via Ollama
 - Free but requires more setup
@@ -142,7 +142,7 @@ source ~/.bashrc
 ### API server errors about OpenAI key
 
 If you see API key errors after starting the server:
-1. Run `./scripts/setup/initialize-auth.sh` to configure embeddings
+1. Run `./scripts/setup/initialize-platform.sh` to configure embeddings
 2. Paste your OpenAI API key when prompted
 3. OR choose option 2 for local embeddings
 
@@ -180,7 +180,7 @@ docker-compose down -v
 - Started FastAPI server in background
 - Logs: `logs/api_*.log`
 
-**Auth Setup (initialize-auth.sh):**
+**Auth Setup (initialize-platform.sh):**
 - Created admin user in database
 - Generated OAuth infrastructure (ADR-054)
 - Generated encryption keys in `.env`
@@ -201,7 +201,7 @@ docker-compose down -v
 1. Deleted entire repository (`rm -rf knowledge-graph-system`)
 2. Fresh clone from GitHub
 3. Followed 5-command quick start
-4. Pasted OpenAI API key into `initialize-auth.sh`
+4. Pasted OpenAI API key into `initialize-platform.sh`
 5. Switched to Nomic embeddings (to match backup)
 6. Restored production backup (3,436 concepts)
 
@@ -270,7 +270,7 @@ kg admin backup
 **Scripts:**
 - `./scripts/database/start-database.sh` - Start database
 - `./scripts/services/start-api.sh` - Start API server
-- `./scripts/setup/initialize-auth.sh` - Configure auth + embeddings
+- `./scripts/setup/initialize-platform.sh` - Configure auth + embeddings
 - `./scripts/services/stop-api.sh` - Stop API server
 - `./scripts/database/stop-database.sh` - Stop database
 
