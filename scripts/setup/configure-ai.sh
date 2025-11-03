@@ -30,9 +30,37 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
+# ============================================================================
+# MODEL PRICING CONFIGURATION (Per 1M Tokens)
+# ============================================================================
+# These are ESTIMATES and may change. Update these values to reflect current
+# pricing from provider websites. These estimates inform cost calculations
+# during document ingestion.
+#
+# Pricing sources:
+# - OpenAI: https://openai.com/api/pricing/
+# - Anthropic: https://www.anthropic.com/pricing
+#
+# NOTE: Prices shown are approximate averages. Actual costs may vary based on:
+# - Input vs output tokens (usually different rates)
+# - Prompt caching (can reduce costs)
+# - Volume discounts
+# ============================================================================
+
+# OpenAI Model Pricing (approximate, per 1M tokens)
+PRICE_GPT4O="\$6.25"
+PRICE_GPT4O_MINI="\$0.38"
+PRICE_O1_PREVIEW="\$30"
+PRICE_O1_MINI="\$5.50"
+
+# Anthropic Model Pricing (approximate, per 1M tokens)
+PRICE_SONNET_4="\$9"
+PRICE_SONNET_35="\$6"     # Approximate
+PRICE_OPUS_3="\$45"       # Approximate
+
 echo -e "${BLUE}${BOLD}"
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║     AI Provider Testing and Model Configuration Tool      ║"
+echo "║      AI Provider Testing and Model Configuration Tool      ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -239,10 +267,10 @@ case $option in
             1)
                 PROVIDER="openai"
                 echo -e "\n${YELLOW}OpenAI Extraction Models:${NC}"
-                echo "  1) gpt-4o - Latest GPT-4o (~$6.25/1M tokens, balanced)"
-                echo "  2) gpt-4o-mini - Faster, cheaper (~$0.38/1M tokens)"
-                echo "  3) o1-preview - Reasoning model (~$30/1M tokens)"
-                echo "  4) o1-mini - Smaller reasoning (~$5.50/1M tokens)"
+                echo "  1) gpt-4o - Latest GPT-4o (~${PRICE_GPT4O}/1M tokens, balanced)"
+                echo "  2) gpt-4o-mini - Faster, cheaper (~${PRICE_GPT4O_MINI}/1M tokens)"
+                echo "  3) o1-preview - Reasoning model (~${PRICE_O1_PREVIEW}/1M tokens)"
+                echo "  4) o1-mini - Smaller reasoning (~${PRICE_O1_MINI}/1M tokens)"
                 echo "  5) Cancel (return to menu)"
                 echo ""
                 read -p "Model [1-5]: " model_choice
@@ -270,9 +298,9 @@ case $option in
             2)
                 PROVIDER="anthropic"
                 echo -e "\n${YELLOW}Anthropic Extraction Models:${NC}"
-                echo "  1) claude-sonnet-4-20250514 - Latest Sonnet 4.5 (~$9/1M tokens, SOTA)"
-                echo "  2) claude-3-5-sonnet-20241022 - Claude 3.5 Sonnet"
-                echo "  3) claude-3-opus-20240229 - Claude 3 Opus"
+                echo "  1) claude-sonnet-4-20250514 - Latest Sonnet 4.5 (~${PRICE_SONNET_4}/1M tokens, SOTA)"
+                echo "  2) claude-3-5-sonnet-20241022 - Claude 3.5 Sonnet (~${PRICE_SONNET_35}/1M tokens)"
+                echo "  3) claude-3-opus-20240229 - Claude 3 Opus (~${PRICE_OPUS_3}/1M tokens)"
                 echo "  4) Cancel (return to menu)"
                 echo ""
                 read -p "Model [1-4]: " model_choice
