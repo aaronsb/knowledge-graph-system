@@ -73,26 +73,42 @@ $$) as (label agtype) LIMIT 25;
 
 ## Claude Desktop Integration
 
+### 1. Create OAuth Client for MCP
+
+First, authenticate and create OAuth credentials for Claude Desktop:
+
+```bash
+# Login with your admin credentials
+kg login
+
+# Create OAuth client for MCP server
+kg oauth create-mcp
+```
+
+This will display your OAuth credentials and ready-to-paste configuration.
+
+### 2. Configure Claude Desktop
+
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "knowledge-graph": {
-      "command": "node",
-      "args": ["/absolute/path/to/knowledge-graph-system/mcp-server/build/index.js"],
+      "command": "kg-mcp-server",
       "env": {
-        "POSTGRES_HOST": "localhost",
-        "POSTGRES_PORT": "5432",
-        "POSTGRES_DB": "knowledge_graph",
-        "POSTGRES_USER": "postgres",
-        "POSTGRES_PASSWORD": "password",
-        "OPENAI_API_KEY": "your-key-here"
+        "KG_OAUTH_CLIENT_ID": "your-client-id-from-above",
+        "KG_OAUTH_CLIENT_SECRET": "your-client-secret-from-above",
+        "KG_API_URL": "http://localhost:8000"
       }
     }
   }
 }
 ```
+
+**Note:** OAuth credentials are shown only once. Keep them secure!
+
+### 3. Test the Integration
 
 Restart Claude Desktop, then ask:
 - "What concepts are in the knowledge graph about linear thinking?"
@@ -180,10 +196,10 @@ The knowledge graph uses a **migration system** to safely evolve the database sc
 
 ```bash
 # View current migration status
-./scripts/migrate-db.sh --dry-run
+./scripts/database/migrate-db.sh --dry-run
 
 # Apply pending migrations
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 
 # Migrations apply automatically when starting database
 ./scripts/start-db.sh  # Auto-runs migrate-db.sh
@@ -205,10 +221,10 @@ docker-compose restart
 ### Schema migrations pending
 ```bash
 # Check what's pending
-./scripts/migrate-db.sh --dry-run
+./scripts/database/migrate-db.sh --dry-run
 
 # Apply migrations
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 ```
 
 ### API key invalid

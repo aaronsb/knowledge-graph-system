@@ -705,7 +705,7 @@ curl -X PUT http://localhost:8000/admin/embedding/config \
   -d '{"model_name": "BAAI/bge-large-en-v1.5", "num_threads": 8}'
 
 # Restart API to apply
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 **Characteristics:**

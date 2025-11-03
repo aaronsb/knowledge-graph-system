@@ -103,8 +103,8 @@ OPENAI_API_KEY=sk-...
 
 **Stopping:**
 ```bash
-./scripts/stop-api.sh
-./scripts/stop-database.sh
+./scripts/services/stop-api.sh
+./scripts/database/stop-database.sh
 ```
 
 ### 2. Local Production Deployment
@@ -195,7 +195,7 @@ docker-compose -f /opt/kg/docker-compose.yml down
 **Migrations:**
 ```bash
 # Apply migrations
-./scripts/migrate-db.sh
+./scripts/database/migrate-db.sh
 
 # Check migration status
 kg database stats

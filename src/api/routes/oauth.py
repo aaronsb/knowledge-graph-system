@@ -82,6 +82,472 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 
 # =============================================================================
+# Personal OAuth Client Endpoint (GitHub CLI-style)
+# =============================================================================
+
+@router.post("/clients/personal", response_model=OAuthClientWithSecret, status_code=status.HTTP_201_CREATED)
+async def create_personal_oauth_client(
+    username: str = Form(..., description="Username for authentication"),
+    password: str = Form(..., description="Password for authentication"),
+    client_name: Optional[str] = Form(None, description="Optional custom client name"),
+    scope: str = Form("read:* write:*", description="Requested OAuth scopes")
+):
+    """
+    Create a personal OAuth client for a user (GitHub CLI-style authentication).
+
+    This endpoint allows users to create long-lived OAuth credentials by authenticating
+    with their username and password. The returned client_id and client_secret should be
+    stored securely (e.g., ~/.config/kg/config.json) and used for subsequent API requests
+    via the client_credentials grant.
+
+    Flow:
+    1. User provides username + password
+    2. API verifies credentials
+    3. API creates personal OAuth client: kg-cli-{username}-{random}
+    4. Returns client_id + client_secret (shown once!)
+    5. User stores credentials locally
+    6. All future API calls use client credentials grant
+
+    Similar to:
+    - `gh auth login` (GitHub CLI)
+    - `glab auth login` (GitLab CLI)
+    - `heroku login` (Heroku CLI)
+
+    **Security:**
+    - Client secret is shown only once
+    - User can revoke via `kg logout` or web UI
+    - User can rotate secret if compromised
+    - Each personal client is tracked per user
+
+    **Example:**
+    ```bash
+    curl -X POST http://localhost:8000/auth/oauth/clients/personal \\
+      -F "username=admin" \\
+      -F "password=secret" \\
+      -F "scope=read:* write:*"
+    ```
+
+    Returns:
+    ```json
+    {
+      "client_id": "kg-cli-admin-f8a4b2c1",
+      "client_secret": "kg_secret_...",
+      "client_name": "kg CLI (admin)",
+      "scopes": ["read:*", "write:*"],
+      ...
+    }
+    ```
+    """
+    import secrets
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Step 1: Verify user credentials
+            cur.execute(
+                "SELECT id, username, password_hash, primary_role, disabled FROM kg_auth.users WHERE username = %s",
+                (username,)
+            )
+            user_row = cur.fetchone()
+
+            if not user_row:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid username or password"
+                )
+
+            user_id, db_username, password_hash, role, disabled = user_row
+
+            if disabled:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User account is disabled"
+                )
+
+            if not verify_password(password, password_hash):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid username or password"
+                )
+
+            # Step 2: Parse and validate scopes
+            requested_scopes = parse_scope_string(scope)
+            allowed_scopes = ["read:*", "write:*", "admin:*"]  # Personal clients can request any scope
+            is_valid, validated_scopes = validate_scopes(requested_scopes, allowed_scopes)
+
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid scopes requested. Allowed: {', '.join(allowed_scopes)}"
+                )
+
+            # Step 3: Generate unique client_id with pattern: kg-cli-{username}-{random}
+            random_suffix = secrets.token_hex(4)  # 8 characters
+            generated_client_id = f"kg-cli-{db_username}-{random_suffix}"
+
+            # Ensure uniqueness (very unlikely collision, but check anyway)
+            cur.execute(
+                "SELECT client_id FROM kg_auth.oauth_clients WHERE client_id = %s",
+                (generated_client_id,)
+            )
+            if cur.fetchone():
+                # Collision detected, generate new random suffix
+                random_suffix = secrets.token_hex(6)  # Try with longer suffix
+                generated_client_id = f"kg-cli-{db_username}-{random_suffix}"
+
+            # Step 4: Generate client secret
+            client_secret = generate_client_secret()
+            client_secret_hash = get_password_hash(client_secret)
+
+            # Step 5: Determine client name
+            final_client_name = client_name or f"kg CLI ({db_username})"
+
+            # Step 6: Insert personal OAuth client
+            import json
+            metadata_json = json.dumps({
+                "personal": True,
+                "user_id": user_id,
+                "username": db_username,
+                "description": "Personal OAuth client for kg CLI"
+            })
+
+            cur.execute("""
+                INSERT INTO kg_auth.oauth_clients
+                (client_id, client_secret_hash, client_name, client_type, grant_types, redirect_uris, scopes, created_by, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                RETURNING created_at
+            """, (
+                generated_client_id,
+                client_secret_hash,
+                final_client_name,
+                "confidential",  # Personal clients are confidential (have secret)
+                ["client_credentials"],  # Only support client_credentials grant
+                None,  # No redirect URIs needed for client_credentials
+                validated_scopes,
+                user_id,
+                metadata_json
+            ))
+
+            created_at = cur.fetchone()[0]
+            conn.commit()
+
+            return OAuthClientWithSecret(
+                client_id=generated_client_id,
+                client_name=final_client_name,
+                client_type="confidential",
+                client_secret=client_secret,  # Shown only once!
+                grant_types=["client_credentials"],
+                redirect_uris=None,
+                scopes=validated_scopes,
+                is_active=True,
+                created_at=created_at,
+                metadata={
+                    "personal": True,
+                    "user_id": user_id,
+                    "username": db_username
+                }
+            )
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create personal OAuth client: {str(e)}"
+        )
+    finally:
+        conn.close()
+
+
+@router.post("/clients/personal/new", response_model=OAuthClientWithSecret, status_code=status.HTTP_201_CREATED)
+async def create_additional_personal_oauth_client(
+    client_name: Optional[str] = Form(None, description="Optional custom client name"),
+    scope: str = Form("read:* write:*", description="Requested OAuth scopes"),
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)] = None
+):
+    """
+    Create an additional personal OAuth client (requires existing authentication).
+
+    This endpoint allows authenticated users to create additional OAuth clients
+    (e.g., for MCP server, scripts) without providing password again.
+
+    Flow:
+    1. User is already authenticated with bearer token
+    2. API creates new personal OAuth client: kg-cli-{username}-{random}
+    3. Returns client_id + client_secret (shown once!)
+    4. User can store for MCP or other uses
+
+    **Example:**
+    ```bash
+    curl -X POST http://localhost:8000/auth/oauth/clients/personal/new \\
+      -H "Authorization: Bearer <access_token>" \\
+      -F "client_name=kg MCP Server" \\
+      -F "scope=read:* write:*"
+    ```
+
+    Returns:
+    ```json
+    {
+      "client_id": "kg-cli-admin-f8a4b2c1",
+      "client_secret": "kg_secret_...",
+      "client_name": "kg MCP Server",
+      ...
+    }
+    ```
+    """
+    import secrets
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # User is already authenticated, we have current_user from token
+            user_id = current_user.id
+            db_username = current_user.username
+            role = current_user.role
+
+            # Step 1: Parse and validate scopes
+            requested_scopes = parse_scope_string(scope)
+            allowed_scopes = ["read:*", "write:*", "admin:*"]
+            is_valid, validated_scopes = validate_scopes(requested_scopes, allowed_scopes)
+
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid scopes requested. Allowed: {', '.join(allowed_scopes)}"
+                )
+
+            # Step 2: Generate unique client_id with pattern: kg-cli-{username}-{random}
+            random_suffix = secrets.token_hex(4)  # 8 characters
+            generated_client_id = f"kg-cli-{db_username}-{random_suffix}"
+
+            # Ensure uniqueness
+            cur.execute(
+                "SELECT client_id FROM kg_auth.oauth_clients WHERE client_id = %s",
+                (generated_client_id,)
+            )
+            if cur.fetchone():
+                random_suffix = secrets.token_hex(6)
+                generated_client_id = f"kg-cli-{db_username}-{random_suffix}"
+
+            # Step 3: Generate client secret
+            client_secret = generate_client_secret()
+            client_secret_hash = get_password_hash(client_secret)
+
+            # Step 4: Determine client name
+            final_client_name = client_name or f"kg CLI ({db_username})"
+
+            # Step 5: Insert personal OAuth client
+            import json
+            metadata_json = json.dumps({
+                "personal": True,
+                "user_id": user_id,
+                "username": db_username,
+                "description": "Personal OAuth client"
+            })
+
+            cur.execute("""
+                INSERT INTO kg_auth.oauth_clients
+                (client_id, client_secret_hash, client_name, client_type, grant_types, redirect_uris, scopes, created_by, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                RETURNING created_at
+            """, (
+                generated_client_id,
+                client_secret_hash,
+                final_client_name,
+                "confidential",
+                ["client_credentials"],
+                None,
+                validated_scopes,
+                user_id,
+                metadata_json
+            ))
+
+            created_at = cur.fetchone()[0]
+            conn.commit()
+
+            return OAuthClientWithSecret(
+                client_id=generated_client_id,
+                client_name=final_client_name,
+                client_type="confidential",
+                client_secret=client_secret,  # Shown only once!
+                grant_types=["client_credentials"],
+                redirect_uris=None,
+                scopes=validated_scopes,
+                is_active=True,
+                created_at=created_at,
+                metadata={
+                    "personal": True,
+                    "user_id": user_id,
+                    "username": db_username
+                }
+            )
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create personal OAuth client: {str(e)}"
+        )
+    finally:
+        conn.close()
+
+
+@router.delete("/clients/personal/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_personal_oauth_client(
+    client_id: str,
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+):
+    """
+    Delete a personal OAuth client (requires authentication).
+
+    Allows users to revoke their own personal OAuth clients.
+    This is called by `kg logout` to clean up OAuth credentials.
+
+    Security:
+    - User can only delete their own personal clients
+    - Cannot delete system clients or other users' clients
+    - Deletion cascades to all associated tokens
+
+    Returns 204 No Content on success.
+
+    **Example:**
+    ```bash
+    curl -X DELETE http://localhost:8000/auth/oauth/clients/personal/kg-cli-admin-f8a4b2c1 \\
+      -H "Authorization: Bearer <access_token>"
+    ```
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Verify client exists and is a personal client owned by current user
+            cur.execute("""
+                SELECT metadata
+                FROM kg_auth.oauth_clients
+                WHERE client_id = %s
+            """, (client_id,))
+
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"OAuth client '{client_id}' not found"
+                )
+
+            metadata = row[0] or {}
+
+            # Check if this is a personal client
+            if not metadata.get("personal"):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot delete non-personal OAuth client. Use admin endpoints."
+                )
+
+            # Check if client belongs to current user
+            if metadata.get("user_id") != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot delete another user's OAuth client"
+                )
+
+            # Delete the client (cascades to tokens, codes, etc.)
+            cur.execute(
+                "DELETE FROM kg_auth.oauth_clients WHERE client_id = %s",
+                (client_id,)
+            )
+
+            conn.commit()
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete personal OAuth client: {str(e)}"
+        )
+    finally:
+        conn.close()
+
+
+@router.get("/clients/personal", response_model=OAuthClientListResponse)
+async def list_personal_oauth_clients(
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+):
+    """
+    List all personal OAuth clients for the current user.
+
+    Returns OAuth clients owned by the authenticated user.
+    Useful for managing multiple clients (CLI, MCP, scripts, etc.)
+
+    Security:
+    - User can only see their own personal clients
+    - Client secrets are NOT returned (shown only once during creation)
+
+    **Example:**
+    ```bash
+    curl http://localhost:8000/auth/oauth/clients/personal \\
+      -H "Authorization: Bearer <access_token>"
+    ```
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Get all personal clients for current user
+            cur.execute("""
+                SELECT
+                    client_id,
+                    client_name,
+                    client_type,
+                    grant_types,
+                    redirect_uris,
+                    scopes,
+                    is_active,
+                    created_at,
+                    created_by,
+                    metadata
+                FROM kg_auth.oauth_clients
+                WHERE metadata->>'personal' = 'true'
+                  AND (metadata->>'user_id')::int = %s
+                ORDER BY created_at DESC
+            """, (current_user.id,))
+
+            clients = []
+            for row in cur.fetchall():
+                clients.append(OAuthClientRead(
+                    client_id=row[0],
+                    client_name=row[1],
+                    client_type=row[2],
+                    grant_types=row[3],
+                    redirect_uris=row[4],
+                    scopes=row[5],
+                    is_active=row[6],
+                    created_at=row[7],
+                    created_by=row[8],
+                    updated_at=None,  # No updated_at column
+                    metadata=row[9]
+                ))
+
+            return OAuthClientListResponse(
+                clients=clients,
+                total=len(clients)
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list personal OAuth clients: {str(e)}"
+        )
+    finally:
+        conn.close()
+
+
+# =============================================================================
 # OAuth Client Management Endpoints (Admin Only)
 # =============================================================================
 
@@ -916,9 +1382,9 @@ async def _handle_client_credentials_grant(
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            # Fetch client
+            # Fetch client (include metadata for personal OAuth clients)
             cur.execute("""
-                SELECT client_secret_hash, client_type, grant_types, scopes, is_active
+                SELECT client_secret_hash, client_type, grant_types, scopes, is_active, metadata
                 FROM kg_auth.oauth_clients
                 WHERE client_id = %s
             """, (client_id,))
@@ -930,7 +1396,7 @@ async def _handle_client_credentials_grant(
                     detail="Invalid client credentials"
                 )
 
-            client_secret_hash, client_type, grant_types, allowed_scopes, is_active = row
+            client_secret_hash, client_type, grant_types, allowed_scopes, is_active, metadata = row
 
             # Validate client is active
             if not is_active:
@@ -974,12 +1440,18 @@ async def _handle_client_credentials_grant(
             access_token = generate_access_token()
             access_token_hash = hash_token(access_token)
 
-            # Store access token (user_id is NULL for client_credentials)
+            # For personal OAuth clients, associate token with user
+            # Otherwise, user_id is NULL for machine-to-machine authentication
+            user_id = None
+            if metadata and isinstance(metadata, dict) and metadata.get("personal"):
+                user_id = metadata.get("user_id")
+
+            # Store access token
             cur.execute("""
                 INSERT INTO kg_auth.oauth_access_tokens
                 (token_hash, client_id, user_id, scopes, expires_at)
-                VALUES (%s, %s, NULL, %s, %s)
-            """, (access_token_hash, client_id, granted_scopes, get_access_token_expiry()))
+                VALUES (%s, %s, %s, %s, %s)
+            """, (access_token_hash, client_id, user_id, granted_scopes, get_access_token_expiry()))
 
             conn.commit()
 

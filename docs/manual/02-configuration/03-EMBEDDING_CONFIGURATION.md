@@ -565,7 +565,7 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph \
   -c "SELECT version, name FROM public.schema_migrations WHERE version = 6"
 
 # Apply pending migrations
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 ```
 
 Migration 006 adds:

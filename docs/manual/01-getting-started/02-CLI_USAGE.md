@@ -20,7 +20,6 @@ kg [global-options] <command> [subcommand] [options] [arguments]
 ### Global Options
 - `--api-url <url>` - Override API base URL (default: http://localhost:8000)
 - `--client-id <id>` - Client ID for multi-tenancy (env: KG_CLIENT_ID)
-- `--api-key <key>` - API key for authentication (env: KG_API_KEY)
 
 ### Command Naming Convention
 
@@ -871,41 +870,195 @@ kg admin scheduler cleanup
 
 ## 9. Authentication Commands
 
-> **Note:** Detailed authentication documentation is in [01-AUTHENTICATION.md](../04-security-and-access/01-AUTHENTICATION.md) (ADR-027)
+> **Note:** Detailed authentication documentation is in [01-AUTHENTICATION.md](../04-security-and-access/01-AUTHENTICATION.md) (ADR-054: OAuth 2.0)
+
+The Knowledge Graph System uses OAuth 2.0 client credentials for authentication. All authenticated commands automatically handle token refresh.
 
 ### 9.1 `kg login`
 
 **Command:** `kg login [options]`
 
-**Purpose:** Authenticate with username and password
+**Purpose:** Authenticate and create personal OAuth client credentials
 
 **Options:**
-- `-u, --username <username>` - Username for authentication
+- `-u, --username <username>` - Username (will prompt if not provided)
 
 **Flow:**
 ```
 kg login
-  → Prompt for username (if not provided)
+  → Prompt for username (if not provided or saved)
   → Prompt for password (hidden input)
-  → POST /auth/login
-  → Save auth token to config
-  → Display success message
+  → POST /auth/oauth/clients/personal
+  → Save OAuth client credentials to ~/.kg/config.json
+  → Display success message with client info
+```
+
+**What it does:**
+- Authenticates with username/password
+- Creates a long-lived OAuth client (client_id + client_secret)
+- Stores OAuth credentials locally (NOT the password)
+- Future API requests use OAuth client credentials grant
+
+**Example:**
+```bash
+kg login
+
+# Output:
+# Username: admin
+# Password: ********
+#
+# ✓ Creating personal OAuth client credentials...
+# ✓ Login successful
+#
+# Logged in as: admin (role: admin)
+# OAuth Client: kg-cli-admin-20251102
+# Scopes: read:*, write:*
 ```
 
 ### 9.2 `kg logout`
 
 **Command:** `kg logout [options]`
 
-**Purpose:** End authentication session
+**Purpose:** Revoke OAuth client and clear credentials
 
 **Options:**
-- `-a, --all` - Clear all tokens (not just current)
+- `--forget` - Also forget saved username
 
 **Flow:**
 ```
 kg logout
-  → Remove auth token from config
+  → Get OAuth client credentials from config
+  → DELETE /auth/oauth/clients/personal/{client_id}
+  → Remove OAuth credentials from config
   → Display success message
+```
+
+**What it does:**
+- Revokes the OAuth client at the server (invalidates credentials)
+- Clears local OAuth credentials from config
+- Optionally clears saved username (with `--forget`)
+
+**Example:**
+```bash
+kg logout
+
+# Output:
+# ✓ OAuth client revoked
+# ✓ Logged out successfully
+```
+
+### 9.3 `kg oauth` - OAuth Client Management
+
+**Command:** `kg oauth <subcommand>`
+
+**Purpose:** Manage personal OAuth clients (list, create for MCP, revoke)
+
+#### 9.3.1 `kg oauth clients` (alias: `kg oauth list`)
+
+**Purpose:** List all personal OAuth clients
+
+**Flow:**
+```
+kg oauth clients
+  → GET /auth/oauth/clients/personal
+  → Display table of OAuth clients
+```
+
+**Example:**
+```bash
+kg oauth clients
+
+# Output:
+# Personal OAuth Clients
+#
+# Client ID                 Name                 Scopes          Created              Status
+# ────────────────────────────────────────────────────────────────────────────────────────────
+# kg-cli-admin-20251102     kg CLI (admin)       read:*, write:* 2 hours ago          ✓ Active
+# kg-mcp-server-admin       kg MCP Server (a...  read:*, write:* 1 day ago            ✓ Active
+```
+
+#### 9.3.2 `kg oauth create-mcp`
+
+**Purpose:** Create OAuth client for MCP server and display ready-to-paste config
+
+**Options:**
+- `--name <name>` - Custom client name (default: "kg MCP Server (username)")
+
+**Flow:**
+```
+kg oauth create-mcp
+  → POST /auth/oauth/clients/personal/new
+  → Display OAuth credentials
+  → Display Claude Desktop config (ready to paste)
+  → Display claude CLI command
+```
+
+**Example:**
+```bash
+kg oauth create-mcp
+
+# Output:
+# 🔐 Creating OAuth client for MCP server...
+#
+# ✅ OAuth client created successfully!
+#
+# ════════════════════════════════════════════════════════════════════════════════
+# CLAUDE DESKTOP CONFIG
+# ════════════════════════════════════════════════════════════════════════════════
+#
+# Add this to your Claude Desktop config:
+#
+#   "knowledge-graph": {
+#     "command": "kg-mcp-server",
+#     "env": {
+#       "KG_OAUTH_CLIENT_ID": "kg-mcp-server-admin-20251102",
+#       "KG_OAUTH_CLIENT_SECRET": "oauth_secret_abc123...",
+#       "KG_API_URL": "http://localhost:8000"
+#     }
+#   }
+#
+# ⚠️  IMPORTANT:
+#   • Keep these credentials secure!
+#   • Client secret is shown only once
+#   • To revoke: kg oauth revoke kg-mcp-server-admin-20251102
+```
+
+#### 9.3.3 `kg oauth revoke <client-id>`
+
+**Purpose:** Revoke an OAuth client
+
+**Options:**
+- `--force` - Force revocation even if it's your current CLI client
+
+**Flow:**
+```
+kg oauth revoke <client-id>
+  → Check if revoking current CLI client
+  → DELETE /auth/oauth/clients/personal/{client_id}
+  → Display success message
+  → If current CLI client: clear config and logout
+```
+
+**Example:**
+```bash
+# Revoke MCP server client
+kg oauth revoke kg-mcp-server-admin-20251102
+
+# Output:
+# 🗑️  Revoking OAuth client kg-mcp-server-admin-20251102...
+#
+# ✅ OAuth client revoked successfully!
+
+# Try to revoke current CLI client (protected)
+kg oauth revoke kg-cli-admin-20251102
+
+# Output:
+# ⚠️  Warning: This is your current CLI OAuth client
+#    Client ID: kg-cli-admin-20251102
+#    Revoking this will log you out.
+#
+#    To proceed, use: kg oauth revoke kg-cli-admin-20251102 --force
+#    Or use: kg logout
 ```
 
 ---

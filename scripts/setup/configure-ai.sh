@@ -15,7 +15,7 @@ echo "============================="
 # Check if venv exists
 if [ ! -d "venv" ]; then
     echo -e "${RED}✗ Python virtual environment not found${NC}"
-    echo -e "${YELLOW}  Run: ./scripts/setup.sh${NC}"
+    echo -e "${YELLOW}  Run: python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
     exit 1
 fi
 

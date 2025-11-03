@@ -67,45 +67,56 @@ export class KnowledgeGraphClient {
       },
     });
 
-    // ADR-027: Add request interceptor for JWT authentication
-    this.client.interceptors.request.use((requestConfig) => {
-      // Priority 1: Use MCP JWT token if set (for MCP server)
+    // ADR-054: Add request interceptor for OAuth authentication
+    this.client.interceptors.request.use(async (requestConfig) => {
+      // Priority 1: Use MCP JWT token if set (for MCP server - legacy)
       if (this.mcpJwtToken) {
         requestConfig.headers.Authorization = `Bearer ${this.mcpJwtToken}`;
         return requestConfig;
       }
 
-      // Priority 2: Try to get JWT token from config (via ConfigManager for CLI)
+      // Priority 2: Get OAuth client credentials from config and fetch fresh access token
       try {
         const { getConfig } = require('../lib/config');
+        const { AuthClient } = require('../lib/auth/auth-client');
         const configManager = getConfig();
-        const tokenInfo = configManager.getAuthToken();
 
-        if (tokenInfo && configManager.isAuthenticated()) {
-          // Add JWT token to Authorization header (takes precedence over API key)
-          requestConfig.headers.Authorization = `Bearer ${tokenInfo.access_token}`;
+        // Check for OAuth client credentials (ADR-054)
+        const oauthCreds = configManager.getOAuthCredentials();
+        if (oauthCreds) {
+          // Get fresh access token using client credentials grant
+          const authClient = new AuthClient(this.config.baseUrl);
+          const tokenResponse = await authClient.getOAuthToken({
+            grant_type: 'client_credentials',
+            client_id: oauthCreds.client_id,
+            client_secret: oauthCreds.client_secret,
+            scope: oauthCreds.scopes.join(' ')
+          });
+
+          requestConfig.headers.Authorization = `Bearer ${tokenResponse.access_token}`;
         }
       } catch (error) {
-        // Config not available or token not found - that's ok, continue without auth
+        // Config not available or OAuth credentials not found - continue without auth
       }
 
       return requestConfig;
     });
 
-    // ADR-027: Add response interceptor for 401 errors (expired token)
+    // ADR-054: Add response interceptor for 401 errors (invalid OAuth token)
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Check if we have an expired token
+          // Check if we have OAuth credentials
           try {
             const { getConfig } = require('../lib/config');
             const configManager = getConfig();
 
-            if (configManager.getAuthToken()) {
-              // User has a token but it's expired or invalid
-              console.error('\n\x1b[31m❌ Authentication expired or invalid\x1b[0m');
-              console.error('   Your session has expired. Please login again:');
+            if (configManager.isAuthenticated()) {
+              // User has OAuth credentials but got 401 - client may be revoked
+              console.error('\n\x1b[31m❌ Authentication failed\x1b[0m');
+              console.error('   Your OAuth credentials may be invalid or revoked.');
+              console.error('   Please login again:');
               console.error('     \x1b[36mkg login\x1b[0m\n');
             }
           } catch (e) {

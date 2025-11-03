@@ -51,7 +51,7 @@ Examples:
 
 **Migration Runner Behavior:**
 ```bash
-./scripts/migrate-db.sh
+./scripts/database/migrate-db.sh
 
 # Checks schema_migrations table
 # Applies only unapplied migrations in order
@@ -195,8 +195,8 @@ schema/
 # Migration runner for PostgreSQL schema changes
 #
 # Usage:
-#   ./scripts/migrate-db.sh              # Apply all pending migrations
-#   ./scripts/migrate-db.sh --dry-run    # Show what would be applied
+#   ./scripts/database/migrate-db.sh              # Apply all pending migrations
+#   ./scripts/database/migrate-db.sh --dry-run    # Show what would be applied
 #
 # Idempotent: Safe to run multiple times
 
@@ -213,7 +213,7 @@ set -e
 # Initialize database schema
 # This script now delegates to the migration runner
 
-./scripts/migrate-db.sh
+./scripts/database/migrate-db.sh
 ```
 
 **5. Update docker-compose.yml (if needed)**
@@ -253,8 +253,8 @@ COMMIT;
 
 1. Create new migration file: `schema/migrations/003_description.sql`
 2. Write SQL changes (use BEGIN/COMMIT for safety)
-3. Test on fresh database: `./scripts/migrate-db.sh`
-4. Test on existing database: `./scripts/migrate-db.sh`
+3. Test on fresh database: `./scripts/database/migrate-db.sh`
+4. Test on existing database: `./scripts/database/migrate-db.sh`
 5. Commit migration file to git
 
 **Periodically consolidate:**
@@ -274,7 +274,7 @@ COMMIT;
 - Clear audit trail of schema changes
 
 ✅ **Developer productivity**
-- `./scripts/migrate-db.sh` works on fresh and existing databases
+- `./scripts/database/migrate-db.sh` works on fresh and existing databases
 - No manual SQL coordination
 - Git history shows schema evolution
 

@@ -91,13 +91,13 @@ pip install -r requirements.txt
 cd client && ./install.sh && cd ..
 
 # 4. Start database (applies baseline schema + all migrations automatically)
-./scripts/start-database.sh
+./scripts/database/start-database.sh
 
 # 5. Start API server
-./scripts/start-api.sh -y
+./scripts/services/start-api.sh -y
 
 # 6. Initialize authentication (interactive: sets admin password, JWT secrets, API keys)
-./scripts/initialize-auth.sh
+./scripts/setup/initialize-auth.sh
 
 # 7. Verify system is ready
 kg database stats
@@ -114,10 +114,10 @@ kg ingest file -o "My Ontology" document.txt
 source venv/bin/activate
 
 # Start database (if not running)
-./scripts/start-database.sh
+./scripts/database/start-database.sh
 
 # Start API server (if not running)
-./scripts/start-api.sh -y
+./scripts/services/start-api.sh -y
 
 # Use kg CLI for operations
 kg database stats
@@ -129,8 +129,8 @@ docker logs -f knowledge-graph-postgres  # Database logs
 tail -f logs/api_*.log                   # API server logs
 
 # Stop services
-./scripts/stop-api.sh       # Stop API server
-./scripts/stop-database.sh  # Stop database (data persists)
+./scripts/services/stop-api.sh       # Stop API server
+./scripts/database/stop-database.sh  # Stop database (data persists)
 ```
 
 ### Resetting Database (Clean State)
@@ -144,10 +144,10 @@ When you need to completely wipe and reinitialize the database:
 kg admin reset
 
 # 2. **CRITICAL**: Restart API server to clear stale connections
-./scripts/stop-api.sh && ./scripts/start-api.sh -y
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh -y
 
 # 3. Re-initialize authentication and secrets
-./scripts/initialize-auth.sh
+./scripts/setup/initialize-auth.sh
 
 # 4. System is now ready for fresh data
 kg ingest file -o "My Ontology" document.txt
@@ -156,20 +156,20 @@ kg ingest file -o "My Ontology" document.txt
 **Option 2: Manual reset (without kg CLI)**
 ```bash
 # 1. Stop all services
-./scripts/stop-api.sh
-./scripts/stop-database.sh
+./scripts/services/stop-api.sh
+./scripts/database/stop-database.sh
 
 # 2. Wipe database volume
 docker-compose down -v
 
 # 3. Start fresh (applies baseline + migrations)
-./scripts/start-database.sh
+./scripts/database/start-database.sh
 
 # 4. Start API server
-./scripts/start-api.sh -y
+./scripts/services/start-api.sh -y
 
 # 5. Initialize authentication
-./scripts/initialize-auth.sh
+./scripts/setup/initialize-auth.sh
 
 # 6. System is now ready
 kg database stats
@@ -181,25 +181,25 @@ kg database stats
 
 **When modifying AI extraction:**
 1. Edit `src/api/lib/ai_providers.py` or `src/api/lib/llm_extractor.py`
-2. Restart API: `./scripts/stop-api.sh && ./scripts/start-api.sh`
-3. Test with: `./scripts/configure-ai.sh` (option 1)
+2. Restart API: `./scripts/services/stop-api.sh && ./scripts/services/start-api.sh`
+3. Test with: `./scripts/setup/configure-ai.sh` (option 1)
 4. Test ingestion: `kg ingest file -o "Test" -y <test-file>`
 
 **When modifying database schema:**
 1. Create new migration file: `schema/migrations/00N_descriptive_name.sql`
-2. Apply migration: `./scripts/migrate-db.sh` (or `./scripts/migrate-db.sh -y` to skip confirmation)
+2. Apply migration: `./scripts/database/migrate-db.sh` (or `./scripts/database/migrate-db.sh -y` to skip confirmation)
 3. Test the changes with kg CLI commands
 4. **Important**: Never manually apply migrations with `docker exec` - always use `migrate-db.sh`
 
 **Migration script options:**
-- `./scripts/migrate-db.sh` - Interactive mode with confirmation
-- `./scripts/migrate-db.sh --dry-run` - Preview pending migrations
-- `./scripts/migrate-db.sh -y` - Apply without confirmation
-- `./scripts/migrate-db.sh -y --verbose` - Apply with detailed SQL output
+- `./scripts/database/migrate-db.sh` - Interactive mode with confirmation
+- `./scripts/database/migrate-db.sh --dry-run` - Preview pending migrations
+- `./scripts/database/migrate-db.sh -y` - Apply without confirmation
+- `./scripts/database/migrate-db.sh -y --verbose` - Apply with detailed SQL output
 
 **When modifying API endpoints:**
 1. Edit files in `src/api/routes/`
-2. Restart API: `./scripts/stop-api.sh && ./scripts/start-api.sh`
+2. Restart API: `./scripts/services/stop-api.sh && ./scripts/services/start-api.sh`
 3. Test with kg CLI commands
 
 **When modifying kg CLI:**
@@ -273,10 +273,10 @@ When using local inference with Ollama + local embeddings on single-GPU systems,
 **Switching Providers:**
 - **Cloud (OpenAI/Anthropic):**
   - Set `AI_PROVIDER` in `.env`
-  - Test with `./scripts/configure-ai.sh`
+  - Test with `./scripts/setup/configure-ai.sh`
 
 - **Local (Ollama):**
-  - Start Ollama: `./scripts/start-ollama.sh -y`
+  - Start Ollama: `./scripts/ollama/start-ollama.sh -y`
   - Pull model: `docker exec kg-ollama ollama pull mistral:7b-instruct`
   - Configure: `kg admin extraction set --provider ollama --model mistral:7b-instruct`
   - Test: `kg admin extraction test`
@@ -501,7 +501,7 @@ curl http://localhost:8000/health
 tail -f logs/api_*.log
 
 # Restart API
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 ```
 
 ### kg CLI Issues
@@ -520,7 +520,7 @@ cd client && ./uninstall.sh && ./install.sh
 ### LLM Extraction Failures
 ```bash
 # Test provider
-./scripts/configure-ai.sh
+./scripts/setup/configure-ai.sh
 
 # Check .env
 cat .env | grep API_KEY
@@ -572,7 +572,7 @@ curl http://localhost:8000/health
 kg health
 
 # Test provider
-./scripts/configure-ai.sh
+./scripts/setup/configure-ai.sh
 
 # Test ingestion
 kg ingest file -o "Test Ontology" -y ingest_source/watts_lecture_1.txt
@@ -587,7 +587,7 @@ kg search details <concept-id>
 ```bash
 # Full pipeline test
 docker-compose restart
-./scripts/stop-api.sh && ./scripts/start-api.sh
+./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 kg ontology delete "Test Ontology"
 kg ingest file -o "Test Ontology" -y <test-file>
 kg database stats  # Verify counts
@@ -654,4 +654,4 @@ kg database stats  # Verify counts
 2. Review `docs/` for detailed documentation
 3. Check Docker logs: `docker logs knowledge-graph-postgres`
 4. Review API logs: `tail -f logs/api_*.log`
-5. Test providers: `./scripts/configure-ai.sh`
+5. Test providers: `./scripts/setup/configure-ai.sh`

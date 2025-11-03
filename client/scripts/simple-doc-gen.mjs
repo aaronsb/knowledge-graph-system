@@ -109,6 +109,9 @@ async function main() {
   const modules = [
     { name: 'health', path: '../dist/cli/health.js' },
     { name: 'config', path: '../dist/cli/config.js' },
+    { name: 'login', path: '../dist/cli/login.js' },
+    { name: 'logout', path: '../dist/cli/logout.js' },
+    { name: 'oauth', path: '../dist/cli/oauth.js' },
     { name: 'ingest', path: '../dist/cli/ingest.js' },
     { name: 'jobs', path: '../dist/cli/jobs.js' },
     { name: 'search', path: '../dist/cli/search.js' },
@@ -123,7 +126,7 @@ async function main() {
   for (const mod of modules) {
     try {
       const imported = await import(mod.path);
-      const cmdExport = imported[`${mod.name}Command`] || imported.default || imported[mod.name + 'Cmd'];
+      const cmdExport = imported[`${mod.name}Command`] || imported[`${mod.name}Command_obj`] || imported.default || imported[mod.name + 'Cmd'];
 
       if (cmdExport) {
         commands.push(extractMetadata(cmdExport));

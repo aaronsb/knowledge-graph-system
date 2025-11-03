@@ -2,6 +2,12 @@
  * Configuration Manager for kg CLI
  *
  * Manages user configuration stored at ~/.config/kg/config.json
+ *
+ * ADR-054: OAuth 2.0 Authentication
+ * - All authentication uses personal OAuth clients (GitHub CLI-style)
+ * - Client credentials (client_id + client_secret) are long-lived
+ * - Fresh access tokens obtained on-demand via client credentials grant
+ * - JWT support removed (OAuth-only)
  */
 
 import * as fs from 'fs';
@@ -19,17 +25,17 @@ export interface McpConfig {
 }
 
 export interface AuthTokenConfig {
-  token?: string;           // Legacy JWT access token (ADR-027, deprecated)
-  token_type?: string;      // Token type (usually "bearer")
-  expires_at?: number;      // Unix timestamp (seconds)
-  username?: string;        // Cached username from token
-  role?: string;            // Cached role from token
+  // ADR-054: OAuth 2.0 Client Credentials (Personal OAuth Client)
+  oauth_client_id?: string;        // OAuth client ID (kg-cli-username-random)
+  oauth_client_secret?: string;    // OAuth client secret (hashed on server)
+  oauth_client_name?: string;      // Client name for display
+  oauth_scopes?: string[];         // OAuth scopes granted
+  oauth_created_at?: string;       // ISO 8601 timestamp
 
-  // ADR-054: OAuth 2.0 token fields
-  access_token?: string;    // OAuth access token
-  refresh_token?: string;   // OAuth refresh token (for device flow)
-  client_id?: string;       // OAuth client ID (kg-cli, kg-mcp, etc.)
-  scope?: string;           // Space-separated OAuth scopes
+  // Metadata
+  token_type?: string;             // Always "bearer"
+  username?: string;               // Cached username
+  role?: string;                   // Cached role
 }
 
 export interface KgConfig {
@@ -38,7 +44,7 @@ export interface KgConfig {
   api_url?: string;
   backup_dir?: string;
   auto_approve?: boolean;  // ADR-014: Auto-approve all jobs by default
-  auth?: AuthTokenConfig;   // ADR-027: JWT token storage
+  auth?: AuthTokenConfig;   // ADR-054: OAuth 2.0 client credentials
   mcp?: McpConfig;
   aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
 }
@@ -332,140 +338,72 @@ export class ConfigManager {
   // ========== Authentication Methods (ADR-027, updated by ADR-054) ==========
 
   /**
-   * Store OAuth 2.0 token (ADR-054)
+   * Store OAuth client credentials (ADR-054 - personal OAuth clients)
    *
-   * @param tokenInfo OAuth token information
+   * Stores long-lived client_id + client_secret for client credentials grant.
+   * This is the preferred authentication method for CLI tools.
+   *
+   * @param credentials OAuth client credentials
    */
-  storeOAuthToken(tokenInfo: {
-    access_token: string;
-    token_type: string;
-    expires_at: number;
-    refresh_token?: string;
+  storeOAuthCredentials(credentials: {
     client_id: string;
-    scope: string;
+    client_secret: string;
+    client_name: string;
+    scopes: string[];
+    created_at: string;
     username?: string;
-    role?: string;
   }): void {
-    this.set('auth.access_token', tokenInfo.access_token);
-    this.set('auth.token_type', tokenInfo.token_type);
-    this.set('auth.expires_at', tokenInfo.expires_at);
-    this.set('auth.client_id', tokenInfo.client_id);
-    this.set('auth.scope', tokenInfo.scope);
+    this.set('auth.oauth_client_id', credentials.client_id);
+    this.set('auth.oauth_client_secret', credentials.client_secret);
+    this.set('auth.oauth_client_name', credentials.client_name);
+    this.set('auth.oauth_scopes', credentials.scopes);
+    this.set('auth.oauth_created_at', credentials.created_at);
+    this.set('auth.token_type', 'bearer');
 
-    if (tokenInfo.refresh_token) {
-      this.set('auth.refresh_token', tokenInfo.refresh_token);
+    if (credentials.username) {
+      this.set('auth.username', credentials.username);
+      this.set('username', credentials.username);  // Backwards compatibility
     }
 
-    if (tokenInfo.username) {
-      this.set('auth.username', tokenInfo.username);
-      this.set('username', tokenInfo.username);  // Backwards compatibility
-    }
-
-    if (tokenInfo.role) {
-      this.set('auth.role', tokenInfo.role);
-    }
-
-    // Clear legacy JWT token field
+    // Clear any legacy fields
     this.delete('auth.token');
+    this.delete('auth.access_token');
+    this.delete('auth.refresh_token');
+    this.delete('auth.expires_at');
+    this.delete('auth.client_id');
+    this.delete('auth.scope');
   }
 
   /**
-   * Store authentication token (Legacy JWT, ADR-027 - deprecated)
+   * Get OAuth client credentials (ADR-054)
    *
-   * @deprecated Use storeOAuthToken() instead (ADR-054)
-   * @param tokenInfo Token information including access token, expiration, user details
+   * @returns OAuth client credentials or null if not stored
    */
-  storeAuthToken(tokenInfo: {
-    access_token: string;
-    token_type: string;
-    expires_at: number;
-    username: string;
-    role: string;
-  }): void {
-    this.set('auth.token', tokenInfo.access_token);
-    this.set('auth.token_type', tokenInfo.token_type);
-    this.set('auth.expires_at', tokenInfo.expires_at);
-    this.set('auth.username', tokenInfo.username);
-    this.set('auth.role', tokenInfo.role);
-
-    // Also update top-level username for backwards compatibility
-    this.set('username', tokenInfo.username);
-  }
-
-  /**
-   * Retrieve OAuth 2.0 token (ADR-054)
-   *
-   * @returns OAuth token information or null if not authenticated
-   */
-  getOAuthToken(): {
-    access_token: string;
-    token_type: string;
-    expires_at: number;
-    refresh_token?: string;
+  getOAuthCredentials(): {
     client_id: string;
-    scope: string;
+    client_secret: string;
+    client_name: string;
+    scopes: string[];
+    created_at: string;
     username?: string;
-    role?: string;
   } | null {
-    const accessToken = this.get('auth.access_token');
-    const clientId = this.get('auth.client_id');
+    const clientId = this.get('auth.oauth_client_id');
+    const clientSecret = this.get('auth.oauth_client_secret');
 
-    if (!accessToken || !clientId) {
+    if (!clientId || !clientSecret) {
       return null;
     }
 
     return {
-      access_token: accessToken,
-      token_type: this.get('auth.token_type') || 'Bearer',
-      expires_at: this.get('auth.expires_at') || 0,
-      refresh_token: this.get('auth.refresh_token'),
       client_id: clientId,
-      scope: this.get('auth.scope') || '',
-      username: this.get('auth.username'),
-      role: this.get('auth.role')
+      client_secret: clientSecret,
+      client_name: this.get('auth.oauth_client_name') || 'kg-cli',
+      scopes: this.get('auth.oauth_scopes') || [],
+      created_at: this.get('auth.oauth_created_at') || new Date().toISOString(),
+      username: this.get('auth.username')
     };
   }
 
-  /**
-   * Retrieve authentication token (supports both OAuth and legacy JWT)
-   *
-   * Returns OAuth token if available, otherwise falls back to legacy JWT.
-   *
-   * @returns Token information or null if not authenticated
-   */
-  getAuthToken(): {
-    access_token: string;
-    token_type: string;
-    expires_at: number;
-    username: string;
-    role: string;
-  } | null {
-    // Try OAuth token first (ADR-054)
-    const oauthToken = this.getOAuthToken();
-    if (oauthToken) {
-      return {
-        access_token: oauthToken.access_token,
-        token_type: oauthToken.token_type,
-        expires_at: oauthToken.expires_at,
-        username: oauthToken.username || '',
-        role: oauthToken.role || ''
-      };
-    }
-
-    // Fall back to legacy JWT token (ADR-027)
-    const token = this.get('auth.token');
-    if (!token) {
-      return null;
-    }
-
-    return {
-      access_token: token,
-      token_type: this.get('auth.token_type') || 'bearer',
-      expires_at: this.get('auth.expires_at') || 0,
-      username: this.get('auth.username') || '',
-      role: this.get('auth.role') || ''
-    };
-  }
 
   /**
    * Clear authentication token
@@ -475,20 +413,15 @@ export class ConfigManager {
   }
 
   /**
-   * Check if user is authenticated (has valid, non-expired token)
+   * Check if user is authenticated (has OAuth client credentials)
    *
-   * @returns true if user has a valid token
+   * OAuth client credentials are long-lived and do not expire.
+   * Fresh access tokens are obtained on-demand via client credentials grant.
+   *
+   * @returns true if user has OAuth client credentials
    */
   isAuthenticated(): boolean {
-    const tokenInfo = this.getAuthToken();
-    if (!tokenInfo) {
-      return false;
-    }
-
-    const now = Math.floor(Date.now() / 1000);
-    const BUFFER_SECONDS = 5 * 60;  // 5-minute buffer
-
-    return tokenInfo.expires_at > now + BUFFER_SECONDS;
+    return this.getOAuthCredentials() !== null;
   }
 
   // ========== Alias Methods (ADR-029) ==========

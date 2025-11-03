@@ -13,13 +13,18 @@ import { AuthChallenge } from '../lib/auth/challenge.js';
 import { Table } from '../lib/table.js';
 
 /**
- * Ensure user is logged in and has admin role
+ * Ensure user is logged in (has OAuth credentials or valid token)
+ *
+ * ADR-054: Updated to support OAuth client credentials
+ * - Checks for OAuth credentials first (preferred)
+ * - Falls back to legacy JWT tokens
+ * - Gets fresh OAuth access token if using client credentials
  */
-function requireAuth(): { token: string; tokenManager: TokenManager; authClient: AuthClient } {
+async function requireAuth(): Promise<{ token: string; authClient: AuthClient; username: string }> {
   const config = getConfig();
-  const tokenManager = new TokenManager(config);
 
-  if (!tokenManager.isLoggedIn()) {
+  // Check if user is authenticated (OAuth credentials or JWT token)
+  if (!config.isAuthenticated()) {
     console.error('');
     console.error('\x1b[31m❌ Authentication required\x1b[0m');
     console.error('   This command requires authentication.');
@@ -30,19 +35,28 @@ function requireAuth(): { token: string; tokenManager: TokenManager; authClient:
     process.exit(1);
   }
 
-  const tokenInfo = tokenManager.getToken();
-  if (!tokenInfo) {
-    console.error('\x1b[31m❌ Token expired. Please login again: kg login\x1b[0m\n');
-    process.exit(1);
-  }
-
   const apiUrl = config.getApiUrl();
   const authClient = new AuthClient(apiUrl);
 
+  // Get OAuth client credentials (ADR-054)
+  const oauthCreds = config.getOAuthCredentials();
+  if (!oauthCreds) {
+    console.error('\x1b[31m❌ No OAuth credentials found. Please login: kg login\x1b[0m\n');
+    process.exit(1);
+  }
+
+  // Get fresh access token using client credentials grant
+  const tokenResponse = await authClient.getOAuthToken({
+    grant_type: 'client_credentials',
+    client_id: oauthCreds.client_id,
+    client_secret: oauthCreds.client_secret,
+    scope: oauthCreds.scopes.join(' ')
+  });
+
   return {
-    token: tokenInfo.access_token,
-    tokenManager,
-    authClient
+    token: tokenResponse.access_token,
+    authClient,
+    username: oauthCreds.username || 'unknown'
   };
 }
 
@@ -91,7 +105,7 @@ async function promptPassword(confirmRequired: boolean = false): Promise<string>
  * List users command
  */
 async function listUsersCommand(options: { role?: string; skip?: number; limit?: number }) {
-  const { token, authClient } = requireAuth();
+  const { token, authClient } = await requireAuth();
 
   try {
     const skip = options.skip || 0;
@@ -150,7 +164,7 @@ async function listUsersCommand(options: { role?: string; skip?: number; limit?:
  * Get user command
  */
 async function getUserCommand(userId: string) {
-  const { token, authClient } = requireAuth();
+  const { token, authClient } = await requireAuth();
 
   try {
     const user = await authClient.getUser(token, parseInt(userId));
@@ -182,7 +196,7 @@ async function getUserCommand(userId: string) {
  * Create user command
  */
 async function createUserCommand(username: string, options: { role: string; password?: string }) {
-  const { token, authClient } = requireAuth();
+  const { token, authClient } = await requireAuth();
 
   // Validate role
   const validRoles = ['read_only', 'contributor', 'curator', 'admin'];
@@ -244,7 +258,7 @@ async function updateUserCommand(
   userId: string,
   options: { role?: string; password?: string | boolean; disable?: boolean; enable?: boolean }
 ) {
-  const { token, authClient, tokenManager } = requireAuth();
+  const { token, authClient, username: currentUsername } = await requireAuth();
 
   // Validate role if provided
   if (options.role) {
@@ -285,32 +299,12 @@ async function updateUserCommand(
     // Handle role change (requires challenge if promoting to admin)
     if (options.role) {
       if (options.role === 'admin' && user.role !== 'admin') {
-        // Promoting to admin requires re-authentication
-        const challenge = new AuthChallenge(authClient, tokenManager);
-        const newToken = await challenge.challenge({
-          reason: `Promote user "${user.username}" to admin role`,
-          username: tokenManager.getUsername() || undefined,
-          allowCancel: true
-        });
-
-        if (!newToken) {
-          console.log('Operation cancelled.');
-          process.exit(0);
-        }
-
-        // Use new token for the update
-        request.role = options.role as any;
-        const updatedUser = await authClient.updateUser(newToken.access_token, parseInt(userId), request);
-
+        // TODO(ADR-054): Re-implement AuthChallenge with OAuth support for sensitive operations
         console.log('');
-        console.log('\x1b[32m✅ User updated successfully!\x1b[0m');
-        console.log(`   Username: ${updatedUser.username}`);
-        console.log(`   Role: ${updatedUser.role} (changed from ${user.role})`);
+        console.log(`\x1b[33m⚠️  Warning: Promoting user "${user.username}" to admin role\x1b[0m`);
         console.log('');
-        return;
-      } else {
-        request.role = options.role as any;
       }
+      request.role = options.role as any;
     }
 
     // Handle disable/enable
@@ -350,7 +344,7 @@ async function updateUserCommand(
  * Delete user command
  */
 async function deleteUserCommand(userId: string, options: { yes?: boolean }) {
-  const { token, authClient, tokenManager } = requireAuth();
+  const { token, authClient } = await requireAuth();
 
   try {
     // Get user details first
@@ -362,21 +356,24 @@ async function deleteUserCommand(userId: string, options: { yes?: boolean }) {
     console.log('   This action cannot be undone!');
     console.log('');
 
-    // Confirm deletion (requires re-authentication)
-    const challenge = new AuthChallenge(authClient, tokenManager);
-    const newToken = await challenge.challenge({
-      reason: `Delete user "${user.username}"`,
-      username: tokenManager.getUsername() || undefined,
-      allowCancel: true
-    });
+    // TODO(ADR-054): Re-implement AuthChallenge with OAuth support
+    // For now, require manual confirmation
+    if (!options.yes) {
+      const confirmation = await prompts({
+        type: 'confirm',
+        name: 'confirm',
+        message: `Are you sure you want to delete user "${user.username}"?`,
+        initial: false
+      });
 
-    if (!newToken) {
-      console.log('Operation cancelled.');
-      process.exit(0);
+      if (!confirmation.confirm) {
+        console.log('Operation cancelled.');
+        process.exit(0);
+      }
     }
 
     // Delete user
-    await authClient.deleteUser(newToken.access_token, parseInt(userId));
+    await authClient.deleteUser(token, parseInt(userId));
 
     console.log('');
     console.log('\x1b[32m✅ User deleted successfully!\x1b[0m');

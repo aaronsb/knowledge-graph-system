@@ -204,11 +204,28 @@ export const configCommand = new Command('config')
               category: 'auth'
             });
           }
-          if (allConfig.auth?.token !== undefined) {
-            const isValid = config.isAuthenticated();
+          // Show OAuth credentials status
+          const oauthCreds = config.getOAuthCredentials();
+          if (oauthCreds) {
             configRows.push({
-              key: 'auth.token',
-              value: isValid ? '✓ valid' : '✗ expired',
+              key: 'auth.oauth_client_id',
+              value: oauthCreds.client_id,
+              category: 'auth'
+            });
+            configRows.push({
+              key: 'auth.oauth_client_name',
+              value: oauthCreds.client_name,
+              category: 'auth'
+            });
+            configRows.push({
+              key: 'auth.status',
+              value: '✓ authenticated',
+              category: 'auth'
+            });
+          } else {
+            configRows.push({
+              key: 'auth.status',
+              value: '✗ not authenticated',
               category: 'auth'
             });
           }
@@ -285,9 +302,9 @@ export const configCommand = new Command('config')
                   if (row.key === 'auto_approve' && val === 'false') return colors.status.dim(val);
                   if (row.key.startsWith('mcp.') && val.includes('true')) return colors.status.success(val);
                   if (row.key.startsWith('mcp.') && val.includes('false')) return colors.status.dim(val);
-                  if (row.key.startsWith('auth.token')) {
-                    if (val.includes('valid')) return colors.status.success(val);
-                    if (val.includes('expired')) return colors.status.warning(val);
+                  if (row.key === 'auth.status') {
+                    if (val.includes('authenticated')) return colors.status.success(val);
+                    if (val.includes('not authenticated')) return colors.status.warning(val);
                   }
                   return val;
                 }

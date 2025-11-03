@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2025-11-01
+> Last updated: 2025-11-03
 
 ---
 
@@ -11,6 +11,9 @@
 
 - [`health`](#health) - Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.
 - [`config` (cfg)](#config) - Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).
+- [`login`](#login) - Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)
+- [`logout`](#logout) - End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)
+- [`oauth`](#oauth) - Manage OAuth clients (list, create for MCP, revoke)
 - [`ingest`](#ingest) - Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.
 - [`job` (jobs)](#job) - Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)
 - [`search`](#search) - Search and explore the knowledge graph using vector similarity, graph traversal, and path finding
@@ -285,6 +288,99 @@ Output configuration template/schema
 ```bash
 kg dto [options]
 ```
+
+
+## login
+
+Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)
+
+**Usage:**
+```bash
+kg login [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-u, --username <username>` | Username (will prompt if not provided - can be saved for future logins) | - |
+
+
+## logout
+
+End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)
+
+**Usage:**
+```bash
+kg logout [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--forget` | Also forget saved username (requires username prompt on next login) | - |
+
+
+## oauth
+
+Manage OAuth clients (list, create for MCP, revoke)
+
+**Usage:**
+```bash
+kg oauth [options]
+```
+
+**Subcommands:**
+
+- `clients` (`list`) - List your personal OAuth clients
+- `create-mcp` - Create OAuth client for MCP server and display config
+- `revoke` - Revoke an OAuth client
+
+---
+
+### clients (list)
+
+List your personal OAuth clients
+
+**Usage:**
+```bash
+kg clients [options]
+```
+
+### create-mcp
+
+Create OAuth client for MCP server and display config
+
+**Usage:**
+```bash
+kg create-mcp [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--name <name>` | Custom client name | - |
+
+### revoke
+
+Revoke an OAuth client
+
+**Usage:**
+```bash
+kg revoke <client-id>
+```
+
+**Arguments:**
+
+- `<client-id>` - Required
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--force` | Force revocation even if it's your current CLI client | - |
 
 
 ## ingest

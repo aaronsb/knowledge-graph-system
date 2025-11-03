@@ -18,15 +18,20 @@ git clone https://github.com/aaronsb/knowledge-graph-system.git
 cd knowledge-graph-system
 
 # 2. Start database - auto-applies schema + migrations (15 seconds)
-./scripts/start-database.sh
+./scripts/database/start-database.sh
 
 # 3. Start API server - auto-creates venv + installs deps (15 seconds)
-./scripts/start-api.sh -y
+./scripts/services/start-api.sh -y
 
 # 4. Initialize auth + configure embeddings (interactive, 60 seconds)
-./scripts/initialize-auth.sh
-# → Set admin password
+./scripts/setup/initialize-auth.sh          # Production mode (interactive password)
+# OR for development (uses default password 'Password1!'):
+./scripts/setup/initialize-auth.sh --dev    # Development mode (quick start)
+
+# Steps:
+# → Set admin password (or uses Password1! in dev mode)
 # → Auto-generates JWT secrets
+# → Auto-generates encryption key
 # → Choose embedding option:
 #    Option 1: OpenAI (paste your API key when prompted)
 #    Option 2: Local embeddings (Nomic - no API key needed)
@@ -44,6 +49,30 @@ kg database stats  # Should show: 0 concepts (empty database ready)
 **Total time:** ~3-4 minutes for fresh system! 🚀
 
 ## Configuration Notes
+
+### Development vs Production Mode
+
+**Development Mode (`--dev` flag):**
+```bash
+./scripts/setup/initialize-auth.sh --dev
+```
+- Sets admin password to `Password1!` (no prompts)
+- Fastest cold start (~30 seconds)
+- Perfect for local development, testing, demos
+- ⚠️ **NEVER use in production!**
+
+**Production Mode (default):**
+```bash
+./scripts/setup/initialize-auth.sh
+# OR in Docker with environment variable:
+ADMIN_PASSWORD='YourSecurePassword!' ./scripts/setup/initialize-auth.sh --non-interactive
+```
+- Prompts for secure password (interactive)
+- OR accepts password via `ADMIN_PASSWORD` environment variable (Docker)
+- Required for production deployments
+- Password must meet requirements:
+  - Minimum 8 characters
+  - Uppercase, lowercase, digit, special character
 
 ### OpenAI API Key (Recommended for Quick Start)
 
@@ -113,7 +142,7 @@ source ~/.bashrc
 ### API server errors about OpenAI key
 
 If you see API key errors after starting the server:
-1. Run `./scripts/initialize-auth.sh` to configure embeddings
+1. Run `./scripts/setup/initialize-auth.sh` to configure embeddings
 2. Paste your OpenAI API key when prompted
 3. OR choose option 2 for local embeddings
 
@@ -134,7 +163,7 @@ kg admin embedding reload
 Hard reset:
 ```bash
 docker-compose down -v
-./scripts/start-database.sh
+./scripts/database/start-database.sh
 ```
 
 ## What Just Happened?
@@ -153,9 +182,11 @@ docker-compose down -v
 
 **Auth Setup (initialize-auth.sh):**
 - Created admin user in database
-- Generated JWT secrets in `.env`
+- Generated OAuth infrastructure (ADR-054)
+- Generated encryption keys in `.env`
 - Configured embedding provider (OpenAI or Nomic)
-- System ready for production use
+- **Dev mode (`--dev`)**: Uses password `Password1!` for quick start
+- **Production mode**: Prompts for secure password or uses `ADMIN_PASSWORD` env var
 
 **CLI Install (client/install.sh):**
 - Built TypeScript client
@@ -237,11 +268,11 @@ kg admin backup
 - Logs: `logs/api_*.log`
 
 **Scripts:**
-- `./scripts/start-database.sh` - Start database
-- `./scripts/start-api.sh` - Start API server
-- `./scripts/initialize-auth.sh` - Configure auth + embeddings
-- `./scripts/stop-api.sh` - Stop API server
-- `./scripts/stop-database.sh` - Stop database
+- `./scripts/database/start-database.sh` - Start database
+- `./scripts/services/start-api.sh` - Start API server
+- `./scripts/setup/initialize-auth.sh` - Configure auth + embeddings
+- `./scripts/services/stop-api.sh` - Stop API server
+- `./scripts/database/stop-database.sh` - Stop database
 
 **Documentation:**
 - `docs/guides/QUICKSTART.md` - User quickstart guide

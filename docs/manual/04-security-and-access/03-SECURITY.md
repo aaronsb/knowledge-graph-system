@@ -24,7 +24,7 @@ The knowledge graph system implements **defense-in-depth** security with multipl
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                      HTTP API Layer                              │
-│  • Authentication (JWT tokens, API keys)                         │
+│  • Authentication (OAuth 2.0)                                    │
 │  • RBAC authorization                                            │
 │  • Rate limiting (future)                                        │
 └────────────────────┬────────────────────────────────────────────┘
@@ -452,7 +452,7 @@ kg ingest file -o "Test" document.txt
 ### Threat Model Summary
 
 **Attacker needs to compromise ALL of:**
-1. HTTP API authentication (bypass JWT/RBAC)
+1. HTTP API authentication (bypass OAuth/RBAC)
 2. Job queue isolation (inject malicious job)
 3. Worker thread execution (run arbitrary code)
 4. Capability token (present valid internal secret)

@@ -16,12 +16,17 @@ Admin endpoints (requires OAuth token):
 - PUT /users/{user_id} - Update user
 - DELETE /users/{user_id} - Delete user
 
-REMOVED ENDPOINTS (ADR-054 - OAuth 2.0 Migration):
-- POST /auth/login -> Use OAuth device flow or authorization code flow
-- GET /auth/me -> Use GET /users/me instead
-- GET/POST/DELETE /auth/api-keys -> Use OAuth token endpoints
+UNIFIED OAUTH AUTHENTICATION STRATEGY (ADR-054):
+All clients use OAuth 2.0 flows - NO JWT sessions, NO multiple auth systems.
 
-For OAuth endpoints, see src/api/routes/oauth.py
+- kg CLI: Personal OAuth clients (POST /auth/oauth/clients/personal → client_credentials grant)
+- MCP: Client credentials grant (POST /auth/oauth/token)
+- viz-app: Authorization Code + PKCE flow (GET /auth/oauth/authorize → POST /auth/oauth/token)
+- Third-party tools: Device authorization flow (POST /auth/oauth/device → POST /auth/oauth/token)
+
+Future: External OAuth providers (Google, Microsoft, GitHub) for viz-app social login.
+
+For all OAuth endpoints, see src/api/routes/oauth.py
 """
 
 import os
@@ -46,6 +51,7 @@ from src.api.models.auth import (
     UserUpdate,
     UserInDB,
     UserListResponse,
+    LoginRequest,
     LoginResponse,
     Token,
     APIKeyCreate,
@@ -127,14 +133,24 @@ async def register_user(user: UserCreate):
 
 
 # =============================================================================
-# REMOVED: POST /auth/login (ADR-054)
+# REMOVED: POST /auth/login (ADR-054 - Unified OAuth Architecture)
 # =============================================================================
-# The legacy JWT password flow has been removed and replaced by OAuth 2.0 flows:
-# - Device Authorization Grant (CLI): POST /auth/oauth/device + POST /auth/oauth/token
-# - Authorization Code + PKCE (Web): GET /auth/oauth/authorize + POST /auth/oauth/token
-# - Client Credentials (MCP): POST /auth/oauth/token (grant_type=client_credentials)
+# ALL authentication (including viz-app) now uses OAuth 2.0 flows.
+# This eliminates multiple auth systems and reduces attack surface.
 #
-# See ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+# OAuth Flows by Client:
+# - kg CLI: Personal OAuth clients (client_credentials grant)
+#   → POST /auth/oauth/clients/personal → store client_id + client_secret
+# - MCP: Client credentials grant (confidential client)
+#   → POST /auth/oauth/token (grant_type=client_credentials)
+# - viz-app: Authorization Code + PKCE flow
+#   → GET /auth/oauth/authorize → POST /auth/oauth/token (grant_type=authorization_code)
+# - Third-party tools: Device authorization flow
+#   → POST /auth/oauth/device → POST /auth/oauth/token (grant_type=device_code)
+#
+# Future: External OAuth providers (Google, Microsoft, GitHub) for viz-app social login.
+#
+# See src/api/routes/oauth.py for all OAuth endpoints.
 
 
 # =============================================================================

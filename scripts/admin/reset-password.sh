@@ -43,7 +43,7 @@ USERS=$(docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -t
 
 if [ -z "$USERS" ]; then
     echo -e "${RED}✗ No users found in database${NC}"
-    echo -e "${YELLOW}  Run: ./scripts/initialize-auth.sh to create admin user${NC}"
+    echo -e "${YELLOW}  Run: ./scripts/setup/initialize-auth.sh to create admin user${NC}"
     exit 1
 fi
 

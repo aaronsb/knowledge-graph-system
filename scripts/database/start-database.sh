@@ -16,8 +16,8 @@ YELLOW="\033[0;33m"
 RED="\033[0;31m"
 NC="\033[0m" # No Color
 
-# Project root (parent of scripts directory)
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Project root (two levels up from scripts/database/)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo ""
 echo -e "${BOLD}╔════════════════════════════════════════════════════════╗${NC}"
@@ -107,7 +107,7 @@ FIRST_INIT=$(echo "$FIRST_INIT" | head -1 | tr -d ' \n')
 # Apply migrations using standard migrate-db.sh script
 echo ""
 echo -e "${BLUE}→${NC} Applying database migrations..."
-if "$PROJECT_ROOT/scripts/migrate-db.sh" -y > /dev/null 2>&1; then
+if "$PROJECT_ROOT/scripts/database/migrate-db.sh" -y > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC} Migrations applied"
 else
     echo -e "${YELLOW}⚠${NC}  Migration check completed (may be already applied)"
@@ -127,8 +127,8 @@ fi
 
 echo ""
 echo -e "${BOLD}Next Steps:${NC}"
-echo -e "  1. Start API server: ${BLUE}./scripts/start-api.sh${NC}"
-echo -e "  2. Initialize auth: ${BLUE}./scripts/initialize-auth.sh${NC}"
+echo -e "  1. Start API server: ${BLUE}./scripts/services/start-api.sh${NC}"
+echo -e "  2. Initialize auth: ${BLUE}./scripts/setup/initialize-auth.sh${NC}"
 echo -e "  3. Use kg CLI: ${BLUE}kg database stats${NC}"
 echo ""
 echo -e "${BOLD}Logs:${NC} ${BLUE}docker logs -f knowledge-graph-postgres${NC}"

@@ -10,16 +10,16 @@ This guide explains how to safely evolve the database schema using the knowledge
 
 ```bash
 # Apply all pending migrations
-./scripts/migrate-db.sh
+./scripts/database/migrate-db.sh
 
 # Preview what would be applied (dry run)
-./scripts/migrate-db.sh --dry-run
+./scripts/database/migrate-db.sh --dry-run
 
 # Apply without confirmation (for CI/CD)
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 
 # Show SQL being executed
-./scripts/migrate-db.sh -y --verbose
+./scripts/database/migrate-db.sh -y --verbose
 ```
 
 ---
@@ -50,7 +50,7 @@ The knowledge graph uses a **migration-based schema management system** that:
 
 **With migrations:**
 - Each change is a numbered file: `002_add_feature_x.sql`
-- `./scripts/migrate-db.sh` applies pending changes automatically
+- `./scripts/database/migrate-db.sh` applies pending changes automatically
 - `schema_migrations` table tracks what's applied
 - Migrations apply in correct order
 - Idempotent and transactional
@@ -79,7 +79,7 @@ Database ready!
 ### Applying Migrations to Existing Database
 
 ```bash
-./scripts/migrate-db.sh
+./scripts/database/migrate-db.sh
 ↓
 Checks schema_migrations table
 ↓
@@ -99,7 +99,7 @@ Database updated!
 ↓
 Starts PostgreSQL container
 ↓
-Automatically runs ./scripts/migrate-db.sh -y
+Automatically runs ./scripts/database/migrate-db.sh -y
 ↓
 Applies any pending migrations
 ↓
@@ -218,14 +218,14 @@ EOF
 
 ```bash
 # Preview what would happen (dry run)
-./scripts/migrate-db.sh --dry-run
+./scripts/database/migrate-db.sh --dry-run
 
 # Output:
 # Pending Migrations:
 #   → Migration 003 - add_user_preferences
 
 # Apply migration
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 
 # Verify it worked
 docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
@@ -266,7 +266,7 @@ cat > schema/migrations/003_add_cache.sql <<'EOF'
 EOF
 
 # Test locally
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 
 # Commit
 git add schema/migrations/003_add_cache.sql
@@ -284,7 +284,7 @@ git pull
 ./scripts/start-db.sh
 
 # Or apply manually
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 ```
 
 ---
@@ -455,11 +455,11 @@ ON CONFLICT (version) DO NOTHING;
 ```bash
 # Test on fresh database
 docker-compose down -v && docker-compose up -d
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 
 # Test on existing database (with data)
 # (Use your development database)
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 ```
 
 ### 5. One Migration = One Logical Change
@@ -483,7 +483,7 @@ Don't combine unrelated changes:
 
 **What happens:**
 ```bash
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 → Applying migration 002 (add_query_cache)...
 ERROR: syntax error at line 15
 ✗ Migration 002 failed - stopping
@@ -495,7 +495,7 @@ Your database is in the **same state as before the migration started**.
 
 **To fix:**
 1. Edit `schema/migrations/002_*.sql` to fix the error
-2. Run `./scripts/migrate-db.sh -y` again
+2. Run `./scripts/database/migrate-db.sh -y` again
 3. Migration will apply from scratch
 
 ### Migration Not Recorded
@@ -529,7 +529,7 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
   "SELECT * FROM public.schema_migrations ORDER BY version;"
 
 # What's pending?
-./scripts/migrate-db.sh --dry-run
+./scripts/database/migrate-db.sh --dry-run
 ```
 
 ---
@@ -670,11 +670,11 @@ scripts/
 ### Migration Runner Options
 
 ```bash
-./scripts/migrate-db.sh              # Interactive (asks for confirmation)
-./scripts/migrate-db.sh -y           # Auto-confirm (for CI/CD)
-./scripts/migrate-db.sh --dry-run    # Preview only (no changes)
-./scripts/migrate-db.sh -v           # Verbose (show SQL)
-./scripts/migrate-db.sh --help       # Show usage
+./scripts/database/migrate-db.sh              # Interactive (asks for confirmation)
+./scripts/database/migrate-db.sh -y           # Auto-confirm (for CI/CD)
+./scripts/database/migrate-db.sh --dry-run    # Preview only (no changes)
+./scripts/database/migrate-db.sh -v           # Verbose (show SQL)
+./scripts/database/migrate-db.sh --help       # Show usage
 ```
 
 ---
@@ -732,13 +732,13 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
 ### Check Pending Migrations
 
 ```bash
-./scripts/migrate-db.sh --dry-run
+./scripts/database/migrate-db.sh --dry-run
 ```
 
 ### Apply All Pending Migrations
 
 ```bash
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 ```
 
 ### Create and Apply a Migration
@@ -765,7 +765,7 @@ COMMIT;
 EOF
 
 # 2. Apply
-./scripts/migrate-db.sh -y
+./scripts/database/migrate-db.sh -y
 
 # 3. Commit
 git add schema/migrations/003_add_feature.sql

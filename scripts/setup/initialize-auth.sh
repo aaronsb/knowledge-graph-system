@@ -14,7 +14,25 @@ BOLD='\033[1m'
 
 # Get script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+
+# Parse arguments
+DEV_MODE=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --dev)
+            DEV_MODE=true
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Usage: $0 [--dev]"
+            echo "  --dev    Development mode (sets password to 'Password1!')"
+            exit 1
+            ;;
+    esac
+done
 
 # Use venv Python if available, otherwise system python3
 if [ -f "$PROJECT_ROOT/venv/bin/python" ]; then
@@ -32,6 +50,11 @@ echo "╔═══════════════════════�
 echo "║   Knowledge Graph System - Authentication Initialization   ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
+
+if [ "$DEV_MODE" = true ]; then
+    echo -e "${YELLOW}⚠${NC}  ${BOLD}DEVELOPMENT MODE${NC} - Using default password"
+    echo ""
+fi
 
 # Check if PostgreSQL is running
 echo -e "${BLUE}→${NC} Checking PostgreSQL connection..."
@@ -66,10 +89,22 @@ echo ""
 echo -e "${BOLD}Admin Password Setup${NC}"
 
 # Call set-admin-password.sh to handle password setup
-if [ "$RESET_MODE" = true ]; then
-    "$SCRIPT_DIR/set-admin-password.sh" --quiet
+if [ "$DEV_MODE" = true ]; then
+    # Development mode: Use known password Password1!
+    export ADMIN_PASSWORD="Password1!"
+    if [ "$RESET_MODE" = true ]; then
+        "$SCRIPT_DIR/set-admin-password.sh" --quiet --non-interactive
+    else
+        "$SCRIPT_DIR/set-admin-password.sh" --quiet --create --non-interactive
+    fi
+    echo -e "${GREEN}✓${NC} Admin password set to: ${BOLD}Password1!${NC} (dev mode)"
 else
-    "$SCRIPT_DIR/set-admin-password.sh" --quiet --create
+    # Production mode: Interactive password prompt
+    if [ "$RESET_MODE" = true ]; then
+        "$SCRIPT_DIR/set-admin-password.sh" --quiet
+    else
+        "$SCRIPT_DIR/set-admin-password.sh" --quiet --create
+    fi
 fi
 
 # Check if password was set successfully
@@ -390,21 +425,30 @@ echo -e "${GREEN}${BOLD}╚═════════════════�
 echo ""
 echo -e "${BOLD}Admin Credentials:${NC}"
 echo -e "  Username: ${GREEN}admin${NC}"
-echo -e "  Password: ${GREEN}(the password you just set)${NC}"
+if [ "$DEV_MODE" = true ]; then
+    echo -e "  Password: ${GREEN}Password1!${NC} ${YELLOW}(DEV MODE - change in production!)${NC}"
+else
+    echo -e "  Password: ${GREEN}(the password you just set)${NC}"
+fi
 echo ""
 echo -e "${BOLD}Next Steps:${NC}"
-echo -e "  1. ${BLUE}Start API server:${NC} ./scripts/start-api.sh"
-echo -e "  2. ${BLUE}Login:${NC} curl -X POST http://localhost:8000/auth/login \\"
-echo -e "           -d 'username=admin&password=YOUR_PASSWORD'"
+echo -e "  1. ${BLUE}Start API server:${NC} ./scripts/services/start-api.sh"
+echo -e "  2. ${BLUE}Login (kg CLI):${NC} kg login"
+echo -e "     ${BLUE}Or test OAuth:${NC} curl -X POST http://localhost:8000/auth/oauth/clients/personal \\"
+echo -e "                      -F username=admin -F password=YOUR_PASSWORD"
 echo -e "  3. ${BLUE}View docs:${NC} http://localhost:8000/docs"
 echo -e "  4. ${BLUE}Ingest data:${NC} kg ingest file -o 'My Ontology' document.txt"
 echo ""
 echo -e "${YELLOW}Security Notes:${NC}"
-echo -e "  • JWT secret is stored in ${BOLD}.env${NC}"
-echo -e "  • API keys are encrypted at rest (Fernet AES-128)"
+echo -e "  • ${BOLD}OAuth tokens${NC} are used for all authentication (ADR-054)"
+echo -e "  • Client secrets are hashed with bcrypt (rounds=12)"
+echo -e "  • OAuth access tokens expire after 1 hour"
+echo -e "  • Encryption key stored in ${BOLD}.env${NC}"
 echo -e "  • Never commit .env to git (it's in .gitignore)"
-echo -e "  • Admin password is hashed with bcrypt (rounds=12)"
-echo -e "  • JWT tokens expire after 60 minutes by default"
+if [ "$DEV_MODE" = true ]; then
+    echo -e "  • ${YELLOW}${BOLD}WARNING:${NC} ${YELLOW}Development mode password is NOT secure!${NC}"
+    echo -e "    ${YELLOW}For production, run: ./scripts/setup/initialize-auth.sh (without --dev)${NC}"
+fi
 echo ""
 echo -e "${YELLOW}Configuration:${NC}"
 if [[ $EMBEDDING_CHOICE =~ ^[12]$ ]]; then

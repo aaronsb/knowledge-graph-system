@@ -16,8 +16,8 @@ YELLOW="\033[0;33m"
 RED="\033[0;31m"
 NC="\033[0m" # No Color
 
-# Project root (parent of scripts directory)
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Project root (two levels up from scripts/database/)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo ""
 echo -e "${BOLD}╔════════════════════════════════════════════════════════╗${NC}"
@@ -46,6 +46,6 @@ echo ""
 echo -e "${GREEN}✓${NC} Database stopped"
 echo ""
 echo -e "${BOLD}Note:${NC} Data is persisted in Docker volume"
-echo -e "  Restart: ${BLUE}./scripts/start-database.sh${NC}"
+echo -e "  Restart: ${BLUE}./scripts/database/start-database.sh${NC}"
 echo -e "  Wipe data: ${BLUE}docker-compose down -v${NC}"
 echo ""
