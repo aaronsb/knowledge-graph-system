@@ -213,7 +213,7 @@ fi
 clear
 echo -e "${BLUE}${BOLD}"
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║   Knowledge Graph System - Configuration Manager          ║"
+echo "║       Knowledge Graph System - Configuration Manager       ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 echo ""
@@ -553,11 +553,27 @@ configure_ai_provider() {
     echo "Select AI provider:"
     echo "  1) OpenAI (GPT-4o) - Recommended"
     echo "  2) Anthropic (Claude Sonnet 4)"
-    echo "  3) Skip (configure later via API)"
+    if [ -n "$CURRENT_PROVIDER" ]; then
+        echo "  3) Keep current ($CURRENT_PROVIDER)"
+    else
+        echo "  3) Skip (configure later)"
+    fi
     echo ""
     read -p "Choice [1-3]: " -n 1 -r
     echo ""
     echo ""
+
+    # If user chose option 3 (keep current or skip)
+    if [ "$REPLY" = "3" ]; then
+        if [ -n "$CURRENT_PROVIDER" ]; then
+            echo -e "${GREEN}✓${NC} Keeping current AI extraction provider: $CURRENT_PROVIDER"
+        else
+            echo -e "${YELLOW}⚠${NC}  Skipping AI provider configuration"
+        fi
+        echo ""
+        read -p "Press Enter to continue..."
+        return
+    fi
 
     if [[ $REPLY =~ ^[12]$ ]]; then
         local PROVIDER_NAME PROVIDER_DISPLAY DEFAULT_MODEL
@@ -648,11 +664,26 @@ configure_embedding_provider() {
     echo "Available providers:"
     echo "  1) OpenAI (text-embedding-3-small) - 1536 dimensions, cloud-based"
     echo "  2) Nomic (nomic-embed-text-v1.5) - 768 dimensions, local inference"
-    echo "  3) Skip (use OpenAI default)"
+    if [ -n "$CURRENT_EMBEDDING" ]; then
+        echo "  3) Keep current ($CURRENT_EMBEDDING)"
+        echo "  4) Skip (use OpenAI default)"
+        echo ""
+        read -p "Choice [1-4]: " -n 1 -r
+    else
+        echo "  3) Skip (use OpenAI default)"
+        echo ""
+        read -p "Choice [1-3]: " -n 1 -r
+    fi
     echo ""
-    read -p "Choice [1-3]: " -n 1 -r
     echo ""
-    echo ""
+
+    # If user chose "keep current" option
+    if [ -n "$CURRENT_EMBEDDING" ] && [ "$REPLY" = "3" ]; then
+        echo -e "${GREEN}✓${NC} Keeping current embedding provider: $CURRENT_EMBEDDING"
+        echo ""
+        read -p "Press Enter to continue..."
+        return
+    fi
 
     if [[ $REPLY =~ ^[12]$ ]]; then
         local EMBEDDING_PROVIDER EMBEDDING_MODEL EMBEDDING_DISPLAY EMBEDDING_DIMS
@@ -701,8 +732,8 @@ config = {
     "supports_batch": True
 }
 try:
-    config_id = save_embedding_config(config, created_by="initialize-platform.sh")
-    if config_id:
+    success, message, config_id = save_embedding_config(config, updated_by="initialize-platform.sh", force_change=True)
+    if success:
         from src.api.lib.embedding_config import activate_embedding_config
         activate_embedding_config(config_id)
         print("SUCCESS")
