@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../ADR-056-timezone-aware-datetime-utilities/">
+        <link rel="prev" href="../ADR-057-multimodal-image-ingestion/">
       
       
         <link rel="next" href="../ARCHITECTURE_OVERVIEW/">
@@ -4003,6 +4003,52 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-057-appendix-single-vs-two-stage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-057-multimodal-image-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-057: Multimodal Image Ingestion with Visual Context Injection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -5209,6 +5255,24 @@
 <td>Accepted</td>
 <td>OAuth 2.0 server with client registration and three grant types: authorization code + PKCE (web), device authorization (CLI), client credentials (MCP) - replaces JWT password flow and API keys for proper multi-client authentication</td>
 </tr>
+<tr>
+<td><a href="../ADR-055-cdn-serverless-deployment-model/">ADR-055</a></td>
+<td>CDN and Serverless Deployment Model</td>
+<td>Proposed</td>
+<td>Runtime configuration via <code>/config.json</code> for CDN-deployed static apps - enables single build deployed to multiple environments with OAuth 2.0 PKCE flow and proper redirect URI validation</td>
+</tr>
+<tr>
+<td><a href="../ADR-056-timezone-aware-datetime-utilities/">ADR-056</a></td>
+<td>Timezone-Aware Datetime Utilities</td>
+<td>Proposed</td>
+<td>Centralized datetime utilities with strict UTC enforcement - eliminates naive/aware comparison errors via explicit UTC conversions and timezone-aware PostgreSQL queries</td>
+</tr>
+<tr>
+<td><a href="../ADR-057-multimodal-image-ingestion/">ADR-057</a></td>
+<td>Multimodal Image Ingestion</td>
+<td>Proposed</td>
+<td>Single unified upsert with visual context injection - images follow "hairpin" through existing text pipeline with ontology-aware visual similarity search, dual embeddings (image + text), MinIO storage, and support for Granite Vision/GPT-4V/Claude backends</td>
+</tr>
 </tbody>
 </table>
 <h2 id="how-to-use-this-index">How to Use This Index</h2>
@@ -5261,7 +5325,7 @@
 <li><strong>Superseded:</strong> Decision replaced by specific ADR (noted in "Related" section)</li>
 </ol>
 <hr />
-<p><strong>Last Updated:</strong> 2025-10-31</p>
+<p><strong>Last Updated:</strong> 2025-11-03</p>
 <p><strong>Note:</strong> When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.</p>
 
 
