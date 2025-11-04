@@ -832,12 +832,17 @@ async def get_similar_types(
             other_embedding = np.array(row['embedding'], dtype=np.float32)
             similarity = categorizer._cosine_similarity(target_embedding, other_embedding)
 
+            # Get correct usage_count from graph (ADR-048 Phase 3)
+            # Use edge_count (real-time count) not usage_count (stale property)
+            type_info = db_client.get_edge_type_info(row['relationship_type'])
+            actual_usage_count = type_info['edge_count'] if type_info else 0
+
             similarities.append(SimilarEdgeType(
                 relationship_type=row['relationship_type'],
                 similarity=float(similarity),
                 category=row['category'],
                 is_builtin=row['is_builtin'],
-                usage_count=row['usage_count']
+                usage_count=actual_usage_count
             ))
 
         # Sort by similarity (descending for similar, ascending for opposite)
