@@ -67,7 +67,8 @@ class VisualEmbeddingGenerator:
 
             self.processor = AutoProcessor.from_pretrained(
                 model_name,
-                trust_remote_code=True
+                trust_remote_code=True,
+                use_fast=True
             )
 
             # Set model to eval mode
