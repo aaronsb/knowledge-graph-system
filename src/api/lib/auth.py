@@ -10,7 +10,7 @@ Dependencies:
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Optional, Dict, Any
 
 # Fix passlib 1.7.4 compatibility with bcrypt 4.x/5.x
@@ -28,6 +28,7 @@ except ImportError:
 
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from .datetime_utils import utcnow
 
 
 # =============================================================================
@@ -122,9 +123,9 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
 
     # Set expiration time
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
 

@@ -22,8 +22,8 @@ Usage:
 """
 
 from typing import Optional, Dict, List, Any
-from datetime import datetime
 import logging
+from .datetime_utils import to_iso, utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class QueryAuditLog:
     ):
         """Log a query execution for audit trail."""
         entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": to_iso(utcnow()),
             "query": query,
             "namespace": namespace,
             "is_raw": is_raw,

@@ -6,7 +6,8 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 import json
 import base64
-from datetime import datetime, timedelta
+from datetime import timedelta
+from src.api.lib.datetime_utils import timedelta_from_now, to_iso
 import tempfile
 from pathlib import Path
 
@@ -77,7 +78,7 @@ async def run_job_analysis(job_id: str, auto_approve: bool = False):
             analysis = analyzer.analyze_ingestion_job(analysis_data)
 
             # Calculate expiration (24 hours from now)
-            expires_at = (datetime.now() + timedelta(hours=24)).isoformat()
+            expires_at = to_iso(timedelta_from_now(hours=24))
 
             # Update job with analysis
             queue.update_job(job_id, {
@@ -90,7 +91,7 @@ async def run_job_analysis(job_id: str, auto_approve: bool = False):
             if auto_approve:
                 queue.update_job(job_id, {
                     "status": "approved",
-                    "approved_at": datetime.now().isoformat(),
+                    "approved_at": to_iso(timedelta_from_now()),
                     "approved_by": "auto"
                 })
                 # Execute immediately (ADR-031: Non-blocking execution)
