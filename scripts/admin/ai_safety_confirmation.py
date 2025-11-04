@@ -177,9 +177,9 @@ def prompt_hold_enter(
                         started = True
                         last_update = time.time()
 
-            # Poll progress (every 500ms)
+            # Poll progress (every 500ms) - but skip if in decompression mode
             current_time = time.time()
-            if current_time - last_update >= poll_interval:
+            if not decompression_mode and current_time - last_update >= poll_interval:
                 last_update = current_time
 
                 if started and enter_pressed:
@@ -192,6 +192,7 @@ def prompt_hold_enter(
                         print(f"{Colors.SUCCESS}\n✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
                         print(f"{Colors.INFO}Release Enter and press [Space] to continue...{Colors.NC}")
                         decompression_mode = True
+                        # Don't reset enter_pressed here - let decompression mode handle it
                         continue
 
                 elif started and not enter_pressed:
@@ -199,7 +200,7 @@ def prompt_hold_enter(
                     print(f"{Colors.WARNING}\n✗ Released too early{Colors.NC}\n")
                     return False
 
-                # Reset flag for next poll
+                # Reset flag for next poll (only if not in decompression mode)
                 enter_pressed = False
 
     except KeyboardInterrupt:
