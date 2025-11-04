@@ -826,16 +826,30 @@ async def get_similar_types(
         """
         all_types = await db_client.execute_query(query, (relationship_type,))
 
+        # Batch fetch edge counts for all types (ADR-044: query-time computation)
+        # Replaces N+1 queries with single batch query for performance
+        type_names = [row['relationship_type'] for row in all_types]
+
+        if type_names:
+            # Single query to count edges for all relationship types
+            count_query = """
+            MATCH ()-[r]->()
+            WHERE type(r) IN $type_names
+            RETURN type(r) as rel_type, count(r) as edge_count
+            """
+            edge_count_results = db_client._execute_cypher(count_query, {"type_names": type_names})
+            edge_count_map = {row['rel_type']: int(str(row['edge_count'])) for row in edge_count_results}
+        else:
+            edge_count_map = {}
+
         # Compute similarities
         similarities = []
         for row in all_types:
             other_embedding = np.array(row['embedding'], dtype=np.float32)
             similarity = categorizer._cosine_similarity(target_embedding, other_embedding)
 
-            # Get correct usage_count from graph (ADR-048 Phase 3)
-            # Use edge_count (real-time count) not usage_count (stale property)
-            type_info = db_client.get_edge_type_info(row['relationship_type'])
-            actual_usage_count = type_info['edge_count'] if type_info else 0
+            # Get edge count from batch results (0 if type has no edges)
+            actual_usage_count = edge_count_map.get(row['relationship_type'], 0)
 
             similarities.append(SimilarEdgeType(
                 relationship_type=row['relationship_type'],
