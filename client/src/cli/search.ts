@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { getConceptColor, getRelationshipColor, coloredPercentage, separator } from './colors';
-import { configureColoredHelp } from './help-formatter';
+import { configureColoredHelp, setCommandHelp } from './help-formatter';
 import { getConfig } from '../lib/config';
 import {
   isChafaAvailable,
@@ -37,8 +37,11 @@ function formatGroundingStrength(grounding: number): string {
   }
 }
 
-const queryCommand = new Command('query')
-      .description('Search for concepts using vector similarity (embeddings) - use specific phrases for best results')
+const queryCommand = setCommandHelp(
+  new Command('query'),
+  'Search concepts by semantic similarity',
+  'Search for concepts using vector similarity (embeddings) - use specific phrases for best results'
+)
       .showHelpAfterError()
       .argument('<query>', 'Natural language search query (2-3 words work best)')
       .option('-l, --limit <number>', 'Maximum number of results to return', '10')
@@ -164,8 +167,11 @@ const queryCommand = new Command('query')
         }
       });
 
-const detailsCommand = new Command('details')
-      .description('Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength')
+const detailsCommand = setCommandHelp(
+  new Command('details'),
+  'Get full details for a concept',
+  'Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength'
+)
       .showHelpAfterError()
       .argument('<concept-id>', 'Concept ID to retrieve (from search results)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
@@ -220,8 +226,11 @@ const detailsCommand = new Command('details')
         }
       });
 
-const relatedCommand = new Command('related')
-      .description('Find concepts related through graph traversal (breadth-first search) - groups results by distance')
+const relatedCommand = setCommandHelp(
+  new Command('related'),
+  'Find related concepts by graph traversal',
+  'Find concepts related through graph traversal (breadth-first search) - groups results by distance'
+)
       .showHelpAfterError()
       .argument('<concept-id>', 'Starting concept ID for traversal')
       .option('-d, --depth <number>', 'Maximum traversal depth in hops (1-2 fast, 3-4 moderate, 5 slow)', '2')
@@ -268,8 +277,11 @@ const relatedCommand = new Command('related')
         }
       });
 
-const connectCommand = new Command('connect')
-      .description('Find shortest path between two concepts using IDs or semantic phrase matching')
+const connectCommand = setCommandHelp(
+  new Command('connect'),
+  'Find paths between two concepts',
+  'Find shortest path between two concepts using IDs or semantic phrase matching'
+)
       .showHelpAfterError()
       .argument('<from>', 'Starting concept (exact ID or descriptive phrase - e.g., "licensing issues" not "licensing")')
       .argument('<to>', 'Target concept (exact ID or descriptive phrase - use 2-3 word phrases for best results)')
@@ -451,8 +463,11 @@ Notes:
 // Configure colored help for all search subcommands
 [queryCommand, detailsCommand, relatedCommand, connectCommand].forEach(configureColoredHelp);
 
-export const searchCommand = new Command('search')
-  .description('Search and explore the knowledge graph using vector similarity, graph traversal, and path finding')
+export const searchCommand = setCommandHelp(
+  new Command('search'),
+  'Search and explore the knowledge graph',
+  'Search and explore the knowledge graph using vector similarity, graph traversal, and path finding'
+)
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(queryCommand)

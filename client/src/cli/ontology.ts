@@ -7,10 +7,14 @@ import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { coloredCount, separator } from './colors';
 import { Table } from '../lib/table';
+import { setCommandHelp } from './help-formatter';
 
-export const ontologyCommand = new Command('ontology')
+export const ontologyCommand = setCommandHelp(
+  new Command('ontology'),
+  'Manage ontologies (knowledge domains)',
+  'Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.'
+)
   .alias('onto')  // Short alias
-  .description('Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(

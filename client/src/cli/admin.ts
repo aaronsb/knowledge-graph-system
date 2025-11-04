@@ -12,7 +12,7 @@ import { createClientFromEnv } from '../api/client';
 import { getConfig } from '../lib/config';
 import * as colors from './colors';
 import { separator } from './colors';
-import { configureColoredHelp } from './help-formatter';
+import { configureColoredHelp, setCommandHelp } from './help-formatter';
 import { JobProgressStream, trackJobProgress } from '../lib/job-stream';
 import type { JobStatus, JobProgress } from '../types';
 import { registerAuthAdminCommand } from './auth-admin';
@@ -1224,8 +1224,11 @@ const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
 
 // ========== Main Admin Command ==========
 
-export const adminCommand = new Command('admin')
-  .description('System administration and management - health monitoring, backup/restore, database operations, user/RBAC management, AI model configuration (requires authentication for destructive operations)')
+export const adminCommand = setCommandHelp(
+  new Command('admin'),
+  'System administration and management',
+  'System administration and management - health monitoring, backup/restore, database operations, user/RBAC management, AI model configuration (requires authentication for destructive operations)'
+)
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(statusCommand)

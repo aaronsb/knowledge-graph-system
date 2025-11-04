@@ -8,10 +8,14 @@ import { createClientFromEnv } from '../api/client';
 import { JobStatus } from '../types';
 import * as colors from './colors';
 import { Table } from '../lib/table';
+import { setCommandHelp } from './help-formatter';
 
-export const jobsCommand = new Command('job')
+export const jobsCommand = setCommandHelp(
+  new Command('job'),
+  'Manage and monitor ingestion jobs',
+  'Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)'
+)
   .alias('jobs')  // Plural alias for backwards compatibility
-  .description('Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError();
 

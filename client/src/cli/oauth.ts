@@ -10,6 +10,7 @@ import { AuthClient } from '../lib/auth/auth-client.js';
 import { Table } from '../lib/table.js';
 import { createClientFromEnv } from '../api/client.js';
 import axios from 'axios';
+import { setCommandHelp } from './help-formatter.js';
 
 /**
  * Require authentication and return OAuth access token
@@ -221,8 +222,11 @@ async function revokeClientCommand(clientId: string, options: { force?: boolean 
 /**
  * OAuth command group object (for documentation generation)
  */
-export const oauthCommand = new Command('oauth')
-  .description('Manage OAuth clients (list, create for MCP, revoke)');
+export const oauthCommand = setCommandHelp(
+  new Command('oauth'),
+  'Manage OAuth clients',
+  'Manage OAuth clients (list, create for MCP, revoke)'
+);
 
 oauthCommand
   .command('clients')

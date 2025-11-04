@@ -6,10 +6,14 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { coloredCount, separator } from './colors';
+import { setCommandHelp } from './help-formatter';
 
-export const databaseCommand = new Command('database')
+export const databaseCommand = setCommandHelp(
+  new Command('database'),
+  'Database operations and information',
+  'Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.'
+)
   .alias('db')  // Short alias
-  .description('Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(

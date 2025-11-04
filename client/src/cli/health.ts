@@ -5,9 +5,13 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { createClientFromEnv } from '../api/client';
+import { setCommandHelp } from './help-formatter';
 
-export const healthCommand = new Command('health')
-  .description('Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.')
+export const healthCommand = setCommandHelp(
+  new Command('health'),
+  'Check API server health',
+  'Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.'
+)
   .showHelpAfterError()
   .action(async () => {
     try {

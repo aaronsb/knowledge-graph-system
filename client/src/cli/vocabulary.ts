@@ -9,10 +9,14 @@ import * as colors from './colors';
 import { coloredCount, separator } from './colors';
 import { plotBezierCurve, formatCurveSummary, type CurveMarker, type ZoneLabel } from './curve-viz';
 import { Table } from '../lib/table';
+import { setCommandHelp } from './help-formatter';
 
-export const vocabularyCommand = new Command('vocabulary')
+export const vocabularyCommand = setCommandHelp(
+  new Command('vocabulary'),
+  'Vocabulary management and consolidation',
+  'Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-032), and auto-categorization (probabilistic via embeddings - ADR-047). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-049).'
+)
   .alias('vocab')
-  .description('Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-032), and auto-categorization (probabilistic via embeddings - ADR-047). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-049).')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(
