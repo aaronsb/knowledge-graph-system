@@ -8,7 +8,7 @@ import * as readline from 'readline';
 import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { separator } from './colors';
-import { configureColoredHelp } from './help-formatter';
+import { configureColoredHelp, setCommandHelp } from './help-formatter';
 import { Table } from '../lib/table';
 
 /**
@@ -56,9 +56,12 @@ function promptPassword(question: string): Promise<string> {
   });
 }
 
-export const configCommand = new Command('config')
+export const configCommand = setCommandHelp(
+  new Command('config'),
+  'Manage CLI configuration',
+  'Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).'
+)
   .alias('cfg')  // Short alias
-  .description('Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).')
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
   .addCommand(

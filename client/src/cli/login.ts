@@ -14,6 +14,7 @@ import { Command } from 'commander';
 import prompts from 'prompts';
 import { getConfig } from '../lib/config.js';
 import { AuthClient } from '../lib/auth/auth-client.js';
+import { setCommandHelp } from './help-formatter.js';
 
 interface LoginOptions {
   username?: string;
@@ -175,8 +176,11 @@ async function loginCommand(options: LoginOptions) {
 /**
  * Login command object (for documentation generation)
  */
-export const loginCommand_obj = new Command('login')
-  .description('Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)')
+export const loginCommand_obj = setCommandHelp(
+  new Command('login'),
+  'Authenticate with username and password',
+  'Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)'
+)
   .option('-u, --username <username>', 'Username (will prompt if not provided - can be saved for future logins)')
   .action(loginCommand);
 

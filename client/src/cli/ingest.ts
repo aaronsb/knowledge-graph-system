@@ -11,9 +11,13 @@ import * as os from 'os';  // ADR-051: Get hostname for provenance
 import { createClientFromEnv } from '../api/client';
 import { IngestRequest, JobStatus, DuplicateJobResponse, JobSubmitResponse } from '../types';
 import { getConfig } from '../lib/config';
+import { setCommandHelp } from './help-formatter';
 
-export const ingestCommand = new Command('ingest')
-  .description('Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.')
+export const ingestCommand = setCommandHelp(
+  new Command('ingest'),
+  'Ingest documents into the knowledge graph',
+  'Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.'
+)
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError();
 

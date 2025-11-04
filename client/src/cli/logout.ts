@@ -8,6 +8,7 @@
 import { Command } from 'commander';
 import { getConfig } from '../lib/config.js';
 import { AuthClient } from '../lib/auth/auth-client.js';
+import { setCommandHelp } from './help-formatter.js';
 
 interface LogoutOptions {
   forget?: boolean;
@@ -138,8 +139,11 @@ async function logoutCommand(options: LogoutOptions) {
 /**
  * Logout command object (for documentation generation)
  */
-export const logoutCommand_obj = new Command('logout')
-  .description('End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)')
+export const logoutCommand_obj = setCommandHelp(
+  new Command('logout'),
+  'End authentication session',
+  'End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)'
+)
   .option('--forget', 'Also forget saved username (requires username prompt on next login)')
   .action(logoutCommand);
 
