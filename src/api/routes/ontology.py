@@ -271,6 +271,44 @@ async def delete_ontology(
                     detail=f"Ontology '{ontology_name}' not found"
                 )
 
+        # ADR-057: Clean up MinIO objects before deleting sources
+        # Query for all MinIO object keys in this ontology
+        minio_objects_result = client._execute_cypher(f"""
+            MATCH (s:Source {{document: '{ontology_name}'}})
+            WHERE s.properties IS NOT NULL AND s.properties CONTAINS 'minio_object_key'
+            RETURN s.properties as props
+        """)
+
+        minio_keys_to_delete = []
+        if minio_objects_result:
+            import json
+            for row in minio_objects_result:
+                try:
+                    props = json.loads(row['props'])
+                    if 'minio_object_key' in props:
+                        minio_keys_to_delete.append(props['minio_object_key'])
+                except (json.JSONDecodeError, KeyError):
+                    pass
+
+        # Delete MinIO objects
+        if minio_keys_to_delete:
+            try:
+                from ..lib.minio_client import get_minio_client
+                minio_client = get_minio_client()
+
+                deleted_count = 0
+                for object_key in minio_keys_to_delete:
+                    try:
+                        minio_client.delete_image(object_key)
+                        deleted_count += 1
+                    except Exception as e:
+                        logger.warning(f"Failed to delete MinIO object {object_key}: {e}")
+
+                if deleted_count > 0:
+                    logger.info(f"Deleted {deleted_count} images from MinIO for ontology '{ontology_name}'")
+            except Exception as e:
+                logger.warning(f"Failed to initialize MinIO client for cleanup: {e}")
+
         # Delete instances linked to sources in this ontology
         client._execute_cypher(f"""
             MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {{document: '{ontology_name}'}})

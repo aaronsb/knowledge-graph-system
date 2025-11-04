@@ -89,7 +89,7 @@ fi
 # Show reload status if enabled
 if [ "$RELOAD" = "--reload" ]; then
     echo -e "${YELLOW}Hot reload enabled (development mode)${NC}"
-    RELOAD="--reload --reload-exclude 'docs/*' --reload-exclude 'site/*' --reload-exclude '.cache/*'"
+    RELOAD="--reload --reload-exclude 'docs/*' --reload-exclude 'site/*' --reload-exclude '.cache/*' --reload-exclude 'examples/*'"
 fi
 
 echo -e "\n${GREEN}Starting API server...${NC}"

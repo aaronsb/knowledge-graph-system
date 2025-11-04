@@ -24,7 +24,7 @@ scripts/
 # 1. Start database
 #    - Starts PostgreSQL + Apache AGE container
 #    - Automatically runs migrate-db.sh to apply all schema migrations
-./scripts/database/start-database.sh
+./scripts/services/start-database.sh
 
 # 2. Start API server
 ./scripts/services/start-api.sh -y
@@ -43,8 +43,8 @@ scripts/
 
 ```bash
 # Database operations
-./scripts/database/start-database.sh    # Start PostgreSQL + Apache AGE (auto-runs migrations)
-./scripts/database/stop-database.sh     # Stop database
+./scripts/services/start-database.sh    # Start PostgreSQL + Apache AGE (auto-runs migrations)
+./scripts/services/stop-database.sh     # Stop database
 ./scripts/database/migrate-db.sh        # Apply schema migrations (manual - auto-runs during start)
 ./scripts/database/backup-database.sh   # Create binary backup
 ./scripts/database/restore-database.sh  # Restore from backup
@@ -81,7 +81,7 @@ scripts/
 Most scripts support automation flags for CI/CD:
 
 ```bash
-./scripts/database/start-database.sh -y         # Skip confirmation
+./scripts/services/start-database.sh -y         # Skip confirmation
 ./scripts/database/backup-database.sh -y        # Auto-confirm backup
 ./scripts/setup/initialize-auth.sh --dev        # Development mode (Password1!)
 ```
@@ -156,8 +156,8 @@ Most scripts support automation flags for CI/CD:
 **Old paths** → **New paths:**
 
 ```bash
-./scripts/start-database.sh     → ./scripts/database/start-database.sh
-./scripts/stop-database.sh      → ./scripts/database/stop-database.sh
+./scripts/start-database.sh     → ./scripts/services/start-database.sh
+./scripts/stop-database.sh      → ./scripts/services/stop-database.sh
 ./scripts/start-api.sh          → ./scripts/services/start-api.sh
 ./scripts/migrate-db.sh         → ./scripts/database/migrate-db.sh
 ./scripts/backup-database.sh    → ./scripts/database/backup-database.sh
@@ -214,7 +214,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 Scripts may reference other scripts using relative paths from project root:
 
 ```bash
-# From scripts/database/start-database.sh
+# From scripts/services/start-database.sh
 "$PROJECT_ROOT/scripts/database/migrate-db.sh" -y
 
 # From scripts/setup/initialize-auth.sh

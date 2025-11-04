@@ -104,7 +104,7 @@ OPENAI_API_KEY=sk-...
 **Stopping:**
 ```bash
 ./scripts/services/stop-api.sh
-./scripts/database/stop-database.sh
+./scripts/services/stop-database.sh
 ```
 
 ### 2. Local Production Deployment

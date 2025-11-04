@@ -33,7 +33,7 @@ from .workers.restore_worker import run_restore_worker
 from .workers.vocab_refresh_worker import run_vocab_refresh_worker
 from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher
-from .routes import ingest, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -140,10 +140,11 @@ async def startup_event():
 
     # Register worker functions
     queue.register_worker("ingestion", run_ingestion_worker)
+    queue.register_worker("ingest_image", run_ingestion_worker)  # ADR-057: Same worker, prose already generated
     queue.register_worker("restore", run_restore_worker)
     queue.register_worker("vocab_refresh", run_vocab_refresh_worker)  # ADR-050
     queue.register_worker("vocab_consolidate", run_vocab_consolidate_worker)  # ADR-050
-    logger.info("✅ Workers registered: ingestion, restore, vocab_refresh, vocab_consolidate")
+    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate")
 
     # Resume interrupted jobs (jobs that were processing when server stopped)
     # Note: SQLite queue uses "processing", PostgreSQL queue uses "running"
@@ -308,6 +309,8 @@ app.include_router(auth.admin_router)  # ADR-027: Admin user management
 app.include_router(oauth.router)  # ADR-054: OAuth 2.0 client management and token flows
 app.include_router(rbac.router)  # ADR-028: RBAC management endpoints
 app.include_router(ingest.router)
+app.include_router(ingest_image.router)  # ADR-057: Multimodal image ingestion
+app.include_router(sources.router)  # ADR-057: Source retrieval (images from MinIO)
 app.include_router(jobs.router)
 app.include_router(queries.router)
 app.include_router(database.router)
@@ -354,6 +357,7 @@ async def root():
             "docs": "/docs",
             "endpoints": {
                 "ingest": "POST /ingest (upload file) or POST /ingest/text (raw text)",
+                "ingest_image": "POST /ingest/image (multimodal image ingestion, ADR-057)",
                 "jobs": "GET /jobs/{job_id} for status, POST /jobs/{job_id}/approve to start processing"
             }
         }

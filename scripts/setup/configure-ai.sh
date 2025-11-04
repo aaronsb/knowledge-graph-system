@@ -16,7 +16,7 @@ set -e
 # - configure-ai.sh → Testing, validation, and model tuning
 #
 # REQUIREMENTS:
-# - Database must be running (./scripts/database/start-database.sh)
+# - Database must be running (./scripts/services/start-database.sh)
 # - API server must be running (./scripts/start-api.sh)
 # - Providers configured via initialize-platform.sh or kg CLI
 # ============================================================================

@@ -115,7 +115,7 @@ echo ""
 # Check if container is running
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER}$"; then
     echo -e "${RED}✗${NC} Database container is not running"
-    echo -e "  Start it with: ${BLUE}./scripts/database/start-database.sh${NC}"
+    echo -e "  Start it with: ${BLUE}./scripts/services/start-database.sh${NC}"
     echo ""
     exit 1
 fi

@@ -68,7 +68,7 @@ fi
 
 if ! docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT 1" > /dev/null 2>&1; then
     echo -e "${RED}✗ PostgreSQL is not running${NC}"
-    echo -e "${YELLOW}  Run: ./scripts/database/start-database.sh${NC}"
+    echo -e "${YELLOW}  Run: ./scripts/services/start-database.sh${NC}"
     exit 1
 fi
 

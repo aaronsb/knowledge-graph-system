@@ -1,0 +1,18 @@
+# Ignore large test images
+test-images/*.jpg
+test-images/*.jpeg
+test-images/*.png
+test-images/*.gif
+test-images/*.bmp
+test-images/*.webp
+
+# Ignore PDFs
+*.pdf
+*.pptx
+
+# Ignore generated descriptions
+descriptions/
+*.desc.txt
+
+# Keep directory structure
+!test-images/.gitkeep
