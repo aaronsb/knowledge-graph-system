@@ -12,6 +12,14 @@ set -e
 # so the API server can start with known-good settings and avoid common
 # cold-start issues.
 #
+# ARCHITECTURE:
+# This script uses the same Python code as the API server but "à la carte"
+# (importing specific functions directly from src/api/lib/*). This is an
+# out-of-band management approach - it bypasses the API server and makes
+# direct database calls using the exact same functions the API would use.
+# Designed to be packaged inside containers for bootstrap configuration
+# without requiring the API to be running. Tests validate the same code paths.
+#
 # WHAT IT CONFIGURES:
 # 1. Admin User - Known username/password for first login
 # 2. OAuth Signing Key - JWT token signing for authentication (ADR-054)
