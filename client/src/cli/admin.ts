@@ -954,99 +954,22 @@ const restoreCommand = new Command('restore')
     }
   });
 
-// ========== Reset Command ==========
-
-const resetCommand = new Command('reset')
-  .description('Reset database - PERMANENTLY DELETES ALL DATA (requires 3-second confirmation hold + authentication) - wipes graph, reapplies migrations, clears logs/checkpoints')
-  .option('--no-logs', 'Do not clear log files during reset')
-  .option('--no-checkpoints', 'Do not clear checkpoint files during reset')
-  .action(async (options) => {
-    try {
-      const client = createClientFromEnv();
-
-      console.log('\n' + separator());
-      console.log(colors.status.error('🔄 DATABASE RESET - DESTRUCTIVE OPERATION'));
-      console.log(separator());
-
-      console.log(colors.status.error('\n⚠️  WARNING: This will DELETE ALL graph data!'));
-      console.log(colors.status.dim('This operation will:'));
-      console.log(colors.status.dim('  - Stop all containers'));
-      console.log(colors.status.dim('  - Delete the PostgreSQL database'));
-      console.log(colors.status.dim('  - Remove all data volumes'));
-      console.log(colors.status.dim('  - Restart with a clean database'));
-      console.log(colors.status.dim('  - Re-initialize AGE schema'));
-
-      // "Human CAPTCHA" - physical confirmation required
-      // This deliberate friction reduces risk of accidental execution by AI agents or automation
-      const confirmed = await promptHoldEnter(
-        colors.status.error('🚨 This action cannot be undone!')
-      );
-
-      if (!confirmed) {
-        console.log(colors.status.dim('Cancelled\n'));
-        process.exit(0);
-      }
-
-      // Get authentication
-      // NOTE: Placeholder auth for testing (see ADR-016 for future auth system)
-      // Currently validates: username exists in config, password length >= 4
-      // Future: Will validate against proper auth system with hashed passwords
-      console.log('\n' + colors.status.warning('Authentication required:'));
-
-      const config = getConfig();
-      // Get username from config
-      const username = config.get('username') || config.getClientId();
-      if (!username) {
-        console.error(colors.status.error('✗ Username not configured. Run: kg config set username <your-username>'));
-        process.exit(1);
-      }
-
-      console.log(colors.status.dim(`Using username: ${username}`));
-      const password = await promptPassword('Password: ');
-
-      if (!password) {
-        console.error(colors.status.error('✗ Password required'));
-        process.exit(1);
-      }
-
-      console.log(colors.status.info('\nResetting database (this may take a minute)...'));
-
-      const result = await client.resetDatabase({
-        username,
-        password,
-        confirm: true,
-        clear_logs: options.logs !== false,
-        clear_checkpoints: options.checkpoints !== false
-      });
-
-      console.log('\n' + separator());
-      console.log(colors.status.success('✓ Reset Complete'));
-      console.log(separator());
-
-      console.log('\n' + colors.ui.header('Schema Validation:'));
-      console.log(`  ${colors.ui.key('Constraints:')} ${colors.coloredCount(result.schema_validation.constraints_count)}/3`);
-      console.log(`  ${colors.ui.key('Vector Index:')} ${result.schema_validation.vector_index_exists ? colors.status.success('Yes') : colors.status.error('No')}`);
-      console.log(`  ${colors.ui.key('Nodes:')} ${colors.coloredCount(result.schema_validation.node_count)}`);
-      console.log(`  ${colors.ui.key('Test Passed:')} ${result.schema_validation.schema_test_passed ? colors.status.success('Yes') : colors.status.error('No')}`);
-      console.log(colors.status.dim(`\n  Note: "Constraints" = PostgreSQL schemas (kg_api, kg_auth, kg_logs)`));
-      console.log(colors.status.dim(`        "Vector Index" = AGE graph exists (Apache AGE doesn't use Neo4j indexes)`));
-
-      if (result.warnings.length > 0) {
-        console.log(`\n  ${colors.status.warning('Warnings:')}`);
-        result.warnings.forEach(w => console.log(`    ${colors.status.dim('• ' + w)}`));
-      }
-
-      console.log('\n' + colors.status.success('✅ Database is now empty and ready for fresh data'));
-      console.log('\n' + colors.status.warning('⚠️  IMPORTANT: Restart the API server to clear stale connections:'));
-      console.log(colors.status.dim('   ./scripts/stop-api.sh && ./scripts/start-api.sh'));
-      console.log('\n' + separator() + '\n');
-
-    } catch (error: any) {
-      console.error(colors.status.error('✗ Reset failed'));
-      console.error(colors.status.error(error.response?.data?.detail || error.message));
-      process.exit(1);
-    }
-  });
+// ========== Reset Command REMOVED ==========
+//
+// Database reset has been removed from the CLI (too dangerous for remote access).
+// Use scripts/setup/initialize-platform.sh option 0 instead.
+//
+// Reasons for removal:
+// - Prevents accidental execution via AI agents or automation
+// - Requires physical terminal access (child lock with hold Enter for 3s)
+// - Cannot be triggered remotely via API or CLI
+// - Ensures human is present at the keyboard
+//
+// To reset the database:
+//   ./scripts/setup/initialize-platform.sh
+//   Select option 0 (Database Reset)
+//
+// ==================================================
 
 // ========== Scheduler Commands (ADR-014) ==========
 
@@ -1235,7 +1158,7 @@ export const adminCommand = setCommandHelp(
   .addCommand(backupCommand)
   .addCommand(listBackupsCommand)
   .addCommand(restoreCommand)
-  .addCommand(resetCommand)
+  // resetCommand removed - too dangerous for CLI, use initialize-platform.sh option 0
   .addCommand(schedulerCommand)
   .addCommand(regenerateEmbeddingsCommand);
 
@@ -1262,4 +1185,4 @@ adminCommand.addCommand(extractionCommand);
 adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
-[statusCommand, backupCommand, listBackupsCommand, restoreCommand, resetCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand, regenerateEmbeddingsCommand].forEach(configureColoredHelp);
+[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand, regenerateEmbeddingsCommand].forEach(configureColoredHelp);
