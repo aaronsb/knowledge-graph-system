@@ -69,6 +69,11 @@ class JobStatus(BaseModel):
     approved_at: Optional[str] = Field(None, description="Approval timestamp")
     approved_by: Optional[str] = Field(None, description="User who approved (Phase 2)")
     expires_at: Optional[str] = Field(None, description="Expiration timestamp for unapproved jobs")
+    # ADR-051: Source provenance (extracted from job_data for display)
+    filename: Optional[str] = Field(None, description="Original filename or display name")
+    source_type: Optional[str] = Field(None, description="Source type: file, stdin, mcp, api")
+    source_path: Optional[str] = Field(None, description="Full filesystem path (file ingestion only)")
+    source_hostname: Optional[str] = Field(None, description="Hostname where ingestion was initiated")
 
 
 class JobSubmitResponse(BaseModel):

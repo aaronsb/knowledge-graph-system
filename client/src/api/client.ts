@@ -199,6 +199,17 @@ export class KnowledgeGraphClient {
       }
     }
 
+    // ADR-051: Source provenance metadata
+    if (request.source_type) {
+      form.append('source_type', request.source_type);
+    }
+    if (request.source_path) {
+      form.append('source_path', request.source_path);
+    }
+    if (request.source_hostname) {
+      form.append('source_hostname', request.source_hostname);
+    }
+
     const response = await this.client.post('/ingest', form, {
       headers: form.getHeaders(),
     });

@@ -135,13 +135,15 @@ async def search_concepts(request: SearchRequest):
                     except Exception as e:
                         logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
-                # Fetch sample evidence instances if requested (ADR-057: include image metadata)
+                # Fetch sample evidence instances if requested (ADR-057: include image metadata, ADR-051: include provenance)
                 sample_evidence = None
                 if request.include_evidence:
                     evidence_instances_query = client._execute_cypher(
                         f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        f"OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}}) WHERE s.source_id IN d.source_ids "
                         f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                        f"s.content_type as content_type, s.minio_object_key as minio_object_key "
+                        f"s.content_type as content_type, s.minio_object_key as minio_object_key, "
+                        f"d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
                         f"ORDER BY s.document, s.paragraph "
                         f"LIMIT 3"  # Sample first 3 instances
                     )
@@ -155,7 +157,11 @@ async def search_concepts(request: SearchRequest):
                                 content_type=e.get('content_type'),
                                 has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
                                 image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
-                                minio_object_key=e.get('minio_object_key')
+                                minio_object_key=e.get('minio_object_key'),
+                                filename=e.get('filename'),
+                                source_type=e.get('source_type'),
+                                source_path=e.get('source_path'),
+                                source_hostname=e.get('source_hostname')
                             )
                             for e in evidence_instances_query
                         ]
@@ -219,13 +225,15 @@ async def search_concepts(request: SearchRequest):
                         except Exception as e:
                             logger.warning(f"Failed to calculate grounding for top match {top_concept_id}: {e}")
 
-                    # Fetch sample evidence for top match if requested (ADR-057: include image metadata)
+                    # Fetch sample evidence for top match if requested (ADR-057: include image metadata, ADR-051: include provenance)
                     top_sample_evidence = None
                     if request.include_evidence:
                         top_evidence_instances_query = client._execute_cypher(
                             f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            f"OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}}) WHERE s.source_id IN d.source_ids "
                             f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                            f"s.content_type as content_type, s.minio_object_key as minio_object_key "
+                            f"s.content_type as content_type, s.minio_object_key as minio_object_key, "
+                            f"d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
                             f"ORDER BY s.document, s.paragraph "
                             f"LIMIT 3"
                         )
@@ -239,7 +247,11 @@ async def search_concepts(request: SearchRequest):
                                     content_type=e.get('content_type'),
                                     has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
                                     image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
-                                    minio_object_key=e.get('minio_object_key')
+                                    minio_object_key=e.get('minio_object_key'),
+                                    filename=e.get('filename'),
+                                    source_type=e.get('source_type'),
+                                    source_path=e.get('source_path'),
+                                    source_hostname=e.get('source_hostname')
                                 )
                                 for e in top_evidence_instances_query
                             ]
@@ -329,10 +341,12 @@ async def get_concept_details(
         concept = concept_result['c']
         documents = concept_result['documents']
 
-        # Get instances (ADR-057: include image metadata)
+        # Get instances (ADR-057: include image metadata, ADR-051: include provenance from DocumentMeta)
         instances_result = client._execute_cypher(f"""
             MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)
             MATCH (i)-[:FROM_SOURCE]->(s:Source)
+            OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}})
+            WHERE s.source_id IN d.source_ids
             RETURN
                 i.quote as quote,
                 s.document as document,
@@ -340,7 +354,11 @@ async def get_concept_details(
                 s.source_id as source_id,
                 s.full_text as full_text,
                 s.content_type as content_type,
-                s.minio_object_key as minio_object_key
+                s.minio_object_key as minio_object_key,
+                d.filename as filename,
+                d.source_type as source_type,
+                d.file_path as source_path,
+                d.hostname as source_hostname
             ORDER BY s.document, s.paragraph
         """)
 
@@ -355,7 +373,12 @@ async def get_concept_details(
                 content_type=record.get('content_type'),
                 has_image=record.get('content_type') == 'image' and record.get('minio_object_key') is not None,
                 image_uri=f"/api/sources/{record['source_id']}/image" if record.get('content_type') == 'image' and record.get('minio_object_key') else None,
-                minio_object_key=record.get('minio_object_key')
+                minio_object_key=record.get('minio_object_key'),
+                # ADR-051: Source provenance from DocumentMeta
+                filename=record.get('filename'),
+                source_type=record.get('source_type'),
+                source_path=record.get('source_path'),
+                source_hostname=record.get('source_hostname')
             )
             for record in (instances_result or [])
         ]

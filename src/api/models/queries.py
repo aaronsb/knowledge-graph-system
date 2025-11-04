@@ -65,6 +65,11 @@ class ConceptInstance(BaseModel):
     has_image: Optional[bool] = Field(None, description="True if this source has an associated image")
     image_uri: Optional[str] = Field(None, description="URI to retrieve image: /api/sources/{source_id}/image (requires authentication)")
     minio_object_key: Optional[str] = Field(None, description="MinIO object key for image storage (internal use)")
+    # ADR-051: Source provenance metadata (from DocumentMeta)
+    filename: Optional[str] = Field(None, description="Original filename or display name")
+    source_type: Optional[str] = Field(None, description="Source type: file, stdin, mcp, api")
+    source_path: Optional[str] = Field(None, description="Full filesystem path (file ingestion only)")
+    source_hostname: Optional[str] = Field(None, description="Hostname where ingestion was initiated")
 
 
 class ConceptRelationship(BaseModel):

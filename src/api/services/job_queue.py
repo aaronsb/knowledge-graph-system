@@ -270,6 +270,13 @@ class PostgreSQLJobQueue(JobQueue):
                             # If parsing fails, leave as None
                             job[json_field] = None
 
+                # ADR-051: Extract source provenance fields from job_data for display
+                if job.get('job_data'):
+                    job['filename'] = job['job_data'].get('filename')
+                    job['source_type'] = job['job_data'].get('source_type')
+                    job['source_path'] = job['job_data'].get('source_path')
+                    job['source_hostname'] = job['job_data'].get('source_hostname')
+
                 # Rename error to error for consistency
                 job['error'] = job.pop('error', None)
 
@@ -402,6 +409,13 @@ class PostgreSQLJobQueue(JobQueue):
                                 # If parsing fails, leave as None
                                 job[json_field] = None
 
+                    # ADR-051: Extract source provenance fields from job_data for display
+                    if job.get('job_data'):
+                        job['filename'] = job['job_data'].get('filename')
+                        job['source_type'] = job['job_data'].get('source_type')
+                        job['source_path'] = job['job_data'].get('source_path')
+                        job['source_hostname'] = job['job_data'].get('source_hostname')
+
                     # Rename error to error
                     job['error'] = job.pop('error', None)
 
@@ -477,6 +491,13 @@ class PostgreSQLJobQueue(JobQueue):
                         except json.JSONDecodeError:
                             # If parsing fails, leave as None
                             job[json_field] = None
+
+                # ADR-051: Extract source provenance fields from job_data for display
+                if job.get('job_data'):
+                    job['filename'] = job['job_data'].get('filename')
+                    job['source_type'] = job['job_data'].get('source_type')
+                    job['source_path'] = job['job_data'].get('source_path')
+                    job['source_hostname'] = job['job_data'].get('source_hostname')
 
                 # Rename error to error for consistency
                 job['error'] = job.pop('error', None)
