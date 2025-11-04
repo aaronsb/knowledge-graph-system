@@ -52,12 +52,19 @@ class ConceptInstance(BaseModel):
 
     Each instance is a quoted text snippet from a specific document and paragraph.
     Includes the full chunk text for grounding and context.
+
+    For image sources (ADR-057), includes image metadata and retrieval URI.
     """
-    quote: str = Field(..., description="Quoted text from source")
+    quote: str = Field(..., description="Quoted text from source (for images, this is the vision AI description)")
     document: str = Field(..., description="Source document name")
     paragraph: int = Field(..., description="Paragraph number in document")
     source_id: str = Field(..., description="Unique source identifier")
     full_text: Optional[str] = Field(None, description="Full chunk text that was processed (for grounding)")
+    # ADR-057: Image metadata
+    content_type: Optional[str] = Field(None, description="Content type: 'image' for image sources, 'text' or None for text")
+    has_image: Optional[bool] = Field(None, description="True if this source has an associated image")
+    image_uri: Optional[str] = Field(None, description="URI to retrieve image: /api/sources/{source_id}/image (requires authentication)")
+    minio_object_key: Optional[str] = Field(None, description="MinIO object key for image storage (internal use)")
 
 
 class ConceptRelationship(BaseModel):

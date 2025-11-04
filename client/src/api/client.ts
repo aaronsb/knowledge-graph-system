@@ -441,6 +441,29 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Get image for a source node (ADR-057)
+   * @param sourceId - Source ID from concept instance
+   * @returns Image as Buffer (binary data)
+   */
+  async getSourceImage(sourceId: string): Promise<Buffer> {
+    const response = await this.client.get(`/sources/${sourceId}/image`, {
+      responseType: 'arraybuffer',
+    });
+    return Buffer.from(response.data);
+  }
+
+  /**
+   * Get image for a source node as base64 string (ADR-057)
+   * Useful for MCP server to return images to Claude
+   * @param sourceId - Source ID from concept instance
+   * @returns Base64-encoded image string
+   */
+  async getSourceImageBase64(sourceId: string): Promise<string> {
+    const buffer = await this.getSourceImage(sourceId);
+    return buffer.toString('base64');
+  }
+
   // ========== Database Methods ==========
 
   /**

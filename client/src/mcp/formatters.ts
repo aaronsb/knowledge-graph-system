@@ -58,6 +58,10 @@ export function formatSearchResults(result: SearchResponse): string {
       concept.sample_evidence.forEach((inst, idx) => {
         const truncated = inst.quote.length > 120 ? inst.quote.substring(0, 120) + '...' : inst.quote;
         output += `${idx + 1}. ${inst.document} (para ${inst.paragraph}): "${truncated}"\n`;
+        // ADR-057: Indicate if this evidence has an image
+        if (inst.has_image && inst.source_id) {
+          output += `   [IMAGE] Use get_source_image("${inst.source_id}") to view original image\n`;
+        }
       });
       output += `Tip: Use get_concept_details("${concept.concept_id}") for all evidence\n`;
     }
@@ -89,6 +93,11 @@ export function formatConceptDetails(concept: ConceptDetailsResponse): string {
   output += `\n## Evidence (${concept.instances.length} instances)\n\n`;
   concept.instances.forEach((inst, i) => {
     output += `${i + 1}. ${inst.document} (para ${inst.paragraph}): "${inst.quote}"\n`;
+    // ADR-057: Indicate if this evidence has an image
+    if (inst.has_image && inst.source_id) {
+      output += `   Source: ${inst.source_id} [IMAGE AVAILABLE]\n`;
+      output += `   Use get_source_image("${inst.source_id}") to view and verify the original image\n`;
+    }
   });
 
   if (concept.relationships.length > 0) {
@@ -135,6 +144,10 @@ export function formatConnectionPaths(result: FindConnectionBySearchResponse): s
         node.sample_evidence.forEach((inst, idx) => {
           const truncated = inst.quote.length > 100 ? inst.quote.substring(0, 100) + '...' : inst.quote;
           output += `  ${idx + 1}. ${inst.document} (para ${inst.paragraph}): "${truncated}"\n`;
+          // ADR-057: Indicate if this evidence has an image
+          if (inst.has_image && inst.source_id) {
+            output += `     [IMAGE] get_source_image("${inst.source_id}")\n`;
+          }
         });
       }
 
