@@ -1407,7 +1407,9 @@ class AGEClient:
                 info['category_scores'] = None
                 info['category_ambiguous'] = None
 
-            # Query graph for actual edge count
+            # ⚠️ CRITICAL: Real-time edge counting required (ADR-044)
+            # This MUST count actual edges - do NOT return cached/stale usage_count!
+            # Grounding calculations depend on current edge state. See ADR-044 section on caching.
             try:
                 count_query = f"""
                 MATCH ()-[r:{relationship_type}]->()

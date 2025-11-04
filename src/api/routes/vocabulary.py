@@ -826,8 +826,18 @@ async def get_similar_types(
         """
         all_types = await db_client.execute_query(query, (relationship_type,))
 
-        # Batch fetch edge counts for all types (ADR-044: query-time computation)
-        # Replaces N+1 queries with single batch query for performance
+        # ⚠️ CRITICAL: Real-time edge counting required (ADR-044)
+        #
+        # This MUST query actual edges each time - do NOT cache/precompute counts!
+        #
+        # Why: Grounding strength calculations (ADR-044) depend on current edge state.
+        # Stale counts → stale grounding → incorrect truth convergence → system failure.
+        #
+        # Allowed optimization: Batching (fetch all counts in one query)
+        # Forbidden optimization: Caching (store counts as properties/materialized views)
+        #
+        # Yes, this is O(E) where E = edge count. That's the price of always-current data.
+        # The architecture requires it. Don't try to "fix" this without revisiting ADR-044.
         type_names = [row['relationship_type'] for row in all_types]
 
         if type_names:

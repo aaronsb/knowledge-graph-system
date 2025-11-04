@@ -843,11 +843,79 @@ Format response as JSON.
 - Agent output is optional enhancement, not required for filtering
 - Grounding strength calculation happens independently of agent
 
-### Phase 3: Performance Optimization (Future)
+### Phase 3: Performance Characteristics and Constraints
 
-**Caching grounding_strength:**
+**⚠️ CRITICAL: Why Caching Edge Counts Breaks the System**
 
-For performance, optionally cache grounding_strength calculations:
+This architecture requires **real-time edge counting** for correctness. Caching edge counts (or grounding scores) seems like an obvious optimization, but **fundamentally breaks truth convergence**.
+
+**Why caching is forbidden:**
+
+```python
+# ❌ WRONG - Cached counts
+vocab_type.usage_count = 23  # Stored property, updated on writes
+# Problem: Between writes, this is stale
+# Impact: Grounding calculations use wrong edge counts → wrong truth values
+
+# ✅ CORRECT - Real-time counts
+MATCH ()-[r:SUPPORTS]->()
+RETURN count(r)  # Queries actual edges every time
+# Benefit: Always reflects current graph state → correct grounding
+```
+
+**Concrete failure scenario:**
+
+```
+1. Initial state: usage_count = 5 (cached)
+2. User ingests new document → adds 10 SUPPORTS edges
+3. Grounding calculation runs before cache refresh
+4. Calculation uses stale count (5) instead of real count (15)
+5. Result: Grounding = 0.32 (should be 0.68)
+6. System incorrectly marks concept as weakly-grounded
+7. Truth convergence fails
+```
+
+**Why this matters:**
+
+- Grounding is a **mathematical property of the current graph state**
+- Like asking "what's the sum of these numbers?" - you can't use yesterday's numbers
+- Cache invalidation is a distributed systems problem (adds complexity)
+- Staleness window (even 1 second) allows incorrect truth calculations
+- ADR-044 principle: "Always current: Reflects latest edge weights at query time"
+
+**Performance cost is intentional:**
+
+- Yes, edge counting is O(E) where E = number of edges
+- Yes, this means slower queries than cached values
+- **This is the price of correctness in a live truth-convergence system**
+- Don't try to "optimize" this without fundamentally rethinking the architecture
+
+**Allowed optimizations:**
+
+```python
+# ✅ Batching (still live data, just efficient)
+MATCH ()-[r]->() WHERE type(r) IN [...]
+RETURN type(r), count(r)  # 1 query instead of N queries
+
+# ❌ Caching (stale data)
+SET v.usage_count_cached = 23  # Materialized value
+```
+
+**If you need better performance:**
+
+1. **First:** Ensure queries are well-indexed
+2. **Then:** Consider batch fetching (reduces round-trips, not staleness)
+3. **Last resort:** Accept eventual consistency and document the trade-offs explicitly
+
+**See also:** `src/api/routes/vocabulary.py:829` and `src/api/lib/age_client.py:1410` for implementation comments.
+
+---
+
+### Phase 3: Optional Grounding Score Caching (Experimental)
+
+**⚠️ WARNING: The above constraints apply to grounding_strength caching too!**
+
+For performance, you *could* optionally cache grounding_strength calculations, but understand the risks:
 
 ```cypher
 // Materialized view pattern (recalculated periodically)
