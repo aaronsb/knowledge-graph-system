@@ -795,10 +795,19 @@ try:
     success, message, config_id = save_embedding_config(config, updated_by="initialize-platform.sh", force_change=True)
     if success:
         from src.api.lib.embedding_config import activate_embedding_config
-        activate_embedding_config(config_id)
-        print("SUCCESS")
+        # Activate with force_dimension_change=True for cold-start (may be switching from default)
+        activate_success, activate_error = activate_embedding_config(
+            config_id,
+            updated_by="initialize-platform.sh",
+            force_dimension_change=True
+        )
+        if activate_success:
+            print("SUCCESS")
+        else:
+            print(f"ERROR:Activation failed: {activate_error}")
+            sys.exit(1)
     else:
-        print("ERROR:Failed to save configuration")
+        print(f"ERROR:Failed to save configuration: {message}")
         sys.exit(1)
 except Exception as e:
     print(f"ERROR:{e}")
