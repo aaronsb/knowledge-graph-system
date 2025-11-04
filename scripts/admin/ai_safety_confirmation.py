@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Child Lock - AI-Aware Human Confirmation Prompt
+AI Safety Confirmation - Human Verification Prompt
 
-Provides a "live man switch" style confirmation requiring the user to physically
-hold the Enter key for 3 seconds. This prevents accidental execution by AI agents
-or automation scripts.
+Provides a deliberate confirmation mechanism requiring the user to physically
+hold the Enter key for 3 seconds. This slows down execution to prevent accidental
+actions by AI agents or automation scripts.
 
 Design Pattern:
 - Physical action required (hold Enter for 3 seconds)
@@ -14,7 +14,7 @@ Design Pattern:
 - "Decompression mode" to drain Enter keypresses after confirmation
 
 Usage:
-    from scripts.admin.child_lock import prompt_hold_enter
+    from scripts.admin.ai_safety_confirmation import prompt_hold_enter
 
     if prompt_hold_enter("⚠️  This action cannot be undone!"):
         # User confirmed - proceed
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="AI-Aware Human Confirmation Prompt (Child Lock)",
+        description="AI Safety Confirmation - Human Verification Prompt",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
