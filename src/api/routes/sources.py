@@ -1,7 +1,7 @@
 """
 Source retrieval API routes.
 
-Provides endpoints for retrieving source content, including images from MinIO (ADR-057).
+Provides endpoints for retrieving source content, including images from Garage (ADR-057).
 """
 
 import logging
@@ -10,7 +10,7 @@ from fastapi.responses import Response
 from typing import Optional
 
 from ..lib.age_client import AGEClient
-from ..lib.minio_client import get_minio_client
+from ..lib.garage_client import get_garage_client
 from ..dependencies.auth import get_current_active_user
 from ..models.auth import UserInDB
 
@@ -117,10 +117,10 @@ async def get_source_image(
             detail=f"Source {source_id} has no MinIO object key (image may have been deleted)"
         )
 
-    # Step 3: Download image from MinIO
+    # Step 3: Download image from Garage
     try:
-        minio_client = get_minio_client()
-        image_bytes = minio_client.download_image(minio_object_key)
+        garage_client = get_garage_client()
+        image_bytes = garage_client.download_image(minio_object_key)
 
         logger.info(f"Retrieved image for {source_id}: {len(image_bytes)} bytes")
 

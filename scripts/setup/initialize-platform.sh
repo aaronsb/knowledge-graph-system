@@ -313,23 +313,21 @@ get_api_keys_status() {
     fi
 }
 
-get_minio_status() {
-    # Check if MinIO credentials are in encrypted key store (ADR-031)
-    local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'minio'" | xargs)
+get_garage_status() {
+    # Check if Garage credentials are in encrypted key store (ADR-031)
+    local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'garage'" | xargs)
 
     if [ "$key_exists" -gt "0" ]; then
         # Credentials encrypted in database (recommended)
         if [ "$DEPLOYMENT_MODE" = "docker" ]; then
-            if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-minio$"; then
+            if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-garage$"; then
                 echo -e "${GREEN}✓${NC} configured, running"
             else
                 echo -e "${GREEN}✓${NC} configured, stopped"
             fi
         else
-            # Non-Docker - try health check
-            local minio_host=$(grep "^MINIO_HOST=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "localhost")
-            local minio_port=$(grep "^MINIO_PORT=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "9000")
-            if command -v curl &> /dev/null && curl -sf "http://${minio_host}:${minio_port}/minio/health/live" > /dev/null 2>&1; then
+            # Non-Docker - try health check (Garage status command)
+            if command -v docker &> /dev/null && docker exec knowledge-graph-garage garage status > /dev/null 2>&1; then
                 echo -e "${GREEN}✓${NC} configured, reachable"
             else
                 echo -e "${GREEN}✓${NC} configured, unreachable"
@@ -337,7 +335,7 @@ get_minio_status() {
         fi
     else
         # Check if using .env fallback (works but not recommended)
-        if grep -q "^MINIO_ROOT_USER=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        if grep -q "^GARAGE_ACCESS_KEY_ID=" "$PROJECT_ROOT/.env" 2>/dev/null; then
             echo -e "${YELLOW}⚠${NC} .env fallback"
         else
             echo -e "○ not configured"
@@ -356,7 +354,7 @@ show_menu() {
     echo -e "  4) AI Extraction Provider  [$(get_ai_provider_status)]"
     echo -e "  5) Embedding Provider      [$(get_embedding_provider_status)]"
     echo -e "  6) API Keys                [$(get_api_keys_status)]"
-    echo -e "  7) MinIO Storage           [$(get_minio_status)]"
+    echo -e "  7) Garage Storage          [$(get_garage_status)]"
     echo -e "  8) Image Embedding Model   [nomic-ai/nomic-embed-vision-v1.5]"
     echo ""
     echo -e "  ${BOLD}h)${NC} Help     ${BOLD}q)${NC} Quit"
@@ -946,10 +944,10 @@ configure_api_keys() {
     read -p "Press Enter to continue..."
 }
 
-# Configure MinIO storage (ADR-057)
-configure_minio() {
+# Configure Garage storage (ADR-057)
+configure_garage() {
     echo ""
-    echo -e "${BOLD}MinIO Object Storage Configuration (ADR-057)${NC}"
+    echo -e "${BOLD}Garage Object Storage Configuration (ADR-057)${NC}"
     echo -e "${YELLOW}Credentials are encrypted at rest (ADR-031)${NC}"
     echo ""
 
@@ -963,37 +961,34 @@ configure_minio() {
         return
     fi
 
-    # Check if MinIO is running (optional - can configure credentials without it)
-    local minio_running=false
-    echo -e "${BLUE}→${NC} Checking MinIO availability..."
+    # Check if Garage is running (optional - can configure credentials without it)
+    local garage_running=false
+    echo -e "${BLUE}→${NC} Checking Garage availability..."
 
     if [ "$DEPLOYMENT_MODE" = "docker" ]; then
         # Docker deployment - check for container
-        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-minio$"; then
-            echo -e "${GREEN}✓${NC} MinIO container detected (knowledge-graph-minio)"
-            minio_running=true
+        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-garage$"; then
+            echo -e "${GREEN}✓${NC} Garage container detected (knowledge-graph-garage)"
+            garage_running=true
         else
-            echo -e "${YELLOW}⚠${NC}  MinIO container not running (can still configure credentials)"
+            echo -e "${YELLOW}⚠${NC}  Garage container not running (can still configure credentials)"
         fi
     else
-        # Non-Docker - try to reach MinIO endpoint
-        local minio_host=$(grep "^MINIO_HOST=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "localhost")
-        local minio_port=$(grep "^MINIO_PORT=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "9000")
-
-        if command -v curl &> /dev/null && curl -sf "http://${minio_host}:${minio_port}/minio/health/live" > /dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} MinIO service reachable (${minio_host}:${minio_port})"
-            minio_running=true
+        # Non-Docker - try to reach Garage via status command
+        if command -v docker &> /dev/null && docker exec knowledge-graph-garage garage status > /dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC} Garage service reachable"
+            garage_running=true
         else
-            echo -e "${YELLOW}⚠${NC}  MinIO not reachable at ${minio_host}:${minio_port} (can still configure credentials)"
+            echo -e "${YELLOW}⚠${NC}  Garage not reachable (can still configure credentials)"
         fi
     fi
     echo ""
 
     # Check if credentials already configured in database
-    local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'minio'" | xargs)
+    local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'garage'" | xargs)
 
     if [ "$key_exists" -gt "0" ]; then
-        echo -e "${GREEN}✓${NC} MinIO credentials already configured in encrypted key store"
+        echo -e "${GREEN}✓${NC} Garage credentials already configured in encrypted key store"
         echo ""
         read -p "Reconfigure? (y/N): " reconfigure
         if [ "$reconfigure" != "y" ] && [ "$reconfigure" != "Y" ]; then
@@ -1001,40 +996,148 @@ configure_minio() {
         fi
     fi
 
+    # Auto-generate GARAGE_RPC_SECRET if not present (cold start requirement)
+    echo -e "${BLUE}→${NC} Checking Garage RPC secret..."
+    if ! grep -q "^GARAGE_RPC_SECRET=" "$PROJECT_ROOT/.env" 2>/dev/null || grep -q "^GARAGE_RPC_SECRET=CHANGE_THIS" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        local rpc_secret=$(openssl rand -hex 32)
+        echo -e "${GREEN}✓${NC} Generated Garage RPC secret"
+
+        # Add or update in .env
+        if grep -q "^GARAGE_RPC_SECRET=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+            # Replace existing placeholder
+            if command -v sed &> /dev/null; then
+                sed -i.bak "s|^GARAGE_RPC_SECRET=.*|GARAGE_RPC_SECRET=$rpc_secret|" "$PROJECT_ROOT/.env"
+            else
+                echo "GARAGE_RPC_SECRET=$rpc_secret" >> "$PROJECT_ROOT/.env"
+            fi
+        else
+            # Doesn't exist, will be added below with full section
+            :
+        fi
+    else
+        echo -e "${GREEN}✓${NC} RPC secret already configured"
+    fi
+    echo ""
+
     # Configure endpoint settings in .env (not credentials!)
-    echo -e "${BLUE}→${NC} Configuring MinIO endpoint settings..."
-    if ! grep -q "# MinIO Object Storage Configuration" "$PROJECT_ROOT/.env" 2>/dev/null; then
-        cat >> "$PROJECT_ROOT/.env" << 'EOF'
+    echo -e "${BLUE}→${NC} Configuring Garage endpoint settings..."
+    if ! grep -q "# Garage Object Storage Configuration" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        # Generate RPC secret if we haven't yet
+        local rpc_secret_value=$(grep "^GARAGE_RPC_SECRET=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2)
+        if [ -z "$rpc_secret_value" ] || [ "$rpc_secret_value" = "CHANGE_THIS_TO_A_RANDOM_SECRET_KEY" ]; then
+            rpc_secret_value=$(openssl rand -hex 32)
+        fi
+
+        cat >> "$PROJECT_ROOT/.env" << EOF
 
 # ----------------------------------------------------------------------------
-# MinIO Object Storage Configuration (ADR-057)
+# Garage Object Storage Configuration (ADR-057)
 # ----------------------------------------------------------------------------
+# Garage: S3-compatible object storage with cooperative governance
+# Replaced MinIO after March 2025 Enterprise edition trap (\$96k/year)
+#
 # Credentials stored encrypted in database (ADR-031)
-# Only endpoint configuration in .env
-MINIO_HOST=localhost
-MINIO_PORT=9000
-MINIO_BUCKET=images
-MINIO_SECURE=false
+# Configure via: ./scripts/setup/initialize-platform.sh (option 7)
+#
+# Only endpoint configuration in .env:
+GARAGE_S3_ENDPOINT=http://localhost:3900
+GARAGE_REGION=garage
+GARAGE_BUCKET=knowledge-graph-images
+
+# RPC secret for Garage cluster coordination (auto-generated)
+GARAGE_RPC_SECRET=$rpc_secret_value
+
+# Note: GARAGE_ACCESS_KEY_ID and GARAGE_SECRET_ACCESS_KEY stored encrypted in PostgreSQL
+# for consistent security model with OpenAI/Anthropic API keys
 EOF
-        echo -e "${GREEN}✓${NC} MinIO endpoint settings added to .env"
+        echo -e "${GREEN}✓${NC} Garage endpoint settings added to .env"
     else
-        echo -e "${YELLOW}⚠${NC}  MinIO section already exists in .env"
+        echo -e "${YELLOW}⚠${NC}  Garage section already exists in .env"
     fi
     echo ""
 
     # Store credentials in encrypted key store
-    echo -e "${BLUE}→${NC} Configuring MinIO credentials..."
+    echo -e "${BLUE}→${NC} Retrieving Garage credentials..."
     echo ""
 
-    # Prompt for credentials
-    echo "Enter MinIO credentials (from docker-compose.yml or MinIO console):"
-    echo ""
-    read -p "Access Key [minioadmin]: " access_key
-    access_key=${access_key:-minioadmin}
+    # Try to auto-load credentials from temporary file created by init-garage.sh
+    local access_key=""
+    local secret_key=""
+    local creds_file="/tmp/garage-credentials.txt"
 
-    read -sp "Secret Key [minioadmin]: " secret_key
+    if [ -f "$creds_file" ]; then
+        # Load credentials from temp file
+        echo -e "${BLUE}  Found credentials file from init-garage.sh${NC}"
+
+        # Source the file to get variables
+        source "$creds_file"
+
+        access_key="$GARAGE_ACCESS_KEY_ID"
+        secret_key="$GARAGE_SECRET_ACCESS_KEY"
+
+        if [ -n "$access_key" ] && [ -n "$secret_key" ]; then
+            echo -e "${GREEN}✓${NC} Auto-loaded credentials from ${creds_file}"
+            echo -e "${BLUE}  Access Key: ${access_key}${NC}"
+        else
+            echo -e "${YELLOW}⚠${NC}  Failed to parse credentials file"
+            access_key=""
+            secret_key=""
+        fi
+    elif [ "$garage_running" = true ]; then
+        # Credentials file doesn't exist, but Garage is running
+        if docker exec knowledge-graph-garage /garage key info kg-api-key > /dev/null 2>&1; then
+            echo -e "${YELLOW}⚠${NC}  Garage key exists but credentials not available"
+            echo ""
+            echo "The secret key is only shown once during key creation."
+            echo "Options:"
+            echo "  1. Delete and recreate key:"
+            echo "     docker exec knowledge-graph-garage /garage key delete kg-api-key"
+            echo "     ./scripts/garage/init-garage.sh"
+            echo "  2. Enter credentials manually if you saved them"
+            echo ""
+            # Continue to manual entry below
+        else
+            echo -e "${YELLOW}⚠${NC}  API key 'kg-api-key' not found in Garage"
+            echo ""
+            echo "Run initialization to create key:"
+            echo "  ./scripts/garage/init-garage.sh"
+            echo ""
+            read -p "Press Enter to continue..."
+            return
+        fi
+    fi
+
+    # Manual entry fallback (if Garage not running or auto-retrieval failed)
+    if [ -z "$access_key" ]; then
+        echo "Garage not running or credentials not found."
+        echo "Enter credentials manually (or start Garage and run init-garage.sh):"
+        echo ""
+        read -p "Access Key: " access_key
+
+        if [ -z "$access_key" ]; then
+            echo ""
+            echo -e "${YELLOW}⚠${NC}  No access key provided - skipping credential storage"
+            echo ""
+            echo "Next steps:"
+            echo "  1. Start Garage: ./scripts/services/start-garage.sh"
+            echo "  2. Initialize: ./scripts/garage/init-garage.sh"
+            echo "  3. Return here and select option 7 again"
+            echo ""
+            read -p "Press Enter to continue..."
+            return
+        fi
+
+        read -sp "Secret Key: " secret_key
+        echo ""
+
+        if [ -z "$secret_key" ]; then
+            echo ""
+            echo -e "${YELLOW}⚠${NC}  No secret key provided - skipping credential storage"
+            read -p "Press Enter to continue..."
+            return
+        fi
+    fi
     echo ""
-    secret_key=${secret_key:-minioadmin}
 
     # Store in encrypted key store
     local temp_script=$(mktemp)
@@ -1050,10 +1153,10 @@ try:
     conn = client.pool.getconn()
     try:
         key_store = EncryptedKeyStore(conn)
-        # Store as "access_key:secret_key" format
+        # Store as "access_key:secret_key" format (same as MinIO pattern)
         credentials = "${access_key}:${secret_key}"
-        key_store.store_key("minio", credentials)
-        print("✓ MinIO credentials stored in encrypted key store")
+        key_store.store_key("garage", credentials)
+        print("✓ Garage credentials stored in encrypted key store")
         sys.exit(0)
     finally:
         client.pool.putconn(conn)
@@ -1068,50 +1171,56 @@ EOF
 
     if [ $result -ne 0 ]; then
         echo ""
-        echo -e "${RED}✗${NC} Failed to store MinIO credentials"
+        echo -e "${RED}✗${NC} Failed to store Garage credentials"
         read -p "Press Enter to continue..."
         return
     fi
 
+    # Clean up temporary credentials file after successful storage
+    if [ -f "$creds_file" ]; then
+        rm -f "$creds_file"
+        echo -e "${BLUE}  Cleaned up temporary credentials file${NC}"
+    fi
+
     echo ""
 
-    # Run initialization script (only if MinIO is running)
-    if [ "$minio_running" = true ]; then
-        echo -e "${BLUE}→${NC} Initializing MinIO bucket..."
-        if [ -x "$PROJECT_ROOT/scripts/minio/init-minio.sh" ]; then
-            "$PROJECT_ROOT/scripts/minio/init-minio.sh"
+    # Run initialization script (only if Garage is running)
+    if [ "$garage_running" = true ]; then
+        echo -e "${BLUE}→${NC} Initializing Garage bucket..."
+        if [ -x "$PROJECT_ROOT/scripts/garage/init-garage.sh" ]; then
+            "$PROJECT_ROOT/scripts/garage/init-garage.sh"
             echo ""
-            echo -e "${GREEN}✓${NC} MinIO bucket initialized"
+            echo -e "${GREEN}✓${NC} Garage bucket initialized"
         else
-            echo -e "${YELLOW}⚠${NC}  MinIO init script not found or not executable"
-            echo "    Expected location: $PROJECT_ROOT/scripts/minio/init-minio.sh"
-            echo "    You can run it manually later: ./scripts/minio/init-minio.sh"
+            echo -e "${YELLOW}⚠${NC}  Garage init script not found or not executable"
+            echo "    Expected location: $PROJECT_ROOT/scripts/garage/init-garage.sh"
+            echo "    You can run it manually later: ./scripts/garage/init-garage.sh"
         fi
     else
-        echo -e "${YELLOW}⚠${NC}  Skipping bucket initialization (MinIO not running)"
-        echo "    Start MinIO and run: ./scripts/minio/init-minio.sh"
+        echo -e "${YELLOW}⚠${NC}  Skipping bucket initialization (Garage not running)"
+        echo "    Start Garage and run: ./scripts/garage/init-garage.sh"
     fi
     echo ""
 
     # Success message
-    echo -e "${GREEN}✓${NC} MinIO credentials configured successfully"
+    echo -e "${GREEN}✓${NC} Garage credentials configured successfully"
     echo ""
     echo -e "${BOLD}Next Steps:${NC}"
 
-    if [ "$minio_running" = false ]; then
-        echo "1. Start MinIO:"
+    if [ "$garage_running" = false ]; then
+        echo "1. Start Garage:"
         if [ "$DEPLOYMENT_MODE" = "docker" ]; then
-            echo "   ./scripts/services/start-minio.sh"
+            echo "   ./scripts/services/start-garage.sh"
         else
-            echo "   Start your MinIO service (configuration in .env)"
+            echo "   Start your Garage service (configuration in .env)"
         fi
         echo ""
         echo "2. Initialize bucket:"
-        echo "   ./scripts/minio/init-minio.sh"
+        echo "   ./scripts/garage/init-garage.sh"
         echo ""
-        echo "3. Restart API server to pick up MinIO credentials:"
+        echo "3. Restart API server to pick up Garage credentials:"
     else
-        echo "1. Restart API server to pick up MinIO credentials:"
+        echo "1. Restart API server to pick up Garage credentials:"
     fi
     echo "   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh"
     echo ""
@@ -1193,7 +1302,7 @@ show_menu_help() {
     echo "   Store encrypted API keys for configured providers"
     echo "   Keys are independent: OpenAI extraction + local embedding = only needs OpenAI key"
     echo ""
-    echo -e "${BLUE}7. MinIO Storage${NC}"
+    echo -e "${BLUE}7. Garage Storage${NC}"
     echo "   Configure S3-compatible object storage for image assets (ADR-057)"
     echo "   Credentials stored encrypted in database (same as OpenAI/Anthropic keys)"
     echo ""
@@ -1244,7 +1353,7 @@ while true; do
             configure_api_keys
             ;;
         7)
-            configure_minio
+            configure_garage
             ;;
         8)
             configure_image_embedding

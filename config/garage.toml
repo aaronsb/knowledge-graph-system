@@ -1,0 +1,32 @@
+# Garage Configuration
+# Knowledge Graph System - Object Storage for Image Assets
+# https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/
+
+metadata_dir = "/meta"
+data_dir = "/data"
+
+# Metadata engine: sqlite (single-node) or lmdb (production)
+db_engine = "sqlite"
+
+# Replication mode (single-node: 1 copy, production: 3 copies)
+replication_mode = "1"
+
+# Compression level (0=none, 1=fast/zstd, 2=best/zstd)
+compression_level = 1
+
+# RPC settings
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+
+# Bootstrap peers (empty for single-node)
+bootstrap_peers = []
+
+# S3 API endpoint
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+# Admin API endpoint
+[admin]
+api_bind_addr = "[::]:3903"
