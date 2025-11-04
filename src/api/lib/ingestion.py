@@ -168,7 +168,12 @@ def process_chunk(
     # ADR-051: Provenance metadata for edge tracking
     job_id: Optional[str] = None,
     document_id: Optional[str] = None,
-    user_id: Optional[str] = None
+    user_id: Optional[str] = None,
+    # ADR-057: Image source metadata
+    content_type: str = "document",
+    minio_object_key: Optional[str] = None,
+    visual_embedding: Optional[List[float]] = None,
+    text_embedding: Optional[List[float]] = None
 ) -> List[str]:
     """
     Process a single chunk: create source, extract concepts, create graph nodes.
@@ -218,10 +223,15 @@ def process_chunk(
             document=ontology_name,  # Ontology name for logical grouping
             paragraph=chunk.chunk_number,  # Using chunk number as paragraph
             full_text=chunk.text,
-            file_path=file_path  # Track actual source file
+            file_path=file_path,  # Track actual source file
+            # ADR-057: Image source metadata
+            content_type=content_type,
+            minio_object_key=minio_object_key,
+            visual_embedding=visual_embedding,
+            embedding=text_embedding
         )
         stats.sources_created += 1
-        logger.info(f"  ✓ Created Source node: {source_id}")
+        logger.info(f"  ✓ Created Source node: {source_id} (type: {content_type})")
     except Exception as e:
         raise Exception(f"Failed to create Source node: {e}")
 

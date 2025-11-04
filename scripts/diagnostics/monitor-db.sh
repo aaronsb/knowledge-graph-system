@@ -18,7 +18,7 @@ fi
 # Check if database is running
 if ! docker ps --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
     echo -e "${RED}✗ Database is not running${NC}"
-    echo -e "${YELLOW}  Start with: ./scripts/database/start-database.sh${NC}"
+    echo -e "${YELLOW}  Start with: ./scripts/services/start-database.sh${NC}"
     exit 1
 fi
 

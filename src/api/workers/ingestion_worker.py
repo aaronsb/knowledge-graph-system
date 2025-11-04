@@ -188,7 +188,12 @@ def run_ingestion_worker(
                 # ADR-051: Pass provenance metadata for edge tracking
                 job_id=job_id,
                 document_id=job_data["content_hash"],
-                user_id=job_data.get("user_id")
+                user_id=job_data.get("user_id"),
+                # ADR-057: Pass image metadata for multimodal sources
+                content_type=job_data.get("content_type", "document"),
+                minio_object_key=job_data.get("minio_object_key"),
+                visual_embedding=job_data.get("visual_embedding"),
+                text_embedding=None  # Will be generated during concept extraction
             )
 
             # Update progress with detailed stats AND save resume checkpoint

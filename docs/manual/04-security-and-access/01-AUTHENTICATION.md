@@ -110,7 +110,7 @@ When deploying the knowledge graph system for the first time, you need to initia
 
 ### Prerequisites
 
-1. PostgreSQL container running: `./scripts/database/start-database.sh`
+1. PostgreSQL container running: `./scripts/services/start-database.sh`
 2. API server running: `./scripts/services/start-api.sh`
 3. kg CLI installed: `cd client && ./install.sh`
 

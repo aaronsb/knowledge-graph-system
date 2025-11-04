@@ -302,7 +302,11 @@ class AGEClient:
         document: str,
         paragraph: int,
         full_text: str,
-        file_path: str = None
+        file_path: str = None,
+        content_type: str = "document",
+        minio_object_key: str = None,
+        visual_embedding: list = None,
+        embedding: list = None
     ) -> Dict[str, Any]:
         """
         Create a Source node in the graph.
@@ -311,8 +315,12 @@ class AGEClient:
             source_id: Unique identifier for the source
             document: Document/ontology name for logical grouping
             paragraph: Paragraph/chunk number in the document
-            full_text: Full text content of the paragraph
+            full_text: Full text content of the paragraph (prose for images, original text for documents)
             file_path: Path to the source file (optional)
+            content_type: Type of content - "document" or "image" (ADR-057)
+            minio_object_key: MinIO object key for image storage (images only, ADR-057)
+            visual_embedding: 768-dim visual embedding from Nomic Vision (images only, ADR-057)
+            embedding: Text embedding of full_text (both documents and image prose, ADR-057)
 
         Returns:
             Dictionary with created node properties
@@ -326,7 +334,11 @@ class AGEClient:
             document: $document,
             paragraph: $paragraph,
             full_text: $full_text,
-            file_path: $file_path
+            file_path: $file_path,
+            content_type: $content_type,
+            minio_object_key: $minio_object_key,
+            visual_embedding: $visual_embedding,
+            embedding: $embedding
         })
         RETURN s
         """
@@ -339,7 +351,11 @@ class AGEClient:
                     "document": document,
                     "paragraph": paragraph,
                     "full_text": full_text,
-                    "file_path": file_path if file_path else "null"
+                    "file_path": file_path if file_path else None,
+                    "content_type": content_type,
+                    "minio_object_key": minio_object_key,
+                    "visual_embedding": visual_embedding,
+                    "embedding": embedding
                 },
                 fetch_one=True
             )

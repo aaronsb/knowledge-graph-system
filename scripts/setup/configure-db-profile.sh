@@ -46,7 +46,7 @@ echo -e "${NC}"
 # Check if database container exists
 if ! docker ps -a --format '{{.Names}}' | grep -q knowledge-graph-postgres; then
     echo -e "${RED}✗ Database container not found${NC}"
-    echo -e "${YELLOW}  Run: ./scripts/database/start-database.sh${NC}"
+    echo -e "${YELLOW}  Run: ./scripts/services/start-database.sh${NC}"
     exit 1
 fi
 

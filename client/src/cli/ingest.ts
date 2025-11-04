@@ -108,9 +108,9 @@ ingestCommand
 // Ingest directory command
 ingestCommand
   .command('directory <dir>')
-  .description('Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default *.md *.txt), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.')
+  .description('Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-057), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.')
   .option('-o, --ontology <name>', 'Ontology/collection name (required unless --directories-as-ontologies). Single ontology receives all files.')
-  .option('-p, --pattern <patterns...>', 'File patterns to match (glob patterns like *.md *.txt)', ['*.md', '*.txt'])
+  .option('-p, --pattern <patterns...>', 'File patterns to match (glob patterns). Text and image extensions supported.', ['*.md', '*.txt', '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.bmp'])
   .option('-r, --recurse', 'Recursively scan subdirectories. Use "--recurse --depth all" for unlimited depth, "--recurse --depth 2" for 2 levels, etc.', false)
   .option('-d, --depth <n>', 'Maximum recursion depth: 0=current dir only, 1=one level, 2=two levels, "all"=unlimited (use with --recurse)', '0')
   .option('--directories-as-ontologies', 'Use directory names as ontology names (auto-creates ontologies from folder structure, cannot be combined with -o)', false)
@@ -177,14 +177,29 @@ ingestCommand
         filesByOntology.get(ontologyName)!.push(file);
       }
 
+      // Categorize files by type
+      const imageFiles = filesWithDirs.filter(({ file }) => isImageFile(file));
+      const textFiles = filesWithDirs.filter(({ file }) => !isImageFile(file));
+
       console.log(chalk.blue(`\n📂 Found ${filesWithDirs.length} file(s):`));
+      console.log(chalk.gray(`  Text files: ${textFiles.length}`));
+      console.log(chalk.gray(`  Image files: ${imageFiles.length}`));
       if (options.directoriesAsOntologies) {
         console.log(chalk.gray(`  Ontologies: ${filesByOntology.size}`));
         for (const [ontology, files] of filesByOntology) {
-          console.log(chalk.gray(`  • ${ontology}: ${files.length} file(s)`));
+          const ontImages = files.filter(f => isImageFile(f)).length;
+          const ontText = files.length - ontImages;
+          console.log(chalk.gray(`  • ${ontology}: ${files.length} file(s) (${ontText} text, ${ontImages} images)`));
         }
       } else {
-        filesWithDirs.forEach(({ file }) => console.log(chalk.gray(`  • ${nodePath.relative(dir, file)}`)));
+        if (textFiles.length > 0) {
+          console.log(chalk.gray(`\n  Text files:`));
+          textFiles.forEach(({ file }) => console.log(chalk.gray(`    • ${nodePath.relative(dir, file)}`)));
+        }
+        if (imageFiles.length > 0) {
+          console.log(chalk.gray(`\n  Images:`));
+          imageFiles.forEach(({ file }) => console.log(chalk.gray(`    • ${nodePath.relative(dir, file)}`)));
+        }
       }
 
       // Dry-run mode: check duplicates without submitting
@@ -214,26 +229,45 @@ ingestCommand
           };
 
           try {
-            // This will check for duplicates without auto-approving
-            const result = await client.ingestFile(filePath, request);
+            // Route to appropriate API based on file type
+            let result;
+            if (isImageFile(filePath)) {
+              // Image dry-run check
+              const imageRequest = {
+                ontology: request.ontology,
+                filename: request.filename,
+                force: request.force,
+                auto_approve: false,
+                vision_provider: 'openai',
+                source_type: 'file' as const,
+                source_path: request.source_path,
+                source_hostname: request.source_hostname,
+              };
+              result = await client.ingestImage(filePath, imageRequest);
+            } else {
+              // Text dry-run check
+              result = await client.ingestFile(filePath, request);
+            }
 
             const displayPath = options.directoriesAsOntologies
               ? `[${ontologyName}] ${nodePath.basename(filePath)}`
               : nodePath.relative(dir, filePath);
+            const fileType = isImageFile(filePath) ? '🖼️ ' : '📄 ';
 
             if ('duplicate' in result && result.duplicate) {
               wouldSkip++;
-              skipDetails.push(`  ${chalk.yellow('○')} ${chalk.gray(displayPath)}`);
+              skipDetails.push(`  ${chalk.yellow('○')} ${chalk.gray(fileType + displayPath)}`);
             } else {
               // It created a pending job - we need to cancel it
               const submitResult = result as JobSubmitResponse;
               await client.cancelJob(submitResult.job_id);
               wouldSubmit++;
-              submitDetails.push(`  ${chalk.green('✓')} ${displayPath}`);
+              submitDetails.push(`  ${chalk.green('✓')} ${fileType + displayPath}`);
             }
           } catch (error: any) {
+            const fileType = isImageFile(filePath) ? '🖼️ ' : '📄 ';
             wouldSkip++;
-            skipDetails.push(`  ${chalk.red('✗')} ${chalk.gray(nodePath.relative(dir, filePath))} ${chalk.dim(`(${error.message})`)}`);
+            skipDetails.push(`  ${chalk.red('✗')} ${chalk.gray(fileType + nodePath.relative(dir, filePath))} ${chalk.dim(`(${error.message})`)}`);
           }
         }
 
@@ -291,13 +325,32 @@ ingestCommand
         };
 
         try {
-          const result = await client.ingestFile(filePath, request);
+          // Route to appropriate API based on file type
+          let result;
+          if (isImageFile(filePath)) {
+            // Image ingestion (ADR-057)
+            const imageRequest = {
+              ontology: request.ontology,
+              filename: request.filename,
+              force: request.force,
+              auto_approve: request.auto_approve,
+              vision_provider: 'openai',  // Default to OpenAI for directory ingestion
+              source_type: 'file' as const,
+              source_path: request.source_path,
+              source_hostname: request.source_hostname,
+            };
+            result = await client.ingestImage(filePath, imageRequest);
+          } else {
+            // Text ingestion
+            result = await client.ingestFile(filePath, request);
+          }
 
           if ('duplicate' in result && result.duplicate) {
             const displayPath = options.directoriesAsOntologies
               ? `[${ontologyName}] ${nodePath.basename(filePath)}`
               : nodePath.relative(dir, filePath);
-            console.log(chalk.yellow(`⚠ Skipped (duplicate): ${displayPath}`));
+            const fileType = isImageFile(filePath) ? '🖼️ ' : '📄 ';
+            console.log(chalk.yellow(`⚠ Skipped (duplicate): ${fileType}${displayPath}`));
             skipped++;
           } else {
             const submitResult = result as JobSubmitResponse;
@@ -305,14 +358,16 @@ ingestCommand
             const displayPath = options.directoriesAsOntologies
               ? `[${ontologyName}] ${nodePath.basename(filePath)}`
               : nodePath.relative(dir, filePath);
-            console.log(chalk.green(`✓ Queued: ${displayPath} → ${submitResult.job_id.substring(0, 12)}...`));
+            const fileType = isImageFile(filePath) ? '🖼️ ' : '📄 ';
+            console.log(chalk.green(`✓ Queued: ${fileType}${displayPath} → ${submitResult.job_id.substring(0, 12)}...`));
             submitted++;
           }
         } catch (error: any) {
           const displayPath = options.directoriesAsOntologies
             ? `[${ontologyName}] ${nodePath.basename(filePath)}`
             : nodePath.relative(dir, filePath);
-          console.log(chalk.red(`✗ Failed: ${displayPath} - ${error.message}`));
+          const fileType = isImageFile(filePath) ? '🖼️ ' : '📄 ';
+          console.log(chalk.red(`✗ Failed: ${fileType}${displayPath} - ${error.message}`));
           skipped++;
         }
       }
@@ -403,6 +458,15 @@ ingestCommand
       process.exit(1);
     }
   });
+
+/**
+ * Check if a file is an image based on extension
+ */
+function isImageFile(filepath: string): boolean {
+  const ext = nodePath.extname(filepath).toLowerCase();
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'];
+  return imageExtensions.includes(ext);
+}
 
 /**
  * Collect files matching patterns from directory

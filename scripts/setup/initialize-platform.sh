@@ -313,6 +313,38 @@ get_api_keys_status() {
     fi
 }
 
+get_minio_status() {
+    # Check if MinIO credentials are in encrypted key store (ADR-031)
+    local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'minio'" | xargs)
+
+    if [ "$key_exists" -gt "0" ]; then
+        # Credentials encrypted in database (recommended)
+        if [ "$DEPLOYMENT_MODE" = "docker" ]; then
+            if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-minio$"; then
+                echo -e "${GREEN}✓${NC} configured, running"
+            else
+                echo -e "${GREEN}✓${NC} configured, stopped"
+            fi
+        else
+            # Non-Docker - try health check
+            local minio_host=$(grep "^MINIO_HOST=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "localhost")
+            local minio_port=$(grep "^MINIO_PORT=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "9000")
+            if command -v curl &> /dev/null && curl -sf "http://${minio_host}:${minio_port}/minio/health/live" > /dev/null 2>&1; then
+                echo -e "${GREEN}✓${NC} configured, reachable"
+            else
+                echo -e "${GREEN}✓${NC} configured, unreachable"
+            fi
+        fi
+    else
+        # Check if using .env fallback (works but not recommended)
+        if grep -q "^MINIO_ROOT_USER=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+            echo -e "${YELLOW}⚠${NC} .env fallback"
+        else
+            echo -e "○ not configured"
+        fi
+    fi
+}
+
 # Main menu loop
 show_menu() {
     echo ""
@@ -324,8 +356,10 @@ show_menu() {
     echo -e "  4) AI Extraction Provider  [$(get_ai_provider_status)]"
     echo -e "  5) Embedding Provider      [$(get_embedding_provider_status)]"
     echo -e "  6) API Keys                [$(get_api_keys_status)]"
-    echo -e "  7) Help"
-    echo -e "  8) Exit"
+    echo -e "  7) MinIO Storage           [$(get_minio_status)]"
+    echo -e "  8) Image Embedding Model   [nomic-ai/nomic-embed-vision-v1.5]"
+    echo ""
+    echo -e "  ${BOLD}h)${NC} Help     ${BOLD}q)${NC} Quit"
     echo ""
 }
 
@@ -338,24 +372,40 @@ configure_single_api_key() {
     echo -e "${YELLOW}Keys are encrypted at rest (ADR-031)${NC}"
     echo ""
 
-    # Check if key already exists
+    # Check if key already exists and if it can be decrypted
     local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = '$provider'" | xargs)
 
     if [ "$key_exists" -gt "0" ]; then
-        echo -e "${GREEN}✓${NC} ${provider_display} API key already configured and tested"
-        return 0
-    fi
+        # Key exists - check if it's valid
+        local validation_status=$(pg_query "SELECT validation_status FROM kg_api.system_api_keys WHERE provider = '$provider'" | xargs)
 
-    # Key doesn't exist - prompt to configure it
-    echo -e "${YELLOW}→${NC} No ${provider_display} API key found"
-    echo ""
-    read -p "Configure ${provider_display} API key now? [Y/n]: " -n 1 -r
-    echo ""
+        if [ "$validation_status" = "valid" ]; then
+            echo -e "${GREEN}✓${NC} ${provider_display} API key already configured and validated"
+        elif [ "$validation_status" = "invalid" ]; then
+            echo -e "${RED}✗${NC} ${provider_display} API key is invalid (failed validation)"
+        else
+            echo -e "${YELLOW}⚠${NC}  ${provider_display} API key exists but validation status unknown"
+        fi
 
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-        echo -e "${YELLOW}⚠${NC}  Skipping API key configuration"
-        echo -e "${YELLOW}   Provider will be configured but may fail without API key${NC}"
-        return 1
+        echo ""
+        read -p "Update ${provider_display} API key? [y/N]: " -n 1 -r
+        echo ""
+
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            return 0
+        fi
+    else
+        # Key doesn't exist - prompt to configure it
+        echo -e "${YELLOW}→${NC} No ${provider_display} API key found"
+        echo ""
+        read -p "Configure ${provider_display} API key now? [Y/n]: " -n 1 -r
+        echo ""
+
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            echo -e "${YELLOW}⚠${NC}  Skipping API key configuration"
+            echo -e "${YELLOW}   Provider will be configured but may fail without API key${NC}"
+            return 1
+        fi
     fi
 
     # Call Python helper to configure just this provider
@@ -528,6 +578,18 @@ configure_encryption_key() {
             echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> "$PROJECT_ROOT/.env"
         fi
         echo -e "${GREEN}✓${NC} Encryption key saved to .env"
+
+        # Check if there are any existing encrypted keys that are now unreadable
+        local encrypted_keys=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys" | xargs)
+        if [ "$encrypted_keys" -gt "0" ]; then
+            echo ""
+            echo -e "${RED}⚠${NC}  ${BOLD}IMPORTANT:${NC} You must reconfigure all API keys!"
+            echo -e "${RED}   All existing encrypted keys are now unreadable.${NC}"
+            echo ""
+            echo "   Next steps:"
+            echo "   1. Restart API server: ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh"
+            echo "   2. Run option 6 (API Keys) to reconfigure each provider"
+        fi
     fi
 
     echo ""
@@ -844,7 +906,7 @@ configure_api_keys() {
             # List keys with details
             echo -e "${BLUE}→${NC} Fetching key details..."
             echo ""
-            "$PYTHON" "$PROJECT_ROOT/scripts/admin/manage-api-keys.py" --list
+            "$PYTHON" "$PROJECT_ROOT/scripts/admin/manage_api_keys.py" --list
             ;;
         2)
             # Configure OpenAI key
@@ -884,6 +946,212 @@ configure_api_keys() {
     read -p "Press Enter to continue..."
 }
 
+# Configure MinIO storage (ADR-057)
+configure_minio() {
+    echo ""
+    echo -e "${BOLD}MinIO Object Storage Configuration (ADR-057)${NC}"
+    echo -e "${YELLOW}Credentials are encrypted at rest (ADR-031)${NC}"
+    echo ""
+
+    # Check encryption key exists (required for storing credentials)
+    if ! grep -q "^ENCRYPTION_KEY=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        echo -e "${RED}✗${NC} Encryption key not configured"
+        echo ""
+        echo "Run option 3 (Configure Encryption Key) first"
+        echo ""
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Check if MinIO is running (optional - can configure credentials without it)
+    local minio_running=false
+    echo -e "${BLUE}→${NC} Checking MinIO availability..."
+
+    if [ "$DEPLOYMENT_MODE" = "docker" ]; then
+        # Docker deployment - check for container
+        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-minio$"; then
+            echo -e "${GREEN}✓${NC} MinIO container detected (knowledge-graph-minio)"
+            minio_running=true
+        else
+            echo -e "${YELLOW}⚠${NC}  MinIO container not running (can still configure credentials)"
+        fi
+    else
+        # Non-Docker - try to reach MinIO endpoint
+        local minio_host=$(grep "^MINIO_HOST=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "localhost")
+        local minio_port=$(grep "^MINIO_PORT=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2 || echo "9000")
+
+        if command -v curl &> /dev/null && curl -sf "http://${minio_host}:${minio_port}/minio/health/live" > /dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC} MinIO service reachable (${minio_host}:${minio_port})"
+            minio_running=true
+        else
+            echo -e "${YELLOW}⚠${NC}  MinIO not reachable at ${minio_host}:${minio_port} (can still configure credentials)"
+        fi
+    fi
+    echo ""
+
+    # Check if credentials already configured in database
+    local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'minio'" | xargs)
+
+    if [ "$key_exists" -gt "0" ]; then
+        echo -e "${GREEN}✓${NC} MinIO credentials already configured in encrypted key store"
+        echo ""
+        read -p "Reconfigure? (y/N): " reconfigure
+        if [ "$reconfigure" != "y" ] && [ "$reconfigure" != "Y" ]; then
+            return
+        fi
+    fi
+
+    # Configure endpoint settings in .env (not credentials!)
+    echo -e "${BLUE}→${NC} Configuring MinIO endpoint settings..."
+    if ! grep -q "# MinIO Object Storage Configuration" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        cat >> "$PROJECT_ROOT/.env" << 'EOF'
+
+# ----------------------------------------------------------------------------
+# MinIO Object Storage Configuration (ADR-057)
+# ----------------------------------------------------------------------------
+# Credentials stored encrypted in database (ADR-031)
+# Only endpoint configuration in .env
+MINIO_HOST=localhost
+MINIO_PORT=9000
+MINIO_BUCKET=images
+MINIO_SECURE=false
+EOF
+        echo -e "${GREEN}✓${NC} MinIO endpoint settings added to .env"
+    else
+        echo -e "${YELLOW}⚠${NC}  MinIO section already exists in .env"
+    fi
+    echo ""
+
+    # Store credentials in encrypted key store
+    echo -e "${BLUE}→${NC} Configuring MinIO credentials..."
+    echo ""
+
+    # Prompt for credentials
+    echo "Enter MinIO credentials (from docker-compose.yml or MinIO console):"
+    echo ""
+    read -p "Access Key [minioadmin]: " access_key
+    access_key=${access_key:-minioadmin}
+
+    read -sp "Secret Key [minioadmin]: " secret_key
+    echo ""
+    secret_key=${secret_key:-minioadmin}
+
+    # Store in encrypted key store
+    local temp_script=$(mktemp)
+    cat > "$temp_script" << EOF
+#!/usr/bin/env python3
+import sys
+sys.path.insert(0, "$PROJECT_ROOT")
+from src.api.lib.encrypted_keys import EncryptedKeyStore
+from src.api.lib.age_client import AGEClient
+
+try:
+    client = AGEClient()
+    conn = client.pool.getconn()
+    try:
+        key_store = EncryptedKeyStore(conn)
+        # Store as "access_key:secret_key" format
+        credentials = "${access_key}:${secret_key}"
+        key_store.store_key("minio", credentials)
+        print("✓ MinIO credentials stored in encrypted key store")
+        sys.exit(0)
+    finally:
+        client.pool.putconn(conn)
+except Exception as e:
+    print(f"ERROR: {e}", file=sys.stderr)
+    sys.exit(1)
+EOF
+
+    $PYTHON "$temp_script"
+    local result=$?
+    rm -f "$temp_script"
+
+    if [ $result -ne 0 ]; then
+        echo ""
+        echo -e "${RED}✗${NC} Failed to store MinIO credentials"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    echo ""
+
+    # Run initialization script (only if MinIO is running)
+    if [ "$minio_running" = true ]; then
+        echo -e "${BLUE}→${NC} Initializing MinIO bucket..."
+        if [ -x "$PROJECT_ROOT/scripts/minio/init-minio.sh" ]; then
+            "$PROJECT_ROOT/scripts/minio/init-minio.sh"
+            echo ""
+            echo -e "${GREEN}✓${NC} MinIO bucket initialized"
+        else
+            echo -e "${YELLOW}⚠${NC}  MinIO init script not found or not executable"
+            echo "    Expected location: $PROJECT_ROOT/scripts/minio/init-minio.sh"
+            echo "    You can run it manually later: ./scripts/minio/init-minio.sh"
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC}  Skipping bucket initialization (MinIO not running)"
+        echo "    Start MinIO and run: ./scripts/minio/init-minio.sh"
+    fi
+    echo ""
+
+    # Success message
+    echo -e "${GREEN}✓${NC} MinIO credentials configured successfully"
+    echo ""
+    echo -e "${BOLD}Next Steps:${NC}"
+
+    if [ "$minio_running" = false ]; then
+        echo "1. Start MinIO:"
+        if [ "$DEPLOYMENT_MODE" = "docker" ]; then
+            echo "   ./scripts/services/start-minio.sh"
+        else
+            echo "   Start your MinIO service (configuration in .env)"
+        fi
+        echo ""
+        echo "2. Initialize bucket:"
+        echo "   ./scripts/minio/init-minio.sh"
+        echo ""
+        echo "3. Restart API server to pick up MinIO credentials:"
+    else
+        echo "1. Restart API server to pick up MinIO credentials:"
+    fi
+    echo "   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh"
+    echo ""
+
+    read -p "Press Enter to continue..."
+}
+
+# View image embedding configuration (read-only for now)
+configure_image_embedding() {
+    echo ""
+    echo -e "${BOLD}Image Embedding Configuration (Read-Only)${NC}"
+    echo -e "${YELLOW}View current visual embedding model for image similarity${NC}"
+    echo ""
+
+    # Image embeddings are currently hardcoded to Nomic Vision v1.5
+    # This is a placeholder for future configurability
+    echo -e "${BLUE}→${NC} Current configuration:"
+    echo ""
+    echo -e "  ${BOLD}Model:${NC}        nomic-ai/nomic-embed-vision-v1.5"
+    echo -e "  ${BOLD}Dimensions:${NC}   768 (same space as Nomic Text embeddings)"
+    echo -e "  ${BOLD}Inference:${NC}    Local (transformers library, not Ollama)"
+    echo -e "  ${BOLD}Performance:${NC}  ~1-2ms per image (GPU), ~5-10ms (CPU fallback)"
+    echo ""
+    echo -e "${GREEN}✓${NC} Research validated (ADR-057):"
+    echo "    • 0.847 average top-3 similarity"
+    echo "    • 27% better than OpenAI CLIP"
+    echo "    • Excellent clustering for similar images"
+    echo ""
+    echo -e "${YELLOW}Note:${NC} Image embedding provider is not configurable yet."
+    echo "      Nomic Vision v1.5 is the default and recommended model."
+    echo ""
+    echo -e "${YELLOW}Future:${NC} If you need to add another provider (e.g., OpenAI CLIP):"
+    echo "      1. Implement provider in src/api/lib/visual_embeddings.py"
+    echo "      2. Add database config table (similar to embedding_config)"
+    echo "      3. Update this configuration option to support selection"
+    echo ""
+
+    read -p "Press Enter to continue..."
+}
+
 # Display help in menu context
 show_menu_help() {
     clear
@@ -914,13 +1182,25 @@ show_menu_help() {
     echo "   Configure which LLM to use for concept extraction"
     echo "   Options: OpenAI (GPT-4), Anthropic (Claude), Ollama (Local)"
     echo ""
-    echo -e "${BLUE}5. Embedding Provider${NC}"
-    echo "   Configure which embedding model to use"
-    echo "   Options: OpenAI (text-embedding-3-small), Local (nomic-embed-text)"
+    echo -e "${BLUE}5. Embedding Provider (Text)${NC}"
+    echo "   Configure which embedding model to use for text/concepts"
+    echo "   Options:"
+    echo "     • OpenAI (text-embedding-3-small) - Cloud API, fast, costs ~$0.02/1M tokens"
+    echo "     • Local (nomic-embed-text-v1.5) - Free, local inference via Ollama"
+    echo "       768-dim embeddings, same space as Nomic Vision for images"
     echo ""
     echo -e "${BLUE}6. API Keys${NC}"
     echo "   Store encrypted API keys for configured providers"
     echo "   Keys are independent: OpenAI extraction + local embedding = only needs OpenAI key"
+    echo ""
+    echo -e "${BLUE}7. MinIO Storage${NC}"
+    echo "   Configure S3-compatible object storage for image assets (ADR-057)"
+    echo "   Credentials stored encrypted in database (same as OpenAI/Anthropic keys)"
+    echo ""
+    echo -e "${BLUE}8. Image Embedding Model${NC}"
+    echo "   View current image embedding configuration (read-only)"
+    echo "   Default: Nomic Vision v1.5 (768-dim, local inference)"
+    echo "   Research: 27% better than CLIP for visual similarity"
     echo ""
     echo -e "${BOLD}Why Pre-Configure?${NC}"
     echo ""
@@ -942,7 +1222,7 @@ show_menu_help() {
 # Main menu loop
 while true; do
     show_menu
-    read -p "Select option [1-8]: " choice
+    read -p "Select option [1-8, h, q]: " choice
 
     case $choice in
         1)
@@ -963,10 +1243,16 @@ while true; do
         6)
             configure_api_keys
             ;;
-        7|h|H)
+        7)
+            configure_minio
+            ;;
+        8)
+            configure_image_embedding
+            ;;
+        h|H)
             show_menu_help
             ;;
-        8|q|Q)
+        q|Q)
             echo ""
             echo -e "${GREEN}Configuration complete!${NC}"
             echo ""

@@ -33,7 +33,7 @@ from .workers.restore_worker import run_restore_worker
 from .workers.vocab_refresh_worker import run_vocab_refresh_worker
 from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher
-from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -310,6 +310,7 @@ app.include_router(oauth.router)  # ADR-054: OAuth 2.0 client management and tok
 app.include_router(rbac.router)  # ADR-028: RBAC management endpoints
 app.include_router(ingest.router)
 app.include_router(ingest_image.router)  # ADR-057: Multimodal image ingestion
+app.include_router(sources.router)  # ADR-057: Source retrieval (images from MinIO)
 app.include_router(jobs.router)
 app.include_router(queries.router)
 app.include_router(database.router)

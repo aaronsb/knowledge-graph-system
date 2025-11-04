@@ -7,6 +7,7 @@ sentence-transformers>=2.3.0  # Local embedding models for ADR-039 (nomic-embed-
 transformers>=4.35.0  # Required for Nomic Vision embeddings (ADR-057)
 torch>=2.0.0  # Required for visual embeddings (Nomic Vision)
 Pillow>=10.0.0  # Image processing for visual embeddings (ADR-057)
+minio>=7.2.0  # S3-compatible object storage client (ADR-057)
 einops>=0.8.0  # Required by nomic-embed-text model architecture
 mistune>=3.0.0  # Markdown parsing for preprocessing (ADR-023)
 nltk>=3.8.0  # Natural language processing for relationship mapping (stemming)

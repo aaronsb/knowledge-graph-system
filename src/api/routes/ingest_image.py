@@ -27,6 +27,7 @@ from ..models.auth import UserInDB
 # ADR-057: Vision and embedding modules
 from ..lib.vision_providers import get_vision_provider, LITERAL_DESCRIPTION_PROMPT
 from ..lib.visual_embeddings import generate_visual_embedding, check_visual_embedding_health
+from ..lib.minio_client import get_minio_client
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
@@ -278,7 +279,35 @@ async def ingest_image(
             detail=f"Image description failed: {str(e)}"
         )
 
-    # Step 3: Hash content for deduplication (use image bytes, not prose)
+    # Step 3: Store image in MinIO (before job creation to avoid large job payloads)
+    try:
+        minio_client = get_minio_client()
+
+        # Generate temporary source_id (will be replaced with actual source_id during ingestion)
+        import uuid
+        temp_source_id = f"src_{uuid.uuid4().hex[:12]}"
+
+        logger.info(f"Uploading image to MinIO: {ontology}/{temp_source_id}...")
+        minio_object_key = minio_client.upload_image(
+            ontology=ontology,
+            source_id=temp_source_id,
+            image_bytes=content,
+            filename=file.filename,
+            metadata={
+                "uploaded_by": current_user.username,
+                "upload_time": datetime.now().isoformat()
+            }
+        )
+        logger.info(f"Image stored in MinIO: {minio_object_key}")
+
+    except Exception as e:
+        logger.error(f"Failed to store image in MinIO: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Image storage failed: {str(e)}"
+        )
+
+    # Step 4: Hash content for deduplication (use image bytes, not prose)
     content_hash = hasher.hash_content(content)
 
     # Check for duplicates
@@ -295,7 +324,7 @@ async def ingest_image(
                 content=duplicate_info
             )
 
-    # Step 4: Prepare job data for hairpin pattern (prose → text pipeline)
+    # Step 5: Prepare job data for hairpin pattern (prose → text pipeline)
     # The prose description will be processed like any text document
     use_filename = filename or file.filename or "uploaded_image"
 
@@ -325,6 +354,8 @@ async def ingest_image(
         # Image-specific metadata (stored in job_data for tracking)
         "content_type": "image",  # Mark as image for tracking
         "original_filename": file.filename,
+        "minio_object_key": minio_object_key,  # MinIO path for retrieval
+        "visual_embedding": visual_embedding,  # Already a list from generate_visual_embedding()
         "vision_metadata": {
             "provider": provider.get_provider_name(),
             "model": provider.get_model_name(),

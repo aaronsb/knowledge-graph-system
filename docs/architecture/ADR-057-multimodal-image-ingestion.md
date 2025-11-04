@@ -72,6 +72,20 @@ Image → Visual Analysis → Text Description + Visual Context → Existing Tex
 
 **Research validation** (Nov 2025): Comprehensive testing validated GPT-4o Vision as primary backend over Granite Vision 3.3 2B due to reliability (100% vs random refusals). Nomic Vision v1.5 embeddings achieved 0.847 average top-3 similarity (27% higher than CLIP). See `docs/research/vision-testing/` for complete findings.
 
+### Security Model (ADR-031)
+
+MinIO credentials follow the same encrypted storage pattern as OpenAI/Anthropic API keys:
+
+- **Encrypted at rest**: Credentials stored in `kg_api.system_api_keys` table using Fernet encryption (AES-128-CBC + HMAC-SHA256)
+- **Master key**: `ENCRYPTION_KEY` environment variable or Docker secrets (never in database)
+- **Configuration**: Interactive setup via `./scripts/setup/initialize-platform.sh` (option 7)
+- **Runtime access**: API server retrieves credentials on-demand from encrypted store
+- **Endpoint config only in .env**: `MINIO_HOST`, `MINIO_PORT`, `MINIO_BUCKET`, `MINIO_SECURE`
+
+This ensures consistent security across all service credentials. PostgreSQL credentials remain in .env (infrastructure requirement), while external/independent service credentials (OpenAI, Anthropic, MinIO) are encrypted in the database.
+
+**Migration note**: Existing deployments with plain-text MinIO credentials in .env will automatically fall back to environment variables until credentials are configured via `initialize-platform.sh`.
+
 ---
 
 ## Architecture Components
@@ -245,6 +259,89 @@ Be thorough and literal. If you see text, transcribe it exactly. If you see a bo
 - **Cost**: ~$10 per 1000 images (GPT-4o) vs $0 (local, but unreliable)
 
 **Note on MinIO licensing**: While MinIO is AGPL v3, we interact with it purely through the S3-compatible API (network boundary). We never link against MinIO code, import MinIO libraries, or modify MinIO source. This is similar to using PostgreSQL (also network service) - AGPL network copyleft does not apply across API boundaries.
+
+---
+
+## Embedding Architecture - Critical Design Principle
+
+**⚠️ IMPORTANT**: The system uses a **unified concept space** with **system-wide embedding consistency**. Understanding this is critical to understanding how image and document concepts relate.
+
+### Three Types of Embeddings
+
+**1. Visual Embeddings (Image Sources Only)**
+- **Model**: Nomic Vision v1.5 (768-dim) - **ONE model system-wide**
+- **Stored on**: `sources.visual_embedding` (only when `content_type='image'`)
+- **Generated from**: Raw image pixels
+- **Used for**: Visual-to-visual similarity search (find similar-looking images)
+- **NOT used for**: Concept matching
+
+**2. Text Embeddings on Source Prose**
+- **Model**: System-wide text embedding model (Nomic Text v1.5 OR OpenAI) - **ONE model system-wide**
+- **Stored on**: `sources.embedding`
+- **Generated from**:
+  - Document sources: Original document text
+  - Image sources: Vision model prose description
+- **Used for**: Direct text query → search source descriptions (cross-modal bridge)
+
+**3. Text Embeddings on Concepts**
+- **Model**: **SAME** system-wide text embedding model as #2
+- **Stored on**: `concept` nodes
+- **Generated from**: Concept labels extracted by LLM
+- **Used for**: Concept matching, merging, and semantic search
+
+### Why This Matters: Automatic Cross-Source Concept Matching
+
+```
+Document: "The fog comes on little cat feet" (Carl Sandburg poem)
+   ↓ LLM extraction
+Concept: "little cat feet" → Text embedding vector A (from system-wide text model)
+
+Image: Photo of cat paws
+   ↓ Vision model (GPT-4o)
+Prose: "Close-up of little cat feet with soft paw pads"
+   ↓ LLM extraction (SAME extraction pipeline)
+Concept: "little cat feet" → Text embedding vector B (from SAME text model)
+   ↓
+Cosine similarity(A, B) = 0.92 (high similarity)
+   ↓
+Concepts MERGE or get SUPPORTS edge (automatic via existing matching logic)
+```
+
+**Query "little cat feet":**
+```sql
+-- Search concept embeddings (ONE unified concept space)
+SELECT c.* FROM concepts c WHERE cosine_similarity(c.embedding, query_embedding) > 0.7
+
+-- Returns ONE concept "little cat feet" with TWO sources:
+--   1. Source: Sandburg poem (content_type='document')
+--   2. Source: Cat paws photo (content_type='image')
+```
+
+### Key Principles
+
+1. **No "image concepts" vs "document concepts"** - All concepts live in the same namespace, use the same text embeddings
+2. **System-wide embedding consistency** - ONE text model, ONE visual model
+3. **Changing embedding models = rebuild entire graph** - No mixing 768-dim and 1536-dim embeddings
+4. **Prose is the semantic bridge** - Image descriptions use text embeddings, enabling automatic concept matching
+5. **Visual embeddings are orthogonal** - Used only for visual similarity, not concept matching
+
+### Search Paths Enabled
+
+```
+Path 1 (Concept-based):
+  Text query → Concept embeddings → Find concepts → Get all sources (images + documents)
+
+Path 2 (Source-based):
+  Text query → Source prose embeddings → Find images with matching descriptions
+
+Path 3 (Visual):
+  Upload image → Visual embeddings → Find visually similar images
+```
+
+All three paths work together because:
+- Path 1 & 2 use the SAME text embedding model
+- Path 3 uses visual embeddings (separate space, separate use case)
+- The hairpin pattern (image → prose → concepts) collapses multimodal into text-based matching
 
 ---
 
@@ -737,12 +834,16 @@ IMAGE_EMBEDDING_PROVIDER=transformers  # Direct model loading via transformers
 TEXT_EMBEDDING_MODEL=nomic-embed-text:latest
 TEXT_EMBEDDING_PROVIDER=ollama  # or openai
 
-# MinIO Storage
-MINIO_ENDPOINT=http://minio:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-MINIO_BUCKET=knowledge-graph-images
-MINIO_USE_SSL=false
+# MinIO Storage (ADR-031: Credentials encrypted in database)
+# Credentials configured via: ./scripts/setup/initialize-platform.sh (option 7)
+# Only endpoint configuration in .env:
+MINIO_HOST=localhost
+MINIO_PORT=9000
+MINIO_BUCKET=images
+MINIO_SECURE=false
+
+# Note: MINIO_ROOT_USER and MINIO_ROOT_PASSWORD stored encrypted in PostgreSQL
+# for consistent security model with OpenAI/Anthropic API keys
 ```
 
 ### Configuration File

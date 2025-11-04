@@ -61,8 +61,39 @@ services:
 
     restart: unless-stopped
 
+  minio:
+    # MinIO S3-compatible object storage for image assets
+    image: minio/minio:latest
+    container_name: knowledge-graph-minio
+    ports:
+      - "9000:9000"  # MinIO API (S3-compatible)
+      - "9001:9001"  # MinIO Console (web UI)
+    environment:
+      # MinIO container credentials (defaults used if not in .env)
+      # Note: Application retrieves these from encrypted key store (ADR-031)
+      # Configure via: ./scripts/setup/initialize-platform.sh (option 7)
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+
+    command: server /data --console-address ":9001"
+
+    volumes:
+      # Data persistence for stored images
+      - minio_data:/data
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
   postgres_import:
+    driver: local
+  minio_data:
     driver: local

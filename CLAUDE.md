@@ -56,13 +56,28 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 - `client/install.sh` - Installs `kg` command globally
 
 ### Management Scripts
-- `scripts/start-database.sh` - Start PostgreSQL + AGE (auto-applies migrations)
-- `scripts/stop-database.sh` - Stop database container
-- `scripts/start-api.sh` - Start FastAPI server
-- `scripts/stop-api.sh` - Stop API server
-- `scripts/initialize-platform.sh` - Initialize admin user, JWT secrets, API keys
-- `scripts/migrate-db.sh` - Apply database schema migrations
-- `scripts/configure-ai.sh` - AI provider configuration (legacy)
+
+**Service Management (scripts/services/):**
+- `scripts/services/start-database.sh` - Start PostgreSQL + AGE (auto-applies migrations)
+- `scripts/services/stop-database.sh` - Stop database container
+- `scripts/services/start-minio.sh` - Start MinIO object storage (ADR-057)
+- `scripts/services/stop-minio.sh` - Stop MinIO container
+- `scripts/services/start-api.sh` - Start FastAPI server
+- `scripts/services/stop-api.sh` - Stop API server
+
+**Setup & Configuration (scripts/setup/):**
+- `scripts/setup/initialize-platform.sh` - Initialize admin user, JWT secrets, API keys, MinIO
+- `scripts/setup/configure-ai.sh` - AI provider configuration (legacy)
+
+**Database Operations (scripts/database/):**
+- `scripts/database/migrate-db.sh` - Apply database schema migrations
+- `scripts/database/backup-database.sh` - Backup database to file
+- `scripts/database/restore-database.sh` - Restore database from backup
+
+**MinIO Operations (scripts/minio/):**
+- `scripts/minio/init-minio.sh` - Initialize MinIO bucket and policies
+
+**Client:**
 - `client/install.sh` - Install kg CLI globally
 
 ### Documentation
@@ -91,7 +106,7 @@ pip install -r requirements.txt
 cd client && ./install.sh && cd ..
 
 # 4. Start database (applies baseline schema + all migrations automatically)
-./scripts/database/start-database.sh
+./scripts/services/start-database.sh
 
 # 5. Start API server
 ./scripts/services/start-api.sh -y
@@ -114,7 +129,7 @@ kg ingest file -o "My Ontology" document.txt
 source venv/bin/activate
 
 # Start database (if not running)
-./scripts/database/start-database.sh
+./scripts/services/start-database.sh
 
 # Start API server (if not running)
 ./scripts/services/start-api.sh -y
@@ -130,7 +145,7 @@ tail -f logs/api_*.log                   # API server logs
 
 # Stop services
 ./scripts/services/stop-api.sh       # Stop API server
-./scripts/database/stop-database.sh  # Stop database (data persists)
+./scripts/services/stop-database.sh  # Stop database (data persists)
 ```
 
 ### Resetting Database (Clean State)
@@ -157,13 +172,13 @@ kg ingest file -o "My Ontology" document.txt
 ```bash
 # 1. Stop all services
 ./scripts/services/stop-api.sh
-./scripts/database/stop-database.sh
+./scripts/services/stop-database.sh
 
 # 2. Wipe database volume
 docker-compose down -v
 
 # 3. Start fresh (applies baseline + migrations)
-./scripts/database/start-database.sh
+./scripts/services/start-database.sh
 
 # 4. Start API server
 ./scripts/services/start-api.sh -y
@@ -616,7 +631,10 @@ kg database stats  # Verify counts
 ## Security Notes
 
 - **API Keys**: Never commit `.env` (in .gitignore)
+- **Encrypted Credentials (ADR-031)**: OpenAI, Anthropic, and MinIO credentials stored encrypted in PostgreSQL using Fernet (AES-128-CBC + HMAC-SHA256). Master encryption key in .env or Docker secrets.
+- **Infrastructure Credentials**: PostgreSQL credentials must remain in .env (needed before database starts)
 - **Database**: PostgreSQL requires auth (env: POSTGRES_USER/POSTGRES_PASSWORD)
+- **MinIO**: Credentials encrypted in database (ADR-031), only endpoint config in .env. Configure via `initialize-platform.sh` option 7.
 - **API Server**: No authentication by default - add if exposing publicly
 - **kg CLI**: Communicates with localhost:8000 by default
 - **MCP Server**: Runs locally via Claude Desktop, no external exposure

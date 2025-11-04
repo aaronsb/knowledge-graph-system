@@ -7,16 +7,16 @@ Works with both Docker and non-Docker PostgreSQL deployments.
 
 Usage:
     # Interactive mode - configure needed keys
-    python3 manage-api-keys.py --interactive
+    python3 manage_api_keys.py --interactive
 
     # List configured keys
-    python3 manage-api-keys.py --list
+    python3 manage_api_keys.py --list
 
     # Add specific key
-    python3 manage-api-keys.py --add openai --key sk-...
+    python3 manage_api_keys.py --add openai --key sk-...
 
     # Delete key
-    python3 manage-api-keys.py --delete openai
+    python3 manage_api_keys.py --delete openai
 
 Environment Variables:
     POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
@@ -278,16 +278,16 @@ def main():
         epilog="""
 Examples:
   # Interactive mode (configure needed keys)
-  python3 manage-api-keys.py --interactive
+  python3 manage_api_keys.py --interactive
 
   # List configured keys
-  python3 manage-api-keys.py --list
+  python3 manage_api_keys.py --list
 
   # Add specific key
-  python3 manage-api-keys.py --add openai --key sk-...
+  python3 manage_api_keys.py --add openai --key sk-...
 
   # Delete key
-  python3 manage-api-keys.py --delete openai
+  python3 manage_api_keys.py --delete openai
         """
     )
 

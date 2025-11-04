@@ -18,7 +18,7 @@ git clone https://github.com/aaronsb/knowledge-graph-system.git
 cd knowledge-graph-system
 
 # 2. Start database - auto-applies schema + migrations (15 seconds)
-./scripts/database/start-database.sh
+./scripts/services/start-database.sh
 
 # 3. Start API server - auto-creates venv + installs deps (15 seconds)
 ./scripts/services/start-api.sh -y
@@ -163,7 +163,7 @@ kg admin embedding reload
 Hard reset:
 ```bash
 docker-compose down -v
-./scripts/database/start-database.sh
+./scripts/services/start-database.sh
 ```
 
 ## What Just Happened?
@@ -268,11 +268,11 @@ kg admin backup
 - Logs: `logs/api_*.log`
 
 **Scripts:**
-- `./scripts/database/start-database.sh` - Start database
+- `./scripts/services/start-database.sh` - Start database
 - `./scripts/services/start-api.sh` - Start API server
 - `./scripts/setup/initialize-platform.sh` - Configure auth + embeddings
 - `./scripts/services/stop-api.sh` - Stop API server
-- `./scripts/database/stop-database.sh` - Stop database
+- `./scripts/services/stop-database.sh` - Stop database
 
 **Documentation:**
 - `docs/guides/QUICKSTART.md` - User quickstart guide
