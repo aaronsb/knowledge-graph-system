@@ -191,16 +191,20 @@ def prompt_hold_enter(
 
                     # Success - held long enough
                     if accumulated >= duration_s:
-                        # Move to fresh line after progress bar
-                        print(f"\n{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
+                        # After progress bar (which uses \r), need \r\n to reset to column 0
+                        sys.stdout.write('\r\n')
+                        sys.stdout.flush()
+                        print(f"{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
                         print(f"{Colors.INFO}Release Enter and press [Space] to continue...{Colors.NC}", end='', flush=True)
                         decompression_mode = True
                         # Don't reset enter_pressed here - let decompression mode handle it
                         continue
 
                 elif started and not enter_pressed:
-                    # Enter released too early
-                    print(f"\n{Colors.WARNING}✗ Released too early{Colors.NC}\n")
+                    # Enter released too early - need \r\n after progress bar
+                    sys.stdout.write('\r\n')
+                    sys.stdout.flush()
+                    print(f"{Colors.WARNING}✗ Released too early{Colors.NC}\n")
                     return False
 
                 # Reset flag for next poll (only if not in decompression mode)
