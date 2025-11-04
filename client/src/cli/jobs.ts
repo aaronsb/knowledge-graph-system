@@ -89,9 +89,22 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
         field: 'job_id',
         type: 'job_id',
         width: 'flex',
-        priority: 2,
+        priority: 3,
         maxWidth: fullId ? 40 : 30,
         minWidth: fullId ? 38 : 20
+      },
+      {
+        header: 'Source',
+        field: (job) => job.source_path || job.filename || '-',
+        type: 'text',
+        width: 'flex',
+        priority: 1,
+        customFormat: (source, job) => {
+          if (!source || source === '-') return colors.status.dim('-');
+          // Show full path if available, otherwise just filename
+          return source;
+        },
+        truncate: true
       },
       {
         header: 'User',
@@ -112,7 +125,7 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
         field: 'ontology',
         type: 'heading',
         width: 'flex',
-        priority: 1,
+        priority: 2,
         customFormat: (name) => name || '-',
         truncate: true
       },
