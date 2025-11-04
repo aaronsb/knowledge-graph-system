@@ -24,13 +24,13 @@ echo -e "${BLUE}🔍 Linting datetime usage (ADR-056)${NC}"
 echo ""
 
 # Check if linter exists
-if [ ! -f "scripts/lint_datetimes.py" ]; then
-    echo -e "${RED}❌ Linter not found: scripts/lint_datetimes.py${NC}"
+if [ ! -f "src/testing/linters/datetime_linter.py" ]; then
+    echo -e "${RED}❌ Linter not found: src/testing/linters/datetime_linter.py${NC}"
     exit 1
 fi
 
 # Run linter with all arguments passed through
-python3 scripts/lint_datetimes.py "$@"
+python3 -m src.testing.linters.datetime_linter "$@"
 
 # Capture exit code
 EXIT_CODE=$?

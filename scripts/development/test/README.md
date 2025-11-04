@@ -95,6 +95,10 @@ Checks for unsafe datetime patterns in the codebase (ADR-056).
 - `datetime.now()` without timezone (use `datetime_utils.utcnow()`)
 - `datetime.fromtimestamp()` without tz (use `datetime_utils.utc_from_timestamp()`)
 
+**Implementation:**
+- Linter code: `src/testing/linters/datetime_linter.py`
+- First-class testing infrastructure (excluded from production containers)
+
 **Current status:**
 - 13/34 violations fixed (38% complete)
 - All critical security/job modules clean
