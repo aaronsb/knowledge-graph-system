@@ -25,10 +25,8 @@ from ..models.job import JobSubmitResponse, DuplicateJobResponse
 from ..dependencies.auth import get_current_active_user
 from ..models.auth import UserInDB
 
-# ADR-057: Vision and embedding modules
-from ..lib.vision_providers import get_vision_provider, LITERAL_DESCRIPTION_PROMPT
-from ..lib.visual_embeddings import generate_visual_embedding, check_visual_embedding_health
-from ..lib.minio_client import get_minio_client
+# ADR-057: Only health check remains in endpoint (heavy work moved to worker)
+from ..lib.visual_embeddings import check_visual_embedding_health
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
@@ -234,81 +232,10 @@ async def ingest_image(
         f"→ ontology '{ontology}'"
     )
 
-    # Step 1: Generate visual embedding (Nomic Vision v1.5)
-    try:
-        logger.info("Generating visual embedding with Nomic Vision v1.5...")
-        visual_embedding = generate_visual_embedding(content)
-        logger.info(f"Visual embedding generated: 768-dim (hash: {hash(tuple(visual_embedding)) % 10000})")
-    except Exception as e:
-        logger.error(f"Failed to generate visual embedding: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Visual embedding generation failed: {str(e)}"
-        )
+    # Note: Heavy work (embedding, vision, MinIO upload) moved to background worker
+    # This allows fast job queueing for directory ingestion
 
-    # Step 2: Convert image to prose description (Vision Provider)
-    try:
-        # Get vision provider (GPT-4o by default)
-        provider = get_vision_provider(
-            provider=vision_provider,
-            model=vision_model
-        )
-
-        logger.info(
-            f"Converting image to prose with {provider.get_provider_name()} "
-            f"({provider.get_model_name()})..."
-        )
-
-        # Use literal description prompt (validated in research)
-        description_response = provider.describe_image(
-            image_bytes=content,
-            prompt=LITERAL_DESCRIPTION_PROMPT
-        )
-
-        prose_description = description_response["text"]
-        vision_tokens = description_response.get("tokens", {})
-
-        logger.info(
-            f"Image described: {len(prose_description)} chars, "
-            f"{vision_tokens.get('total_tokens', 0)} tokens"
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to describe image with vision provider: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Image description failed: {str(e)}"
-        )
-
-    # Step 3: Store image in MinIO (before job creation to avoid large job payloads)
-    try:
-        minio_client = get_minio_client()
-
-        # Generate temporary source_id (will be replaced with actual source_id during ingestion)
-        import uuid
-        temp_source_id = f"src_{uuid.uuid4().hex[:12]}"
-
-        logger.info(f"Uploading image to MinIO: {ontology}/{temp_source_id}...")
-        minio_object_key = minio_client.upload_image(
-            ontology=ontology,
-            source_id=temp_source_id,
-            image_bytes=content,
-            filename=file.filename,
-            metadata={
-                "uploaded_by": current_user.username,
-                "upload_time": to_iso(timedelta_from_now())
-            }
-        )
-        logger.info(f"Image stored in MinIO: {minio_object_key}")
-
-    except Exception as e:
-        logger.error(f"Failed to store image in MinIO: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Image storage failed: {str(e)}"
-        )
-
-    # Step 4: Hash content for deduplication (use image bytes, not prose)
+    # Step 1: Hash content for deduplication (use image bytes)
     content_hash = hasher.hash_content(content)
 
     # Check for duplicates
@@ -325,8 +252,8 @@ async def ingest_image(
                 content=duplicate_info
             )
 
-    # Step 5: Prepare job data for hairpin pattern (prose → text pipeline)
-    # The prose description will be processed like any text document
+    # Step 2: Prepare job data with raw image bytes
+    # Heavy work (embedding, vision, MinIO upload) happens in worker
     use_filename = filename or file.filename or "uploaded_image"
 
     # Build options (minimal for images - single chunk)
@@ -336,7 +263,7 @@ async def ingest_image(
     )
 
     job_data = {
-        "content": base64.b64encode(prose_description.encode('utf-8')).decode('utf-8'),  # Store prose, not image
+        "image_bytes": base64.b64encode(content).decode('utf-8'),  # Store raw image
         "content_hash": content_hash,
         "ontology": ontology,
         "filename": use_filename,
@@ -352,19 +279,14 @@ async def ingest_image(
         "source_type": source_type or "api",
         "source_path": source_path,
         "source_hostname": source_hostname,
-        # Image-specific metadata (stored in job_data for tracking)
-        "content_type": "image",  # Mark as image for tracking
+        # Image-specific metadata
+        "content_type": "image",  # Mark as image for worker routing
         "original_filename": file.filename,
-        "minio_object_key": minio_object_key,  # MinIO path for retrieval
-        "visual_embedding": visual_embedding,  # Already a list from generate_visual_embedding()
-        "vision_metadata": {
-            "provider": provider.get_provider_name(),
-            "model": provider.get_model_name(),
-            "vision_tokens": vision_tokens,
-            "visual_embedding_model": "nomic-ai/nomic-embed-vision-v1.5",
-            "visual_embedding_dimension": 768,
-            "prose_length": len(prose_description)
-        }
+        "image_size_bytes": len(content),
+        # Vision config (worker will use these)
+        "vision_provider": vision_provider or "openai",
+        "vision_model": vision_model,
+        "uploaded_by": current_user.username,
     }
 
     # Create job
