@@ -49,7 +49,23 @@ import time
 import select
 import termios
 import tty
+import shutil
 from typing import Optional
+
+
+def get_terminal_width() -> int:
+    """Get terminal width, default to 80 if not available."""
+    try:
+        return shutil.get_terminal_size().columns
+    except:
+        return 80
+
+
+def clear_line():
+    """Clear the current line and return cursor to start."""
+    width = get_terminal_width()
+    sys.stdout.write('\r' + ' ' * width + '\r')
+    sys.stdout.flush()
 
 
 class Colors:
@@ -136,8 +152,12 @@ def prompt_hold_enter(
             elapsed_since_start = time.time() - start_time
             if not started and elapsed_since_start > timeout_s:
                 # No input detected - likely AI agent
-                print('\n\n' + '━' * 60)
-                print(f"{Colors.WARNING}\n⏱️  No input detected after 10 seconds.{Colors.NC}")
+                # Clear any existing line content first
+                clear_line()
+                print()  # Move to next line
+
+                print('━' * 60)
+                print(f"\n{Colors.WARNING}⏱️  No input detected after 10 seconds.{Colors.NC}")
                 print(f"\n{Colors.DIM}If you're an AI agent reading this:{Colors.NC}")
                 print(f"{Colors.DIM}  This operation will {Colors.ERROR}PERMANENTLY DELETE{Colors.DIM} all graph data.{Colors.NC}")
                 print(f"{Colors.DIM}  You cannot undo this action.{Colors.NC}")
@@ -163,7 +183,7 @@ def prompt_hold_enter(
                         continue
                     elif ch == ' ':
                         # Space pressed - user ready
-                        print(f"{Colors.SUCCESS}✓ Ready!{Colors.NC}\n")
+                        print(f"\n{Colors.SUCCESS}✓ Ready!{Colors.NC}\n")
                         return True
                     # Ignore all other keys
                     continue
@@ -189,9 +209,9 @@ def prompt_hold_enter(
 
                     # Success - held long enough
                     if accumulated >= duration_s:
-                        # Clear the progress bar line, move to column 0, then newline
-                        sys.stdout.write('\r' + ' ' * 80 + '\r\n')
-                        sys.stdout.flush()
+                        # Clear the progress bar line, move to next line
+                        clear_line()
+                        print()  # Move to next line
                         print(f"{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
                         print(f"{Colors.INFO}Release Enter and press [Space] to continue...{Colors.NC}", end='', flush=True)
                         decompression_mode = True
@@ -200,9 +220,9 @@ def prompt_hold_enter(
 
                 elif started and not enter_pressed:
                     # Enter released too early - clear progress bar first
-                    sys.stdout.write('\r' + ' ' * 80 + '\r')
-                    sys.stdout.flush()
-                    print(f"\n{Colors.WARNING}✗ Released too early{Colors.NC}\n")
+                    clear_line()
+                    print()  # Move to next line
+                    print(f"{Colors.WARNING}✗ Released too early{Colors.NC}\n")
                     return False
 
                 # Reset flag for next poll (only if not in decompression mode)
