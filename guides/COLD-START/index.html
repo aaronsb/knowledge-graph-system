@@ -4644,6 +4644,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: MinIO Integration &amp; Emergent Visual Relationships
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
@@ -5116,7 +5139,7 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># 2. Start database - auto-applies schema + migrations (15 seconds)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>./scripts/database/start-database.sh
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>./scripts/services/start-database.sh
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># 3. Start API server - auto-creates venv + installs deps (15 seconds)</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>./scripts/services/start-api.sh<span class="w"> </span>-y
@@ -5222,7 +5245,7 @@
 <h3 id="database-wont-start">Database won't start</h3>
 <p>Hard reset:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>docker-compose<span class="w"> </span>down<span class="w"> </span>-v
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./scripts/database/start-database.sh
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./scripts/services/start-database.sh
 </code></pre></div></p>
 <h2 id="what-just-happened">What Just Happened?</h2>
 <p><strong>Database (start-database.sh):</strong>
@@ -5301,11 +5324,11 @@
 - Backups: <code>~/.local/share/kg/backups/</code>
 - Logs: <code>logs/api_*.log</code></p>
 <p><strong>Scripts:</strong>
-- <code>./scripts/database/start-database.sh</code> - Start database
+- <code>./scripts/services/start-database.sh</code> - Start database
 - <code>./scripts/services/start-api.sh</code> - Start API server
 - <code>./scripts/setup/initialize-platform.sh</code> - Configure auth + embeddings
 - <code>./scripts/services/stop-api.sh</code> - Stop API server
-- <code>./scripts/database/stop-database.sh</code> - Stop database</p>
+- <code>./scripts/services/stop-database.sh</code> - Stop database</p>
 <p><strong>Documentation:</strong>
 - <code>docs/guides/QUICKSTART.md</code> - User quickstart guide
 - <code>CLAUDE.md</code> - Developer guide for Claude Code

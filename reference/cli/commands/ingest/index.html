@@ -1759,6 +1759,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#image" class="md-nav__link">
+    <span class="md-ellipsis">
+      image
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4507,6 +4516,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: MinIO Integration &amp; Emergent Visual Relationships
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
@@ -4799,6 +4831,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#image" class="md-nav__link">
+    <span class="md-ellipsis">
+      image
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4835,8 +4876,9 @@
 <p><strong>Subcommands:</strong></p>
 <ul>
 <li><code>file</code> - Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-014), -w to wait for completion (polls until complete, shows progress).</li>
-<li><code>directory</code> - Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default <em>.md </em>.txt), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.</li>
+<li><code>directory</code> - Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text <em>.md </em>.txt, images <em>.png </em>.jpg <em>.jpeg </em>.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-057), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.</li>
 <li><code>text</code> - Ingest raw text directly without a file. Submits text content as ingestion job, useful for quick testing/prototyping, ingesting programmatically generated text, API/script integration, and processing text from other commands. Can pipe command output via xargs or use multiline text with heredoc syntax. Text is chunked (default 1000 words per chunk) and processed like file ingestion. Use --filename to customize displayed name in ontology files list (default: text_input). Behavior same as file ingestion: auto-approves by default, detects duplicates, supports --wait for synchronous completion.</li>
+<li><code>image</code> - Ingest an image file using multimodal vision AI (ADR-057). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/</li>
 </ul>
 <hr />
 <h3 id="file">file</h3>
@@ -4901,7 +4943,7 @@
 </tbody>
 </table>
 <h3 id="directory">directory</h3>
-<p>Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default <em>.md </em>.txt), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.</p>
+<p>Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text <em>.md </em>.txt, images <em>.png </em>.jpg <em>.jpeg </em>.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-057), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.</p>
 <p><strong>Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>directory<span class="w"> </span>&lt;dir&gt;
 </code></pre></div></p>
@@ -4926,8 +4968,8 @@
 </tr>
 <tr>
 <td><code>-p, --pattern &lt;patterns...&gt;</code></td>
-<td>File patterns to match (glob patterns like <em>.md </em>.txt)</td>
-<td><code>["*.md","*.txt"]</code></td>
+<td>File patterns to match (glob patterns). Text and image extensions supported.</td>
+<td><code>["*.md","*.txt","*.png","*.jpg","*.jpeg","*.gif","*.webp","*.bmp"]</code></td>
 </tr>
 <tr>
 <td><code>-r, --recurse</code></td>
@@ -5028,6 +5070,62 @@
 <tr>
 <td><code>-w, --wait</code></td>
 <td>Wait for job completion (polls until complete, shows progress). Default: submit and exit.</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="image">image</h3>
+<p>Ingest an image file using multimodal vision AI (ADR-057). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>image<span class="w"> </span>&lt;path&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;path&gt;</code> - Required</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-o, --ontology &lt;name&gt;</code></td>
+<td>Ontology/collection name</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>-f, --force</code></td>
+<td>Force re-ingestion even if duplicate</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--no-approve</code></td>
+<td>Require manual approval before processing. Default: auto-approve.</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--vision-provider &lt;provider&gt;</code></td>
+<td>Vision provider: openai (default), anthropic, ollama</td>
+<td><code>"openai"</code></td>
+</tr>
+<tr>
+<td><code>--vision-model &lt;model&gt;</code></td>
+<td>Vision model name (optional, uses provider default)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--filename &lt;name&gt;</code></td>
+<td>Override filename for tracking</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>-w, --wait</code></td>
+<td>Wait for job completion</td>
 <td><code>false</code></td>
 </tr>
 </tbody>
