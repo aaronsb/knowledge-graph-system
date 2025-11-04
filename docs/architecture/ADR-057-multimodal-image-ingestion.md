@@ -1,7 +1,8 @@
 # ADR-057: Multimodal Image Ingestion with Visual Context Injection
 
-**Status:** Proposed
+**Status:** In Progress
 **Date:** 2025-11-03
+**Updated:** 2025-11-03 (Research completed, implementation starting)
 **Deciders:** System Architects
 **Related ADRs:**
 - [ADR-042: Ollama Local Inference Integration](./ADR-042-ollama-local-inference.md)
@@ -63,11 +64,13 @@ Image → Visual Analysis → Text Description + Visual Context → Existing Tex
 **Key architectural decisions**:
 
 1. **Storage separation**: MinIO for heavy image blobs, PostgreSQL for lightweight embeddings and metadata
-2. **Vision backend**: Granite Vision 3.3 2B (local, Apache 2.0) or GPT-4V/Claude to support non-compute capable nodes.
-3. **Dual embeddings**: Nomic Vision for image embeddings, Nomic Text for description embeddings
+2. **Vision backend**: GPT-4o (primary, cloud) or Claude 3.5 Sonnet, with Ollama/Granite as optional local fallback
+3. **Dual embeddings**: Nomic Vision v1.5 for image embeddings (768-dim), Nomic Text for description embeddings
 4. **Visual context injection**: Similar images provide context during concept extraction
 5. **Ontology-aware search**: Boost same-ontology results, enable cross-domain discovery
 6. **LLM-driven relationships**: Model chooses appropriate relationship types (IMPLIES, CONTRADICTS, SUPPORTS, etc.)
+
+**Research validation** (Nov 2025): Comprehensive testing validated GPT-4o Vision as primary backend over Granite Vision 3.3 2B due to reliability (100% vs random refusals). Nomic Vision v1.5 embeddings achieved 0.847 average top-3 similarity (27% higher than CLIP). See `docs/research/vision-testing/` for complete findings.
 
 ---
 
@@ -84,28 +87,59 @@ class VisionBackend(ABC):
         """Convert image to prose description"""
         pass
 
-class GraniteVisionBackend(VisionBackend):
-    """Local inference via Ollama (default)"""
-    model = "granite-vision-3.3:2b"
-
 class OpenAIVisionBackend(VisionBackend):
-    """GPT-4V / GPT-4o via OpenAI API"""
+    """GPT-4o via OpenAI API (PRIMARY - validated in research)"""
     model = "gpt-4o"
 
+    # Research shows: 100% reliable, excellent literal descriptions
+    # Cost: ~$0.01/image, Speed: ~5s/image
+
 class AnthropicVisionBackend(VisionBackend):
-    """Claude 3.5 Sonnet via Anthropic API"""
+    """Claude 3.5 Sonnet via Anthropic API (ALTERNATE)"""
     model = "claude-3-5-sonnet-20241022"
+
+    # Similar quality to GPT-4o, slightly higher cost
+    # Cost: ~$0.015/image, Speed: ~5s/image
+
+class OllamaVisionBackend(VisionBackend):
+    """Local inference via Ollama (OPTIONAL - pattern in place)"""
+    model = "granite-vision-3.3:2b"  # or llava, etc.
+
+    # Research shows: Inconsistent quality, random refusals
+    # Use only when cloud APIs unavailable
+    # Cost: $0, Speed: ~15s/image
 ```
 
 **Simple usage example**:
 ```python
-# Standard OpenAI "tell me what this is" pattern
-vision_backend = get_vision_backend()  # Based on config
+# Standard OpenAI vision pattern (primary backend)
+vision_backend = get_vision_backend()  # Returns OpenAIVisionBackend by default
 description = await vision_backend.describe_image(
     image_bytes,
-    prompt="Describe this image in detail."
+    prompt=LITERAL_DESCRIPTION_PROMPT  # See below for literal prompt
 )
 ```
+
+**Literal Description Prompt** (validated in research):
+```python
+LITERAL_DESCRIPTION_PROMPT = """
+Describe everything visible in this image literally and exhaustively.
+
+Do NOT summarize or interpret. Do NOT provide analysis or conclusions.
+
+Instead, describe:
+- Every piece of text you see, word for word
+- Every visual element (boxes, arrows, shapes, colors)
+- The exact layout and positioning of elements
+- Any diagrams, charts, or graphics in detail
+- Relationships between elements (what connects to what, what's above/below)
+- Any logos, branding, or page numbers
+
+Be thorough and literal. If you see text, transcribe it exactly. If you see a box with an arrow pointing to another box, describe that precisely.
+"""
+```
+
+**Why literal prompts?** Two-stage pipeline requires raw descriptions. Stage 1 (vision) provides literal facts. Stage 2 (LLM extraction) interprets concepts. Interpretive summaries in Stage 1 reduce Stage 2 quality.
 
 ### 2. Storage Architecture
 
@@ -196,11 +230,19 @@ description = await vision_backend.describe_image(
 
 | Component | Technology | License | Why |
 |-----------|-----------|---------|-----|
-| **Vision Model** | Granite Vision 3.3 2B | Apache 2.0 | Local-first, 2B parameters, runs on consumer GPU |
-| **Image Embeddings** | Nomic Embed Vision v2.0 | Apache 2.0 | Multimodal (text + images in same space), 768-dim |
-| **Text Embeddings** | Nomic Embed Text v1.5 | Apache 2.0 | Already using, consistent with vision embeddings |
+| **Vision Model (Primary)** | GPT-4o Vision | Proprietary | **Research validated**: 100% reliable, excellent literal descriptions, ~$0.01/image |
+| **Vision Model (Alternate)** | Claude 3.5 Sonnet Vision | Proprietary | Similar quality to GPT-4o, provider diversity |
+| **Vision Model (Local)** | Ollama (Granite, LLaVA) | Apache 2.0 | **Optional**: Pattern in place, but inconsistent quality per research |
+| **Image Embeddings** | Nomic Embed Vision v1.5 | Apache 2.0 | **Research validated**: 0.847 clustering quality (27% better than CLIP), 768-dim |
+| **Text Embeddings** | Nomic Embed Text v1.5 | Apache 2.0 | Already using, consistent with vision embeddings (same 768-dim space) |
 | **Object Storage** | MinIO | AGPL v3 | Network-isolated (S3 API only), no code integration |
 | **PDF Conversion** | External (user's choice) | N/A | pdftoppm, ImageMagick, etc. - out of our scope |
+
+**Research findings** (Nov 2025, `docs/research/vision-testing/`):
+- **Vision quality**: GPT-4o: ⭐⭐⭐⭐⭐ (100% reliable), Granite: ⭐⭐ (random refusals)
+- **Embedding quality**: Nomic Vision: 0.847 avg similarity, CLIP: 0.666, OpenAI API: 0.542
+- **Decision**: GPT-4o primary, abstraction supports Anthropic/Ollama for flexibility
+- **Cost**: ~$10 per 1000 images (GPT-4o) vs $0 (local, but unreliable)
 
 **Note on MinIO licensing**: While MinIO is AGPL v3, we interact with it purely through the S3-compatible API (network boundary). We never link against MinIO code, import MinIO libraries, or modify MinIO source. This is similar to using PostgreSQL (also network service) - AGPL network copyleft does not apply across API boundaries.
 
@@ -256,10 +298,11 @@ async def ingest_image(
     #   ]
     # }
 
-    # 4. Generate prose description using vision model
-    prose_description = await granite_vision.describe_image(
+    # 4. Generate prose description using vision model (GPT-4o by default)
+    vision_backend = get_vision_backend()  # Returns OpenAIVisionBackend
+    prose_description = await vision_backend.describe_image(
         image_bytes,
-        prompt=VISION_DESCRIPTION_PROMPT
+        prompt=LITERAL_DESCRIPTION_PROMPT  # Literal, non-interpretive
     )
 
     # 5. Store original image in MinIO (organized by ontology)
@@ -670,24 +713,29 @@ Response: [
 
 ### Environment Variables
 ```bash
-# Vision Model (image → text)
-VISION_PROVIDER=ollama  # Options: ollama (local), openai, anthropic
-VISION_MODEL=granite-vision-3.3:2b
+# Vision Model (image → text) - PRIMARY: OpenAI GPT-4o
+VISION_PROVIDER=openai  # Options: openai (recommended), anthropic, ollama
+VISION_MODEL=gpt-4o  # or gpt-4o-mini for lower cost
+OPENAI_API_KEY=sk-...
 
-# For OpenAI (standard "send image to OpenAI" pattern)
-# VISION_PROVIDER=openai
-# VISION_MODEL=gpt-4o  # or gpt-4-turbo, gpt-4o-mini
-# OPENAI_API_KEY=sk-...
-
-# For Anthropic
+# For Anthropic (alternate provider)
 # VISION_PROVIDER=anthropic
 # VISION_MODEL=claude-3-5-sonnet-20241022  # or claude-3-opus, claude-3-haiku
 # ANTHROPIC_API_KEY=sk-ant-...
 
-# Embeddings (image → vector)
-EMBEDDING_PROVIDER=ollama  # Must support vision embeddings
-IMAGE_EMBEDDING_MODEL=nomic-embed-vision:latest
+# For Ollama (optional local fallback - not recommended per research)
+# VISION_PROVIDER=ollama
+# VISION_MODEL=granite-vision-3.3:2b  # or llava, etc.
+# Note: Research shows inconsistent quality, use only if cloud unavailable
+
+# Image Embeddings (image → vector) - Nomic Vision v1.5 (local, transformers)
+# Note: Uses transformers library, not Ollama
+IMAGE_EMBEDDING_MODEL=nomic-ai/nomic-embed-vision-v1.5
+IMAGE_EMBEDDING_PROVIDER=transformers  # Direct model loading via transformers
+
+# Text Embeddings (description → vector) - Nomic Text v1.5 (existing)
 TEXT_EMBEDDING_MODEL=nomic-embed-text:latest
+TEXT_EMBEDDING_PROVIDER=ollama  # or openai
 
 # MinIO Storage
 MINIO_ENDPOINT=http://minio:9000
@@ -1044,10 +1092,11 @@ echo -e "${GREEN}All storage services stopped${NC}"
 ./scripts/initialize-auth.sh    # Set up authentication
 ./scripts/start-api.sh -y       # Start API server
 
-# Pull vision models
-docker exec kg-ollama ollama pull granite-vision-3.3:2b
-docker exec kg-ollama ollama pull nomic-embed-vision:latest
+# Pull text embedding model (vision embeddings use transformers, not Ollama)
 docker exec kg-ollama ollama pull nomic-embed-text:latest
+
+# Optional: Pull local vision model (not recommended - see research findings)
+# docker exec kg-ollama ollama pull granite-vision-3.3:2b
 
 # Verify everything is running
 kg health                       # Check API
@@ -1074,20 +1123,23 @@ kg search images --by-text "architecture diagram"
 ./scripts/stop-storage.sh       # PostgreSQL + MinIO (data persists)
 ```
 
-### Ollama Model Management
+### Ollama Model Management (Optional)
+
+**Note**: Primary setup uses GPT-4o (cloud) + Nomic Vision (transformers). Ollama only needed for text embeddings.
 
 ```bash
-# scripts/setup-vision-models.sh
+# scripts/setup-embedding-models.sh
 #!/bin/bash
-# Pull all required vision and embedding models
+# Pull required embedding models
 
 set -e
 
 # Colors
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}Setting up vision models...${NC}"
+echo -e "${GREEN}Setting up embedding models...${NC}"
 
 # Check if Ollama is running
 if ! docker ps | grep -q kg-ollama; then
@@ -1096,16 +1148,25 @@ if ! docker ps | grep -q kg-ollama; then
     sleep 5
 fi
 
-# Pull vision model
-echo "Pulling Granite Vision 3.3 2B..."
-docker exec kg-ollama ollama pull granite-vision-3.3:2b
-
-# Pull embedding models
-echo "Pulling Nomic Embed Vision..."
-docker exec kg-ollama ollama pull nomic-embed-vision:latest
-
+# Pull text embedding model (required)
 echo "Pulling Nomic Embed Text..."
 docker exec kg-ollama ollama pull nomic-embed-text:latest
+
+# Note about image embeddings
+echo ""
+echo -e "${YELLOW}Note: Image embeddings use Nomic Vision v1.5 via transformers library${NC}"
+echo "No Ollama model needed for visual embeddings"
+echo ""
+
+# Optional: Pull local vision model (not recommended)
+read -p "Pull Granite Vision for local fallback? (not recommended, see research) [y/N]: " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Pulling Granite Vision 3.3 2B..."
+    docker exec kg-ollama ollama pull granite-vision-3.3:2b
+    echo -e "${YELLOW}Warning: Research shows Granite Vision has inconsistent quality${NC}"
+    echo "Use only when cloud APIs unavailable"
+fi
 
 # Verify
 echo ""
@@ -1113,8 +1174,9 @@ echo -e "${GREEN}Models installed:${NC}"
 docker exec kg-ollama ollama list
 
 echo ""
-echo "Vision model ready: granite-vision-3.3:2b"
-echo "Embedding models ready: nomic-embed-vision, nomic-embed-text"
+echo "Text embedding model ready: nomic-embed-text"
+echo "Image embeddings: nomic-ai/nomic-embed-vision-v1.5 (transformers, auto-downloaded)"
+echo "Vision backend: GPT-4o (cloud API, set OPENAI_API_KEY in .env)"
 ```
 
 ---
@@ -1151,14 +1213,14 @@ echo "Embedding models ready: nomic-embed-vision, nomic-embed-text"
 - Enables cross-domain discovery
 - Consistent with text ingestion
 
-### 6. **Local-First**
-- Granite Vision 3.3 2B runs locally
-- Nomic embeddings via Ollama
-- No cloud API required
-- Zero per-image cost
+### 6. **Quality-First with Local Fallback**
+- GPT-4o Vision (primary): Excellent quality, ~$0.01/image
+- Nomic Vision embeddings: Local via transformers, 0.847 clustering quality
+- Ollama vision (optional): Available but not recommended per research
+- Smart trade-off: Pay for reliability, use local embeddings
 
 ### 7. **Licensing Clean**
-- Apache 2.0: Granite Vision, Nomic embeddings
+- Apache 2.0: Nomic Vision embeddings, Nomic Text embeddings
 - MinIO: Network-isolated (no code integration)
 - No AGPL contamination
 - Safe for commercial use
@@ -1178,8 +1240,8 @@ echo "Embedding models ready: nomic-embed-vision, nomic-embed-text"
 **Pro**: Single unified upsert system
 **Con**: Visual context adds complexity to text extraction prompt
 
-**Pro**: Local-first with Granite Vision
-**Con**: Slower than cloud APIs (GPT-4V ~5s, Granite ~15s per image)
+**Pro**: GPT-4o Vision reliable and fast (~5s per image)
+**Con**: API cost (~$0.01/image, ~$10 per 1000 images) vs free local (but unreliable)
 
 **Pro**: Ground truth preservation
 **Con**: Storage costs (200KB per image vs. text-only)
