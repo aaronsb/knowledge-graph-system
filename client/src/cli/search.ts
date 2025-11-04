@@ -43,15 +43,20 @@ const queryCommand = new Command('query')
       .argument('<query>', 'Natural language search query (2-3 words work best)')
       .option('-l, --limit <number>', 'Maximum number of results to return', '10')
       .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches)', '0.7')
-      .option('--show-evidence', 'Show sample evidence quotes from source documents')
+      .option('--no-evidence', 'Hide evidence quotes (shown by default)')
+      .option('--no-images', 'Hide inline image display (shown by default if chafa installed)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
-      .option('--show-images', 'Display images inline in terminal using chafa (requires chafa to be installed)')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (query, options) => {
         try {
           const client = createClientFromEnv();
-          const includeEvidence = options.showEvidence || false;
+          const config = getConfig();
+
+          // Use config defaults, allow CLI flags to override
+          // Commander.js --no-evidence flag sets options.evidence to false
+          const includeEvidence = options.evidence !== undefined ? options.evidence : config.getSearchShowEvidence();
+          const shouldShowImages = options.images !== undefined ? options.images : config.getSearchShowImages();
           const includeGrounding = options.grounding !== false; // Default: true
 
           const result = await client.searchConcepts({
@@ -98,8 +103,6 @@ const queryCommand = new Command('query')
 
                 // ADR-057: Handle images if available
                 if (inst.has_image && inst.source_id) {
-                  const config = getConfig();
-                  const shouldShowImages = options.showImages || false;
                   const downloadDir = options.download;
 
                   if (downloadDir) {
@@ -126,6 +129,8 @@ const queryCommand = new Command('query')
                         const extension = detectImageFormat(imageBuffer);
                         await displayImageBufferWithChafa(imageBuffer, extension, {
                           width: config.getChafaWidth(),
+                          scale: config.getChafaScale(),
+                          align: config.getChafaAlign(),
                           colors: config.getChafaColors()
                         });
                       } catch (error: any) {
@@ -270,9 +275,9 @@ const connectCommand = new Command('connect')
       .argument('<to>', 'Target concept (exact ID or descriptive phrase - use 2-3 word phrases for best results)')
       .option('--max-hops <number>', 'Maximum path length', '5')
       .option('--min-similarity <number>', 'Semantic similarity threshold for phrase matching (default 50% - lower for broader matches)', '0.5')
-      .option('--show-evidence', 'Show sample evidence quotes for each concept in paths')
+      .option('--no-evidence', 'Hide evidence quotes (shown by default)')
+      .option('--no-images', 'Hide inline image display (shown by default if chafa installed)')
       .option('--no-grounding', 'Disable grounding strength calculation (faster)')
-      .option('--show-images', 'Display images inline in terminal using chafa (requires chafa to be installed)')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text')
       .addHelpText('after', `
@@ -291,7 +296,11 @@ Notes:
       .action(async (from, to, options) => {
         try {
           const client = createClientFromEnv();
-          const includeEvidence = options.showEvidence || false;
+          const config = getConfig();
+
+          // Use config defaults, allow CLI flags to override
+          const includeEvidence = options.evidence !== undefined ? options.evidence : config.getSearchShowEvidence();
+          const shouldShowImages = options.images !== undefined ? options.images : config.getSearchShowImages();
           const includeGrounding = options.grounding !== false; // Default: true
 
           // Auto-detect if using concept IDs (contain hyphens/underscores) or natural language
@@ -377,8 +386,6 @@ Notes:
 
                     // ADR-057: Handle images if available
                     if (inst.has_image && inst.source_id) {
-                      const config = getConfig();
-                      const shouldShowImages = options.showImages || false;
                       const downloadDir = options.download;
 
                       if (downloadDir) {
@@ -405,6 +412,8 @@ Notes:
                             const extension = detectImageFormat(imageBuffer);
                             await displayImageBufferWithChafa(imageBuffer, extension, {
                               width: config.getChafaWidth(),
+                              scale: config.getChafaScale(),
+                              align: config.getChafaAlign(),
                               colors: config.getChafaColors()
                             });
                           } catch (error: any) {

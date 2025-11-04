@@ -43,6 +43,10 @@ export interface ChafaOptions {
   width?: number;
   /** Height in characters (default: auto) */
   height?: number;
+  /** Scale factor (0.0-1.0, e.g., 0.3 for 1/3 width) */
+  scale?: number;
+  /** Alignment: left, center, right (default: left) */
+  align?: 'left' | 'center' | 'right';
   /** Color mode: 256 (default), 16, 2, or full (truecolor) */
   colors?: '256' | '16' | '2' | 'full';
   /** Symbol map: block, border, space, vhalf, etc. */
@@ -66,12 +70,27 @@ export function displayImageWithChafa(imagePath: string, options: ChafaOptions =
   const args: string[] = [];
 
   // Size options
+  const termWidth = process.stdout.columns || 80;
+  let targetWidth: number;
+
   if (options.width) {
-    args.push('--size', `${options.width}x${options.height || ''}`);
+    // Explicit width takes precedence
+    targetWidth = options.width;
+  } else if (options.scale) {
+    // Scale factor (e.g., 0.3 for 1/3 width)
+    targetWidth = Math.floor(termWidth * options.scale);
   } else {
-    // Auto-size to terminal width (leave some margin)
-    const termWidth = process.stdout.columns || 80;
-    args.push('--size', `${Math.min(termWidth - 4, 120)}x`);
+    // Default: use terminal width with margin
+    targetWidth = Math.min(termWidth - 4, 120);
+  }
+
+  args.push('--size', `${targetWidth}x${options.height || ''}`);
+
+  // Alignment
+  if (options.align) {
+    args.push('--align', options.align);
+  } else {
+    args.push('--align', 'left');
   }
 
   // Color mode
