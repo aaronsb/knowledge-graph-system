@@ -255,51 +255,40 @@ export const configCommand = new Command('config')
             });
           }
 
-          // Display section (ADR-057)
-          if (allConfig.display?.enableChafa !== undefined) {
-            configRows.push({
-              key: 'display.enableChafa',
-              value: allConfig.display.enableChafa ? 'true' : 'false',
-              category: 'display'
-            });
-          }
-          if (allConfig.display?.chafaScale !== undefined) {
-            configRows.push({
-              key: 'display.chafaScale',
-              value: allConfig.display.chafaScale.toString(),
-              category: 'display'
-            });
-          }
-          if (allConfig.display?.chafaAlign !== undefined) {
-            configRows.push({
-              key: 'display.chafaAlign',
-              value: allConfig.display.chafaAlign,
-              category: 'display'
-            });
-          }
-          if (allConfig.display?.chafaColors !== undefined) {
-            configRows.push({
-              key: 'display.chafaColors',
-              value: allConfig.display.chafaColors,
-              category: 'display'
-            });
-          }
+          // Display section (ADR-057) - show defaults even if not in config
+          configRows.push({
+            key: 'display.enableChafa',
+            value: config.isChafaEnabled() ? 'true' : 'false',
+            category: 'display'
+          });
+          configRows.push({
+            key: 'display.chafaScale',
+            value: config.getChafaScale().toString(),
+            category: 'display'
+          });
+          configRows.push({
+            key: 'display.chafaAlign',
+            value: config.getChafaAlign(),
+            category: 'display'
+          });
+          configRows.push({
+            key: 'display.chafaColors',
+            value: config.getChafaColors(),
+            category: 'display'
+          });
 
-          // Search section (ADR-057)
-          if (allConfig.search?.showEvidence !== undefined) {
-            configRows.push({
-              key: 'search.showEvidence',
-              value: allConfig.search.showEvidence ? 'true' : 'false',
-              category: 'search'
-            });
-          }
-          if (allConfig.search?.showImages !== undefined) {
-            configRows.push({
-              key: 'search.showImages',
-              value: allConfig.search.showImages ? 'true' : 'false',
-              category: 'search'
-            });
-          }
+          // Search section (ADR-057) - show defaults even if not in config
+          configRows.push({
+            key: 'search.showEvidence',
+            value: config.getSearchShowEvidence() ? 'true' : 'false',
+            category: 'search'
+          });
+          configRows.push({
+            key: 'search.showImages',
+            value: config.getSearchShowImages() ? 'true' : 'false',
+            category: 'search'
+          });
+
 
           if (configRows.length === 0) {
             console.log(colors.status.dim('\nNo configuration found\n'));
