@@ -528,6 +528,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {},
         },
       },
+      // ========== Image Retrieval (ADR-057) ==========
+      {
+        name: 'get_source_image',
+        description: `Retrieve the original image for a source node (ADR-057). Use this when concept evidence has image metadata (has_image=true, image_uri set). Returns base64-encoded image data. **Use Case:** Visual verification of extracted concepts - compare image to extracted descriptions to check if anything was missed. This enables a refinement loop: view image → create new description → upsert → concepts get associated with image.`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            source_id: {
+              type: 'string',
+              description: 'Source ID from concept instance (found in evidence with has_image=true)',
+            },
+          },
+          required: ['source_id'],
+        },
+      },
     ],
   };
 });
@@ -865,6 +880,42 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         };
+      }
+
+      // ========== Image Retrieval (ADR-057) ==========
+      case 'get_source_image': {
+        const source_id = toolArgs.source_id as string;
+
+        if (!source_id) {
+          throw new Error('source_id is required');
+        }
+
+        try {
+          // Get image as base64
+          const base64Image = await client.getSourceImageBase64(source_id);
+
+          return {
+            content: [
+              {
+                type: 'image',
+                data: base64Image,
+                mimeType: 'image/jpeg', // Could be enhanced to detect actual MIME type
+              },
+              {
+                type: 'text',
+                text: `Retrieved image for source: ${source_id}\n\nThis image was extracted from the knowledge graph. You can now:\n1. Compare the image to the extracted concepts to verify accuracy\n2. Create a new description if you notice anything that was missed\n3. Use kg ingest text to create a refined description that will be associated with this image\n\nThis creates an emergent refinement loop: visual verification → new description → concept association → improved graph understanding.`,
+              },
+            ],
+          };
+        } catch (error: any) {
+          // Check if this is a 404 (source not found or not an image)
+          if (error.response?.status === 404) {
+            throw new Error(`Source ${source_id} not found or is not an image source. Only image sources have retrievable images.`);
+          } else if (error.response?.status === 400) {
+            throw new Error(`Source ${source_id} is not an image (content_type != 'image')`);
+          }
+          throw error;
+        }
       }
 
       default:

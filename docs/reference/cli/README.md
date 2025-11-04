@@ -52,9 +52,6 @@ kg config [options]
 - `path` - Show configuration file path
 - `init` - Initialize configuration file with defaults
 - `reset` - Reset configuration to defaults
-- `enable-mcp` - Enable an MCP tool
-- `disable-mcp` - Disable an MCP tool
-- `mcp` - Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
 - `auto-approve` - Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
 - `update-secret` - Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.
 - `json` - JSON-based configuration operations (machine-friendly)
@@ -167,51 +164,6 @@ kg reset [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-y, --yes` | Skip confirmation | - |
-
-### enable-mcp
-
-Enable an MCP tool
-
-**Usage:**
-```bash
-kg enable-mcp <tool>
-```
-
-**Arguments:**
-
-- `<tool>` - MCP tool name
-
-### disable-mcp
-
-Disable an MCP tool
-
-**Usage:**
-```bash
-kg disable-mcp <tool>
-```
-
-**Arguments:**
-
-- `<tool>` - MCP tool name
-
-### mcp
-
-Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
-
-**Usage:**
-```bash
-kg mcp [tool]
-```
-
-**Arguments:**
-
-- `<tool>` - Specific MCP tool name (optional). Omit to show all MCP tools.
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--json` | Output as JSON | - |
 
 ### auto-approve
 
@@ -797,8 +749,10 @@ kg query <query>
 |--------|-------------|---------|
 | `-l, --limit <number>` | Maximum number of results to return | `"10"` |
 | `--min-similarity <number>` | Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches) | `"0.7"` |
-| `--show-evidence` | Show sample evidence quotes from source documents | - |
+| `--no-evidence` | Hide evidence quotes (shown by default) | - |
+| `--no-images` | Hide inline image display (shown by default if chafa installed) | - |
 | `--no-grounding` | Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results | - |
+| `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
 
 ### details
@@ -862,8 +816,10 @@ kg connect <from> <to>
 |--------|-------------|---------|
 | `--max-hops <number>` | Maximum path length | `"5"` |
 | `--min-similarity <number>` | Semantic similarity threshold for phrase matching (default 50% - lower for broader matches) | `"0.5"` |
-| `--show-evidence` | Show sample evidence quotes for each concept in paths | - |
+| `--no-evidence` | Hide evidence quotes (shown by default) | - |
+| `--no-images` | Hide inline image display (shown by default if chafa installed) | - |
 | `--no-grounding` | Disable grounding strength calculation (faster) | - |
+| `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text | - |
 
 

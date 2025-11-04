@@ -161,6 +161,11 @@ export interface ConceptInstance {
   paragraph: number;
   source_id: string;
   full_text?: string; // Full chunk text for grounding
+  // ADR-057: Image metadata
+  content_type?: string; // 'image' for image sources, 'text' or null for text
+  has_image?: boolean; // True if source has associated image
+  image_uri?: string; // URI to retrieve image: /api/sources/{source_id}/image
+  minio_object_key?: string; // MinIO object key (internal use)
 }
 
 export interface ConceptRelationship {

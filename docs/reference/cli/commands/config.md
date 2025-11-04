@@ -20,9 +20,6 @@ kg config [options]
 - `path` - Show configuration file path
 - `init` - Initialize configuration file with defaults
 - `reset` - Reset configuration to defaults
-- `enable-mcp` - Enable an MCP tool
-- `disable-mcp` - Disable an MCP tool
-- `mcp` - Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
 - `auto-approve` - Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
 - `update-secret` - Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.
 - `json` - JSON-based configuration operations (machine-friendly)
@@ -135,51 +132,6 @@ kg reset [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-y, --yes` | Skip confirmation | - |
-
-### enable-mcp
-
-Enable an MCP tool
-
-**Usage:**
-```bash
-kg enable-mcp <tool>
-```
-
-**Arguments:**
-
-- `<tool>` - MCP tool name
-
-### disable-mcp
-
-Disable an MCP tool
-
-**Usage:**
-```bash
-kg disable-mcp <tool>
-```
-
-**Arguments:**
-
-- `<tool>` - MCP tool name
-
-### mcp
-
-Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.
-
-**Usage:**
-```bash
-kg mcp [tool]
-```
-
-**Arguments:**
-
-- `<tool>` - Specific MCP tool name (optional). Omit to show all MCP tools.
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--json` | Output as JSON | - |
 
 ### auto-approve
 

@@ -135,12 +135,13 @@ async def search_concepts(request: SearchRequest):
                     except Exception as e:
                         logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
-                # Fetch sample evidence instances if requested
+                # Fetch sample evidence instances if requested (ADR-057: include image metadata)
                 sample_evidence = None
                 if request.include_evidence:
                     evidence_instances_query = client._execute_cypher(
                         f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                        f"s.content_type as content_type, s.minio_object_key as minio_object_key "
                         f"ORDER BY s.document, s.paragraph "
                         f"LIMIT 3"  # Sample first 3 instances
                     )
@@ -150,7 +151,11 @@ async def search_concepts(request: SearchRequest):
                                 quote=e['quote'],
                                 document=e['document'],
                                 paragraph=e['paragraph'],
-                                source_id=e['source_id']
+                                source_id=e['source_id'],
+                                content_type=e.get('content_type'),
+                                has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
+                                image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
+                                minio_object_key=e.get('minio_object_key')
                             )
                             for e in evidence_instances_query
                         ]
@@ -214,12 +219,13 @@ async def search_concepts(request: SearchRequest):
                         except Exception as e:
                             logger.warning(f"Failed to calculate grounding for top match {top_concept_id}: {e}")
 
-                    # Fetch sample evidence for top match if requested
+                    # Fetch sample evidence for top match if requested (ADR-057: include image metadata)
                     top_sample_evidence = None
                     if request.include_evidence:
                         top_evidence_instances_query = client._execute_cypher(
                             f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                            f"s.content_type as content_type, s.minio_object_key as minio_object_key "
                             f"ORDER BY s.document, s.paragraph "
                             f"LIMIT 3"
                         )
@@ -229,7 +235,11 @@ async def search_concepts(request: SearchRequest):
                                     quote=e['quote'],
                                     document=e['document'],
                                     paragraph=e['paragraph'],
-                                    source_id=e['source_id']
+                                    source_id=e['source_id'],
+                                    content_type=e.get('content_type'),
+                                    has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
+                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
+                                    minio_object_key=e.get('minio_object_key')
                                 )
                                 for e in top_evidence_instances_query
                             ]
@@ -319,7 +329,7 @@ async def get_concept_details(
         concept = concept_result['c']
         documents = concept_result['documents']
 
-        # Get instances
+        # Get instances (ADR-057: include image metadata)
         instances_result = client._execute_cypher(f"""
             MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)
             MATCH (i)-[:FROM_SOURCE]->(s:Source)
@@ -328,7 +338,9 @@ async def get_concept_details(
                 s.document as document,
                 s.paragraph as paragraph,
                 s.source_id as source_id,
-                s.full_text as full_text
+                s.full_text as full_text,
+                s.content_type as content_type,
+                s.minio_object_key as minio_object_key
             ORDER BY s.document, s.paragraph
         """)
 
@@ -338,7 +350,12 @@ async def get_concept_details(
                 document=record['document'],
                 paragraph=record['paragraph'],
                 source_id=record['source_id'],
-                full_text=record.get('full_text')
+                full_text=record.get('full_text'),
+                # ADR-057: Image metadata
+                content_type=record.get('content_type'),
+                has_image=record.get('content_type') == 'image' and record.get('minio_object_key') is not None,
+                image_uri=f"/api/sources/{record['source_id']}/image" if record.get('content_type') == 'image' and record.get('minio_object_key') else None,
+                minio_object_key=record.get('minio_object_key')
             )
             for record in (instances_result or [])
         ]
@@ -602,12 +619,13 @@ async def find_connection(request: FindConnectionRequest):
                         except Exception as e:
                             logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
-                    # Fetch sample evidence if requested
+                    # Fetch sample evidence if requested (ADR-057: include image metadata)
                     sample_evidence = None
                     if request.include_evidence and concept_id:
                         evidence_query = client._execute_cypher(
                             f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                            f"s.content_type as content_type, s.minio_object_key as minio_object_key "
                             f"ORDER BY s.document, s.paragraph "
                             f"LIMIT 3"
                         )
@@ -617,7 +635,11 @@ async def find_connection(request: FindConnectionRequest):
                                     quote=e['quote'],
                                     document=e['document'],
                                     paragraph=e['paragraph'],
-                                    source_id=e['source_id']
+                                    source_id=e['source_id'],
+                                    content_type=e.get('content_type'),
+                                    has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
+                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
+                                    minio_object_key=e.get('minio_object_key')
                                 )
                                 for e in evidence_query
                             ]
@@ -807,12 +829,13 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                         except Exception as e:
                             logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
-                    # Fetch sample evidence if requested
+                    # Fetch sample evidence if requested (ADR-057: include image metadata)
                     sample_evidence = None
                     if request.include_evidence and concept_id:
                         evidence_query = client._execute_cypher(
                             f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id "
+                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                            f"s.content_type as content_type, s.minio_object_key as minio_object_key "
                             f"ORDER BY s.document, s.paragraph "
                             f"LIMIT 3"
                         )
@@ -822,7 +845,11 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                                     quote=e['quote'],
                                     document=e['document'],
                                     paragraph=e['paragraph'],
-                                    source_id=e['source_id']
+                                    source_id=e['source_id'],
+                                    content_type=e.get('content_type'),
+                                    has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
+                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
+                                    minio_object_key=e.get('minio_object_key')
                                 )
                                 for e in evidence_query
                             ]

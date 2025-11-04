@@ -255,23 +255,40 @@ export const configCommand = new Command('config')
             });
           }
 
-          // MCP section
-          if (allConfig.mcp?.enabled !== undefined) {
-            configRows.push({
-              key: 'mcp.enabled',
-              value: allConfig.mcp.enabled ? 'true' : 'false',
-              category: 'mcp'
-            });
-          }
-          if (allConfig.mcp?.tools) {
-            const toolCount = Object.keys(allConfig.mcp.tools).length;
-            const enabledCount = Object.values(allConfig.mcp.tools).filter(t => t.enabled).length;
-            configRows.push({
-              key: 'mcp.tools',
-              value: `${enabledCount}/${toolCount} enabled`,
-              category: 'mcp'
-            });
-          }
+          // Display section (ADR-057) - show defaults even if not in config
+          configRows.push({
+            key: 'display.enableChafa',
+            value: config.isChafaEnabled() ? 'true' : 'false',
+            category: 'display'
+          });
+          configRows.push({
+            key: 'display.chafaScale',
+            value: config.getChafaScale().toString(),
+            category: 'display'
+          });
+          configRows.push({
+            key: 'display.chafaAlign',
+            value: config.getChafaAlign(),
+            category: 'display'
+          });
+          configRows.push({
+            key: 'display.chafaColors',
+            value: config.getChafaColors(),
+            category: 'display'
+          });
+
+          // Search section (ADR-057) - show defaults even if not in config
+          configRows.push({
+            key: 'search.showEvidence',
+            value: config.getSearchShowEvidence() ? 'true' : 'false',
+            category: 'search'
+          });
+          configRows.push({
+            key: 'search.showImages',
+            value: config.getSearchShowImages() ? 'true' : 'false',
+            category: 'search'
+          });
+
 
           if (configRows.length === 0) {
             console.log(colors.status.dim('\nNo configuration found\n'));
@@ -306,6 +323,12 @@ export const configCommand = new Command('config')
                     if (val.includes('authenticated')) return colors.status.success(val);
                     if (val.includes('not authenticated')) return colors.status.warning(val);
                   }
+                  // Display section (ADR-057)
+                  if (row.key.startsWith('display.') && val === 'true') return colors.status.success(val);
+                  if (row.key.startsWith('display.') && val === 'false') return colors.status.dim(val);
+                  // Search section (ADR-057)
+                  if (row.key.startsWith('search.') && val === 'true') return colors.status.success(val);
+                  if (row.key.startsWith('search.') && val === 'false') return colors.status.dim(val);
                   return val;
                 }
               },
@@ -319,7 +342,8 @@ export const configCommand = new Command('config')
                     case 'auth': return colors.ui.value('auth');
                     case 'connection': return colors.ui.value('connection');
                     case 'behavior': return colors.ui.value('behavior');
-                    case 'mcp': return colors.ui.value('mcp');
+                    case 'display': return colors.ui.value('display');
+                    case 'search': return colors.ui.value('search');
                     default: return type;
                   }
                 }
@@ -334,8 +358,7 @@ export const configCommand = new Command('config')
 
           // Helpful footer
           console.log(colors.status.dim(`Config file: ${config.getConfigPath()}`));
-          console.log(colors.status.dim(`Usage: kg config set <key> <value>`));
-          console.log(colors.status.dim(`MCP tools: kg config mcp list\n`));
+          console.log(colors.status.dim(`Usage: kg config set <key> <value>\n`));
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to list config'));
           console.error(colors.status.error(error.message));
@@ -400,137 +423,6 @@ export const configCommand = new Command('config')
           console.log(colors.status.dim(`Location: ${config.getConfigPath()}\n`));
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to reset config'));
-          console.error(colors.status.error(error.message));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('enable-mcp')
-      .description('Enable an MCP tool')
-      .argument('<tool>', 'MCP tool name')
-      .action(async (tool) => {
-        try {
-          const config = getConfig();
-          config.enableMcpTool(tool);
-          console.log(colors.status.success(`✓ Enabled MCP tool: ${colors.ui.value(tool)}`));
-        } catch (error: any) {
-          console.error(colors.status.error('✗ Failed to enable MCP tool'));
-          console.error(colors.status.error(error.message));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('disable-mcp')
-      .description('Disable an MCP tool')
-      .argument('<tool>', 'MCP tool name')
-      .action(async (tool) => {
-        try {
-          const config = getConfig();
-          config.disableMcpTool(tool);
-          console.log(colors.status.success(`✓ Disabled MCP tool: ${colors.ui.value(tool)}`));
-        } catch (error: any) {
-          console.error(colors.status.error('✗ Failed to disable MCP tool'));
-          console.error(colors.status.error(error.message));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('mcp')
-      .description('Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.')
-      .argument('[tool]', 'Specific MCP tool name (optional). Omit to show all MCP tools.')
-      .option('--json', 'Output as JSON')
-      .action(async (tool, options) => {
-        try {
-          const config = getConfig();
-
-          if (tool) {
-            // Show specific tool
-            const status = config.getMcpToolStatus(tool);
-            const tools = config.listMcpTools();
-            const toolConfig = tools[tool];
-
-            if (!toolConfig) {
-              console.error(colors.status.error(`✗ MCP tool '${tool}' not found`));
-              process.exit(1);
-            }
-
-            if (options.json) {
-              console.log(JSON.stringify({ [tool]: toolConfig }, null, 2));
-            } else {
-              console.log('\n' + separator());
-              console.log(colors.ui.title(`MCP Tool: ${tool}`));
-              console.log(separator());
-              const statusText = status ? colors.status.success('✓ enabled') : colors.status.dim('✗ disabled');
-              console.log(`\n${colors.ui.key('Status:')} ${statusText}`);
-              if (toolConfig.description) {
-                console.log(`${colors.ui.key('Description:')} ${colors.ui.value(toolConfig.description)}`);
-              }
-              console.log('\n' + separator());
-            }
-          } else {
-            // Show all tools as table
-            const tools = config.listMcpTools();
-
-            if (options.json) {
-              console.log(JSON.stringify({ tools }, null, 2));
-              return;
-            }
-
-            console.log('\n' + separator());
-            console.log(colors.ui.title('🔧 MCP Tools'));
-            console.log(separator());
-
-            const toolRows = Object.entries(tools).map(([name, toolConfig]) => ({
-              name,
-              enabled: toolConfig.enabled,
-              description: toolConfig.description || '-'
-            }));
-
-            if (toolRows.length === 0) {
-              console.log(colors.status.dim('\nNo MCP tools configured\n'));
-              return;
-            }
-
-            const table = new Table<{ name: string; enabled: boolean; description: string }>({
-              columns: [
-                {
-                  header: 'Tool Name',
-                  field: 'name',
-                  type: 'heading',
-                  width: 'flex',
-                  priority: 2
-                },
-                {
-                  header: 'Enabled',
-                  field: 'enabled',
-                  type: 'text',
-                  width: 10,
-                  customFormat: (enabled) => enabled ? colors.status.success('✓') : colors.status.dim('✗')
-                },
-                {
-                  header: 'Description',
-                  field: 'description',
-                  type: 'text',
-                  width: 'flex',
-                  priority: 3,
-                  truncate: true
-                }
-              ],
-              spacing: 2,
-              showHeader: true,
-              showSeparator: true
-            });
-
-            table.print(toolRows);
-
-            console.log(colors.status.dim(`Enable tool: kg config enable-mcp <tool-name>`));
-            console.log(colors.status.dim(`Disable tool: kg config disable-mcp <tool-name>\n`));
-          }
-        } catch (error: any) {
-          console.error(colors.status.error('✗ Failed to get MCP config'));
           console.error(colors.status.error(error.message));
           process.exit(1);
         }

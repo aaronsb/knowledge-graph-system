@@ -39,8 +39,10 @@ kg query <query>
 |--------|-------------|---------|
 | `-l, --limit <number>` | Maximum number of results to return | `"10"` |
 | `--min-similarity <number>` | Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches) | `"0.7"` |
-| `--show-evidence` | Show sample evidence quotes from source documents | - |
+| `--no-evidence` | Hide evidence quotes (shown by default) | - |
+| `--no-images` | Hide inline image display (shown by default if chafa installed) | - |
 | `--no-grounding` | Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results | - |
+| `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
 
 ### details
@@ -104,6 +106,8 @@ kg connect <from> <to>
 |--------|-------------|---------|
 | `--max-hops <number>` | Maximum path length | `"5"` |
 | `--min-similarity <number>` | Semantic similarity threshold for phrase matching (default 50% - lower for broader matches) | `"0.5"` |
-| `--show-evidence` | Show sample evidence quotes for each concept in paths | - |
+| `--no-evidence` | Hide evidence quotes (shown by default) | - |
+| `--no-images` | Hide inline image display (shown by default if chafa installed) | - |
 | `--no-grounding` | Disable grounding strength calculation (faster) | - |
+| `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text | - |

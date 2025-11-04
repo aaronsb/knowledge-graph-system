@@ -7,6 +7,15 @@ import { createClientFromEnv } from '../api/client';
 import * as colors from './colors';
 import { getConceptColor, getRelationshipColor, coloredPercentage, separator } from './colors';
 import { configureColoredHelp } from './help-formatter';
+import { getConfig } from '../lib/config';
+import {
+  isChafaAvailable,
+  displayImageBufferWithChafa,
+  saveImageToFile,
+  detectImageFormat,
+  printChafaInstallInstructions
+} from '../lib/terminal-images';
+import * as nodePath from 'path';
 
 /**
  * Format grounding strength for display (ADR-044)
@@ -34,13 +43,20 @@ const queryCommand = new Command('query')
       .argument('<query>', 'Natural language search query (2-3 words work best)')
       .option('-l, --limit <number>', 'Maximum number of results to return', '10')
       .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches)', '0.7')
-      .option('--show-evidence', 'Show sample evidence quotes from source documents')
+      .option('--no-evidence', 'Hide evidence quotes (shown by default)')
+      .option('--no-images', 'Hide inline image display (shown by default if chafa installed)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
+      .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (query, options) => {
         try {
           const client = createClientFromEnv();
-          const includeEvidence = options.showEvidence || false;
+          const config = getConfig();
+
+          // Use config defaults, allow CLI flags to override
+          // Commander.js --no-evidence flag sets options.evidence to false
+          const includeEvidence = options.evidence !== undefined ? options.evidence : config.getSearchShowEvidence();
+          const shouldShowImages = options.images !== undefined ? options.images : config.getSearchShowImages();
           const includeGrounding = options.grounding !== false; // Default: true
 
           const result = await client.searchConcepts({
@@ -62,7 +78,7 @@ const queryCommand = new Command('query')
           console.log(separator());
           console.log(colors.status.success(`\n✓ Found ${result.count} concepts:\n`));
 
-          result.results.forEach((concept, i) => {
+          for (const [i, concept] of result.results.entries()) {
             const scoreColor = getConceptColor(concept.score);
             console.log(colors.ui.bullet('●') + ' ' + colors.concept.label(`${i + 1}. ${concept.label}`));
             console.log(`   ${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
@@ -78,17 +94,62 @@ const queryCommand = new Command('query')
             // Display sample evidence if requested
             if (includeEvidence && concept.sample_evidence && concept.sample_evidence.length > 0) {
               console.log(`   ${colors.ui.key('Sample Evidence:')}`);
-              concept.sample_evidence.forEach((inst, idx) => {
+              for (const [idx, inst] of concept.sample_evidence.entries()) {
                 const truncatedQuote = inst.quote.length > 100
                   ? inst.quote.substring(0, 100) + '...'
                   : inst.quote;
                 console.log(`      ${colors.ui.bullet(`${idx + 1}.`)} ${colors.evidence.document(inst.document)} ${colors.evidence.paragraph(`(para ${inst.paragraph})`)}`);
                 console.log(`         ${colors.evidence.quote(`"${truncatedQuote}"`)}`);
-              });
+
+                // ADR-057: Handle images if available
+                if (inst.has_image && inst.source_id) {
+                  const downloadDir = options.download;
+
+                  if (downloadDir) {
+                    // Download mode
+                    try {
+                      console.log(colors.status.dim(`         📥 Downloading image from ${inst.source_id}...`));
+                      const imageBuffer = await client.getSourceImage(inst.source_id);
+                      const extension = detectImageFormat(imageBuffer);
+                      const filename = `${inst.source_id}${extension}`;
+                      const outputPath = nodePath.join(downloadDir, filename);
+
+                      if (saveImageToFile(imageBuffer, outputPath)) {
+                        console.log(colors.status.success(`         ✓ Saved to ${outputPath}`));
+                      }
+                    } catch (error: any) {
+                      console.log(colors.status.error(`         ✗ Failed to download image: ${error.message}`));
+                    }
+                  } else if (shouldShowImages && config.isChafaEnabled()) {
+                    // Display mode
+                    if (isChafaAvailable()) {
+                      try {
+                        console.log(colors.status.dim(`         🖼️  Displaying image from ${inst.source_id}...`));
+                        const imageBuffer = await client.getSourceImage(inst.source_id);
+                        const extension = detectImageFormat(imageBuffer);
+                        await displayImageBufferWithChafa(imageBuffer, extension, {
+                          width: config.getChafaWidth(),
+                          scale: config.getChafaScale(),
+                          align: config.getChafaAlign(),
+                          colors: config.getChafaColors()
+                        });
+                      } catch (error: any) {
+                        console.log(colors.status.error(`         ✗ Failed to display image: ${error.message}`));
+                      }
+                    } else {
+                      console.log(colors.status.warning(`         🖼️  Image available (source: ${inst.source_id})`));
+                      printChafaInstallInstructions();
+                    }
+                  } else {
+                    // Just indicate image is available
+                    console.log(colors.status.dim(`         🖼️  Image available (use --show-images to display or --download <dir> to save)`));
+                  }
+                }
+              }
             }
 
             console.log();
-          });
+          }
 
           // Show hint if additional results available below threshold
           if (result.below_threshold_count && result.below_threshold_count > 0 && result.suggested_threshold) {
@@ -214,8 +275,10 @@ const connectCommand = new Command('connect')
       .argument('<to>', 'Target concept (exact ID or descriptive phrase - use 2-3 word phrases for best results)')
       .option('--max-hops <number>', 'Maximum path length', '5')
       .option('--min-similarity <number>', 'Semantic similarity threshold for phrase matching (default 50% - lower for broader matches)', '0.5')
-      .option('--show-evidence', 'Show sample evidence quotes for each concept in paths')
+      .option('--no-evidence', 'Hide evidence quotes (shown by default)')
+      .option('--no-images', 'Hide inline image display (shown by default if chafa installed)')
       .option('--no-grounding', 'Disable grounding strength calculation (faster)')
+      .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text')
       .addHelpText('after', `
 Examples:
@@ -233,7 +296,11 @@ Notes:
       .action(async (from, to, options) => {
         try {
           const client = createClientFromEnv();
-          const includeEvidence = options.showEvidence || false;
+          const config = getConfig();
+
+          // Use config defaults, allow CLI flags to override
+          const includeEvidence = options.evidence !== undefined ? options.evidence : config.getSearchShowEvidence();
+          const shouldShowImages = options.images !== undefined ? options.images : config.getSearchShowImages();
           const includeGrounding = options.grounding !== false; // Default: true
 
           // Auto-detect if using concept IDs (contain hyphens/underscores) or natural language
@@ -297,9 +364,9 @@ Notes:
           } else {
             console.log(colors.status.success(`✓ Found ${result.count} path(s):\n`));
 
-            result.paths.forEach((path, i) => {
+            for (const [i, path] of result.paths.entries()) {
               console.log(colors.path.distance(`Path ${i + 1}`) + colors.status.dim(` (${path.hops} hops):`));
-              path.nodes.forEach((node, j) => {
+              for (const [j, node] of path.nodes.entries()) {
                 console.log(`  ${colors.path.node(node.label)} ${colors.concept.id(`(${node.id})`)}`);
 
                 // Display grounding strength if available (ADR-044)
@@ -310,13 +377,58 @@ Notes:
                 // Display sample evidence if requested
                 if (includeEvidence && node.sample_evidence && node.sample_evidence.length > 0) {
                   console.log(`     ${colors.ui.key('Evidence:')}`);
-                  node.sample_evidence.forEach((inst, idx) => {
+                  for (const [idx, inst] of node.sample_evidence.entries()) {
                     const truncatedQuote = inst.quote.length > 80
                       ? inst.quote.substring(0, 80) + '...'
                       : inst.quote;
                     console.log(`        ${colors.ui.bullet(`${idx + 1}.`)} ${colors.evidence.document(inst.document)} ${colors.evidence.paragraph(`(para ${inst.paragraph})`)}`);
                     console.log(`           ${colors.evidence.quote(`"${truncatedQuote}"`)}`);
-                  });
+
+                    // ADR-057: Handle images if available
+                    if (inst.has_image && inst.source_id) {
+                      const downloadDir = options.download;
+
+                      if (downloadDir) {
+                        // Download mode
+                        try {
+                          console.log(colors.status.dim(`           📥 Downloading image from ${inst.source_id}...`));
+                          const imageBuffer = await client.getSourceImage(inst.source_id);
+                          const extension = detectImageFormat(imageBuffer);
+                          const filename = `${inst.source_id}${extension}`;
+                          const outputPath = nodePath.join(downloadDir, filename);
+
+                          if (saveImageToFile(imageBuffer, outputPath)) {
+                            console.log(colors.status.success(`           ✓ Saved to ${outputPath}`));
+                          }
+                        } catch (error: any) {
+                          console.log(colors.status.error(`           ✗ Failed to download image: ${error.message}`));
+                        }
+                      } else if (shouldShowImages && config.isChafaEnabled()) {
+                        // Display mode
+                        if (isChafaAvailable()) {
+                          try {
+                            console.log(colors.status.dim(`           🖼️  Displaying image from ${inst.source_id}...`));
+                            const imageBuffer = await client.getSourceImage(inst.source_id);
+                            const extension = detectImageFormat(imageBuffer);
+                            await displayImageBufferWithChafa(imageBuffer, extension, {
+                              width: config.getChafaWidth(),
+                              scale: config.getChafaScale(),
+                              align: config.getChafaAlign(),
+                              colors: config.getChafaColors()
+                            });
+                          } catch (error: any) {
+                            console.log(colors.status.error(`           ✗ Failed to display image: ${error.message}`));
+                          }
+                        } else {
+                          console.log(colors.status.warning(`           🖼️  Image available (source: ${inst.source_id})`));
+                          printChafaInstallInstructions();
+                        }
+                      } else {
+                        // Just indicate image is available
+                        console.log(colors.status.dim(`           🖼️  Image available (use --show-images to display or --download <dir> to save)`));
+                      }
+                    }
+                  }
                 }
 
                 if (j < path.relationships.length) {
@@ -324,9 +436,9 @@ Notes:
                   const relColor = getRelationshipColor(relType);
                   console.log(`    ${colors.path.arrow('↓')} ${relColor(relType)}`);
                 }
-              });
+              }
               console.log();
-            });
+            }
           }
           console.log(separator());
         } catch (error: any) {

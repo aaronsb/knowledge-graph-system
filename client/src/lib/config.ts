@@ -38,6 +38,21 @@ export interface AuthTokenConfig {
   role?: string;                   // Cached role
 }
 
+export interface DisplayConfig {
+  // ADR-057: Terminal image display with chafa
+  enableChafa?: boolean;           // Enable inline terminal image display (default: true if chafa installed)
+  chafaWidth?: number;             // Terminal width for image display (default: auto)
+  chafaScale?: number;             // Scale factor 0.0-1.0 (e.g., 0.3 for 1/3 width, default: 0.3)
+  chafaAlign?: 'left' | 'center' | 'right';  // Image alignment (default: left)
+  chafaColors?: '256' | '16' | '2' | 'full';  // Color mode (default: 256)
+}
+
+export interface SearchConfig {
+  // ADR-057: Search command display defaults
+  showEvidence?: boolean;          // Show evidence quotes by default in search results (default: true)
+  showImages?: boolean;            // Display images inline by default in search results (default: true)
+}
+
 export interface KgConfig {
   username?: string;
   secret?: string;  // API key (never store password!)
@@ -47,6 +62,8 @@ export interface KgConfig {
   auth?: AuthTokenConfig;   // ADR-054: OAuth 2.0 client credentials
   mcp?: McpConfig;
   aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
+  display?: DisplayConfig;  // ADR-057: Display preferences
+  search?: SearchConfig;    // ADR-057: Search command defaults
 }
 
 export class ConfigManager {
@@ -117,6 +134,17 @@ export class ConfigManager {
       // Example: zsh users with 'alias cat=bat' can use this to prevent expansion conflicts
       aliases: {
         cat: ['bat']  // Allow 'kg bat' as alias for 'kg cat' (handles zsh cat→bat expansion)
+      },
+      // ADR-057: Display and search defaults
+      display: {
+        enableChafa: true,   // Enable chafa if available
+        chafaScale: 0.3,     // Default to 1/3 terminal width
+        chafaAlign: 'left',  // Default to left alignment
+        chafaColors: '256'   // Default to 256 colors for best compatibility
+      },
+      search: {
+        showEvidence: true,  // Show evidence quotes by default
+        showImages: true     // Display images inline by default
       }
     };
   }
@@ -488,6 +516,167 @@ export class ConfigManager {
 
       this.save();
     }
+  }
+
+  // ========== Display Methods (ADR-057) ==========
+
+  /**
+   * Check if chafa terminal image display is enabled
+   * If not explicitly set, defaults to true (will check for chafa availability at runtime)
+   *
+   * @returns true if chafa display is enabled in config
+   */
+  isChafaEnabled(): boolean {
+    return this.config.display?.enableChafa ?? true;
+  }
+
+  /**
+   * Enable or disable chafa terminal image display
+   *
+   * @param enabled Whether to enable chafa
+   */
+  setChafaEnabled(enabled: boolean): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.enableChafa = enabled;
+    this.save();
+  }
+
+  /**
+   * Get chafa display width
+   *
+   * @returns Width in characters, or undefined for auto-sizing
+   */
+  getChafaWidth(): number | undefined {
+    return this.config.display?.chafaWidth;
+  }
+
+  /**
+   * Set chafa display width
+   *
+   * @param width Width in characters (undefined for auto)
+   */
+  setChafaWidth(width: number | undefined): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.chafaWidth = width;
+    this.save();
+  }
+
+  /**
+   * Get chafa color mode
+   *
+   * @returns Color mode ('256', '16', '2', or 'full')
+   */
+  getChafaColors(): '256' | '16' | '2' | 'full' {
+    return this.config.display?.chafaColors ?? '256';
+  }
+
+  /**
+   * Set chafa color mode
+   *
+   * @param colors Color mode
+   */
+  setChafaColors(colors: '256' | '16' | '2' | 'full'): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.chafaColors = colors;
+    this.save();
+  }
+
+  /**
+   * Get chafa scale factor
+   *
+   * @returns Scale factor (0.0-1.0, e.g., 0.3 for 1/3 width)
+   */
+  getChafaScale(): number {
+    return this.config.display?.chafaScale ?? 0.3;
+  }
+
+  /**
+   * Set chafa scale factor
+   *
+   * @param scale Scale factor (0.0-1.0)
+   */
+  setChafaScale(scale: number): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.chafaScale = scale;
+    this.save();
+  }
+
+  /**
+   * Get chafa alignment
+   *
+   * @returns Alignment ('left', 'center', or 'right')
+   */
+  getChafaAlign(): 'left' | 'center' | 'right' {
+    return this.config.display?.chafaAlign ?? 'left';
+  }
+
+  /**
+   * Set chafa alignment
+   *
+   * @param align Alignment
+   */
+  setChafaAlign(align: 'left' | 'center' | 'right'): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.chafaAlign = align;
+    this.save();
+  }
+
+  // ========== Search Methods (ADR-057) ==========
+
+  /**
+   * Check if search should show evidence by default
+   * Defaults to true for rich terminal experience
+   *
+   * @returns true if evidence should be shown by default
+   */
+  getSearchShowEvidence(): boolean {
+    return this.config.search?.showEvidence ?? true;
+  }
+
+  /**
+   * Set whether search should show evidence by default
+   *
+   * @param enabled Whether to show evidence by default
+   */
+  setSearchShowEvidence(enabled: boolean): void {
+    if (!this.config.search) {
+      this.config.search = {};
+    }
+    this.config.search.showEvidence = enabled;
+    this.save();
+  }
+
+  /**
+   * Check if search should show images by default
+   * Defaults to true for rich terminal experience
+   *
+   * @returns true if images should be shown by default
+   */
+  getSearchShowImages(): boolean {
+    return this.config.search?.showImages ?? true;
+  }
+
+  /**
+   * Set whether search should show images by default
+   *
+   * @param enabled Whether to show images by default
+   */
+  setSearchShowImages(enabled: boolean): void {
+    if (!this.config.search) {
+      this.config.search = {};
+    }
+    this.config.search.showImages = enabled;
+    this.save();
   }
 }
 
