@@ -560,3 +560,130 @@ function printJobResult(result: any) {
     console.log(chalk.gray(`  Total: ${result.cost.total}`));
   }
 }
+
+// Ingest image command (ADR-057)
+ingestCommand
+  .command('image <path>')
+  .description('Ingest an image file using multimodal vision AI (ADR-057). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/')
+  .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
+  .option('-f, --force', 'Force re-ingestion even if duplicate', false)
+  .option('--no-approve', 'Require manual approval before processing. Default: auto-approve.')
+  .option('--vision-provider <provider>', 'Vision provider: openai (default), anthropic, ollama', 'openai')
+  .option('--vision-model <model>', 'Vision model name (optional, uses provider default)')
+  .option('--filename <name>', 'Override filename for tracking')
+  .option('-w, --wait', 'Wait for job completion', false)
+  .showHelpAfterError()
+  .action(async (path: string, options) => {
+    try {
+      // Validate file exists
+      if (!fs.existsSync(path)) {
+        console.error(chalk.red(`✗ Image file not found: ${path}`));
+        process.exit(1);
+      }
+
+      // Validate file is an image
+      const ext = nodePath.extname(path).toLowerCase();
+      const supportedFormats = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'];
+      if (!supportedFormats.includes(ext)) {
+        console.error(chalk.red(`✗ Unsupported image format: ${ext}`));
+        console.error(chalk.gray(`  Supported: ${supportedFormats.join(', ')}`));
+        process.exit(1);
+      }
+
+      const client = createClientFromEnv();
+      const config = getConfig();
+
+      const autoApprove = options.approve !== false;
+
+      const spinner = ora('Submitting image for ingestion...').start();
+
+      try {
+        // Read file
+        const fileBuffer = fs.readFileSync(path);
+        const stats = fs.statSync(path);
+
+        // Check file size (10MB limit)
+        const maxSize = 10 * 1024 * 1024;
+        if (stats.size > maxSize) {
+          spinner.fail('Image too large');
+          console.error(chalk.red(`✗ Image size ${(stats.size / 1024 / 1024).toFixed(2)}MB exceeds 10MB limit`));
+          process.exit(1);
+        }
+
+        spinner.text = `Uploading image (${(stats.size / 1024).toFixed(1)}KB)...`;
+
+        // Prepare request
+        const request = {
+          ontology: options.ontology,
+          filename: options.filename,
+          force: options.force,
+          auto_approve: autoApprove,
+          vision_provider: options.visionProvider,
+          vision_model: options.visionModel,
+          // ADR-051: Source metadata
+          source_type: 'file' as const,
+          source_path: nodePath.resolve(path),
+          source_hostname: os.hostname(),
+        };
+
+        // Submit to API using ingestImage method
+        const result = await client.ingestImage(path, request);
+
+        // Check if duplicate
+        if ('duplicate' in result && result.duplicate) {
+          spinner.warn('Duplicate detected');
+          console.log(chalk.yellow('\n⚠️  This image has already been ingested'));
+          console.log(chalk.gray(`  Previous job: ${result.existing_job_id}`));
+          console.log(chalk.gray(`  Status: ${result.status}`));
+          console.log(chalk.gray(`\n  ${result.message}`));
+
+          if (result.use_force) {
+            console.log(chalk.gray(`  ${result.use_force}`));
+          }
+
+          return;
+        }
+
+        // Type narrowed: result is JobSubmitResponse
+        const submitResult = result as JobSubmitResponse;
+        const jobId = submitResult.job_id;
+        spinner.succeed(`Image submitted (Job ${jobId})`);
+
+        console.log(chalk.blue('\n📸 Image Ingestion Job Created'));
+        console.log(chalk.gray(`  Job ID: ${jobId}`));
+        console.log(chalk.gray(`  Status: ${submitResult.status}`));
+        console.log(chalk.gray(`  Ontology: ${options.ontology}`));
+        console.log(chalk.gray(`  File: ${nodePath.basename(path)} (${(stats.size / 1024).toFixed(1)}KB)`));
+        console.log(chalk.gray(`  Vision: ${options.visionProvider || 'openai'} (GPT-4o)`));
+        console.log(chalk.gray(`\n  Monitor: ${chalk.cyan(`kg jobs status ${jobId} --watch`)}`));
+
+        // Wait for completion if requested
+        if (options.wait) {
+          await pollJobWithProgress(client, jobId);
+        }
+
+      } catch (error: any) {
+        spinner.fail('Image ingestion failed');
+
+        if (error.response) {
+          const status = error.response.status;
+          const detail = error.response.data?.detail || error.response.statusText;
+
+          console.error(chalk.red(`\n✗ API Error (${status}): ${detail}`));
+
+          if (status === 401 || status === 403) {
+            console.error(chalk.gray('\n  Authentication required. Please login:'));
+            console.error(chalk.cyan('  kg login'));
+          }
+        } else {
+          console.error(chalk.red(`\n✗ ${error.message}`));
+        }
+
+        process.exit(1);
+      }
+
+    } catch (error: any) {
+      console.error(chalk.red(`\n✗ Error: ${error.message}`));
+      process.exit(1);
+    }
+  });

@@ -306,14 +306,25 @@ async def ingest_image(
     )
 
     job_data = {
-        "ontology": ontology,
-        "filename": use_filename,
         "content": base64.b64encode(prose_description.encode('utf-8')).decode('utf-8'),  # Store prose, not image
         "content_hash": content_hash,
+        "ontology": ontology,
+        "filename": use_filename,
+        "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
+        "processing_mode": processing_mode,
+        "options": {
+            "target_words": options.target_words,
+            "min_words": options.get_min_words(),
+            "max_words": options.get_max_words(),
+            "overlap_words": options.overlap_words
+        },
+        # ADR-051: Source metadata (optional, best-effort provenance)
+        "source_type": source_type or "api",
+        "source_path": source_path,
+        "source_hostname": source_hostname,
+        # Image-specific metadata (stored in job_data for tracking)
         "content_type": "image",  # Mark as image for tracking
         "original_filename": file.filename,
-        "options": options.dict(),
-        "processing_mode": processing_mode,
         "vision_metadata": {
             "provider": provider.get_provider_name(),
             "model": provider.get_model_name(),
@@ -321,22 +332,13 @@ async def ingest_image(
             "visual_embedding_model": "nomic-ai/nomic-embed-vision-v1.5",
             "visual_embedding_dimension": 768,
             "prose_length": len(prose_description)
-        },
-        # ADR-051: Source metadata
-        "source_metadata": {
-            "type": source_type or "api",
-            "path": source_path,
-            "hostname": source_hostname,
-            "ingested_at": datetime.now().isoformat(),
-            "ingested_by": current_user.username
         }
     }
 
     # Create job
-    job_id = queue.create_job(
-        job_type="ingest_image",  # Distinct job type for tracking
-        job_data=job_data,
-        created_by=current_user.username
+    job_id = queue.enqueue(
+        "ingest_image",  # Job type matches worker registration
+        job_data
     )
 
     # Run analysis in background

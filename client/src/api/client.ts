@@ -249,6 +249,59 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Ingest image (ADR-057)
+   */
+  async ingestImage(
+    filePath: string,
+    request: IngestRequest & {
+      vision_provider?: string;
+      vision_model?: string;
+    }
+  ): Promise<JobSubmitResponse | DuplicateJobResponse> {
+    const form = new FormData();
+    form.append('file', fs.createReadStream(filePath));
+    form.append('ontology', request.ontology);
+
+    if (request.filename) {
+      form.append('filename', request.filename);
+    }
+
+    if (request.force) {
+      form.append('force', 'true');
+    }
+
+    if (request.auto_approve) {
+      form.append('auto_approve', 'true');
+    }
+
+    if (request.vision_provider) {
+      form.append('vision_provider', request.vision_provider);
+    }
+
+    if (request.vision_model) {
+      form.append('vision_model', request.vision_model);
+    }
+
+    if (request.source_type) {
+      form.append('source_type', request.source_type);
+    }
+
+    if (request.source_path) {
+      form.append('source_path', request.source_path);
+    }
+
+    if (request.source_hostname) {
+      form.append('source_hostname', request.source_hostname);
+    }
+
+    const response = await this.client.post('/ingest/image', form, {
+      headers: form.getHeaders(),
+    });
+
+    return response.data;
+  }
+
+  /**
    * Get job status
    */
   async getJob(jobId: string): Promise<JobStatus> {
