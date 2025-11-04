@@ -223,6 +223,7 @@ export interface FindConnectionRequest {
 export interface PathNode {
   id: string;
   label: string;
+  description?: string; // Factual 1-2 sentence definition
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
   sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }

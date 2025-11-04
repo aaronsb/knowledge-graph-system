@@ -140,6 +140,9 @@ export function formatConnectionPaths(result: FindConnectionBySearchResponse): s
 
     path.nodes.forEach((node, j) => {
       output += `${node.label} (${node.id})\n`;
+      if (node.description) {
+        output += `${node.description}\n`;
+      }
 
       if (node.grounding_strength !== undefined && node.grounding_strength !== null) {
         output += `Grounding: ${formatGroundingStrength(node.grounding_strength)}\n`;
