@@ -4,9 +4,10 @@
 
 import { Command, Help } from 'commander';
 import * as colors from './colors';
+import ansis from 'ansis';
 
 /**
- * Format description text with markdown-like syntax and colors
+ * Format description text with markdown-like syntax and colors using ansis
  * Supports:
  * - Sentences ending with periods: regular white text
  * - Sentences ending with colons: bold cyan (section headers)
@@ -30,7 +31,7 @@ function formatDescription(text: string): string {
     // Section headers (end with colon) - new line and bold cyan
     if (sentence.endsWith(':')) {
       if (output && !output.endsWith('\n')) output += '\n';
-      output += '\x1b[1m\x1b[36m' + sentence + '\x1b[0m' + '\n';
+      output += ansis.bold.cyan(sentence) + '\n';
       lineLength = 0;
       return;
     }
@@ -39,23 +40,25 @@ function formatDescription(text: string): string {
     let formatted = sentence;
 
     // Highlight parenthetical references (ADR-xxx, etc.) in dim
-    formatted = formatted.replace(/(\([A-Z]+[-\d]+[^)]*\))/g, '\x1b[2m$1\x1b[22m');
+    formatted = formatted.replace(/(\([A-Z]+[-\d]+[^)]*\))/g, (match) => ansis.dim(match));
 
     // Highlight technical terms with arrows
-    formatted = formatted.replace(/([a-z]+→[a-z]+)/gi, '\x1b[32m$1\x1b[39m');
+    formatted = formatted.replace(/([a-z]+→[a-z]+)/gi, (match) => ansis.green(match));
 
     // Highlight file extensions and paths
-    formatted = formatted.replace(/(\w+\/\w+)/g, '\x1b[32m$1\x1b[39m');
-    formatted = formatted.replace(/(\.\w{2,4})/g, '\x1b[32m$1\x1b[39m');
+    formatted = formatted.replace(/(\w+\/\w+)/g, (match) => ansis.green(match));
+    formatted = formatted.replace(/(\.\w{2,4})/g, (match) => ansis.green(match));
 
     // Highlight workflow/status terms
-    formatted = formatted.replace(/\b(pending|approval|processing|completed|failed|awaiting_approval|running)\b/g, '\x1b[33m$1\x1b[39m');
+    formatted = formatted.replace(/\b(pending|approval|processing|completed|failed|awaiting_approval|running)\b/g,
+      (match) => ansis.yellow(match));
 
     // Highlight technical terms
-    formatted = formatted.replace(/\b(LLM|API|REST|OAuth|PostgreSQL|Apache AGE|vector|embedding|graph|concept|chunk|ontology)\b/g, '\x1b[36m$1\x1b[39m');
+    formatted = formatted.replace(/\b(LLM|API|REST|OAuth|PostgreSQL|Apache AGE|vector|embedding|graph|concept|chunk|ontology)\b/g,
+      (match) => ansis.cyan(match));
 
     // Normal text in white (not dim)
-    output += '\x1b[37m' + formatted + '\x1b[0m';
+    output += ansis.white(formatted);
 
     lineLength += sentence.length;
 
@@ -69,6 +72,40 @@ function formatDescription(text: string): string {
   });
 
   return output.trim();
+}
+
+/**
+ * Wrap text to fit within a specific width, indenting continuation lines
+ * Uses ansis.strip() to measure actual text length without color codes
+ * @param text - Text to wrap (may include ANSI color codes)
+ * @param maxWidth - Maximum width for each line
+ * @param indent - Indentation for continuation lines
+ */
+function wrapText(text: string, maxWidth: number, indent: string = ''): string {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? currentLine + ' ' + word : word;
+    const testLineStripped = ansis.strip(testLine);
+
+    if (testLineStripped.length <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      currentLine = word;
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  // Join with newline + indent for continuation lines
+  return lines.map((line, idx) => idx === 0 ? line : indent + line).join('\n');
 }
 
 /**
@@ -89,6 +126,7 @@ export function configureColoredHelp(cmd: Command): void {
   cmd.configureHelp({
     formatHelp: (command, helper) => {
       const termWidth = helper.padWidth(command, helper);
+      const availableWidth = process.stdout.columns || 100;
       let output = '';
 
       // Usage
@@ -115,7 +153,14 @@ export function configureColoredHelp(cmd: Command): void {
             : colors.ui.command(name);
 
           const padding = ' '.repeat(Math.max(2, termWidth - name.length + 2));
-          output += '  ' + coloredName + padding + colors.status.dim(description) + '\n';
+          const leftColumnWidth = 2 + name.length + padding.length; // 2 for indent
+          const descWidth = availableWidth - leftColumnWidth;
+          const wrappedDesc = wrapText(
+            colors.status.dim(description),
+            descWidth,
+            ' '.repeat(leftColumnWidth)
+          );
+          output += '  ' + coloredName + padding + wrappedDesc + '\n';
         });
         output += '\n';
       }
@@ -144,7 +189,14 @@ export function configureColoredHelp(cmd: Command): void {
 
           const coloredFlags = coloredParts.join(' ');
           const padding = ' '.repeat(Math.max(2, termWidth - flags.length + 2));
-          output += '  ' + coloredFlags + padding + colors.status.dim(description) + '\n';
+          const leftColumnWidth = 2 + flags.length + padding.length;
+          const descWidth = availableWidth - leftColumnWidth;
+          const wrappedDesc = wrapText(
+            colors.status.dim(description),
+            descWidth,
+            ' '.repeat(leftColumnWidth)
+          );
+          output += '  ' + coloredFlags + padding + wrappedDesc + '\n';
         });
         output += '\n';
       }
@@ -176,7 +228,14 @@ export function configureColoredHelp(cmd: Command): void {
 
           const coloredName = coloredParts.join(' ');
           const padding = ' '.repeat(Math.max(2, termWidth - name.length + 2));
-          output += '  ' + coloredName + padding + colors.status.dim(description) + '\n';
+          const leftColumnWidth = 2 + name.length + padding.length;
+          const descWidth = availableWidth - leftColumnWidth;
+          const wrappedDesc = wrapText(
+            colors.status.dim(description),
+            descWidth,
+            ' '.repeat(leftColumnWidth)
+          );
+          output += '  ' + coloredName + padding + wrappedDesc + '\n';
         });
       }
 
