@@ -142,7 +142,7 @@ async def search_concepts(request: SearchRequest):
                         f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
                         f"OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}}) WHERE s.source_id IN d.source_ids "
                         f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                        f"s.content_type as content_type, s.minio_object_key as minio_object_key, "
+                        f"s.content_type as content_type, s.storage_key as storage_key, "
                         f"d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
                         f"ORDER BY s.document, s.paragraph "
                         f"LIMIT 3"  # Sample first 3 instances
@@ -155,9 +155,9 @@ async def search_concepts(request: SearchRequest):
                                 paragraph=e['paragraph'],
                                 source_id=e['source_id'],
                                 content_type=e.get('content_type'),
-                                has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
-                                image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
-                                minio_object_key=e.get('minio_object_key'),
+                                has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                                image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                                storage_key=e.get('storage_key'),
                                 filename=e.get('filename'),
                                 source_type=e.get('source_type'),
                                 source_path=e.get('source_path'),
@@ -232,7 +232,7 @@ async def search_concepts(request: SearchRequest):
                             f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
                             f"OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}}) WHERE s.source_id IN d.source_ids "
                             f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                            f"s.content_type as content_type, s.minio_object_key as minio_object_key, "
+                            f"s.content_type as content_type, s.storage_key as storage_key, "
                             f"d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
                             f"ORDER BY s.document, s.paragraph "
                             f"LIMIT 3"
@@ -245,9 +245,9 @@ async def search_concepts(request: SearchRequest):
                                     paragraph=e['paragraph'],
                                     source_id=e['source_id'],
                                     content_type=e.get('content_type'),
-                                    has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
-                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
-                                    minio_object_key=e.get('minio_object_key'),
+                                    has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                                    storage_key=e.get('storage_key'),
                                     filename=e.get('filename'),
                                     source_type=e.get('source_type'),
                                     source_path=e.get('source_path'),
@@ -354,7 +354,7 @@ async def get_concept_details(
                 s.source_id as source_id,
                 s.full_text as full_text,
                 s.content_type as content_type,
-                s.minio_object_key as minio_object_key,
+                s.storage_key as storage_key,
                 d.filename as filename,
                 d.source_type as source_type,
                 d.file_path as source_path,
@@ -371,9 +371,9 @@ async def get_concept_details(
                 full_text=record.get('full_text'),
                 # ADR-057: Image metadata
                 content_type=record.get('content_type'),
-                has_image=record.get('content_type') == 'image' and record.get('minio_object_key') is not None,
-                image_uri=f"/api/sources/{record['source_id']}/image" if record.get('content_type') == 'image' and record.get('minio_object_key') else None,
-                minio_object_key=record.get('minio_object_key'),
+                has_image=record.get('content_type') == 'image' and record.get('storage_key') is not None,
+                image_uri=f"/api/sources/{record['source_id']}/image" if record.get('content_type') == 'image' and record.get('storage_key') else None,
+                storage_key=record.get('storage_key'),
                 # ADR-051: Source provenance from DocumentMeta
                 filename=record.get('filename'),
                 source_type=record.get('source_type'),
@@ -648,7 +648,7 @@ async def find_connection(request: FindConnectionRequest):
                         evidence_query = client._execute_cypher(
                             f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
                             f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                            f"s.content_type as content_type, s.minio_object_key as minio_object_key "
+                            f"s.content_type as content_type, s.storage_key as storage_key "
                             f"ORDER BY s.document, s.paragraph "
                             f"LIMIT 3"
                         )
@@ -660,9 +660,9 @@ async def find_connection(request: FindConnectionRequest):
                                     paragraph=e['paragraph'],
                                     source_id=e['source_id'],
                                     content_type=e.get('content_type'),
-                                    has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
-                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
-                                    minio_object_key=e.get('minio_object_key')
+                                    has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                                    storage_key=e.get('storage_key')
                                 )
                                 for e in evidence_query
                             ]
@@ -858,7 +858,7 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                         evidence_query = client._execute_cypher(
                             f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
                             f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                            f"s.content_type as content_type, s.minio_object_key as minio_object_key "
+                            f"s.content_type as content_type, s.storage_key as storage_key "
                             f"ORDER BY s.document, s.paragraph "
                             f"LIMIT 3"
                         )
@@ -870,9 +870,9 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                                     paragraph=e['paragraph'],
                                     source_id=e['source_id'],
                                     content_type=e.get('content_type'),
-                                    has_image=e.get('content_type') == 'image' and e.get('minio_object_key') is not None,
-                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('minio_object_key') else None,
-                                    minio_object_key=e.get('minio_object_key')
+                                    has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                                    storage_key=e.get('storage_key')
                                 )
                                 for e in evidence_query
                             ]

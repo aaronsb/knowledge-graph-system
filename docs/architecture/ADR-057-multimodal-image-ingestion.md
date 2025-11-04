@@ -2,11 +2,27 @@
 
 **Status:** In Progress
 **Date:** 2025-11-03
-**Updated:** 2025-11-03 (Research completed, implementation starting)
+**Updated:** 2025-11-04 (Migrated from MinIO to Garage)
 **Deciders:** System Architects
 **Related ADRs:**
 - [ADR-042: Ollama Local Inference Integration](./ADR-042-ollama-local-inference.md)
 - [ADR-043: Embedding Strategy and Resource Management](./ADR-043-embedding-strategy-resource-management.md)
+- [ADR-016: Apache AGE Migration](./ADR-016-apache-age-migration.md) (Parallel vendor lock-in escape)
+
+---
+
+## Migration Note: MinIO → Garage (2025-11-04)
+
+**Initial implementation** used MinIO for S3-compatible object storage. However, in March 2025, MinIO gutted the admin UI from their Community Edition, relegating it to their Enterprise edition at $96,000/year. This follows the exact same bait-and-switch pattern we encountered with Neo4j (which charges $180,000/year for RBAC and security features we considered table-stakes).
+
+**Why we switched to Garage:**
+- **Governance**: Deuxfleurs cooperative (can't pull license tricks like MinIO/Neo4j)
+- **License**: AGPLv3 with no Enterprise edition trap
+- **EU-funded**: Government-backed stability
+- **S3 API**: Drop-in replacement requiring zero code changes to our abstraction layer
+- **Philosophy alignment**: Same principles that led us to escape Neo4j via Apache AGE (ADR-016)
+
+**Migration impact**: Since we only use the S3 API (never integrated MinIO client libraries), this is purely an infrastructure change. All references to "MinIO" in this document now refer to "Garage" instead. The architectural patterns, security model, and API interactions remain identical - only the underlying object storage implementation changed.
 
 ---
 
@@ -63,7 +79,7 @@ Image → Visual Analysis → Text Description + Visual Context → Existing Tex
 
 **Key architectural decisions**:
 
-1. **Storage separation**: MinIO for heavy image blobs, PostgreSQL for lightweight embeddings and metadata
+1. **Storage separation**: Garage for heavy image blobs, PostgreSQL for lightweight embeddings and metadata
 2. **Vision backend**: GPT-4o (primary, cloud) or Claude 3.5 Sonnet, with Ollama/Granite as optional local fallback
 3. **Dual embeddings**: Nomic Vision v1.5 for image embeddings (768-dim), Nomic Text for description embeddings
 4. **Visual context injection**: Similar images provide context during concept extraction
@@ -74,17 +90,17 @@ Image → Visual Analysis → Text Description + Visual Context → Existing Tex
 
 ### Security Model (ADR-031)
 
-MinIO credentials follow the same encrypted storage pattern as OpenAI/Anthropic API keys:
+Garage credentials follow the same encrypted storage pattern as OpenAI/Anthropic API keys:
 
 - **Encrypted at rest**: Credentials stored in `kg_api.system_api_keys` table using Fernet encryption (AES-128-CBC + HMAC-SHA256)
 - **Master key**: `ENCRYPTION_KEY` environment variable or Docker secrets (never in database)
 - **Configuration**: Interactive setup via `./scripts/setup/initialize-platform.sh` (option 7)
 - **Runtime access**: API server retrieves credentials on-demand from encrypted store
-- **Endpoint config only in .env**: `MINIO_HOST`, `MINIO_PORT`, `MINIO_BUCKET`, `MINIO_SECURE`
+- **Endpoint config only in .env**: `GARAGE_RPC_HOST`, `GARAGE_RPC_SECRET`, `GARAGE_S3_ENDPOINT`, `GARAGE_REGION`
 
-This ensures consistent security across all service credentials. PostgreSQL credentials remain in .env (infrastructure requirement), while external/independent service credentials (OpenAI, Anthropic, MinIO) are encrypted in the database.
+This ensures consistent security across all service credentials. PostgreSQL credentials remain in .env (infrastructure requirement), while external/independent service credentials (OpenAI, Anthropic, Garage) are encrypted in the database.
 
-**Migration note**: Existing deployments with plain-text MinIO credentials in .env will automatically fall back to environment variables until credentials are configured via `initialize-platform.sh`.
+**Migration note**: Existing deployments with plain-text Garage credentials in .env will automatically fall back to environment variables until credentials are configured via `initialize-platform.sh`.
 
 ---
 
@@ -163,7 +179,7 @@ Be thorough and literal. If you see text, transcribe it exactly. If you see a bo
 ├─────────────────────────────────────────────────────────────┤
 │ (:ImageAsset {                                              │
 │   asset_id: "uuid",                                         │
-│   minio_key: "images/Watts Lectures/2024-11-03/uuid.jpg",  │
+│   object_key: "images/Watts Lectures/2024-11-03/uuid.jpg", │
 │   image_embedding: [768 floats],  ← ~3KB                   │
 │   ontology: "Watts Lectures",                               │
 │   mime_type: "image/jpeg",                                  │
@@ -175,7 +191,7 @@ Be thorough and literal. If you see text, transcribe it exactly. If you see a bo
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│ MinIO (Heavy Binary Storage, Rarely Accessed)               │
+│ Garage (Heavy Binary Storage, Rarely Accessed)              │
 ├─────────────────────────────────────────────────────────────┤
 │ Bucket: knowledge-graph-images/                             │
 │   └── images/                                               │
@@ -189,7 +205,7 @@ Be thorough and literal. If you see text, transcribe it exactly. If you see a bo
 - Embeddings need fast vector similarity search (graph database)
 - Images are rarely accessed (only when user clicks "show source")
 - Graph stays fast (~5KB per image node)
-- MinIO handles cheap blob storage (~200KB per compressed image)
+- Garage handles cheap blob storage (~200KB per compressed image)
 
 ### 2. Graph Schema
 
@@ -197,7 +213,7 @@ Be thorough and literal. If you see text, transcribe it exactly. If you see a bo
 // ImageAsset with visual embedding
 (:ImageAsset {
   asset_id: "uuid",
-  minio_key: "images/{ontology}/{date}/{uuid}.jpg",
+  object_key: "images/{ontology}/{date}/{uuid}.jpg",
   image_embedding: vector(768),
   ontology: "Watts Lectures",
   mime_type: "image/jpeg",
@@ -249,7 +265,7 @@ Be thorough and literal. If you see text, transcribe it exactly. If you see a bo
 | **Vision Model (Local)** | Ollama (Granite, LLaVA) | Apache 2.0 | **Optional**: Pattern in place, but inconsistent quality per research |
 | **Image Embeddings** | Nomic Embed Vision v1.5 | Apache 2.0 | **Research validated**: 0.847 clustering quality (27% better than CLIP), 768-dim |
 | **Text Embeddings** | Nomic Embed Text v1.5 | Apache 2.0 | Already using, consistent with vision embeddings (same 768-dim space) |
-| **Object Storage** | MinIO | AGPL v3 | Network-isolated (S3 API only), no code integration |
+| **Object Storage** | Garage | AGPL v3 | Network-isolated (S3 API only), no code integration, cooperative governance |
 | **PDF Conversion** | External (user's choice) | N/A | pdftoppm, ImageMagick, etc. - out of our scope |
 
 **Research findings** (Nov 2025, `docs/research/vision-testing/`):
@@ -258,7 +274,7 @@ Be thorough and literal. If you see text, transcribe it exactly. If you see a bo
 - **Decision**: GPT-4o primary, abstraction supports Anthropic/Ollama for flexibility
 - **Cost**: ~$10 per 1000 images (GPT-4o) vs $0 (local, but unreliable)
 
-**Note on MinIO licensing**: While MinIO is AGPL v3, we interact with it purely through the S3-compatible API (network boundary). We never link against MinIO code, import MinIO libraries, or modify MinIO source. This is similar to using PostgreSQL (also network service) - AGPL network copyleft does not apply across API boundaries.
+**Note on Garage licensing**: While Garage is AGPL v3, we interact with it purely through the S3-compatible API (network boundary). We never link against Garage code, import Garage libraries, or modify Garage source. This is similar to using PostgreSQL (also network service) - AGPL network copyleft does not apply across API boundaries. Unlike MinIO (which moved to Enterprise licensing), Garage is maintained by a cooperative and will remain open-source.
 
 ---
 
@@ -402,12 +418,12 @@ async def ingest_image(
         prompt=LITERAL_DESCRIPTION_PROMPT  # Literal, non-interpretive
     )
 
-    # 5. Store original image in MinIO (organized by ontology)
+    # 5. Store original image in Garage (organized by ontology)
     asset_id = str(uuid.uuid4())
-    minio_key = f"images/{ontology}/{datetime.now().strftime('%Y-%m-%d')}/{asset_id}.jpg"
-    await minio_client.put_object(
+    object_key = f"images/{ontology}/{datetime.now().strftime('%Y-%m-%d')}/{asset_id}.jpg"
+    await garage_client.put_object(
         bucket="knowledge-graph-images",
-        key=minio_key,
+        key=object_key,
         data=image_bytes,
         content_type="image/jpeg"
     )
@@ -415,7 +431,7 @@ async def ingest_image(
     # 6. Create ImageAsset node in graph
     image_asset = await create_image_asset(
         asset_id=asset_id,
-        minio_key=minio_key,
+        object_key=object_key,
         image_embedding=image_embedding,
         ontology=ontology,
         vision_model="granite-vision-3.3:2b",
@@ -729,10 +745,10 @@ Query: ?size=full|thumb  # Optional
 
 Response: JPEG image (with Cache-Control headers)
 
-# Alternative: Presigned URL for direct MinIO access
+# Alternative: Presigned URL for direct Garage access
 GET /api/sources/{source_id}/image/presigned
 Response: {
-  "url": "https://minio.local/kg-images/images/...",
+  "url": "https://garage.local/kg-images/images/...",
   "expires_at": "2024-11-03T14:45:00Z"
 }
 ```
@@ -834,15 +850,15 @@ IMAGE_EMBEDDING_PROVIDER=transformers  # Direct model loading via transformers
 TEXT_EMBEDDING_MODEL=nomic-embed-text:latest
 TEXT_EMBEDDING_PROVIDER=ollama  # or openai
 
-# MinIO Storage (ADR-031: Credentials encrypted in database)
+# Garage Storage (ADR-031: Credentials encrypted in database)
 # Credentials configured via: ./scripts/setup/initialize-platform.sh (option 7)
 # Only endpoint configuration in .env:
-MINIO_HOST=localhost
-MINIO_PORT=9000
-MINIO_BUCKET=images
-MINIO_SECURE=false
+GARAGE_S3_ENDPOINT=http://localhost:3900
+GARAGE_S3_REGION=garage
+GARAGE_RPC_HOST=localhost:3901
+GARAGE_BUCKET=knowledge-graph-images
 
-# Note: MINIO_ROOT_USER and MINIO_ROOT_PASSWORD stored encrypted in PostgreSQL
+# Note: GARAGE_ACCESS_KEY_ID and GARAGE_SECRET_ACCESS_KEY stored encrypted in PostgreSQL
 # for consistent security model with OpenAI/Anthropic API keys
 ```
 
@@ -904,7 +920,7 @@ embeddings:
 ```sql
 CREATE TABLE image_assets (
     asset_id UUID PRIMARY KEY,
-    minio_key VARCHAR(500) NOT NULL,
+    object_key VARCHAR(500) NOT NULL,
     image_embedding vector(768) NOT NULL,
     ontology VARCHAR(255) NOT NULL,
     mime_type VARCHAR(50) NOT NULL,
@@ -926,8 +942,8 @@ WITH (lists = 100);
 -- Ontology filter index
 CREATE INDEX idx_image_assets_ontology ON image_assets(ontology);
 
--- MinIO key lookup
-CREATE INDEX idx_image_assets_minio_key ON image_assets(minio_key);
+-- S3 object key lookup
+CREATE INDEX idx_image_assets_object_key ON image_assets(object_key);
 ```
 
 ### Updated Table: sources
@@ -966,43 +982,46 @@ CREATE INDEX idx_source_images_asset ON source_images(asset_id);
 services:
   # ... existing services (postgres, ollama, api) ...
 
-  minio:
-    image: minio/minio:latest
-    container_name: knowledge-graph-minio
+  garage:
+    image: dxflrs/garage:v2.1.0
+    container_name: knowledge-graph-garage
     ports:
-      - "9000:9000"  # S3 API
-      - "9001:9001"  # Web console
+      - "3900:3900"  # S3 API
+      - "3903:3903"  # Admin API
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
     volumes:
-      - minio-data:/data
-    command: server /data --console-address ":9001"
+      - garage-data:/data
+      - garage-meta:/meta
+      - ./config/garage.toml:/etc/garage.toml:ro
+    command: server
     networks:
       - kg-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "garage", "status"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  minio-data:
+  garage-data:
+    driver: local
+  garage-meta:
     driver: local
 ```
 
 ### Management Scripts (PostgreSQL Pattern)
 
-#### scripts/start-minio.sh
+#### scripts/garage/start-garage.sh
 ```bash
 #!/bin/bash
-# Start MinIO object storage
+# Start Garage object storage
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Colors
 GREEN='\033[0;32m'
@@ -1010,45 +1029,44 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Starting MinIO object storage...${NC}"
+echo -e "${GREEN}Starting Garage object storage...${NC}"
 
-# Check if MinIO is already running
-if docker ps | grep -q knowledge-graph-minio; then
-    echo -e "${YELLOW}MinIO is already running${NC}"
-    echo "MinIO console: http://localhost:9001"
-    echo "MinIO API: http://localhost:9000"
+# Check if Garage is already running
+if docker ps | grep -q knowledge-graph-garage; then
+    echo -e "${YELLOW}Garage is already running${NC}"
+    echo "Garage S3 API: http://localhost:3900"
+    echo "Garage Admin API: http://localhost:3903"
     exit 0
 fi
 
-# Start MinIO
+# Start Garage
 cd "$PROJECT_ROOT"
-docker-compose up -d minio
+docker-compose up -d garage
 
-# Wait for MinIO to be healthy
-echo "Waiting for MinIO to be ready..."
+# Wait for Garage to be healthy
+echo "Waiting for Garage to be ready..."
 RETRIES=30
-until docker exec knowledge-graph-minio curl -sf http://localhost:9000/minio/health/live > /dev/null 2>&1; do
+until docker exec knowledge-graph-garage garage status > /dev/null 2>&1; do
     RETRIES=$((RETRIES - 1))
     if [ $RETRIES -eq 0 ]; then
-        echo -e "${RED}MinIO failed to start${NC}"
+        echo -e "${RED}Garage failed to start${NC}"
         exit 1
     fi
     sleep 2
 done
 
-echo -e "${GREEN}MinIO started successfully${NC}"
-echo "MinIO console: http://localhost:9001"
-echo "MinIO API: http://localhost:9000"
-echo "Credentials: minioadmin / minioadmin"
+echo -e "${GREEN}Garage started successfully${NC}"
+echo "Garage S3 API: http://localhost:3900"
+echo "Garage Admin API: http://localhost:3903"
 
 # Run initialization
-"$SCRIPT_DIR/initialize-minio.sh"
+"$SCRIPT_DIR/init-garage.sh"
 ```
 
-#### scripts/stop-minio.sh
+#### scripts/garage/stop-garage.sh
 ```bash
 #!/bin/bash
-# Stop MinIO object storage
+# Stop Garage object storage
 
 set -e
 
@@ -1057,26 +1075,26 @@ YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-echo -e "${YELLOW}Stopping MinIO object storage...${NC}"
+echo -e "${YELLOW}Stopping Garage object storage...${NC}"
 
-# Check if MinIO is running
-if ! docker ps | grep -q knowledge-graph-minio; then
-    echo "MinIO is not running"
+# Check if Garage is running
+if ! docker ps | grep -q knowledge-graph-garage; then
+    echo "Garage is not running"
     exit 0
 fi
 
-# Stop MinIO (keep data)
-docker-compose stop minio
+# Stop Garage (keep data)
+docker-compose stop garage
 
-echo -e "${GREEN}MinIO stopped successfully${NC}"
-echo "Note: Data persists in docker volume 'minio-data'"
-echo "To remove data: docker volume rm knowledge-graph-system_minio-data"
+echo -e "${GREEN}Garage stopped successfully${NC}"
+echo "Note: Data persists in docker volumes 'garage-data' and 'garage-meta'"
+echo "To remove data: docker volume rm knowledge-graph-system_garage-data knowledge-graph-system_garage-meta"
 ```
 
-#### scripts/initialize-minio.sh
+#### scripts/garage/init-garage.sh
 ```bash
 #!/bin/bash
-# Initialize MinIO buckets and policies
+# Initialize Garage buckets and keys
 
 set -e
 
@@ -1088,49 +1106,42 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}Initializing MinIO...${NC}"
+echo -e "${GREEN}Initializing Garage...${NC}"
 
-# Check if MinIO is running
-if ! docker ps | grep -q knowledge-graph-minio; then
-    echo -e "${RED}MinIO is not running. Start it first with: ./scripts/start-minio.sh${NC}"
+# Check if Garage is running
+if ! docker ps | grep -q knowledge-graph-garage; then
+    echo -e "${RED}Garage is not running. Start it first with: ./scripts/garage/start-garage.sh${NC}"
     exit 1
 fi
 
-# Install MinIO client (mc) in the container if needed
-docker exec knowledge-graph-minio sh -c "
-    # Configure alias
-    mc alias set local http://localhost:9000 minioadmin minioadmin 2>/dev/null || true
-
+# Initialize Garage cluster and create bucket
+docker exec knowledge-graph-garage sh -c "
     # Create bucket
-    if ! mc ls local/knowledge-graph-images >/dev/null 2>&1; then
-        echo 'Creating bucket: knowledge-graph-images'
-        mc mb local/knowledge-graph-images
-        echo 'Bucket created successfully'
-    else
-        echo 'Bucket already exists: knowledge-graph-images'
-    fi
+    garage bucket create knowledge-graph-images 2>/dev/null || echo 'Bucket may already exist'
 
-    # Set versioning (optional, for data protection)
-    mc version enable local/knowledge-graph-images
+    # Create access key for API server
+    garage key create kg-api-key 2>/dev/null || echo 'Key may already exist'
 
-    # Set lifecycle policy (optional, auto-delete old thumbnails)
-    # This is commented out by default - uncomment if you want auto-cleanup
-    # mc ilm add --expiry-days 30 --prefix 'thumbnails/' local/knowledge-graph-images
+    # Allow access key to use bucket
+    garage bucket allow knowledge-graph-images --read --write --key kg-api-key
 
-    echo 'MinIO initialization complete'
+    echo 'Garage initialization complete'
 "
 
-echo -e "${GREEN}MinIO initialized successfully${NC}"
+echo -e "${GREEN}Garage initialized successfully${NC}"
 echo ""
 echo "Bucket: knowledge-graph-images"
-echo "Web console: http://localhost:9001"
-echo "Credentials: minioadmin / minioadmin"
+echo "S3 API: http://localhost:3900"
+echo "Admin API: http://localhost:3903"
+echo ""
+echo "Retrieve access credentials with:"
+echo "  docker exec knowledge-graph-garage garage key info kg-api-key"
 ```
 
-#### scripts/start-storage.sh (Combined)
+#### scripts/services/start-storage.sh (Combined)
 ```bash
 #!/bin/bash
-# Start all storage services (PostgreSQL + MinIO)
+# Start all storage services (PostgreSQL + Garage)
 
 set -e
 
@@ -1148,22 +1159,22 @@ echo "=== Starting PostgreSQL ==="
 "$SCRIPT_DIR/start-database.sh"
 echo ""
 
-# Start MinIO
-echo "=== Starting MinIO ==="
-"$SCRIPT_DIR/start-minio.sh"
+# Start Garage
+echo "=== Starting Garage ==="
+"$SCRIPT_DIR/../garage/start-garage.sh"
 echo ""
 
 echo -e "${GREEN}All storage services started successfully${NC}"
 echo ""
 echo "PostgreSQL: localhost:5432"
-echo "MinIO API: http://localhost:9000"
-echo "MinIO Console: http://localhost:9001"
+echo "Garage S3 API: http://localhost:3900"
+echo "Garage Admin API: http://localhost:3903"
 ```
 
-#### scripts/stop-storage.sh (Combined)
+#### scripts/services/stop-storage.sh (Combined)
 ```bash
 #!/bin/bash
-# Stop all storage services (PostgreSQL + MinIO)
+# Stop all storage services (PostgreSQL + Garage)
 
 set -e
 
@@ -1176,8 +1187,8 @@ NC='\033[0m'
 
 echo -e "${YELLOW}Stopping all storage services...${NC}"
 
-# Stop MinIO
-"$SCRIPT_DIR/stop-minio.sh"
+# Stop Garage
+"$SCRIPT_DIR/../garage/stop-garage.sh"
 
 # Stop PostgreSQL
 "$SCRIPT_DIR/stop-database.sh"
@@ -1189,9 +1200,9 @@ echo -e "${GREEN}All storage services stopped${NC}"
 
 ```bash
 # Complete fresh setup (first time)
-./scripts/start-storage.sh      # Start PostgreSQL + MinIO
-./scripts/initialize-auth.sh    # Set up authentication
-./scripts/start-api.sh -y       # Start API server
+./scripts/services/start-storage.sh      # Start PostgreSQL + Garage
+./scripts/setup/initialize-platform.sh   # Set up authentication
+./scripts/services/start-api.sh -y       # Start API server
 
 # Pull text embedding model (vision embeddings use transformers, not Ollama)
 docker exec kg-ollama ollama pull nomic-embed-text:latest
@@ -1202,7 +1213,7 @@ docker exec kg-ollama ollama pull nomic-embed-text:latest
 # Verify everything is running
 kg health                       # Check API
 kg database stats               # Check database
-curl http://localhost:9001      # Check MinIO console
+curl http://localhost:3903/health  # Check Garage admin API
 
 # Ingest first image
 kg ingest image my-diagram.jpg -o "Test Ontology"
@@ -1212,16 +1223,16 @@ kg ingest image my-diagram.jpg -o "Test Ontology"
 
 ```bash
 # Start everything
-./scripts/start-storage.sh      # PostgreSQL + MinIO
-./scripts/start-api.sh -y       # API server
+./scripts/services/start-storage.sh      # PostgreSQL + Garage
+./scripts/services/start-api.sh -y       # API server
 
 # Work...
 kg ingest image diagram.jpg -o "My Project"
 kg search images --by-text "architecture diagram"
 
 # Stop everything
-./scripts/stop-api.sh
-./scripts/stop-storage.sh       # PostgreSQL + MinIO (data persists)
+./scripts/services/stop-api.sh
+./scripts/services/stop-storage.sh       # PostgreSQL + Garage (data persists)
 ```
 
 ### Ollama Model Management (Optional)
@@ -1297,7 +1308,7 @@ echo "Vision backend: GPT-4o (cloud API, set OPENAI_API_KEY in .env)"
 - Discovers cross-domain connections
 
 ### 3. **Ground Truth Preservation**
-- Original images stored forever in MinIO
+- Original images stored forever in Garage
 - Text descriptions are derived evidence
 - Users can always verify source material
 - Addresses "telephone game" fidelity loss
@@ -1322,14 +1333,15 @@ echo "Vision backend: GPT-4o (cloud API, set OPENAI_API_KEY in .env)"
 
 ### 7. **Licensing Clean**
 - Apache 2.0: Nomic Vision embeddings, Nomic Text embeddings
-- MinIO: Network-isolated (no code integration)
+- Garage: Network-isolated (no code integration), cooperative governance
 - No AGPL contamination
 - Safe for commercial use
+- No Enterprise edition trap (learned from Neo4j, MinIO)
 
 ### 8. **Scalable Storage**
 - Graph: Lightweight (5KB per image node)
-- MinIO: Heavy blobs (200KB per compressed image)
-- Can migrate to S3/Azure Blob later
+- Garage: Heavy blobs (200KB per compressed image)
+- Can migrate to S3/Azure Blob later if needed (standard S3 API)
 - Proper separation of concerns
 
 ---
@@ -1359,8 +1371,8 @@ echo "Vision backend: GPT-4o (cloud API, set OPENAI_API_KEY in .env)"
 2. **No OCR Fallback**: Pure vision model approach; no text-layer extraction from PDFs
 3. **Single Image Per Source**: One Source per image (not multi-page grouping)
 4. **No Video Support**: Images only (could extend to video frames later)
-5. **MinIO Single-Node**: No replication/HA in initial implementation
-6. **English-Centric**: Granite Vision optimized for English text in images
+5. **Garage Single-Node**: No replication/HA in initial implementation (Garage supports multi-node for future)
+6. **English-Centric**: Vision models optimized for English text in images
 
 ### Known Issues
 
@@ -1385,7 +1397,7 @@ echo "Vision backend: GPT-4o (cloud API, set OPENAI_API_KEY in .env)"
 - [ ] Batch image ingestion (multiple images per API call)
 - [ ] Image compression options (JPEG quality slider)
 - [ ] GPT-4V and Claude 4.5 Sonnet backend support
-- [ ] MinIO replication for HA
+- [ ] Garage multi-node replication for HA
 
 ### Medium-Term
 - [ ] Multi-page document grouping (one Source, multiple ImageAssets)
@@ -1404,9 +1416,9 @@ echo "Vision backend: GPT-4o (cloud API, set OPENAI_API_KEY in .env)"
 
 ## Security Considerations
 
-### MinIO Credential Management (PostgreSQL Pattern)
+### Garage Credential Management (PostgreSQL Pattern)
 
-Like PostgreSQL, MinIO credentials are **never hardcoded** in docker-compose.yml:
+Like PostgreSQL, Garage credentials are **never hardcoded** in docker-compose.yml:
 
 #### Development (.env file)
 ```bash
@@ -1416,15 +1428,15 @@ Like PostgreSQL, MinIO credentials are **never hardcoded** in docker-compose.yml
 POSTGRES_USER=kg_user
 POSTGRES_PASSWORD=securepassword123
 
-# MinIO credentials (mirroring PostgreSQL pattern)
-MINIO_ROOT_USER=${MINIO_ROOT_USER:-kg_minio_admin}
-MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-generate_this_on_first_run}
+# Garage credentials (mirroring PostgreSQL pattern)
+GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET:-generate_this_on_first_run}
+GARAGE_ACCESS_KEY_ID=${GARAGE_ACCESS_KEY_ID}
+GARAGE_SECRET_ACCESS_KEY=${GARAGE_SECRET_ACCESS_KEY}
 
 # API server needs both
 DATABASE_URL=postgresql://kg_user:securepassword123@localhost:5432/knowledge_graph
-MINIO_ENDPOINT=http://minio:9000
-MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
-MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+GARAGE_S3_ENDPOINT=http://garage:3900
+GARAGE_REGION=garage
 ```
 
 #### Docker Compose (No Hardcoded Credentials)
@@ -1438,26 +1450,25 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     # No hardcoded passwords!
 
-  minio:
+  garage:
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
     # No hardcoded passwords!
 
   api:
     environment:
       # API server trusts both storage backends
       DATABASE_URL: ${DATABASE_URL}
-      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      GARAGE_S3_ENDPOINT: ${GARAGE_S3_ENDPOINT}
+      GARAGE_ACCESS_KEY_ID: ${GARAGE_ACCESS_KEY_ID}
+      GARAGE_SECRET_ACCESS_KEY: ${GARAGE_SECRET_ACCESS_KEY}
 ```
 
 #### Initialize Credentials (First Run)
 ```bash
-# scripts/initialize-storage-credentials.sh
+# scripts/setup/initialize-storage-credentials.sh
 #!/bin/bash
-# Generate secure credentials for PostgreSQL and MinIO
+# Generate secure credentials for PostgreSQL and Garage
 
 set -e
 
@@ -1476,84 +1487,82 @@ if [ ! -f "$ENV_FILE" ]; then
     cp .env.example .env
 fi
 
-# Generate MinIO credentials if not set
-if ! grep -q "MINIO_ROOT_PASSWORD=" "$ENV_FILE" || grep -q "MINIO_ROOT_PASSWORD=\${" "$ENV_FILE"; then
-    MINIO_PASSWORD=$(openssl rand -base64 32)
+# Generate Garage RPC secret if not set
+if ! grep -q "GARAGE_RPC_SECRET=" "$ENV_FILE" || grep -q "GARAGE_RPC_SECRET=\${" "$ENV_FILE"; then
+    GARAGE_RPC_SECRET=$(openssl rand -hex 32)
     echo ""
-    echo -e "${YELLOW}Generated MinIO credentials:${NC}"
-    echo "MINIO_ROOT_USER=kg_minio_admin"
-    echo "MINIO_ROOT_PASSWORD=$MINIO_PASSWORD"
+    echo -e "${YELLOW}Generated Garage RPC secret:${NC}"
+    echo "GARAGE_RPC_SECRET=$GARAGE_RPC_SECRET"
     echo ""
 
     # Update .env
-    sed -i.bak "s|MINIO_ROOT_USER=.*|MINIO_ROOT_USER=kg_minio_admin|" "$ENV_FILE"
-    sed -i.bak "s|MINIO_ROOT_PASSWORD=.*|MINIO_ROOT_PASSWORD=$MINIO_PASSWORD|" "$ENV_FILE"
-    sed -i.bak "s|MINIO_ACCESS_KEY=.*|MINIO_ACCESS_KEY=kg_minio_admin|" "$ENV_FILE"
-    sed -i.bak "s|MINIO_SECRET_KEY=.*|MINIO_SECRET_KEY=$MINIO_PASSWORD|" "$ENV_FILE"
+    sed -i.bak "s|GARAGE_RPC_SECRET=.*|GARAGE_RPC_SECRET=$GARAGE_RPC_SECRET|" "$ENV_FILE"
     rm -f "$ENV_FILE.bak"
 fi
 
 echo -e "${GREEN}Storage credentials configured${NC}"
 echo "Credentials are stored in .env (gitignored)"
+echo ""
+echo "Note: Garage S3 access keys are generated by Garage during init"
+echo "Run ./scripts/garage/init-garage.sh to create bucket and keys"
 ```
 
-### MinIO API Server Trust
+### Garage API Server Trust
 
-API server authenticates to MinIO using credentials from environment:
+API server authenticates to Garage using credentials from environment:
 
 ```python
-# src/api/lib/minio_client.py
+# src/api/lib/garage_client.py
 
 import os
-from minio import Minio
-from minio.error import S3Error
+import boto3
+from botocore.exceptions import ClientError
 
-class MinIOClient:
-    """MinIO client for image storage with secure credential handling."""
+class GarageClient:
+    """Garage client for image storage with secure credential handling."""
 
     def __init__(self):
         # Load from environment (like PostgreSQL connection)
-        self.endpoint = os.getenv("MINIO_ENDPOINT", "minio:9000")
-        self.access_key = os.getenv("MINIO_ACCESS_KEY")
-        self.secret_key = os.getenv("MINIO_SECRET_KEY")
-        self.secure = os.getenv("MINIO_USE_SSL", "false").lower() == "true"
-        self.bucket = os.getenv("MINIO_BUCKET", "knowledge-graph-images")
+        self.endpoint = os.getenv("GARAGE_S3_ENDPOINT", "http://garage:3900")
+        self.access_key = os.getenv("GARAGE_ACCESS_KEY_ID")
+        self.secret_key = os.getenv("GARAGE_SECRET_ACCESS_KEY")
+        self.region = os.getenv("GARAGE_REGION", "garage")
+        self.bucket = os.getenv("GARAGE_BUCKET", "knowledge-graph-images")
 
         if not self.access_key or not self.secret_key:
             raise ValueError(
-                "MinIO credentials not found. Set MINIO_ACCESS_KEY and MINIO_SECRET_KEY "
+                "Garage credentials not found. Set GARAGE_ACCESS_KEY_ID and GARAGE_SECRET_ACCESS_KEY "
                 "in environment (like DATABASE_URL for PostgreSQL)"
             )
 
-        # Create MinIO client
-        self.client = Minio(
-            self.endpoint,
-            access_key=self.access_key,
-            secret_key=self.secret_key,
-            secure=self.secure
+        # Create S3 client for Garage
+        self.client = boto3.client(
+            's3',
+            endpoint_url=self.endpoint,
+            aws_access_key_id=self.access_key,
+            aws_secret_access_key=self.secret_key,
+            region_name=self.region
         )
 
         # Verify connection
         try:
-            if not self.client.bucket_exists(self.bucket):
-                raise ValueError(f"Bucket '{self.bucket}' does not exist")
-        except S3Error as e:
-            raise ValueError(f"Failed to connect to MinIO: {e}")
+            self.client.head_bucket(Bucket=self.bucket)
+        except ClientError as e:
+            raise ValueError(f"Failed to connect to Garage: {e}")
 
     async def upload_image(self, object_name: str, data: bytes, content_type: str = "image/jpeg"):
-        """Upload image to MinIO (authenticated)."""
+        """Upload image to Garage (authenticated)."""
         self.client.put_object(
-            self.bucket,
-            object_name,
-            io.BytesIO(data),
-            length=len(data),
-            content_type=content_type
+            Bucket=self.bucket,
+            Key=object_name,
+            Body=data,
+            ContentType=content_type
         )
 
     async def get_image(self, object_name: str) -> bytes:
-        """Retrieve image from MinIO (authenticated)."""
-        response = self.client.get_object(self.bucket, object_name)
-        return response.read()
+        """Retrieve image from Garage (authenticated)."""
+        response = self.client.get_object(Bucket=self.bucket, Key=object_name)
+        return response['Body'].read()
 ```
 
 ### Production Considerations
@@ -1563,56 +1572,41 @@ class MinIOClient:
 # docker-compose.prod.yml
 
 services:
-  minio:
+  garage:
     environment:
-      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
-      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+      GARAGE_RPC_SECRET_FILE: /run/secrets/garage_rpc_secret
     secrets:
-      - minio_root_user
-      - minio_root_password
+      - garage_rpc_secret
 
 secrets:
-  minio_root_user:
-    external: true
-  minio_root_password:
+  garage_rpc_secret:
     external: true
 ```
 
-#### IAM Policies (Advanced)
-For production, create a dedicated "application user" with scoped access:
+#### Garage Bucket Policies (Advanced)
+For production, create a dedicated "application key" with scoped access:
 
 ```bash
-# Create application user with limited permissions
-mc admin user add myminio kg_api_user <generated-password>
+# Create application key with limited permissions
+docker exec knowledge-graph-garage garage key create kg-api-key
 
-# Create policy for API server (read/write to images bucket only)
-mc admin policy create myminio kg_api_policy /tmp/api-policy.json
+# Create bucket with specific permissions
+docker exec knowledge-graph-garage garage bucket create knowledge-graph-images
 
-# api-policy.json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
-      "Resource": "arn:aws:s3:::knowledge-graph-images/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket"
-      ],
-      "Resource": "arn:aws:s3:::knowledge-graph-images"
-    }
-  ]
-}
+# Grant read/write access to API key
+docker exec knowledge-graph-garage garage bucket allow \
+  knowledge-graph-images \
+  --read --write \
+  --key kg-api-key
 
-# Assign policy to user
-mc admin policy attach myminio kg_api_policy --user kg_api_user
+# Deny public access
+docker exec knowledge-graph-garage garage bucket deny \
+  knowledge-graph-images \
+  --read --write \
+  --key '*'
+
+# View key credentials
+docker exec knowledge-graph-garage garage key info kg-api-key
 ```
 
 ### Security Trust Model
@@ -1623,22 +1617,22 @@ Development:
 │ API      │─────────────▶│ PostgreSQL │
 │ Server   │             └────────────┘
 │          │ .env creds  ┌────────────┐
-│          │─────────────▶│ MinIO      │
+│          │─────────────▶│ Garage     │
 └──────────┘             └────────────┘
 
 Production:
 ┌──────────┐ secrets     ┌────────────┐
 │ API      │─────────────▶│ PostgreSQL │
 │ Server   │             └────────────┘
-│          │ IAM policy  ┌────────────┐
-│          │─────────────▶│ MinIO      │
+│          │ key policy  ┌────────────┐
+│          │─────────────▶│ Garage     │
 └──────────┘             └────────────┘
 ```
 
 **Key principles**:
 1. **No hardcoded credentials** (like PostgreSQL pattern)
 2. **Environment-based config** (dev: .env, prod: secrets)
-3. **Least privilege** (prod: scoped IAM policies)
+3. **Least privilege** (prod: scoped bucket permissions per key)
 4. **API mediates all access** (users never directly access storage)
 
 ### Input Validation
@@ -1647,11 +1641,11 @@ Production:
 - Image dimension limits (max 8000×8000 pixels)
 - Malware scanning for uploaded files
 
-### MinIO Access Control
+### Garage Access Control
 - Private bucket by default
 - Presigned URLs for time-limited access
 - API server mediates all image access
-- No direct public access to MinIO
+- No direct public access to Garage
 - Ontology-based authorization (users only access their ontologies)
 
 ### Rate Limiting
@@ -1766,8 +1760,8 @@ async def test_concurrent_image_ingestion():
     assert len(results) == 50
     assert all("source_id" in r for r in results)
 
-    # Verify MinIO has all images
-    assert await minio_client.object_count() >= 50
+    # Verify Garage has all images
+    assert await garage_client.object_count() >= 50
 ```
 
 ---
@@ -1783,8 +1777,8 @@ image_ingestion_total = Counter("image_ingestion_total", ["ontology", "status"])
 visual_context_matches = Histogram("visual_context_matches")
 
 # Storage metrics
-minio_storage_bytes = Gauge("minio_storage_bytes")
-minio_object_count = Gauge("minio_object_count")
+garage_storage_bytes = Gauge("garage_storage_bytes")
+garage_object_count = Gauge("garage_object_count")
 image_embedding_dimension = Gauge("image_embedding_dimension")
 
 # Search metrics
@@ -1819,9 +1813,9 @@ logger.info(
 ## Implementation Checklist
 
 ### Infrastructure
-- [ ] Add MinIO to docker-compose
-- [ ] Create initialization script (create bucket, set policy)
-- [ ] Pull Ollama models (granite-vision-3.3:2b, nomic-embed-vision)
+- [ ] Add Garage to docker-compose
+- [ ] Create initialization script (create bucket, set keys)
+- [ ] Pull Ollama models (granite-vision-3.3:2b for optional local vision)
 
 ### Database Schema
 - [ ] Create image_assets table with vector index
@@ -1845,7 +1839,7 @@ logger.info(
 - [ ] Test hairpin pattern with existing text pipeline
 
 ### Storage
-- [ ] Implement MinIO client wrapper
+- [ ] Implement Garage S3 client wrapper
 - [ ] Implement image upload/compression
 - [ ] Implement image retrieval (full + thumbnail)
 - [ ] Implement presigned URL generation
@@ -1892,6 +1886,31 @@ The implementation will be considered successful when:
 8. ✅ **Unified pipeline works** (image ingestion uses existing text upsert)
 9. ✅ **Performance is acceptable** (<30s per image with local models, <10s with cloud)
 10. ✅ **Storage is manageable** (<500KB per image including embeddings and metadata)
+
+---
+
+## Considered Alternatives
+
+### MinIO (Initially Implemented, Then Rejected)
+
+**Why initially chosen:**
+- Mature S3-compatible object storage
+- Well-documented API
+- Popular in self-hosted environments
+- Initially appeared to be open-source friendly
+
+**Why rejected:**
+- **Enterprise license trap**: In March 2025, MinIO gutted the admin UI from Community Edition
+- **Pricing**: Enterprise edition costs $96,000/year for admin features we considered table-stakes
+- **Pattern recognition**: Follows exact same bait-and-switch as Neo4j ($180k/year for RBAC)
+- **Community vs Enterprise split**: Essential management features moved to proprietary license
+- **Governance risk**: For-profit company that demonstrated willingness to gut open-source offering
+
+**Migration to Garage:**
+- Drop-in S3 API replacement (zero code changes required)
+- Standard boto3 library works identically
+- All architectural patterns preserved (presigned URLs, bucket policies, etc.)
+- Cooperative governance (Deuxfleurs) prevents future license traps
 
 ---
 

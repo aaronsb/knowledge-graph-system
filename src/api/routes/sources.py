@@ -1,7 +1,7 @@
 """
 Source retrieval API routes.
 
-Provides endpoints for retrieving source content, including images from MinIO (ADR-057).
+Provides endpoints for retrieving source content, including images from Garage (ADR-057).
 """
 
 import logging
@@ -10,7 +10,7 @@ from fastapi.responses import Response
 from typing import Optional
 
 from ..lib.age_client import AGEClient
-from ..lib.minio_client import get_minio_client
+from ..lib.garage_client import get_garage_client
 from ..dependencies.auth import get_current_active_user
 from ..models.auth import UserInDB
 
@@ -47,8 +47,8 @@ async def get_source_image(
     **Workflow:**
     1. Look up Source node in graph by source_id
     2. Verify it's an image source (content_type='image')
-    3. Get MinIO object key from Source node
-    4. Download image from MinIO
+    3. Get storage key from Source node
+    4. Download image from Garage storage
     5. Return image with appropriate Content-Type header
 
     **Args:**
@@ -75,7 +75,7 @@ async def get_source_image(
         query = """
         MATCH (s:Source {source_id: $source_id})
         RETURN s.content_type as content_type,
-               s.minio_object_key as minio_object_key
+               s.storage_key as storage_key
         """
 
         result = age_client._execute_cypher(
@@ -91,9 +91,9 @@ async def get_source_image(
             )
 
         content_type = result.get("content_type")
-        minio_object_key = result.get("minio_object_key")
+        storage_key = result.get("storage_key")
 
-        logger.info(f"Found source {source_id}: content_type={content_type}, minio_key={minio_object_key}")
+        logger.info(f"Found source {source_id}: content_type={content_type}, storage_key={storage_key}")
 
     except HTTPException:
         raise
@@ -111,16 +111,16 @@ async def get_source_image(
             detail=f"Source {source_id} is not an image (content_type='{content_type}')"
         )
 
-    if not minio_object_key:
+    if not storage_key:
         raise HTTPException(
             status_code=404,
             detail=f"Source {source_id} has no MinIO object key (image may have been deleted)"
         )
 
-    # Step 3: Download image from MinIO
+    # Step 3: Download image from Garage
     try:
-        minio_client = get_minio_client()
-        image_bytes = minio_client.download_image(minio_object_key)
+        garage_client = get_garage_client()
+        image_bytes = garage_client.download_image(storage_key)
 
         logger.info(f"Retrieved image for {source_id}: {len(image_bytes)} bytes")
 
@@ -141,9 +141,9 @@ async def get_source_image(
         '.bmp': 'image/bmp'
     }
 
-    # Extract extension from minio_object_key
+    # Extract extension from storage_key
     import os
-    ext = os.path.splitext(minio_object_key)[1].lower()
+    ext = os.path.splitext(storage_key)[1].lower()
     mime_type = content_type_map.get(ext, 'image/jpeg')
 
     # Step 5: Return image with appropriate headers
@@ -176,7 +176,7 @@ async def get_source(
       "paragraph": 1,
       "full_text": "Flowchart showing...",
       "content_type": "image",
-      "minio_object_key": "Architecture_Diagrams/src_abc123.jpg",
+      "storage_key": "Architecture_Diagrams/src_abc123.jpg",
       "has_visual_embedding": true,
       "has_text_embedding": true
     }
@@ -196,7 +196,7 @@ async def get_source(
                s.full_text as full_text,
                s.file_path as file_path,
                s.content_type as content_type,
-               s.minio_object_key as minio_object_key,
+               s.storage_key as storage_key,
                s.visual_embedding IS NOT NULL as has_visual_embedding,
                s.embedding IS NOT NULL as has_text_embedding
         """

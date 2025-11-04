@@ -304,7 +304,7 @@ class AGEClient:
         full_text: str,
         file_path: str = None,
         content_type: str = "document",
-        minio_object_key: str = None,
+        storage_key: str = None,
         visual_embedding: list = None,
         embedding: list = None
     ) -> Dict[str, Any]:
@@ -318,7 +318,7 @@ class AGEClient:
             full_text: Full text content of the paragraph (prose for images, original text for documents)
             file_path: Path to the source file (optional)
             content_type: Type of content - "document" or "image" (ADR-057)
-            minio_object_key: MinIO object key for image storage (images only, ADR-057)
+            storage_key: MinIO object key for image storage (images only, ADR-057)
             visual_embedding: 768-dim visual embedding from Nomic Vision (images only, ADR-057)
             embedding: Text embedding of full_text (both documents and image prose, ADR-057)
 
@@ -336,7 +336,7 @@ class AGEClient:
             full_text: $full_text,
             file_path: $file_path,
             content_type: $content_type,
-            minio_object_key: $minio_object_key,
+            storage_key: $storage_key,
             visual_embedding: $visual_embedding,
             embedding: $embedding
         })
@@ -353,7 +353,7 @@ class AGEClient:
                     "full_text": full_text,
                     "file_path": file_path if file_path else None,
                     "content_type": content_type,
-                    "minio_object_key": minio_object_key,
+                    "storage_key": storage_key,
                     "visual_embedding": visual_embedding,
                     "embedding": embedding
                 },

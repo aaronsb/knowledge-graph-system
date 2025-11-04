@@ -171,7 +171,7 @@ def process_chunk(
     user_id: Optional[str] = None,
     # ADR-057: Image source metadata
     content_type: str = "document",
-    minio_object_key: Optional[str] = None,
+    storage_key: Optional[str] = None,
     visual_embedding: Optional[List[float]] = None,
     text_embedding: Optional[List[float]] = None
 ) -> List[str]:
@@ -226,7 +226,7 @@ def process_chunk(
             file_path=file_path,  # Track actual source file
             # ADR-057: Image source metadata
             content_type=content_type,
-            minio_object_key=minio_object_key,
+            storage_key=storage_key,
             visual_embedding=visual_embedding,
             embedding=text_embedding
         )

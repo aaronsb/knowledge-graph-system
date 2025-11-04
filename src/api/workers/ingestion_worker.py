@@ -103,19 +103,19 @@ def run_ingestion_worker(
             logger.error(f"Failed to describe image with vision provider: {e}")
             raise Exception(f"Image description failed: {str(e)}")
 
-        # Step 3: Upload image to MinIO
-        logger.info("Uploading image to MinIO...")
-        from src.api.lib.minio_client import get_minio_client
+        # Step 3: Upload image to Garage
+        logger.info("Uploading image to Garage...")
+        from src.api.lib.garage_client import get_garage_client
         from src.api.lib.datetime_utils import timedelta_from_now, to_iso
         import uuid
 
         try:
-            minio_client = get_minio_client()
+            garage_client = get_garage_client()
 
             # Generate temporary source_id (will be replaced with actual source_id during graph upsert)
             temp_source_id = f"src_{uuid.uuid4().hex[:12]}"
 
-            minio_object_key = minio_client.upload_image(
+            storage_key = garage_client.upload_image(
                 ontology=ontology,
                 source_id=temp_source_id,
                 image_bytes=image_bytes,
@@ -126,13 +126,13 @@ def run_ingestion_worker(
                     "job_id": job_id
                 }
             )
-            logger.info(f"Image stored in MinIO: {minio_object_key}")
+            logger.info(f"Image stored in Garage: {storage_key}")
         except Exception as e:
-            logger.error(f"Failed to store image in MinIO: {e}")
+            logger.error(f"Failed to store image in Garage: {e}")
             raise Exception(f"Image storage failed: {str(e)}")
 
         # Step 4: Store image metadata in job_data for graph upsert
-        job_data["minio_object_key"] = minio_object_key
+        job_data["storage_key"] = storage_key
         job_data["visual_embedding"] = visual_embedding
         job_data["vision_metadata"] = {
             "provider": vision_provider.get_provider_name(),
@@ -289,7 +289,7 @@ def run_ingestion_worker(
                 user_id=job_data.get("user_id"),
                 # ADR-057: Pass image metadata for multimodal sources
                 content_type=job_data.get("content_type", "document"),
-                minio_object_key=job_data.get("minio_object_key"),
+                storage_key=job_data.get("storage_key"),
                 visual_embedding=job_data.get("visual_embedding"),
                 text_embedding=None  # Will be generated during concept extraction
             )

@@ -271,38 +271,38 @@ async def delete_ontology(
                     detail=f"Ontology '{ontology_name}' not found"
                 )
 
-        # ADR-057: Clean up MinIO objects before deleting sources
-        # Query for all MinIO object keys in this ontology
-        minio_objects_result = client._execute_cypher(f"""
+        # ADR-057: Clean up Garage objects before deleting sources
+        # Query for all Garage object keys in this ontology
+        storage_objects_result = client._execute_cypher(f"""
             MATCH (s:Source {{document: '{ontology_name}'}})
-            WHERE s.minio_object_key IS NOT NULL
-            RETURN s.minio_object_key as minio_key
+            WHERE s.storage_key IS NOT NULL
+            RETURN s.storage_key as storage_key
         """)
 
-        minio_keys_to_delete = []
-        if minio_objects_result:
-            for row in minio_objects_result:
-                if row.get('minio_key'):
-                    minio_keys_to_delete.append(row['minio_key'])
+        storage_keys_to_delete = []
+        if storage_objects_result:
+            for row in storage_objects_result:
+                if row.get('storage_key'):
+                    storage_keys_to_delete.append(row['storage_key'])
 
-        # Delete MinIO objects
-        if minio_keys_to_delete:
+        # Delete Garage objects
+        if storage_keys_to_delete:
             try:
-                from ..lib.minio_client import get_minio_client
-                minio_client = get_minio_client()
+                from ..lib.garage_client import get_garage_client
+                garage_client = get_garage_client()
 
                 deleted_count = 0
-                for object_key in minio_keys_to_delete:
+                for object_key in storage_keys_to_delete:
                     try:
-                        minio_client.delete_image(object_key)
+                        garage_client.delete_image(object_key)
                         deleted_count += 1
                     except Exception as e:
-                        logger.warning(f"Failed to delete MinIO object {object_key}: {e}")
+                        logger.warning(f"Failed to delete Garage object {object_key}: {e}")
 
                 if deleted_count > 0:
-                    logger.info(f"Deleted {deleted_count} images from MinIO for ontology '{ontology_name}'")
+                    logger.info(f"Deleted {deleted_count} images from Garage for ontology '{ontology_name}'")
             except Exception as e:
-                logger.warning(f"Failed to initialize MinIO client for cleanup: {e}")
+                logger.warning(f"Failed to initialize Garage client for cleanup: {e}")
 
         # Delete instances linked to sources in this ontology
         client._execute_cypher(f"""
