@@ -352,6 +352,28 @@ knowledge-graph-system/
 
 This is an experimental exploration of knowledge graphs, LLM extraction, and semantic understanding. Feedback, issues, and contributions welcome.
 
+## License
+
+This project is licensed under the **Elastic License 2.0**.
+
+### What This Means
+
+✅ **Free for individuals** - Homelab, learning, experimentation
+✅ **Free for companies** - Internal use at any scale
+✅ **Free for product integration** - Incorporate into your own products
+
+❌ **Not permitted** - Offering as "Knowledge Graph as a Service" to third parties for a fee
+
+### When You Need a Commercial License
+
+If you want to provide the Knowledge Graph System as a managed service or SaaS offering to third parties, you'll need a commercial license.
+
+For commercial licensing inquiries, see [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) or contact the repository owner.
+
+### Why This License
+
+The goal is to keep this platform accessible for learning, experimentation, and internal business use while preventing silent appropriation by commercial platforms. If you're building something valuable with this system and want to offer it as a service, let's talk about how to make that work fairly.
+
 ## Acknowledgments
 
 Built with:
