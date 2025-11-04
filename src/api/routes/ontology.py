@@ -273,26 +273,26 @@ async def delete_ontology(
 
         # ADR-057: Clean up Garage objects before deleting sources
         # Query for all Garage object keys in this ontology
-        minio_objects_result = client._execute_cypher(f"""
+        storage_objects_result = client._execute_cypher(f"""
             MATCH (s:Source {{document: '{ontology_name}'}})
-            WHERE s.minio_object_key IS NOT NULL
-            RETURN s.minio_object_key as minio_key
+            WHERE s.storage_key IS NOT NULL
+            RETURN s.storage_key as storage_key
         """)
 
-        minio_keys_to_delete = []
-        if minio_objects_result:
-            for row in minio_objects_result:
-                if row.get('minio_key'):
-                    minio_keys_to_delete.append(row['minio_key'])
+        storage_keys_to_delete = []
+        if storage_objects_result:
+            for row in storage_objects_result:
+                if row.get('storage_key'):
+                    storage_keys_to_delete.append(row['storage_key'])
 
         # Delete Garage objects
-        if minio_keys_to_delete:
+        if storage_keys_to_delete:
             try:
                 from ..lib.garage_client import get_garage_client
                 garage_client = get_garage_client()
 
                 deleted_count = 0
-                for object_key in minio_keys_to_delete:
+                for object_key in storage_keys_to_delete:
                     try:
                         garage_client.delete_image(object_key)
                         deleted_count += 1

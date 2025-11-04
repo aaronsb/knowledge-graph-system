@@ -64,7 +64,7 @@ class ConceptInstance(BaseModel):
     content_type: Optional[str] = Field(None, description="Content type: 'image' for image sources, 'text' or None for text")
     has_image: Optional[bool] = Field(None, description="True if this source has an associated image")
     image_uri: Optional[str] = Field(None, description="URI to retrieve image: /api/sources/{source_id}/image (requires authentication)")
-    minio_object_key: Optional[str] = Field(None, description="MinIO object key for image storage (internal use)")
+    storage_key: Optional[str] = Field(None, description="MinIO object key for image storage (internal use)")
     # ADR-051: Source provenance metadata (from DocumentMeta)
     filename: Optional[str] = Field(None, description="Original filename or display name")
     source_type: Optional[str] = Field(None, description="Source type: file, stdin, mcp, api")

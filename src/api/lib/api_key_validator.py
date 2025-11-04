@@ -141,8 +141,8 @@ def validate_api_keys_at_startup() -> Dict[str, bool]:
                         is_valid, error_msg = validate_openai_key(api_key)
                     elif provider == 'anthropic':
                         is_valid, error_msg = validate_anthropic_key(api_key)
-                    elif provider == 'minio':
-                        # MinIO credentials are "access_key:secret_key" format
+                    elif provider == 'garage':
+                        # Garage credentials are "access_key:secret_key" format
                         # No API validation available, just check format
                         if ':' in api_key and len(api_key.split(':', 1)) == 2:
                             logger.info(f"   ✓ {provider}: Credentials retrieved (validation skipped)")
