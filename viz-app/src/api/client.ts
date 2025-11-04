@@ -302,6 +302,19 @@ class APIClient {
     });
     return response.data;
   }
+
+  /**
+   * Get image for a source node (ADR-057)
+   * @param sourceId - Source ID from concept instance
+   * @returns Image URL (blob URL for display)
+   */
+  async getSourceImageUrl(sourceId: string): Promise<string> {
+    const response = await this.client.get(`/sources/${sourceId}/image`, {
+      responseType: 'blob',
+    });
+    // Create blob URL for display in <img> tags
+    return URL.createObjectURL(response.data);
+  }
 }
 
 // Export singleton instance

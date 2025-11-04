@@ -8,6 +8,73 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { formatGrounding, getRelationshipTextColor } from './utils';
 
+/**
+ * EvidenceImage - Display image from evidence source (ADR-057)
+ */
+const EvidenceImage: React.FC<{ sourceId: string }> = ({ sourceId }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let currentUrl: string | null = null;
+
+    const fetchImage = async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const url = await apiClient.getSourceImageUrl(sourceId);
+        currentUrl = url;
+        setImageUrl(url);
+      } catch (err) {
+        console.error('Failed to fetch image:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchImage();
+
+    // Cleanup: revoke blob URL when component unmounts or sourceId changes
+    return () => {
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+    };
+  }, [sourceId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-2 text-gray-500">
+        <span className="text-xs">Loading image...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-2 text-gray-500">
+        <span className="text-xs">🖼️ Image available (failed to load)</span>
+      </div>
+    );
+  }
+
+  if (!imageUrl) {
+    return null;
+  }
+
+  return (
+    <div className="rounded border border-gray-600 overflow-hidden">
+      <img
+        src={imageUrl}
+        alt="Evidence"
+        className="w-full h-auto"
+        style={{ maxHeight: '200px', objectFit: 'contain', backgroundColor: '#1f2937' }}
+      />
+    </div>
+  );
+};
+
 export interface NodeInfoBoxProps {
   info: {
     nodeId: string;
@@ -203,10 +270,16 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
                   )}
                 </button>
                 {expandedSections.has('evidence') && (
-                  <div className="px-4 py-3 space-y-2 text-xs bg-gray-750">
+                  <div className="px-4 py-3 space-y-3 text-xs bg-gray-750">
                     {detailedData.instances.slice(0, 10).map((instance: any, idx: number) => (
-                      <div key={`${instance.instance_id || instance.id || idx}-${instance.quote?.substring(0, 20) || ''}`} className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
-                        "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
+                      <div key={`${instance.instance_id || instance.id || idx}-${instance.quote?.substring(0, 20) || ''}`} className="space-y-2">
+                        <div className="text-gray-300 italic border-l-2 border-gray-600 pl-2">
+                          "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
+                        </div>
+                        {/* ADR-057: Display image if available */}
+                        {instance.has_image && instance.source_id && (
+                          <EvidenceImage sourceId={instance.source_id} />
+                        )}
                       </div>
                     ))}
                     {detailedData.instances.length > 10 && (
