@@ -138,15 +138,18 @@ def prompt_hold_enter(
             elapsed_since_start = time.time() - start_time
             if not started and elapsed_since_start > timeout_s:
                 # No input detected - likely AI agent
-                print('\n\n' + '━' * 60)
-                print(f"\n{Colors.WARNING}⏱️  No input detected after 10 seconds.{Colors.NC}")
-                print(f"\n{Colors.DIM}If you're an AI agent reading this:{Colors.NC}")
-                print(f"{Colors.DIM}  This operation will {Colors.ERROR}PERMANENTLY DELETE{Colors.DIM} all graph data.{Colors.NC}")
-                print(f"{Colors.DIM}  You cannot undo this action.{Colors.NC}")
-                print(f"\n{Colors.INFO}  → Please ask your human to run this command directly.{Colors.NC}")
-                print(f"{Colors.INFO}  → They will need to hold Enter for 3 seconds.{Colors.NC}")
-                print(f"\n{Colors.DIM}Exiting...{Colors.NC}")
-                print('━' * 60 + '\n')
+                # Use \r\n for all line endings to ensure column 0 alignment
+                sys.stdout.write('\r\n\r\n')
+                sys.stdout.write('━' * 60 + '\r\n')
+                sys.stdout.write(f"\r\n{Colors.WARNING}⏱️  No input detected after 10 seconds.{Colors.NC}\r\n")
+                sys.stdout.write(f"\r\n{Colors.DIM}If you're an AI agent reading this:{Colors.NC}\r\n")
+                sys.stdout.write(f"{Colors.DIM}  This operation will {Colors.ERROR}PERMANENTLY DELETE{Colors.DIM} all graph data.{Colors.NC}\r\n")
+                sys.stdout.write(f"{Colors.DIM}  You cannot undo this action.{Colors.NC}\r\n")
+                sys.stdout.write(f"\r\n{Colors.INFO}  → Please ask your human to run this command directly.{Colors.NC}\r\n")
+                sys.stdout.write(f"{Colors.INFO}  → They will need to hold Enter for 3 seconds.{Colors.NC}\r\n")
+                sys.stdout.write(f"\r\n{Colors.DIM}Exiting...{Colors.NC}\r\n")
+                sys.stdout.write('━' * 60 + '\r\n')
+                sys.stdout.flush()
                 return False
 
             # Check for keypress
@@ -155,7 +158,8 @@ def prompt_hold_enter(
 
                 # Ctrl+C always cancels
                 if ch == '\x03':
-                    print(f"\n\n{Colors.DIM}Cancelled{Colors.NC}\n")
+                    sys.stdout.write(f"\r\n\r\n{Colors.DIM}Cancelled{Colors.NC}\r\n")
+                    sys.stdout.flush()
                     return False
 
                 # Decompression mode: drain Enter, wait for Space
@@ -165,7 +169,8 @@ def prompt_hold_enter(
                         continue
                     elif ch == ' ':
                         # Space pressed - user ready
-                        print(f"\n{Colors.SUCCESS}✓ Ready!{Colors.NC}\n")
+                        sys.stdout.write(f"\r\n{Colors.SUCCESS}✓ Ready!{Colors.NC}\r\n")
+                        sys.stdout.flush()
                         return True
                     # Ignore all other keys
                     continue
@@ -192,10 +197,10 @@ def prompt_hold_enter(
                     # Success - held long enough
                     if accumulated >= duration_s:
                         # After progress bar (which uses \r), need \r\n to reset to column 0
-                        # Add extra newline for spacing
                         sys.stdout.write('\r\n\n')
                         sys.stdout.flush()
-                        print(f"{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
+                        # Use \r\n after first message to reset column (emoji messes with cursor position)
+                        sys.stdout.write(f"{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}\r\n")
                         sys.stdout.write(f"{Colors.INFO}Release Enter and press [Space] to continue...{Colors.NC}")
                         sys.stdout.flush()
                         decompression_mode = True
@@ -213,7 +218,8 @@ def prompt_hold_enter(
                 enter_pressed = False
 
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.DIM}Cancelled{Colors.NC}\n")
+        sys.stdout.write(f"\r\n\r\n{Colors.DIM}Cancelled{Colors.NC}\r\n")
+        sys.stdout.flush()
         return False
     finally:
         # Restore terminal settings
