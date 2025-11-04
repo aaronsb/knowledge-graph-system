@@ -29,6 +29,7 @@ from fastapi.responses import RedirectResponse
 import psycopg2
 
 from src.api.lib.auth import get_password_hash, verify_password
+from src.api.lib.datetime_utils import utcnow
 from src.api.lib.oauth_utils import (
     generate_authorization_code,
     generate_device_code,
@@ -905,7 +906,7 @@ async def rotate_client_secret(
             return RotateSecretResponse(
                 client_id=client_id,
                 client_secret=new_secret,
-                rotated_at=datetime.utcnow()
+                rotated_at=utcnow()
             )
 
     except HTTPException:

@@ -9,7 +9,7 @@ import hashlib
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from .datetime_utils import utcnow, to_iso
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class IngestionCheckpoint:
             "char_position": char_position,
             "chunks_processed": chunks_processed,
             "recent_concept_ids": recent_concept_ids[-50:],  # Keep last 50
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": to_iso(utcnow()),
             "stats": stats
         }
 

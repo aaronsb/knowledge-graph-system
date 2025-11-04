@@ -580,6 +580,22 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
 
 ## Testing Strategy
 
+### Development Test Scripts
+
+Simple test script tree for running tests across the entire stack in `scripts/development/test/`:
+
+```bash
+./scripts/development/test/all.sh       # Run everything (API + linters)
+./scripts/development/test/api.sh       # Python API tests only
+./scripts/development/test/client.sh    # TypeScript CLI + MCP (future)
+./scripts/development/test/webapp.sh    # React webapp (future)
+./scripts/development/test/lint.sh      # All code quality linters
+```
+
+Scripts handle venv activation and provide consistent interface across languages. All scripts support `--quick` mode (skip coverage) and pass-through arguments.
+
+**See `scripts/development/test/README.md` for complete documentation** including the test tree model, functional domain expansion, and CI/CD integration.
+
 ### Manual Testing
 ```bash
 # Test API health

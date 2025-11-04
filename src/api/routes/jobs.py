@@ -5,7 +5,8 @@ import json
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
-from datetime import datetime, timedelta
+from datetime import timedelta
+from src.api.lib.datetime_utils import utcnow, to_iso
 
 from ..services.job_queue import get_job_queue
 from ..models.job import JobStatus
@@ -195,7 +196,7 @@ async def approve_job(
     # Mark approved
     queue.update_job(job_id, {
         "status": "approved",
-        "approved_at": datetime.now().isoformat(),
+        "approved_at": to_iso(utcnow()),
         "approved_by": current_user.get("user_id", "anonymous")  # Phase 2: real user ID
     })
 
@@ -323,7 +324,7 @@ async def stream_job_progress(
         - Auto-closes on terminal state
         """
         last_progress = None
-        last_keepalive = datetime.now()
+        last_keepalive = utcnow()
 
         while True:
             job = queue.get_job(job_id)
@@ -352,9 +353,9 @@ async def stream_job_progress(
                 break
 
             # Send keepalive every 30 seconds to prevent timeout
-            now = datetime.now()
+            now = utcnow()
             if (now - last_keepalive).total_seconds() >= 30:
-                yield f"event: keepalive\ndata: {json.dumps({'timestamp': now.isoformat()})}\n\n"
+                yield f"event: keepalive\ndata: {json.dumps({'timestamp': to_iso(now)})}\n\n"
                 last_keepalive = now
 
             # Poll interval: 500ms for sub-second updates
