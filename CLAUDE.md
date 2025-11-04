@@ -580,6 +580,17 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
 
 ## Testing Strategy
 
+### Development Test Scripts
+
+Quick-access test scripts for rapid development iteration are available in `scripts/development/test/`:
+- `unit.sh` - Run unit tests (no database required)
+- `datetime.sh` - Run datetime utilities tests
+- `lint-datetime.sh` - Run datetime linter
+
+All scripts support `--quick` mode (skip coverage) and pass-through arguments to pytest/linter.
+
+**See `scripts/development/test/README.md` for complete usage documentation.**
+
 ### Manual Testing
 ```bash
 # Test API health
