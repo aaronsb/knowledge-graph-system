@@ -169,6 +169,7 @@ async def search_concepts(request: SearchRequest):
                 results.append(ConceptSearchResult(
                     concept_id=concept_id,
                     label=match['label'],
+                    description=match.get('description'),
                     score=match['similarity'],
                     documents=documents,
                     evidence_count=evidence_count,
@@ -259,6 +260,7 @@ async def search_concepts(request: SearchRequest):
                     top_match = ConceptSearchResult(
                         concept_id=top_concept_id,
                         label=top_match_data['label'],
+                        description=top_match_data.get('description'),
                         score=top_match_data['similarity'],
                         documents=top_documents,
                         evidence_count=top_evidence_count,
@@ -477,6 +479,7 @@ async def get_concept_details(
         return ConceptDetailsResponse(
             concept_id=props.get('concept_id', ''),
             label=props.get('label', ''),
+            description=props.get('description', ''),
             search_terms=props.get('search_terms', []),
             documents=documents,
             instances=instances,
@@ -628,6 +631,7 @@ async def find_connection(request: FindConnectionRequest):
                     props = node.get('properties', {})
                     concept_id = props.get('concept_id', '')
                     label = props.get('label', '')
+                    description = props.get('description', '')
 
                     # Check if this is a metadata node (Source or Instance)
                     # Metadata nodes lack concept_id and label properties
@@ -670,6 +674,7 @@ async def find_connection(request: FindConnectionRequest):
                     nodes.append(PathNode(
                         id=concept_id,
                         label=label,
+                        description=description,
                         grounding_strength=grounding_strength,
                         sample_evidence=sample_evidence
                     ))
@@ -809,9 +814,11 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
         # Use the top match for each
         from_concept_id = from_matches[0]['concept_id']
         from_label = from_matches[0]['label']
+        from_description = from_matches[0].get('description', '')
         from_similarity = from_matches[0]['similarity']
         to_concept_id = to_matches[0]['concept_id']
         to_label = to_matches[0]['label']
+        to_description = to_matches[0].get('description', '')
         to_similarity = to_matches[0]['similarity']
 
         logger.info(f"Found concept matches: '{from_label}' ({from_concept_id}, {from_similarity:.1%}) -> '{to_label}' ({to_concept_id}, {to_similarity:.1%})")
@@ -838,6 +845,7 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                     props = node.get('properties', {})
                     concept_id = props.get('concept_id', '')
                     label = props.get('label', '')
+                    description = props.get('description', '')
 
                     # Check if this is a metadata node (Source or Instance)
                     # Metadata nodes lack concept_id and label properties
@@ -880,6 +888,7 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
                     nodes.append(PathNode(
                         id=concept_id,
                         label=label,
+                        description=description,
                         grounding_strength=grounding_strength,
                         sample_evidence=sample_evidence
                     ))
@@ -906,8 +915,8 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
         return FindConnectionBySearchResponse(
             from_query=request.from_query,
             to_query=request.to_query,
-            from_concept=PathNode(id=from_concept_id, label=from_label),
-            to_concept=PathNode(id=to_concept_id, label=to_label),
+            from_concept=PathNode(id=from_concept_id, label=from_label, description=from_description),
+            to_concept=PathNode(id=to_concept_id, label=to_label, description=to_description),
             from_similarity=from_similarity,
             to_similarity=to_similarity,
             from_suggested_threshold=from_suggested_threshold,

@@ -23,6 +23,7 @@ class ConceptSearchResult(BaseModel):
     """Single concept search result with similarity score and evidence"""
     concept_id: str = Field(..., description="Unique concept identifier")
     label: str = Field(..., description="Human-readable concept label")
+    description: Optional[str] = Field(None, description="Factual 1-2 sentence definition of the concept")
     score: float = Field(..., description="Similarity score (0.0-1.0)")
     documents: List[str] = Field(..., description="Documents where concept appears")
     evidence_count: int = Field(..., description="Number of evidence instances")
@@ -130,6 +131,7 @@ class ConceptDetailsResponse(BaseModel):
     """
     concept_id: str = Field(..., description="Unique concept identifier")
     label: str = Field(..., description="Human-readable concept label")
+    description: Optional[str] = Field(None, description="Factual 1-2 sentence definition of the concept")
     search_terms: List[str] = Field(..., description="Alternative search terms for this concept")
     embedding: Optional[List[float]] = Field(None, description="Vector embedding for semantic similarity (1536 dimensions)")
     documents: List[str] = Field(..., description="Documents where concept appears")
@@ -189,6 +191,7 @@ class PathNode(BaseModel):
     """Node in a connection path"""
     id: str = Field(..., description="Concept ID")
     label: str = Field(..., description="Concept label")
+    description: Optional[str] = Field(None, description="Factual 1-2 sentence definition of the concept")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
     sample_evidence: Optional[List['ConceptInstance']] = Field(None, description="Sample evidence instances when include_evidence=true")
 

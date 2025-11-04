@@ -7,6 +7,7 @@ import React from 'react';
 interface SearchResult {
   concept_id: string;
   label: string;
+  description?: string;
   score: number;
   evidence_count: number;
 }
@@ -26,6 +27,9 @@ export const SearchResultsDropdown: React.FC<SearchResultsDropdownProps> = ({ re
           className="w-full text-left p-3 rounded-lg border border-border bg-muted hover:border-primary/50 transition-colors"
         >
           <div className="text-sm font-mono font-medium">{result.label}</div>
+          {result.description && (
+            <div className="text-xs text-muted-foreground mt-1">{result.description}</div>
+          )}
           <div className="text-xs text-muted-foreground mt-1">
             Similarity: {(result.score * 100).toFixed(0)}% • {result.evidence_count} instances
           </div>

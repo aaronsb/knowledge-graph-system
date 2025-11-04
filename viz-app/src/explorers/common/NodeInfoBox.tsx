@@ -187,6 +187,12 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
               </button>
               {expandedSections.has('overview') && (
                 <div className="px-4 py-3 space-y-2 text-sm bg-gray-750">
+                  {detailedData?.description && (
+                    <div className="pb-2 border-b border-gray-600">
+                      <div className="text-gray-400 text-xs mb-1">Description:</div>
+                      <div className="text-gray-300 italic">{detailedData.description}</div>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-400">Ontology:</span>
                     <span className="font-medium text-gray-100">{info.group}</span>

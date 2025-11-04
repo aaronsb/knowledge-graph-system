@@ -143,6 +143,7 @@ export interface SearchRequest {
 export interface ConceptSearchResult {
   concept_id: string;
   label: string;
+  description?: string; // Factual 1-2 sentence definition of the concept
   score: number;
   documents: string[];
   evidence_count: number;
@@ -183,6 +184,7 @@ export interface ConceptRelationship {
 export interface ConceptDetailsResponse {
   concept_id: string;
   label: string;
+  description?: string; // Factual 1-2 sentence definition of the concept
   search_terms: string[];
   documents: string[];
   instances: ConceptInstance[];
@@ -221,6 +223,7 @@ export interface FindConnectionRequest {
 export interface PathNode {
   id: string;
   label: string;
+  description?: string; // Factual 1-2 sentence definition
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
   sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }

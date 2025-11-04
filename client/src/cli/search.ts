@@ -84,6 +84,9 @@ const queryCommand = setCommandHelp(
           for (const [i, concept] of result.results.entries()) {
             const scoreColor = getConceptColor(concept.score);
             console.log(colors.ui.bullet('●') + ' ' + colors.concept.label(`${i + 1}. ${concept.label}`));
+            if (concept.description) {
+              console.log(`   ${colors.status.dim(concept.description)}`);
+            }
             console.log(`   ${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
             console.log(`   ${colors.ui.key('Similarity:')} ${coloredPercentage(concept.score)}`);
             console.log(`   ${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
@@ -192,6 +195,9 @@ const detailsCommand = setCommandHelp(
           console.log(colors.ui.title(`📊 Concept Details: ${concept.label}`));
           console.log(separator());
           console.log(`\n${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
+          if (concept.description) {
+            console.log(`${colors.ui.key('Description:')} ${colors.status.dim(concept.description)}`);
+          }
           console.log(`${colors.ui.key('Search Terms:')} ${colors.concept.searchTerms(concept.search_terms.join(', '))}`);
           console.log(`${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
 
@@ -380,6 +386,9 @@ Notes:
               console.log(colors.path.distance(`Path ${i + 1}`) + colors.status.dim(` (${path.hops} hops):`));
               for (const [j, node] of path.nodes.entries()) {
                 console.log(`  ${colors.path.node(node.label)} ${colors.concept.id(`(${node.id})`)}`);
+                if (node.description) {
+                  console.log(`     ${colors.status.dim(node.description)}`);
+                }
 
                 // Display grounding strength if available (ADR-044)
                 if (includeGrounding && node.grounding_strength !== undefined && node.grounding_strength !== null) {

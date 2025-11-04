@@ -275,16 +275,25 @@ def process_chunk(
     for concept in extraction["concepts"]:
         llm_concept_id = concept["concept_id"]  # LLM-provided ID (may not be unique)
         label = concept["label"]
+        description = concept.get("description", "")
         search_terms = concept.get("search_terms", [])
 
         # Generate embedding via unified embedding worker
         # This automatically handles queueing for local providers
+        # Include description in embedding text for richer semantic matching
         try:
             embedding_worker = get_embedding_worker()
             if embedding_worker is None:
                 raise RuntimeError("Embedding worker not initialized")
 
-            embedding_response = embedding_worker.generate_concept_embedding(label)
+            # Build embedding text: label + description + search terms
+            embedding_text = label
+            if description:
+                embedding_text += f". {description}"
+            if search_terms:
+                embedding_text += f". {', '.join(search_terms)}"
+
+            embedding_response = embedding_worker.generate_concept_embedding(embedding_text)
             embedding = embedding_response["embedding"]
             embedding_tokens = embedding_response.get("tokens", 0)
             stats.embedding_tokens += embedding_tokens
@@ -326,7 +335,8 @@ def process_chunk(
                     concept_id=actual_concept_id,
                     label=label,
                     embedding=embedding,
-                    search_terms=search_terms
+                    search_terms=search_terms,
+                    description=description
                 )
                 age_client.link_concept_to_source(actual_concept_id, source_id)
                 stats.concepts_created += 1
