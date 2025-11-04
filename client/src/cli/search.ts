@@ -386,6 +386,9 @@ Notes:
               console.log(colors.path.distance(`Path ${i + 1}`) + colors.status.dim(` (${path.hops} hops):`));
               for (const [j, node] of path.nodes.entries()) {
                 console.log(`  ${colors.path.node(node.label)} ${colors.concept.id(`(${node.id})`)}`);
+                if (node.description) {
+                  console.log(`     ${colors.status.dim(node.description)}`);
+                }
 
                 // Display grounding strength if available (ADR-044)
                 if (includeGrounding && node.grounding_strength !== undefined && node.grounding_strength !== null) {
