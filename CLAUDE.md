@@ -582,14 +582,19 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
 
 ### Development Test Scripts
 
-Quick-access test scripts for rapid development iteration are available in `scripts/development/test/`:
-- `unit.sh` - Run unit tests (no database required)
-- `datetime.sh` - Run datetime utilities tests
-- `lint-datetime.sh` - Run datetime linter
+Simple test script tree for running tests across the entire stack in `scripts/development/test/`:
 
-All scripts support `--quick` mode (skip coverage) and pass-through arguments to pytest/linter.
+```bash
+./scripts/development/test/all.sh       # Run everything (API + linters)
+./scripts/development/test/api.sh       # Python API tests only
+./scripts/development/test/client.sh    # TypeScript CLI + MCP (future)
+./scripts/development/test/webapp.sh    # React webapp (future)
+./scripts/development/test/lint.sh      # All code quality linters
+```
 
-**See `scripts/development/test/README.md` for complete usage documentation.**
+Scripts handle venv activation and provide consistent interface across languages. All scripts support `--quick` mode (skip coverage) and pass-through arguments.
+
+**See `scripts/development/test/README.md` for complete documentation** including the test tree model, functional domain expansion, and CI/CD integration.
 
 ### Manual Testing
 ```bash

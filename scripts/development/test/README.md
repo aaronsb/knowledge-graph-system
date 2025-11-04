@@ -1,202 +1,323 @@
 # Development Test Scripts
 
-Quick-access scripts for running tests during development. These scripts provide an easy way to run specific test suites without memorizing pytest commands.
+Simple test script tree for running tests across the entire stack (Python API, TypeScript CLI/MCP, React webapp).
 
 ## Quick Reference
 
 ```bash
-# Unit tests (fast, no database required)
-./scripts/development/test/unit.sh
+# Run everything
+./scripts/development/test/all.sh
 
-# Datetime utilities tests
-./scripts/development/test/datetime.sh
-
-# Datetime linter
-./scripts/development/test/lint-datetime.sh
+# Run by component (focused testing)
+./scripts/development/test/api.sh       # Python API server tests
+./scripts/development/test/client.sh    # TypeScript CLI + MCP tests (future)
+./scripts/development/test/webapp.sh    # React webapp tests (future)
+./scripts/development/test/lint.sh      # All code quality linters
 ```
 
-## Available Scripts
+## The Test Tree
 
-### `unit.sh` - Unit Tests
-Runs all unit tests (no external dependencies like database or API server).
+```
+                          all.sh (run everything)
+                             |
+        ┌────────────────────┼────────────────────┬──────────┐
+        |                    |                    |          |
+     api.sh             client.sh            webapp.sh    lint.sh
+   (Python)          (TypeScript)            (React)    (Linters)
+```
 
-**Examples:**
+**Vertical navigation** - Test one component:
+- Focus on Python API while developing backend
+- Focus on TypeScript client while developing CLI/MCP
+- Focus on React webapp while developing visualizations
+
+**Horizontal navigation** - Test entire stack:
+- `all.sh` runs everything before commit/PR
+- Validates cross-component integration
+
+## Scripts
+
+### `all.sh` - Complete Test Suite
+
+Run all tests across entire stack (Python + TypeScript + React + linters).
+
 ```bash
-# Run all unit tests
-./scripts/development/test/unit.sh
-
-# Verbose output
-./scripts/development/test/unit.sh -v
-
-# Quick mode (skip coverage)
-./scripts/development/test/unit.sh --quick
-
-# Run specific test
-./scripts/development/test/unit.sh -k datetime
+./scripts/development/test/all.sh              # Run everything
+./scripts/development/test/all.sh --quick      # Skip coverage
 ```
 
-**What it runs:**
-- Pure Python unit tests
-- No database required
-- No API server required
-- Fast feedback (<5 seconds)
+**What it does:**
+- Runs `api.sh` (Python tests)
+- Runs `client.sh` (TypeScript tests - future)
+- Runs `webapp.sh` (React tests - future)
+- Runs `lint.sh` (all linters)
+- Shows pass/fail summary
 
-**Excludes:**
-- `tests/api/` (require database)
-- `tests/test_synonym_detector.py` (requires database)
-- `tests/test_vocabulary_manager_integration.py` (requires database)
-- `tests/test_phase3_vocabulary_graph.py` (requires database)
+**When to use:**
+- Before committing changes
+- Before creating pull requests
+- When you want comprehensive validation
 
 ---
 
-### `datetime.sh` - Datetime Utilities Tests
-Runs the ADR-056 datetime utilities test suite.
+### `api.sh` - Python API Server Tests
 
-**Examples:**
+Test the Python API server (`src/api/`).
+
 ```bash
-# Run with coverage
-./scripts/development/test/datetime.sh
-
-# Quick mode (no coverage)
-./scripts/development/test/datetime.sh --quick
-
-# Verbose output
-./scripts/development/test/datetime.sh -v
+./scripts/development/test/api.sh              # All API tests with coverage
+./scripts/development/test/api.sh --quick      # Skip coverage (faster)
+./scripts/development/test/api.sh -k datetime  # Run specific tests
+./scripts/development/test/api.sh -v           # Verbose output
 ```
 
 **What it tests:**
-- `src/api/lib/datetime_utils.py` module
-- 32 comprehensive tests
-- 100% code coverage
-- Timezone-aware datetime handling
+- Unit tests (fast, no database required)
+- Integration tests (requires database - future)
+- Infrastructure: datetime, auth, config, secrets
+- Ingestion: LLM extraction, chunking, workers
+- Queries: graph queries, search, connections
+- Vocabulary: vocabulary management
+
+**Current scope:**
+- 205 unit tests
+- Excludes integration tests (require database)
+- Coverage report: `htmlcov/unit/index.html`
 
 ---
 
-### `lint-datetime.sh` - Datetime Usage Linter
-Checks for unsafe datetime patterns in the codebase (ADR-056).
+### `client.sh` - TypeScript CLI + MCP Tests
 
-**Examples:**
+Test the TypeScript client (`client/`).
+
 ```bash
-# Lint entire src/api directory
-./scripts/development/test/lint-datetime.sh
-
-# Show violations with line numbers
-./scripts/development/test/lint-datetime.sh --verbose
-
-# Exit with code 1 if violations found (for CI)
-./scripts/development/test/lint-datetime.sh --strict
-
-# Lint specific file
-./scripts/development/test/lint-datetime.sh --path src/api/lib/auth.py
+./scripts/development/test/client.sh           # All client tests
+./scripts/development/test/client.sh --watch   # Watch mode
 ```
 
-**What it detects:**
-- `datetime.utcnow()` (deprecated, use `datetime_utils.utcnow()`)
-- `datetime.now()` without timezone (use `datetime_utils.utcnow()`)
-- `datetime.fromtimestamp()` without tz (use `datetime_utils.utc_from_timestamp()`)
+**What it will test** (future):
+- CLI command tests
+- MCP server tool tests
+- API client integration
 
-**Implementation:**
-- Linter code: `src/testing/linters/datetime_linter.py`
-- First-class testing infrastructure (excluded from production containers)
+**Status:** Placeholder - tests not yet implemented
 
-**Current status:**
-- 13/34 violations fixed (38% complete)
-- All critical security/job modules clean
-- 21 violations remain in low-priority files
+---
+
+### `webapp.sh` - React Webapp Tests
+
+Test the React webapp (`viz-app/`).
+
+```bash
+./scripts/development/test/webapp.sh           # All webapp tests
+./scripts/development/test/webapp.sh --watch   # Watch mode
+```
+
+**What it will test** (future):
+- Component tests
+- Integration tests
+- E2E tests
+
+**Status:** Placeholder - tests not yet implemented
+
+---
+
+### `lint.sh` - Code Quality Linters
+
+Run all code quality linters across the codebase.
+
+```bash
+./scripts/development/test/lint.sh              # All linters
+./scripts/development/test/lint.sh --verbose    # Show violations
+./scripts/development/test/lint.sh --strict     # Exit 1 on violations
+```
+
+**Current linters:**
+- **Datetime linter (ADR-056)** - Detects unsafe datetime patterns
+  - `datetime.utcnow()` (deprecated)
+  - `datetime.now()` without timezone
+  - `datetime.fromtimestamp()` without tz
+
+**Future linters:**
+- Query safety linter (ADR-048) - Namespace safety checks
+- General code quality (pylint, flake8, etc.)
+
+**Linter implementations:** `src/testing/linters/`
 
 ---
 
 ## Common Workflows
 
 ### During Active Development
-```bash
-# Fast iteration: run unit tests
-./scripts/development/test/unit.sh --quick
 
-# Or watch mode (requires pytest-watch):
-# pip install pytest-watch
-pytest-watch tests/ --ignore=tests/api/ --runner "pytest -v --tb=short"
+Focus on the component you're working on:
+
+```bash
+# Working on Python API
+./scripts/development/test/api.sh --quick      # Fast feedback loop
+
+# Working on TypeScript client (future)
+./scripts/development/test/client.sh --watch   # Auto-run on changes
+
+# Working on React webapp (future)
+./scripts/development/test/webapp.sh --watch   # Auto-run on changes
 ```
 
 ### Before Committing
+
+Run complete validation:
+
 ```bash
-# Run unit tests + linting
-./scripts/development/test/unit.sh
-./scripts/development/test/lint-datetime.sh --verbose
+# Run everything
+./scripts/development/test/all.sh
+
+# Or run separately for more control
+./scripts/development/test/api.sh
+./scripts/development/test/lint.sh
 ```
 
-### Testing Specific Changes
-```bash
-# If you modified datetime utilities:
-./scripts/development/test/datetime.sh
+### Testing Specific Features
 
-# If you modified auth/OAuth code:
-./scripts/development/test/lint-datetime.sh --path src/api/lib/auth.py
-./scripts/development/test/lint-datetime.sh --path src/api/routes/oauth.py
+Use pytest directly from repo root (requires venv):
+
+```bash
+source venv/bin/activate
+
+# Run specific test file
+pytest tests/test_datetime_utils.py
+
+# Run tests matching pattern
+pytest tests/ -k datetime
+
+# Run with verbose output
+pytest tests/test_datetime_utils.py -v
 ```
 
 ---
 
 ## Future Expansion
 
-As the test infrastructure grows, additional scripts will be added:
+As testing infrastructure grows, consider adding:
 
-- **`integration.sh`** - Integration tests (auto-starts database)
-- **`api.sh`** - API endpoint tests (auto-starts API server)
-- **`all.sh`** - Full test suite (unit + integration)
-- **`coverage.sh`** - Comprehensive coverage report
-- **`lint.sh`** - All linters (datetime, queries, code quality)
-- **`quick.sh`** - Pre-commit checks (fast)
-- **`watch.sh`** - Continuous testing on file changes
+### Functional Domain Scripts
+
+Cross-component test slices by feature (advanced pattern):
+
+```bash
+scripts/development/test/
+├── queries.sh         # Query tests: API + CLI + MCP + webapp
+├── ingestion.sh       # Ingestion tests: API + CLI
+├── vocabulary.sh      # Vocabulary tests: API + CLI
+├── infrastructure.sh  # Infrastructure tests: API + client + webapp
+```
+
+Each functional script orchestrates multiple components:
+
+```bash
+# Example: queries.sh
+pytest tests/ -k query                    # Python API query tests
+(cd client && npm test -- search)         # TypeScript CLI query tests
+(cd viz-app && npm test -- QueryBuilder)  # React query visualization tests
+```
+
+**Benefits:**
+- Test features end-to-end across entire stack
+- Catch integration issues between components
+- Map to user-facing functionality
+
+**When to implement:**
+- When you have tests in multiple components
+- When you need cross-component validation
+- When functional grouping adds value
+
+---
+
+## Architecture Decision Records (ADRs)
+
+Tests are linked to ADRs that document architectural decisions:
+
+| ADR | Related Tests | What it validates |
+|-----|---------------|-------------------|
+| ADR-056 | `api.sh -k datetime`<br>`lint.sh` (datetime linter) | Timezone-aware datetime utilities |
+| ADR-048 | (future) Query safety tests | Query facade namespace safety |
+| ADR-042 | (future) Ollama tests | Local LLM inference |
+
+See `docs/architecture/ARCHITECTURE_DECISIONS.md` for complete ADR index.
 
 ---
 
 ## Prerequisites
 
-**Virtual Environment:**
-All scripts require an activated Python virtual environment:
+**Python tests (api.sh):**
 ```bash
 # One-time setup
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+
+# Install test dependencies
+pip install pytest pytest-cov pytest-asyncio
 ```
 
-Scripts will check for `venv/` and warn if not found.
+Scripts automatically activate venv if found.
 
-**Test Dependencies:**
+**TypeScript tests (client.sh, webapp.sh):**
 ```bash
-pip install pytest pytest-cov pytest-asyncio
+# Client
+cd client
+npm install
+npm test
+
+# Webapp
+cd viz-app
+npm install
+npm test
 ```
 
 ---
 
 ## CI/CD Integration
 
-These scripts are designed to work in both local development and CI pipelines:
+These scripts work in both local development and CI pipelines:
 
 ```yaml
 # .github/workflows/test.yml
-- name: Run unit tests
-  run: ./scripts/development/test/unit.sh --quick
+- name: Run all tests
+  run: ./scripts/development/test/all.sh
 
-- name: Lint datetime usage
-  run: ./scripts/development/test/lint-datetime.sh --strict
+# Or run separately for parallel execution
+- name: Python API tests
+  run: ./scripts/development/test/api.sh --quick
+
+- name: TypeScript client tests
+  run: ./scripts/development/test/client.sh
+
+- name: Linters
+  run: ./scripts/development/test/lint.sh --strict
 ```
 
 ---
 
-## Related Documentation
+## Design Philosophy
 
-- **ADR-056:** Timezone-Aware Datetime Utilities
-  - `docs/architecture/ADR-056-timezone-aware-datetime-utilities.md`
-  - Migration guide for datetime violations
+**Start simple, grow as needed:**
+- Begin with component-based scripts (api, client, webapp, lint, all)
+- Add functional domain scripts when cross-component testing becomes valuable
+- Keep scripts thin - they orchestrate existing test frameworks (pytest, jest, vitest)
 
-- **Testing Guide:** (future)
-  - `docs/guides/TESTING.md`
-  - Comprehensive testing documentation
+**Why shell scripts?**
+- Handle venv activation automatically
+- Orchestrate across multiple languages/frameworks
+- Provide consistent interface (no need to remember pytest vs npm test)
+- Navigate the test tree at any level
+
+**The test tree mental model:**
+- Root: `all.sh` (everything)
+- Branches: `api.sh`, `client.sh`, `webapp.sh` (components)
+- Leaves: Direct test runner (pytest, npm test)
+- Optional slices: Functional domain scripts (queries, ingestion, etc.)
 
 ---
 
 **Pattern Established:** 2025-11-04
-**Next Steps:** Add integration test scripts when database testing infrastructure is mature
+**Next Steps:** Add client/webapp tests when codebases mature, consider functional domain scripts when cross-component testing adds value

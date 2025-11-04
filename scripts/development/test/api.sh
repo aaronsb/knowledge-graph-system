@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 #
-# Run unit tests (no external dependencies)
+# Run Python API server tests
 #
-# Unit tests are fast tests that don't require database, API server, or other
-# external services. Ideal for rapid development iteration.
+# Tests the API server codebase (src/api) including unit tests and integration tests.
+# Unit tests are fast and don't require external dependencies.
+# Integration tests require database to be running.
 #
 # Usage:
-#   ./scripts/development/test/unit.sh              # Run all unit tests
-#   ./scripts/development/test/unit.sh -v           # Verbose output
-#   ./scripts/development/test/unit.sh -k datetime  # Run tests matching 'datetime'
-#   ./scripts/development/test/unit.sh --quick      # Skip coverage report
+#   ./scripts/development/test/api.sh              # Run all API tests
+#   ./scripts/development/test/api.sh -v           # Verbose output
+#   ./scripts/development/test/api.sh -k datetime  # Run tests matching 'datetime'
+#   ./scripts/development/test/api.sh --quick      # Skip coverage report
 #
 set -e
 
@@ -36,7 +37,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo -e "${BLUE}⚡ Running unit tests (fast, no dependencies)${NC}"
+echo -e "${BLUE}🐍 Running Python API tests${NC}"
 echo ""
 
 # Activate virtual environment
@@ -83,4 +84,4 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}✅ All unit tests passed${NC}"
+echo -e "${GREEN}✅ Python API tests passed${NC}"
