@@ -1039,10 +1039,16 @@ configure_api_keys() {
 }
 
 # Configure Garage storage (ADR-057)
+# Fully automated cold-start configuration:
+# 1. Generate RPC secret
+# 2. Start Garage if needed
+# 3. Run init-garage.sh to create bucket and keys
+# 4. Store credentials in encrypted database
+# 5. Clean up temp files
 configure_garage() {
     echo ""
     echo -e "${BOLD}Garage Object Storage Configuration (ADR-057)${NC}"
-    echo -e "${YELLOW}Credentials are encrypted at rest (ADR-031)${NC}"
+    echo -e "${YELLOW}Fully automated setup - just follow the prompts${NC}"
     echo ""
 
     # Check encryption key exists (required for storing credentials)
@@ -1055,73 +1061,60 @@ configure_garage() {
         return
     fi
 
-    # Check if Garage is running (optional - can configure credentials without it)
-    local garage_running=false
-    echo -e "${BLUE}→${NC} Checking Garage availability..."
-
-    if [ "$DEPLOYMENT_MODE" = "docker" ]; then
-        # Docker deployment - check for container
-        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-garage$"; then
-            echo -e "${GREEN}✓${NC} Garage container detected (knowledge-graph-garage)"
-            garage_running=true
-        else
-            echo -e "${YELLOW}⚠${NC}  Garage container not running (can still configure credentials)"
-        fi
-    else
-        # Non-Docker - try to reach Garage via status command
-        if command -v docker &> /dev/null && docker exec knowledge-graph-garage garage status > /dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Garage service reachable"
-            garage_running=true
-        else
-            echo -e "${YELLOW}⚠${NC}  Garage not reachable (can still configure credentials)"
-        fi
-    fi
-    echo ""
-
     # Check if credentials already configured in database
     local key_exists=$(pg_query "SELECT COUNT(*) FROM kg_api.system_api_keys WHERE provider = 'garage'" | xargs)
 
     if [ "$key_exists" -gt "0" ]; then
         echo -e "${GREEN}✓${NC} Garage credentials already configured in encrypted key store"
         echo ""
-        read -p "Reconfigure? (y/N): " reconfigure
-        if [ "$reconfigure" != "y" ] && [ "$reconfigure" != "Y" ]; then
+        echo "What would you like to do?"
+        echo "  1) Keep existing credentials"
+        echo "  2) Regenerate credentials (deletes existing Garage key)"
+        echo ""
+        read -p "Choice [1-2]: " -n 1 -r
+        echo ""
+        echo ""
+
+        if [ "$REPLY" = "1" ]; then
+            echo -e "${BLUE}  Keeping existing configuration${NC}"
+            read -p "Press Enter to continue..."
+            return
+        elif [ "$REPLY" != "2" ]; then
+            echo -e "${YELLOW}⚠${NC}  Invalid choice - keeping existing configuration"
+            read -p "Press Enter to continue..."
             return
         fi
+
+        echo -e "${YELLOW}→${NC} Regenerating Garage credentials..."
+        echo ""
     fi
 
-    # Auto-generate GARAGE_RPC_SECRET if not present (cold start requirement)
+    # ========================================================================
+    # Step 1: Generate/verify RPC secret
+    # ========================================================================
     echo -e "${BLUE}→${NC} Checking Garage RPC secret..."
-    if ! grep -q "^GARAGE_RPC_SECRET=" "$PROJECT_ROOT/.env" 2>/dev/null || grep -q "^GARAGE_RPC_SECRET=CHANGE_THIS" "$PROJECT_ROOT/.env" 2>/dev/null; then
-        local rpc_secret=$(openssl rand -hex 32)
-        echo -e "${GREEN}✓${NC} Generated Garage RPC secret"
+    local rpc_secret_value=$(grep "^GARAGE_RPC_SECRET=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2)
 
-        # Add or update in .env
+    if [ -z "$rpc_secret_value" ] || [ "$rpc_secret_value" = "CHANGE_THIS_TO_A_RANDOM_SECRET_KEY" ]; then
+        rpc_secret_value=$(openssl rand -hex 32)
+        echo -e "${GREEN}✓${NC} Generated new RPC secret"
+
+        # Update .env
         if grep -q "^GARAGE_RPC_SECRET=" "$PROJECT_ROOT/.env" 2>/dev/null; then
-            # Replace existing placeholder
             if command -v sed &> /dev/null; then
-                sed -i.bak "s|^GARAGE_RPC_SECRET=.*|GARAGE_RPC_SECRET=$rpc_secret|" "$PROJECT_ROOT/.env"
-            else
-                echo "GARAGE_RPC_SECRET=$rpc_secret" >> "$PROJECT_ROOT/.env"
+                sed -i.bak "s|^GARAGE_RPC_SECRET=.*|GARAGE_RPC_SECRET=$rpc_secret_value|" "$PROJECT_ROOT/.env"
             fi
-        else
-            # Doesn't exist, will be added below with full section
-            :
         fi
     else
         echo -e "${GREEN}✓${NC} RPC secret already configured"
     fi
     echo ""
 
-    # Configure endpoint settings in .env (not credentials!)
+    # ========================================================================
+    # Step 2: Configure endpoint settings in .env
+    # ========================================================================
     echo -e "${BLUE}→${NC} Configuring Garage endpoint settings..."
     if ! grep -q "# Garage Object Storage Configuration" "$PROJECT_ROOT/.env" 2>/dev/null; then
-        # Generate RPC secret if we haven't yet
-        local rpc_secret_value=$(grep "^GARAGE_RPC_SECRET=" "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2)
-        if [ -z "$rpc_secret_value" ] || [ "$rpc_secret_value" = "CHANGE_THIS_TO_A_RANDOM_SECRET_KEY" ]; then
-            rpc_secret_value=$(openssl rand -hex 32)
-        fi
-
         cat >> "$PROJECT_ROOT/.env" << EOF
 
 # ----------------------------------------------------------------------------
@@ -1146,94 +1139,116 @@ GARAGE_RPC_SECRET=$rpc_secret_value
 EOF
         echo -e "${GREEN}✓${NC} Garage endpoint settings added to .env"
     else
-        echo -e "${YELLOW}⚠${NC}  Garage section already exists in .env"
+        echo -e "${GREEN}✓${NC} Garage endpoint settings already configured"
     fi
     echo ""
 
-    # Store credentials in encrypted key store
-    echo -e "${BLUE}→${NC} Retrieving Garage credentials..."
+    # ========================================================================
+    # Step 3: Start Garage if not running
+    # ========================================================================
+    echo -e "${BLUE}→${NC} Checking Garage container status..."
+    if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^knowledge-graph-garage$"; then
+        echo -e "${YELLOW}⚠${NC}  Garage container not running"
+        echo ""
+        read -p "Start Garage now? (Y/n): " start_garage
+
+        if [ "$start_garage" = "n" ] || [ "$start_garage" = "N" ]; then
+            echo -e "${YELLOW}⚠${NC}  Cannot configure without Garage running"
+            echo ""
+            echo "To start Garage manually:"
+            echo "  ./scripts/services/start-garage.sh"
+            echo ""
+            read -p "Press Enter to continue..."
+            return
+        fi
+
+        echo ""
+        echo -e "${BLUE}→${NC} Starting Garage container..."
+        if [ -x "$PROJECT_ROOT/scripts/services/start-garage.sh" ]; then
+            "$PROJECT_ROOT/scripts/services/start-garage.sh"
+            sleep 3  # Give Garage time to fully initialize
+        else
+            echo -e "${RED}✗${NC} Start script not found"
+            read -p "Press Enter to continue..."
+            return
+        fi
+    else
+        echo -e "${GREEN}✓${NC} Garage container running"
+    fi
     echo ""
 
-    # Try to auto-load credentials from temporary file created by init-garage.sh
+    # ========================================================================
+    # Step 4: Delete existing Garage key if regenerating
+    # ========================================================================
+    if [ "$key_exists" -gt "0" ]; then
+        echo -e "${BLUE}→${NC} Deleting old Garage API key..."
+        if docker exec knowledge-graph-garage /garage key info kg-api-key > /dev/null 2>&1; then
+            docker exec knowledge-graph-garage /garage key delete kg-api-key --yes > /dev/null 2>&1
+            echo -e "${GREEN}✓${NC} Old key deleted"
+        else
+            echo -e "${BLUE}  No existing key found in Garage (database only)${NC}"
+        fi
+        echo ""
+    fi
+
+    # ========================================================================
+    # Step 5: Run init-garage.sh to create bucket and generate credentials
+    # ========================================================================
+    echo -e "${BLUE}→${NC} Running Garage initialization..."
+    echo ""
+
+    if [ -x "$PROJECT_ROOT/scripts/garage/init-garage.sh" ]; then
+        "$PROJECT_ROOT/scripts/garage/init-garage.sh"
+        local init_result=$?
+
+        if [ $init_result -ne 0 ]; then
+            echo ""
+            echo -e "${RED}✗${NC} Garage initialization failed"
+            read -p "Press Enter to continue..."
+            return
+        fi
+    else
+        echo -e "${RED}✗${NC} Init script not found or not executable"
+        echo "    Expected: $PROJECT_ROOT/scripts/garage/init-garage.sh"
+        read -p "Press Enter to continue..."
+        return
+    fi
+    echo ""
+
+    # ========================================================================
+    # Step 6: Load credentials from temp file
+    # ========================================================================
+    echo -e "${BLUE}→${NC} Loading Garage credentials..."
+    local creds_file="/tmp/garage-credentials.txt"
     local access_key=""
     local secret_key=""
-    local creds_file="/tmp/garage-credentials.txt"
 
     if [ -f "$creds_file" ]; then
-        # Load credentials from temp file
-        echo -e "${BLUE}  Found credentials file from init-garage.sh${NC}"
-
         # Source the file to get variables
         source "$creds_file"
-
         access_key="$GARAGE_ACCESS_KEY_ID"
         secret_key="$GARAGE_SECRET_ACCESS_KEY"
 
         if [ -n "$access_key" ] && [ -n "$secret_key" ]; then
-            echo -e "${GREEN}✓${NC} Auto-loaded credentials from ${creds_file}"
+            echo -e "${GREEN}✓${NC} Credentials loaded from init-garage.sh"
             echo -e "${BLUE}  Access Key: ${access_key}${NC}"
         else
-            echo -e "${YELLOW}⚠${NC}  Failed to parse credentials file"
-            access_key=""
-            secret_key=""
-        fi
-    elif [ "$garage_running" = true ]; then
-        # Credentials file doesn't exist, but Garage is running
-        if docker exec knowledge-graph-garage /garage key info kg-api-key > /dev/null 2>&1; then
-            echo -e "${YELLOW}⚠${NC}  Garage key exists but credentials not available"
-            echo ""
-            echo "The secret key is only shown once during key creation."
-            echo "Options:"
-            echo "  1. Delete and recreate key:"
-            echo "     docker exec knowledge-graph-garage /garage key delete kg-api-key"
-            echo "     ./scripts/garage/init-garage.sh"
-            echo "  2. Enter credentials manually if you saved them"
-            echo ""
-            # Continue to manual entry below
-        else
-            echo -e "${YELLOW}⚠${NC}  API key 'kg-api-key' not found in Garage"
-            echo ""
-            echo "Run initialization to create key:"
-            echo "  ./scripts/garage/init-garage.sh"
-            echo ""
+            echo -e "${RED}✗${NC} Failed to parse credentials file"
             read -p "Press Enter to continue..."
             return
         fi
-    fi
-
-    # Manual entry fallback (if Garage not running or auto-retrieval failed)
-    if [ -z "$access_key" ]; then
-        echo "Garage not running or credentials not found."
-        echo "Enter credentials manually (or start Garage and run init-garage.sh):"
-        echo ""
-        read -p "Access Key: " access_key
-
-        if [ -z "$access_key" ]; then
-            echo ""
-            echo -e "${YELLOW}⚠${NC}  No access key provided - skipping credential storage"
-            echo ""
-            echo "Next steps:"
-            echo "  1. Start Garage: ./scripts/services/start-garage.sh"
-            echo "  2. Initialize: ./scripts/garage/init-garage.sh"
-            echo "  3. Return here and select option 7 again"
-            echo ""
-            read -p "Press Enter to continue..."
-            return
-        fi
-
-        read -sp "Secret Key: " secret_key
-        echo ""
-
-        if [ -z "$secret_key" ]; then
-            echo ""
-            echo -e "${YELLOW}⚠${NC}  No secret key provided - skipping credential storage"
-            read -p "Press Enter to continue..."
-            return
-        fi
+    else
+        echo -e "${RED}✗${NC} Credentials file not found: $creds_file"
+        echo "    Expected to be created by init-garage.sh"
+        read -p "Press Enter to continue..."
+        return
     fi
     echo ""
 
-    # Store in encrypted key store
+    # ========================================================================
+    # Step 7: Store credentials in encrypted database
+    # ========================================================================
+    echo -e "${BLUE}→${NC} Storing credentials in encrypted database..."
     local temp_script=$(mktemp)
     cat > "$temp_script" << EOF
 #!/usr/bin/env python3
@@ -1247,10 +1262,10 @@ try:
     conn = client.pool.getconn()
     try:
         key_store = EncryptedKeyStore(conn)
-        # Store as "access_key:secret_key" format (same as MinIO pattern)
+        # Store as "access_key:secret_key" format
         credentials = "${access_key}:${secret_key}"
         key_store.store_key("garage", credentials)
-        print("✓ Garage credentials stored in encrypted key store")
+        print("SUCCESS")
         sys.exit(0)
     finally:
         client.pool.putconn(conn)
@@ -1259,66 +1274,41 @@ except Exception as e:
     sys.exit(1)
 EOF
 
-    $PYTHON "$temp_script"
+    $PYTHON "$temp_script" 2>&1
     local result=$?
     rm -f "$temp_script"
 
     if [ $result -ne 0 ]; then
-        echo ""
-        echo -e "${RED}✗${NC} Failed to store Garage credentials"
+        echo -e "${RED}✗${NC} Failed to store Garage credentials in database"
         read -p "Press Enter to continue..."
         return
     fi
 
-    # Clean up temporary credentials file after successful storage
+    echo -e "${GREEN}✓${NC} Credentials stored in encrypted key store"
+    echo ""
+
+    # ========================================================================
+    # Step 8: Clean up temporary credentials file
+    # ========================================================================
     if [ -f "$creds_file" ]; then
         rm -f "$creds_file"
-        echo -e "${BLUE}  Cleaned up temporary credentials file${NC}"
-    fi
-
-    echo ""
-
-    # Run initialization script (only if Garage is running)
-    if [ "$garage_running" = true ]; then
-        echo -e "${BLUE}→${NC} Initializing Garage bucket..."
-        if [ -x "$PROJECT_ROOT/scripts/garage/init-garage.sh" ]; then
-            "$PROJECT_ROOT/scripts/garage/init-garage.sh"
-            echo ""
-            echo -e "${GREEN}✓${NC} Garage bucket initialized"
-        else
-            echo -e "${YELLOW}⚠${NC}  Garage init script not found or not executable"
-            echo "    Expected location: $PROJECT_ROOT/scripts/garage/init-garage.sh"
-            echo "    You can run it manually later: ./scripts/garage/init-garage.sh"
-        fi
-    else
-        echo -e "${YELLOW}⚠${NC}  Skipping bucket initialization (Garage not running)"
-        echo "    Start Garage and run: ./scripts/garage/init-garage.sh"
-    fi
-    echo ""
-
-    # Success message
-    echo -e "${GREEN}✓${NC} Garage credentials configured successfully"
-    echo ""
-    echo -e "${BOLD}Next Steps:${NC}"
-
-    if [ "$garage_running" = false ]; then
-        echo "1. Start Garage:"
-        if [ "$DEPLOYMENT_MODE" = "docker" ]; then
-            echo "   ./scripts/services/start-garage.sh"
-        else
-            echo "   Start your Garage service (configuration in .env)"
-        fi
+        echo -e "${GREEN}✓${NC} Temporary credentials file deleted (security)"
         echo ""
-        echo "2. Initialize bucket:"
-        echo "   ./scripts/garage/init-garage.sh"
-        echo ""
-        echo "3. Restart API server to pick up Garage credentials:"
-    else
-        echo "1. Restart API server to pick up Garage credentials:"
     fi
-    echo "   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh"
-    echo ""
 
+    # ========================================================================
+    # Done!
+    # ========================================================================
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}✓ Garage storage configured successfully${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo "Bucket: knowledge-graph-images"
+    echo "Endpoint: http://localhost:3900"
+    echo "Credentials: Stored encrypted in PostgreSQL"
+    echo ""
+    echo -e "${YELLOW}Note: Restart the API server to pick up new credentials${NC}"
+    echo ""
     read -p "Press Enter to continue..."
 }
 
