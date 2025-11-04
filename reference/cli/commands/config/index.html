@@ -1727,33 +1727,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#enable-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      enable-mcp
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#disable-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      disable-mcp
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      mcp
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#auto-approve" class="md-nav__link">
     <span class="md-ellipsis">
       auto-approve
@@ -2622,6 +2595,29 @@
   
   <span class="md-ellipsis">
     get_ontology_info
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mcp/tools/get_source_image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_source_image
     
   </span>
   
@@ -4982,33 +4978,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#enable-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      enable-mcp
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#disable-mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      disable-mcp
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      mcp
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#auto-approve" class="md-nav__link">
     <span class="md-ellipsis">
       auto-approve
@@ -5110,9 +5079,6 @@
 <li><code>path</code> - Show configuration file path</li>
 <li><code>init</code> - Initialize configuration file with defaults</li>
 <li><code>reset</code> - Reset configuration to defaults</li>
-<li><code>enable-mcp</code> - Enable an MCP tool</li>
-<li><code>disable-mcp</code> - Disable an MCP tool</li>
-<li><code>mcp</code> - Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.</li>
 <li><code>auto-approve</code> - Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).</li>
 <li><code>update-secret</code> - Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.</li>
 <li><code>json</code> - JSON-based configuration operations (machine-friendly)</li>
@@ -5256,54 +5222,10 @@
 </tr>
 </tbody>
 </table>
-<h3 id="enable-mcp">enable-mcp</h3>
-<p>Enable an MCP tool</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>enable-mcp<span class="w"> </span>&lt;tool&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;tool&gt;</code> - MCP tool name</li>
-</ul>
-<h3 id="disable-mcp">disable-mcp</h3>
-<p>Disable an MCP tool</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>disable-mcp<span class="w"> </span>&lt;tool&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;tool&gt;</code> - MCP tool name</li>
-</ul>
-<h3 id="mcp">mcp</h3>
-<p>Show MCP tool configuration status. Lists all MCP tools with enabled/disabled status and descriptions. Specify a tool name to see details for that tool.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>mcp<span class="w"> </span><span class="o">[</span>tool<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;tool&gt;</code> - Specific MCP tool name (optional). Omit to show all MCP tools.</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--json</code></td>
-<td>Output as JSON</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
 <h3 id="auto-approve">auto-approve</h3>
 <p>Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>auto-approve<span class="w"> </span><span class="o">[</span>value<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>auto-approve<span class="w"> </span><span class="o">[</span>value<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -5312,7 +5234,7 @@
 <h3 id="update-secret">update-secret</h3>
 <p>Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>update-secret<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>update-secret<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -5334,7 +5256,7 @@
 <h3 id="json">json</h3>
 <p>JSON-based configuration operations (machine-friendly)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>json<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>json<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -5346,12 +5268,12 @@
 <h4 id="get_1">get</h4>
 <p>Get entire configuration as JSON</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>get<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>get<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h4 id="set_1">set</h4>
 <p>Set configuration from JSON (full or partial)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;json&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;json&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -5360,7 +5282,7 @@
 <h4 id="dto">dto</h4>
 <p>Output configuration template/schema</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>dto<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>dto<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 
 

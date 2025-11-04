@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../list_ontologies/">
+        <link rel="prev" href="../get_ontology_info/">
       
       
-        <link rel="next" href="../../../api/">
+        <link rel="next" href="../get_system_status/">
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>search_concepts - Knowledge Graph System</title>
+        <title>get_source_image - Knowledge Graph System</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#search_concepts" class="md-skip">
+        <a href="#get_source_image" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              search_concepts
+              get_source_image
             
           </span>
         </div>
@@ -2429,10 +2429,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../get_source_image/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    get_source_image
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2443,6 +2465,35 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#get_source_image_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_source_image
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2544,32 +2595,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    search_concepts
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../search_concepts/" class="md-nav__link">
         
   
   
@@ -2580,35 +2609,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#search_concepts_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      search_concepts
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -4776,9 +4776,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#search_concepts_1" class="md-nav__link">
+  <a href="#get_source_image_1" class="md-nav__link">
     <span class="md-ellipsis">
-      search_concepts
+      get_source_image
     </span>
   </a>
   
@@ -4803,21 +4803,15 @@
   
 
 
-<h1 id="search_concepts">search_concepts</h1>
+<h1 id="get_source_image">get_source_image</h1>
 <blockquote>
 <p>Auto-generated from MCP tool schema</p>
 </blockquote>
-<h3 id="search_concepts_1">search_concepts</h3>
-<p>Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: get_concept_details (all evidence), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").</p>
+<h3 id="get_source_image_1">get_source_image</h3>
+<p>Retrieve the original image for a source node (ADR-057). Use this when concept evidence has image metadata (has_image=true, image_uri set). Returns base64-encoded image data. <strong>Use Case:</strong> Visual verification of extracted concepts - compare image to extracted descriptions to check if anything was missed. This enables a refinement loop: view image → create new description → upsert → concepts get associated with image.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>query</code> (<code>string</code>) <strong>(required)</strong> - Search query text (2-3 word phrases work best, e.g., "linear thinking patterns")</li>
-<li><code>limit</code> (<code>number</code>) - Maximum number of results to return (default: 10, max: 100)</li>
-<li>Default: <code>10</code></li>
-<li><code>min_similarity</code> (<code>number</code>) - Minimum similarity score 0.0-1.0 (default: 0.7 for 70%, lower to 0.5-0.6 for broader matches)</li>
-<li>Default: <code>0.7</code></li>
-<li><code>offset</code> (<code>number</code>) - Number of results to skip for pagination (default: 0)</li>
-<li>Default: <code>0</code></li>
+<li><code>source_id</code> (<code>string</code>) <strong>(required)</strong> - Source ID from concept instance (found in evidence with has_image=true)</li>
 </ul>
 <hr />
 
