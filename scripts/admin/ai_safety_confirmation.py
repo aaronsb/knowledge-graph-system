@@ -189,11 +189,11 @@ def prompt_hold_enter(
 
                     # Success - held long enough
                     if accumulated >= duration_s:
-                        # Clear the progress bar line and move to start
-                        sys.stdout.write('\r' + ' ' * 80 + '\r')
+                        # Clear the progress bar line, move to column 0, then newline
+                        sys.stdout.write('\r' + ' ' * 80 + '\r\n')
                         sys.stdout.flush()
-                        print(f"\n{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
-                        print(f"{Colors.INFO}Release Enter and press [Space] to continue...{Colors.NC}")
+                        print(f"{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
+                        print(f"{Colors.INFO}Release Enter and press [Space] to continue...{Colors.NC}", end='', flush=True)
                         decompression_mode = True
                         # Don't reset enter_pressed here - let decompression mode handle it
                         continue
