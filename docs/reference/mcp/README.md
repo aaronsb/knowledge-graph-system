@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2025-10-28
+> Last updated: 2025-11-04
 
 ---
 
@@ -35,6 +35,7 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - [`ingest_text`](#ingest-text) - Submit text content to the knowledge graph for concept extraction. Automatically processes and extracts concepts, relationships, and evidence. Specify which ontology (knowledge domain) to add the concepts to. The system will chunk the text, extract concepts using LLM, and add them to the graph. Returns a job ID for tracking progress.
 - [`get_api_health`](#get-api-health) - Check API server health status. Returns status and timestamp.
 - [`get_system_status`](#get-system-status) - Get comprehensive system status including database, job scheduler, and resource usage statistics.
+- [`get_source_image`](#get-source-image) - Retrieve the original image for a source node (ADR-057). Use this when concept evidence has image metadata (has_image=true, image_uri set). Returns base64-encoded image data. **Use Case:** Visual verification of extracted concepts - compare image to extracted descriptions to check if anything was missed. This enables a refinement loop: view image → create new description → upsert → concepts get associated with image.
 
 ---
 
@@ -261,5 +262,15 @@ Get comprehensive system status including database, job scheduler, and resource 
 **Parameters:**
 
 
+
+---
+
+### get_source_image
+
+Retrieve the original image for a source node (ADR-057). Use this when concept evidence has image metadata (has_image=true, image_uri set). Returns base64-encoded image data. **Use Case:** Visual verification of extracted concepts - compare image to extracted descriptions to check if anything was missed. This enables a refinement loop: view image → create new description → upsert → concepts get associated with image.
+
+**Parameters:**
+
+- `source_id` (`string`) **(required)** - Source ID from concept instance (found in evidence with has_image=true)
 
 ---

@@ -38,6 +38,13 @@ export interface AuthTokenConfig {
   role?: string;                   // Cached role
 }
 
+export interface DisplayConfig {
+  // ADR-057: Terminal image display with chafa
+  enableChafa?: boolean;           // Enable inline terminal image display (default: true if chafa installed)
+  chafaWidth?: number;             // Terminal width for image display (default: auto)
+  chafaColors?: '256' | '16' | '2' | 'full';  // Color mode (default: 256)
+}
+
 export interface KgConfig {
   username?: string;
   secret?: string;  // API key (never store password!)
@@ -47,6 +54,7 @@ export interface KgConfig {
   auth?: AuthTokenConfig;   // ADR-054: OAuth 2.0 client credentials
   mcp?: McpConfig;
   aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
+  display?: DisplayConfig;  // ADR-057: Display preferences
 }
 
 export class ConfigManager {
@@ -488,6 +496,75 @@ export class ConfigManager {
 
       this.save();
     }
+  }
+
+  // ========== Display Methods (ADR-057) ==========
+
+  /**
+   * Check if chafa terminal image display is enabled
+   * If not explicitly set, defaults to true (will check for chafa availability at runtime)
+   *
+   * @returns true if chafa display is enabled in config
+   */
+  isChafaEnabled(): boolean {
+    return this.config.display?.enableChafa ?? true;
+  }
+
+  /**
+   * Enable or disable chafa terminal image display
+   *
+   * @param enabled Whether to enable chafa
+   */
+  setChafaEnabled(enabled: boolean): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.enableChafa = enabled;
+    this.save();
+  }
+
+  /**
+   * Get chafa display width
+   *
+   * @returns Width in characters, or undefined for auto-sizing
+   */
+  getChafaWidth(): number | undefined {
+    return this.config.display?.chafaWidth;
+  }
+
+  /**
+   * Set chafa display width
+   *
+   * @param width Width in characters (undefined for auto)
+   */
+  setChafaWidth(width: number | undefined): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.chafaWidth = width;
+    this.save();
+  }
+
+  /**
+   * Get chafa color mode
+   *
+   * @returns Color mode ('256', '16', '2', or 'full')
+   */
+  getChafaColors(): '256' | '16' | '2' | 'full' {
+    return this.config.display?.chafaColors ?? '256';
+  }
+
+  /**
+   * Set chafa color mode
+   *
+   * @param colors Color mode
+   */
+  setChafaColors(colors: '256' | '16' | '2' | 'full'): void {
+    if (!this.config.display) {
+      this.config.display = {};
+    }
+    this.config.display.chafaColors = colors;
+    this.save();
   }
 }
 
