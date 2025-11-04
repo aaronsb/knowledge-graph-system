@@ -116,8 +116,7 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
         header: 'Status',
         field: 'status',
         type: 'text',  // Use custom formatting instead of status type
-        width: 'auto',
-        maxWidth: 12,
+        width: 8,  // Fixed width for compact status
         customFormat: (status) => {
           // Compact status - just icons for terminal states
           switch (status) {
@@ -132,7 +131,8 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
             case 'cancelled': return colors.status.dim('⊗ stop');
             default: return colors.status.dim(status);
           }
-        }
+        },
+        truncate: false
       },
       {
         header: 'Ontology',
