@@ -368,7 +368,8 @@ configure_reset() {
 
     # Call Python child lock for confirmation
     # Uses the same UX as the TypeScript version (progress bar, AI timeout, etc.)
-    if ! $PYTHON "$PROJECT_ROOT/scripts/admin/child_lock.py" <<< "🚨 This action cannot be undone!"; then
+    # Redirect stdin from /dev/tty to ensure TTY access for termios
+    if ! $PYTHON "$PROJECT_ROOT/scripts/admin/child_lock.py" "🚨 This action cannot be undone!" < /dev/tty; then
         echo ""
         echo -e "${YELLOW}Reset cancelled${NC}"
         read -p "Press Enter to continue..."

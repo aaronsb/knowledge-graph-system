@@ -231,11 +231,62 @@ def _update_progress(accumulated: float, duration: float):
 
 
 if __name__ == '__main__':
-    # Demo
-    print("Child Lock Demo")
-    print("=" * 60)
+    import sys
+    import argparse
 
-    if prompt_hold_enter("🚨 This action cannot be undone!"):
-        print(f"{Colors.SUCCESS}✅ Confirmed - would proceed with dangerous action{Colors.NC}")
-    else:
-        print(f"{Colors.WARNING}❌ Cancelled - would abort dangerous action{Colors.NC}")
+    parser = argparse.ArgumentParser(
+        description="AI-Aware Human Confirmation Prompt (Child Lock)",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        'message',
+        nargs='?',
+        default="🚨 This action cannot be undone!",
+        help='Warning message to display'
+    )
+    parser.add_argument(
+        '--duration',
+        type=int,
+        default=3000,
+        help='Duration to hold Enter in milliseconds (default: 3000)'
+    )
+    parser.add_argument(
+        '--timeout',
+        type=int,
+        default=10000,
+        help='Inactivity timeout for AI detection in milliseconds (default: 10000)'
+    )
+    parser.add_argument(
+        '--bypass',
+        action='store_true',
+        help='DANGEROUS - Skip confirmation (requires explicit user consent)'
+    )
+    parser.add_argument(
+        '--demo',
+        action='store_true',
+        help='Run demo mode with example message'
+    )
+
+    args = parser.parse_args()
+
+    # Check if stdin is a TTY
+    if not sys.stdin.isatty():
+        print(f"{Colors.ERROR}Error: This script requires an interactive terminal (TTY){Colors.NC}", file=sys.stderr)
+        print(f"{Colors.DIM}stdin is not a TTY - cannot capture keypress events{Colors.NC}", file=sys.stderr)
+        sys.exit(1)
+
+    # Demo mode adds separator
+    if args.demo:
+        print("=" * 60)
+        print()
+
+    # Run confirmation prompt
+    result = prompt_hold_enter(
+        message=args.message,
+        duration_ms=args.duration,
+        timeout_ms=args.timeout,
+        confirm_bypass=args.bypass
+    )
+
+    # Exit with appropriate code
+    sys.exit(0 if result else 1)
