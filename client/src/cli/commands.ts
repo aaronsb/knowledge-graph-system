@@ -115,22 +115,4 @@ export async function registerCommands(program: Command) {
     configureColoredHelp(cmd);
     program.addCommand(cmd);
   });
-
-  // Global options
-  program.option(
-    '--api-url <url>',
-    'API base URL'
-  );
-
-  program.option('--client-id <id>', 'Client ID for multi-tenancy', process.env.KG_CLIENT_ID);
-
-  program.option('--api-key <key>', 'API key for authentication', process.env.KG_API_KEY);
-
-  // Set global options in environment for client to pick up
-  program.hook('preAction', (thisCommand, actionCommand) => {
-    const opts = thisCommand.opts();
-    if (opts.apiUrl) process.env.KG_API_URL = opts.apiUrl;
-    if (opts.clientId) process.env.KG_CLIENT_ID = opts.clientId;
-    if (opts.apiKey) process.env.KG_API_KEY = opts.apiKey;
-  });
 }
