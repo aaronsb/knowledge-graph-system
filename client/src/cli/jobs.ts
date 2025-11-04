@@ -88,31 +88,58 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
         header: 'Job ID',
         field: 'job_id',
         type: 'job_id',
+        width: fullId ? 38 : 16,  // Fixed width - job IDs are consistent length
+        truncate: false
+      },
+      {
+        header: 'Source',
+        field: (job) => job.source_path || job.filename || '-',
+        type: 'text',
         width: 'flex',
-        priority: 2,
-        maxWidth: fullId ? 40 : 30,
-        minWidth: fullId ? 38 : 20
+        priority: 10,  // Highest priority - gets most space
+        customFormat: (source, job) => {
+          if (!source || source === '-') return colors.status.dim('-');
+          return source;
+        },
+        truncate: true
       },
       {
         header: 'User',
         field: 'username',
         type: 'user',
-        width: 12,
+        width: 'auto',  // Fit to content
+        maxWidth: 12,
         customFormat: (username) => username || 'unknown',
         truncate: true
       },
       {
         header: 'Status',
         field: 'status',
-        type: 'status',
-        width: 18
+        type: 'text',  // Use custom formatting instead of status type
+        width: 8,  // Fixed width for compact status
+        customFormat: (status) => {
+          // Compact status - just icons for terminal states
+          switch (status) {
+            case 'completed': return colors.status.success('✓ done');
+            case 'failed': return colors.status.error('✗ fail');
+            case 'running': return colors.status.info('⚙ run');
+            case 'processing': return colors.status.info('⚙ run');
+            case 'approved': return colors.status.success('✓ ok');
+            case 'awaiting_approval': return colors.status.warning('⏸ wait');
+            case 'pending': return colors.status.dim('○ pend');
+            case 'queued': return colors.status.info('⋯ queue');
+            case 'cancelled': return colors.status.dim('⊗ stop');
+            default: return colors.status.dim(status);
+          }
+        },
+        truncate: false
       },
       {
         header: 'Ontology',
         field: 'ontology',
         type: 'heading',
         width: 'flex',
-        priority: 1,
+        priority: 3,  // Lower priority than Source
         customFormat: (name) => name || '-',
         truncate: true
       },
@@ -120,23 +147,24 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
         header: 'Created',
         field: 'created_at',
         type: 'timestamp',
-        width: 18
+        width: 16  // Timestamp is consistent width
       },
       {
-        header: 'Progress',
+        header: '',  // No header for progress icon
         field: (job) => job.progress?.percent,
         type: 'progress',
-        width: 10,
+        width: 1,  // Just the icon
         customFormat: (percent, job) => {
-          // Special case: show icons for terminal states
+          // Just icons, no text
           if (job.status === 'completed') return '✓';
           if (job.status === 'failed') return '✗';
           if (job.status === 'cancelled') return '⊗';
-          return percent !== undefined ? String(percent) : '-';
-        }
+          return percent !== undefined && percent < 100 ? '⋯' : ' ';
+        },
+        truncate: false
       }
     ],
-    spacing: 2,
+    spacing: 1,  // Tighter spacing between columns
     showHeader: true,
     showSeparator: true
   });

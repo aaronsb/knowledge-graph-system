@@ -31,9 +31,15 @@ def run_ingestion_worker(
     """
     Execute document ingestion as a background job.
 
+    Handles both text and image ingestion:
+    - Text jobs: content field contains text bytes
+    - Image jobs: image_bytes field contains raw image, worker generates prose
+
     Args:
         job_data: Job parameters
-            - content: bytes - Document content
+            - content: bytes - Document content (text jobs)
+            OR
+            - image_bytes: bytes - Raw image content (image jobs)
             - ontology: str - Ontology name
             - options: dict - Chunking config
             - filename: str (optional) - Original filename
@@ -46,12 +52,104 @@ def run_ingestion_worker(
     Raises:
         Exception: If ingestion fails
     """
-    # Decode base64-encoded content
-    content_b64 = job_data["content"]
-    content = base64.b64decode(content_b64)
-
     ontology = job_data["ontology"]
     options = job_data.get("options", {})
+
+    # Check if this is an image job (ADR-057)
+    is_image_job = "image_bytes" in job_data
+
+    if is_image_job:
+        logger.info(f"Processing image job {job_id}...")
+
+        # Decode image bytes
+        image_b64 = job_data["image_bytes"]
+        image_bytes = base64.b64decode(image_b64)
+
+        # Step 1: Generate visual embedding (Nomic Vision v1.5)
+        logger.info("Generating visual embedding with Nomic Vision v1.5...")
+        from src.api.lib.visual_embeddings import generate_visual_embedding
+        try:
+            visual_embedding = generate_visual_embedding(image_bytes)
+            logger.info(f"Visual embedding generated: 768-dim")
+        except Exception as e:
+            logger.error(f"Failed to generate visual embedding: {e}")
+            raise Exception(f"Visual embedding generation failed: {str(e)}")
+
+        # Step 2: Convert image to prose description (Vision Provider)
+        logger.info("Converting image to prose with vision AI...")
+        from src.api.lib.vision_providers import get_vision_provider, LITERAL_DESCRIPTION_PROMPT
+        try:
+            vision_provider_name = job_data.get("vision_provider", "openai")
+            vision_model_name = job_data.get("vision_model")
+
+            vision_provider = get_vision_provider(
+                provider=vision_provider_name,
+                model=vision_model_name
+            )
+
+            description_response = vision_provider.describe_image(
+                image_bytes=image_bytes,
+                prompt=LITERAL_DESCRIPTION_PROMPT
+            )
+
+            prose_description = description_response["text"]
+            vision_tokens = description_response.get("tokens", {})
+
+            logger.info(
+                f"Image described: {len(prose_description)} chars, "
+                f"{vision_tokens.get('total_tokens', 0)} tokens"
+            )
+        except Exception as e:
+            logger.error(f"Failed to describe image with vision provider: {e}")
+            raise Exception(f"Image description failed: {str(e)}")
+
+        # Step 3: Upload image to MinIO
+        logger.info("Uploading image to MinIO...")
+        from src.api.lib.minio_client import get_minio_client
+        from src.api.lib.datetime_utils import timedelta_from_now, to_iso
+        import uuid
+
+        try:
+            minio_client = get_minio_client()
+
+            # Generate temporary source_id (will be replaced with actual source_id during graph upsert)
+            temp_source_id = f"src_{uuid.uuid4().hex[:12]}"
+
+            minio_object_key = minio_client.upload_image(
+                ontology=ontology,
+                source_id=temp_source_id,
+                image_bytes=image_bytes,
+                filename=job_data.get("original_filename", "image"),
+                metadata={
+                    "uploaded_by": job_data.get("uploaded_by", "system"),
+                    "upload_time": to_iso(timedelta_from_now()),
+                    "job_id": job_id
+                }
+            )
+            logger.info(f"Image stored in MinIO: {minio_object_key}")
+        except Exception as e:
+            logger.error(f"Failed to store image in MinIO: {e}")
+            raise Exception(f"Image storage failed: {str(e)}")
+
+        # Step 4: Store image metadata in job_data for graph upsert
+        job_data["minio_object_key"] = minio_object_key
+        job_data["visual_embedding"] = visual_embedding
+        job_data["vision_metadata"] = {
+            "provider": vision_provider.get_provider_name(),
+            "model": vision_provider.get_model_name(),
+            "vision_tokens": vision_tokens,
+            "visual_embedding_model": "nomic-ai/nomic-embed-vision-v1.5",
+            "visual_embedding_dimension": 768,
+            "prose_length": len(prose_description)
+        }
+
+        # Convert prose to bytes for text ingestion pipeline
+        content = prose_description.encode('utf-8')
+        logger.info(f"Image processing complete, proceeding with text ingestion of {len(content)} byte prose description")
+    else:
+        # Text job: decode base64-encoded content
+        content_b64 = job_data["content"]
+        content = base64.b64decode(content_b64)
     filename = job_data.get("filename", f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
     # Extract options

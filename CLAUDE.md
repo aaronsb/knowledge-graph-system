@@ -198,7 +198,7 @@ kg database stats
 1. Edit `src/api/lib/ai_providers.py` or `src/api/lib/llm_extractor.py`
 2. Restart API: `./scripts/services/stop-api.sh && ./scripts/services/start-api.sh`
 3. Test with: `./scripts/setup/configure-ai.sh` (option 1)
-4. Test ingestion: `kg ingest file -o "Test" -y <test-file>`
+4. Test ingestion: `kg ingest file -o "Test" <test-file>`
 
 **When modifying database schema:**
 1. Create new migration file: `schema/migrations/00N_descriptive_name.sql`
@@ -472,7 +472,7 @@ results = client.facade.match_concepts(
 1. Edit prompt in `src/api/lib/llm_extractor.py` (EXTRACTION_PROMPT)
 2. Adjust JSON schema if needed
 3. Update concept matching in `src/api/lib/ingestion.py`
-4. Restart API and test with: `kg ingest file -o "Test" -y <test-doc>`
+4. Restart API and test with: `kg ingest file -o "Test" <test-doc>`
 
 ### Add New Relationship Types
 
@@ -606,7 +606,7 @@ kg health
 ./scripts/setup/configure-ai.sh
 
 # Test ingestion
-kg ingest file -o "Test Ontology" -y ingest_source/watts_lecture_1.txt
+kg ingest file -o "Test Ontology" ingest_source/watts_lecture_1.txt
 
 # Test queries
 kg search query "linear thinking"
@@ -620,7 +620,7 @@ kg search details <concept-id>
 docker-compose restart
 ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
 kg ontology delete "Test Ontology"
-kg ingest file -o "Test Ontology" -y <test-file>
+kg ingest file -o "Test Ontology" <test-file>
 kg database stats  # Verify counts
 ```
 

@@ -78,6 +78,11 @@ export interface JobStatus {
   approved_at?: string;
   approved_by?: string;
   expires_at?: string;
+  // ADR-051: Source provenance metadata
+  filename?: string;
+  source_type?: string;
+  source_path?: string;
+  source_hostname?: string;
 }
 
 export interface JobSubmitResponse {

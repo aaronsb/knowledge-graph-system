@@ -275,20 +275,15 @@ async def delete_ontology(
         # Query for all MinIO object keys in this ontology
         minio_objects_result = client._execute_cypher(f"""
             MATCH (s:Source {{document: '{ontology_name}'}})
-            WHERE s.properties IS NOT NULL AND s.properties CONTAINS 'minio_object_key'
-            RETURN s.properties as props
+            WHERE s.minio_object_key IS NOT NULL
+            RETURN s.minio_object_key as minio_key
         """)
 
         minio_keys_to_delete = []
         if minio_objects_result:
-            import json
             for row in minio_objects_result:
-                try:
-                    props = json.loads(row['props'])
-                    if 'minio_object_key' in props:
-                        minio_keys_to_delete.append(props['minio_object_key'])
-                except (json.JSONDecodeError, KeyError):
-                    pass
+                if row.get('minio_key'):
+                    minio_keys_to_delete.append(row['minio_key'])
 
         # Delete MinIO objects
         if minio_keys_to_delete:
