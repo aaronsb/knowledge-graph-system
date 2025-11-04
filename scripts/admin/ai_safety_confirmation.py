@@ -49,23 +49,9 @@ import time
 import select
 import termios
 import tty
-import shutil
 from typing import Optional
 
 
-def get_terminal_width() -> int:
-    """Get terminal width, default to 80 if not available."""
-    try:
-        return shutil.get_terminal_size().columns
-    except:
-        return 80
-
-
-def clear_line():
-    """Clear the current line and return cursor to start."""
-    width = get_terminal_width()
-    sys.stdout.write('\r' + ' ' * width + '\r')
-    sys.stdout.flush()
 
 
 class Colors:
@@ -152,11 +138,7 @@ def prompt_hold_enter(
             elapsed_since_start = time.time() - start_time
             if not started and elapsed_since_start > timeout_s:
                 # No input detected - likely AI agent
-                # Clear any existing line content first
-                clear_line()
-                print()  # Move to next line
-
-                print('━' * 60)
+                print('\n\n' + '━' * 60)
                 print(f"\n{Colors.WARNING}⏱️  No input detected after 10 seconds.{Colors.NC}")
                 print(f"\n{Colors.DIM}If you're an AI agent reading this:{Colors.NC}")
                 print(f"{Colors.DIM}  This operation will {Colors.ERROR}PERMANENTLY DELETE{Colors.DIM} all graph data.{Colors.NC}")
@@ -209,20 +191,16 @@ def prompt_hold_enter(
 
                     # Success - held long enough
                     if accumulated >= duration_s:
-                        # Clear the progress bar line, move to next line
-                        clear_line()
-                        print()  # Move to next line
-                        print(f"{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
+                        # Move to fresh line after progress bar
+                        print(f"\n{Colors.SUCCESS}✓ Confirmed! You're probably human! 👩‍💻{Colors.NC}")
                         print(f"{Colors.INFO}Release Enter and press [Space] to continue...{Colors.NC}", end='', flush=True)
                         decompression_mode = True
                         # Don't reset enter_pressed here - let decompression mode handle it
                         continue
 
                 elif started and not enter_pressed:
-                    # Enter released too early - clear progress bar first
-                    clear_line()
-                    print()  # Move to next line
-                    print(f"{Colors.WARNING}✗ Released too early{Colors.NC}\n")
+                    # Enter released too early
+                    print(f"\n{Colors.WARNING}✗ Released too early{Colors.NC}\n")
                     return False
 
                 # Reset flag for next poll (only if not in decompression mode)
