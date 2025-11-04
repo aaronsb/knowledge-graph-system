@@ -372,7 +372,8 @@ class AGEClient:
         concept_id: str,
         label: str,
         embedding: List[float],
-        search_terms: List[str]
+        search_terms: List[str],
+        description: str = ""
     ) -> Dict[str, Any]:
         """
         Create a Concept node in the graph.
@@ -382,6 +383,7 @@ class AGEClient:
             label: Human-readable concept label
             embedding: Vector embedding for similarity search
             search_terms: Alternative terms/phrases for the concept
+            description: Factual 1-2 sentence definition of the concept (optional)
 
         Returns:
             Dictionary with created node properties
@@ -393,6 +395,7 @@ class AGEClient:
         CREATE (c:Concept {
             concept_id: $concept_id,
             label: $label,
+            description: $description,
             embedding: $embedding,
             search_terms: $search_terms
         })
@@ -405,6 +408,7 @@ class AGEClient:
                 params={
                     "concept_id": concept_id,
                     "label": label,
+                    "description": description,
                     "embedding": embedding,
                     "search_terms": search_terms
                 },
@@ -707,6 +711,7 @@ class AGEClient:
         WHERE c.embedding IS NOT NULL
         RETURN c.concept_id AS concept_id,
                c.label AS label,
+               c.description AS description,
                c.embedding AS embedding
         """
 
@@ -723,11 +728,13 @@ class AGEClient:
                 # Parse agtype result
                 concept_id_agtype = record.get('concept_id')
                 label_agtype = record.get('label')
+                description_agtype = record.get('description')
                 embedding_agtype = record.get('embedding')
 
                 # Extract values from agtype (strip quotes)
                 concept_id = str(concept_id_agtype).strip('"')
                 label = str(label_agtype).strip('"')
+                description = str(description_agtype).strip('"') if description_agtype else ""
 
                 # Parse embedding from agtype (it's stored as JSON array)
                 embedding_str = str(embedding_agtype)
@@ -746,6 +753,7 @@ class AGEClient:
                     similarities.append({
                         "concept_id": concept_id,
                         "label": label,
+                        "description": description,
                         "similarity": similarity
                     })
 

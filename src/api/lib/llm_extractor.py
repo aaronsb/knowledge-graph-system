@@ -21,6 +21,7 @@ EXTRACTION_PROMPT_TEMPLATE = """You are a knowledge graph extraction agent. Your
 For each concept, provide:
 - concept_id: A unique identifier (e.g., "concept_001", "concept_002", etc.)
 - label: A clear, concise name for the concept
+- description: A factual 1-2 sentence statement defining what this concept IS (not opinion, just objective definition)
 - search_terms: Alternative terms/phrases that refer to this concept
 
 For each instance, provide:
@@ -71,6 +72,7 @@ Return your response as a JSON object with this structure:
     {{
       "concept_id": "concept_001",
       "label": "Concept Name",
+      "description": "A concise factual statement about what this concept represents.",
       "search_terms": ["term1", "term2", "term3"]
     }}
   ],

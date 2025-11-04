@@ -44,6 +44,9 @@ export function formatSearchResults(result: SearchResponse): string {
 
   result.results.forEach((concept, i) => {
     output += `## ${i + 1}. ${concept.label}\n`;
+    if (concept.description) {
+      output += `${concept.description}\n\n`;
+    }
     output += `ID: ${concept.concept_id}\n`;
     output += `Similarity: ${(concept.score * 100).toFixed(1)}%\n`;
     output += `Documents: ${concept.documents.join(', ')}\n`;
@@ -82,6 +85,9 @@ export function formatSearchResults(result: SearchResponse): string {
  */
 export function formatConceptDetails(concept: ConceptDetailsResponse): string {
   let output = `# Concept: ${concept.label}\n\n`;
+  if (concept.description) {
+    output += `${concept.description}\n\n`;
+  }
   output += `ID: ${concept.concept_id}\n`;
   output += `Search Terms: ${concept.search_terms.join(', ')}\n`;
   output += `Documents: ${concept.documents.join(', ')}\n`;

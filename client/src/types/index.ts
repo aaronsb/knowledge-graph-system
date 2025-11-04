@@ -143,6 +143,7 @@ export interface SearchRequest {
 export interface ConceptSearchResult {
   concept_id: string;
   label: string;
+  description?: string; // Factual 1-2 sentence definition of the concept
   score: number;
   documents: string[];
   evidence_count: number;
@@ -183,6 +184,7 @@ export interface ConceptRelationship {
 export interface ConceptDetailsResponse {
   concept_id: string;
   label: string;
+  description?: string; // Factual 1-2 sentence definition of the concept
   search_terms: string[];
   documents: string[];
   instances: ConceptInstance[];
