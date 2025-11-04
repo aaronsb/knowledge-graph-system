@@ -256,28 +256,20 @@ class ResetManager:
             if verbose:
                 Console.success(f"✓ Applied {migration_result['applied_count']} migration(s)")
 
-            # Step 7: Clear user data nodes (but preserve system nodes like :VocabType)
-            # Migrations create system nodes (:VocabType, :VocabCategory) that should persist
-            # Only clear user-created content: :Concept, :Source, :Instance, :DocumentMeta
-            if verbose:
-                Console.info("🧹 Clearing user data nodes...")
-
-            try:
-                conn = AGEConnection()
-                client = conn.get_client()
-
-                # Delete only user content nodes (system vocabulary nodes persist)
-                client._execute_cypher(
-                    "MATCH (n) WHERE n:Concept OR n:Source OR n:Instance OR n:DocumentMeta "
-                    "DETACH DELETE n"
-                )
-
-                conn.close()
-                if verbose:
-                    Console.success("✓ User data cleared (vocabulary preserved)")
-            except Exception as e:
-                if verbose:
-                    Console.warning(f"⚠ Graph clear failed (might already be empty): {e}")
+            # Step 7: Graph already empty after volume removal
+            # Note: We do NOT need to manually clear the graph here because:
+            # - docker-compose down -v removed all volumes (full cold restart)
+            # - Database was recreated from scratch with fresh volumes
+            # - Migrations just ran on a brand new empty database
+            # - Graph is already empty except for system vocabulary from migrations
+            #
+            # The old code here tried to clear user nodes with invalid openCypher syntax:
+            #   WHERE n:Concept OR n:Source (invalid - can't use :Label in WHERE)
+            #
+            # If we ever need "soft reset" (clear data but keep DB running), use:
+            #   MATCH (n)
+            #   WHERE 'Concept' IN labels(n) OR 'Source' IN labels(n) ...
+            #   DETACH DELETE n
 
             # Step 8: Clear log files
             if clear_logs:

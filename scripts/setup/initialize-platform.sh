@@ -351,10 +351,87 @@ get_garage_status() {
     fi
 }
 
+# Configure database reset (option 0 - dangerous operation)
+configure_reset() {
+    echo ""
+    echo -e "${RED}${BOLD}⚠️  DATABASE RESET - DESTRUCTIVE OPERATION${NC}"
+    echo ""
+    echo -e "${RED}This will DELETE ALL graph data!${NC}"
+    echo -e "${YELLOW}This operation will:${NC}"
+    echo "  • Stop all containers"
+    echo "  • Delete the PostgreSQL database"
+    echo "  • Remove all data volumes"
+    echo "  • Restart with a clean database"
+    echo "  • Re-initialize AGE schema"
+    echo "  • Apply all database migrations"
+    echo ""
+
+    # Call Python AI safety confirmation for human verification
+    # Uses the same UX as the TypeScript version (progress bar, AI timeout, etc.)
+    # Redirect stdin from /dev/tty to ensure TTY access for termios
+    if ! $PYTHON "$PROJECT_ROOT/scripts/admin/ai_safety_confirmation.py" "🚨 This action cannot be undone!" < /dev/tty; then
+        echo ""
+        echo -e "${YELLOW}Reset cancelled${NC}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Child lock passed - execute reset
+    echo ""
+    echo -e "${BLUE}→${NC} Executing database reset..."
+    echo ""
+
+    # Call ResetManager directly (à la carte pattern - bypasses API)
+    local temp_script=$(mktemp)
+    cat > "$temp_script" << 'EOF'
+#!/usr/bin/env python3
+import sys
+import os
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(os.getenv("PROJECT_ROOT", "."))
+sys.path.insert(0, str(project_root))
+
+# Import ResetManager
+from src.admin.reset import ResetManager
+
+# Execute reset
+manager = ResetManager(project_root=project_root)
+result = manager.reset(
+    clear_logs=True,
+    clear_checkpoints=True,
+    verbose=True
+)
+
+# Exit with appropriate code
+sys.exit(0 if result["success"] else 1)
+EOF
+
+    PROJECT_ROOT="$PROJECT_ROOT" $PYTHON "$temp_script"
+    local result=$?
+    rm -f "$temp_script"
+
+    echo ""
+    if [ $result -eq 0 ]; then
+        echo -e "${GREEN}✅ Database reset complete${NC}"
+        echo ""
+        echo -e "${YELLOW}⚠️  IMPORTANT: Restart the API server to clear stale connections:${NC}"
+        echo -e "${YELLOW}   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh${NC}"
+    else
+        echo -e "${RED}✗ Reset failed${NC}"
+    fi
+
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
 # Main menu loop
 show_menu() {
     echo ""
     echo -e "${BOLD}Configuration Menu:${NC}"
+    echo ""
+    echo -e "  ${RED}0) Database Reset${NC}          ${RED}[DANGEROUS - Deletes ALL data]${NC}"
     echo ""
     echo -e "  1) Admin Password          [$(get_admin_status)]"
     echo -e "  2) OAuth Signing Key       [$(get_oauth_key_status)]"
@@ -1293,6 +1370,13 @@ show_menu_help() {
     echo ""
     echo -e "${BOLD}What This Script Configures:${NC}"
     echo ""
+    echo -e "${RED}0. Database Reset (DANGEROUS)${NC}"
+    echo "   ${RED}PERMANENTLY DELETES ALL DATA${NC}"
+    echo "   Wipes database, reapplies schema, clears logs/checkpoints"
+    echo "   Requires physical confirmation (hold Enter for 3 seconds)"
+    echo "   AI-aware protection: 10-second timeout with clear messaging"
+    echo "   ${YELLOW}Removed from kg CLI - only accessible via this script${NC}"
+    echo ""
     echo -e "${BLUE}1. Admin Password${NC}"
     echo "   Set known username/password for first login (kg login -u admin)"
     echo ""
@@ -1348,9 +1432,12 @@ show_menu_help() {
 # Main menu loop
 while true; do
     show_menu
-    read -p "Select option [1-8, h, q]: " choice
+    read -p "Select option [0-8, h, q]: " choice
 
     case $choice in
+        0)
+            configure_reset
+            ;;
         1)
             configure_admin
             ;;

@@ -5,9 +5,11 @@ API endpoints for system administration:
 - System status
 - Database backup
 - Database restore (ADR-015 Phase 2: Multipart Upload)
-- Database reset
 - Job scheduler management (ADR-014)
 - API key management (ADR-031)
+
+Note: Database reset removed from API (too dangerous).
+      Use ./scripts/setup/initialize-platform.sh option 0 instead.
 """
 
 import uuid
@@ -27,8 +29,7 @@ from ..models.admin import (
     ListBackupsResponse,
     RestoreRequest,
     RestoreResponse,
-    ResetRequest,
-    ResetResponse,
+    # ResetRequest, ResetResponse removed - reset moved to initialize-platform.sh option 0
 )
 from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
@@ -361,82 +362,19 @@ async def restore_backup(
         )
 
 
-@router.post("/reset", response_model=ResetResponse)
-async def reset_database(request: ResetRequest):
-    """
-    Reset database (DESTRUCTIVE - requires authentication)
-
-    ⚠️ **DANGER**: This operation:
-    - Stops all containers
-    - Deletes the PostgreSQL database
-    - Removes all data volumes
-    - Restarts with a clean database
-    - Re-initializes AGE schema
-    - Applies all database migrations
-
-    ⚠️ **CRITICAL**: After reset completes, you MUST restart the API server:
-    ```bash
-    ./scripts/stop-api.sh && ./scripts/start-api.sh
-    ```
-    This clears stale database connections. Without restart, API queries will fail.
-
-    **Authentication required**: Must provide username and password.
-    (Currently placeholder - will be validated in Phase 2)
-
-    Must set `confirm: true` to proceed.
-
-    Optional:
-    - `clear_logs`: Clear log files (default: true)
-    - `clear_checkpoints`: Clear checkpoint files (default: true)
-
-    Example:
-    ```json
-    {
-        "username": "admin",
-        "password": "your_password",
-        "confirm": true,
-        "clear_logs": true,
-        "clear_checkpoints": true
-    }
-    ```
-
-    Returns schema validation results after reset.
-    """
-    # Validate confirmation
-    if not request.confirm:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Must set 'confirm: true' to reset database"
-        )
-
-    # TODO: Phase 2 - Validate username/password against auth system
-    # For now, just check they're provided
-    if not request.username or not request.password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Username and password required for reset operation"
-        )
-
-    # Placeholder auth check
-    # In Phase 2, this will validate against real auth system
-    if len(request.password) < 4:  # Minimal validation
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
-        )
-
-    service = AdminService()
-    try:
-        return await service.reset_database(
-            clear_logs=request.clear_logs,
-            clear_checkpoints=request.clear_checkpoints
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Reset failed: {str(e)}"
-        )
-
+# ========== Database Reset REMOVED - Too Dangerous for API ==========
+#
+# Database reset has been moved to initialize-platform.sh option 0 for security:
+# - Requires physical confirmation (hold Enter for 3 seconds)
+# - AI-aware protection (10-second inactivity timeout)
+# - Only accessible via direct terminal access
+# - Cannot be triggered remotely via API
+#
+# To reset the database:
+#   ./scripts/setup/initialize-platform.sh
+#   Select option 0 (Database Reset)
+#
+# ========================================================================
 
 # ========== Job Scheduler Endpoints (ADR-014) ==========
 

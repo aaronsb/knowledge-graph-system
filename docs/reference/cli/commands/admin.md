@@ -17,7 +17,6 @@ kg admin [options]
 - `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (requires authentication)
-- `reset` - Reset database - PERMANENTLY DELETES ALL DATA (requires 3-second confirmation hold + authentication) - wipes graph, reapplies migrations, clears logs/checkpoints
 - `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
 - `regenerate-embeddings` - Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)
 - `user` - User management commands (admin only)
@@ -81,22 +80,6 @@ kg restore [options]
 | `--path <path>` | Custom backup file path (overrides configured directory) | - |
 | `--merge` | Merge into existing ontology if it exists (default: error if ontology exists) | `false` |
 | `--deps <action>` | How to handle external dependencies: prune, stitch, defer | `"prune"` |
-
-### reset
-
-Reset database - PERMANENTLY DELETES ALL DATA (requires 3-second confirmation hold + authentication) - wipes graph, reapplies migrations, clears logs/checkpoints
-
-**Usage:**
-```bash
-kg reset [options]
-```
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--no-logs` | Do not clear log files during reset | - |
-| `--no-checkpoints` | Do not clear checkpoint files during reset | - |
 
 ### scheduler
 
