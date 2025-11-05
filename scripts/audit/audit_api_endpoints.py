@@ -1,0 +1,345 @@
+#!/usr/bin/env python3
+"""
+API Endpoint Authentication Audit Script
+
+Scans all FastAPI routes and identifies:
+- Which endpoints require authentication
+- Which endpoints are public
+- Which endpoints have role/permission requirements
+- Which endpoints lack auth but probably should have it
+
+Usage:
+    python scripts/audit/audit_api_endpoints.py [--verbose] [--format=json|table|markdown]
+"""
+
+import sys
+import os
+import inspect
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+import argparse
+import json
+from tabulate import tabulate
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+# Now we can import from the API
+from fastapi import FastAPI, Depends
+from src.api.main import app
+
+
+def extract_dependency_names(dependencies: List) -> List[str]:
+    """Extract names of dependency functions from depends list"""
+    names = []
+    for dep in dependencies:
+        if hasattr(dep, 'dependency'):
+            func = dep.dependency
+            if hasattr(func, '__name__'):
+                names.append(func.__name__)
+            elif hasattr(func, '__class__'):
+                names.append(func.__class__.__name__)
+    return names
+
+
+def analyze_endpoint(route) -> Dict[str, Any]:
+    """Analyze a single endpoint for auth requirements"""
+
+    endpoint_info = {
+        "path": route.path,
+        "method": ",".join(route.methods) if hasattr(route, 'methods') else "N/A",
+        "name": route.name,
+        "has_auth": False,
+        "auth_type": "none",
+        "dependencies": [],
+        "requires_role": None,
+        "requires_permission": None,
+    }
+
+    # Check route dependencies
+    if hasattr(route, 'dependencies'):
+        dep_names = extract_dependency_names(route.dependencies)
+        endpoint_info["dependencies"] = dep_names
+
+        # Check for auth dependencies
+        auth_deps = [
+            'get_current_user',
+            'get_current_active_user',
+            'get_api_key_user',
+            'require_role',
+            'require_permission'
+        ]
+
+        for auth_dep in auth_deps:
+            if any(auth_dep in dep for dep in dep_names):
+                endpoint_info["has_auth"] = True
+
+                if 'require_role' in auth_dep:
+                    endpoint_info["auth_type"] = "role"
+                elif 'require_permission' in auth_dep:
+                    endpoint_info["auth_type"] = "permission"
+                elif 'get_current_user' in auth_dep or 'get_current_active_user' in auth_dep:
+                    endpoint_info["auth_type"] = "user"
+                elif 'get_api_key' in auth_dep:
+                    endpoint_info["auth_type"] = "api_key"
+
+    # Check endpoint function signature
+    if hasattr(route, 'endpoint'):
+        sig = inspect.signature(route.endpoint)
+        for param_name, param in sig.parameters.items():
+            if param.default != inspect.Parameter.empty:
+                # Check if parameter has Depends with auth
+                if isinstance(param.default, type(Depends())):
+                    func_name = param.default.dependency.__name__ if hasattr(param.default.dependency, '__name__') else str(param.default.dependency)
+
+                    if any(auth in func_name for auth in ['current_user', 'api_key', 'require_role', 'require_permission']):
+                        endpoint_info["has_auth"] = True
+
+                        if 'require_role' in func_name:
+                            endpoint_info["auth_type"] = "role"
+                        elif 'require_permission' in func_name:
+                            endpoint_info["auth_type"] = "permission"
+                        elif 'current_user' in func_name:
+                            endpoint_info["auth_type"] = "user"
+                        elif 'api_key' in func_name:
+                            endpoint_info["auth_type"] = "api_key"
+
+    return endpoint_info
+
+
+def categorize_endpoints(endpoints: List[Dict]) -> Dict[str, List[Dict]]:
+    """Categorize endpoints by auth requirements"""
+
+    categories = {
+        "public": [],  # No auth required
+        "authenticated": [],  # Requires authentication
+        "role_based": [],  # Requires specific role
+        "permission_based": [],  # Requires specific permission
+        "unclear": [],  # Should probably have auth but doesn't
+    }
+
+    # Patterns that indicate endpoints should be public
+    public_patterns = [
+        "/health",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/auth/login",
+        "/auth/device/authorize",
+        "/oauth/",
+    ]
+
+    # Patterns that indicate endpoints should require auth
+    protected_patterns = [
+        "/admin/",
+        "/ingest",
+        "/jobs/",
+        "/ontology/",
+        "/vocabulary/",
+        "/users/",
+        "/roles/",
+        "/permissions/",
+    ]
+
+    for endpoint in endpoints:
+        path = endpoint["path"]
+
+        # Public endpoints
+        if any(pattern in path for pattern in public_patterns):
+            categories["public"].append(endpoint)
+
+        # Authenticated endpoints
+        elif endpoint["has_auth"]:
+            if endpoint["auth_type"] == "role":
+                categories["role_based"].append(endpoint)
+            elif endpoint["auth_type"] == "permission":
+                categories["permission_based"].append(endpoint)
+            else:
+                categories["authenticated"].append(endpoint)
+
+        # Endpoints that should probably be protected
+        elif any(pattern in path for pattern in protected_patterns):
+            categories["unclear"].append(endpoint)
+
+        # Everything else is public
+        else:
+            categories["public"].append(endpoint)
+
+    return categories
+
+
+def print_summary(categories: Dict[str, List[Dict]], verbose: bool = False):
+    """Print summary of endpoint audit"""
+
+    print("\n" + "="*80)
+    print("API ENDPOINT AUTHENTICATION AUDIT")
+    print("="*80 + "\n")
+
+    total = sum(len(endpoints) for endpoints in categories.values())
+    print(f"Total endpoints: {total}\n")
+
+    # Summary counts
+    summary_data = [
+        ["Public (no auth)", len(categories["public"])],
+        ["Authenticated (user)", len(categories["authenticated"])],
+        ["Role-based", len(categories["role_based"])],
+        ["Permission-based", len(categories["permission_based"])],
+        ["⚠️  Unclear/Missing Auth", len(categories["unclear"])],
+    ]
+
+    print(tabulate(summary_data, headers=["Category", "Count"], tablefmt="grid"))
+    print()
+
+    if verbose:
+        # Detailed breakdown
+        for category, endpoints in categories.items():
+            if not endpoints:
+                continue
+
+            print(f"\n{'='*80}")
+            print(f"{category.upper().replace('_', ' ')} ENDPOINTS ({len(endpoints)})")
+            print('='*80)
+
+            table_data = []
+            for ep in endpoints:
+                table_data.append([
+                    ep["method"],
+                    ep["path"],
+                    ep["auth_type"],
+                    ", ".join(ep["dependencies"][:2]) if ep["dependencies"] else "none"
+                ])
+
+            print(tabulate(
+                table_data,
+                headers=["Method", "Path", "Auth Type", "Dependencies"],
+                tablefmt="grid"
+            ))
+
+    # Highlight unclear/missing auth
+    if categories["unclear"]:
+        print(f"\n{'='*80}")
+        print("⚠️  ENDPOINTS WITH UNCLEAR/MISSING AUTHENTICATION")
+        print('='*80)
+        print("\nThese endpoints may need authentication but don't appear to have it:\n")
+
+        table_data = []
+        for ep in categories["unclear"]:
+            table_data.append([
+                ep["method"],
+                ep["path"],
+                ep["name"],
+                "❌ NO AUTH" if not ep["has_auth"] else "✓ Has Auth"
+            ])
+
+        print(tabulate(
+            table_data,
+            headers=["Method", "Path", "Name", "Status"],
+            tablefmt="grid"
+        ))
+        print()
+
+
+def export_json(categories: Dict[str, List[Dict]], output_file: str):
+    """Export audit results to JSON file"""
+    with open(output_file, 'w') as f:
+        json.dump(categories, f, indent=2)
+    print(f"\n✅ Results exported to: {output_file}")
+
+
+def export_markdown(categories: Dict[str, List[Dict]], output_file: str):
+    """Export audit results to Markdown file"""
+
+    with open(output_file, 'w') as f:
+        f.write("# API Endpoint Authentication Audit\n\n")
+        f.write(f"**Generated:** {os.popen('date').read().strip()}\n\n")
+
+        total = sum(len(endpoints) for endpoints in categories.values())
+        f.write(f"**Total Endpoints:** {total}\n\n")
+
+        # Summary table
+        f.write("## Summary\n\n")
+        f.write("| Category | Count |\n")
+        f.write("|----------|-------|\n")
+        for category, endpoints in categories.items():
+            f.write(f"| {category.replace('_', ' ').title()} | {len(endpoints)} |\n")
+
+        # Detailed breakdown
+        for category, endpoints in categories.items():
+            if not endpoints:
+                continue
+
+            f.write(f"\n## {category.replace('_', ' ').title()} Endpoints ({len(endpoints)})\n\n")
+            f.write("| Method | Path | Auth Type | Name |\n")
+            f.write("|--------|------|-----------|------|\n")
+
+            for ep in endpoints:
+                f.write(f"| {ep['method']} | `{ep['path']}` | {ep['auth_type']} | {ep['name']} |\n")
+
+        # Highlight missing auth
+        if categories["unclear"]:
+            f.write("\n## ⚠️ Endpoints Requiring Review\n\n")
+            f.write("These endpoints may need authentication:\n\n")
+            f.write("| Method | Path | Current Status |\n")
+            f.write("|--------|------|----------------|\n")
+
+            for ep in categories["unclear"]:
+                status = "❌ NO AUTH" if not ep["has_auth"] else "✓ Has Auth"
+                f.write(f"| {ep['method']} | `{ep['path']}` | {status} |\n")
+
+    print(f"\n✅ Results exported to: {output_file}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Audit API endpoints for authentication requirements"
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Show detailed breakdown of all endpoints"
+    )
+    parser.add_argument(
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output format"
+    )
+    parser.add_argument(
+        "--output", "-o",
+        help="Output file path (required for json/markdown formats)"
+    )
+
+    args = parser.parse_args()
+
+    # Collect all endpoints
+    print("Scanning API endpoints...")
+    endpoints = []
+
+    for route in app.routes:
+        if hasattr(route, 'path'):
+            endpoint_info = analyze_endpoint(route)
+            endpoints.append(endpoint_info)
+
+    # Categorize endpoints
+    categories = categorize_endpoints(endpoints)
+
+    # Output results
+    if args.format == "table":
+        print_summary(categories, verbose=args.verbose)
+
+    elif args.format == "json":
+        if not args.output:
+            print("Error: --output required for JSON format")
+            sys.exit(1)
+        export_json(categories, args.output)
+
+    elif args.format == "markdown":
+        if not args.output:
+            print("Error: --output required for Markdown format")
+            sys.exit(1)
+        export_markdown(categories, args.output)
+
+
+if __name__ == "__main__":
+    main()
