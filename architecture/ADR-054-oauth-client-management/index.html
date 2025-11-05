@@ -4494,6 +4494,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../ADR-060-endpoint-security-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-060: API Endpoint Security Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -5021,6 +5044,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Endpoint Authentication Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Authentication Audit Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Authentication Testing Research
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
@@ -5516,7 +5608,11 @@
 <p><strong>Status:</strong> Accepted
 <strong>Date:</strong> 2025-11-01
 <strong>Supersedes:</strong> ADR-027 (OAuth future work) - Now implements OAuth properly
-<strong>Related:</strong> ADR-027 (User Management), ADR-028 (RBAC), ADR-024 (Multi-Schema Architecture)</p>
+<strong>Related ADRs:</strong>
+- <a href="../ADR-027-user-management-api/">ADR-027: User Management</a> - User operations
+- <a href="../ADR-028-dynamic-rbac-system/">ADR-028: Dynamic RBAC</a> - Role-based access control
+- <a href="../ADR-024-multi-schema-postgresql-architecture/">ADR-024: Multi-Schema Architecture</a> - Database schema
+- <a href="../ADR-060-endpoint-security-architecture/">ADR-060: API Endpoint Security Architecture</a> - Endpoint-level security implementation</p>
 <h2 id="context">Context</h2>
 <p>The knowledge graph system currently uses JWT tokens (password flow) and API keys for authentication. This works for the CLI but creates security problems for other client types:</p>
 <h3 id="current-authentication-limitations">Current Authentication Limitations</h3>

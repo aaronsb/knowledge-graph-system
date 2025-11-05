@@ -1,0 +1,6222 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../ADR-059-llm-determined-relationship-direction/">
+      
+      
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>ADR-060: API Endpoint Security Architecture - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-060-api-endpoint-security-architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-060: API Endpoint Security Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/COLD-START/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5-Minute Cold Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Vocabulary Categories
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Introduction
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    What is the Knowledge Graph System?
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/01-QUICKSTART/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg CLI Usage Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Document Ingestion Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Configuration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Switching Extraction Providers - Quick Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Inference Implementation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Extraction Quality Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            Integration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Setup Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Edge Vocabulary Consolidation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Security & Access
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Security & Access
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC Operations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Password Recovery and Account Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Maintenance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Backup and Restore Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Migrations Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Use Cases: Practical Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples: Real Queries, Real Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GitHub Project History Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts and Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concept: Why Knowledge Graphs, Not Just RAG
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Enrichment Journey: From Empty Graph to Multi-Perspective Understanding
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Distributed Graph Database Sharding: Research and Architectural Patterns
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced Cypher Query Patterns for Apache AGE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    openCypher Query Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LLM Edge Discovery Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tool Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Tool Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tool &amp; API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    CLI Commands
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            CLI Commands
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Command Reference (Auto-Generated)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2_2" id="__nav_4_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    commands
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            commands
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg admin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg config
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg database
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg ingest
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg job
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg login
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg logout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg oauth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg ontology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    kg vocabulary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2_3" id="__nav_4_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    media
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            media
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/media/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Media Assets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    MCP Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            MCP Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP Server Tool Reference (Auto-Generated)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_2" id="__nav_4_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    media
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            media
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/media/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Media Assets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_3" id="__nav_4_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/approve_job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    approve_job
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/cancel_job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    cancel_job
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/delete_ontology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    delete_ontology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/find_connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    find_connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/find_connection_by_search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    find_connection_by_search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/find_related_concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    find_related_concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_api_health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_api_health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_concept_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_concept_details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_database_health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_database_health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_database_info/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_database_info
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_database_stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_database_stats
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_job_status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_job_status
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_ontology_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_ontology_files
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_ontology_info/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_ontology_info
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_source_image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_source_image
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/get_system_status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    get_system_status
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/ingest_text/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ingest_text
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/list_jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    list_jobs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/list_ontologies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    list_ontologies
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/tools/search_concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    search_concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    REST API
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            REST API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    REST API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-001: Multi-Tier Agent Access Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-002: Node Fitness Scoring System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-003: Semantic Tool Hint Networks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-004: Pure Graph Design (Library Metaphor)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-005: Source Text Tracking and Retrieval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-006: Staging and Migration Workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-011-cli-admin-separation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-011: CLI and Admin Tooling Separation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-015: Backup/Restore Streaming Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-019: Type-Based Table Formatting System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-020: Admin Module Architecture Pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-023: Markdown Structured Content Preprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-024: Multi-Schema PostgreSQL Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-025: Dynamic Relationship Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-026: Autonomous Vocabulary Curation and Ontology Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-027: User Management API with Lightweight JWT Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-030: Concept Deduplication Quality Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-031: Encrypted API Key Storage with Container Secrets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-035: Explorer Methods, Uses, and Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-036: Universal Visual Query Builder
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-037: Human-Guided Graph Editing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-038: Official Project Apparel Design Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-040: Database Schema Migration Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-041: AI Extraction Provider Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-042: Local LLM Inference for Concept Extraction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-043: Single-Node Resource Management for Local Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-045-unified-embedding-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-045: Unified Embedding Generation System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-046: Grounding-Aware Vocabulary Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-047: Probabilistic Vocabulary Categorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-048: Vocabulary Metadata as First-Class Graph
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-049: Rate Limiting and Per-Provider Concurrency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-050: Scheduled Jobs System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-051a-graph-document-deduplication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-051: Graph-Based Provenance Tracking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-051b-API-CHANGES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-051: API Changes for Graph-Based Document Deduplication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-052: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-053: Eager Vocabulary Categorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-054-oauth-client-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-055: CDN and Serverless Deployment Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-056: Timezone-Aware Datetime Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-057: Multimodal Image Ingestion with Visual Context Injection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-058: Polarity Axis Triangulation for Grounding Calculation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-059: LLM-Determined Relationship Direction Semantics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-060: API Endpoint Security Architecture
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-060: API Endpoint Security Architecture
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current State
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-industry-standards" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research: Industry Standards
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-security-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Security Levels
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-type-annotated-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Type-Annotated Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-per-endpoint-dependencies-not-router-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Per-Endpoint Dependencies (Not Router-Level)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-central-security-policy-our-addition" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Central Security Policy (Our Addition)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-startup-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Startup Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Pattern
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#route-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Route Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependency-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependency Definitions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Path
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-critical-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Critical Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-all-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: All Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-testing-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Testing &amp; Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependency-override-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependency Override Pattern
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      Negative
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mitigations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives Considered
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-middleware-based-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 1: Middleware-Based Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-router-level-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 2: Router-Level Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-decorator-based-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 3: Decorator-Based Registry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="References">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#official-fastapi-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Official FastAPI Resources
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#our-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Our Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related ADRs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision Log
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      Approval
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Decision Records (ADRs)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Authentication Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODE-CHANGES-ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Changes Analysis: ADR-045/046 Implementation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DATA_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Contract Pattern: Schema Governance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OAUTH_CLIENT_ANALYSIS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OAuth Client Management - Feasibility Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PHASE_3_3_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-048 Phase 3.3 Implementation Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PHASE_3_IMPLEMENTATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Implementation Plan: Vocabulary as Graph Nodes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Safety Baseline - Technical Debt
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Recursive Upsert Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visualization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auto-Documentation Strategy for CLI Tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: Chunked Ingestion System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development Journal: MinIO Integration &amp; Emergent Visual Relationships
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Learned Knowledge Synthesis - MCP Enhancement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pattern Repetition in Growth Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Relationship Semantics: How Others Do It vs. Our Proposal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Vocabulary Direction Semantics Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Endpoint Authentication Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Authentication Audit Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Authentication Testing Research
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Test Notes - Working Commands &amp; Observations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knowledge Graph System - Integration Test Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL Schema Migration - Functional Test Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Coverage Areas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current State
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-industry-standards" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research: Industry Standards
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-security-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Security Levels
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-type-annotated-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Type-Annotated Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-per-endpoint-dependencies-not-router-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Per-Endpoint Dependencies (Not Router-Level)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-central-security-policy-our-addition" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Central Security Policy (Our Addition)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-startup-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Startup Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Pattern
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#route-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Route Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependency-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependency Definitions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Path
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-critical-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Critical Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-all-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: All Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-testing-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Testing &amp; Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependency-override-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependency Override Pattern
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      Negative
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mitigations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives Considered
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-middleware-based-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 1: Middleware-Based Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-router-level-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 2: Router-Level Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-decorator-based-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternative 3: Decorator-Based Registry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="References">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#official-fastapi-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Official FastAPI Resources
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#our-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Our Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related ADRs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision Log
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      Approval
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-060-api-endpoint-security-architecture">ADR-060: API Endpoint Security Architecture</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2025-01-05
+<strong>Deciders:</strong> Engineering Team
+<strong>Related ADRs:</strong>
+- <a href="../ADR-028-dynamic-rbac-system/">ADR-028: Dynamic RBAC System</a> - RBAC implementation
+- <a href="../ADR-054-oauth-client-management/">ADR-054: OAuth Client Management</a> - OAuth 2.0 authentication
+- <a href="../ADR-027-user-management-api/">ADR-027: User Management API</a> - User operations</p>
+<hr />
+<h2 id="context">Context</h2>
+<h3 id="problem-statement">Problem Statement</h3>
+<p>An API authentication audit (2025-01-05) revealed critical security gaps:</p>
+<ul>
+<li><strong>112 total API endpoints</strong> exist in the system</li>
+<li><strong>Only 6 endpoints (5%)</strong> have proper authentication</li>
+<li><strong>52 endpoints (46%)</strong> completely lack authentication but require it</li>
+<li><strong>Critical endpoints unprotected:</strong> Admin operations, user management, RBAC, database reset, Cypher queries</li>
+</ul>
+<p><strong>Risk Assessment:</strong> Anyone can currently delete ontologies, grant themselves admin roles, or reset the entire database. This is a <strong>CRITICAL</strong> security vulnerability blocking production deployment.</p>
+<h3 id="current-state">Current State</h3>
+<p><strong>Scattered Security Implementation:</strong>
+- Some endpoints use <code>Depends(get_current_user)</code> manually
+- Most endpoints have no authentication checks at all
+- No consistent pattern across routes
+- Security requirements not documented centrally
+- Easy for developers to forget authentication on new endpoints</p>
+<p><strong>Deferred Architecture:</strong>
+Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but deferred the overall security architecture. This ADR addresses that gap.</p>
+<h3 id="research-industry-standards">Research: Industry Standards</h3>
+<p>We researched production FastAPI security patterns to avoid inventing custom approaches:</p>
+<p><strong>FastAPI Full-Stack Template</strong> (official reference implementation by @tiangolo):
+- Uses per-endpoint dependency injection
+- No middleware for authentication
+- Type-annotated dependencies (<code>CurrentUser</code>, <code>SessionDep</code>)
+- Superuser dependency for admin routes: <code>dependencies=[Depends(get_current_active_superuser)]</code>
+- Public endpoints have no dependencies</p>
+<p><strong>Key Sources:</strong>
+- <a href="https://github.com/fastapi/full-stack-fastapi-template">FastAPI Full-Stack Template</a>
+- <a href="https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/">FastAPI Security Tutorial</a>
+- <a href="https://testdriven.io/blog/fastapi-jwt-auth/">FastAPI OAuth2 with JWT</a></p>
+<p><strong>Consensus:</strong> Production FastAPI apps use <strong>per-endpoint dependency injection</strong> rather than middleware for authentication. This provides better OpenAPI documentation, testability, and explicitness.</p>
+<hr />
+<h2 id="decision">Decision</h2>
+<p>We adopt the <strong>FastAPI Full-Stack Template security pattern</strong> with per-endpoint dependency injection:</p>
+<h3 id="1-security-levels">1. Security Levels</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Three security levels (no custom invention)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">PUBLIC</span>    <span class="c1"># No authentication required</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">USER</span>      <span class="c1"># Authenticated user required</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">ADMIN</span>     <span class="c1"># Admin role required</span>
+</code></pre></div>
+<h3 id="2-type-annotated-dependencies">2. Type-Annotated Dependencies</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># From src/api/dependencies/auth.py (already exists, needs refinement)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Type alias for authenticated user</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">CurrentUser</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">)]</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Public endpoints - no dependencies</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/health&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">():</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;healthy&quot;</span><span class="p">}</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># User endpoints - CurrentUser parameter</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/users/me&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_my_profile</span><span class="p">(</span><span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">):</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="k">return</span> <span class="n">current_user</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># Admin endpoints - superuser dependency</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/reset&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reset_database</span><span class="p">(</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">,</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_role</span><span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">))</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="p">):</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">reset_db</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="3-per-endpoint-dependencies-not-router-level">3. Per-Endpoint Dependencies (Not Router-Level)</h3>
+<p><strong>Pattern from FastAPI Template:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># ❌ NOT router-level (would be invisible in OpenAPI)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">admin_router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/admin&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="n">Depends</span><span class="p">(</span><span class="n">require_admin</span><span class="p">)]</span>  <span class="c1"># Don&#39;t do this</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># ✅ Per-endpoint (visible in OpenAPI docs)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/reset&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reset_database</span><span class="p">(</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">,</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_role</span><span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">))</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p">):</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="o">...</span>
+</code></pre></div></p>
+<p><strong>Rationale:</strong> Per-endpoint dependencies appear in OpenAPI/Swagger documentation, making security requirements visible to API consumers.</p>
+<h3 id="4-central-security-policy-our-addition">4. Central Security Policy (Our Addition)</h3>
+<p>While the FastAPI template doesn't mandate a central config, we add one for auditability:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/api/config/endpoint_security.py</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="sd">Central documentation of endpoint security requirements.</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="sd">Actual enforcement happens via per-endpoint dependencies.</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="sd">This file serves as:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="sd">1. Documentation/audit reference</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="sd">2. Validation source for startup checks</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="sd">3. Guide for enhanced audit script</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="n">ENDPOINT_SECURITY_REQUIREMENTS</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="c1"># Public endpoints</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="s2">&quot;/health&quot;</span><span class="p">:</span> <span class="s2">&quot;public&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="s2">&quot;/auth/*&quot;</span><span class="p">:</span> <span class="s2">&quot;public&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="s2">&quot;/docs&quot;</span><span class="p">:</span> <span class="s2">&quot;public&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="c1"># User endpoints</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="s2">&quot;/query/*&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="s2">&quot;/ontology/*&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="s2">&quot;/jobs/*&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="c1"># Admin endpoints</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>    <span class="s2">&quot;/admin/*&quot;</span><span class="p">:</span> <span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>    <span class="s2">&quot;/rbac/*&quot;</span><span class="p">:</span> <span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="s2">&quot;/users/</span><span class="si">{user_id}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;admin&quot;</span><span class="p">,</span>  <span class="c1"># Other users</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="p">}</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="c1"># Default for unlisted endpoints</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="n">DEFAULT_SECURITY</span> <span class="o">=</span> <span class="s2">&quot;user&quot;</span>  <span class="c1"># Secure by default</span>
+</code></pre></div>
+<h3 id="5-startup-validation">5. Startup Validation</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># src/api/main.py</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nd">@app</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="s2">&quot;startup&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_endpoint_security</span><span class="p">():</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="sd">    Validate all endpoints have appropriate dependencies.</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="sd">    Logs warnings for endpoints missing auth.</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">src.api.config.endpoint_security</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_security</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">validate_security</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">if</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;missing_auth&quot;</span><span class="p">]:</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;missing_auth&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> endpoints missing auth!&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="k">for</span> <span class="n">endpoint</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;missing_auth&quot;</span><span class="p">]:</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="c1"># Optionally fail startup in production</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">ENVIRONMENT</span> <span class="o">==</span> <span class="s2">&quot;production&quot;</span><span class="p">:</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Security validation failed&quot;</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="implementation-pattern">Implementation Pattern</h2>
+<h3 id="route-structure">Route Structure</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># src/api/routes/admin.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="sd">Admin routes - all require admin role.</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="sd">Pattern: CurrentUser + require_role(&quot;admin&quot;) on each endpoint.</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">CurrentUser</span><span class="p">,</span> <span class="n">require_role</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/admin&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;admin&quot;</span><span class="p">])</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/status&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_system_status</span><span class="p">(</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_role</span><span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">))</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="p">):</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Admin only - visible in OpenAPI docs&quot;&quot;&quot;</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">get_status</span><span class="p">()</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/reset&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reset_database</span><span class="p">(</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    <span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">,</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_role</span><span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">))</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="p">):</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;DANGEROUS: Admin only&quot;&quot;&quot;</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">reset_db</span><span class="p">()</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># src/api/routes/users.py</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="sd">User routes - authenticated users can access their own data.</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="sd">Pattern: CurrentUser parameter with ownership checks in handler.</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">HTTPException</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">CurrentUser</span><span class="p">,</span> <span class="n">require_role</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/users&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;users&quot;</span><span class="p">])</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/me&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_my_profile</span><span class="p">(</span><span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">):</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Any authenticated user&quot;&quot;&quot;</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="k">return</span> <span class="n">current_user</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{user_id}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">):</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;User can see their own profile, admins can see any&quot;&quot;&quot;</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="k">if</span> <span class="n">user_id</span> <span class="o">!=</span> <span class="n">current_user</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]:</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>        <span class="c1"># Check for admin role</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        <span class="k">if</span> <span class="s2">&quot;admin&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_user</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;roles&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">403</span><span class="p">,</span> <span class="s2">&quot;Can only view your own profile&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="nd">@router</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{user_id}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_user</span><span class="p">(</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>    <span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">,</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_role</span><span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">))</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="p">):</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Admin only - delete any user&quot;&quot;&quot;</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">delete_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># src/api/routes/public.py</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="sd">Public routes - no authentication required.</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">Pattern: No dependencies.</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;public&quot;</span><span class="p">])</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/health&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">():</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Public endpoint - no auth&quot;&quot;&quot;</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;healthy&quot;</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="dependency-definitions">Dependency Definitions</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># src/api/dependencies/auth.py (refine existing)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">Authentication dependencies following FastAPI Full-Stack Template pattern.</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">status</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2PasswordBearer</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jose</span><span class="w"> </span><span class="kn">import</span> <span class="n">jwt</span><span class="p">,</span> <span class="n">JWTError</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.models.user</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># OAuth2 scheme</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">oauth2_scheme</span> <span class="o">=</span> <span class="n">OAuth2PasswordBearer</span><span class="p">(</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="n">tokenUrl</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">API_V1_STR</span><span class="si">}</span><span class="s2">/auth/oauth/token&quot;</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="p">)</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="c1"># Type aliases (FastAPI template pattern)</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="n">TokenDep</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">oauth2_scheme</span><span class="p">)]</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="n">SessionDep</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Session</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)]</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_current_user</span><span class="p">(</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>    <span class="n">token</span><span class="p">:</span> <span class="n">TokenDep</span><span class="p">,</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    <span class="n">session</span><span class="p">:</span> <span class="n">SessionDep</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="sd">    Decode JWT token and return current user.</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="sd">    Raises 401 if token invalid, 404 if user not found.</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>        <span class="n">payload</span> <span class="o">=</span> <span class="n">jwt</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>            <span class="n">token</span><span class="p">,</span>
+<a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a>            <span class="n">settings</span><span class="o">.</span><span class="n">SECRET_KEY</span><span class="p">,</span>
+<a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a>            <span class="n">algorithms</span><span class="o">=</span><span class="p">[</span><span class="n">settings</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">]</span>
+<a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a>        <span class="p">)</span>
+<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a>        <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sub&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a>            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="s2">&quot;Invalid token&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a>    <span class="k">except</span> <span class="n">JWTError</span><span class="p">:</span>
+<a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="s2">&quot;Invalid token&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-42" name="__codelineno-8-42" href="#__codelineno-8-42"></a>
+<a id="__codelineno-8-43" name="__codelineno-8-43" href="#__codelineno-8-43"></a>    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+<a id="__codelineno-8-44" name="__codelineno-8-44" href="#__codelineno-8-44"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+<a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s2">&quot;User not found&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a>
+<a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+<a id="__codelineno-8-48" name="__codelineno-8-48" href="#__codelineno-8-48"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="s2">&quot;Inactive user&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-49" name="__codelineno-8-49" href="#__codelineno-8-49"></a>
+<a id="__codelineno-8-50" name="__codelineno-8-50" href="#__codelineno-8-50"></a>    <span class="k">return</span> <span class="n">user</span>
+<a id="__codelineno-8-51" name="__codelineno-8-51" href="#__codelineno-8-51"></a>
+<a id="__codelineno-8-52" name="__codelineno-8-52" href="#__codelineno-8-52"></a><span class="c1"># Type alias for authenticated user (FastAPI template pattern)</span>
+<a id="__codelineno-8-53" name="__codelineno-8-53" href="#__codelineno-8-53"></a><span class="n">CurrentUser</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">)]</span>
+<a id="__codelineno-8-54" name="__codelineno-8-54" href="#__codelineno-8-54"></a>
+<a id="__codelineno-8-55" name="__codelineno-8-55" href="#__codelineno-8-55"></a><span class="k">def</span><span class="w"> </span><span class="nf">require_role</span><span class="p">(</span><span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-8-56" name="__codelineno-8-56" href="#__codelineno-8-56"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-57" name="__codelineno-8-57" href="#__codelineno-8-57"></a><span class="sd">    Dependency factory for role-based access control.</span>
+<a id="__codelineno-8-58" name="__codelineno-8-58" href="#__codelineno-8-58"></a><span class="sd">    Usage: Depends(require_role(&quot;admin&quot;))</span>
+<a id="__codelineno-8-59" name="__codelineno-8-59" href="#__codelineno-8-59"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-60" name="__codelineno-8-60" href="#__codelineno-8-60"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">check_role</span><span class="p">(</span><span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-8-61" name="__codelineno-8-61" href="#__codelineno-8-61"></a>        <span class="k">if</span> <span class="n">role</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_user</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;roles&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+<a id="__codelineno-8-62" name="__codelineno-8-62" href="#__codelineno-8-62"></a>            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+<a id="__codelineno-8-63" name="__codelineno-8-63" href="#__codelineno-8-63"></a>                <span class="n">status_code</span><span class="o">=</span><span class="mi">403</span><span class="p">,</span>
+<a id="__codelineno-8-64" name="__codelineno-8-64" href="#__codelineno-8-64"></a>                <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Role &#39;</span><span class="si">{</span><span class="n">role</span><span class="si">}</span><span class="s2">&#39; required&quot;</span>
+<a id="__codelineno-8-65" name="__codelineno-8-65" href="#__codelineno-8-65"></a>            <span class="p">)</span>
+<a id="__codelineno-8-66" name="__codelineno-8-66" href="#__codelineno-8-66"></a>    <span class="k">return</span> <span class="n">check_role</span>
+<a id="__codelineno-8-67" name="__codelineno-8-67" href="#__codelineno-8-67"></a>
+<a id="__codelineno-8-68" name="__codelineno-8-68" href="#__codelineno-8-68"></a><span class="k">def</span><span class="w"> </span><span class="nf">require_permission</span><span class="p">(</span><span class="n">permission</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-8-69" name="__codelineno-8-69" href="#__codelineno-8-69"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-70" name="__codelineno-8-70" href="#__codelineno-8-70"></a><span class="sd">    Dependency factory for permission-based access control.</span>
+<a id="__codelineno-8-71" name="__codelineno-8-71" href="#__codelineno-8-71"></a><span class="sd">    Usage: Depends(require_permission(&quot;ontology:delete&quot;))</span>
+<a id="__codelineno-8-72" name="__codelineno-8-72" href="#__codelineno-8-72"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-73" name="__codelineno-8-73" href="#__codelineno-8-73"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">check_permission</span><span class="p">(</span><span class="n">current_user</span><span class="p">:</span> <span class="n">CurrentUser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-8-74" name="__codelineno-8-74" href="#__codelineno-8-74"></a>        <span class="k">if</span> <span class="n">permission</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_user</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;permissions&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+<a id="__codelineno-8-75" name="__codelineno-8-75" href="#__codelineno-8-75"></a>            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+<a id="__codelineno-8-76" name="__codelineno-8-76" href="#__codelineno-8-76"></a>                <span class="n">status_code</span><span class="o">=</span><span class="mi">403</span><span class="p">,</span>
+<a id="__codelineno-8-77" name="__codelineno-8-77" href="#__codelineno-8-77"></a>                <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Permission &#39;</span><span class="si">{</span><span class="n">permission</span><span class="si">}</span><span class="s2">&#39; required&quot;</span>
+<a id="__codelineno-8-78" name="__codelineno-8-78" href="#__codelineno-8-78"></a>            <span class="p">)</span>
+<a id="__codelineno-8-79" name="__codelineno-8-79" href="#__codelineno-8-79"></a>    <span class="k">return</span> <span class="n">check_permission</span>
+</code></pre></div>
+<hr />
+<h2 id="migration-path">Migration Path</h2>
+<h3 id="phase-1-critical-endpoints">Phase 1: Critical Endpoints</h3>
+<p><strong>Priority:</strong> CRITICAL - Block production deployment</p>
+<p>Add authentication to endpoints that can cause immediate damage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>✅ /admin/* - All admin operations
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>✅ /rbac/* - Role/permission management
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>✅ /users/{user_id} - User management (other users)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>✅ /ontology/{name}/rename - Ontology deletion/modification
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>✅ /vocabulary/merge - Vocabulary write operations
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>✅ /vocabulary/consolidate
+</code></pre></div>
+<p><strong>Acceptance Criteria:</strong>
+- All admin endpoints require <code>CurrentUser + require_role("admin")</code>
+- All user management endpoints have ownership checks or admin requirement
+- RBAC endpoints require admin role
+- Audit script shows 0 unprotected admin endpoints</p>
+<h3 id="phase-2-all-endpoints">Phase 2: All Endpoints</h3>
+<p>Add authentication to remaining endpoints:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>✅ /query/* - USER level (authenticated user required)
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>✅ /ontology/* - USER level (read operations)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>✅ /jobs/* - USER level (see own jobs)
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>✅ /ingest/* - USER level (with job approval workflow)
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>✅ /sources/* - USER level (read-only)
+</code></pre></div>
+<p><strong>Acceptance Criteria:</strong>
+- All non-public endpoints have <code>CurrentUser</code> parameter
+- Central security policy documented
+- Startup validation passes
+- Audit script shows proper classification</p>
+<h3 id="phase-3-testing-validation">Phase 3: Testing &amp; Validation</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>✅ Unit tests for all dependencies
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>✅ Integration tests for protected endpoints
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>✅ OpenAPI schema validation
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>✅ Security regression tests in CI/CD
+</code></pre></div>
+<hr />
+<h2 id="testing-strategy">Testing Strategy</h2>
+<h3 id="dependency-override-pattern">Dependency Override Pattern</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># tests/conftest.py</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.testclient</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestClient</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">admin_user</span><span class="p">():</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="s2">&quot;test-admin&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;admin@example.com&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>        <span class="s2">&quot;roles&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;admin&quot;</span><span class="p">],</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        <span class="s2">&quot;is_active&quot;</span><span class="p">:</span> <span class="kc">True</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>    <span class="p">}</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="k">def</span><span class="w"> </span><span class="nf">regular_user</span><span class="p">():</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="s2">&quot;test-user&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>        <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>        <span class="s2">&quot;roles&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">],</span>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>        <span class="s2">&quot;is_active&quot;</span><span class="p">:</span> <span class="kc">True</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>    <span class="p">}</span>
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="k">def</span><span class="w"> </span><span class="nf">admin_client</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">admin_user</span><span class="p">):</span>
+<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test client with admin authentication&quot;&quot;&quot;</span>
+<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>    <span class="n">app</span><span class="o">.</span><span class="n">dependency_overrides</span><span class="p">[</span><span class="n">get_current_user</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">admin_user</span>
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>    <span class="k">with</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">app</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>        <span class="k">yield</span> <span class="n">client</span>
+<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>    <span class="n">app</span><span class="o">.</span><span class="n">dependency_overrides</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>
+<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a><span class="k">def</span><span class="w"> </span><span class="nf">user_client</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">regular_user</span><span class="p">):</span>
+<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test client with regular user authentication&quot;&quot;&quot;</span>
+<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>    <span class="n">app</span><span class="o">.</span><span class="n">dependency_overrides</span><span class="p">[</span><span class="n">get_current_user</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">regular_user</span>
+<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>    <span class="k">with</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">app</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>        <span class="k">yield</span> <span class="n">client</span>
+<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>    <span class="n">app</span><span class="o">.</span><span class="n">dependency_overrides</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>
+<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a><span class="k">def</span><span class="w"> </span><span class="nf">anonymous_client</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test client without authentication&quot;&quot;&quot;</span>
+<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a>    <span class="k">with</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">app</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>        <span class="k">yield</span> <span class="n">client</span>
+</code></pre></div>
+<h3 id="security-tests">Security Tests</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># tests/test_security.py</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_admin_endpoint_requires_admin</span><span class="p">(</span><span class="n">admin_client</span><span class="p">,</span> <span class="n">user_client</span><span class="p">,</span> <span class="n">anonymous_client</span><span class="p">):</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Admin endpoints reject non-admin users&quot;&quot;&quot;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="c1"># Anonymous: 401 Unauthorized</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">anonymous_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/reset&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="c1"># Regular user: 403 Forbidden</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">user_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/reset&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">403</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    <span class="c1"># Admin: 200 OK</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">admin_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/reset&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_user_endpoint_requires_auth</span><span class="p">(</span><span class="n">user_client</span><span class="p">,</span> <span class="n">anonymous_client</span><span class="p">):</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;User endpoints reject unauthenticated requests&quot;&quot;&quot;</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    <span class="c1"># Anonymous: 401</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">anonymous_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/users/me&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>    <span class="c1"># Authenticated: 200</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">user_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/users/me&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_public_endpoint_allows_anonymous</span><span class="p">(</span><span class="n">anonymous_client</span><span class="p">):</span>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Public endpoints work without auth&quot;&quot;&quot;</span>
+<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">anonymous_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/health&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a>    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+</code></pre></div>
+<hr />
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ol>
+<li><strong>✅ Industry Standard Pattern:</strong> Following official FastAPI template - well-understood by community</li>
+<li><strong>✅ OpenAPI Documentation:</strong> Security requirements visible in Swagger/ReDoc</li>
+<li><strong>✅ Easy Testing:</strong> Dependency overrides make testing straightforward</li>
+<li><strong>✅ Explicit Security:</strong> Each endpoint declares its auth requirements in code</li>
+<li><strong>✅ Type Safety:</strong> Type-annotated dependencies provide IDE autocompletion</li>
+<li><strong>✅ Flexible:</strong> Can have different auth requirements per endpoint</li>
+<li><strong>✅ No Custom Invention:</strong> Using proven patterns, not custom solutions</li>
+</ol>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>⚠️ Verbose:</strong> Each endpoint must declare dependencies (more code)</li>
+<li><strong>⚠️ Easy to Forget:</strong> Developers might forget to add dependencies to new endpoints</li>
+<li><strong>⚠️ Scattered:</strong> Security requirements across multiple route files</li>
+</ol>
+<h3 id="mitigations">Mitigations</h3>
+<ol>
+<li><strong>Startup Validation:</strong> Catch missing dependencies at app startup</li>
+<li><strong>Central Policy Document:</strong> Single source of truth for audit</li>
+<li><strong>Enhanced Audit Script:</strong> Continuous monitoring of endpoint security</li>
+<li><strong>CI/CD Integration:</strong> Block PRs with unprotected endpoints</li>
+<li><strong>Code Review Checklist:</strong> Require security review for new endpoints</li>
+</ol>
+<hr />
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="alternative-1-middleware-based-authentication">Alternative 1: Middleware-Based Authentication</h3>
+<p><strong>Approach:</strong> Use middleware to enforce admin role by default on all endpoints, with explicit relaxations.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">DefaultAdminMiddleware</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default: all endpoints require admin&quot;&quot;&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">RELAXATIONS</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>        <span class="s2">&quot;/users/*&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="s2">&quot;/health&quot;</span><span class="p">:</span> <span class="s2">&quot;public&quot;</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="p">}</span>
+</code></pre></div>
+<p><strong>Rejected Because:</strong>
+- ❌ Not standard FastAPI pattern (less common in production)
+- ❌ Security requirements not visible in OpenAPI documentation
+- ❌ More complex testing (override middleware + dependencies)
+- ❌ Path matching adds complexity
+- ❌ Against FastAPI's design philosophy (dependencies over middleware)</p>
+<h3 id="alternative-2-router-level-dependencies">Alternative 2: Router-Level Dependencies</h3>
+<p><strong>Approach:</strong> Apply dependencies at router level rather than per-endpoint.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">admin_router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/admin&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="n">Depends</span><span class="p">(</span><span class="n">require_admin</span><span class="p">)]</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="p">)</span>
+</code></pre></div>
+<p><strong>Partially Accepted:</strong>
+- ✅ Could use this for routers where ALL endpoints have same requirements
+- ⚠️ FastAPI template uses per-endpoint pattern
+- ⚠️ Less flexible (can't vary auth within router)</p>
+<p><strong>Decision:</strong> Use per-endpoint pattern as primary approach, optionally use router-level for consistency.</p>
+<h3 id="alternative-3-decorator-based-registry">Alternative 3: Decorator-Based Registry</h3>
+<p><strong>Approach:</strong> Custom decorators that register security requirements.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/admin/status&quot;</span><span class="p">)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nd">@require_admin</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_status</span><span class="p">():</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="o">...</span>
+</code></pre></div>
+<p><strong>Rejected Because:</strong>
+- ❌ Custom invention (not standard FastAPI pattern)
+- ❌ Doesn't integrate with OpenAPI like <code>Depends()</code> does
+- ❌ More code to maintain (custom decorator system)
+- ❌ FastAPI template doesn't use this pattern</p>
+<hr />
+<h2 id="references">References</h2>
+<h3 id="official-fastapi-resources">Official FastAPI Resources</h3>
+<ul>
+<li><a href="https://github.com/fastapi/full-stack-fastapi-template">FastAPI Full-Stack Template</a> - Official production template</li>
+<li><a href="https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/">FastAPI Security Tutorial</a> - JWT authentication</li>
+<li><a href="https://fastapi.tiangolo.com/reference/dependencies/">Dependencies API Reference</a></li>
+</ul>
+<h3 id="our-implementation">Our Implementation</h3>
+<ul>
+<li><a href="../../testing/API_AUTH_AUDIT_SUMMARY.md">API Auth Audit Summary</a> - Security findings</li>
+<li><a href="../../testing/API_AUTH_TESTING_RESEARCH.md">API Auth Testing Research</a> - Testing patterns</li>
+<li>Audit Tool: <code>scripts/development/audit-api-auth.sh</code></li>
+</ul>
+<h3 id="related-adrs">Related ADRs</h3>
+<ul>
+<li><a href="../ADR-028-dynamic-rbac-system/">ADR-028: Dynamic RBAC System</a> - Role/permission system</li>
+<li><a href="../ADR-054-oauth-client-management/">ADR-054: OAuth Client Management</a> - OAuth 2.0 flow</li>
+<li><a href="../ADR-027-user-management-api/">ADR-027: User Management API</a> - User operations</li>
+<li><a href="../ADR-017-sensitive-auth-verification/">ADR-017: Sensitive Auth Verification</a> - Password verification</li>
+</ul>
+<hr />
+<h2 id="decision-log">Decision Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Decision</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-01-05</td>
+<td>Adopt FastAPI Full-Stack Template pattern</td>
+<td>Industry standard, well-documented, proven in production</td>
+</tr>
+<tr>
+<td>2025-01-05</td>
+<td>Use per-endpoint dependencies (not router-level)</td>
+<td>Matches official template, visible in OpenAPI</td>
+</tr>
+<tr>
+<td>2025-01-05</td>
+<td>Add central security policy document</td>
+<td>Auditability, validation, documentation</td>
+</tr>
+<tr>
+<td>2025-01-05</td>
+<td>Reject middleware-based approach</td>
+<td>Not standard pattern, against FastAPI philosophy</td>
+</tr>
+<tr>
+<td>2025-01-05</td>
+<td>3-phase implementation (4 weeks)</td>
+<td>Critical endpoints first, comprehensive coverage second, testing third</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="approval">Approval</h2>
+<ul>
+<li>[ ] Security Review</li>
+<li>[ ] Engineering Review</li>
+<li>[ ] Documentation Updated</li>
+<li>[ ] Implementation Plan Approved</li>
+</ul>
+<p><strong>Next Steps:</strong>
+1. Review and approve this ADR
+2. Update ADR-028 and ADR-054 with references to this ADR
+3. Begin Phase 1 implementation (critical endpoints)
+4. Update audit script to validate against this architecture</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

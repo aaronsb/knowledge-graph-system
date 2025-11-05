@@ -4383,6 +4383,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../ADR-060-endpoint-security-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-060: API Endpoint Security Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -4910,6 +4933,75 @@
   
   
     <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Endpoint Authentication Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Authentication Audit Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Authentication Testing Research
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
@@ -5293,7 +5385,9 @@
 <h1 id="adr-028-dynamic-role-based-access-control-rbac-system">ADR-028: Dynamic Role-Based Access Control (RBAC) System</h1>
 <p><strong>Status:</strong> Proposed
 <strong>Date:</strong> 2025-10-11
-<strong>Supersedes:</strong> ADR-027 (Authentication API) - extends with dynamic RBAC</p>
+<strong>Supersedes:</strong> ADR-027 (Authentication API) - extends with dynamic RBAC
+<strong>Related ADRs:</strong>
+- <a href="../ADR-060-endpoint-security-architecture/">ADR-060: API Endpoint Security Architecture</a> - Endpoint-level security implementation</p>
 <h2 id="context">Context</h2>
 <p>The current authentication system (ADR-027) has hardcoded roles (<code>read_only</code>, <code>contributor</code>, <code>curator</code>, <code>admin</code>) with static permissions seeded in <code>kg_auth.role_permissions</code>. As the platform evolves to support:</p>
 <ul>
