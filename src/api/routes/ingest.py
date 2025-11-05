@@ -18,8 +18,7 @@ from ..services.content_hasher import ContentHasher
 from ..services.job_analysis import JobAnalyzer
 from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
-from ..dependencies.auth import get_current_active_user
-from ..models.auth import UserInDB
+from ..dependencies.auth import CurrentUser
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
@@ -116,6 +115,7 @@ async def run_job_analysis(job_id: str, auto_approve: bool = False):
 )
 async def ingest_document(
     background_tasks: BackgroundTasks,
+    current_user: CurrentUser,
     file: UploadFile = File(..., description="Document file to ingest"),
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Override filename"),
@@ -129,8 +129,7 @@ async def ingest_document(
     # ADR-051: Source metadata (optional, best-effort provenance tracking)
     source_type: Optional[str] = Form(None, description="Source type: file, stdin, mcp, api"),
     source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
-    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated"),
-    current_user: UserInDB = Depends(get_current_active_user)
+    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated")
 ):
     """
     Submit a document for async ingestion into the knowledge graph with approval workflow.
@@ -290,6 +289,7 @@ async def ingest_document(
 )
 async def ingest_text(
     background_tasks: BackgroundTasks,
+    current_user: CurrentUser,
     text: str = Form(..., description="Text content to ingest"),
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Filename for source tracking"),
@@ -301,8 +301,7 @@ async def ingest_text(
     # ADR-051: Source metadata (optional, best-effort provenance tracking)
     source_type: Optional[str] = Form(None, description="Source type: file, stdin, mcp, api"),
     source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
-    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated"),
-    current_user: UserInDB = Depends(get_current_active_user)
+    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated")
 ):
     """
     Submit raw text content for async ingestion into the knowledge graph.

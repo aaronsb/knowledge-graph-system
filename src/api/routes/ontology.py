@@ -8,9 +8,10 @@ Provides REST API access to:
 - Delete ontologies with orphan cleanup
 """
 
-from fastapi import APIRouter, HTTPException, Query as QueryParam
+from fastapi import APIRouter, Depends, HTTPException, Query as QueryParam
 import logging
 
+from ..dependencies.auth import CurrentUser, require_role
 from ..models.ontology import (
     OntologyListResponse,
     OntologyItem,
@@ -34,12 +35,16 @@ def get_age_client() -> AGEClient:
 
 
 @router.get("/", response_model=OntologyListResponse)
-async def list_ontologies():
+async def list_ontologies(
+    current_user: CurrentUser
+):
     """
-    List all ontologies in the knowledge graph.
+    List all ontologies in the knowledge graph (ADR-060).
 
     Returns summary statistics for each ontology including
     file count, chunk count, and concept count.
+
+    **Authentication:** Requires valid OAuth token
 
     Returns:
         OntologyListResponse with all ontologies
@@ -85,9 +90,12 @@ async def list_ontologies():
 
 
 @router.get("/{ontology_name}", response_model=OntologyInfoResponse)
-async def get_ontology_info(ontology_name: str):
+async def get_ontology_info(
+    ontology_name: str,
+    current_user: CurrentUser
+):
     """
-    Get detailed information about a specific ontology.
+    Get detailed information about a specific ontology (ADR-060).
 
     Includes:
     - File count and list of files
@@ -95,6 +103,8 @@ async def get_ontology_info(ontology_name: str):
     - Concept count
     - Evidence instance count
     - Relationship count
+
+    **Authentication:** Requires valid OAuth token
 
     Args:
         ontology_name: Name of the ontology
@@ -161,9 +171,14 @@ async def get_ontology_info(ontology_name: str):
 
 
 @router.get("/{ontology_name}/files", response_model=OntologyFilesResponse)
-async def get_ontology_files(ontology_name: str):
+async def get_ontology_files(
+    ontology_name: str,
+    current_user: CurrentUser
+):
     """
-    List all files in a specific ontology with their statistics.
+    List all files in a specific ontology with their statistics (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Args:
         ontology_name: Name of the ontology
@@ -224,10 +239,12 @@ async def get_ontology_files(ontology_name: str):
 @router.delete("/{ontology_name}", response_model=OntologyDeleteResponse)
 async def delete_ontology(
     ontology_name: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
     force: bool = QueryParam(False, description="Skip confirmation and force deletion")
 ):
     """
-    Delete an ontology and all its data.
+    Delete an ontology and all its data (Admin only - ADR-060).
 
     **WARNING: This action cannot be undone!**
 
@@ -237,6 +254,8 @@ async def delete_ontology(
     - All DocumentMeta nodes for this ontology (ADR-051: provenance metadata)
     - Orphaned Concept nodes (concepts with no remaining sources)
     - All job records for this ontology (enables clean re-ingestion)
+
+    **Authentication:** Requires admin role
 
     Args:
         ontology_name: Name of the ontology to delete
@@ -368,13 +387,17 @@ async def delete_ontology(
 @router.post("/{ontology_name}/rename", response_model=OntologyRenameResponse)
 async def rename_ontology(
     ontology_name: str,
-    request: OntologyRenameRequest
+    request: OntologyRenameRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
-    Rename an ontology.
+    Rename an ontology (Admin only - ADR-060).
 
     Updates all Source nodes' document property from old_name to new_name.
     This operation is fast and safe - only affects Source nodes in the specified ontology.
+
+    **Authentication:** Requires admin role
 
     Args:
         ontology_name: Current ontology name

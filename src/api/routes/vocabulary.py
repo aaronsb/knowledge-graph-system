@@ -9,10 +9,12 @@ Provides REST API access to:
 - Analysis and insights
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 import logging
 import os
+
+from src.api.dependencies.auth import CurrentUser, require_role
 
 from ..models.vocabulary import (
     # Status and info
@@ -105,9 +107,13 @@ def get_vocabulary_manager() -> VocabularyManager:
 # =============================================================================
 
 @router.get("/status", response_model=VocabularyStatusResponse)
-async def get_vocabulary_status():
+async def get_vocabulary_status(
+    current_user: CurrentUser
+):
     """
-    Get current vocabulary status including size, zone, and aggressiveness.
+    Get current vocabulary status including size, zone, and aggressiveness (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Returns:
         VocabularyStatusResponse with current state
@@ -175,11 +181,14 @@ async def get_vocabulary_status():
 
 @router.get("/types", response_model=EdgeTypeListResponse)
 async def list_edge_types(
+    current_user: CurrentUser,
     include_inactive: bool = Query(False, description="Include inactive types"),
     include_builtin: bool = Query(True, description="Include builtin types")
 ):
     """
-    List all edge types with statistics.
+    List all edge types with statistics (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Args:
         include_inactive: Include inactive/deprecated types
@@ -256,7 +265,11 @@ async def list_edge_types(
 
 
 @router.post("/types", response_model=EdgeTypeInfo)
-async def add_edge_type(request: AddEdgeTypeRequest):
+async def add_edge_type(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    request: AddEdgeTypeRequest = None
+):
     """
     Manually add a new edge type (curator action).
 
@@ -265,6 +278,8 @@ async def add_edge_type(request: AddEdgeTypeRequest):
 
     Returns:
         EdgeTypeInfo for the newly created type
+
+    **Authentication:** Requires admin role
 
     Example:
         POST /vocabulary/types
@@ -326,7 +341,11 @@ async def add_edge_type(request: AddEdgeTypeRequest):
 # =============================================================================
 
 @router.post("/merge", response_model=MergeEdgeTypesResponse)
-async def merge_edge_types(request: MergeEdgeTypesRequest):
+async def merge_edge_types(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    request: MergeEdgeTypesRequest = None
+):
     """
     Merge one edge type into another (curator action).
 
@@ -337,6 +356,8 @@ async def merge_edge_types(request: MergeEdgeTypesRequest):
 
     Returns:
         MergeEdgeTypesResponse with results
+
+    **Authentication:** Requires admin role
 
     Example:
         POST /vocabulary/merge
@@ -378,7 +399,11 @@ async def merge_edge_types(request: MergeEdgeTypesRequest):
 # =============================================================================
 
 @router.post("/consolidate", response_model=ConsolidateVocabularyResponse)
-async def consolidate_vocabulary(request: ConsolidateVocabularyRequest):
+async def consolidate_vocabulary(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    request: ConsolidateVocabularyRequest = None
+):
     """
     Run AITL vocabulary consolidation workflow.
 
@@ -398,6 +423,8 @@ async def consolidate_vocabulary(request: ConsolidateVocabularyRequest):
 
     Returns:
         ConsolidateVocabularyResponse with results
+
+    **Authentication:** Requires admin role
 
     Example:
         POST /vocabulary/consolidate
@@ -517,7 +544,11 @@ async def consolidate_vocabulary(request: ConsolidateVocabularyRequest):
 # =============================================================================
 
 @router.post("/generate-embeddings", response_model=GenerateEmbeddingsResponse)
-async def generate_embeddings(request: GenerateEmbeddingsRequest):
+async def generate_embeddings(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    request: GenerateEmbeddingsRequest = None
+):
     """
     Generate embeddings for vocabulary types (bulk operation).
 
@@ -531,6 +562,8 @@ async def generate_embeddings(request: GenerateEmbeddingsRequest):
 
     Returns:
         GenerateEmbeddingsResponse with counts of generated/skipped/failed
+
+    **Authentication:** Requires admin role
 
     Example:
         POST /vocabulary/generate-embeddings
@@ -598,9 +631,14 @@ async def generate_embeddings(request: GenerateEmbeddingsRequest):
 
 
 @router.get("/category-scores/{relationship_type}", response_model=CategoryScoresResponse)
-async def get_category_scores(relationship_type: str):
+async def get_category_scores(
+    relationship_type: str,
+    current_user: CurrentUser
+):
     """
-    Get category similarity scores for a relationship type (ADR-047).
+    Get category similarity scores for a relationship type (ADR-047, ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Returns detailed breakdown of semantic similarity to all 8 categories:
     - causation, composition, logical, evidential
@@ -661,7 +699,11 @@ async def get_category_scores(relationship_type: str):
 
 
 @router.post("/refresh-categories", response_model=RefreshCategoriesResponse)
-async def refresh_categories(request: RefreshCategoriesRequest):
+async def refresh_categories(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    request: RefreshCategoriesRequest = None
+):
     """
     Refresh category assignments for vocabulary types (ADR-047).
 
@@ -678,6 +720,8 @@ async def refresh_categories(request: RefreshCategoriesRequest):
 
     Returns:
         RefreshCategoriesResponse with counts and detailed assignments
+
+    **Authentication:** Requires admin role
 
     Example:
         POST /vocabulary/refresh-categories
@@ -756,11 +800,14 @@ async def refresh_categories(request: RefreshCategoriesRequest):
 @router.get("/similar/{relationship_type}", response_model=VocabularySimilarityResponse)
 async def get_similar_types(
     relationship_type: str,
+    current_user: CurrentUser,
     limit: int = Query(10, ge=1, le=100, description="Number of results to return"),
     reverse: bool = Query(False, description="If True, return least similar (opposites)")
 ):
     """
-    Find similar (or opposite) edge types based on embedding similarity (ADR-053).
+    Find similar (or opposite) edge types based on embedding similarity (ADR-053, ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Uses cosine similarity between embeddings to find:
     - Similar types (high similarity): Potential synonyms for consolidation
@@ -888,9 +935,14 @@ async def get_similar_types(
 
 
 @router.get("/analyze/{relationship_type}", response_model=VocabularyAnalysisDetailResponse)
-async def analyze_vocabulary_type(relationship_type: str):
+async def analyze_vocabulary_type(
+    relationship_type: str,
+    current_user: CurrentUser
+):
     """
-    Detailed analysis of vocabulary type for quality assurance (ADR-053).
+    Detailed analysis of vocabulary type for quality assurance (ADR-053, ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Provides comprehensive similarity analysis:
     - Category fit (similarity to category seeds)

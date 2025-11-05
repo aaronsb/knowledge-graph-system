@@ -3,6 +3,8 @@
 **Status:** Proposed
 **Date:** 2025-10-11
 **Supersedes:** ADR-027 (Authentication API) - extends with dynamic RBAC
+**Related ADRs:**
+- [ADR-060: API Endpoint Security Architecture](./ADR-060-endpoint-security-architecture.md) - Endpoint-level security implementation
 
 ## Context
 

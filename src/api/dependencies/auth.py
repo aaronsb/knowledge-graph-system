@@ -1,5 +1,5 @@
 """
-Authentication Dependencies (ADR-027, ADR-028, ADR-054)
+Authentication Dependencies (ADR-027, ADR-028, ADR-054, ADR-060)
 
 FastAPI dependency injection for authentication and authorization.
 
@@ -10,10 +10,20 @@ Provides:
 - require_permission: Dynamic permission checking with scoping support
 - get_api_key_user: Authenticate via API key
 
+Type Aliases (ADR-060 - FastAPI Full-Stack Template Pattern):
+- CurrentUser: Type-annotated dependency for authenticated user
+- TokenDep: Type-annotated dependency for raw token
+- Used for cleaner endpoint signatures per industry standard pattern
+
 ADR-054: OAuth 2.0 Authentication
 - All authentication uses OAuth 2.0 flows (client credentials, device code, personal clients)
 - Single middleware validates OAuth access tokens
 - JWT support removed (OAuth-only since Phase 4 completion)
+
+ADR-060: Endpoint Security Architecture
+- Per-endpoint dependency injection following FastAPI Full-Stack Template
+- Type-annotated dependencies for cleaner signatures
+- Three security levels: PUBLIC, USER, ADMIN
 """
 
 import os
@@ -479,3 +489,14 @@ async def require_permission(
         return current_user
 
     return check_user_permission
+
+
+# =============================================================================
+# Type Aliases (ADR-060 - FastAPI Full-Stack Template Pattern)
+# =============================================================================
+
+# Type alias for raw OAuth token (FastAPI template pattern)
+TokenDep = Annotated[str, Depends(oauth2_scheme)]
+
+# Type alias for authenticated user (FastAPI template pattern)
+CurrentUser = Annotated[UserInDB, Depends(get_current_active_user)]

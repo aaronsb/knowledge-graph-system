@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 import logging
 
+from ..dependencies.auth import CurrentUser
 from ..models.queries import (
     SearchRequest,
     SearchResponse,
@@ -47,9 +48,14 @@ def get_age_client() -> AGEClient:
 
 
 @router.post("/search", response_model=SearchResponse)
-async def search_concepts(request: SearchRequest):
+async def search_concepts(
+    current_user: CurrentUser,
+    request: SearchRequest
+):
     """
-    Search for concepts using semantic similarity with vector embeddings.
+    Search for concepts using semantic similarity with vector embeddings (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Generates a vector embedding for the query text using the configured AI provider
     and performs cosine similarity search against all concept embeddings in the graph.
@@ -289,10 +295,13 @@ async def search_concepts(request: SearchRequest):
 @router.get("/concept/{concept_id}", response_model=ConceptDetailsResponse)
 async def get_concept_details(
     concept_id: str,
+    current_user: CurrentUser,
     include_grounding: bool = False
 ):
     """
-    Get detailed information about a specific concept including all evidence and relationships.
+    Get detailed information about a specific concept including all evidence and relationships (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Retrieves complete concept data from the graph including:
     - Concept metadata (unique ID, human-readable label, alternative search terms)
@@ -498,9 +507,14 @@ async def get_concept_details(
 
 
 @router.post("/related", response_model=RelatedConceptsResponse)
-async def find_related_concepts(request: RelatedConceptsRequest):
+async def find_related_concepts(
+    current_user: CurrentUser,
+    request: RelatedConceptsRequest
+):
     """
-    Find concepts related through graph traversal using breadth-first search.
+    Find concepts related through graph traversal using breadth-first search (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Performs breadth-first graph traversal from a starting concept to discover
     all connected concepts within a specified maximum distance (hops). Optionally
@@ -574,9 +588,14 @@ async def find_related_concepts(request: RelatedConceptsRequest):
 
 
 @router.post("/connect", response_model=FindConnectionResponse)
-async def find_connection(request: FindConnectionRequest):
+async def find_connection(
+    current_user: CurrentUser,
+    request: FindConnectionRequest
+):
     """
-    Find shortest paths between two concepts using exact concept IDs.
+    Find shortest paths between two concepts using exact concept IDs (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Uses Apache AGE graph traversal to find up to 5 shortest paths connecting
     two concepts. Requires exact concept IDs (not semantic phrase matching).
@@ -714,9 +733,14 @@ async def find_connection(request: FindConnectionRequest):
 
 
 @router.post("/connect-by-search", response_model=FindConnectionBySearchResponse)
-async def find_connection_by_search(request: FindConnectionBySearchRequest):
+async def find_connection_by_search(
+    current_user: CurrentUser,
+    request: FindConnectionBySearchRequest
+):
     """
-    Find shortest paths between two concepts using semantic phrase matching.
+    Find shortest paths between two concepts using semantic phrase matching (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Uses vector embeddings to match query phrases to existing concepts based on
     semantic similarity, then finds shortest paths connecting them.
@@ -938,9 +962,14 @@ async def find_connection_by_search(request: FindConnectionBySearchRequest):
 
 
 @router.post("/cypher", response_model=CypherQueryResponse)
-async def execute_cypher_query(request: CypherQueryRequest):
+async def execute_cypher_query(
+    current_user: CurrentUser,
+    request: CypherQueryRequest
+):
     """
-    Execute a raw openCypher query against the Apache AGE graph.
+    Execute a raw openCypher query against the Apache AGE graph (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Allows direct execution of openCypher queries for advanced users who want full control.
     Returns nodes and relationships in a format suitable for graph visualization.
