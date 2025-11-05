@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-056-timezone-aware-datetime-utilities/">
+        <link rel="prev" href="../ADR-032a-automatic-edge-vocabulary-expansion/">
       
       
-        <link rel="next" href="../ADR-057-multimodal-image-ingestion/">
+        <link rel="next" href="../ADR-033-multimodal-ingestion-configurable-prompts/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing - Knowledge Graph System</title>
+        <title>ADR-032 Implementation Quick Reference - Knowledge Graph System</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-057-appendix-single-stage-vs-two-stage-image-processing" class="md-skip">
+        <a href="#adr-032-implementation-quick-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
+              ADR-032 Implementation Quick Reference
             
           </span>
         </div>
@@ -3362,12 +3362,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-032-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ADR-032 Implementation Quick Reference
+    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
     
   </span>
   
@@ -3382,20 +3382,221 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-032-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-032 Implementation Quick Reference
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
-    ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+    ADR-032 Implementation Quick Reference
     
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#critical-implementation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Critical Implementation Details
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Critical Implementation Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-sliding-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Sliding Windows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-confidence-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Confidence Thresholds
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-value-score-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Value Score Formula
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-aggressiveness-zones" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Aggressiveness Zones
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-merge-vs-prune-decision-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Merge vs Prune Decision Tree
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-bezier-curve-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Bezier Curve Profiles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-protected-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Protected Sets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-auto-expansion-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Auto-Expansion Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-database-tables-minimal-additions" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Database Tables (Minimal Additions)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-configuration-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Configuration Keys
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-key-module-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Key Module Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-testing-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Testing Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-implementation-order-from-todo" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. Implementation Order (from TODO)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-critical-dont-forget-items" class="md-nav__link">
+    <span class="md-ellipsis">
+      14. Critical "Don't Forget" Items
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      15. Performance Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-common-pitfalls-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      16. Common Pitfalls to Avoid
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3799,29 +4000,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-049-llm-determined-relationship-direction/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    ADR-049: LLM-Determined Relationship Direction Semantics
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
@@ -3868,12 +4046,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-051-API-CHANGES/" class="md-nav__link">
+      <a href="../ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ADR-051: API Changes for Graph-Based Document Deduplication
+    ADR-051: Graph-Based Provenance Tracking
     
   </span>
   
@@ -3891,12 +4069,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-051-graph-document-deduplication/" class="md-nav__link">
+      <a href="../ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ADR-051: Graph-Based Provenance Tracking
+    ADR-051: API Changes for Graph-Based Document Deduplication
     
   </span>
   
@@ -4026,416 +4204,20 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
+    ADR-057: Multimodal Image Ingestion with Visual Context Injection
     
   </span>
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#question" class="md-nav__link">
-    <span class="md-ellipsis">
-      Question
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#approach-1-single-stage-image-concepts-directly" class="md-nav__link">
-    <span class="md-ellipsis">
-      Approach 1: Single-Stage (Image → Concepts Directly)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Approach 1: Single-Stage (Image → Concepts Directly)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      How It Works
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pros" class="md-nav__link">
-    <span class="md-ellipsis">
-      Pros
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cons" class="md-nav__link">
-    <span class="md-ellipsis">
-      Cons
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#approach-2-two-stage-image-prose-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      Approach 2: Two-Stage (Image → Prose → Concepts)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Approach 2: Two-Stage (Image → Prose → Concepts)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      How It Works
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pros_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Pros
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cons_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Cons
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#research-what-do-others-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      Research: What Do Others Do?
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Research: What Do Others Do?">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#gpt-4v-vision-api-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      GPT-4V / Vision API Patterns
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#claude-3-vision-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      Claude 3 / Vision Patterns
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#langchain-llamaindex-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      LangChain / LlamaIndex Patterns
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#industry-consensus" class="md-nav__link">
-    <span class="md-ellipsis">
-      Industry Consensus
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#our-use-case-knowledge-graph-construction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Our Use Case: Knowledge Graph Construction
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Our Use Case: Knowledge Graph Construction">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-we-need" class="md-nav__link">
-    <span class="md-ellipsis">
-      What We Need
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-matters-less" class="md-nav__link">
-    <span class="md-ellipsis">
-      What Matters Less
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#comparison-table" class="md-nav__link">
-    <span class="md-ellipsis">
-      Comparison Table
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recommendation-two-stage-with-option-for-single-stage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Recommendation: Two-Stage with Option for Single-Stage
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Recommendation: Two-Stage with Option for Single-Stage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#default-two-stage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Default: Two-Stage
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#optional-single-stage-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optional: Single-Stage Mode
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hybrid-approach-best-of-both" class="md-nav__link">
-    <span class="md-ellipsis">
-      Hybrid Approach: Best of Both
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#chain-of-thought-why-two-stage-works-better" class="md-nav__link">
-    <span class="md-ellipsis">
-      Chain-of-Thought: Why Two-Stage Works Better
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Chain-of-Thought: Why Two-Stage Works Better">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-thinking-step-effect" class="md-nav__link">
-    <span class="md-ellipsis">
-      The "Thinking Step" Effect
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-flowchart-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example: Flowchart Analysis
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cost-benefit-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Cost-Benefit Analysis
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cost-Benefit Analysis">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#two-stage-costs-per-image" class="md-nav__link">
-    <span class="md-ellipsis">
-      Two-Stage Costs (per image)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#two-stage-benefits" class="md-nav__link">
-    <span class="md-ellipsis">
-      Two-Stage Benefits
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#break-even-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Break-Even Analysis
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#final-recommendation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Final Recommendation
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Final Recommendation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#adopt-two-stage-as-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      Adopt Two-Stage as Default
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#provide-single-stage-as-opt-in" class="md-nav__link">
-    <span class="md-ellipsis">
-      Provide Single-Stage as Opt-In
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementation-priority" class="md-nav__link">
-    <span class="md-ellipsis">
-      Implementation Priority
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#conclusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      Conclusion
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -4448,12 +4230,58 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-057-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    ADR-057: Multimodal Image Ingestion with Visual Context Injection
+    ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-058: Polarity Axis Triangulation for Grounding Calculation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-059: LLM-Determined Relationship Direction Semantics
     
   </span>
   
@@ -5117,46 +4945,154 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#question" class="md-nav__link">
+  <a href="#critical-implementation-details" class="md-nav__link">
     <span class="md-ellipsis">
-      Question
+      Critical Implementation Details
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#approach-1-single-stage-image-concepts-directly" class="md-nav__link">
-    <span class="md-ellipsis">
-      Approach 1: Single-Stage (Image → Concepts Directly)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Approach 1: Single-Stage (Image → Concepts Directly)">
+    <nav class="md-nav" aria-label="Critical Implementation Details">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#1-sliding-windows" class="md-nav__link">
     <span class="md-ellipsis">
-      How It Works
+      1. Sliding Windows
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pros" class="md-nav__link">
+  <a href="#2-confidence-thresholds" class="md-nav__link">
     <span class="md-ellipsis">
-      Pros
+      2. Confidence Thresholds
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#cons" class="md-nav__link">
+  <a href="#3-value-score-formula" class="md-nav__link">
     <span class="md-ellipsis">
-      Cons
+      3. Value Score Formula
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-aggressiveness-zones" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Aggressiveness Zones
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-merge-vs-prune-decision-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Merge vs Prune Decision Tree
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-bezier-curve-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Bezier Curve Profiles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-protected-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Protected Sets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-auto-expansion-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Auto-Expansion Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-database-tables-minimal-additions" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Database Tables (Minimal Additions)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-configuration-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Configuration Keys
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-key-module-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Key Module Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-testing-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Testing Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-implementation-order-from-todo" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. Implementation Order (from TODO)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-critical-dont-forget-items" class="md-nav__link">
+    <span class="md-ellipsis">
+      14. Critical "Don't Forget" Items
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      15. Performance Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-common-pitfalls-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      16. Common Pitfalls to Avoid
     </span>
   </a>
   
@@ -5164,309 +5100,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#approach-2-two-stage-image-prose-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      Approach 2: Two-Stage (Image → Prose → Concepts)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Approach 2: Two-Stage (Image → Prose → Concepts)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      How It Works
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pros_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Pros
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cons_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Cons
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#research-what-do-others-do" class="md-nav__link">
-    <span class="md-ellipsis">
-      Research: What Do Others Do?
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Research: What Do Others Do?">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#gpt-4v-vision-api-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      GPT-4V / Vision API Patterns
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#claude-3-vision-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      Claude 3 / Vision Patterns
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#langchain-llamaindex-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      LangChain / LlamaIndex Patterns
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#industry-consensus" class="md-nav__link">
-    <span class="md-ellipsis">
-      Industry Consensus
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#our-use-case-knowledge-graph-construction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Our Use Case: Knowledge Graph Construction
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Our Use Case: Knowledge Graph Construction">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-we-need" class="md-nav__link">
-    <span class="md-ellipsis">
-      What We Need
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-matters-less" class="md-nav__link">
-    <span class="md-ellipsis">
-      What Matters Less
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#comparison-table" class="md-nav__link">
-    <span class="md-ellipsis">
-      Comparison Table
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recommendation-two-stage-with-option-for-single-stage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Recommendation: Two-Stage with Option for Single-Stage
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Recommendation: Two-Stage with Option for Single-Stage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#default-two-stage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Default: Two-Stage
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#optional-single-stage-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optional: Single-Stage Mode
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hybrid-approach-best-of-both" class="md-nav__link">
-    <span class="md-ellipsis">
-      Hybrid Approach: Best of Both
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#chain-of-thought-why-two-stage-works-better" class="md-nav__link">
-    <span class="md-ellipsis">
-      Chain-of-Thought: Why Two-Stage Works Better
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Chain-of-Thought: Why Two-Stage Works Better">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-thinking-step-effect" class="md-nav__link">
-    <span class="md-ellipsis">
-      The "Thinking Step" Effect
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-flowchart-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example: Flowchart Analysis
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cost-benefit-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Cost-Benefit Analysis
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cost-Benefit Analysis">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#two-stage-costs-per-image" class="md-nav__link">
-    <span class="md-ellipsis">
-      Two-Stage Costs (per image)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#two-stage-benefits" class="md-nav__link">
-    <span class="md-ellipsis">
-      Two-Stage Benefits
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#break-even-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Break-Even Analysis
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#final-recommendation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Final Recommendation
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Final Recommendation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#adopt-two-stage-as-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      Adopt Two-Stage as Default
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#provide-single-stage-as-opt-in" class="md-nav__link">
-    <span class="md-ellipsis">
-      Provide Single-Stage as Opt-In
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementation-priority" class="md-nav__link">
-    <span class="md-ellipsis">
-      Implementation Priority
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#conclusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      Conclusion
-    </span>
-  </a>
   
 </li>
       
@@ -5489,476 +5122,245 @@
   
 
 
-<h1 id="adr-057-appendix-single-stage-vs-two-stage-image-processing">ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing</h1>
-<p><strong>Date:</strong> 2025-11-03
-<strong>Related ADR:</strong> <a href="../ADR-057-multimodal-image-ingestion/">ADR-057: Multimodal Image Ingestion</a></p>
-<hr />
-<h2 id="question">Question</h2>
-<p>Should we process images in <strong>one stage</strong> (image → concepts directly) or <strong>two stages</strong> (image → prose → concepts)?</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Single-Stage:  Image → [Vision LLM] → Concepts JSON
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Two-Stage:     Image → [Vision LLM] → Prose Markdown
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                                        ↓
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                           Prose → [Extraction LLM] → Concepts JSON
+<h1 id="adr-032-implementation-quick-reference">ADR-032 Implementation Quick Reference</h1>
+<p><strong>Status:</strong> Implementation Guide
+<strong>Date:</strong> 2025-10-15
+<strong>Related:</strong> ADR-032-automatic-edge-vocabulary-expansion.md</p>
+<h2 id="critical-implementation-details">Critical Implementation Details</h2>
+<h3 id="1-sliding-windows">1. Sliding Windows</h3>
+<p><strong>Edge Types:</strong>
+- MIN: 30 (protected core, never prune)
+- MAX: 90 (soft limit, trigger optimization)
+- HARD: 200 (block expansion, force curator)</p>
+<p><strong>Categories:</strong>
+- MIN: 8 (protected core)
+- MAX: 15 (hard limit)
+- MERGE_THRESHOLD: 12 (start flagging merge opportunities)</p>
+<h3 id="2-confidence-thresholds">2. Confidence Thresholds</h3>
+<p><strong>Category Classification:</strong>
+- <code>&gt;= 0.3</code>: Assign to existing category (good fit)
+- <code>&lt; 0.3</code>: Propose new category (poor fit to all)</p>
+<p><strong>Synonym Detection:</strong>
+- <code>&gt;= 0.90</code>: High similarity, suggest merge
+- <code>0.70-0.89</code>: Moderate similarity, flag for review
+- <code>&lt; 0.70</code>: Not synonyms</p>
+<p><strong>AITL Decisions:</strong>
+- <code>&gt;= 0.7</code>: Execute AI decision
+- <code>&lt; 0.7</code>: Fallback to HITL (low confidence)</p>
+<h3 id="3-value-score-formula">3. Value Score Formula</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">value_score</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">edge_count</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">+</span>                    <span class="c1"># Base: how many edges exist</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="p">(</span><span class="n">avg_traversal</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span>       <span class="c1"># Usage: how often queried</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="p">(</span><span class="n">bridge_count</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.3</span> <span class="o">+</span>         <span class="c1"># Structural: connects subgraphs</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">trend_14d</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span>               <span class="c1"># Momentum: growing usage</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
 </code></pre></div>
-<hr />
-<h2 id="approach-1-single-stage-image-concepts-directly">Approach 1: Single-Stage (Image → Concepts Directly)</h2>
-<h3 id="how-it-works">How It Works</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_image_single_stage</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">visual_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="sd">    Single LLM call: Image + visual context → Concepts JSON</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="c1"># Generate image embedding (for similarity search)</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">image_embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="n">nomic_vision</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="c1"># Search for visually similar images</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">similar_images</span> <span class="o">=</span> <span class="k">await</span> <span class="n">search_similar_images</span><span class="p">(</span><span class="n">image_embedding</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">visual_context</span> <span class="o">=</span> <span class="k">await</span> <span class="n">build_visual_context</span><span class="p">(</span><span class="n">similar_images</span><span class="p">)</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="c1"># Build prompt with visual context</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="s2">Extract semantic concepts from this image for the &quot;</span><span class="si">{</span><span class="n">ontology</span><span class="si">}</span><span class="s2">&quot; ontology.</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="s2">## Visual Context</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="s2">This image is visually similar to:</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="si">{</span><span class="n">format_visual_context</span><span class="p">(</span><span class="n">visual_context</span><span class="p">)</span><span class="si">}</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="s2">## Task</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="s2">Analyze the image and extract concepts with relationships.</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="s2">Output JSON:</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="se">{{</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="s2">  &quot;concepts&quot;: [</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="s2">    </span><span class="se">{{</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="s2">      &quot;label&quot;: &quot;concept name&quot;,</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="s2">      &quot;relationships&quot;: [</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="s2">        </span><span class="se">{{</span><span class="s2">&quot;target&quot;: &quot;other concept&quot;, &quot;type&quot;: &quot;IMPLIES&quot;, &quot;strength&quot;: 0.9, &quot;reason&quot;: &quot;...&quot;</span><span class="se">}}</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="s2">      ]</span>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="s2">    </span><span class="se">}}</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="s2">  ]</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="se">}}</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>    <span class="c1"># SINGLE CALL: Image → Concepts JSON</span>
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>    <span class="n">concepts_json</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vision_backend</span><span class="o">.</span><span class="n">extract_concepts_from_image</span><span class="p">(</span>
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>        <span class="n">image_bytes</span><span class="p">,</span>
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>        <span class="n">prompt</span><span class="p">,</span>
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;json&quot;</span>
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>    <span class="p">)</span>
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>    <span class="c1"># Parse and upsert concepts</span>
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>    <span class="n">concepts</span> <span class="o">=</span> <span class="n">parse_concepts_json</span><span class="p">(</span><span class="n">concepts_json</span><span class="p">)</span>
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">upsert_concepts</span><span class="p">(</span><span class="n">concepts</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="pros">Pros</h3>
-<p>✅ <strong>Faster</strong>: One LLM call instead of two (save 3-10 seconds)
-✅ <strong>Cheaper</strong>: One API call instead of two (~50% cost reduction)
-✅ <strong>More direct</strong>: Vision model sees image directly, no "telephone game"
-✅ <strong>Simpler prompt flow</strong>: Single comprehensive instruction
-✅ <strong>Less state management</strong>: Don't need to store intermediate prose</p>
-<h3 id="cons">Cons</h3>
-<p>❌ <strong>No prose preservation</strong>: Can't see "what the vision model said" for debugging
-❌ <strong>Less flexible</strong>: Can't adjust extraction separately from vision
-❌ <strong>Harder to debug</strong>: If concepts are wrong, can't see intermediate prose
-❌ <strong>Can't search prose</strong>: No full-text search on descriptions
-❌ <strong>Monolithic</strong>: Vision + extraction logic coupled
-❌ <strong>Re-extraction impossible</strong>: Can't re-run concept extraction without re-processing image</p>
-<hr />
-<h2 id="approach-2-two-stage-image-prose-concepts">Approach 2: Two-Stage (Image → Prose → Concepts)</h2>
-<h3 id="how-it-works_1">How It Works</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_image_two_stage</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">visual_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="sd">    Two LLM calls:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="sd">    1. Image → Prose description</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">    2. Prose + visual context → Concepts JSON</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="c1"># Generate image embedding</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">image_embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="n">nomic_vision</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">)</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="c1"># Search for visually similar images</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">similar_images</span> <span class="o">=</span> <span class="k">await</span> <span class="n">search_similar_images</span><span class="p">(</span><span class="n">image_embedding</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">visual_context</span> <span class="o">=</span> <span class="k">await</span> <span class="n">build_visual_context</span><span class="p">(</span><span class="n">similar_images</span><span class="p">)</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="c1"># STAGE 1: Image → Prose Description</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">prose_prompt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="s2">Analyze this image and describe it in markdown format.</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="s2">Include:</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="s2">- All visible text verbatim</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="s2">- Diagrams, charts, and visual elements</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="s2">- Relationships between elements</span>
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="s2">- Structure (headings, lists, tables)</span>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="s2">Output pure markdown.</span>
-<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>
-<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>    <span class="n">prose_description</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vision_backend</span><span class="o">.</span><span class="n">describe_image</span><span class="p">(</span>
-<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>        <span class="n">image_bytes</span><span class="p">,</span>
-<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>        <span class="n">prose_prompt</span>
-<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>    <span class="p">)</span>
-<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>
-<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>    <span class="c1"># Store prose in Source node</span>
-<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>    <span class="n">source</span> <span class="o">=</span> <span class="k">await</span> <span class="n">create_source</span><span class="p">(</span>
-<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>        <span class="n">full_text</span><span class="o">=</span><span class="n">prose_description</span><span class="p">,</span>
-<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>        <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span>
-<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>    <span class="p">)</span>
-<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>
-<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>    <span class="c1"># STAGE 2: Prose + Visual Context → Concepts</span>
-<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>    <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">extract_and_upsert_concepts</span><span class="p">(</span>
-<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>        <span class="n">text</span><span class="o">=</span><span class="n">prose_description</span><span class="p">,</span>
-<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a>        <span class="n">source_id</span><span class="o">=</span><span class="n">source</span><span class="o">.</span><span class="n">source_id</span><span class="p">,</span>
-<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a>        <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">,</span>
-<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a>        <span class="n">additional_context</span><span class="o">=</span><span class="n">visual_context</span>  <span class="c1"># Visual context injection</span>
-<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>    <span class="p">)</span>
-<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>
-<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>    <span class="k">return</span> <span class="n">concepts</span>
-</code></pre></div>
-<h3 id="pros_1">Pros</h3>
-<p>✅ <strong>Prose preservation</strong>: Full description stored in Source node
-✅ <strong>Debuggable</strong>: Can see what vision model "saw" in the image
-✅ <strong>Flexible</strong>: Can re-run concept extraction without re-processing image
-✅ <strong>Searchable</strong>: Prose descriptions are full-text searchable
-✅ <strong>Modular</strong>: Vision and extraction logic decoupled
-✅ <strong>Consistent with text pipeline</strong>: Uses same extraction logic
-✅ <strong>Re-extraction possible</strong>: Update extraction prompt, re-run on existing prose</p>
-<h3 id="cons_1">Cons</h3>
-<p>❌ <strong>Slower</strong>: Two LLM calls instead of one (add 3-10 seconds)
-❌ <strong>More expensive</strong>: Two API calls (~2× cost)
-❌ <strong>Intermediate state</strong>: Need to store prose between stages
-❌ <strong>Potential information loss</strong>: Vision model → prose → concepts (two transformations)
-❌ <strong>More complex</strong>: Two prompts to maintain</p>
-<hr />
-<h2 id="research-what-do-others-do">Research: What Do Others Do?</h2>
-<h3 id="gpt-4v-vision-api-patterns">GPT-4V / Vision API Patterns</h3>
-<p><strong>OpenAI's GPT-4V documentation</strong> recommends:</p>
-<blockquote>
-<p>"Vision models can directly answer questions about images or generate structured output.
-For complex extraction tasks, consider a two-step approach: first describe the image,
-then extract structured data from the description."</p>
-</blockquote>
-<p><strong>Common patterns observed</strong>:
-1. <strong>Simple Q&amp;A</strong>: Single-stage (image → answer)
-2. <strong>OCR/Transcription</strong>: Single-stage (image → text)
-3. <strong>Structured extraction</strong>: Two-stage (image → description → JSON)
-4. <strong>Complex reasoning</strong>: Two-stage (description allows model to "think" before extracting)</p>
-<h3 id="claude-3-vision-patterns">Claude 3 / Vision Patterns</h3>
-<p><strong>Anthropic's Claude 3.5 Sonnet documentation</strong>:</p>
-<blockquote>
-<p>"For best results with complex visual analysis, use a chain-of-thought approach:
-Ask the model to first describe what it sees, then perform the extraction task."</p>
-</blockquote>
-<p><strong>Reasoning</strong>: The intermediate description acts as a "thinking step" that improves extraction quality.</p>
-<h3 id="langchain-llamaindex-patterns">LangChain / LlamaIndex Patterns</h3>
-<p>Both frameworks support <strong>both patterns</strong>, but recommend two-stage for:
-- Knowledge extraction
-- Document processing
-- Multi-step reasoning</p>
-<p>And single-stage for:
-- Simple classification
-- Direct Q&amp;A
-- Speed-critical applications</p>
-<h3 id="industry-consensus">Industry Consensus</h3>
-<p><strong>Two-stage is preferred when</strong>:
-- Output quality matters more than speed
-- Debugging is important
-- Re-processing is expensive (large images, slow models)
-- Need to audit what the vision model "saw"
-- Building knowledge bases (our use case!)</p>
-<p><strong>Single-stage is preferred when</strong>:
-- Latency is critical (real-time applications)
-- Cost is primary concern
-- Task is simple (classification, simple extraction)
-- No need for prose preservation</p>
-<hr />
-<h2 id="our-use-case-knowledge-graph-construction">Our Use Case: Knowledge Graph Construction</h2>
-<h3 id="what-we-need">What We Need</h3>
-<ol>
-<li><strong>High-quality concepts</strong>: Accuracy &gt; speed</li>
-<li><strong>Ground truth preservation</strong>: Must verify what was extracted</li>
-<li><strong>Re-extraction capability</strong>: Update extraction logic without re-processing images</li>
-<li><strong>Debugging</strong>: Need to see what vision model interpreted</li>
-<li><strong>Consistency</strong>: Same extraction logic for text and images</li>
-<li><strong>Search</strong>: Users should be able to search prose descriptions</li>
-</ol>
-<h3 id="what-matters-less">What Matters Less</h3>
-<ol>
-<li><strong>Latency</strong>: Ingestion is asynchronous (job queue)</li>
-<li><strong>Cost</strong>: Knowledge extraction is one-time, high-value</li>
-<li><strong>Simplicity</strong>: System is already complex (worth it for flexibility)</li>
-</ol>
-<hr />
-<h2 id="comparison-table">Comparison Table</h2>
-<table>
-<thead>
-<tr>
-<th>Criterion</th>
-<th>Single-Stage</th>
-<th>Two-Stage</th>
-<th>Winner</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Speed</strong></td>
-<td>~5-10s per image</td>
-<td>~10-20s per image</td>
-<td>Single</td>
-</tr>
-<tr>
-<td><strong>Cost</strong></td>
-<td>1× LLM call</td>
-<td>2× LLM calls</td>
-<td>Single</td>
-</tr>
-<tr>
-<td><strong>Quality</strong></td>
-<td>Direct from image</td>
-<td>Chain-of-thought</td>
-<td>Two</td>
-</tr>
-<tr>
-<td><strong>Debuggability</strong></td>
-<td>No intermediate state</td>
-<td>Prose visible</td>
-<td>Two</td>
-</tr>
-<tr>
-<td><strong>Re-extraction</strong></td>
-<td>Must re-process image</td>
-<td>Re-run on prose</td>
-<td>Two</td>
-</tr>
-<tr>
-<td><strong>Search prose</strong></td>
-<td>N/A</td>
-<td>Full-text search</td>
-<td>Two</td>
-</tr>
-<tr>
-<td><strong>Consistency</strong></td>
-<td>Custom logic</td>
-<td>Same as text</td>
-<td>Two</td>
-</tr>
-<tr>
-<td><strong>Audit trail</strong></td>
-<td>Opaque</td>
-<td>Transparent</td>
-<td>Two</td>
-</tr>
-<tr>
-<td><strong>Flexibility</strong></td>
-<td>Monolithic</td>
-<td>Modular</td>
-<td>Two</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Score</strong>: Single-Stage: 2/9, Two-Stage: 7/9</p>
-<hr />
-<h2 id="recommendation-two-stage-with-option-for-single-stage">Recommendation: Two-Stage with Option for Single-Stage</h2>
-<h3 id="default-two-stage">Default: Two-Stage</h3>
-<p>Use two-stage approach by default because:</p>
-<ol>
-<li><strong>Quality matters</strong>: We're building a knowledge base, not a real-time system</li>
-<li><strong>Debugging essential</strong>: Users need to verify extraction accuracy</li>
-<li><strong>Re-extraction valuable</strong>: Can improve extraction prompt without re-processing images</li>
-<li><strong>Consistency</strong>: Uses same extraction logic as text ingestion</li>
-<li><strong>Search</strong>: Prose descriptions add value for full-text search</li>
-</ol>
-<h3 id="optional-single-stage-mode">Optional: Single-Stage Mode</h3>
-<p>Provide single-stage as an <strong>optional optimization</strong> for users who:
-- Have cost constraints
-- Need faster ingestion
-- Trust the extraction quality
-- Don't need prose descriptions</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># config/ingestion.yaml</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">image_processing</span><span class="p">:</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="c1"># Processing mode</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;two_stage&quot;</span><span class="w">  </span><span class="c1"># Options: two_stage (default), single_stage</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="c1"># Two-stage settings</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nt">two_stage</span><span class="p">:</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">preserve_prose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">prose_searchable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">enable_re_extraction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="c1"># Single-stage settings (when mode=single_stage)</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="nt">single_stage</span><span class="p">:</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="nt">direct_concept_extraction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="nt">no_intermediate_storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</code></pre></div>
-<h3 id="hybrid-approach-best-of-both">Hybrid Approach: Best of Both</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_image_hybrid</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;two_stage&quot;</span><span class="p">):</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="sd">    Hybrid approach: Support both modes with shared infrastructure.</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="c1"># Always generate image embedding (needed for both modes)</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">image_embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="n">nomic_vision</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">)</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">similar_images</span> <span class="o">=</span> <span class="k">await</span> <span class="n">search_similar_images</span><span class="p">(</span><span class="n">image_embedding</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">visual_context</span> <span class="o">=</span> <span class="k">await</span> <span class="n">build_visual_context</span><span class="p">(</span><span class="n">similar_images</span><span class="p">)</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;single_stage&quot;</span><span class="p">:</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="c1"># FAST PATH: Image → Concepts directly</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vision_backend</span><span class="o">.</span><span class="n">extract_concepts_from_image</span><span class="p">(</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>            <span class="n">image_bytes</span><span class="p">,</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>            <span class="n">visual_context</span><span class="p">,</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>            <span class="n">ontology</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="p">)</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="c1"># Store minimal Source (no prose)</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>        <span class="n">source</span> <span class="o">=</span> <span class="k">await</span> <span class="n">create_source</span><span class="p">(</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>            <span class="n">full_text</span><span class="o">=</span><span class="s2">&quot;[Single-stage extraction - no prose description]&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>            <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">,</span>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>            <span class="n">extraction_mode</span><span class="o">=</span><span class="s2">&quot;single_stage&quot;</span>
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>        <span class="p">)</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>    <span class="k">else</span><span class="p">:</span>  <span class="c1"># mode == &quot;two_stage&quot; (default)</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>        <span class="c1"># QUALITY PATH: Image → Prose → Concepts</span>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>        <span class="n">prose</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vision_backend</span><span class="o">.</span><span class="n">describe_image</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">)</span>
-<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>
-<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>        <span class="c1"># Store prose in Source</span>
-<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>        <span class="n">source</span> <span class="o">=</span> <span class="k">await</span> <span class="n">create_source</span><span class="p">(</span>
-<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>            <span class="n">full_text</span><span class="o">=</span><span class="n">prose</span><span class="p">,</span>
-<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>            <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">,</span>
-<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>            <span class="n">extraction_mode</span><span class="o">=</span><span class="s2">&quot;two_stage&quot;</span>
-<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>        <span class="p">)</span>
-<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>
-<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>        <span class="c1"># Extract concepts from prose with visual context</span>
-<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>        <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">extract_and_upsert_concepts</span><span class="p">(</span>
-<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>            <span class="n">text</span><span class="o">=</span><span class="n">prose</span><span class="p">,</span>
-<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>            <span class="n">source_id</span><span class="o">=</span><span class="n">source</span><span class="o">.</span><span class="n">source_id</span><span class="p">,</span>
-<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a>            <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">,</span>
-<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>            <span class="n">additional_context</span><span class="o">=</span><span class="n">visual_context</span>
-<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>        <span class="p">)</span>
-<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>
-<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>    <span class="k">return</span> <span class="n">concepts</span>
-</code></pre></div>
-<hr />
-<h2 id="chain-of-thought-why-two-stage-works-better">Chain-of-Thought: Why Two-Stage Works Better</h2>
-<h3 id="the-thinking-step-effect">The "Thinking Step" Effect</h3>
-<p>When a vision model generates prose before extracting concepts, it performs <strong>implicit reasoning</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Single-Stage:
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  Image → [What concepts do I see?] → Concepts
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  (Direct leap from visual features to abstract concepts)
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Two-Stage:
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  Image → [What do I see?] → Prose → [What concepts are in this text?] → Concepts
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  (Intermediate &quot;thinking&quot; step grounds the extraction)
-</code></pre></div>
-<h3 id="example-flowchart-analysis">Example: Flowchart Analysis</h3>
-<p><strong>Single-Stage Output</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;concepts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;process flow&quot;</span><span class="p">},</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;decision point&quot;</span><span class="p">}</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">}</span>
+<p><strong>Bridge Detection:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Low-activation node connecting to high-activation nodes</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">c_from</span><span class="o">.</span><span class="n">access_count</span> <span class="o">&lt;</span> <span class="mi">10</span>      <span class="c1"># Source rarely accessed</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">c_to</span><span class="o">.</span><span class="n">access_count</span> <span class="o">&gt;</span> <span class="mi">100</span>       <span class="c1"># Destination frequently accessed</span>
 </code></pre></div></p>
-<p><strong>Two-Stage Output</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Prose: &quot;This flowchart shows a recursive descent parser.
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>        It starts with a &#39;parse&#39; function that calls itself
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>        when encountering nested structures...&quot;
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>Concepts:
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>{
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  &quot;concepts&quot;: [
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    {&quot;label&quot;: &quot;recursive descent parser&quot;},
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    {&quot;label&quot;: &quot;self-referential control flow&quot;},
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    {&quot;label&quot;: &quot;nested structure handling&quot;}
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  ]
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>}
+<h3 id="4-aggressiveness-zones">4. Aggressiveness Zones</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Position = (current_size - MIN) / (MAX - MIN)  # 0.0 to 1.0
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Aggressiveness = CURVE.get_y_for_x(Position)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Zones:
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  0.0-0.2: monitor  (just watch, no action)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  0.2-0.5: watch    (flag opportunities)
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  0.5-0.7: merge    (prefer synonym merging)
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  0.7-0.9: mixed    (merge + prune zero-edge)
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  0.9-1.0: emergency (aggressive batch pruning)
+</code></pre></div>
+<h3 id="5-merge-vs-prune-decision-tree">5. Merge vs Prune Decision Tree</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Need to reduce vocabulary?
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  ├─ Check synonyms (similarity &gt;= 0.90)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  │  ├─ Found? → MERGE (preserves edges)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  │  └─ Not found? → Continue
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  │
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  ├─ Check zero-edge types (edge_count == 0)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  │  ├─ Found? → PRUNE (safe, no data loss)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  │  └─ Not found? → Continue
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  │
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  └─ Last resort → PRUNE low-value types (lossy)
+</code></pre></div>
+<p><strong>Batching:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">target_reduction</span> <span class="o">=</span> <span class="p">(</span><span class="n">current_size</span> <span class="o">-</span> <span class="n">MAX</span><span class="p">)</span> <span class="o">+</span> <span class="n">buffer</span>  <span class="c1"># buffer = 5</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Remove MORE than minimum to avoid immediate re-trigger</span>
 </code></pre></div></p>
-<p><strong>Why better?</strong> The prose description forces the model to:
-1. <strong>Identify specific algorithm</strong> (not just "process flow")
-2. <strong>Notice recursion</strong> (from "calls itself")
-3. <strong>Extract domain-specific concept</strong> ("recursive descent parser")</p>
+<h3 id="6-bezier-curve-profiles">6. Bezier Curve Profiles</h3>
+<p><strong>Default: "aggressive"</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">CubicBezier</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># Stays passive until 75 types, then sharp acceleration</span>
+</code></pre></div></p>
+<p><strong>Other profiles:</strong>
+- <code>linear</code>: (0.0, 0.0, 1.0, 1.0) - constant rate
+- <code>gentle</code>: (0.5, 0.5, 0.5, 0.5) - very gradual
+- <code>exponential</code>: (0.7, 0.0, 0.84, 0.0) - explosive near limit
+- <code>ease-in-out</code>: (0.42, 0.0, 0.58, 1.0) - smooth S-curve</p>
+<h3 id="7-protected-sets">7. Protected Sets</h3>
+<p><strong>Protected Edge Types:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">is_builtin</span> <span class="o">==</span> <span class="n">TRUE</span>  <span class="c1"># 30 core types from ADR-022</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Can be merged into, but never deleted</span>
+</code></pre></div></p>
+<p><strong>Protected Categories:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">BUILTIN_CATEGORIES</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="s2">&quot;logical_truth&quot;</span><span class="p">,</span> <span class="s2">&quot;causal&quot;</span><span class="p">,</span> <span class="s2">&quot;structural&quot;</span><span class="p">,</span> <span class="s2">&quot;evidential&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="s2">&quot;similarity&quot;</span><span class="p">,</span> <span class="s2">&quot;temporal&quot;</span><span class="p">,</span> <span class="s2">&quot;functional&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">]</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Can be merged into, but never deleted</span>
+</code></pre></div></p>
+<h3 id="8-auto-expansion-validation">8. Auto-Expansion Validation</h3>
+<p><strong>Allowed:</strong>
+- Uppercase alphanumeric + underscores
+- Length: 3-50 characters
+- Not in blacklist</p>
+<p><strong>Rejected:</strong>
+- Ends with <code>_BY</code> (reversed relationship)
+- Contains profanity/reserved terms
+- Malformed (lowercase, special chars)</p>
+<h3 id="9-database-tables-minimal-additions">9. Database Tables (Minimal Additions)</h3>
+<p><strong>Already Exists:</strong>
+- <code>kg_api.relationship_vocabulary</code> ✓
+- <code>kg_api.skipped_relationships</code> ✓
+- <code>kg_api.vocabulary_audit</code> ✓</p>
+<p><strong>Need to Add:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">-- History tracking</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">kg_api</span><span class="p">.</span><span class="n">vocabulary_history</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="n">relationship_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="n">action</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;added&#39;, &#39;merged&#39;, &#39;pruned&#39;, &#39;restored&#39;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="n">performed_by</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="n">performed_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="n">snapshot</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="n">merge_target</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="p">)</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1">-- Category proposals</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">kg_api</span><span class="p">.</span><span class="n">category_proposals</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">    </span><span class="n">proposed_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">    </span><span class="n">trigger_edge_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">    </span><span class="n">confidence_scores</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">    </span><span class="n">llm_reasoning</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="n">status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;pending&#39;, &#39;approved&#39;, &#39;rejected&#39;</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="p">)</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1">-- Pruning recommendations (HITL/AITL)</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="n">kg_api</span><span class="p">.</span><span class="n">pruning_recommendations</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="w">    </span><span class="n">recommendation_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;merge&#39;, &#39;prune&#39;, &#39;mixed&#39;</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="w">    </span><span class="n">targets</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Array of types/pairs</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="w">    </span><span class="n">aggressiveness</span><span class="w"> </span><span class="nb">FLOAT</span><span class="p">,</span>
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="w">    </span><span class="n">reasoning</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="w">    </span><span class="n">status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;pending&#39;, &#39;approved&#39;, &#39;rejected&#39;</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="p">)</span>
+</code></pre></div></p>
+<h3 id="10-configuration-keys">10. Configuration Keys</h3>
+<p><strong>Environment Variables:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">VOCAB_AGGRESSIVENESS</span><span class="o">=</span>aggressive<span class="w">        </span><span class="c1"># Bezier profile</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nv">VOCAB_PRUNING_MODE</span><span class="o">=</span>aitl<span class="w">                </span><span class="c1"># naive|hitl|aitl</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nv">VOCAB_MIN</span><span class="o">=</span><span class="m">30</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nv">VOCAB_MAX</span><span class="o">=</span><span class="m">90</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nv">VOCAB_HARD_LIMIT</span><span class="o">=</span><span class="m">200</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="nv">CATEGORY_MAX</span><span class="o">=</span><span class="m">15</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="nv">AITL_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.7
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="nv">AITL_REASONING_MODEL</span><span class="o">=</span>claude-3-5-sonnet-20241022
+</code></pre></div></p>
+<h3 id="11-key-module-dependencies">11. Key Module Dependencies</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>aggressiveness_curve.py       # Pure math, no dependencies
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    ↓
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>vocabulary_scoring.py         # Needs: DB queries (edge_usage_stats)
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    ↓
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>category_classifier.py        # Needs: embeddings API
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    ↓
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>synonym_detector.py           # Needs: embeddings API
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    ↓
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>pruning_strategies.py         # Needs: all above + LLM (AITL mode)
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    ↓
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>vocabulary_manager.py         # Orchestrates everything
+</code></pre></div>
+<h3 id="12-testing-checklist">12. Testing Checklist</h3>
+<p><strong>Unit Tests:</strong>
+- [ ] Bezier curves: all profiles, boundary conditions
+- [ ] Value scoring: each component (edges, traversals, bridge, trend)
+- [ ] Category classifier: good fit (&gt;0.3), poor fit (&lt;0.3), edge cases
+- [ ] Synonym detector: high similarity (&gt;0.9), moderate, low
+- [ ] Pruning strategies: merge preference, zero-edge pruning, last resort</p>
+<p><strong>Integration Tests:</strong>
+- [ ] Vocabulary manager: auto-expansion → classification → pruning
+- [ ] Database operations: insert, update, history tracking
+- [ ] End-to-end: ingest → expand → trigger → optimize → approve</p>
+<p><strong>Edge Cases:</strong>
+- [ ] Vocabulary at exactly MAX (90 types)
+- [ ] All categories at maximum (15 categories)
+- [ ] No merge candidates available
+- [ ] All types have edges (can't safe-prune)
+- [ ] AITL confidence exactly at threshold (0.7)
+- [ ] Bezier position at 0.0, 0.5, 1.0</p>
+<h3 id="13-implementation-order-from-todo">13. Implementation Order (from TODO)</h3>
+<p><strong>Phase 1: Worker Modules (Isolated)</strong>
+1. aggressiveness_curve.py + tests
+2. vocabulary_scoring.py + tests
+3. category_classifier.py + tests
+4. synonym_detector.py + tests
+5. pruning_strategies.py + tests</p>
+<p><strong>Phase 2: Orchestration</strong>
+6. vocabulary_manager.py + tests</p>
+<p><strong>Phase 3: Integration</strong>
+7. Update schema (minimal)
+8. Modify age_client.py (upsert hook)
+9. Add API routes
+10. Add CLI commands</p>
+<p><strong>Phase 4: Configuration &amp; E2E</strong>
+11. Environment variables
+12. End-to-end tests</p>
+<h3 id="14-critical-dont-forget-items">14. Critical "Don't Forget" Items</h3>
+<ul>
+<li>[ ] <strong>Batching:</strong> Always add buffer (5) when pruning to reduce re-triggers</li>
+<li>[ ] <strong>Merge First:</strong> Check synonyms before pruning anything with edges</li>
+<li>[ ] <strong>High Bar:</strong> New categories need &lt; 0.3 confidence for ALL existing</li>
+<li>[ ] <strong>Bridge Preservation:</strong> Low-value type with high bridge_count = KEEP</li>
+<li>[ ] <strong>Fallback Category:</strong> If new category rejected, assign to closest existing</li>
+<li>[ ] <strong>Audit Trail:</strong> Log every action to vocabulary_history</li>
+<li>[ ] <strong>Rollback Support:</strong> Store snapshot in JSONB before any destructive action</li>
+<li>[ ] <strong>Protected Core:</strong> is_builtin = TRUE immune to automatic pruning</li>
+<li>[ ] <strong>Category Limits:</strong> 8 min (protected), 15 max (hard stop)</li>
+<li>[ ] <strong>Edge Type Limits:</strong> 30 min (protected), 90 soft, 200 hard</li>
+</ul>
+<h3 id="15-performance-considerations">15. Performance Considerations</h3>
+<p><strong>Embedding Calls:</strong>
+- Cache embeddings for existing types (avoid re-computing)
+- Batch embedding generation when possible
+- Category classification: avg of 4-5 types per category = ~40 embeddings</p>
+<p><strong>Database Queries:</strong>
+- Value scoring: needs edge_usage_stats + concept_access_stats joins
+- Bridge detection: potentially expensive (access_count filters on large tables)
+- Consider materialized views for hot paths</p>
+<p><strong>LLM Calls (AITL mode):</strong>
+- ~500-1000 tokens per decision
+- Cost: ~$0.01 per decision (Claude Sonnet)
+- Only triggered when vocabulary exceeds limit (infrequent)</p>
+<h3 id="16-common-pitfalls-to-avoid">16. Common Pitfalls to Avoid</h3>
+<p>❌ <strong>Don't:</strong> Prune based on age/time (graph value is structural)
+❌ <strong>Don't:</strong> Use hardcoded if/else thresholds (use Bezier curves)
+❌ <strong>Don't:</strong> Delete protected types (is_builtin = TRUE)
+❌ <strong>Don't:</strong> Create categories above limit (check before proposing)
+❌ <strong>Don't:</strong> Merge without snapshot (need rollback capability)
+❌ <strong>Don't:</strong> Ignore confidence thresholds (prevents bad decisions)</p>
+<p>✅ <strong>Do:</strong> Batch optimizations (reduce invocations)
+✅ <strong>Do:</strong> Prefer merging over pruning (preserves data)
+✅ <strong>Do:</strong> Log all actions to history (auditability)
+✅ <strong>Do:</strong> Check bridge importance (structural value)
+✅ <strong>Do:</strong> Use embeddings for similarity (not string matching)
+✅ <strong>Do:</strong> Respect aggressiveness curve (smooth, predictable)</p>
 <hr />
-<h2 id="cost-benefit-analysis">Cost-Benefit Analysis</h2>
-<h3 id="two-stage-costs-per-image">Two-Stage Costs (per image)</h3>
-<p><strong>Time:</strong>
-- Stage 1 (vision → prose): ~5-10s
-- Stage 2 (prose → concepts): ~3-5s
-- <strong>Total</strong>: 8-15s per image</p>
-<p><strong>Money (GPT-4o):</strong>
-- Stage 1: $0.0075 (vision) + $0.0025 (text output) = $0.01
-- Stage 2: $0.005 (text input) + $0.0025 (text output) = $0.0075
-- <strong>Total</strong>: ~$0.0175 per image</p>
-<p><strong>For 1000 images</strong>: 15,000 seconds (4.2 hours), $17.50</p>
-<h3 id="two-stage-benefits">Two-Stage Benefits</h3>
-<p><strong>Debugging value</strong>:
-- Can inspect prose for all 1000 images
-- Identify systemic issues in vision model interpretation
-- Fix extraction prompt, re-run on prose (no re-processing)</p>
-<p><strong>Re-extraction value</strong>:
-- Update concept extraction prompt (new relationship types, improved logic)
-- Re-run on all 1000 images in ~1 hour (prose → concepts only)
-- <strong>Saved</strong>: 4.2 hours of vision processing + $10 in vision API costs</p>
-<p><strong>Search value</strong>:
-- Prose descriptions are full-text searchable
-- "Find images that mention 'recursive algorithms'"
-- Returns images even if "recursive algorithms" wasn't extracted as a concept</p>
-<p><strong>Audit value</strong>:
-- Users can verify: "Did the vision model see what I see?"
-- Builds trust in extraction quality
-- Identifies cases where vision model misinterpreted image</p>
-<h3 id="break-even-analysis">Break-Even Analysis</h3>
-<p>Two-stage pays for itself after:
-- <strong>1 re-extraction</strong>: Saves 50% of processing time/cost
-- <strong>1 debugging session</strong>: Prose inspection saves hours of manual review
-- <strong>1 search query</strong>: Prose search finds images that concept search misses</p>
-<p><strong>Conclusion</strong>: For knowledge base construction, two-stage is worth the cost.</p>
-<hr />
-<h2 id="final-recommendation">Final Recommendation</h2>
-<h3 id="adopt-two-stage-as-default">Adopt Two-Stage as Default</h3>
-<p><strong>Reasons</strong>:
-1. ✅ Industry consensus for knowledge extraction
-2. ✅ Quality &gt; speed for our use case
-3. ✅ Debugging essential for trust
-4. ✅ Re-extraction saves time long-term
-5. ✅ Prose search adds value
-6. ✅ Consistent with text pipeline
-7. ✅ Chain-of-thought improves accuracy</p>
-<h3 id="provide-single-stage-as-opt-in">Provide Single-Stage as Opt-In</h3>
-<p>For users who:
-- Have tight cost constraints
-- Need faster batch processing
-- Trust extraction quality
-- Don't need debugging</p>
-<h3 id="implementation-priority">Implementation Priority</h3>
-<p><strong>Phase 1</strong> (MVP): Two-stage only
-- Implement image → prose → concepts
-- Prove the concept works
-- Gather feedback on prose quality</p>
-<p><strong>Phase 2</strong> (Optimization): Add single-stage option
-- Implement direct image → concepts
-- Make it configurable
-- Let users choose based on their needs</p>
-<p><strong>Phase 3</strong> (Intelligence): Adaptive mode
-- Automatically choose mode per image
-- Use single-stage for simple images (screenshots, charts)
-- Use two-stage for complex images (diagrams, dense documents)</p>
-<hr />
-<h2 id="conclusion">Conclusion</h2>
-<p><strong>We recommend the two-stage approach</strong> (image → prose → concepts) because:</p>
-<ol>
-<li><strong>Higher quality</strong>: Chain-of-thought reasoning improves extraction</li>
-<li><strong>Debuggable</strong>: Prose inspection enables quality verification</li>
-<li><strong>Flexible</strong>: Re-extraction without re-processing</li>
-<li><strong>Searchable</strong>: Full-text search on descriptions</li>
-<li><strong>Consistent</strong>: Same extraction pipeline as text</li>
-<li><strong>Industry standard</strong>: Aligned with OpenAI/Anthropic recommendations</li>
-</ol>
-<p>The additional cost (~$0.01 per image, 5-10s latency) is justified by:
-- Improved extraction quality
-- Long-term time savings from re-extraction
-- Enhanced user trust through transparency
-- Additional search capabilities</p>
-<p>This aligns with our philosophy: <strong>high-quality knowledge extraction</strong> over speed optimization.</p>
+<p><strong>Quick Reference URLs:</strong>
+- Full ADR: <code>docs/architecture/ADR-032-automatic-edge-vocabulary-expansion.md</code>
+- ADR-022 (30-type taxonomy): <code>docs/architecture/ADR-022-semantic-relationship-taxonomy.md</code>
+- Constants: <code>src/api/constants.py</code> (RELATIONSHIP_CATEGORIES)
+- Bezier visualization: https://cubic-bezier.com (for testing control points)</p>
 
 
 
