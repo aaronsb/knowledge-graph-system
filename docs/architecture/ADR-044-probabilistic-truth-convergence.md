@@ -1,9 +1,9 @@
 # ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
 
 **Status:** Proposed
-**Date:** 2025-10-24 (Updated: 2025-10-25)
+**Date:** 2025-10-24 (Updated: 2025-11-04)
 **Authors:** System Architecture Team
-**Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), **ADR-045 (Unified Embedding Generation - DEPENDENCY)**, ADR-046 (Grounding-Aware Vocabulary Management)
+**Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), **ADR-045 (Unified Embedding Generation - DEPENDENCY)**, ADR-046 (Grounding-Aware Vocabulary Management), **ADR-058 (Polarity Axis Triangulation - IMPLEMENTATION)**
 
 ## Context
 
@@ -1257,6 +1257,7 @@ When contradictions persist even after introspection:
 - **Statistical Significance (Three Sigma Rule):** https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
 - **Bayesian Belief Networks:** Pearl, Judea. "Probabilistic Reasoning in Intelligent Systems" (1988)
 - **Neo4j → Apache AGE example:** This conversation (2025-10-24)
+- **ADR-058:** Polarity Axis Triangulation - Replaces binary classification with geometric projection for nuanced grounding percentiles
 - **Project page:** https://sakana.ai/dgm/
 - **Code repository:** https://github.com/jennyzzt/dgm
 

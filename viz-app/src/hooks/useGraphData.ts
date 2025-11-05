@@ -7,6 +7,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
+import { transformForD3 } from '../utils/graphTransform';
 
 /**
  * Fetch subgraph centered on a concept

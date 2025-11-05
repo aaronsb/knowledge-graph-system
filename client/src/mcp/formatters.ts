@@ -17,8 +17,13 @@ import type {
  * Format grounding strength as text (token-efficient)
  */
 function formatGroundingStrength(grounding: number): string {
-  const groundingPercent = (grounding * 100).toFixed(0);
   const groundingValue = grounding.toFixed(3);
+  const percentValue = grounding * 100;
+
+  // Use ≈ symbol when value is very close to zero but not exactly zero
+  const groundingPercent = (Math.abs(percentValue) < 0.1 && percentValue !== 0)
+    ? `≈${percentValue >= 0 ? '0' : '-0'}`
+    : percentValue.toFixed(0);
 
   let level: string;
   if (grounding >= 0.7) level = 'Strong';

@@ -41,7 +41,7 @@ export const ForceGraph3D: React.FC<
   ExplorerProps<ForceGraph3DData, ForceGraph3DSettings>
 > = ({ data, settings, onSettingsChange, onNodeClick, className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const fgRef = useRef<any>();
+  const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 

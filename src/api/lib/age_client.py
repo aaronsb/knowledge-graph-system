@@ -1927,20 +1927,25 @@ class AGEClient:
         exclude_types: Optional[List[str]] = None
     ) -> float:
         """
-        Calculate grounding strength using embedding-based edge semantics (ADR-044).
+        Calculate grounding strength using polarity axis projection (ADR-044).
 
-        Uses semantic similarity to prototypical edge types (SUPPORTS, CONTRADICTS)
-        instead of hard-coded polarity. This scales to dynamic vocabulary without
-        manual classification.
+        Uses multiple opposing relationship pairs to triangulate a robust semantic
+        polarity axis (support ↔ contradict). Edge embeddings are projected onto
+        this axis via dot product to determine their grounding contribution.
 
-        Algorithm:
-        1. Get embeddings for SUPPORTS and CONTRADICTS prototypes
-        2. For each incoming edge to concept:
-           - Get edge type embedding
-           - Calculate similarity to both prototypes
-           - Classify as supporting (higher SUPPORTS similarity) or contradicting
-           - Weight by edge confidence and semantic similarity
-        3. Calculate grounding_strength = (support - contradict) / (support + contradict)
+        Algorithm (Polarity Axis Triangulation):
+        1. Define multiple opposing pairs (SUPPORTS/CONTRADICTS, VALIDATES/REFUTES, etc.)
+        2. Fetch embeddings for all pairs that exist in vocabulary
+        3. Calculate difference vectors: positive_emb - negative_emb for each pair
+        4. Average difference vectors to get robust polarity axis
+        5. Normalize axis to unit vector
+        6. For each incoming edge:
+           - Project edge embedding onto polarity axis via dot product
+           - Weight projection by edge confidence
+        7. Calculate grounding = sum(weighted_projections) / sum(confidences)
+
+        This approach provides nuanced grounding scores even for single edge types,
+        based on how semantically aligned they are with support vs contradict axes.
 
         Args:
             concept_id: Target concept to calculate grounding for
@@ -1948,16 +1953,16 @@ class AGEClient:
             exclude_types: Optional list of relationship types to exclude
 
         Returns:
-            Grounding strength float in range [-1.0, 1.0]:
-            - 1.0 = Maximally grounded (strong support, no contradiction)
-            - 0.0 = Neutral (balanced support/contradiction or no edges)
-            - -1.0 = Maximally ungrounded (strong contradiction, no support)
+            Grounding strength float in range approximately [-1.0, 1.0]:
+            - Positive = Edge types align with support-like semantics
+            - Zero = Edge types are neutral or balanced
+            - Negative = Edge types align with contradict-like semantics
 
         Example:
             >>> client = AGEClient()
             >>> grounding = client.calculate_grounding_strength_semantic("concept-123")
-            >>> print(f"Grounding: {grounding:.2f}")
-            Grounding: 0.75  # Strongly grounded
+            >>> print(f"Grounding: {grounding:.3f}")
+            Grounding: 0.347  # Moderately grounded (nuanced value)
 
         References:
             - ADR-044: Probabilistic Truth Convergence
@@ -1965,52 +1970,78 @@ class AGEClient:
         """
         import numpy as np
 
+        # Define opposing pairs for polarity axis triangulation
+        # Format: (positive_pole, negative_pole)
+        # These pairs help triangulate the semantic direction of "support" vs "contradict"
+        POLARITY_PAIRS = [
+            ("SUPPORTS", "CONTRADICTS"),      # Core evidential pair
+            ("VALIDATES", "REFUTES"),         # Verification semantics
+            ("CONFIRMS", "DISPROVES"),        # Proof semantics
+            ("REINFORCES", "OPPOSES"),        # Strength semantics
+            ("ENABLES", "PREVENTS"),          # Causation semantics
+        ]
+
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                # Step 1: Get prototype embeddings for SUPPORTS and CONTRADICTS
-                cur.execute("""
+                # Step 1: Fetch embeddings for all polarity pair terms that exist
+                all_pair_terms = set()
+                for positive, negative in POLARITY_PAIRS:
+                    all_pair_terms.add(positive)
+                    all_pair_terms.add(negative)
+
+                terms_list = ','.join([f"'{t}'" for t in all_pair_terms])
+                cur.execute(f"""
                     SELECT relationship_type, embedding
                     FROM kg_api.relationship_vocabulary
-                    WHERE relationship_type IN ('SUPPORTS', 'CONTRADICTS')
+                    WHERE relationship_type IN ({terms_list})
                       AND embedding IS NOT NULL
                 """)
-                prototypes = cur.fetchall()
 
-                if len(prototypes) < 2:
-                    logger.warning(f"Missing prototype embeddings (need SUPPORTS and CONTRADICTS)")
-                    return 0.0
-
-                # Parse prototype embeddings
-                supports_emb = None
-                contradicts_emb = None
-
-                for proto in prototypes:
-                    emb_json = proto['embedding']
+                pair_embeddings = {}
+                for row in cur.fetchall():
+                    emb_json = row['embedding']
+                    # Parse embedding (handle various formats)
                     if isinstance(emb_json, str):
                         emb_array = np.array(json.loads(emb_json), dtype=float)
                     elif isinstance(emb_json, list):
                         emb_array = np.array(emb_json, dtype=float)
                     elif isinstance(emb_json, dict):
-                        # JSONB might be returned as dict
                         emb_array = np.array(list(emb_json.values()), dtype=float)
                     else:
                         try:
                             emb_array = np.array(list(emb_json), dtype=float)
                         except:
-                            logger.warning(f"Could not parse prototype embedding for {proto['relationship_type']}")
+                            logger.warning(f"Could not parse embedding for {row['relationship_type']}")
                             continue
 
-                    if proto['relationship_type'] == 'SUPPORTS':
-                        supports_emb = emb_array
-                    elif proto['relationship_type'] == 'CONTRADICTS':
-                        contradicts_emb = emb_array
+                    pair_embeddings[row['relationship_type']] = emb_array
 
-                if supports_emb is None or contradicts_emb is None:
-                    logger.warning("Failed to parse prototype embeddings")
+                # Step 2: Calculate difference vectors for each pair
+                difference_vectors = []
+                for positive, negative in POLARITY_PAIRS:
+                    if positive in pair_embeddings and negative in pair_embeddings:
+                        diff_vec = pair_embeddings[positive] - pair_embeddings[negative]
+                        difference_vectors.append(diff_vec)
+                        logger.debug(f"Polarity pair: {positive} - {negative} (magnitude: {np.linalg.norm(diff_vec):.3f})")
+
+                if len(difference_vectors) == 0:
+                    logger.warning("No polarity pairs available for axis calculation (need embeddings)")
                     return 0.0
 
-                # Step 2: Get all incoming relationships to this concept
+                # Step 3: Average difference vectors to get robust polarity axis
+                polarity_axis = np.mean(difference_vectors, axis=0)
+
+                # Step 4: Normalize to unit vector
+                axis_magnitude = np.linalg.norm(polarity_axis)
+                if axis_magnitude == 0:
+                    logger.warning("Polarity axis has zero magnitude")
+                    return 0.0
+
+                polarity_axis = polarity_axis / axis_magnitude
+                logger.debug(f"Polarity axis triangulated from {len(difference_vectors)} pairs")
+
+                # Step 5: Get all incoming relationships to this concept
                 # Use _execute_cypher() to avoid agtype parsing issues
                 cypher_edges_query = f"""
                     MATCH (c:Concept {{concept_id: '{concept_id}'}})<-[r]-(source)
@@ -2023,7 +2054,7 @@ class AGEClient:
                     # No incoming edges = neutral grounding
                     return 0.0
 
-                # Step 2b: Get embeddings for these edge types from vocabulary
+                # Step 6: Get embeddings for these edge types from vocabulary
                 # Build list of unique relationship types
                 rel_types = set(edge['rel_type'] for edge in edge_results)
 
@@ -2062,14 +2093,13 @@ class AGEClient:
                             'embedding': vocab_embeddings[rel_type]
                         })
 
-
                 if not edges:
                     # No incoming edges = neutral grounding
                     return 0.0
 
-                # Step 3: Calculate weighted support and contradiction scores
-                support_weight = 0.0
-                contradict_weight = 0.0
+                # Step 7: Project each edge onto polarity axis and accumulate
+                total_polarity = 0.0
+                total_confidence = 0.0
 
                 for edge in edges:
                     # Parse edge embedding from JSONB
@@ -2100,30 +2130,24 @@ class AGEClient:
                     else:
                         confidence = 1.0
 
-                    # Calculate semantic similarity to prototypes (cosine similarity)
-                    support_sim = np.dot(edge_emb, supports_emb) / (
-                        np.linalg.norm(edge_emb) * np.linalg.norm(supports_emb)
-                    )
-                    contradict_sim = np.dot(edge_emb, contradicts_emb) / (
-                        np.linalg.norm(edge_emb) * np.linalg.norm(contradicts_emb)
-                    )
+                    # Project edge embedding onto polarity axis using dot product
+                    # Positive projection = support-like, negative = contradict-like
+                    polarity_projection = np.dot(edge_emb, polarity_axis)
 
-                    # Classify edge as supporting or contradicting based on higher similarity
-                    if support_sim > contradict_sim:
-                        # Edge is more semantically similar to SUPPORTS
-                        support_weight += confidence * float(support_sim)
-                    else:
-                        # Edge is more semantically similar to CONTRADICTS
-                        contradict_weight += confidence * float(contradict_sim)
+                    # Accumulate weighted projections
+                    total_polarity += confidence * float(polarity_projection)
+                    total_confidence += confidence
 
-                # Step 4: Calculate final grounding strength
-                total_weight = support_weight + contradict_weight
+                    logger.debug(f"  Edge {edge.get('relationship_type')}: projection={polarity_projection:.3f}, confidence={confidence:.2f}")
 
-                if total_weight == 0:
+                # Step 8: Calculate final grounding strength
+                if total_confidence == 0:
                     return 0.0
 
-                # Normalize to [-1.0, 1.0] range
-                grounding_strength = (support_weight - contradict_weight) / total_weight
+                # Average weighted projection
+                grounding_strength = total_polarity / total_confidence
+
+                logger.debug(f"Grounding for {concept_id}: {grounding_strength:.3f} (from {len(edges)} edges)")
 
                 return float(grounding_strength)
 
