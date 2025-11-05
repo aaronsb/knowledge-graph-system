@@ -12,7 +12,11 @@ import { getCategoryColor } from '../../config/categoryColors';
 export function formatGrounding(grounding: number | undefined | null): { emoji: string; label: string; percentage: string; color: string } | null {
   if (grounding === undefined || grounding === null) return null;
 
-  const percentage = (grounding * 100).toFixed(0);
+  const percentValue = grounding * 100;
+  // Use ≈ symbol when value is very close to zero but not exactly zero
+  const percentage = (Math.abs(percentValue) < 0.1 && percentValue !== 0)
+    ? `≈${percentValue >= 0 ? '0' : '-0'}%`
+    : `${percentValue.toFixed(1)}%`;
 
   // Color mapping: green (100%) → yellow (50%) → red (0% or negative)
   let color: string;

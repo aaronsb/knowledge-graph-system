@@ -40,12 +40,16 @@ export interface D3Node {
   size: number; // node size (degree-based)
   color: string;
   grounding?: number; // grounding strength (-1.0 to +1.0)
+  centrality?: number; // centrality measure for graph analysis
   fx?: number; // fixed position X
   fy?: number; // fixed position Y
+  fz?: number; // fixed position Z (for 3D)
   x?: number; // computed position X
   y?: number; // computed position Y
+  z?: number; // computed position Z (for 3D)
   vx?: number; // velocity X
   vy?: number; // velocity Y
+  vz?: number; // velocity Z (for 3D)
 }
 
 export interface D3Link {
@@ -54,6 +58,7 @@ export interface D3Link {
   type: string;
   value: number; // category confidence or weight
   color: string;
+  confidence?: number; // edge confidence score
   category?: string; // relationship category from vocabulary
 }
 

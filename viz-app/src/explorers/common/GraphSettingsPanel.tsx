@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import type { ForceGraph2DSettings } from '../ForceGraph2D/types';
 
 // Generic settings interface - both 2D and 3D settings must have these
 interface GraphSettings {

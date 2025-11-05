@@ -44,7 +44,7 @@ export let categoryColors: CategoryColorConfig = { ...DEFAULT_CATEGORY_COLORS };
  * Update category colors with custom palette
  */
 export function setCategoryColors(colors: Partial<CategoryColorConfig>): void {
-  categoryColors = { ...DEFAULT_CATEGORY_COLORS, ...colors };
+  categoryColors = { ...DEFAULT_CATEGORY_COLORS, ...colors } as CategoryColorConfig;
 }
 
 /**
