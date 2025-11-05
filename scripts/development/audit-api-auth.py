@@ -324,20 +324,18 @@ def main():
     # Categorize endpoints
     categories = categorize_endpoints(endpoints)
 
-    # Output results
-    if args.format == "table":
-        print_summary(categories, verbose=args.verbose)
+    # Output results (always print summary to terminal)
+    print_summary(categories, verbose=args.verbose)
 
-    elif args.format == "json":
+    # Optionally export to file
+    if args.format == "json":
         if not args.output:
-            print("Error: --output required for JSON format")
-            sys.exit(1)
+            args.output = "auth_audit.json"
         export_json(categories, args.output)
 
     elif args.format == "markdown":
         if not args.output:
-            print("Error: --output required for Markdown format")
-            sys.exit(1)
+            args.output = "auth_audit.md"
         export_markdown(categories, args.output)
 
 

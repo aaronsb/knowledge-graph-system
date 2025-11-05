@@ -266,7 +266,8 @@ def test_openapi_schema_documents_security():
 
 - **Full Audit Report:** [API_AUTH_AUDIT_RESULTS.md](./API_AUTH_AUDIT_RESULTS.md)
 - **Research Document:** [API_AUTH_TESTING_RESEARCH.md](./API_AUTH_TESTING_RESEARCH.md)
-- **Audit Script:** `scripts/audit/audit_api_endpoints.py`
+- **Audit Script:** `scripts/development/audit-api-auth.py`
+- **Development Scripts Guide:** `scripts/development/README.md`
 - **ADR-054:** OAuth 2.0 Authentication
 - **ADR-028:** Dynamic RBAC
 
