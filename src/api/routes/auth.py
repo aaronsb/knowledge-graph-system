@@ -59,6 +59,7 @@ from src.api.models.auth import (
     APIKeyResponse,
 )
 from src.api.dependencies.auth import (
+    CurrentUser,
     get_current_user,
     get_current_active_user,
     get_db_connection,
@@ -250,10 +251,12 @@ async def update_current_user_profile(
 
 @admin_router.get("/me", response_model=UserRead)
 async def get_current_user_from_oauth(
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+    current_user: CurrentUser
 ):
     """
-    Get current user profile from OAuth token.
+    Get current user profile (ADR-054, ADR-060)
+
+    **Authentication:** Requires valid OAuth token
 
     Replaces GET /auth/me (ADR-054).
     Returns user details for the authenticated user.
@@ -270,29 +273,24 @@ async def get_current_user_from_oauth(
 
 @admin_router.get("", response_model=UserListResponse)
 async def list_users(
-    skip: int = 0,
+    current_user: CurrentUser,
     limit: int = 100,
-    role: Optional[str] = None,
-    _: Annotated[UserInDB, Depends(require_role("admin"))] = None
+    offset: int = 0
 ):
     """
-    List all users (admin only).
+    List all users (ADR-027, ADR-060)
+
+    **Authentication:** Requires valid OAuth token
 
     Supports pagination and filtering by role.
     """
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            # Build query with optional role filter
+            # Build query
             query = "SELECT id, username, primary_role, created_at, last_login, disabled FROM kg_auth.users"
-            params = []
-
-            if role:
-                query += " WHERE primary_role = %s"
-                params.append(role)
-
             query += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
-            params.extend([limit, skip])
+            params = [limit, offset]
 
             cur.execute(query, params)
             users = []
@@ -307,18 +305,13 @@ async def list_users(
                 ))
 
             # Get total count
-            count_query = "SELECT COUNT(*) FROM kg_auth.users"
-            if role:
-                count_query += " WHERE primary_role = %s"
-                cur.execute(count_query, [role] if role else [])
-            else:
-                cur.execute(count_query)
+            cur.execute("SELECT COUNT(*) FROM kg_auth.users")
             total = cur.fetchone()[0]
 
             return UserListResponse(
                 users=users,
                 total=total,
-                skip=skip,
+                skip=offset,
                 limit=limit
             )
     finally:
@@ -328,11 +321,21 @@ async def list_users(
 @admin_router.get("/{user_id}", response_model=UserRead)
 async def get_user(
     user_id: int,
-    _: Annotated[UserInDB, Depends(require_role("admin"))] = None
+    current_user: CurrentUser
 ):
     """
-    Get user details (admin only).
+    Get user by ID (ADR-027, ADR-060)
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Users can view their own profile, admins can view any user
     """
+    # Ownership check
+    if current_user.id != user_id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Can only view your own profile unless you are an admin"
+        )
+
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
@@ -365,13 +368,23 @@ async def get_user(
 async def update_user(
     user_id: int,
     update: UserUpdate,
-    _: Annotated[UserInDB, Depends(require_role("admin"))] = None
+    current_user: CurrentUser
 ):
     """
-    Update user (admin only).
+    Update user by ID (ADR-027, ADR-060)
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Users can update their own profile, admins can update any user
 
     Can update role, disabled status, and password.
     """
+    # Ownership check
+    if current_user.id != user_id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Can only update your own profile unless you are an admin"
+        )
+
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
@@ -441,10 +454,13 @@ async def update_user(
 @admin_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: int,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
-    Delete user (admin only).
+    Delete user by ID (Admin only - ADR-027, ADR-060)
+
+    **Authentication:** Requires admin role
 
     Cannot delete yourself.
     Cascade deletes API keys, sessions, and OAuth tokens.

@@ -30,22 +30,25 @@ scripts/development/
 
 ```bash
 # Quick summary (prints to terminal only)
-./scripts/development/audit-api-auth.py
+./scripts/development/audit-api-auth.sh
 
 # Detailed breakdown (terminal only)
-./scripts/development/audit-api-auth.py --verbose
+./scripts/development/audit-api-auth.sh --verbose
 
 # Export to JSON file (also prints to terminal)
-./scripts/development/audit-api-auth.py --format=json
+./scripts/development/audit-api-auth.sh --format=json
 
 # Export to Markdown file (also prints to terminal)
-./scripts/development/audit-api-auth.py --format=markdown
+./scripts/development/audit-api-auth.sh --format=markdown
 
 # Custom output path
-./scripts/development/audit-api-auth.py --format=markdown --output=docs/testing/AUTH_AUDIT.md
+./scripts/development/audit-api-auth.sh --format=markdown --output=docs/testing/AUTH_AUDIT.md
 ```
 
-**Note:** By default, the tool only prints to the terminal. Use `--format` to also save a file.
+**Note:**
+- The shell wrapper (`.sh`) automatically handles venv activation and dependency checks
+- By default, the tool only prints to the terminal. Use `--format` to also save a file.
+- You can also run the Python script directly: `python3 scripts/development/audit-api-auth.py`
 
 **What It Checks:**
 - ✅ Which endpoints require authentication
@@ -141,10 +144,10 @@ Add to `.git/hooks/pre-commit`:
 
 if git diff --cached --name-only | grep -q "src/api/routes"; then
     echo "API routes changed, running auth audit..."
-    ./scripts/development/audit-api-auth.py
+    ./scripts/development/audit-api-auth.sh
 
     # Ask for confirmation if unclear endpoints exist
-    unclear_count=$(./scripts/development/audit-api-auth.py --format=json --output=/tmp/audit.json && \
+    unclear_count=$(./scripts/development/audit-api-auth.sh --format=json --output=/tmp/audit.json && \
                     jq '.unclear | length' /tmp/audit.json)
 
     if [ "$unclear_count" -gt 0 ]; then

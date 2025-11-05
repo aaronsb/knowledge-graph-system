@@ -13,9 +13,10 @@ Admin endpoints:
 """
 
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 
+from ..dependencies.auth import CurrentUser, require_role
 from ..models.embedding import (
     EmbeddingConfigResponse,
     EmbeddingConfigDetail,
@@ -66,9 +67,14 @@ async def get_embedding_config():
 
 
 @admin_router.get("/config", response_model=Optional[EmbeddingConfigDetail])
-async def get_embedding_config_detail():
+async def get_embedding_config_detail(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Get full embedding configuration details (admin endpoint).
+    Get full embedding configuration details (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Returns complete configuration including:
     - All resource allocation settings
@@ -89,9 +95,15 @@ async def get_embedding_config_detail():
 
 
 @admin_router.post("/config", response_model=UpdateEmbeddingConfigResponse)
-async def create_embedding_config(request: UpdateEmbeddingConfigRequest):
+async def create_embedding_config(
+    request: UpdateEmbeddingConfigRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Create a new embedding configuration (admin endpoint).
+    Create a new embedding configuration (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Creates a new INACTIVE configuration entry. Use the activate endpoint to switch to it.
 
@@ -186,9 +198,14 @@ async def create_embedding_config(request: UpdateEmbeddingConfigRequest):
 
 
 @admin_router.post("/config/reload", response_model=ReloadEmbeddingModelResponse)
-async def reload_embedding_model():
+async def reload_embedding_model(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Hot reload embedding model without API restart (zero-downtime updates).
+    Hot reload embedding model without API restart (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Implements zero-downtime configuration updates:
     1. Load new config from database
@@ -257,9 +274,14 @@ async def reload_embedding_model():
 
 
 @admin_router.get("/configs", response_model=list)
-async def list_embedding_configs():
+async def list_embedding_configs(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    List all embedding configurations (admin endpoint).
+    List all embedding configurations (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Returns all configs (active and inactive) with protection flags.
     Use this to see all historical configurations.
@@ -278,11 +300,15 @@ async def list_embedding_configs():
 @admin_router.post("/config/{config_id}/protect")
 async def protect_embedding_config(
     config_id: int,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
     delete_protected: Optional[bool] = None,
     change_protected: Optional[bool] = None
 ):
     """
-    Set protection flags on an embedding configuration (admin endpoint).
+    Set protection flags on an embedding configuration (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Protection flags prevent accidental breaking changes:
     - delete_protected: Prevents deletion without explicit unprotect
@@ -328,9 +354,15 @@ async def protect_embedding_config(
 
 
 @admin_router.delete("/config/{config_id}")
-async def delete_embedding_config_endpoint(config_id: int):
+async def delete_embedding_config_endpoint(
+    config_id: int,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Delete an embedding configuration (admin endpoint).
+    Delete an embedding configuration (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Cannot delete configs that are delete-protected.
     Remove protection first if needed.
@@ -357,9 +389,16 @@ async def delete_embedding_config_endpoint(config_id: int):
 
 
 @admin_router.post("/config/{config_id}/activate")
-async def activate_embedding_config_endpoint(config_id: int, force: bool = False):
+async def activate_embedding_config_endpoint(
+    config_id: int,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    force: bool = False
+):
     """
-    Activate an embedding configuration with automatic protection management.
+    Activate an embedding configuration with automatic protection management (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     This provides a clean "unlock → activate → lock" workflow:
     1. Unprotects currently active config (change protection)

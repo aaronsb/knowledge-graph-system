@@ -76,6 +76,7 @@ All ADRs follow a consistent format:
 | [ADR-057a](ADR-057a-multimodal-image-ingestion.md) | Multimodal Image Ingestion | Proposed | Single unified upsert with visual context injection - images follow "hairpin" through existing text pipeline with ontology-aware visual similarity search, dual embeddings (image + text), MinIO storage, and support for Granite Vision/GPT-4V/Claude backends |
 | [ADR-058](ADR-058-polarity-axis-triangulation.md) | Polarity Axis Triangulation for Grounding | Accepted | Replaces binary classification with geometric projection onto polarity axis derived from 5 opposing relationship pairs - produces nuanced grounding percentiles (-5%, +4%) instead of extreme values (±100%) by averaging difference vectors and projecting via dot product |
 | [ADR-059](ADR-059-llm-determined-relationship-direction.md) | LLM-Determined Relationship Direction | Proposed | LLM-determined relationship semantics with directional validation - addresses extraction ambiguity through semantic analysis and bidirectional relationship type inference |
+| [ADR-060](ADR-060-endpoint-security-architecture.md) | API Endpoint Security Architecture | Proposed | Per-endpoint dependency injection following FastAPI Full-Stack Template pattern - type-annotated dependencies (CurrentUser), superuser checks for admin routes, startup validation, and central security policy document for auditability |
 
 ## How to Use This Index
 

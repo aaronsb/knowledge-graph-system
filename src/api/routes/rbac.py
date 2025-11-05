@@ -17,6 +17,7 @@ from psycopg2.extras import RealDictCursor
 import psycopg2
 
 from src.api.dependencies.auth import (
+    CurrentUser,
     get_current_active_user,
     get_db_connection,
     require_role,
@@ -141,12 +142,13 @@ router = APIRouter(prefix="/rbac", tags=["rbac"])
 
 @router.get("/resources", response_model=List[ResourceRead])
 async def list_resources(
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     List all registered resource types.
 
-    Accessible by: admin, curator
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -173,12 +175,13 @@ async def list_resources(
 @router.post("/resources", response_model=ResourceRead, status_code=status.HTTP_201_CREATED)
 async def create_resource(
     resource: ResourceCreate,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Register a new resource type.
 
-    Accessible by: admin only
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -227,12 +230,13 @@ async def create_resource(
 @router.get("/resources/{resource_type}", response_model=ResourceRead)
 async def get_resource(
     resource_type: str,
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Get resource type details.
 
-    Accessible by: admin, curator
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -262,13 +266,15 @@ async def get_resource(
 async def update_resource(
     resource_type: str,
     update: ResourceUpdate,
-    _: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Update resource type configuration.
 
-    Accessible by: admin only
     Cannot update builtin resources.
+
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -331,13 +337,15 @@ async def update_resource(
 @router.delete("/resources/{resource_type}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_resource(
     resource_type: str,
-    _: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Delete a resource type.
 
-    Accessible by: admin only
     Cannot delete builtin resources or resources with existing permissions.
+
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -372,13 +380,14 @@ async def delete_resource(
 
 @router.get("/roles", response_model=List[RoleRead])
 async def list_roles(
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))],
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
     include_inactive: bool = False
 ):
     """
     List all roles.
 
-    Accessible by: admin, curator
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -403,12 +412,13 @@ async def list_roles(
 @router.post("/roles", response_model=RoleRead, status_code=status.HTTP_201_CREATED)
 async def create_role(
     role: RoleCreate,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Create a new role.
 
-    Accessible by: admin only
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -455,12 +465,13 @@ async def create_role(
 @router.get("/roles/{role_name}", response_model=RoleRead)
 async def get_role(
     role_name: str,
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Get role details.
 
-    Accessible by: admin, curator
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -490,13 +501,15 @@ async def get_role(
 async def update_role(
     role_name: str,
     update: RoleUpdate,
-    _: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Update role configuration.
 
-    Accessible by: admin only
     Cannot modify builtin roles.
+
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -573,13 +586,15 @@ async def update_role(
 @router.delete("/roles/{role_name}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_role(
     role_name: str,
-    _: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Delete a role.
 
-    Accessible by: admin only
     Cannot delete builtin roles or roles with users/permissions.
+
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -625,14 +640,15 @@ async def delete_role(
 
 @router.get("/permissions", response_model=List[PermissionRead])
 async def list_permissions(
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))],
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
     role_name: Optional[str] = None,
     resource_type: Optional[str] = None
 ):
     """
     List role permissions with optional filtering.
 
-    Accessible by: admin, curator
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -666,12 +682,13 @@ async def list_permissions(
 @router.post("/permissions", response_model=PermissionRead, status_code=status.HTTP_201_CREATED)
 async def create_permission(
     permission: PermissionCreate,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Grant a permission to a role.
 
-    Accessible by: admin only
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -731,12 +748,13 @@ async def create_permission(
 @router.delete("/permissions/{permission_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_permission(
     permission_id: int,
-    _: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Revoke a permission from a role.
 
-    Accessible by: admin only
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -759,12 +777,13 @@ async def delete_permission(
 @router.get("/user-roles/{user_id}", response_model=List[UserRoleRead])
 async def list_user_roles(
     user_id: int,
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     List roles assigned to a user.
 
-    Accessible by: admin, curator
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -786,12 +805,13 @@ async def list_user_roles(
 @router.post("/user-roles", response_model=UserRoleRead, status_code=status.HTTP_201_CREATED)
 async def assign_user_role(
     assignment: UserRoleAssign,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Assign a role to a user.
 
-    Accessible by: admin only
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -847,12 +867,13 @@ async def assign_user_role(
 @router.delete("/user-roles/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_user_role(
     assignment_id: int,
-    _: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Revoke a role assignment from a user.
 
-    Accessible by: admin only
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:
@@ -888,12 +909,13 @@ class PermissionCheckResponse(BaseModel):
 @router.post("/check-permission", response_model=PermissionCheckResponse)
 async def check_user_permission(
     request: PermissionCheckRequest,
-    _: Annotated[UserInDB, Depends(require_role("admin", "curator"))]
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
 ):
     """
     Check if a user has a specific permission (utility endpoint).
 
-    Accessible by: admin, curator
+    **Authentication:** Requires admin role
     """
     conn = get_db_connection()
     try:

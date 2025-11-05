@@ -22,8 +22,7 @@ from ..services.content_hasher import ContentHasher
 from ..services.job_analysis import JobAnalyzer
 from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
-from ..dependencies.auth import get_current_active_user
-from ..models.auth import UserInDB
+from ..dependencies.auth import CurrentUser
 
 # ADR-057: Only health check remains in endpoint (heavy work moved to worker)
 from ..lib.visual_embeddings import check_visual_embedding_health
@@ -145,6 +144,7 @@ async def run_image_job_analysis(job_id: str, auto_approve: bool = False):
 )
 async def ingest_image(
     background_tasks: BackgroundTasks,
+    current_user: CurrentUser,
     file: UploadFile = File(..., description="Image file to ingest (PNG, JPEG, GIF, WebP, BMP)"),
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Override filename"),
@@ -156,8 +156,7 @@ async def ingest_image(
     # ADR-051: Source metadata (optional)
     source_type: Optional[str] = Form(None, description="Source type: file, mcp, api"),
     source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
-    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated"),
-    current_user: UserInDB = Depends(get_current_active_user)
+    source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated")
 ):
     """
     Submit an image for multimodal ingestion using vision AI and visual embeddings.

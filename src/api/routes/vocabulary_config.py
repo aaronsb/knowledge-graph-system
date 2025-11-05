@@ -16,9 +16,10 @@ Admin endpoints:
 """
 
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 
+from ..dependencies.auth import CurrentUser, require_role
 from ..models.vocabulary import (
     VocabularyConfigResponse,
     VocabularyConfigDetail,
@@ -81,9 +82,14 @@ async def get_vocabulary_config():
 # =============================================================================
 
 @admin_router.get("/config", response_model=VocabularyConfigDetail)
-async def get_vocabulary_config_detail():
+async def get_vocabulary_config_detail(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Get full vocabulary configuration details (admin endpoint).
+    Get full vocabulary configuration details (Admin only - ADR-060)
+
+    **Authentication:** Requires admin role
 
     Returns complete configuration including:
     - All threshold settings
@@ -103,9 +109,15 @@ async def get_vocabulary_config_detail():
 
 
 @admin_router.put("/config", response_model=UpdateConfigResponse)
-async def update_vocabulary_config_endpoint(request: UpdateConfigRequest):
+async def update_vocabulary_config_endpoint(
+    request: UpdateConfigRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Update vocabulary configuration (admin endpoint).
+    Update vocabulary configuration (Admin only - ADR-060)
+
+    **Authentication:** Requires admin role
 
     Updates configuration values in the database. Only provided fields are updated.
 
@@ -180,9 +192,14 @@ async def update_vocabulary_config_endpoint(request: UpdateConfigRequest):
 # =============================================================================
 
 @admin_router.get("/profiles", response_model=ProfileListResponse)
-async def list_profiles():
+async def list_profiles(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    List all aggressiveness profiles (admin endpoint).
+    List all aggressiveness profiles (Admin only - ADR-060)
+
+    **Authentication:** Requires admin role
 
     Returns:
         List of all profiles (builtin and custom) with Bezier curve parameters
@@ -208,9 +225,15 @@ async def list_profiles():
 
 
 @admin_router.get("/profiles/{profile_name}", response_model=AggressivenessProfile)
-async def get_profile(profile_name: str):
+async def get_profile(
+    profile_name: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Get specific aggressiveness profile details (admin endpoint).
+    Get specific aggressiveness profile details (Admin only - ADR-060)
+
+    **Authentication:** Requires admin role
 
     Args:
         profile_name: Name of the profile
@@ -239,9 +262,15 @@ async def get_profile(profile_name: str):
 
 
 @admin_router.post("/profiles", response_model=AggressivenessProfile, status_code=status.HTTP_201_CREATED)
-async def create_profile(request: CreateProfileRequest):
+async def create_profile(
+    request: CreateProfileRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Create custom aggressiveness profile (admin endpoint).
+    Create custom aggressiveness profile (Admin only - ADR-060)
+
+    **Authentication:** Requires admin role
 
     Creates a new Bezier curve profile for vocabulary aggressiveness control.
 
@@ -284,9 +313,15 @@ async def create_profile(request: CreateProfileRequest):
 
 
 @admin_router.delete("/profiles/{profile_name}", response_model=DeleteProfileResponse)
-async def delete_profile(profile_name: str):
+async def delete_profile(
+    profile_name: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Delete custom aggressiveness profile (admin endpoint).
+    Delete custom aggressiveness profile (Admin only - ADR-060)
+
+    **Authentication:** Requires admin role
 
     Args:
         profile_name: Name of the profile to delete

@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException
 import logging
 import os
 
+from ..dependencies.auth import CurrentUser
 from ..models.database import (
     DatabaseStatsResponse,
     DatabaseInfoResponse,
@@ -28,9 +29,13 @@ def get_age_client() -> AGEClient:
 
 
 @router.get("/stats", response_model=DatabaseStatsResponse)
-async def get_database_stats():
+async def get_database_stats(
+    current_user: CurrentUser
+):
     """
-    Get database statistics including node and relationship counts.
+    Get database statistics including node and relationship counts (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Returns:
         DatabaseStatsResponse with node counts by type and relationship breakdown
@@ -88,9 +93,13 @@ async def get_database_stats():
 
 
 @router.get("/info", response_model=DatabaseInfoResponse)
-async def get_database_info():
+async def get_database_info(
+    current_user: CurrentUser
+):
     """
-    Get database connection information.
+    Get database connection information (ADR-060).
+
+    **Authentication:** Requires valid OAuth token
 
     Returns:
         DatabaseInfoResponse with connection details and version info

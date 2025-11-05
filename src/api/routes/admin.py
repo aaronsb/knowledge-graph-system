@@ -18,7 +18,7 @@ import tempfile
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse
 from typing import Optional
 
@@ -31,6 +31,7 @@ from ..models.admin import (
     RestoreResponse,
     # ResetRequest, ResetResponse removed - reset moved to initialize-platform.sh option 0
 )
+from ..dependencies.auth import CurrentUser, require_role
 from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
 from ..services.job_queue import get_job_queue
@@ -45,9 +46,12 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/status", response_model=SystemStatusResponse)
-async def get_system_status():
+async def get_system_status(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Get complete system status
+    Get complete system status (Admin only - ADR-060)
 
     Returns status of:
     - Docker containers
@@ -55,6 +59,8 @@ async def get_system_status():
     - Database statistics
     - Python environment
     - Configuration
+
+    **Authentication:** Requires admin role
     """
     service = AdminService()
     try:
@@ -67,11 +73,16 @@ async def get_system_status():
 
 
 @router.get("/backups", response_model=ListBackupsResponse)
-async def list_backups():
+async def list_backups(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    List all available backup files
+    List all available backup files (Admin only - ADR-060)
 
     Returns list of backup files with metadata (size, created date, etc.)
+
+    **Authentication:** Requires admin role
     """
     service = AdminService()
     try:
@@ -84,7 +95,11 @@ async def list_backups():
 
 
 @router.post("/backup")
-async def create_backup(request: BackupRequest):
+async def create_backup(
+    request: BackupRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
     Create a database backup (ADR-015 Phase 2: Streaming Download)
 
@@ -112,6 +127,8 @@ async def create_backup(request: BackupRequest):
     - Compatible with Gephi for immediate visualization
 
     Returns streaming response with Content-Disposition header.
+
+    **Authentication:** Requires admin role
 
     Example (JSON):
     ```json
@@ -172,16 +189,16 @@ async def create_backup(request: BackupRequest):
 @router.post("/restore")
 async def restore_backup(
     background_tasks: BackgroundTasks,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
     file: UploadFile = File(..., description="Backup JSON file to restore"),
-    username: str = Form(..., description="Username for authentication"),
-    password: str = Form(..., description="Password for authentication"),
     overwrite: bool = Form(False, description="Overwrite existing data"),
     handle_external_deps: str = Form("prune", description="How to handle external dependencies: 'prune', 'stitch', or 'defer'")
 ):
     """
     Restore a database backup (ADR-015 Phase 2: Multipart Upload)
 
-    ⚠️ **Potentially destructive operation** - requires username and password.
+    ⚠️ **Potentially destructive operation** - requires admin role.
 
     **Multipart Upload**: Client streams backup file to server.
     Server validates, then queues restore job for background processing.
@@ -199,33 +216,17 @@ async def restore_backup(
     3. Queue restore worker with job ID
     4. Return job ID for progress tracking
 
-    **Authentication required**: Must provide username and password.
-    (Currently placeholder - will be validated in production)
+    **Authentication:** Requires admin role
 
     Returns job_id for polling restore progress via /jobs/{job_id}
 
     Example (multipart/form-data):
     ```
     file: <backup_file.json>
-    username: admin
-    password: your_password
     overwrite: false
     handle_external_deps: prune
     ```
     """
-    # Validate authentication
-    if not username or not password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Username and password required for restore operation"
-        )
-
-    # Placeholder auth check (will be replaced with real auth in production)
-    if len(password) < 4:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
-        )
 
     # Validate file type
     if not file.filename.endswith('.json'):
@@ -379,7 +380,10 @@ async def restore_backup(
 # ========== Job Scheduler Endpoints (ADR-014) ==========
 
 @router.get("/scheduler/status")
-async def get_scheduler_status():
+async def get_scheduler_status(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
     Get job scheduler status and statistics (ADR-014)
 
@@ -389,6 +393,8 @@ async def get_scheduler_status():
     - Job counts by status
     - Last cleanup time
     - Next scheduled cleanup
+
+    **Authentication:** Requires admin role
 
     Example response:
     ```json
@@ -436,7 +442,10 @@ async def get_scheduler_status():
 
 
 @router.post("/scheduler/cleanup")
-async def trigger_scheduler_cleanup():
+async def trigger_scheduler_cleanup(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
     Manually trigger job scheduler cleanup (ADR-014)
 
@@ -451,6 +460,8 @@ async def trigger_scheduler_cleanup():
     - Manual intervention
 
     Returns cleanup results showing what was processed.
+
+    **Authentication:** Requires admin role
 
     Example response:
     ```json
@@ -500,6 +511,8 @@ async def trigger_scheduler_cleanup():
 @router.post("/keys/{provider}", status_code=status.HTTP_201_CREATED)
 async def set_api_key(
     provider: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
     api_key: str = Form(..., description="API key to store")
 ):
     """
@@ -518,7 +531,7 @@ async def set_api_key(
     - Stored in PostgreSQL
     - Decrypted only when needed for inference
 
-    Requires admin authentication (placeholder for now).
+    **Authentication:** Requires admin role
 
     Example:
     ```bash
@@ -611,7 +624,10 @@ async def set_api_key(
 
 
 @router.get("/keys")
-async def list_api_keys():
+async def list_api_keys(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
     List configured API providers with validation status (ADR-031, ADR-041)
 
@@ -626,6 +642,8 @@ async def list_api_keys():
 
     Does NOT return the actual API keys (security) - only masked versions showing
     prefix + last 6 characters (e.g., "sk-proj-...abc123").
+
+    **Authentication:** Requires admin role
 
     Example response:
     ```json
@@ -693,7 +711,11 @@ async def list_api_keys():
 
 
 @router.delete("/keys/{provider}")
-async def delete_api_key(provider: str):
+async def delete_api_key(
+    provider: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
     Delete system API key for a provider (ADR-031)
 
@@ -701,7 +723,7 @@ async def delete_api_key(provider: str):
     After deletion, inference using this provider will not work
     until a new key is configured.
 
-    Requires admin authentication (placeholder for now).
+    **Authentication:** Requires admin role
 
     Example:
     ```bash
@@ -762,6 +784,8 @@ async def delete_api_key(provider: str):
 
 @router.post("/regenerate-concept-embeddings")
 async def regenerate_concept_embeddings(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
     only_missing: bool = False,
     ontology: Optional[str] = None,
     limit: Optional[int] = None
@@ -771,6 +795,8 @@ async def regenerate_concept_embeddings(
 
     Useful after changing embedding models to update all concept embeddings
     to the new model/dimensions.
+
+    **Authentication:** Requires admin role
 
     Args:
         only_missing: Only generate for concepts without embeddings

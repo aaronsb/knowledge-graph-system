@@ -12,9 +12,10 @@ Admin endpoints:
 """
 
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 
+from ..dependencies.auth import CurrentUser, require_role
 from ..models.extraction import (
     ExtractionConfigResponse,
     ExtractionConfigDetail,
@@ -60,9 +61,14 @@ async def get_extraction_config():
 
 
 @admin_router.get("/config", response_model=Optional[ExtractionConfigDetail])
-async def get_extraction_config_detail():
+async def get_extraction_config_detail(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Get full AI extraction configuration details (admin endpoint).
+    Get full AI extraction configuration details (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Returns complete configuration including:
     - Provider and model details
@@ -84,9 +90,15 @@ async def get_extraction_config_detail():
 
 
 @admin_router.post("/config", response_model=UpdateExtractionConfigResponse)
-async def update_extraction_config(request: UpdateExtractionConfigRequest):
+async def update_extraction_config(
+    request: UpdateExtractionConfigRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
     """
-    Update AI extraction configuration (admin endpoint).
+    Update AI extraction configuration (Admin only - ADR-060).
+
+    **Authentication:** Requires admin role
 
     Creates a new configuration entry and deactivates the previous one.
     Configuration is stored in kg_api.ai_extraction_config table.

@@ -16,7 +16,7 @@ import sys
 import os
 import inspect
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, get_origin, get_args
 import argparse
 import json
 from tabulate import tabulate
@@ -88,15 +88,36 @@ def analyze_endpoint(route) -> Dict[str, Any]:
     if hasattr(route, 'endpoint'):
         sig = inspect.signature(route.endpoint)
         for param_name, param in sig.parameters.items():
+            # ADR-060: Check for CurrentUser type annotation (FastAPI template pattern)
+            if param.annotation != inspect.Parameter.empty:
+                annotation_str = str(param.annotation)
+                # Check for CurrentUser type alias (ADR-060)
+                # Could be "CurrentUser" or "typing.Annotated[UserInDB, ...]"
+                if 'CurrentUser' in annotation_str:
+                    endpoint_info["has_auth"] = True
+                    endpoint_info["auth_type"] = "user"
+                    endpoint_info["dependencies"].append("CurrentUser")
+                # Also check for Annotated types that contain Depends
+                elif hasattr(param.annotation, '__origin__'):
+                    # This is a generic type (like Annotated)
+                    args = get_args(param.annotation)
+                    for arg in args:
+                        arg_str = str(arg)
+                        if 'Depends' in arg_str and ('current_user' in arg_str.lower() or 'get_current' in arg_str):
+                            endpoint_info["has_auth"] = True
+                            endpoint_info["auth_type"] = "user"
+                            break
+
             if param.default != inspect.Parameter.empty:
                 # Check if parameter has Depends with auth
                 if isinstance(param.default, type(Depends())):
                     func_name = param.default.dependency.__name__ if hasattr(param.default.dependency, '__name__') else str(param.default.dependency)
 
-                    if any(auth in func_name for auth in ['current_user', 'api_key', 'require_role', 'require_permission']):
+                    if any(auth in func_name for auth in ['current_user', 'api_key', 'require_role', 'require_permission', 'check_role']):
                         endpoint_info["has_auth"] = True
 
-                        if 'require_role' in func_name:
+                        # ADR-060: Upgrade to role-based if require_role dependency found
+                        if 'require_role' in func_name or 'check_role' in func_name:
                             endpoint_info["auth_type"] = "role"
                         elif 'require_permission' in func_name:
                             endpoint_info["auth_type"] = "permission"
@@ -128,6 +149,20 @@ def categorize_endpoints(endpoints: List[Dict]) -> Dict[str, List[Dict]]:
         "/auth/login",
         "/auth/device/authorize",
         "/oauth/",
+        "/database/",  # Database stats/info (read-only informational)
+        "/embedding/config",  # Public config summary
+        "/extraction/config",  # Public config summary
+        "/sources/",  # Source retrieval (read-only)
+    ]
+
+    # Patterns for PUBLIC vocabulary read endpoints (informational)
+    public_vocabulary_patterns = [
+        ("GET", "/vocabulary/status"),
+        ("GET", "/vocabulary/types"),
+        ("GET", "/vocabulary/category-scores/"),
+        ("GET", "/vocabulary/similar/"),
+        ("GET", "/vocabulary/analyze/"),
+        ("GET", "/vocabulary/config"),
     ]
 
     # Patterns that indicate endpoints should require auth
@@ -136,7 +171,6 @@ def categorize_endpoints(endpoints: List[Dict]) -> Dict[str, List[Dict]]:
         "/ingest",
         "/jobs/",
         "/ontology/",
-        "/vocabulary/",
         "/users/",
         "/roles/",
         "/permissions/",
@@ -144,9 +178,16 @@ def categorize_endpoints(endpoints: List[Dict]) -> Dict[str, List[Dict]]:
 
     for endpoint in endpoints:
         path = endpoint["path"]
+        method = endpoint["method"]
 
-        # Public endpoints
-        if any(pattern in path for pattern in public_patterns):
+        # Check public vocabulary read endpoints first (before general patterns)
+        is_public_vocab = any(
+            method.upper().startswith(vocab_method) and vocab_pattern in path
+            for vocab_method, vocab_pattern in public_vocabulary_patterns
+        )
+
+        # Public endpoints (including public vocabulary reads)
+        if is_public_vocab or any(pattern in path for pattern in public_patterns):
             categories["public"].append(endpoint)
 
         # Authenticated endpoints
