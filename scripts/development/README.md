@@ -29,23 +29,23 @@ scripts/development/
 **Usage:**
 
 ```bash
-# Quick summary (default - prints table to terminal)
+# Quick summary (prints to terminal only)
 ./scripts/development/audit-api-auth.py
 
-# Detailed breakdown with all endpoints
+# Detailed breakdown (terminal only)
 ./scripts/development/audit-api-auth.py --verbose
 
-# Also export to JSON (still prints table)
+# Export to JSON file (also prints to terminal)
 ./scripts/development/audit-api-auth.py --format=json
 
-# Also export to Markdown (still prints table)
+# Export to Markdown file (also prints to terminal)
 ./scripts/development/audit-api-auth.py --format=markdown
 
 # Custom output path
 ./scripts/development/audit-api-auth.py --format=markdown --output=docs/testing/AUTH_AUDIT.md
 ```
 
-**Note:** The tool always prints the summary table to the terminal. The `--format` option adds file export on top of that.
+**Note:** By default, the tool only prints to the terminal. Use `--format` to also save a file.
 
 **What It Checks:**
 - ✅ Which endpoints require authentication

@@ -301,13 +301,12 @@ def main():
     )
     parser.add_argument(
         "--format",
-        choices=["table", "json", "markdown"],
-        default="table",
-        help="Output format"
+        choices=["json", "markdown"],
+        help="Export to file format (optional)"
     )
     parser.add_argument(
         "--output", "-o",
-        help="Output file path (required for json/markdown formats)"
+        help="Output file path (default: auth_audit.json or auth_audit.md)"
     )
 
     args = parser.parse_args()
@@ -324,19 +323,17 @@ def main():
     # Categorize endpoints
     categories = categorize_endpoints(endpoints)
 
-    # Output results (always print summary to terminal)
+    # Always print summary to terminal
     print_summary(categories, verbose=args.verbose)
 
     # Optionally export to file
     if args.format == "json":
-        if not args.output:
-            args.output = "auth_audit.json"
-        export_json(categories, args.output)
+        output_file = args.output or "auth_audit.json"
+        export_json(categories, output_file)
 
     elif args.format == "markdown":
-        if not args.output:
-            args.output = "auth_audit.md"
-        export_markdown(categories, args.output)
+        output_file = args.output or "auth_audit.md"
+        export_markdown(categories, output_file)
 
 
 if __name__ == "__main__":
