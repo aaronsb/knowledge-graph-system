@@ -60,13 +60,14 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 **Service Management (scripts/services/):**
 - `scripts/services/start-database.sh` - Start PostgreSQL + AGE (auto-applies migrations)
 - `scripts/services/stop-database.sh` - Stop database container
-- `scripts/services/start-minio.sh` - Start MinIO object storage (ADR-057)
-- `scripts/services/stop-minio.sh` - Stop MinIO container
+- `scripts/services/start-garage.sh` - Start Garage object storage (ADR-057)
+- `scripts/services/stop-garage.sh` - Stop Garage container
 - `scripts/services/start-api.sh` - Start FastAPI server
 - `scripts/services/stop-api.sh` - Stop API server
 
 **Setup & Configuration (scripts/setup/):**
-- `scripts/setup/initialize-platform.sh` - Initialize admin user, JWT secrets, API keys, MinIO
+- `scripts/setup/bootstrap.sh` - Complete cold start orchestration (database + Garage + API + config)
+- `scripts/setup/initialize-platform.sh` - Initialize admin user, OAuth signing keys, encryption keys, API keys, Garage
 - `scripts/setup/configure-ai.sh` - AI provider configuration (legacy)
 
 **Database Operations (scripts/database/):**
@@ -74,8 +75,8 @@ Documents → REST API → LLM Extraction → Apache AGE Graph
 - `scripts/database/backup-database.sh` - Backup database to file
 - `scripts/database/restore-database.sh` - Restore database from backup
 
-**MinIO Operations (scripts/minio/):**
-- `scripts/minio/init-minio.sh` - Initialize MinIO bucket and policies
+**Garage Operations (scripts/garage/):**
+- `scripts/garage/init-garage.sh` - Initialize Garage bucket and keys
 
 **Client:**
 - `client/install.sh` - Install kg CLI globally
@@ -111,7 +112,7 @@ cd client && ./install.sh && cd ..
 # 5. Start API server
 ./scripts/services/start-api.sh -y
 
-# 6. Initialize authentication (interactive: sets admin password, JWT secrets, API keys)
+# 6. Initialize authentication (interactive: sets admin password, OAuth keys, encryption keys, API keys)
 ./scripts/setup/initialize-platform.sh
 
 # 7. Verify system is ready
@@ -647,10 +648,10 @@ kg database stats  # Verify counts
 ## Security Notes
 
 - **API Keys**: Never commit `.env` (in .gitignore)
-- **Encrypted Credentials (ADR-031)**: OpenAI, Anthropic, and MinIO credentials stored encrypted in PostgreSQL using Fernet (AES-128-CBC + HMAC-SHA256). Master encryption key in .env or Docker secrets.
+- **Encrypted Credentials (ADR-031)**: OpenAI, Anthropic, and Garage credentials stored encrypted in PostgreSQL using Fernet (AES-128-CBC + HMAC-SHA256). Master encryption key in .env or Docker secrets.
 - **Infrastructure Credentials**: PostgreSQL credentials must remain in .env (needed before database starts)
 - **Database**: PostgreSQL requires auth (env: POSTGRES_USER/POSTGRES_PASSWORD)
-- **MinIO**: Credentials encrypted in database (ADR-031), only endpoint config in .env. Configure via `initialize-platform.sh` option 7.
+- **Garage**: Credentials encrypted in database (ADR-031), only endpoint config in .env. Configure via `initialize-platform.sh` option 7.
 - **API Server**: No authentication by default - add if exposing publicly
 - **kg CLI**: Communicates with localhost:8000 by default
 - **MCP Server**: Runs locally via Claude Desktop, no external exposure

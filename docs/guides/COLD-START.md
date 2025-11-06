@@ -10,7 +10,36 @@
 - Python 3.11+ and Node.js 18+
 - OpenAI API key (or use local embeddings - see below)
 
-## Quick Start (5 Commands)
+## Quick Start (1 Command - Recommended)
+
+**Fastest way to get started:**
+
+```bash
+# 1. Clone repository
+git clone https://github.com/aaronsb/knowledge-graph-system.git
+cd knowledge-graph-system
+
+# 2. Run bootstrap script (handles everything automatically)
+./scripts/setup/bootstrap.sh          # Production mode (interactive password)
+# OR for development (uses default password 'Password1!'):
+./scripts/setup/bootstrap.sh --dev    # Development mode (quick start)
+```
+
+**What bootstrap.sh does:**
+- ✅ Checks prerequisites (Docker, Python, Node.js)
+- ✅ Creates .env from .env.example
+- ✅ Starts PostgreSQL + Apache AGE database
+- ✅ Starts Garage object storage
+- ✅ Starts FastAPI server
+- ✅ Configures admin user, OAuth keys, encryption keys, embeddings
+- ✅ Installs kg CLI globally
+- ✅ Verifies system health
+
+**Total time:** ~3-4 minutes for fresh system! 🚀
+
+## Manual Step-by-Step (Alternative)
+
+If you prefer to run each step manually:
 
 ```bash
 # 1. Clone repository (30 seconds)
@@ -20,23 +49,26 @@ cd knowledge-graph-system
 # 2. Start database - auto-applies schema + migrations (15 seconds)
 ./scripts/services/start-database.sh
 
-# 3. Start API server - auto-creates venv + installs deps (15 seconds)
+# 3. Start Garage object storage (10 seconds)
+./scripts/services/start-garage.sh -y
+
+# 4. Start API server - auto-creates venv + installs deps (15 seconds)
 ./scripts/services/start-api.sh -y
 
-# 4. Initialize auth + configure embeddings (interactive, 60 seconds)
+# 5. Initialize auth + configure embeddings (interactive, 60 seconds)
 ./scripts/setup/initialize-platform.sh          # Production mode (interactive password)
 # OR for development (uses default password 'Password1!'):
 ./scripts/setup/initialize-platform.sh --dev    # Development mode (quick start)
 
 # Steps:
 # → Set admin password (or uses Password1! in dev mode)
-# → Auto-generates JWT secrets
+# → Auto-generates OAuth signing keys
 # → Auto-generates encryption key
 # → Choose embedding option:
 #    Option 1: OpenAI (paste your API key when prompted)
 #    Option 2: Local embeddings (Nomic - no API key needed)
 
-# 5. Install kg CLI (20 seconds)
+# 6. Install kg CLI (20 seconds)
 cd client && ./install.sh && cd ..
 ```
 
@@ -168,11 +200,27 @@ docker-compose down -v
 
 ## What Just Happened?
 
+**Bootstrap Script (bootstrap.sh) - Recommended:**
+- Checked all prerequisites (Docker, Python, Node.js)
+- Created `.env` from `.env.example` if needed
+- Started PostgreSQL + Apache AGE + Garage + API server
+- Configured admin user, OAuth keys, encryption keys, embeddings
+- Installed kg CLI globally
+- Verified system health
+- **Total time:** ~3-4 minutes
+
+**OR if you ran individual scripts:**
+
 **Database (start-database.sh):**
 - Created `.env` from `.env.example`
 - Started PostgreSQL + Apache AGE container
 - Applied baseline schema + all migrations automatically
 - Ready in ~15 seconds
+
+**Garage (start-garage.sh):**
+- Started Garage object storage container
+- S3-compatible storage for image assets (ADR-057)
+- Ready in ~10 seconds
 
 **API Server (start-api.sh):**
 - Created Python virtual environment
@@ -182,8 +230,8 @@ docker-compose down -v
 
 **Auth Setup (initialize-platform.sh):**
 - Created admin user in database
-- Generated OAuth infrastructure (ADR-054)
-- Generated encryption keys in `.env`
+- Generated OAuth signing keys (ADR-054)
+- Generated encryption keys in `.env` (ADR-031)
 - Configured embedding provider (OpenAI or Nomic)
 - **Dev mode (`--dev`)**: Uses password `Password1!` for quick start
 - **Production mode**: Prompts for secure password or uses `ADMIN_PASSWORD` env var
