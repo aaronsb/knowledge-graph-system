@@ -1,21 +1,42 @@
 # Knowledge Graph System
 
-**Transform documents into queryable concept networks. Not retrieval - understanding.**
+## What It Does
 
-## What This Is
+Converts documents and images into a graph where concepts are nodes and relationships are edges. LLMs extract both from your content. The graph stores them in PostgreSQL with Apache AGE. You query by meaning, traverse by relationships, and trace back to source material.
 
-A complete knowledge graph platform that extracts concepts and relationships from any text, stores them in a production-grade graph database, and provides multiple interfaces for exploration and analysis.
+**TLDR:**
+```bash
+# Put text documents in
+kg ingest file research_paper.pdf --ontology "Research"
 
-**Four integrated components:**
+# Put images in (vision model generates descriptions → concepts)
+kg ingest file whiteboard_diagram.jpg --ontology "Research"
 
-1. **Apache AGE + PostgreSQL** - Production graph database with openCypher queries, vector search, and full RBAC
-2. **FastAPI REST API** - LLM-powered extraction pipeline with job management and cost controls
-3. **TypeScript CLI + MCP Server** - Unified command-line interface and Model Context Protocol server for agent integration
-4. **React Visualization Explorer** - Interactive graph visualization with smart search, visual query builder, and openCypher editor
+# Get concepts out, with relationships
+kg search query "recursive patterns"
+# Returns: Concepts with ENABLES, SUPPORTS, CONTRADICTS relationships
 
-Feed it research papers, meeting notes, code commits, or philosophical texts. The system identifies concepts, understands their relationships, and preserves evidence trails back to source material. Query by meaning, not keywords. Traverse connections between ideas, not just similarity scores.
+# See how they connect across documents and images
+kg search details concept-id-123
+# Shows: Evidence quotes, source locations, related concepts
+```
 
-**The difference matters:** Traditional RAG retrieves text chunks that match your query. Knowledge graphs reveal how concepts *relate* - what enables what, what contradicts what, what emerges from what. The graph grows smarter with each document, automatically connecting new concepts to existing knowledge.
+**Four components:**
+1. **Apache AGE + PostgreSQL** - Graph storage with openCypher queries, vector embeddings, RBAC
+2. **FastAPI REST API** - Extraction pipeline with job management and cost estimates
+3. **TypeScript CLI + MCP Server** - Command-line interface and agent integration
+4. **React Visualization** - Interactive graph exploration with multiple query modes
+
+**Multimodal ingestion:**
+- **Text sources** - Research papers, meeting notes, code commits, documentation, lecture transcripts
+- **Image sources** - Whiteboard photos, diagrams, screenshots, slides, charts
+- **Processing flow** - Images → S3 storage (Garage) → Vision model description → Concept extraction pipeline
+- **Storage architecture** - Original images in S3-compatible object storage, descriptions and concepts in PostgreSQL
+- **Ground truth preservation** - Vision descriptions are derived evidence; original images remain queryable via S3 URLs
+
+Images and text flow into the same concept graph. A whiteboard photo from a brainstorming session connects to meeting notes from the same project. Lecture slides link to transcripts. Cross-modal discovery through shared concepts.
+
+## How It Works
 
 ---
 
@@ -73,37 +94,94 @@ Connect to Claude Desktop or Claude Code for agent-driven graph operations.
 
 ![MCP Server Tools](docs/media/screenshots/mcp_server.png)
 
-## How It Works
+### Ingestion Pipeline
 
-Documents flow through smart chunking that respects natural boundaries
-  ↓
-LLM extraction identifies concepts, relationships, and evidence quotes
-  ↓
-Graph construction in PostgreSQL with Apache AGE extension
-  ↓
-Vector embeddings enable semantic search across concepts
-  ↓
-Query interface reveals connections and provides provenance
+Documents split into chunks at semantic boundaries. Each chunk:
 
-**The iterative pattern:** Each chunk queries recent concepts before processing. The LLM sees what the graph already knows, enabling cross-chunk relationship detection. Early chunks populate the graph. Later chunks connect to existing concepts. Hit rates climb from 0% to 60%+ as the graph learns your domain.
+1. **Queries recent concepts** - LLM sees what the graph already knows
+2. **Extracts new concepts** - Identifies ideas and relationships from text
+3. **Generates embeddings** - Vector representations for similarity matching
+4. **Matches existing concepts** - Cosine similarity ≥0.85 merges with existing nodes
+5. **Stores with evidence** - Creates nodes, edges, and preserves source quotes
 
-**Multi-document synthesis:** Concepts automatically merge across files when semantically similar. A term mentioned in chapter 1 links to the same concept in chapter 10, even across different documents in the same ontology.
+Early chunks populate the graph from scratch. Later chunks match existing concepts and add new relationships. Hit rates climb from 0% to 60%+ as the graph learns your domain.
 
-## Why This Matters
+Concepts merge across documents when semantically similar. A term in chapter 1 connects to the same concept in chapter 10, even across files in the same ontology.
 
-You've invested time (and API tokens) extracting knowledge from documents. Traditional systems rebuild that understanding on every query. This system *remembers*.
+### How Concepts Govern Themselves
 
-**Persistent concept extraction** → Ideas become first-class entities with labels, search terms, and relationships
+The graph tracks evidence for each concept through relationship edges:
 
-**Relationship modeling** → Concepts ENABLE, SUPPORT, CONTRADICT, IMPLY each other with confidence scores
+**Grounding strength** - Calculated from incoming edges at query time:
+```
+Concept "System uses Apache AGE":
+  ← 47 SUPPORTS edges (weight: 33.8)
+  ← 12 CONTRADICTS edges (weight: 10.2)
+  → Grounding: 33.8 / 44.0 = 76.8% (well-grounded)
 
-**Graph traversal** → Explore connections between ideas across document boundaries
+Concept "System uses Neo4j":
+  ← 12 SUPPORTS edges (weight: 10.2)
+  ← 47 CONTRADICTS edges (weight: 33.8)
+  → Grounding: 10.2 / 44.0 = 23.2% (weakly-grounded)
+```
 
-**Evidence provenance** → Every concept links to source quotes with paragraph references
+Filter queries by grounding threshold:
+- `≥ 80%` - High confidence (production use)
+- `≥ 50%` - Medium confidence (general use)
+- `≥ 20%` - Low confidence (exploratory)
+- `< 20%` - Contradicted (review needed)
 
-**Cross-ontology enrichment** → Ingest related documents into different ontologies; shared concepts bridge them naturally
+As documents evolve, grounding shifts automatically. When you ingest updated documentation, contradiction edges accumulate and grounding scores adjust. No manual curation needed.
 
-**Time as emergent property** → Causal relationships (CAUSES, RESULTS_FROM, ENABLES) create observable time arrows without explicit timestamps
+### How Vocabulary Learns
+
+The system starts with 30 seed relationship types (ENABLES, SUPPORTS, CONTRADICTS, etc.). LLMs create new types as needed during extraction.
+
+**New vocabulary gets three properties:**
+
+1. **Category** (computed from embeddings):
+```
+"FACILITATES" → Compare to seed types
+  → Most similar to "ENABLES" (causation category)
+  → Assign category: "causation"
+```
+
+2. **Confidence** (per relationship, LLM-determined):
+```
+"Meditation FACILITATES enlightenment" → confidence: 0.85
+```
+
+3. **Direction** (per type, LLM reasoning):
+```
+"FACILITATES" → LLM reasons: "meditation acts on enlightenment"
+  → direction: "outward" (from acts on to)
+```
+
+Vocabulary patterns emerge over time. After 100 documents, the system learns "*_FROM suffix → usually inward direction" through statistical observation of LLM choices.
+
+### How It Scales
+
+**Evidence accumulation** - Each document adds edges without reprocessing existing concepts. A concept mentioned in 50 documents has 50 evidence links, strengthening or weakening its grounding.
+
+**Vocabulary convergence** - Custom types with high usage survive. Low-usage types with <20% grounding get filtered. The vocabulary naturally compacts to high-value relationships.
+
+**Query-time calculation** - Grounding strength computes from current edge weights, not stored snapshots. The graph always reflects latest evidence without batch recalculation jobs.
+
+**Bounded computation** - Grounding uses direct edges only (depth=1). Relationship traversal limits to 3 hops. Performance stays consistent as the graph grows to millions of concepts.
+
+## What You Get
+
+**Concepts as entities** - Ideas become first-class nodes with labels, search terms, embeddings, and grounding scores. Query them, traverse from them, filter by reliability.
+
+**Relationships with semantics** - 30 base types (ENABLES, SUPPORTS, CONTRADICTS, IMPLIES, etc.) plus custom vocabulary the LLM creates. Each edge has category, confidence, and direction.
+
+**Evidence preservation** - Every concept links to source quotes with document name, paragraph number, and full text. Trace claims back to original context.
+
+**Cross-document synthesis** - A concept mentioned in 20 files has 20 evidence nodes, all connected. Query once, see all occurrences.
+
+**Emergent temporal structure** - Causal relationships (CAUSES, RESULTS_FROM, ENABLES, PRECEDES) create observable time arrows. No timestamps needed; time emerges from graph topology.
+
+**Grounding scores** - See which concepts have strong vs weak evidence. Filter by confidence threshold. Watch truth shift as documents evolve.
 
 ## Quick Start
 
@@ -160,7 +238,7 @@ kg search query "Apache AGE migration"
 #       RESULTS_FROM → Unified Architecture
 ```
 
-The system understood commits and PRs describe the same architectural change from different perspectives. It merged evidence, enriched relationships, and revealed the strategic narrative without explicit linking.
+Embedding similarity matched "Apache AGE Migration" across both ontologies (commits ≥0.85 similarity to PRs). The graph merged evidence and connected relationships. Same concept, different perspectives.
 
 ## When To Use This
 
@@ -205,21 +283,19 @@ The pattern generalizes: any text-based content can become a queryable knowledge
 - **TypeScript client** - Unified CLI and future MCP server mode for multi-agent access
 - **Dry-run capabilities** - Preview ingestion operations before committing API tokens
 
-## What Makes This Different
+## Key Mechanisms
 
-Not a vector database. Not a new embedding model. A synthesis:
+**LLM-powered extraction** - Understands concepts and relationships from text. Generates embeddings for semantic matching. Creates custom vocabulary as needed.
 
-**LLM-powered extraction** → Understands concepts and relationships, not just word patterns
+**Graph storage** - Apache AGE stores concepts, relationships, and evidence as nodes and edges. OpenCypher queries traverse connections. Vector search finds similar concepts.
 
-**Graph storage** → Models how ideas connect, not just where they appear
+**Evidence-based retrieval** - Each concept links to source quotes with document references. Trace claims back to paragraphs. Verify with original text.
 
-**Evidence-based retrieval** → Provides source quotes with provenance, not isolated chunks
+**Persistent knowledge** - The graph accumulates across documents. Early ingestions populate. Later ingestions connect. No rebuilding on every query.
 
-**Persistent knowledge** → Builds understanding over time, not ephemeral query-time synthesis
+**Multi-dimensional querying** - Search by embedding similarity. Traverse by relationship type. Filter by grounding threshold. Combine all three in one query.
 
-**Multi-dimensional querying** → Semantic search finds concepts, graph traversal explains relationships
-
-**Emergent temporal structure** → Causal relationships create observable time arrows without explicit ordering
+**Self-governing vocabulary** - Relationships get categories from embedding similarity. Directions from LLM reasoning. Grounding from evidence accumulation. Patterns emerge through usage.
 
 ## Technology Stack
 
@@ -381,7 +457,3 @@ Built with:
 - [Model Context Protocol](https://modelcontextprotocol.io/) - LLM integration standard
 - [OpenAI](https://openai.com/) / [Anthropic](https://anthropic.com/) - LLM providers
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern Python API framework
-
----
-
-*Not just retrieval. Understanding.*
