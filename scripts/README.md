@@ -20,17 +20,34 @@ scripts/
 
 ### Initial Setup
 
+**Recommended: Complete cold start orchestration**
+
+```bash
+# One command to rule them all - handles database, Garage, API, auth, and CLI
+./scripts/setup/bootstrap.sh          # Production mode (interactive password)
+./scripts/setup/bootstrap.sh --dev    # Development mode (uses Password1!)
+```
+
+**Manual step-by-step (if you prefer control):**
+
 ```bash
 # 1. Start database
 #    - Starts PostgreSQL + Apache AGE container
 #    - Automatically runs migrate-db.sh to apply all schema migrations
 ./scripts/services/start-database.sh
 
-# 2. Start API server
+# 2. Start Garage object storage
+./scripts/services/start-garage.sh -y
+
+# 3. Start API server
 ./scripts/services/start-api.sh -y
 
-# 3. Initialize authentication and secrets
-./scripts/setup/initialize-auth.sh
+# 4. Initialize authentication and secrets
+./scripts/setup/initialize-platform.sh          # Production
+./scripts/setup/initialize-platform.sh --dev    # Development
+
+# 5. Install kg CLI
+cd client && ./install.sh && cd ..
 
 # Optional: Configure database performance profile
 ./scripts/setup/configure-db-profile.sh <small|medium|large>
