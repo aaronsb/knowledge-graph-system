@@ -16,5 +16,9 @@ Ingest all files from a directory (ADR-062). Validates against allowlist, proces
   - Default: `true`
 - `force` (`boolean`) - Force re-ingestion (default: false)
   - Default: `false`
+- `limit` (`number`) - Number of files to show per page (default: 10)
+  - Default: `10`
+- `offset` (`number`) - Number of files to skip for pagination (default: 0)
+  - Default: `0`
 
 ---

@@ -488,6 +488,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Force re-ingestion (default: false)',
               default: false,
             },
+            limit: {
+              type: 'number',
+              description: 'Number of files to show per page (default: 10)',
+              default: 10,
+            },
+            offset: {
+              type: 'number',
+              description: 'Number of files to skip for pagination (default: 0)',
+              default: 0,
+            },
           },
           required: ['path'],
         },
@@ -1080,6 +1090,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const recursive = toolArgs.recursive === true;
         const auto_approve = toolArgs.auto_approve !== false;
         const force = toolArgs.force === true;
+        const limit = (toolArgs.limit as number) || 10;
+        const offset = (toolArgs.offset as number) || 0;
 
         if (!dirPath) {
           throw new Error('path is required');
@@ -1137,8 +1149,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         scanDirectory(absolutePath);
 
+        // Apply pagination
+        const paginatedFiles = files.slice(offset, offset + limit);
+
         // TODO: Implement batch ingestion
-        // For now, return summary
+        // For now, return summary with pagination
         const result = {
           status: 'not_implemented',
           message: 'Batch directory ingestion not yet implemented',
@@ -1147,7 +1162,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           files_found: files.length,
           files_skipped: skipped.length,
           next_phase: 'Phase 3 - Batch ingestion implementation',
-          files: files.slice(0, 10), // Preview first 10
+          files: paginatedFiles,
+          pagination: {
+            offset,
+            limit,
+            total: files.length,
+            has_more: offset + limit < files.length,
+          },
         };
 
         return {

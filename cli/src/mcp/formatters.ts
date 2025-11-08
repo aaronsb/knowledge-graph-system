@@ -409,13 +409,28 @@ export function formatIngestDirectoryResult(result: any): string {
     output += `Files Skipped: ${result.files_skipped} (blocked by security patterns)\n\n`;
 
     if (result.files && result.files.length > 0) {
-      output += `## Preview (first ${result.files.length} files)\n\n`;
+      const pagination = result.pagination;
+      const startNum = pagination ? pagination.offset + 1 : 1;
+      const endNum = pagination ? pagination.offset + result.files.length : result.files.length;
+
+      output += `## Files (showing ${startNum}-${endNum} of ${result.files_found})\n\n`;
       result.files.forEach((file: string, idx: number) => {
         const basename = file.split('/').pop();
-        output += `${idx + 1}. ${basename}\n`;
+        const fileNum = pagination ? pagination.offset + idx + 1 : idx + 1;
+        output += `${fileNum}. ${basename}\n`;
       });
-      if (result.files_found > result.files.length) {
-        output += `... and ${result.files_found - result.files.length} more\n`;
+
+      // Pagination navigation
+      if (pagination && (pagination.offset > 0 || pagination.has_more)) {
+        output += `\n## Navigation\n\n`;
+        if (pagination.offset > 0) {
+          const prevOffset = Math.max(0, pagination.offset - pagination.limit);
+          output += `Previous: Use offset=${prevOffset}, limit=${pagination.limit}\n`;
+        }
+        if (pagination.has_more) {
+          const nextOffset = pagination.offset + pagination.limit;
+          output += `Next: Use offset=${nextOffset}, limit=${pagination.limit}\n`;
+        }
       }
     }
 
