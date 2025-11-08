@@ -104,12 +104,10 @@ if [ "$SCHEMA_EXISTS" -eq 2 ]; then
     TABLE_COUNT=$(docker exec knowledge-graph-postgres psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema IN ('kg_api', 'kg_auth')" 2>/dev/null || echo "0")
     echo -e "${GREEN}✓ Migrations applied (${TABLE_COUNT} tables)${NC}"
 
-    # Show CREATE TABLE statements from logs as proof of work
-    CREATE_TABLES=$(docker logs knowledge-graph-postgres 2>&1 | grep "CREATE TABLE" | grep -E "kg_api|kg_auth")
-    if [ -n "$CREATE_TABLES" ]; then
-        echo "$CREATE_TABLES" | while IFS= read -r line; do
-            echo "    $line"
-        done
+    # Show table names as proof of work
+    TABLES=$(docker exec knowledge-graph-postgres psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT '    • ' || schemaname || '.' || tablename FROM pg_tables WHERE schemaname IN ('kg_api', 'kg_auth') ORDER BY schemaname, tablename" 2>/dev/null)
+    if [ -n "$TABLES" ]; then
+        echo "$TABLES"
     fi
 else
     echo -e "${YELLOW}⚠  Database schemas not found (migrations may not have run)${NC}"
