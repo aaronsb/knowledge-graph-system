@@ -74,16 +74,16 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: client
+        working-directory: cli
 
       - name: Build TypeScript client
         run: npm run build
-        working-directory: client
+        working-directory: cli
 
       - name: Check for build artifacts
         run: |
-          if [ ! -f "client/dist/index.js" ]; then
-            echo "❌ Build failed - client/dist/index.js not found"
+          if [ ! -f "cli/dist/index.js" ]; then
+            echo "❌ Build failed - cli/dist/index.js not found"
             exit 1
           fi
-          echo "✅ TypeScript client built successfully"
+          echo "✅ TypeScript CLI built successfully"
