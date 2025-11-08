@@ -25,6 +25,9 @@ import {
   formatConnectionPaths,
   formatRelatedConcepts,
   formatJobStatus,
+  formatInspectFileResult,
+  formatIngestFileResult,
+  formatIngestDirectoryResult,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -983,7 +986,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatInspectFileResult(result),
             },
           ],
         };
@@ -1065,7 +1068,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatIngestFileResult(result),
             },
           ],
         };
@@ -1151,7 +1154,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatIngestDirectoryResult(result),
             },
           ],
         };
