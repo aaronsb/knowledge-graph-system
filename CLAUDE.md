@@ -279,6 +279,94 @@ kg database stats
 2. Restart operator: `cd docker && docker-compose restart operator`
 3. Test: `docker exec kg-operator python /workspace/operator/configure.py status`
 
+### Release Process
+
+The project uses a **release branch workflow** with automatic container builds and versioning.
+
+**Release Workflow:**
+
+```bash
+# 1. Development on main branch
+git checkout main
+# ... make changes, commit, push ...
+
+# 2. Update VERSION file when ready to release
+echo "0.3.0" > VERSION
+git add VERSION
+git commit -m "chore: bump version to 0.3.0"
+git push origin main
+
+# 3. Merge to release branch (triggers automated build)
+git checkout release
+git merge main
+git push origin release
+
+# → GitHub Actions automatically:
+#    - Reads VERSION file (0.3.0)
+#    - Creates git tag (v0.3.0)
+#    - Builds all 3 container images
+#    - Publishes to GHCR with tags: latest, 0.3.0, 0.3
+```
+
+**When Builds Trigger:**
+
+1. ✅ **Push to release branch** - Reads VERSION file, creates tag, builds images
+2. ✅ **Push version tag** (v*.*.* ) - Builds images (for manual tagging)
+3. ✅ **Pull request to main** - Builds without pushing (validation only)
+4. ✅ **Manual trigger** - Via GitHub Actions UI
+5. ❌ **Push to main** - Does NOT trigger build (prevents constant rebuilds)
+
+**Published Images:**
+
+After successful release, images are available at:
+```
+ghcr.io/aaronsb/knowledge-graph-system/kg-api:latest
+ghcr.io/aaronsb/knowledge-graph-system/kg-api:0.3.0
+ghcr.io/aaronsb/knowledge-graph-system/kg-api:0.3
+
+ghcr.io/aaronsb/knowledge-graph-system/kg-web:latest
+ghcr.io/aaronsb/knowledge-graph-system/kg-web:0.3.0
+
+ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
+ghcr.io/aaronsb/knowledge-graph-system/kg-operator:0.3.0
+```
+
+**Version Numbering:**
+- Use semantic versioning: `MAJOR.MINOR.PATCH`
+- MAJOR: Breaking changes, incompatible API changes
+- MINOR: New features, backward-compatible
+- PATCH: Bug fixes, backward-compatible
+
+**Alternative: Manual Release Workflow**
+
+For more control, you can manually trigger the create-release workflow:
+
+```bash
+# Trigger via GitHub CLI
+gh workflow run create-release.yml -f version=patch  # 0.2.0 → 0.2.1
+gh workflow run create-release.yml -f version=minor  # 0.2.1 → 0.3.0
+gh workflow run create-release.yml -f version=major  # 0.3.0 → 1.0.0
+gh workflow run create-release.yml -f version=1.5.0  # Explicit version
+```
+
+This workflow:
+- Calculates next version (or uses explicit version)
+- Creates git tag
+- Generates changelog from commit history
+- Creates GitHub Release
+- Triggers container builds
+
+**Using Released Images:**
+
+```bash
+# Use published images instead of building locally
+cd docker
+docker-compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+
+# Or pull specific versions
+docker pull ghcr.io/aaronsb/knowledge-graph-system/kg-api:0.3.0
+```
+
 ## Key Concepts
 
 ### Concept Extraction Flow

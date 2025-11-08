@@ -2,15 +2,9 @@ name: Build and Push Containers
 
 on:
   push:
-    branches: [ main ]
+    branches: [ release ]
     tags:
       - 'v*.*.*'
-    paths:
-      - 'api/**'
-      - 'web/**'
-      - 'operator/**'
-      - 'docker/docker-compose.yml'
-      - '.github/workflows/build-containers.yml'
   pull_request:
     branches: [ main ]
     paths:
@@ -19,13 +13,48 @@ on:
       - 'operator/**'
       - 'docker/docker-compose.yml'
       - '.github/workflows/build-containers.yml'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository }}
 
 jobs:
+  create-tag:
+    name: Create Release Tag
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/release' && github.event_name == 'push'
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read VERSION file and create tag
+        id: tag
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=v${VERSION}" >> $GITHUB_OUTPUT
+
+          # Check if tag already exists
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "Tag v${VERSION} already exists, skipping creation"
+          else
+            echo "Creating tag v${VERSION}"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "v${VERSION}" -m "Release v${VERSION}"
+            git push origin "v${VERSION}"
+          fi
+
   build-api:
+    needs: [create-tag]
+    if: always() && (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped')
     name: Build API Container
     runs-on: ubuntu-latest
     permissions:
@@ -53,7 +82,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/kg-api
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/release' }}
             type=sha,prefix=sha-
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -74,6 +103,8 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-web:
+    needs: [create-tag]
+    if: always() && (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped')
     name: Build Web Container
     runs-on: ubuntu-latest
     permissions:
@@ -101,7 +132,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/kg-web
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/release' }}
             type=sha,prefix=sha-
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -122,6 +153,8 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-operator:
+    needs: [create-tag]
+    if: always() && (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped')
     name: Build Operator Container
     runs-on: ubuntu-latest
     permissions:
@@ -149,7 +182,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/kg-operator
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/release' }}
             type=sha,prefix=sha-
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
