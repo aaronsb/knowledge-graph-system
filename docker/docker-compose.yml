@@ -91,6 +91,42 @@ services:
 
     restart: unless-stopped
 
+  operator:
+    # Platform lifecycle operator (manages other containers via Docker socket)
+    build:
+      context: ..
+      dockerfile: operator/Dockerfile
+    container_name: kg-operator
+    environment:
+      # Database connection (connects to postgres container)
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_graph}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+
+      # Infrastructure secrets (for configure.py operations)
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OAUTH_SIGNING_KEY: ${OAUTH_SIGNING_KEY}
+
+    volumes:
+      # Docker socket access (manage other containers)
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Mount project workspace for development
+      - ..:/workspace
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+
+    # Keep container running for exec commands
+    command: ["tail", "-f", "/dev/null"]
+
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
