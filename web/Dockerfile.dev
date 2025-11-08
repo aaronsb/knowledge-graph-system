@@ -1,0 +1,38 @@
+# Knowledge Graph Visualizer - Development Mode
+#
+# Hot reload enabled with Vite dev server
+# Source code mounted as volumes (see docker-compose.dev.yml)
+#
+# This Dockerfile is used when starting with --dev flag:
+#   ./operator/lib/start-app.sh --dev
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install ALL dependencies (including devDependencies for Vite)
+RUN npm ci
+
+# Copy source code (will be overridden by volume mounts in dev mode)
+COPY . .
+
+# Copy dev entrypoint script
+COPY docker-entrypoint-dev.sh /docker-entrypoint-dev.sh
+RUN chmod +x /docker-entrypoint-dev.sh
+
+# Expose Vite dev server port
+EXPOSE 5173
+
+# Health check for Vite dev server
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5173/ || exit 1
+
+# Use entrypoint to generate config.js from env vars before starting Vite
+ENTRYPOINT ["/docker-entrypoint-dev.sh"]
+
+# Start Vite dev server with hot reload
+# --host 0.0.0.0 allows access from outside container
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

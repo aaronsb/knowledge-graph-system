@@ -114,9 +114,19 @@ fi
 
 # Stop and remove everything
 echo -e "${BLUE}→ Running docker-compose down...${NC}"
+
+# Try with dev override first (in case services were started with --dev)
 if [ -f "$PROJECT_ROOT/.env" ]; then
+    if [ -f "$DOCKER_DIR/docker-compose.dev.yml" ]; then
+        echo -e "  ${YELLOW}Checking dev mode containers...${NC}"
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml --env-file "$PROJECT_ROOT/.env" down -v 2>/dev/null || true
+    fi
+    # Then run regular teardown (catches any remaining)
     docker-compose --env-file "$PROJECT_ROOT/.env" down -v 2>/dev/null || true
 else
+    if [ -f "$DOCKER_DIR/docker-compose.dev.yml" ]; then
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml down -v 2>/dev/null || true
+    fi
     docker-compose down -v 2>/dev/null || true
 fi
 echo -e "${GREEN}✓ Docker Compose services stopped and removed${NC}"

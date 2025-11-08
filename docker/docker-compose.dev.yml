@@ -1,0 +1,79 @@
+# ============================================================================
+# Development Overrides for Hot Reload
+# ============================================================================
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Or use: ./operator/lib/start-app.sh --dev
+# ============================================================================
+
+services:
+  operator:
+    # Operator already has full workspace mounted (..:/workspace)
+    # Ensure scripts and configs are live-mounted for development
+    volumes:
+      # Docker socket access (already in base)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Full workspace mount for live script edits
+      - ..:/workspace
+    environment:
+      # Enable debug logging for development
+      LOG_LEVEL: DEBUG
+    networks:
+      - kg-network
+
+  api:
+    # API already configured with --reload in base Dockerfile
+    # Volume mount already exists in base docker-compose.yml
+    # Override to ensure proper mounts and rebuild
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    volumes:
+      # Mount source for hot reload
+      - ../api:/app/api
+      - ../schema:/app/schema
+    environment:
+      # Enable debug logging for development
+      LOG_LEVEL: DEBUG
+    networks:
+      - kg-network
+
+  web:
+    # Override web service to use Vite dev server instead of nginx
+    build:
+      context: ../web
+      dockerfile: Dockerfile.dev
+    image: kg-web:dev
+    container_name: kg-web-dev
+    ports: !override
+      - "0.0.0.0:3000:5173"  # Vite dev server (IPv4 only - replaces base port)
+    volumes:
+      # Mount source for hot reload
+      - ../web/src:/app/src
+      - ../web/public:/app/public
+      - ../web/index.html:/app/index.html
+      - ../web/vite.config.ts:/app/vite.config.ts
+      - ../web/tsconfig.json:/app/tsconfig.json
+      - ../web/tsconfig.node.json:/app/tsconfig.node.json
+      # Preserve node_modules from image (don't mount from host)
+      - /app/node_modules
+    environment:
+      # Vite env vars (runtime config)
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+      VITE_OAUTH_CLIENT_ID: ${VITE_OAUTH_CLIENT_ID:-kg-viz}
+      VITE_OAUTH_REDIRECT_URI: ${VITE_OAUTH_REDIRECT_URI:-http://localhost:3000/callback}
+      VITE_APP_NAME: ${VITE_APP_NAME:-Knowledge Graph}
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    healthcheck:
+      # Vite dev server health check
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5173/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - kg-network
+
+# No network definition needed - inherits from docker-compose.yml

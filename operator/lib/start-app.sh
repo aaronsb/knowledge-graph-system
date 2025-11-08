@@ -19,8 +19,48 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 DOCKER_DIR="$PROJECT_ROOT/docker"
 
-echo -e "${BLUE}Starting application containers...${NC}"
-echo ""
+# Parse arguments
+DEV_MODE=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --dev)
+            DEV_MODE=true
+            shift
+            ;;
+        --help|-h)
+            echo "Start application containers (API + web)"
+            echo ""
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --dev    Enable development mode with hot reload"
+            echo "           • API: uvicorn --reload (already enabled)"
+            echo "           • Web: Vite dev server with hot module replacement"
+            echo "           • Source code mounted as volumes"
+            echo "  --help   Show this help"
+            echo ""
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            exit 1
+            ;;
+    esac
+done
+
+if [ "$DEV_MODE" = true ]; then
+    echo -e "${BLUE}Starting application containers (${YELLOW}development mode${BLUE})...${NC}"
+    echo ""
+    echo -e "${YELLOW}Hot reload enabled:${NC}"
+    echo "  • Operator: Scripts mounted at /workspace (live edits)"
+    echo "  • API: Source mounted at /app/api (uvicorn --reload)"
+    echo "  • Web: Source mounted at /app/src (Vite HMR)"
+    echo "  • Edit files in your local repo, changes auto-reload in containers"
+    echo ""
+else
+    echo -e "${BLUE}Starting application containers (production mode)...${NC}"
+    echo ""
+fi
 
 # Check if infrastructure is running
 echo -e "${BLUE}→ Checking infrastructure...${NC}"
@@ -46,6 +86,12 @@ echo ""
 
 cd "$DOCKER_DIR"
 
+# Prepare docker-compose command with optional dev override
+COMPOSE_FILES="-f docker-compose.yml"
+if [ "$DEV_MODE" = true ]; then
+    COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.dev.yml"
+fi
+
 # Start API
 echo -e "${BLUE}→ Starting API server...${NC}"
 
@@ -53,7 +99,7 @@ echo -e "${BLUE}→ Starting API server...${NC}"
 export GIT_COMMIT=$(cd "$PROJECT_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build api
+docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" up -d --build api
 
 echo -e "${BLUE}→ Waiting for API to be healthy...${NC}"
 
@@ -73,24 +119,54 @@ for i in {1..30}; do
 done
 
 # Start web viz app (if defined in docker-compose)
-if docker-compose --env-file "$PROJECT_ROOT/.env" config --services 2>/dev/null | grep -q "^web$\|^viz$"; then
+if docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" config --services 2>/dev/null | grep -q "^web$\|^viz$"; then
     echo ""
     echo -e "${BLUE}→ Starting web visualization...${NC}"
     # Build metadata already exported above
-    docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build web 2>/dev/null || docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build viz 2>/dev/null || true
-    echo -e "${GREEN}✓ Web app starting${NC}"
+    docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" up -d --build web 2>/dev/null || docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" up -d --build viz 2>/dev/null || true
+
+    if [ "$DEV_MODE" = true ]; then
+        echo -e "${GREEN}✓ Web dev server starting (Vite HMR enabled)${NC}"
+        echo -e "${YELLOW}  Note: Web dev server runs on port 3000 (mapped from internal 5173)${NC}"
+    else
+        echo -e "${GREEN}✓ Web app starting${NC}"
+    fi
 fi
 
 echo ""
 echo -e "${GREEN}✅ Application started${NC}"
 echo ""
-echo "Services:"
-echo "  • API server: http://localhost:8000"
-echo "  • Web app: http://localhost:3000"
-echo ""
+
+if [ "$DEV_MODE" = true ]; then
+    echo -e "${YELLOW}Development Mode (Hot Reload Active)${NC}"
+    echo ""
+    echo "Services:"
+    echo "  • Operator: Configuration & management"
+    echo "    - Source: $PROJECT_ROOT → /workspace"
+    echo "    - Live script edits (operator/*, schema/*)"
+    echo "  • API server: http://localhost:8000"
+    echo "    - Source: $PROJECT_ROOT/api → /app/api"
+    echo "    - Changes auto-reload (uvicorn --reload)"
+    echo "  • Web app: http://localhost:3000"
+    echo "    - Source: $PROJECT_ROOT/web/src → /app/src"
+    echo "    - Hot Module Replacement (Vite HMR)"
+    echo ""
+    echo "Workflow:"
+    echo "  1. Edit files in $PROJECT_ROOT (operator/*, api/*, web/*)"
+    echo "  2. Changes automatically reflect in running containers"
+    echo "  3. No rebuild required!"
+    echo ""
+else
+    echo "Services:"
+    echo "  • API server: http://localhost:8000"
+    echo "  • Web app: http://localhost:3000"
+    echo ""
+fi
+
 echo "Check status:"
 echo "  docker-compose ps"
 echo ""
 echo "View logs:"
-echo "  docker-compose logs -f api"
+echo "  docker-compose $COMPOSE_FILES logs -f api"
+echo "  docker-compose $COMPOSE_FILES logs -f web"
 echo ""
