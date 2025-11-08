@@ -258,13 +258,15 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # 1. ENCRYPTION_KEY (Fernet key for encrypting API keys at rest)
+# Fernet keys are 32 random bytes, URL-safe base64 encoded
+# Using stdlib only (no cryptography package needed)
 generate_secret "ENCRYPTION_KEY" \
-    "python3 -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"" \
+    'python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())"' \
     "Master encryption key for API keys (ADR-031)"
 
 # 2. OAUTH_SIGNING_KEY (for signing JWT tokens)
 generate_secret "OAUTH_SIGNING_KEY" \
-    "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
+    'python3 -c "import secrets; print(secrets.token_hex(32))"' \
     "OAuth 2.0 access token signing key (ADR-054)"
 
 # 3. POSTGRES_PASSWORD (database admin password)
@@ -288,13 +290,13 @@ if [ "$DEV_MODE" = true ]; then
 else
     # Prod mode: generate strong password
     generate_secret "POSTGRES_PASSWORD" \
-        "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"" \
+        'python3 -c "import secrets; print(secrets.token_urlsafe(32))"' \
         "PostgreSQL admin password"
 fi
 
 # 4. GARAGE_RPC_SECRET (for Garage cluster coordination)
 generate_secret "GARAGE_RPC_SECRET" \
-    "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
+    'python3 -c "import secrets; print(secrets.token_hex(32))"' \
     "Garage cluster RPC secret"
 
 echo ""
