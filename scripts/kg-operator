@@ -1,0 +1,268 @@
+#!/bin/bash
+set -e
+
+# ============================================================================
+# kg-operator
+# Knowledge Graph System - Operator CLI
+# ============================================================================
+#
+# PURPOSE:
+# Single user-facing interface for all platform lifecycle operations.
+# Delegates to internal scripts in scripts/lib/ for implementation.
+#
+# ARCHITECTURE:
+# This follows the Kubernetes operator pattern - one CLI that manages
+# the entire platform lifecycle. Users never touch internal scripts.
+#
+# USAGE:
+#   kg-operator init [--dev]                  # Initialize infrastructure secrets
+#   kg-operator start [--infra-only]          # Start services
+#   kg-operator stop [--all]                  # Stop services
+#   kg-operator config <subcommand>           # Configure application
+#   kg-operator status                        # Show system status
+#   kg-operator backup [--output <file>]      # Backup database
+#   kg-operator restore <file>                # Restore database
+#
+# ============================================================================
+
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LIB_DIR="$SCRIPT_DIR/lib"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+# Show help
+show_help() {
+    echo -e "${BLUE}${BOLD}kg-operator${NC} - Knowledge Graph System Operator"
+    echo ""
+    echo "Single interface for all platform lifecycle operations."
+    echo ""
+    echo -e "${BOLD}Commands:${NC}"
+    echo ""
+    echo -e "  ${BOLD}init${NC} [--dev]"
+    echo "      Initialize infrastructure secrets (ENCRYPTION_KEY, OAUTH_SIGNING_KEY, etc.)"
+    echo "      --dev: Use development mode (weak passwords)"
+    echo ""
+    echo -e "  ${BOLD}start${NC} [--infra-only] [--app-only]"
+    echo "      Start platform services"
+    echo "      --infra-only: Only start postgres + garage"
+    echo "      --app-only: Only start api + viz (assumes infra running)"
+    echo ""
+    echo -e "  ${BOLD}stop${NC} [--all]"
+    echo "      Stop platform services"
+    echo "      --all: Also stop infrastructure (postgres, garage)"
+    echo ""
+    echo -e "  ${BOLD}config${NC} <subcommand> [options]"
+    echo "      Configure application settings (stored in database)"
+    echo ""
+    echo "      Subcommands:"
+    echo "        admin [--username <name>] [--password <pass>]"
+    echo "        ai-provider <openai|anthropic|ollama> [--model <model>]"
+    echo "        embedding <openai|local> [--model <model>]"
+    echo "        api-key <provider> [--key <key>]"
+    echo "        garage"
+    echo "        status"
+    echo ""
+    echo -e "  ${BOLD}status${NC}"
+    echo "      Show system status (containers, config, health)"
+    echo ""
+    echo -e "  ${BOLD}backup${NC} [--output <file>]"
+    echo "      Backup database to file"
+    echo ""
+    echo -e "  ${BOLD}restore${NC} <file>"
+    echo "      Restore database from backup file"
+    echo ""
+    echo -e "  ${BOLD}help${NC}"
+    echo "      Show this help message"
+    echo ""
+    echo -e "${BOLD}Examples:${NC}"
+    echo ""
+    echo "  # Initial setup"
+    echo "  kg-operator init --dev"
+    echo "  kg-operator start --infra-only"
+    echo "  kg-operator config admin --password Password1!"
+    echo "  kg-operator config ai-provider openai"
+    echo "  kg-operator start --app-only"
+    echo ""
+    echo "  # Daily workflow"
+    echo "  kg-operator start"
+    echo "  kg-operator status"
+    echo "  kg-operator stop"
+    echo ""
+}
+
+# Command: init
+cmd_init() {
+    echo -e "${BLUE}Initializing infrastructure secrets...${NC}"
+    echo ""
+    exec "$LIB_DIR/init-secrets.sh" "$@"
+}
+
+# Command: start
+cmd_start() {
+    local INFRA_ONLY=false
+    local APP_ONLY=false
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --infra-only)
+                INFRA_ONLY=true
+                shift
+                ;;
+            --app-only)
+                APP_ONLY=true
+                shift
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                exit 1
+                ;;
+        esac
+    done
+
+    if [ "$INFRA_ONLY" = true ]; then
+        echo -e "${BLUE}Starting infrastructure only (postgres + garage)...${NC}"
+        exec "$LIB_DIR/start-infra.sh"
+    elif [ "$APP_ONLY" = true ]; then
+        echo -e "${BLUE}Starting application only (api + viz)...${NC}"
+        exec "$LIB_DIR/start-app.sh"
+    else
+        echo -e "${BLUE}Starting all services...${NC}"
+        "$LIB_DIR/start-infra.sh"
+        echo ""
+        exec "$LIB_DIR/start-app.sh"
+    fi
+}
+
+# Command: stop
+cmd_stop() {
+    echo -e "${BLUE}Stopping services...${NC}"
+    exec "$LIB_DIR/stop.sh" "$@"
+}
+
+# Command: config
+cmd_config() {
+    if [ $# -eq 0 ]; then
+        echo -e "${RED}Error: config requires a subcommand${NC}"
+        echo ""
+        echo "Available subcommands:"
+        echo "  admin, ai-provider, embedding, api-key, garage, status"
+        echo ""
+        echo "Run 'kg-operator help' for more details"
+        exit 1
+    fi
+
+    local subcommand=$1
+    shift
+
+    echo -e "${BLUE}Configuring: $subcommand${NC}"
+    echo ""
+    exec python3 "$LIB_DIR/configure.py" "$subcommand" "$@"
+}
+
+# Command: status
+cmd_status() {
+    echo -e "${BLUE}${BOLD}Knowledge Graph System - Status${NC}"
+    echo ""
+
+    # Check Docker
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}✗ Docker not installed${NC}"
+        exit 1
+    fi
+
+    # Check containers
+    echo -e "${BOLD}Services:${NC}"
+
+    for service in kg-postgres-dev kg-garage-dev kg-api-dev kg-viz-dev; do
+        if docker ps --format '{{.Names}}' | grep -q "^$service$"; then
+            local status=$(docker ps --format '{{.Status}}' --filter name=$service)
+            if echo "$status" | grep -q "healthy"; then
+                echo -e "  ${GREEN}✓${NC} $service (healthy)"
+            else
+                echo -e "  ${YELLOW}○${NC} $service (starting...)"
+            fi
+        else
+            echo -e "  ${RED}✗${NC} $service (not running)"
+        fi
+    done
+
+    echo ""
+
+    # Check configuration (delegate to Python)
+    if docker ps --format '{{.Names}}' | grep -q "^kg-postgres-dev$"; then
+        echo -e "${BOLD}Configuration:${NC}"
+        python3 "$LIB_DIR/configure.py" status 2>/dev/null || echo -e "  ${YELLOW}⚠${NC} Unable to check config"
+    fi
+}
+
+# Command: backup
+cmd_backup() {
+    echo -e "${BLUE}Backing up database...${NC}"
+    exec "$LIB_DIR/backup-db.sh" "$@"
+}
+
+# Command: restore
+cmd_restore() {
+    if [ $# -eq 0 ]; then
+        echo -e "${RED}Error: restore requires a backup file${NC}"
+        echo "Usage: kg-operator restore <backup-file>"
+        exit 1
+    fi
+
+    echo -e "${BLUE}Restoring database from $1...${NC}"
+    exec "$LIB_DIR/restore-db.sh" "$@"
+}
+
+# Main command router
+main() {
+    if [ $# -eq 0 ]; then
+        show_help
+        exit 0
+    fi
+
+    local command=$1
+    shift
+
+    case $command in
+        init)
+            cmd_init "$@"
+            ;;
+        start)
+            cmd_start "$@"
+            ;;
+        stop)
+            cmd_stop "$@"
+            ;;
+        config)
+            cmd_config "$@"
+            ;;
+        status)
+            cmd_status "$@"
+            ;;
+        backup)
+            cmd_backup "$@"
+            ;;
+        restore)
+            cmd_restore "$@"
+            ;;
+        help|--help|-h)
+            show_help
+            ;;
+        *)
+            echo -e "${RED}Unknown command: $command${NC}"
+            echo ""
+            echo "Run 'kg-operator help' for usage information"
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
