@@ -119,11 +119,11 @@ kg-operator restore backup.sql      # Restore from backup (via container)
 **How delegation works:**
 
 ```bash
-# scripts/kg-operator (shell wrapper)
+# operator/kg-operator (shell wrapper)
 case $command in
     init)
         # Run init-secrets.sh on host (needs to write .env)
-        exec scripts/lib/init-secrets.sh "$@"
+        exec operator/lib/init-secrets.sh "$@"
         ;;
     config)
         # Delegate to operator container
@@ -162,28 +162,33 @@ Docker Network: knowledge-graph-system
 4. **Clean separation** - Operator is infrastructure, not application
 5. **Future: nginx** - Easy to add reverse proxy to the cluster
 
-**Internal Implementation:**
+**Repository Structure (Post-Restructure):**
 
 ```
-scripts/
-├── kg-operator              # 👈 User-facing wrapper (delegates to container)
-│
-operator/                    # Operator container source
-├── Dockerfile
-├── configure.py             # Python tool (database config only)
-├── lib/
-│   ├── start-infra.sh       # Start postgres + garage
-│   ├── start-app.sh         # Start api + viz (after config)
-│   ├── stop.sh              # Clean shutdown
-│   ├── backup-db.sh
-│   └── restore-db.sh
-└── requirements.txt         # Python dependencies
-
-scripts/
-├── development/             # Developer tools (separate)
-│   └── test/
-│
-└── diagnostics/             # Debugging tools (separate)
+/
+├── api/                     # FastAPI server (was src/)
+├── operator/                # Platform lifecycle (was scripts/)
+│   ├── kg-operator          # 👈 User-facing CLI wrapper
+│   ├── lib/                 # Internal implementation (hidden from users)
+│   │   ├── init-secrets.sh  # Generate infrastructure secrets
+│   │   ├── start-infra.sh   # Start postgres + garage
+│   │   ├── start-app.sh     # Start api + viz (after config)
+│   │   ├── stop.sh          # Clean shutdown
+│   │   ├── backup-db.sh
+│   │   └── restore-db.sh
+│   ├── configure.py         # Python database config tool
+│   ├── Dockerfile           # Operator container (future)
+│   ├── requirements.txt     # Python dependencies
+│   ├── development/         # Developer tools
+│   │   └── test/
+│   └── diagnostics/         # Debugging tools
+├── cli/                     # kg CLI + MCP server (was client/)
+├── web/                     # React visualization (was viz-app/)
+├── docker/                  # Docker compose files
+│   ├── docker-compose.yml
+│   └── docker-compose.ollama.yml
+├── schema/                  # Database schemas & migrations
+└── docs/                    # Documentation
 ```
 
 ### Configuration Responsibility Boundaries
@@ -210,9 +215,9 @@ scripts/
 **Python tool that ONLY talks to the database:**
 
 ```python
-# scripts/lib/configure.py
+# operator/configure.py
 import psycopg2
-from src.api.lib.encryption import encrypt_credential
+from api.api.lib.encryption import encrypt_credential
 
 class Operator:
     def __init__(self):
@@ -263,13 +268,13 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY src/ ./src/
+COPY api/ ./api/
 COPY schema/ ./schema/
 
 # No secrets in image!
 # All secrets come from environment at runtime
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0"]
+CMD ["uvicorn", "api.api.main:app", "--host", "0.0.0.0"]
 ```
 
 **docker-compose.yml:**
@@ -291,8 +296,8 @@ services:
 
 **API server reads config at startup:**
 ```python
-# src/api/main.py
-from src.api.lib.config import load_config
+# api/api/main.py
+from api.api.lib.config import load_config
 
 # Infrastructure secrets from environment
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")  # For decrypting API keys
@@ -338,35 +343,37 @@ api_key = decrypt(api_key_encrypted, ENCRYPTION_KEY)  # Decrypt
 ### Migration Path
 
 **Deprecated (to be removed):**
-- ❌ `scripts/services/start-*.sh` (8 files) → Use `kg-operator start`
-- ❌ `scripts/setup/bootstrap.sh` → Use `kg-operator init && kg-operator start`
-- ❌ `scripts/setup/initialize-platform.sh` → Use `kg-operator config`
-- ❌ `scripts/admin/set-admin-password.sh` → Use `kg-operator config admin`
-- ❌ `scripts/garage/init-garage.sh` → Use `kg-operator config garage`
+- ❌ `operator/services/start-*.sh` (8 files) → Use `kg-operator start`
+- ❌ `operator/setup/bootstrap.sh` → Use `kg-operator init && kg-operator start`
+- ❌ `operator/setup/initialize-platform.sh` → Use `kg-operator config`
+- ❌ `operator/admin/set-admin-password.sh` → Use `kg-operator config admin`
+- ❌ `operator/garage/init-garage.sh` → Use `kg-operator config garage`
 
 **Kept (developer tools):**
-- ✅ `scripts/development/test/` - Testing tools
-- ✅ `scripts/diagnostics/` - Debugging tools (monitor-db.sh, garage-status.sh)
+- ✅ `operator/development/test/` - Testing tools
+- ✅ `operator/diagnostics/` - Debugging tools (monitor-db.sh, garage-status.sh)
 
 **Moved to internal lib:**
-- 📦 `scripts/database/backup-database.sh` → `scripts/lib/backup-db.sh`
-- 📦 `scripts/database/restore-database.sh` → `scripts/lib/restore-db.sh`
-- 📦 `scripts/database/migrate-db.sh` → Automatic (postgres runs on startup)
+- 📦 `operator/database/backup-database.sh` → `operator/lib/backup-db.sh`
+- 📦 `operator/database/restore-database.sh` → `operator/lib/restore-db.sh`
+- 📦 `operator/database/migrate-db.sh` → Automatic (postgres runs on startup)
 
 ### Rollout Plan
 
 **Phase 1: Create operator infrastructure** ✅
-- [x] Create `scripts/kg-operator` CLI
-- [x] Create `scripts/lib/init-secrets.sh`
-- [ ] Create `scripts/lib/configure.py`
-- [ ] Create `scripts/lib/start-infra.sh`
-- [ ] Create `scripts/lib/start-app.sh`
-- [ ] Create `scripts/lib/stop.sh`
+- [x] Create `operator/kg-operator` CLI
+- [x] Create `operator/lib/init-secrets.sh`
+- [x] Restructure repository (src→api, scripts→operator, client→cli, viz-app→web)
+- [ ] Create `operator/configure.py` (Python database config tool)
+- [ ] Create `operator/lib/start-infra.sh`
+- [ ] Create `operator/lib/start-app.sh`
+- [ ] Create `operator/lib/stop.sh`
 
 **Phase 2: Update Docker builds**
-- [ ] Update `Dockerfile.api` to be clean (no secrets baked in)
-- [ ] Update `docker-compose.yml` to use environment variables
-- [ ] Update `viz-app/Dockerfile` to be clean
+- [ ] Create `operator/Dockerfile` (operator container)
+- [ ] Update `docker/docker-compose.yml` to include operator service
+- [ ] Create clean API Dockerfile (no secrets baked in)
+- [ ] Update `web/Dockerfile` to be clean
 
 **Phase 3: Documentation**
 - [ ] Update `docs/guides/GETTING-STARTED.md` to use kg-operator
