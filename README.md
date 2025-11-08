@@ -185,6 +185,29 @@ Vocabulary patterns emerge over time. After 100 documents, the system learns "*_
 
 ## Quick Start
 
+### TL;DR - Automated Setup
+
+**Get started in 5 minutes with one command:**
+
+```bash
+./quickstart.sh
+```
+
+This interactive script will:
+- Generate infrastructure secrets
+- Start all Docker services
+- Configure the system with development defaults
+- Install the kg CLI tool
+- Prompt for your OpenAI API key
+
+⚠️ **Uses insecure defaults** (admin password: `Password1!`) - change immediately after setup!
+
+📚 **For manual setup or detailed explanation**, see the [complete Quick Start Guide](docs/guides/QUICKSTART.md).
+
+---
+
+### Manual Setup
+
 **Prerequisites:** Docker or Podman with Compose, (optional) Node.js 18+ for kg CLI
 
 ```bash
