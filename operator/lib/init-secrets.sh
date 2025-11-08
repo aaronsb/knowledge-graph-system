@@ -259,7 +259,7 @@ fi
 
 # 1. ENCRYPTION_KEY (Fernet key for encrypting API keys at rest)
 generate_secret "ENCRYPTION_KEY" \
-    'python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"' \
+    "python3 -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"" \
     "Master encryption key for API keys (ADR-031)"
 
 # 2. OAUTH_SIGNING_KEY (for signing JWT tokens)
@@ -269,7 +269,7 @@ if command -v openssl &> /dev/null; then
         "OAuth 2.0 access token signing key (ADR-054)"
 else
     generate_secret "OAUTH_SIGNING_KEY" \
-        'python3 -c "import secrets; print(secrets.token_hex(32))"' \
+        "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
         "OAuth 2.0 access token signing key (ADR-054)"
 fi
 
@@ -299,7 +299,7 @@ else
             "PostgreSQL admin password"
     else
         generate_secret "POSTGRES_PASSWORD" \
-            'python3 -c "import secrets; print(secrets.token_urlsafe(32))"' \
+            "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"" \
             "PostgreSQL admin password"
     fi
 fi
@@ -311,7 +311,7 @@ if command -v openssl &> /dev/null; then
         "Garage cluster RPC secret"
 else
     generate_secret "GARAGE_RPC_SECRET" \
-        'python3 -c "import secrets; print(secrets.token_hex(32))"' \
+        "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
         "Garage cluster RPC secret"
 fi
 
