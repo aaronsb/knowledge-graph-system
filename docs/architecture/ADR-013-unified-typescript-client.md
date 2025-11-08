@@ -378,9 +378,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
    - Retrieves original source images for verification
 ```
 
-**Removed Tools** (Claude doesn't need these):
-- `get_database_stats`, `get_database_info`, `get_database_health`
-- `get_api_health`, `get_system_status`
+**MCP Resources** (5 resources for status/health queries):
+
+Status and health information moved to MCP resources for on-demand querying with fresh data:
+
+```typescript
+1. database/stats      - Concept counts, relationship counts, ontology stats
+2. database/info       - PostgreSQL version, Apache AGE extension details
+3. database/health     - Database connection status, graph availability
+4. system/status       - Job scheduler status, resource usage
+5. api/health          - API server health and timestamp
+```
+
+**Resources vs Tools**: Resources are queried on-demand for fresh data and don't consume tool budget in Claude's context. Perfect for status/health information that changes frequently.
 
 **Rich Output Preserved**: All formatters (`formatSearchResults`, `formatConceptDetails`, `formatConnectionPaths`, etc.) remain unchanged. Tools still return:
 - Grounding strength scores
