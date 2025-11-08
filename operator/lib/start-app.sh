@@ -53,7 +53,7 @@ echo -e "${BLUE}→ Starting API server...${NC}"
 export GIT_COMMIT=$(cd "$PROJECT_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-docker-compose --env-file "$PROJECT_ROOT/.env" up -d api
+docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build api
 
 echo -e "${BLUE}→ Waiting for API to be healthy...${NC}"
 
@@ -77,7 +77,7 @@ if docker-compose --env-file "$PROJECT_ROOT/.env" config --services 2>/dev/null 
     echo ""
     echo -e "${BLUE}→ Starting web visualization...${NC}"
     # Build metadata already exported above
-    docker-compose --env-file "$PROJECT_ROOT/.env" up -d web 2>/dev/null || docker-compose --env-file "$PROJECT_ROOT/.env" up -d viz 2>/dev/null || true
+    docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build web 2>/dev/null || docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build viz 2>/dev/null || true
     echo -e "${GREEN}✓ Web app starting${NC}"
 fi
 

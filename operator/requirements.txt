@@ -1,14 +1,20 @@
 # Operator minimal dependencies
 # For database configuration and credential management
+# Last updated: 2025-11-08
 
 # Database access
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.11
 
 # Password hashing (for admin user creation)
-bcrypt==4.1.2
+bcrypt==5.0.0
 
 # Encryption (for API key storage via api.api.lib.encrypted_keys)
-cryptography==42.0.2
+cryptography==46.0.3
 
 # Python dotenv (for reading .env files in diagnostics)
-python-dotenv==1.0.1
+python-dotenv==1.2.1
+
+# AI provider SDKs (for API key validation in configure.py)
+httpx==0.27.2  # Pinned to 0.27.x (0.28.x removed proxies parameter, breaks openai SDK)
+openai==2.7.1  # Latest stable
+anthropic==0.72.0  # Latest stable

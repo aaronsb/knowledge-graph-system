@@ -270,16 +270,16 @@ fi
 if [ "$DEV_MODE" = true ]; then
     # Dev mode: use simple password
     if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD"; then
-        echo -e "${YELLOW}→ Setting POSTGRES_PASSWORD (dev mode)...${NC}"
+        echo -e "${YELLOW}→ Setting POSTGRES_PASSWORD (dev mode - using simple password)...${NC}"
         update_env_file "POSTGRES_PASSWORD" "password" "PostgreSQL admin password"
-        echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - set to 'password' (dev mode)"
+        echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - set to \"password\" for easy local development"
     else
         echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - already configured"
     fi
 else
     # Prod mode: generate strong password
     if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD"; then
-        echo -e "${YELLOW}→ Generating POSTGRES_PASSWORD...${NC}"
+        echo -e "${YELLOW}→ Generating POSTGRES_PASSWORD (production mode - strong cryptographic token)...${NC}"
         VALUE=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
         update_env_file "POSTGRES_PASSWORD" "$VALUE" "PostgreSQL admin password"
         echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - generated and saved"

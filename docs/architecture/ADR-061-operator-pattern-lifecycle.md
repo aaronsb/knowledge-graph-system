@@ -343,15 +343,18 @@ api_key = decrypt(api_key_encrypted, ENCRYPTION_KEY)  # Decrypt
 ### Migration Path
 
 **Deprecated (to be removed):**
-- ❌ `operator/services/start-*.sh` (8 files) → Use `kg-operator start`
 - ❌ `operator/setup/bootstrap.sh` → Use `kg-operator init && kg-operator start`
 - ❌ `operator/setup/initialize-platform.sh` → Use `kg-operator config`
 - ❌ `operator/admin/set-admin-password.sh` → Use `kg-operator config admin`
 - ❌ `operator/garage/init-garage.sh` → Use `kg-operator config garage`
 
+**Moved to development tools:**
+- 📦 `operator/services/start-*.sh` (8 files) → `scripts/development/local/run-*-local.sh` (for manual debugging only)
+
 **Kept (developer tools):**
 - ✅ `operator/development/test/` - Testing tools
 - ✅ `operator/diagnostics/` - Debugging tools (monitor-db.sh, garage-status.sh)
+- ✅ `scripts/development/local/` - Manual service scripts for deep debugging (not for normal workflow)
 
 **Moved to internal lib:**
 - 📦 `operator/database/backup-database.sh` → `operator/lib/backup-db.sh`

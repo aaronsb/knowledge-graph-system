@@ -197,7 +197,7 @@ export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 if docker ps --format '{{.Names}}' | grep -q "^kg-operator$"; then
     echo -e "${GREEN}✓ Operator already running${NC}"
 else
-    docker-compose --env-file "$PROJECT_ROOT/.env" up -d operator
+    docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build operator
 
     # Wait for operator to be ready
     echo -e "${BLUE}  Waiting for operator to start...${NC}"

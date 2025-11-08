@@ -251,15 +251,52 @@ class OperatorConfig:
         if not key:
             key = getpass.getpass(f"Enter API key for {provider}: ")
 
-        # Import encryption (from api module)
+        # Import required modules
         try:
             from api.api.lib.encrypted_keys import EncryptedKeyStore
             from api.api.lib.age_client import AGEClient
+            from api.api.lib.ai_providers import OpenAIProvider, AnthropicProvider
         except ImportError as e:
-            print(f"❌ Cannot import encryption modules: {e}")
+            print(f"❌ Cannot import required modules: {e}")
             print("   Make sure PYTHONPATH includes api directory")
             return False
 
+        # Validate the API key before storing
+        print(f"🔍 Validating {provider} API key...")
+        try:
+            if provider.lower() == "openai":
+                validator = OpenAIProvider(api_key=key)
+            elif provider.lower() == "anthropic":
+                validator = AnthropicProvider(api_key=key)
+            else:
+                print(f"⚠️  Warning: Validation not implemented for provider '{provider}'")
+                print("   Key will be stored without validation.")
+                validator = None
+
+            if validator:
+                if not validator.validate_api_key():
+                    print(f"❌ API key validation failed for {provider}")
+                    print("   The key was rejected by the provider's API.")
+                    print("   Please check:")
+                    print("     1. Key is correct (no extra spaces or characters)")
+                    print("     2. Key has not been revoked")
+                    print("     3. Account is active and in good standing")
+                    return False
+                print(f"✅ API key validated successfully")
+
+        except ImportError as e:
+            print(f"❌ Failed to import provider module: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+        except Exception as e:
+            print(f"❌ API key validation failed: {e}")
+            print("   Error details:")
+            import traceback
+            traceback.print_exc()
+            return False
+
+        # Store the validated key
         try:
             client = AGEClient()
             conn = client.pool.getconn()

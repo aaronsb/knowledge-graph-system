@@ -27,24 +27,22 @@ The system uses 5 core containers:
 ```bash
 # Generate encryption keys, OAuth signing key, database password
 ./operator/lib/init-secrets.sh --dev
-
-# What this does:
-# - Creates .env file with cryptographically secure secrets:
-#   - ENCRYPTION_KEY (Fernet key for encrypting API keys at rest)
-#   - OAUTH_SIGNING_KEY (64-char hex for JWT tokens)
-#   - POSTGRES_PASSWORD (URL-safe base64 for database)
-#   - GARAGE_RPC_SECRET (64-char hex for Garage cluster)
-#
-# - Uses CORRECT libraries:
-#   ✓ cryptography.fernet.Fernet.generate_key() for ENCRYPTION_KEY
-#   ✓ openssl rand -hex 32 or secrets.token_hex(32) for signing keys
-#   ✓ openssl rand -base64 32 or secrets.token_urlsafe(32) for passwords
-#
-# - Interactive prompting:
-#   - First run: Generates all secrets
-#   - Subsequent runs: Prompts to keep or regenerate
-#   - Automated scripts: Use -y flag to skip prompts
 ```
+
+**What the `--dev` flag does:**
+- Sets `POSTGRES_PASSWORD="password"` (simple password for easy local development)
+- All other secrets are still cryptographically secure random tokens
+
+**Without `--dev` (production mode):**
+- All secrets including `POSTGRES_PASSWORD` are strong cryptographic tokens
+- Use this for production deployments
+
+**What secrets are generated:**
+- `ENCRYPTION_KEY` - Fernet key for encrypting API keys at rest
+- `OAUTH_SIGNING_KEY` - JWT token signing key (64-char hex)
+- `POSTGRES_PASSWORD` - Database password ("password" in dev mode, or secure token in prod)
+- `GARAGE_RPC_SECRET` - Garage cluster coordination secret (64-char hex)
+- `INTERNAL_KEY_SERVICE_SECRET` - Internal service authorization token
 
 **For automated install scripts:**
 ```bash
@@ -67,9 +65,12 @@ Mode: Development (weak passwords allowed)
 ✓ ENCRYPTION_KEY - generated and saved
 → Generating OAUTH_SIGNING_KEY...
 ✓ OAUTH_SIGNING_KEY - generated and saved
-✓ POSTGRES_PASSWORD - already configured
+→ Setting POSTGRES_PASSWORD (dev mode - using simple password)...
+✓ POSTGRES_PASSWORD - set to "password" for easy local development
 → Generating GARAGE_RPC_SECRET...
 ✓ GARAGE_RPC_SECRET - generated and saved
+→ Generating INTERNAL_KEY_SERVICE_SECRET...
+✓ INTERNAL_KEY_SERVICE_SECRET - generated and saved
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✓ Infrastructure secrets ready
@@ -190,13 +191,18 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 ## Step 3: Configure Admin User
 
 ```bash
-# Create admin user in database
+# Create admin user in database (interactive)
 docker exec -it kg-operator python /workspace/operator/configure.py admin
 
 # When prompted:
 # - Username: admin (default)
 # - Password: <your-secure-password>
 # - Confirm password: <same-password>
+```
+
+**Non-interactive mode (for scripts):**
+```bash
+docker exec kg-operator python /workspace/operator/configure.py admin --password "your-secure-password"
 ```
 
 **Expected output:** ✅ Created admin user: admin
@@ -241,7 +247,7 @@ Example:
   docker exec kg-operator python /workspace/operator/configure.py embedding 2
 ```
 
-**Then activate:**
+**Then observe the activated embedder:**
 ```
 📝 Current: [1] openai / text-embedding-3-small
 ✅ Activated: [2] local / nomic-ai/nomic-embed-text-v1.5 (768 dims, float16) (cpu)
@@ -250,7 +256,7 @@ Example:
 ## Step 6: Store OpenAI API Key (Encrypted)
 
 ```bash
-# Store encrypted OpenAI API key
+# Store encrypted OpenAI API key (interactive)
 docker exec -it kg-operator python /workspace/operator/configure.py api-key openai
 
 # When prompted:
@@ -258,7 +264,19 @@ docker exec -it kg-operator python /workspace/operator/configure.py api-key open
 # (Key will be encrypted using ENCRYPTION_KEY from .env)
 ```
 
-**Expected output:** ✅ Stored encrypted API key for: openai
+**Non-interactive mode (for scripts):**
+```bash
+docker exec kg-operator python /workspace/operator/configure.py api-key openai --key "sk-..."
+```
+
+**Expected output:**
+```
+🔍 Validating openai API key...
+✅ API key validated successfully
+✅ Stored encrypted API key for: openai
+```
+
+**Note:** The key is validated against the provider's API before storage. If validation fails, the key will not be stored.
 
 ## Step 7: Start Application Containers (API + Web)
 
