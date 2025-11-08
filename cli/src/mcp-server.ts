@@ -18,6 +18,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { createClientFromEnv, KnowledgeGraphClient } from './api/client.js';
 import { AuthClient } from './lib/auth/auth-client.js';
+import { McpAllowlistManager } from './lib/mcp-allowlist.js';
 import {
   formatSearchResults,
   formatConceptDetails,
@@ -448,6 +449,12 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
         name: 'API Health',
         description: 'API server health and timestamp',
         mimeType: 'application/json'
+      },
+      {
+        uri: 'mcp/allowed-paths',
+        name: 'MCP File Access Allowlist',
+        description: 'Path allowlist configuration for secure file/directory ingestion (ADR-062)',
+        mimeType: 'application/json'
       }
     ]
   };
@@ -510,6 +517,42 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
             uri,
             mimeType: 'application/json',
             text: JSON.stringify(result, null, 2)
+          }]
+        };
+      }
+
+      case 'mcp/allowed-paths': {
+        const manager = new McpAllowlistManager();
+        const config = manager.getConfig();
+
+        if (!config) {
+          return {
+            contents: [{
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify({
+                configured: false,
+                message: 'Allowlist not initialized. Run: kg mcp-config init-allowlist',
+                hint: 'Initialize with default safe patterns for .md, .txt, .pdf, .png, .jpg files'
+              }, null, 2)
+            }]
+          };
+        }
+
+        return {
+          contents: [{
+            uri,
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              configured: true,
+              version: config.version,
+              allowed_directories: config.allowed_directories,
+              allowed_patterns: config.allowed_patterns,
+              blocked_patterns: config.blocked_patterns,
+              max_file_size_mb: config.max_file_size_mb,
+              max_files_per_directory: config.max_files_per_directory,
+              config_path: manager.getAllowlistPath()
+            }, null, 2)
           }]
         };
       }
