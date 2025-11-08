@@ -1,364 +1,438 @@
 # Deployment Guide
 
-Comprehensive guide for deploying the Knowledge Graph system in various environments.
+Comprehensive guide for deploying the Knowledge Graph system using the operator architecture (ADR-061).
 
 ## Overview
 
-The Knowledge Graph system can be deployed in three main ways:
+The Knowledge Graph system uses a **containerized operator architecture** where all infrastructure runs in Docker containers and configuration is managed through a dedicated operator container. This approach works identically for development and production deployments.
 
-1. **Development** - Local source-based deployment with hot-reload
-2. **Local Production** - Production-like deployment from local builds
-3. **Remote Production** - End-user deployment from GitHub releases
+**Three deployment scenarios:**
 
-## Quick Start
-
-### For Developers
-```bash
-# Clone and setup
-git clone https://github.com/aaronsb/knowledge-graph-system.git
-cd knowledge-graph-system
-
-# Build and deploy locally
-./build/local/build-all.sh
-./build/deploy/local/deploy-all.sh
-
-# Verify
-kg health
-```
-
-### For End Users
-```bash
-# Install from GitHub release (future)
-curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/build/install/install-remote.sh | bash
-
-# Verify
-kg health
-```
+1. **Local Development** - Build from source, use `--dev` secrets, local configuration
+2. **Local Production** - Build from source, use production secrets, persistent volumes
+3. **Remote Production** - Use pre-built GHCR images, production secrets, orchestrated deployment
 
 ## Architecture
 
-The system consists of five components:
+The system consists of five core containers:
 
 ```
-┌──────────────┐
-│  CLI Tool    │  (TypeScript binary)
-└───────┬──────┘
-        │ HTTP
-┌───────▼──────┐     ┌──────────────┐
-│  API Server  │────►│   Database   │
-│   (Python)   │     │ PostgreSQL + │
-└───────┬──────┘     │  Apache AGE  │
-        │            └──────────────┘
-┌───────▼──────┐
-│ MCP Server   │  (TypeScript binary)
-└──────────────┘
-
-┌──────────────┐
-│ Visualization│  (React/Vue + Nginx)
-│    Server    │  [Future]
-└──────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                    Docker Containers                     │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌─────────────┐   ┌─────────────┐   ┌──────────────┐  │
+│  │  PostgreSQL │   │   Garage    │   │   Operator   │  │
+│  │  + AGE      │   │  S3 Storage │   │  (Config)    │  │
+│  └─────────────┘   └─────────────┘   └──────────────┘  │
+│                                                          │
+│  ┌─────────────┐   ┌─────────────┐                     │
+│  │  API Server │   │   Web UI    │                     │
+│  │  (FastAPI)  │   │   (React)   │                     │
+│  └─────────────┘   └─────────────┘                     │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+         ↑
+    kg CLI (optional)
 ```
 
-## Deployment Methods
+## Prerequisites
 
-### 1. Development Deployment
+### All Deployments
+- Docker or Podman with Docker Compose
+- OpenAI API key (or use local embeddings with Ollama)
 
-**Use case:** Active development, testing changes
+### Optional
+- Node.js 18+ for kg CLI tool
+- Ollama for local LLM inference
 
-**Components:**
-- Source code mounted directly
-- Hot-reload enabled
-- Debug logging
-- Development database (no persistence guarantees)
+## Deployment Method 1: Local Development
 
-**Setup:**
+**Use case:** Active development, testing, rapid iteration
+
+**Characteristics:**
+- Build images locally from source
+- Simple passwords (`--dev` mode)
+- Hot-reload for code changes (via rebuild scripts)
+- All services on localhost
+- No persistent volume guarantees
+
+### Setup
+
 ```bash
-# Build from source
-cd build/local
-./build-all.sh --verbose
+# 1. Clone repository
+git clone https://github.com/aaronsb/knowledge-graph-system.git
+cd knowledge-graph-system
 
-# Deploy with hot-reload
-cd ../deploy/local
-./deploy-all.sh
+# 2. Generate development secrets
+./operator/lib/init-secrets.sh --dev
 
-# Services start in background
-# API logs: logs/api_*.log
-# Database logs: docker logs knowledge-graph-postgres
-```
+# 3. Start infrastructure
+./operator/lib/start-infra.sh
 
-**Configuration:**
-Edit `.env` in project root:
-```bash
-# .env
-POSTGRES_USER=kg_user
-POSTGRES_PASSWORD=dev_password
-POSTGRES_DB=knowledge_graph
+# 4. Configure platform
+docker exec -it kg-operator python /workspace/operator/configure.py admin
+docker exec kg-operator python /workspace/operator/configure.py ai-provider openai --model gpt-4o
+docker exec kg-operator python /workspace/operator/configure.py embedding 2
+docker exec -it kg-operator python /workspace/operator/configure.py api-key openai
 
-KG_API_PORT=8000
-LOG_LEVEL=DEBUG
+# 5. Start application
+./operator/lib/start-app.sh
 
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-```
+# 6. Install CLI (optional)
+cd cli && ./install.sh && cd ..
 
-**Stopping:**
-```bash
-./scripts/services/stop-api.sh
-./scripts/services/stop-database.sh
-```
-
-### 2. Local Production Deployment
-
-**Use case:** Testing production build locally, air-gapped deployment
-
-**Components:**
-- Built artifacts (optimized)
-- Docker containers
-- Production logging
-- Persistent data volumes
-
-**Setup:**
-```bash
-# Build production artifacts
-./build/local/build-all.sh --clean
-
-# Install to system
-./build/install/install-local.sh
-
-# Services managed by systemd/launchd
-systemctl status kg-api
-```
-
-**Configuration:**
-System-wide: `/etc/kg/config.yml`
-User-specific: `~/.kg/config.yml`
-
-**Stopping:**
-```bash
-systemctl stop kg-api
-docker-compose down
-```
-
-### 3. Remote Production Deployment
-
-**Use case:** End-user installation, production servers
-
-**Components:**
-- Pre-built Docker images from GHCR
-- Signed binaries from GitHub releases
-- Official configuration
-
-**Setup:**
-```bash
-# One-command install
-curl -fsSL https://... | bash
-
-# Or with specific version
-./build/install/install-remote.sh --version v0.2.0
-
-# Services auto-start
-```
-
-**Configuration:**
-During installation:
-```bash
-./install-remote.sh --configure
-```
-
-After installation:
-```bash
-kg config set api.url http://localhost:8000
-kg config set ai.provider openai
-```
-
-**Stopping:**
-```bash
-systemctl stop kg-*
-# or
-docker-compose -f /opt/kg/docker-compose.yml down
-```
-
-## Component Details
-
-### Database (PostgreSQL + Apache AGE)
-
-**Development:**
-- Started via docker-compose
-- Data in Docker volume
-- Accessible on localhost:5432
-
-**Production:**
-- Docker container or native install
-- Data persistence mandatory
-- Backup strategy required
-
-**Migrations:**
-```bash
-# Apply migrations
-./scripts/database/migrate-db.sh
-
-# Check migration status
-kg database stats
-```
-
-### API Server (Python FastAPI)
-
-**Development:**
-- Runs from venv
-- Hot-reload with `--reload` flag
-- Logs to `logs/api_*.log`
-
-**Production (Future):**
-- Docker container
-- Systemd service
-- Log rotation configured
-- Health checks enabled
-
-**Monitoring:**
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# View logs
-tail -f logs/api_*.log
-# or
-journalctl -u kg-api -f
-```
-
-### CLI Tool (TypeScript)
-
-**Development:**
-- Built from `client/`
-- Installed with `cd client && ./install.sh`
-- Updates with rebuild
-
-**Production:**
-- Binary from GitHub release
-- Installed to /usr/local/bin/kg
-- Auto-update support (future)
-
-**Usage:**
-```bash
-kg --version
+# 7. Verify
 kg health
-kg database stats
 ```
 
-### MCP Server (TypeScript)
+### Making Changes
 
-**Development:**
-- Built with CLI
-- Configured in Claude Desktop
-- Points to dist/mcp-server.js
+When you modify code:
 
-**Production:**
-- Binary from GitHub release
-- Installed to /usr/local/bin/kg-mcp-server
-- Claude Desktop integration
+```bash
+# Rebuild and restart specific container
+./scripts/development/build/rebuild-api.sh
+./scripts/development/build/rebuild-web.sh
+./scripts/development/build/rebuild-operator.sh
 
-**Configuration:**
-```json
-// ~/Library/Application Support/Claude/claude_desktop_config.json
-{
-  "mcpServers": {
-    "knowledge-graph": {
-      "command": "/usr/local/bin/kg-mcp-server"
-    }
-  }
-}
+# Or rebuild all
+./scripts/development/build/rebuild-all.sh
 ```
 
-### Visualization (Future)
+### Stopping
 
-**Development:**
-- React/Vue dev server
-- Hot-reload enabled
-- Proxies to API server
+```bash
+# Stop services (keeps data)
+./operator/lib/stop.sh
 
-**Production:**
-- Static build
-- Served by Nginx
-- Docker container
+# Complete teardown (removes everything)
+./operator/lib/teardown.sh
+
+# Keep secrets but remove data
+./operator/lib/teardown.sh --keep-env
+```
+
+## Deployment Method 2: Local Production
+
+**Use case:** Testing production builds locally, air-gapped deployment, self-hosting
+
+**Characteristics:**
+- Build images locally from source OR pull from GHCR
+- Strong cryptographic secrets
+- Persistent Docker volumes
+- Production logging configuration
+- Optional TLS/authentication
+
+### Setup with Local Builds
+
+```bash
+# 1. Clone repository
+git clone https://github.com/aaronsb/knowledge-graph-system.git
+cd knowledge-graph-system
+
+# 2. Generate production secrets (no --dev flag)
+./operator/lib/init-secrets.sh
+
+# 3. Start infrastructure
+./operator/lib/start-infra.sh
+
+# 4. Configure platform with strong passwords
+docker exec kg-operator python /workspace/operator/configure.py admin --password "$(openssl rand -base64 32)"
+docker exec kg-operator python /workspace/operator/configure.py ai-provider openai --model gpt-4o
+docker exec kg-operator python /workspace/operator/configure.py embedding 2
+docker exec kg-operator python /workspace/operator/configure.py api-key openai --key "$OPENAI_API_KEY"
+
+# 5. Start application
+./operator/lib/start-app.sh
+```
+
+### Setup with Pre-built Images (GHCR)
+
+```bash
+# 1. Create project directory
+mkdir -p ~/knowledge-graph && cd ~/knowledge-graph
+
+# 2. Download docker-compose files
+curl -O https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/docker/docker-compose.yml
+curl -O https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/docker/docker-compose.ghcr.yml
+
+# 3. Download operator scripts
+mkdir -p operator/lib
+curl -o operator/lib/init-secrets.sh https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/operator/lib/init-secrets.sh
+curl -o operator/lib/start-infra.sh https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/operator/lib/start-infra.sh
+curl -o operator/lib/start-app.sh https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/operator/lib/start-app.sh
+chmod +x operator/lib/*.sh
+
+# 4. Generate secrets
+./operator/lib/init-secrets.sh
+
+# 5. Use GHCR images
+cd docker
+docker-compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d postgres garage operator
+
+# 6. Configure platform
+docker exec -it kg-operator python /workspace/operator/configure.py admin
+# ... (same as above)
+
+# 7. Start application with GHCR images
+docker-compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d api web
+```
+
+### Data Persistence
+
+Docker volumes are used for persistent data:
+
+```bash
+# List volumes
+docker volume ls | grep knowledge-graph
+
+# Typical volumes:
+# - postgres_data       - Database files
+# - garage_data         - S3 object storage
+# - garage_meta         - Garage metadata
+
+# Backup volumes
+docker run --rm \
+  -v postgres_data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/postgres-backup-$(date +%Y%m%d).tar.gz /data
+
+# Restore volumes
+docker run --rm \
+  -v postgres_data:/data \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/postgres-backup-20250108.tar.gz -C /
+```
+
+### Database Backups
+
+```bash
+# Backup database
+docker exec knowledge-graph-postgres pg_dump -U admin knowledge_graph | gzip > kg-backup-$(date +%Y%m%d).sql.gz
+
+# Restore database
+gunzip -c kg-backup-20250108.sql.gz | docker exec -i knowledge-graph-postgres psql -U admin knowledge_graph
+```
+
+## Deployment Method 3: Remote Production
+
+**Use case:** Production servers, cloud deployment, orchestrated environments
+
+**Characteristics:**
+- Use pre-built GHCR images (versioned releases)
+- Orchestrator-managed secrets
+- Load balancing and scaling
+- Monitoring and alerting
+- TLS termination via reverse proxy
+
+### Docker Swarm Deployment
+
+```yaml
+# docker-stack.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: apache/age
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+
+  api:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-api:1.0.0
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+    secrets:
+      - encryption_key
+      - oauth_signing_key
+    environment:
+      ENCRYPTION_KEY_FILE: /run/secrets/encryption_key
+
+secrets:
+  postgres_password:
+    external: true
+  encryption_key:
+    external: true
+
+volumes:
+  postgres_data:
+```
+
+Deploy:
+
+```bash
+# Create secrets
+echo "$POSTGRES_PASSWORD" | docker secret create postgres_password -
+echo "$ENCRYPTION_KEY" | docker secret create encryption_key -
+
+# Deploy stack
+docker stack deploy -c docker-stack.yml kg
+```
+
+### Kubernetes Deployment
+
+```yaml
+# kg-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kg-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kg-api
+  template:
+    metadata:
+      labels:
+        app: kg-api
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/aaronsb/knowledge-graph-system/kg-api:1.0.0
+        ports:
+        - containerPort: 8000
+        env:
+        - name: POSTGRES_HOST
+          value: postgres-service
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kg-secrets
+              key: encryption-key
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+```
+
+Deploy:
+
+```bash
+kubectl create secret generic kg-secrets \
+  --from-literal=encryption-key="$ENCRYPTION_KEY" \
+  --from-literal=oauth-signing-key="$OAUTH_SIGNING_KEY"
+
+kubectl apply -f kg-deployment.yaml
+```
+
+## Configuration Management
+
+### Infrastructure Secrets (`.env`)
+
+Generated once by `init-secrets.sh`, never edited:
+
+- `ENCRYPTION_KEY` - Fernet key for API key encryption
+- `OAUTH_SIGNING_KEY` - JWT signing key
+- `POSTGRES_PASSWORD` - Database password
+- `GARAGE_RPC_SECRET` - Garage cluster secret
+- `INTERNAL_KEY_SERVICE_SECRET` - Service authorization
+
+**Backing up secrets:**
+
+```bash
+# Copy .env to secure location
+cp .env .env.backup-$(date +%Y%m%d)
+
+# For production, use secrets manager
+# AWS Secrets Manager, HashiCorp Vault, etc.
+```
+
+### Application Configuration (Database)
+
+Managed via operator container:
+
+```bash
+# View configuration
+docker exec kg-operator python /workspace/operator/configure.py status
+
+# Update AI provider
+docker exec kg-operator python /workspace/operator/configure.py ai-provider anthropic --model claude-sonnet-4-20250514
+
+# Rotate API key
+docker exec kg-operator python /workspace/operator/admin/manage_api_keys.py delete openai
+docker exec -it kg-operator python /workspace/operator/configure.py api-key openai
+```
 
 ## Networking
 
 ### Port Usage
 
-| Component | Port | Configurable |
-|-----------|------|-------------|
-| PostgreSQL | 5432 | Yes |
-| API Server | 8000 | Yes |
-| Visualization | 3000 | Yes |
+| Component | Port | Protocol | Exposed |
+|-----------|------|----------|---------|
+| PostgreSQL | 5432 | TCP | Localhost only |
+| API Server | 8000 | HTTP | Yes (behind proxy) |
+| Web UI | 3000 | HTTP | Yes (behind proxy) |
+| Garage API | 3900 | HTTP | Internal only |
+| Garage Web | 3903 | HTTP | Internal only |
 
-### Firewall Configuration
+### Reverse Proxy (Production)
 
-**Development:** All ports localhost only
+Use Nginx or Caddy for TLS termination:
 
-**Production:**
-```bash
-# Allow API (if exposing publicly)
-ufw allow 8000/tcp
+```nginx
+# /etc/nginx/sites-available/kg
+server {
+    listen 443 ssl http2;
+    server_name kg.example.com;
 
-# Database should NOT be exposed
-# Only allow from API container
-```
+    ssl_certificate /etc/letsencrypt/live/kg.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/kg.example.com/privkey.pem;
 
-## Data Persistence
+    # API
+    location /api/ {
+        proxy_pass http://localhost:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 
-### Volumes
-
-**Docker:**
-- `postgres_data` - Database files
-- `api_logs` - Application logs
-- `kg_cache` - Embeddings cache
-
-**Native:**
-- `/var/lib/postgresql/data` - Database
-- `/var/log/kg/` - Logs
-- `~/.kg/cache/` - User cache
-
-### Backup
-
-**Database:**
-```bash
-# Backup
-docker exec knowledge-graph-postgres pg_dump -U kg_user knowledge_graph > backup.sql
-
-# Restore
-docker exec -i knowledge-graph-postgres psql -U kg_user knowledge_graph < backup.sql
-```
-
-**Full System:**
-```bash
-# Backup volumes
-docker run --rm -v postgres_data:/data -v $(pwd):/backup alpine tar czf /backup/postgres_backup.tar.gz /data
-
-# Restore volumes
-docker run --rm -v postgres_data:/data -v $(pwd):/backup alpine tar xzf /backup/postgres_backup.tar.gz -C /
+    # Web UI
+    location / {
+        proxy_pass http://localhost:3000/;
+        proxy_set_header Host $host;
+    }
+}
 ```
 
 ## Security
 
 ### Development
-- No authentication (localhost only)
-- Debug logging enabled
+- Simple passwords OK (`--dev` mode)
+- No TLS required (localhost only)
 - Permissive CORS
+- Debug logging enabled
 
 ### Production
-- API authentication required
-- TLS/SSL mandatory for remote access
-- Secrets in environment or secrets manager
+- Strong cryptographic secrets required
+- TLS mandatory for external access
 - Restrictive CORS
+- INFO logging level
+- Secrets in secrets manager
 - Regular security updates
 
-**Securing API:**
-```bash
-# Generate API keys
-kg admin create-api-key --name production
+### API Authentication
 
-# Configure TLS
-# Use reverse proxy (nginx, Caddy)
-# Let's Encrypt for certificates
+The system uses JWT-based authentication:
+
+```bash
+# Create admin user
+docker exec kg-operator python /workspace/operator/configure.py admin
+
+# Users authenticate via /auth/login endpoint
+# JWT tokens in Authorization header
 ```
 
 ## Monitoring
@@ -373,31 +447,29 @@ curl http://localhost:8000/health
 kg database stats
 
 # Full system check
-kg admin health-check
+docker ps --format "table {{.Names}}\t{{.Status}}"
 ```
 
 ### Logs
 
-**Centralized Logging (Production):**
-- Use log aggregation (ELK, Loki)
-- Configure log shipping
-- Set retention policies
-
-**Development:**
 ```bash
 # API logs
-tail -f logs/api_*.log
+docker logs -f kg-api-dev
 
 # Database logs
 docker logs -f knowledge-graph-postgres
 
 # All logs
-docker-compose logs -f
+cd docker && docker-compose logs -f
+
+# Export logs
+docker logs kg-api-dev > api-logs-$(date +%Y%m%d).log
 ```
 
-### Metrics
+### Metrics (Future)
 
-**Future: Prometheus Integration**
+Prometheus integration planned:
+
 ```yaml
 # prometheus.yml
 scrape_configs:
@@ -410,99 +482,163 @@ scrape_configs:
 
 ### Horizontal Scaling
 
-**API Server:**
-- Run multiple replicas
-- Load balancer (nginx, HAProxy)
-- Shared database
+Multiple API replicas with shared database:
 
-**Example with Docker Compose:**
 ```yaml
-api:
-  image: ghcr.io/aaronsb/kg-api:latest
-  deploy:
-    replicas: 3
+# docker-compose.override.yml
+services:
+  api:
+    deploy:
+      replicas: 3
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+```
+
+Load balancer configuration:
+
+```nginx
+upstream kg_api {
+    least_conn;
+    server kg-api-1:8000;
+    server kg-api-2:8000;
+    server kg-api-3:8000;
+}
+
+server {
+    listen 80;
+    location / {
+        proxy_pass http://kg_api;
+    }
+}
 ```
 
 ### Database Scaling
 
-**Read Replicas:**
-- Configure PostgreSQL replication
-- Route read queries to replicas
-- Master for writes only
+For high-load scenarios:
 
-**Connection Pooling:**
-- Use PgBouncer
-- Reduce connection overhead
-- Handle connection spikes
-
-## Troubleshooting
-
-### Common Issues
-
-**Can't connect to database:**
-```bash
-# Check database running
-docker ps | grep postgres
-
-# Check connection settings
-cat .env | grep POSTGRES
-
-# Test connection
-docker exec knowledge-graph-postgres psql -U kg_user -d knowledge_graph -c "SELECT 1"
-```
-
-**API won't start:**
-```bash
-# Check logs
-tail -f logs/api_*.log
-
-# Check dependencies
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Check port availability
-lsof -i :8000
-```
-
-**CLI commands fail:**
-```bash
-# Check API connectivity
-kg health
-
-# Check configuration
-kg config show
-
-# Reinstall CLI
-cd client && ./uninstall.sh && ./install.sh
-```
+1. **Read Replicas** - PostgreSQL replication
+2. **Connection Pooling** - PgBouncer
+3. **Resource Tuning** - See `operator/DATABASE_PROFILES.md`
 
 ## Upgrading
 
 ### Development
+
 ```bash
 git pull origin main
-./build/local/build-all.sh
-./build/deploy/local/deploy-all.sh
+./scripts/development/build/rebuild-all.sh
 ```
 
-### Production
+### Production (Local Builds)
+
 ```bash
-# Backup first!
-pg_dump ... > backup.sql
+# 1. Backup database
+docker exec knowledge-graph-postgres pg_dump -U admin knowledge_graph > backup-pre-upgrade.sql
 
-# Install new version
-./build/install/install-remote.sh --upgrade --version v0.2.1
+# 2. Pull latest code
+git pull origin main
 
-# Verify
-kg --version
+# 3. Rebuild images
+cd docker && docker-compose build
+
+# 4. Restart services
+docker-compose up -d
+
+# 5. Verify
 kg health
+```
+
+### Production (GHCR Images)
+
+```bash
+# 1. Backup database
+docker exec knowledge-graph-postgres pg_dump -U admin knowledge_graph > backup-pre-upgrade.sql
+
+# 2. Pull new images
+docker pull ghcr.io/aaronsb/knowledge-graph-system/kg-api:1.1.0
+docker pull ghcr.io/aaronsb/knowledge-graph-system/kg-web:1.1.0
+docker pull ghcr.io/aaronsb/knowledge-graph-system/kg-operator:1.1.0
+
+# 3. Update docker-compose to use new version tags
+# Edit docker-compose.ghcr.yml if using specific versions
+
+# 4. Restart with new images
+cd docker
+docker-compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+
+# 5. Verify
+kg health
+kg database stats
+```
+
+## Troubleshooting
+
+### Container Won't Start
+
+```bash
+# Check container status
+docker ps -a
+
+# Check logs
+docker logs <container-name>
+
+# Check resource usage
+docker stats
+
+# Verify secrets exist
+ls -la .env
+cat .env | grep -E "ENCRYPTION_KEY|POSTGRES_PASSWORD"
+```
+
+### Health Check Failures
+
+```bash
+# API not responding
+docker logs kg-api-dev | tail -50
+
+# Check database connectivity
+docker exec kg-api-dev ping postgres
+
+# Restart service
+cd docker && docker-compose restart api
+```
+
+### Database Connection Issues
+
+```bash
+# Check postgres running
+docker ps | grep postgres
+
+# Test connection
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT 1"
+
+# Check migrations
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "SELECT * FROM schema_migrations ORDER BY applied_at"
+```
+
+### Performance Issues
+
+```bash
+# Check resource limits
+docker stats
+
+# Review database profile
+cat operator/DATABASE_PROFILES.md
+
+# Apply appropriate profile
+docker exec kg-operator python /workspace/operator/setup/configure-db-profile.sh medium
 ```
 
 ## See Also
 
-- [Architecture Overview](../architecture/ARCHITECTURE_OVERVIEW.md) - System design and architecture
-- [Architecture Decisions](../architecture/ARCHITECTURE_DECISIONS.md) - ADR index
-- [API Reference](../reference/api/README.md) - REST API documentation
-- **Developer Resources** (in source repository):
-  - `CLAUDE.md` - Developer workflow guide for Claude Code
-  - `README.md` - Project overview and quick start
+- [Quickstart Guide](QUICKSTART.md) - Get started in 10 minutes
+- [Container Images Guide](CONTAINER_IMAGES.md) - Pre-built images and versioning
+- [Architecture Overview](../architecture/ARCHITECTURE.md) - System design
+- [ADR-061: Operator Architecture](../architecture/ADR-061-operator-pattern-lifecycle.md) - Architecture decision

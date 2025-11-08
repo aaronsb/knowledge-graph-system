@@ -222,6 +222,28 @@ kg database stats
 - **Visualization Explorer:** Open http://localhost:3000 for interactive graph exploration
 - **MCP Server:** Connect via Claude Desktop/Code - See [MCP Setup Guide](docs/guides/MCP_SETUP.md)
 
+### Container Images
+
+Pre-built container images are available from GitHub Container Registry:
+
+```bash
+# Use published images instead of building locally
+cd docker
+docker-compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+
+# Or pull specific versions
+docker pull ghcr.io/aaronsb/knowledge-graph-system/kg-api:latest
+docker pull ghcr.io/aaronsb/knowledge-graph-system/kg-web:latest
+docker pull ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
+```
+
+**Available tags:**
+- `latest` - Most recent build from main branch (always stable)
+- `1.2.3` - Specific release versions
+- `1.2` - Latest patch for major.minor version
+
+**Works with both Docker and Podman!** See [Container Images Guide](docs/guides/CONTAINER_IMAGES.md) for versioning, releases, and deployment options.
+
 ## Live Example
 
 After ingesting project commit history and pull requests into separate ontologies:
