@@ -1,0 +1,344 @@
+#!/bin/bash
+set -e
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Track if services were started for cleanup
+INFRA_STARTED=false
+APP_STARTED=false
+
+# Cleanup function
+cleanup() {
+    echo ""
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}Setup interrupted or failed${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+
+    if [ "$INFRA_STARTED" = true ] || [ "$APP_STARTED" = true ]; then
+        echo -e "${BOLD}Would you like to clean up and remove all created services and data?${NC}"
+        echo ""
+        echo -e "  ${RED}⚠ WARNING:${NC} This will delete:"
+        echo "    • All running containers"
+        echo "    • All stored data (database, concepts, documents)"
+        echo "    • Docker volumes"
+        echo "    • The .env secrets file"
+        echo ""
+        read -p "Run cleanup? (yes/no): " -r
+        echo ""
+
+        if [[ $REPLY =~ ^[Yy]es$ ]]; then
+            echo -e "${BLUE}→${NC} Running teardown..."
+            ./operator/lib/teardown.sh
+            echo ""
+            echo -e "${GREEN}✓${NC} Cleanup complete"
+        else
+            echo -e "${YELLOW}→${NC} Leaving services running. To clean up later, run:"
+            echo "    ./operator/lib/teardown.sh"
+        fi
+    fi
+
+    exit 1
+}
+
+# Set trap for cleanup on error or interrupt
+trap cleanup ERR INT TERM
+
+# Banner
+clear
+echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║${NC}  ${BOLD}Knowledge Graph System - TL;DR Quickstart${NC}             ${BLUE}    ║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${BOLD}This script will get you started in minutes.${NC}"
+echo ""
+echo -e "${YELLOW}What this does:${NC}"
+echo "  • Generates infrastructure secrets (.env file)"
+echo "  • Starts Docker services (PostgreSQL, Garage S3, API, Web)"
+echo "  • Configures system with development defaults"
+echo "  • Installs kg CLI tool globally"
+echo ""
+echo -e "${YELLOW}Development defaults (for quick evaluation):${NC}"
+echo -e "  • Admin password: ${RED}Password1!${NC}"
+echo -e "  • Database password: ${RED}password${NC}"
+echo "  • AI extraction: OpenAI GPT-4o"
+echo "  • Embeddings: Local (nomic-ai/nomic-embed-text-v1.5)"
+echo ""
+echo -e "${YELLOW}Prerequisites:${NC}"
+echo "  • Docker with permissions (docker ps should work)"
+echo "  • OpenAI API key (will prompt during setup)"
+echo "  • Node.js + npm (for kg CLI installation)"
+echo ""
+echo -e "${YELLOW}Time required:${NC} ~5 minutes"
+echo ""
+echo -e "${RED}⚠ WARNING:${NC} This will:"
+echo "  • Start multiple Docker containers on your machine"
+echo "  • Use disk space for databases and volumes"
+echo "  • Install the 'kg' CLI command globally"
+echo ""
+echo -e "${BOLD}Ready to proceed?${NC}"
+echo ""
+read -p "Continue with quickstart? (yes/no): " -r
+echo ""
+
+if [[ ! $REPLY =~ ^[Yy]es$ ]]; then
+    echo "Quickstart cancelled."
+    exit 0
+fi
+
+# Password configuration choice
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Password Configuration${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Choose password security level:"
+echo ""
+echo -e "  ${GREEN}[1] Randomized passwords${NC} (recommended for security)"
+echo "      • Strong random passwords generated automatically"
+echo "      • You'll need to save them (displayed after generation)"
+echo "      • Database password is harder to change later"
+echo ""
+echo -e "  ${YELLOW}[2] Simple defaults${NC} (quick evaluation)"
+echo "      • Admin: Password1!"
+echo "      • Database: password"
+echo "      • Easy to remember, but insecure"
+echo ""
+read -p "Choose option (1 or 2): " -r
+echo ""
+
+USE_RANDOM_PASSWORDS=false
+if [[ $REPLY == "1" ]]; then
+    USE_RANDOM_PASSWORDS=true
+    # Generate random admin password (16 chars, alphanumeric)
+    ADMIN_PASSWORD=$(openssl rand -base64 16 | tr -d '/+=' | cut -c1-16)
+    echo -e "${GREEN}→${NC} Will generate randomized passwords"
+    echo ""
+else
+    ADMIN_PASSWORD="Password1!"
+    echo -e "${YELLOW}→${NC} Using simple default passwords"
+    echo ""
+fi
+
+# Check Docker is running
+echo -e "${BLUE}→${NC} Checking Docker..."
+if ! docker ps >/dev/null 2>&1; then
+    echo -e "${RED}✗${NC} Docker is not running or you don't have permission."
+    echo "  Please start Docker and ensure you can run: docker ps"
+    exit 1
+fi
+echo -e "${GREEN}✓${NC} Docker is running"
+echo ""
+
+# Step 1: Generate secrets
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 1/7: Generating infrastructure secrets${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+if [ "$USE_RANDOM_PASSWORDS" = true ]; then
+    # Production mode - generates random database password
+    # Use --upgrade to handle dev→prod transition (upgrades weak "password" to strong random)
+    ./operator/lib/init-secrets.sh --upgrade -y
+    # Read the generated database password from .env
+    POSTGRES_PASSWORD=$(grep '^POSTGRES_PASSWORD=' .env | cut -d'=' -f2)
+
+    # Display passwords for user to save
+    echo ""
+    echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}🔐 SAVE THESE PASSWORDS${NC}                               ${GREEN}║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${BOLD}Admin Password:${NC}     ${GREEN}$ADMIN_PASSWORD${NC}"
+    echo -e "${BOLD}Database Password:${NC}  ${GREEN}$POSTGRES_PASSWORD${NC}"
+    echo ""
+    echo -e "${YELLOW}⚠  Write these down now - you'll need them to access the system!${NC}"
+    echo ""
+    read -p "Press Enter after saving these passwords..." -r
+    echo ""
+else
+    # Development mode - uses simple default passwords
+    ./operator/lib/init-secrets.sh --dev -y
+    POSTGRES_PASSWORD="password"
+fi
+
+echo ""
+
+# Step 2: Start infrastructure
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 2/7: Starting infrastructure (Postgres + Garage + Operator)${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+./operator/lib/start-infra.sh
+INFRA_STARTED=true
+echo ""
+
+# Step 3: Configure admin
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 3/7: Creating admin user${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+if [ "$USE_RANDOM_PASSWORDS" = true ]; then
+    echo "Creating admin user with randomized password (shown earlier)..."
+else
+    echo -e "Creating admin user with password: ${RED}Password1!${NC}"
+fi
+
+docker exec kg-operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD"
+echo ""
+
+# Step 4: Configure AI provider
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 4/7: Configuring AI extraction provider${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Setting OpenAI GPT-4o as extraction provider..."
+docker exec kg-operator python /workspace/operator/configure.py ai-provider openai --model gpt-4o
+echo ""
+
+# Step 5: Configure embeddings
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 5/7: Configuring embedding provider${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Activating local embeddings (nomic-ai/nomic-embed-text-v1.5)..."
+docker exec kg-operator python /workspace/operator/configure.py embedding 2
+echo ""
+
+# Step 6: Store OpenAI API key with validation loop
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 6/7: Storing OpenAI API key${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Please enter your OpenAI API key."
+echo "The key will be validated and stored encrypted in the database."
+echo ""
+echo -e "${YELLOW}Press Ctrl+C to cancel${NC}"
+echo ""
+
+API_KEY_STORED=false
+while [ "$API_KEY_STORED" = false ]; do
+    read -sp "OpenAI API key (sk-...): " OPENAI_KEY
+    echo ""
+
+    if [ -z "$OPENAI_KEY" ]; then
+        echo -e "${RED}✗${NC} API key cannot be empty. Please try again."
+        echo ""
+        continue
+    fi
+
+    echo -e "${BLUE}→${NC} Validating and storing API key..."
+
+    # Try to store the key (will validate automatically)
+    if docker exec kg-operator python /workspace/operator/configure.py api-key openai --key "$OPENAI_KEY" 2>&1; then
+        API_KEY_STORED=true
+        echo ""
+    else
+        echo ""
+        echo -e "${RED}✗${NC} API key validation failed. Please check your key and try again."
+        echo ""
+    fi
+done
+
+# Step 7: Start application
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 7/7: Starting application (API + Web)${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+./operator/lib/start-app.sh
+APP_STARTED=true
+echo ""
+
+# Show configuration status
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Platform Configuration${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+docker exec kg-operator python /workspace/operator/configure.py status
+echo ""
+
+# Install CLI
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Installing kg CLI${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+if [ -d "cli" ]; then
+    echo -e "${BLUE}→${NC} Installing kg CLI globally..."
+    cd cli && ./install.sh && cd ..
+    echo ""
+else
+    echo -e "${YELLOW}⚠${NC} CLI directory not found. Skipping CLI installation."
+    echo "  You can install it later by running: cd cli && ./install.sh"
+    echo ""
+fi
+
+# Success banner
+echo ""
+echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║${NC}  ${BOLD}🎉 Quickstart Complete!${NC}                                ${GREEN}║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${BOLD}Your Knowledge Graph system is ready!${NC}"
+echo ""
+echo -e "${YELLOW}Services running:${NC}"
+echo "  • API:      http://localhost:8000"
+echo "  • Web UI:   http://localhost:3000"
+echo "  • Postgres: localhost:5432"
+echo ""
+if [ "$USE_RANDOM_PASSWORDS" = true ]; then
+    echo -e "${YELLOW}Your Credentials (randomized - from earlier):${NC}"
+    echo "  • Admin username: admin"
+    echo -e "  • Admin password: ${GREEN}$ADMIN_PASSWORD${NC}"
+    echo -e "  • Database password: ${GREEN}$POSTGRES_PASSWORD${NC}"
+else
+    echo -e "${YELLOW}Development Credentials (for evaluation/testing):${NC}"
+    echo "  • Admin username: admin"
+    echo -e "  • Admin password: ${RED}$ADMIN_PASSWORD${NC}"
+    echo -e "  • Database password: ${RED}$POSTGRES_PASSWORD${NC}"
+fi
+
+echo ""
+echo -e "${BOLD}Next steps:${NC}"
+echo ""
+echo -e "  ${GREEN}1.${NC} Login with kg CLI:"
+echo "       kg login"
+echo "       (Use username: admin, password: $ADMIN_PASSWORD)"
+echo ""
+echo -e "  ${GREEN}2.${NC} Test the system:"
+echo "       kg health"
+echo "       kg database stats"
+echo ""
+echo -e "  ${GREEN}3.${NC} Ingest your first document:"
+echo "       kg ingest file -o \"Test\" path/to/document.txt"
+echo ""
+echo -e "  ${GREEN}4.${NC} Access the web UI:"
+echo "       Open http://localhost:3000 in your browser"
+echo ""
+echo -e "  ${GREEN}5.${NC} Install MCP server for Claude Desktop:"
+echo "       See: docs/guides/MCP_SERVER.md"
+echo ""
+
+if [ "$USE_RANDOM_PASSWORDS" = false ]; then
+    echo -e "${YELLOW}💡 Production Use:${NC}"
+    echo "  If you plan to keep this system, consider changing the default passwords:"
+    echo "    • Admin password:    kg admin update-password"
+    echo "    • Database password: Update POSTGRES_PASSWORD in .env and restart"
+    echo ""
+fi
+
+echo -e "${YELLOW}To stop services:${NC}"
+echo "  ./operator/lib/stop.sh"
+echo ""
+echo -e "${YELLOW}To remove all data and containers:${NC}"
+echo "  ./operator/lib/teardown.sh"
+echo ""
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""

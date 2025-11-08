@@ -48,11 +48,16 @@ DEV_MODE=false
 RESET_ALL=false
 RESET_KEYS=()
 AUTO_YES=false
+UPGRADE_MODE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dev)
             DEV_MODE=true
+            shift
+            ;;
+        --upgrade)
+            UPGRADE_MODE=true
             shift
             ;;
         --reset)
@@ -74,6 +79,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --dev              Development mode (weak passwords acceptable)"
+            echo "  --upgrade          Upgrade dev to prod (regenerates weak passwords)"
             echo "  --reset            Reset ALL secrets (DANGEROUS - will break encryption)"
             echo "  --reset-key KEY    Reset specific secret (e.g., OAUTH_SIGNING_KEY)"
             echo "  -y, --yes          Skip prompts (for automated scripts)"
@@ -278,8 +284,23 @@ if [ "$DEV_MODE" = true ]; then
     fi
 else
     # Prod mode: generate strong password
-    if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD"; then
-        echo -e "${YELLOW}→ Generating POSTGRES_PASSWORD (production mode - strong cryptographic token)...${NC}"
+    # Check if we're upgrading from dev (password is weak, missing, or empty)
+    CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2)
+    NEEDS_UPGRADE=false
+    if [ "$UPGRADE_MODE" = true ]; then
+        # Upgrade if password is weak OR doesn't exist OR is empty
+        if [ -z "$CURRENT_PASSWORD" ] || [ "$CURRENT_PASSWORD" = "password" ]; then
+            NEEDS_UPGRADE=true
+            echo -e "${YELLOW}→ Upgrading POSTGRES_PASSWORD from dev to prod...${NC}"
+        fi
+    fi
+
+    if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD" || [ "$NEEDS_UPGRADE" = true ]; then
+        if [ "$NEEDS_UPGRADE" = true ]; then
+            echo -e "${YELLOW}   Detected weak dev password, generating strong replacement...${NC}"
+        else
+            echo -e "${YELLOW}→ Generating POSTGRES_PASSWORD (production mode - strong cryptographic token)...${NC}"
+        fi
         VALUE=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
         update_env_file "POSTGRES_PASSWORD" "$VALUE" "PostgreSQL admin password"
         echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - generated and saved"
