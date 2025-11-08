@@ -77,6 +77,73 @@ kg mcp-config test-path ~/Documents/notes.md
 
 ### 2. MCP Tools
 
+**Tool: `inspect-file`**
+
+Preview file contents before ingestion (prevents "oops" moments).
+
+```typescript
+{
+  path: string,              // File path (validated against allowlist)
+  mode: 'head' | 'tail' | 'range' | 'search' | 'metadata',
+  limit?: number,            // Max lines/bytes to return (default: 50 lines, max: 500)
+  offset?: number,           // Starting line/byte (for range mode)
+  pattern?: string           // Search pattern (for search mode)
+}
+```
+
+**Modes:**
+
+- **head** - First N lines (like `head -n`)
+- **tail** - Last N lines (like `tail -n`)
+- **range** - Lines from offset to offset+limit
+- **search** - Lines matching pattern (like `grep`)
+- **metadata** - File info only (size, type, line count)
+
+**Image Inspection:**
+
+For image files (`.png`, `.jpg`, `.jpeg`):
+- **metadata** mode returns: dimensions, format, file size, EXIF data
+- Optional: Quick vision AI description (if enabled, small cost)
+
+**Example Workflow:**
+
+```typescript
+// 1. Check what's in the file
+inspect-file({
+  path: "~/Documents/research/paper.pdf",
+  mode: "metadata"
+})
+// → { size: "2.3 MB", pages: 15, type: "application/pdf" }
+
+// 2. Preview first few lines of text file
+inspect-file({
+  path: "~/Documents/notes.md",
+  mode: "head",
+  limit: 20
+})
+// → Returns first 20 lines
+
+// 3. Search for specific content
+inspect-file({
+  path: "~/Projects/app/config.yaml",
+  mode: "search",
+  pattern: "database"
+})
+// → Returns lines containing "database"
+
+// 4. Confirmed it's the right file, now ingest
+ingest-file({
+  path: "~/Documents/notes.md",
+  ontology: "Research Notes"
+})
+```
+
+**Security:**
+- Same allowlist validation as ingestion tools
+- Size limits prevent context consumption (max 500 lines per request)
+- Read-only access (inspection cannot modify files)
+- Audit logged like other file operations
+
 **Tool: `ingest-file`**
 
 Ingest a single file from local filesystem.
@@ -104,6 +171,24 @@ Ingest all files in a directory (optionally recursive).
   auto_approve?: boolean,    // Default: true
   force?: boolean            // Re-ingest existing (default: false)
 }
+```
+
+**Asynchronous Processing:**
+
+Directory ingestion creates multiple jobs that process asynchronously. The tool returns immediately with job IDs, but extraction happens in the background.
+
+**Agent Guidance:**
+- ✅ **DO:** Submit directory, receive job IDs, inform user processing has started
+- ✅ **DO:** Continue with other work while jobs process
+- ❌ **DON'T:** Poll job status immediately after submission
+- ❌ **DON'T:** Wait for jobs to complete (can take minutes for large directories)
+
+**Why:** Extraction is expensive (LLM API calls, embedding generation). Large directories may take 5-10 minutes. Polling wastes context on "still processing" messages.
+
+**User can check status later:**
+```bash
+kg jobs list                    # See all jobs
+kg jobs status <job-id>         # Check specific job
 ```
 
 **Auto-Naming Modes:**
@@ -215,9 +300,11 @@ function validatePath(filePath: string, config: AllowlistConfig): ValidationResu
 All file access attempts logged to `~/.config/kg/mcp-access.log`:
 
 ```
-2025-11-08T22:50:00Z [ALLOWED] /home/user/Documents/notes.md -> Ontology: "Notes"
+2025-11-08T22:50:00Z [INSPECT] /home/user/Documents/notes.md mode=head lines=20
+2025-11-08T22:50:05Z [INGEST]  /home/user/Documents/notes.md -> Ontology: "Notes"
 2025-11-08T22:50:15Z [DENIED]  /home/user/.env -> Reason: Matches blocked pattern
 2025-11-08T22:50:30Z [DENIED]  /etc/passwd -> Reason: Not in allowed directory
+2025-11-08T22:50:45Z [INSPECT] /home/user/wrong-file.txt mode=metadata (agent checks before rejecting)
 ```
 
 **Agent Experience:**
@@ -269,16 +356,27 @@ kg mcp-config allow-pattern "**/*.md"
 
 Agent ingests with auto-naming:
 ```typescript
-ingest-directory({
+// Submit directory ingestion
+const result = ingest-directory({
   path: "~/Projects",
   pattern: "docs/**/*.md",
   recursive: true,
   auto_naming: true
 })
 
-// Results:
-// ~/Projects/project-a/docs/*.md -> Ontology: "project-a"
-// ~/Projects/project-b/docs/*.md -> Ontology: "project-b"
+// Result: { job_ids: ["job_abc123", "job_def456"], message: "Processing 15 files..." }
+
+// ✅ CORRECT: Inform user and move on
+// "I've submitted 15 files for processing (jobs: job_abc123, job_def456).
+//  This will take a few minutes. You can check status with: kg jobs list"
+
+// ❌ WRONG: Don't poll immediately
+// job.status("job_abc123")  // Don't do this!
+// job.status("job_def456")  // Still processing, wastes context
+
+// Results (when done):
+// ~/Projects/project-a/docs/*.md → Ontology: "project-a"
+// ~/Projects/project-b/docs/*.md → Ontology: "project-b"
 ```
 
 **Workflow 3: Image + Description Ingestion**
@@ -312,6 +410,12 @@ ingest-file({
 - Agent can ingest from pre-approved locations
 - Directory recursion enables bulk ingestion
 - Auto-naming preserves organizational structure
+
+✅ **Preview Before Commit**
+- `inspect-file` prevents ingestion mistakes
+- Agent can verify file contents before submitting
+- Avoids "oops" moments (hard to delete individual documents)
+- Low context cost - inspect small portions, ingest full file
 
 ✅ **Auditability**
 - All access attempts logged
@@ -422,10 +526,14 @@ ingest-file({
 - [ ] Path validation logic with security tests
 - [ ] MCP resource for allowed-paths visibility
 
-### Phase 2: File Ingestion (ADR-062b)
+### Phase 2: File Inspection & Ingestion (ADR-062b)
+- [ ] `inspect-file` MCP tool (preview before commit)
+  - Head/tail/range/search/metadata modes
+  - Image metadata extraction (dimensions, EXIF)
+  - Optional vision AI quick description
 - [ ] `ingest-file` MCP tool
 - [ ] Image detection and handling
-- [ ] Access logging
+- [ ] Access logging (INSPECT, INGEST, DENIED)
 
 ### Phase 3: Directory Ingestion (ADR-062c)
 - [ ] `ingest-directory` MCP tool
