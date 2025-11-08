@@ -200,7 +200,7 @@ This interactive script will:
 - Install the kg CLI tool
 - Prompt for your OpenAI API key
 
-⚠️ **Uses insecure defaults** (admin password: `Password1!`) - change immediately after setup!
+💡 **Uses development defaults** (admin password: `Password1!`, database password: `password`) for quick evaluation.
 
 📚 **For manual setup or detailed explanation**, see the [complete Quick Start Guide](docs/guides/QUICKSTART.md).
 
