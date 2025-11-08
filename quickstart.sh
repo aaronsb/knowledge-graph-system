@@ -144,7 +144,8 @@ echo ""
 
 if [ "$USE_RANDOM_PASSWORDS" = true ]; then
     # Production mode - generates random database password
-    ./operator/lib/init-secrets.sh -y
+    # Force reset of POSTGRES_PASSWORD to ensure we get a random one (not leftover "password" from previous --dev run)
+    ./operator/lib/init-secrets.sh --reset-key POSTGRES_PASSWORD -y
     # Read the generated database password from .env
     POSTGRES_PASSWORD=$(grep '^POSTGRES_PASSWORD=' .env | cut -d'=' -f2)
 
