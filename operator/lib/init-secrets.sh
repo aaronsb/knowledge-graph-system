@@ -284,12 +284,15 @@ if [ "$DEV_MODE" = true ]; then
     fi
 else
     # Prod mode: generate strong password
-    # Check if we're upgrading from dev (password == "password")
+    # Check if we're upgrading from dev (password is weak, missing, or empty)
     CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2)
     NEEDS_UPGRADE=false
-    if [ "$UPGRADE_MODE" = true ] && [ "$CURRENT_PASSWORD" = "password" ]; then
-        NEEDS_UPGRADE=true
-        echo -e "${YELLOW}→ Upgrading POSTGRES_PASSWORD from dev to prod...${NC}"
+    if [ "$UPGRADE_MODE" = true ]; then
+        # Upgrade if password is weak OR doesn't exist OR is empty
+        if [ -z "$CURRENT_PASSWORD" ] || [ "$CURRENT_PASSWORD" = "password" ]; then
+            NEEDS_UPGRADE=true
+            echo -e "${YELLOW}→ Upgrading POSTGRES_PASSWORD from dev to prod...${NC}"
+        fi
     fi
 
     if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD" || [ "$NEEDS_UPGRADE" = true ]; then
