@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../..">
+        <link rel="prev" href="../ADR-060-endpoint-security-architecture/">
       
       
-        <link rel="next" href="../DEPLOYMENT/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>5-Minute Cold Start - Knowledge Graph System</title>
+        <title>ADR-061: Operator Pattern for Platform Lifecycle Management - Knowledge Graph System</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#knowledge-graph-system-5-minute-cold-start" class="md-skip">
+        <a href="#adr-061-operator-pattern-for-platform-lifecycle-management" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              5-Minute Cold Start
+              ADR-061: Operator Pattern for Platform Lifecycle Management
             
           </span>
         </div>
@@ -241,20 +241,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -270,7 +268,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Guides
@@ -281,32 +279,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    5-Minute Cold Start
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -317,218 +293,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      Prerequisites
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start-1-command-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick Start (1 Command - Recommended)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#manual-step-by-step-alternative" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manual Step-by-Step (Alternative)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration Notes
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration Notes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#development-vs-production-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      Development vs Production Mode
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#openai-api-key-recommended-for-quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      OpenAI API Key (Recommended for Quick Start)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#local-embeddings-no-api-key-required" class="md-nav__link">
-    <span class="md-ellipsis">
-      Local Embeddings (No API Key Required)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#restoring-a-backup" class="md-nav__link">
-    <span class="md-ellipsis">
-      Restoring a Backup
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-server-integration-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Server Integration (Optional)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#kg-command-not-found" class="md-nav__link">
-    <span class="md-ellipsis">
-      "kg: command not found"
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-server-errors-about-openai-key" class="md-nav__link">
-    <span class="md-ellipsis">
-      API server errors about OpenAI key
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dimension-mismatch-when-restoring" class="md-nav__link">
-    <span class="md-ellipsis">
-      Dimension mismatch when restoring
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#database-wont-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Database won't start
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-just-happened" class="md-nav__link">
-    <span class="md-ellipsis">
-      What Just Happened?
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#nuclear-test-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Nuclear Test Validation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      Next Steps
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Performance Tips
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-files-locations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Files &amp; Locations
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Summary
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -541,7 +305,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DEPLOYMENT/" class="md-nav__link">
+      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -564,7 +328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -754,29 +518,6 @@
             Getting Started
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/01-QUICKSTART/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Quick Start Guide
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
             
               
                 
@@ -2934,18 +2675,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -2961,7 +2704,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Architecture
@@ -2975,7 +2718,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -2998,7 +2741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3021,7 +2764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3044,7 +2787,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3067,7 +2810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3090,7 +2833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3113,7 +2856,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -3136,7 +2879,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -3159,7 +2902,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -3182,7 +2925,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -3205,7 +2948,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -3228,7 +2971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -3251,7 +2994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -3274,7 +3017,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -3297,7 +3040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -3320,7 +3063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -3343,7 +3086,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -3366,7 +3109,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -3389,7 +3132,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -3412,7 +3155,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -3435,7 +3178,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -3458,7 +3201,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -3481,7 +3224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -3504,7 +3247,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -3527,7 +3270,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -3550,7 +3293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -3573,7 +3316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -3596,7 +3339,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -3619,7 +3362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -3642,7 +3385,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -3665,7 +3408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -3688,7 +3431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -3711,7 +3454,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -3734,7 +3477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -3757,7 +3500,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -3780,7 +3523,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -3803,7 +3546,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -3826,7 +3569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -3849,7 +3592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -3872,7 +3615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -3895,7 +3638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -3918,7 +3661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -3941,7 +3684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -3964,7 +3707,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -3987,7 +3730,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -4010,7 +3753,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -4033,7 +3776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -4056,7 +3799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -4079,7 +3822,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -4102,7 +3845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -4125,7 +3868,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -4148,7 +3891,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -4171,7 +3914,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -4194,7 +3937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -4217,7 +3960,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -4240,7 +3983,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -4263,7 +4006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -4286,7 +4029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -4309,7 +4052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -4332,7 +4075,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -4352,10 +4095,297 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ADR-061: Operator Pattern for Platform Lifecycle Management
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-061: Operator Pattern for Platform Lifecycle Management
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem-script-sprawl-and-architectural-confusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Problem: Script Sprawl and Architectural Confusion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-core-architectural-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Core Architectural Problem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-we-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      What We Learned
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adopt-the-kubernetes-operator-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adopt the Kubernetes Operator Pattern
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-four-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Four Layers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-kg-operator-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      The kg-operator CLI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#container-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Container Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-responsibility-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Responsibility Boundaries
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Responsibility Boundaries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#infrastructure-layer-env-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Infrastructure Layer (.env file)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-layer-database-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Layer (Database records)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-configurepy-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      The configure.py Tool
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clean-docker-builds" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clean Docker Builds
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-env-file-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      The .env File Role
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      Negative
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollout-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rollout Plan
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related ADRs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -4378,7 +4408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -4401,7 +4431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
+      <a href="../CLI_AUTHENTICATION_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -4424,7 +4454,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/CODE-CHANGES-ANALYSIS/" class="md-nav__link">
+      <a href="../CODE-CHANGES-ANALYSIS/" class="md-nav__link">
         
   
   
@@ -4447,7 +4477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/DATA_CONTRACT/" class="md-nav__link">
+      <a href="../DATA_CONTRACT/" class="md-nav__link">
         
   
   
@@ -4470,7 +4500,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
+      <a href="../FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -4493,7 +4523,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/OAUTH_CLIENT_ANALYSIS/" class="md-nav__link">
+      <a href="../OAUTH_CLIENT_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -4516,7 +4546,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/PHASE_3_3_PLAN/" class="md-nav__link">
+      <a href="../PHASE_3_3_PLAN/" class="md-nav__link">
         
   
   
@@ -4539,7 +4569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/PHASE_3_IMPLEMENTATION_PLAN/" class="md-nav__link">
+      <a href="../PHASE_3_IMPLEMENTATION_PLAN/" class="md-nav__link">
         
   
   
@@ -4562,7 +4592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -4585,7 +4615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -4608,7 +4638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/visualization/" class="md-nav__link">
+      <a href="../visualization/" class="md-nav__link">
         
   
   
@@ -5070,64 +5100,37 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
-      Prerequisites
+      Context
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start-1-command-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick Start (1 Command - Recommended)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#manual-step-by-step-alternative" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manual Step-by-Step (Alternative)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration Notes
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration Notes">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#development-vs-production-mode" class="md-nav__link">
+  <a href="#the-problem-script-sprawl-and-architectural-confusion" class="md-nav__link">
     <span class="md-ellipsis">
-      Development vs Production Mode
+      The Problem: Script Sprawl and Architectural Confusion
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#openai-api-key-recommended-for-quick-start" class="md-nav__link">
+  <a href="#the-core-architectural-problem" class="md-nav__link">
     <span class="md-ellipsis">
-      OpenAI API Key (Recommended for Quick Start)
+      The Core Architectural Problem
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#local-embeddings-no-api-key-required" class="md-nav__link">
+  <a href="#what-we-learned" class="md-nav__link">
     <span class="md-ellipsis">
-      Local Embeddings (No API Key Required)
+      What We Learned
     </span>
   </a>
   
@@ -5139,64 +5142,106 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#restoring-a-backup" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
-      Restoring a Backup
+      Decision
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-server-integration-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      MCP Server Integration (Optional)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#kg-command-not-found" class="md-nav__link">
+  <a href="#adopt-the-kubernetes-operator-pattern" class="md-nav__link">
     <span class="md-ellipsis">
-      "kg: command not found"
+      Adopt the Kubernetes Operator Pattern
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-server-errors-about-openai-key" class="md-nav__link">
+  <a href="#the-four-layers" class="md-nav__link">
     <span class="md-ellipsis">
-      API server errors about OpenAI key
+      The Four Layers
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#dimension-mismatch-when-restoring" class="md-nav__link">
+  <a href="#the-kg-operator-cli" class="md-nav__link">
     <span class="md-ellipsis">
-      Dimension mismatch when restoring
+      The kg-operator CLI
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#database-wont-start" class="md-nav__link">
+  <a href="#container-architecture" class="md-nav__link">
     <span class="md-ellipsis">
-      Database won't start
+      Container Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-responsibility-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Responsibility Boundaries
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Responsibility Boundaries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#infrastructure-layer-env-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Infrastructure Layer (.env file)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-layer-database-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Layer (Database records)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-configurepy-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      The configure.py Tool
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clean-docker-builds" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clean Docker Builds
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-env-file-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      The .env File Role
     </span>
   </a>
   
@@ -5208,54 +5253,69 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-just-happened" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
-      What Just Happened?
+      Consequences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positive
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      Negative
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollout-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rollout Plan
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related ADRs
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#nuclear-test-validation" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
-      Nuclear Test Validation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      Next Steps
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Performance Tips
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-files-locations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Files &amp; Locations
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Summary
+      References
     </span>
   </a>
   
@@ -5280,265 +5340,350 @@
   
 
 
-<h1 id="knowledge-graph-system-5-minute-cold-start">Knowledge Graph System - 5-Minute Cold Start</h1>
-<p><strong>Get from zero to operational system in under 5 minutes</strong> (excluding optional restore).</p>
-<p><strong>Status:</strong> ✅ Nuclear tested on October 28, 2025 (complete system deletion and rebuild)</p>
-<h2 id="prerequisites">Prerequisites</h2>
+<h1 id="adr-061-operator-pattern-for-platform-lifecycle-management">ADR-061: Operator Pattern for Platform Lifecycle Management</h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2025-01-07
+<strong>Replaces:</strong> Previous containerization attempts with excessive script sprawl</p>
+<h2 id="context">Context</h2>
+<h3 id="the-problem-script-sprawl-and-architectural-confusion">The Problem: Script Sprawl and Architectural Confusion</h3>
+<p>The system evolved 35+ shell scripts across multiple directories (<code>scripts/services/</code>, <code>scripts/setup/</code>, <code>scripts/admin/</code>, etc.), creating several critical problems:</p>
+<ol>
+<li><strong>No clear entry point</strong> - Users had to understand which script to run when</li>
+<li><strong>Unclear responsibility boundaries</strong> - Scripts mixed infrastructure setup (.env file editing) with application configuration (database records)</li>
+<li><strong>Wrong execution order</strong> - Easy to start API before database was configured, leading to inconsistent state</li>
+<li><strong>Duplicate logic</strong> - Multiple scripts doing similar things (start-api.sh, start-database.sh, bootstrap.sh, initialize-platform.sh)</li>
+<li><strong>Docker vs host confusion</strong> - Scripts tried to support both modes, making them complex and fragile</li>
+</ol>
+<h3 id="the-core-architectural-problem">The Core Architectural Problem</h3>
+<p><strong>initialize-platform.sh tried to do two incompatible things:</strong>
+1. Edit infrastructure files (.env, docker-compose.yml) - Infrastructure layer
+2. Configure database records (admin users, AI providers) - Application layer</p>
+<p>This violated separation of concerns and made it impossible to have clean Docker builds where <strong>all secrets come from the environment, not files that get edited at runtime</strong>.</p>
+<h3 id="what-we-learned">What We Learned</h3>
+<p>From the failed <code>feature/containerization-strategy</code> branch (6000+ lines changed), we learned:</p>
+<ol>
+<li><strong>Bootstrap sequencing is critical</strong>: Database → Migrations → <strong>Configuration</strong> → API start (config MUST happen before API boots)</li>
+<li><strong>The operator pattern works</strong>: Single CLI that orchestrates everything</li>
+<li><strong>Configuration belongs in the database</strong>: Not in .env files that get edited post-deployment</li>
+<li><strong>Simplicity wins</strong>: Too many abstraction layers (operator → bootstrap → initialize → config managers) made debugging impossible</li>
+</ol>
+<h2 id="decision">Decision</h2>
+<h3 id="adopt-the-kubernetes-operator-pattern">Adopt the Kubernetes Operator Pattern</h3>
+<p>Create a <strong>single user-facing CLI</strong> (<code>kg-operator</code>) that manages the entire platform lifecycle through clean, layered architecture.</p>
+<h3 id="the-four-layers">The Four Layers</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│ Layer 1: Infrastructure (One-Time Setup)                    │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│ ─────────────────────────────────────────────────────────── │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│ • Generate secrets: ENCRYPTION_KEY, OAUTH_SIGNING_KEY       │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│ • Set database password: POSTGRES_PASSWORD                  │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│ • Configure Garage RPC secret: GARAGE_RPC_SECRET            │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                                                              │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│ Tool: kg-operator init --dev                                │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│ Output: .env file (NEVER edited again)                      │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>└─────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                          ↓
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│ Layer 2: Schema (Automatic)                                 │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│ ─────────────────────────────────────────────────────────── │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│ • Postgres container starts                                 │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│ • Auto-runs migrations from schema/migrations/              │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│ • Creates tables: kg_api.users, ai_provider_config, etc.    │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│                                                              │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│ Tool: docker-compose up -d postgres (migrations automatic)  │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│ Output: Database schema ready                               │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>└─────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                          ↓
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│ Layer 3: Configuration (Operator&#39;s Job)                     │
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│ ─────────────────────────────────────────────────────────── │
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│ • Create admin user in database                             │
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│ • Configure AI providers (OpenAI/Anthropic for extraction)  │
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│ • Configure embedding provider (OpenAI/Local)               │
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│ • Store encrypted API keys (using ENCRYPTION_KEY from env)  │
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│ • Configure Garage credentials (encrypted)                  │
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>│                                                              │
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>│ Tool: kg-operator config &lt;subcommand&gt;                       │
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>│ Output: Database records (application config)               │
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>└─────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>                          ↓
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>│ Layer 4: Application (After Config Ready)                   │
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>│ ─────────────────────────────────────────────────────────── │
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>│ • API server starts                                         │
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>│ • Reads ENCRYPTION_KEY from environment (to decrypt keys)   │
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>│ • Reads all other config from database                      │
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>│ • Viz app starts (talks to API)                             │
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>│                                                              │
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>│ Tool: kg-operator start --app-only                          │
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>│ Output: Running application                                 │
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>└─────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<h3 id="the-kg-operator-cli">The kg-operator CLI</h3>
+<p><strong>Single user interface for everything:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># kg-operator is a shell script that delegates to the operator container</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># Example: kg-operator config admin → docker exec kg-operator configure.py admin</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Initial setup (one time)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg-operator<span class="w"> </span>init<span class="w"> </span>--dev<span class="w">              </span><span class="c1"># Generate .env secrets (host-side script)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kg-operator<span class="w"> </span>start<span class="w"> </span>--infra-only<span class="w">      </span><span class="c1"># Start postgres + garage</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kg-operator<span class="w"> </span>config<span class="w"> </span>admin<span class="w">            </span><span class="c1"># Configure admin (via container)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg-operator<span class="w"> </span>config<span class="w"> </span>ai-provider<span class="w"> </span>openai
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>kg-operator<span class="w"> </span>config<span class="w"> </span>embedding<span class="w"> </span><span class="nb">local</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>kg-operator<span class="w"> </span>start<span class="w"> </span>--app-only<span class="w">        </span><span class="c1"># Start API + viz</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1"># Daily workflow</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>kg-operator<span class="w"> </span>start<span class="w">                   </span><span class="c1"># Start everything</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>kg-operator<span class="w"> </span>status<span class="w">                  </span><span class="c1"># Check health (queries containers)</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>kg-operator<span class="w"> </span>stop<span class="w">                    </span><span class="c1"># Clean shutdown</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="c1"># Maintenance</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>kg-operator<span class="w"> </span>backup<span class="w">                  </span><span class="c1"># Backup database (via container)</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>kg-operator<span class="w"> </span>restore<span class="w"> </span>backup.sql<span class="w">      </span><span class="c1"># Restore from backup (via container)</span>
+</code></pre></div>
+<p><strong>How delegation works:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># operator/kg-operator (shell wrapper)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">case</span><span class="w"> </span><span class="nv">$command</span><span class="w"> </span><span class="k">in</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>init<span class="o">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">        </span><span class="c1"># Run init-secrets.sh on host (needs to write .env)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">        </span><span class="nb">exec</span><span class="w"> </span>operator/lib/init-secrets.sh<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>config<span class="o">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">        </span><span class="c1"># Delegate to operator container</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">        </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/app/configure.py<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span>start<span class="o">)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">        </span><span class="c1"># Operator container uses Docker socket to start others</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">        </span>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">            </span>-v<span class="w"> </span>/var/run/docker.sock:/var/run/docker.sock<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">            </span>kg-operator:latest<span class="w"> </span>start<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="k">esac</span>
+</code></pre></div>
+<h3 id="container-architecture">Container Architecture</h3>
+<p><strong>The operator runs as a container in the cluster:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Docker Network: knowledge-graph-system
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── kg-postgres-dev       (PostgreSQL + AGE)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>├── kg-garage-dev         (S3-compatible storage)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>├── kg-api-dev            (FastAPI server) ← exposed :8000
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>├── kg-viz-dev            (React app) ← exposed :3000
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>└── kg-operator           (Operator container)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    ├── Access to Docker socket (/var/run/docker.sock)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    ├── Can start/stop other containers
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    ├── Connects to postgres via network
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    └── Runs configuration commands
+</code></pre></div>
+<p><strong>Why operator-as-container:</strong>
+1. <strong>Consistent environment</strong> - Same Python/tools everywhere
+2. <strong>Network access</strong> - Can connect to postgres directly (no localhost/port mapping)
+3. <strong>Docker socket access</strong> - Can manage other containers via Docker API
+4. <strong>Clean separation</strong> - Operator is infrastructure, not application
+5. <strong>Future: nginx</strong> - Easy to add reverse proxy to the cluster</p>
+<p><strong>Repository Structure (Post-Restructure):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>/
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── api/                     # FastAPI server (was src/)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>├── operator/                # Platform lifecycle (was scripts/)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│   ├── kg-operator          # 👈 User-facing CLI wrapper
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│   ├── lib/                 # Internal implementation (hidden from users)
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>│   │   ├── init-secrets.sh  # Generate infrastructure secrets
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>│   │   ├── start-infra.sh   # Start postgres + garage
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>│   │   ├── start-app.sh     # Start api + viz (after config)
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│   │   ├── stop.sh          # Clean shutdown
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>│   │   ├── backup-db.sh
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│   │   └── restore-db.sh
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│   ├── configure.py         # Python database config tool
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│   ├── Dockerfile           # Operator container (future)
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>│   ├── requirements.txt     # Python dependencies
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>│   ├── development/         # Developer tools
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>│   │   └── test/
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│   └── diagnostics/         # Debugging tools
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>├── cli/                     # kg CLI + MCP server (was client/)
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>├── web/                     # React visualization (was viz-app/)
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>├── docker/                  # Docker compose files
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>│   ├── docker-compose.yml
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>│   └── docker-compose.ollama.yml
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>├── schema/                  # Database schemas &amp; migrations
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>└── docs/                    # Documentation
+</code></pre></div>
+<h3 id="configuration-responsibility-boundaries">Configuration Responsibility Boundaries</h3>
+<h4 id="infrastructure-layer-env-file">Infrastructure Layer (.env file)</h4>
+<p><strong>Managed by:</strong> <code>kg-operator init</code>
+<strong>Set once, never edited:</strong>
+- <code>ENCRYPTION_KEY</code> - Master key for encrypting API keys at rest
+- <code>OAUTH_SIGNING_KEY</code> - Secret for signing JWT tokens
+- <code>POSTGRES_PASSWORD</code> - Database admin password
+- <code>GARAGE_RPC_SECRET</code> - Garage cluster coordination</p>
+<h4 id="application-layer-database-records">Application Layer (Database records)</h4>
+<p><strong>Managed by:</strong> <code>kg-operator config</code>
+<strong>Changed frequently:</strong>
+- Admin user credentials (<code>kg_api.users</code>)
+- AI provider settings (<code>kg_api.ai_provider_config</code>)
+- Embedding provider (<code>kg_api.embedding_config</code>)
+- API keys - encrypted (<code>kg_api.system_api_keys</code>)
+- Garage credentials - encrypted (<code>kg_api.system_api_keys</code>)</p>
+<h3 id="the-configurepy-tool">The configure.py Tool</h3>
+<p><strong>Python tool that ONLY talks to the database:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># operator/configure.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">psycopg2</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.api.lib.encryption</span><span class="w"> </span><span class="kn">import</span> <span class="n">encrypt_credential</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">Operator</span><span class="p">:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="c1"># Reads connection info from environment</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>            <span class="n">host</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;POSTGRES_HOST&quot;</span><span class="p">,</span> <span class="s2">&quot;localhost&quot;</span><span class="p">),</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>            <span class="n">password</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;POSTGRES_PASSWORD&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="p">)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">config_admin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Create/update admin user in database&quot;&quot;&quot;</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        <span class="n">hashed</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>            <span class="s2">&quot;UPDATE kg_api.users SET password_hash = </span><span class="si">%s</span><span class="s2"> WHERE username = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>            <span class="p">(</span><span class="n">hashed</span><span class="p">,</span> <span class="n">username</span><span class="p">)</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>        <span class="p">)</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">config_ai_provider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure AI extraction provider in database&quot;&quot;&quot;</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>            <span class="s2">&quot;INSERT INTO kg_api.ai_provider_config (provider, model, active) &quot;</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>            <span class="s2">&quot;VALUES (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, true)&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>            <span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>        <span class="p">)</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">store_api_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Encrypt and store API key in database&quot;&quot;&quot;</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>        <span class="c1"># Uses ENCRYPTION_KEY from environment to encrypt</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>        <span class="n">encrypted</span> <span class="o">=</span> <span class="n">encrypt_credential</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>            <span class="s2">&quot;INSERT INTO kg_api.system_api_keys (provider, encrypted_key) &quot;</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>            <span class="s2">&quot;VALUES (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>            <span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">encrypted</span><span class="p">)</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>        <span class="p">)</span>
+</code></pre></div>
+<p><strong>Key principle:</strong> The operator NEVER edits .env files or docker-compose.yml. It only writes to the database.</p>
+<h3 id="clean-docker-builds">Clean Docker Builds</h3>
+<p>With this architecture, Docker images are completely clean:</p>
+<p><strong>API Server Dockerfile:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">FROM</span><span class="w"> </span><span class="s">python:3.11-slim</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">COPY</span><span class="w"> </span>requirements.txt<span class="w"> </span>.
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">COPY</span><span class="w"> </span>api/<span class="w"> </span>./api/
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">COPY</span><span class="w"> </span>schema/<span class="w"> </span>./schema/
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c"># No secrets in image!</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c"># All secrets come from environment at runtime</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;uvicorn&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;api.api.main:app&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--host&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">]</span>
+</code></pre></div></p>
+<p><strong>docker-compose.yml:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">api</span><span class="p">:</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="c1"># Infrastructure secrets (from .env or CI/CD)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">ENCRYPTION_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${ENCRYPTION_KEY}</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">OAUTH_SIGNING_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${OAUTH_SIGNING_KEY}</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">POSTGRES_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${POSTGRES_PASSWORD}</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">      </span><span class="c1"># Database connection</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="nt">POSTGRES_HOST</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">      </span><span class="c1"># Application config comes from database, not environment!</span>
+</code></pre></div></p>
+<p><strong>API server reads config at startup:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># api/api/main.py</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.api.lib.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Infrastructure secrets from environment</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">ENCRYPTION_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ENCRYPTION_KEY&quot;</span><span class="p">)</span>  <span class="c1"># For decrypting API keys</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Application config from database</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">()</span>  <span class="c1"># Reads kg_api.ai_provider_config, etc.</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="n">ai_provider</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">extraction_provider</span>  <span class="c1"># e.g., &quot;openai&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="n">api_key_encrypted</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">api_keys</span><span class="p">[</span><span class="s2">&quot;openai&quot;</span><span class="p">]</span>  <span class="c1"># From database</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">api_key</span> <span class="o">=</span> <span class="n">decrypt</span><span class="p">(</span><span class="n">api_key_encrypted</span><span class="p">,</span> <span class="n">ENCRYPTION_KEY</span><span class="p">)</span>  <span class="c1"># Decrypt</span>
+</code></pre></div></p>
+<h3 id="the-env-file-role">The .env File Role</h3>
+<p><strong>.env is relegated to "override for host-mode development only":</strong></p>
+<p><strong>Docker mode (primary):</strong>
+- Secrets come from Docker secrets, CI/CD environment, or .env sourced by docker-compose
+- .env file exists but is ONLY read by docker-compose, not edited by scripts</p>
+<p><strong>Host mode (fallback):</strong>
+- Developers running API on host (not in Docker) can use .env
+- Allows local development without Docker
+- Still follows same pattern: infrastructure secrets in .env, app config in database</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ol>
+<li><strong>Single entry point</strong> - Users only learn <code>kg-operator</code>, not 35 different scripts</li>
+<li><strong>Clear layer separation</strong> - Infrastructure setup is separate from application configuration</li>
+<li><strong>Correct execution order</strong> - Operator enforces: infra → schema → config → app</li>
+<li><strong>Clean Docker builds</strong> - No runtime file editing, all secrets from environment</li>
+<li><strong>Easier debugging</strong> - <code>kg-operator status</code> shows entire system state</li>
+<li><strong>Better testing</strong> - Internal lib scripts can be tested independently</li>
+<li><strong>Host mode still works</strong> - .env fallback preserves local development workflow</li>
+</ol>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Users must learn new workflow</strong> - Existing bootstrap.sh users need to migrate</li>
+<li><strong>More upfront architecture</strong> - Requires discipline to maintain layer boundaries</li>
+<li><strong>Python dependency</strong> - configure.py requires Python + psycopg2 (acceptable tradeoff)</li>
+</ol>
+<h3 id="migration-path">Migration Path</h3>
+<p><strong>Deprecated (to be removed):</strong>
+- ❌ <code>operator/setup/bootstrap.sh</code> → Use <code>kg-operator init &amp;&amp; kg-operator start</code>
+- ❌ <code>operator/setup/initialize-platform.sh</code> → Use <code>kg-operator config</code>
+- ❌ <code>operator/admin/set-admin-password.sh</code> → Use <code>kg-operator config admin</code>
+- ❌ <code>operator/garage/init-garage.sh</code> → Use <code>kg-operator config garage</code></p>
+<p><strong>Moved to development tools:</strong>
+- 📦 <code>operator/services/start-*.sh</code> (8 files) → <code>scripts/development/local/run-*-local.sh</code> (for manual debugging only)</p>
+<p><strong>Kept (developer tools):</strong>
+- ✅ <code>operator/development/test/</code> - Testing tools
+- ✅ <code>scripts/development/diagnostics/</code> - Debugging tools (monitor-db.sh, garage-status.sh, lint_queries.py)
+- ✅ <code>scripts/development/local/</code> - Manual service scripts for deep debugging (not for normal workflow)</p>
+<p><strong>Moved to internal lib:</strong>
+- 📦 <code>operator/database/backup-database.sh</code> → <code>operator/lib/backup-db.sh</code>
+- 📦 <code>operator/database/restore-database.sh</code> → <code>operator/lib/restore-db.sh</code>
+- 📦 <code>operator/database/migrate-db.sh</code> → Automatic (postgres runs on startup)</p>
+<h3 id="rollout-plan">Rollout Plan</h3>
+<p><strong>Phase 1: Create operator infrastructure</strong> ✅ COMPLETE
+- [x] Create <code>operator/kg-operator</code> CLI
+- [x] Create <code>operator/lib/init-secrets.sh</code>
+- [x] Restructure repository (src→api, scripts→operator, client→cli, viz-app→web)
+- [x] Create <code>operator/configure.py</code> (Python database config tool)
+- [x] Create <code>operator/lib/start-infra.sh</code>
+- [x] Create <code>operator/lib/start-app.sh</code>
+- [x] Create <code>operator/lib/stop.sh</code></p>
+<p><strong>Phase 2: Update Docker builds</strong> ✅ COMPLETE
+- [x] Create <code>operator/Dockerfile</code> (operator container)
+- [x] Update <code>docker/docker-compose.yml</code> to include all services (postgres, garage, api, web, operator)
+- [x] Create clean API Dockerfile (no secrets baked in)
+- [x] Update <code>web/Dockerfile</code> to be clean (already was clean)</p>
+<p><strong>Phase 3: Documentation</strong>
+- [ ] Update <code>docs/guides/GETTING-STARTED.md</code> to use kg-operator
+- [ ] Update <code>CLAUDE.md</code> with new workflow
+- [ ] Create migration guide for existing users</p>
+<p><strong>Phase 4: Deprecation</strong>
+- [ ] Mark old scripts as deprecated
+- [ ] Remove after one release cycle</p>
+<h2 id="related-adrs">Related ADRs</h2>
 <ul>
-<li>Linux/Unix system with Docker installed</li>
-<li>Python 3.11+ and Node.js 18+</li>
-<li>OpenAI API key (or use local embeddings - see below)</li>
+<li><strong>ADR-031:</strong> Encrypted Credential Storage (ENCRYPTION_KEY usage)</li>
+<li><strong>ADR-054:</strong> OAuth 2.0 Authentication (OAUTH_SIGNING_KEY usage)</li>
+<li><strong>ADR-040:</strong> Database Schema Migration Management (automatic migrations)</li>
+<li><strong>ADR-057:</strong> Garage Object Storage (configuration via operator)</li>
 </ul>
-<h2 id="quick-start-1-command-recommended">Quick Start (1 Command - Recommended)</h2>
-<p><strong>Fastest way to get started:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Clone repository</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaronsb/knowledge-graph-system.git
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># 2. Run bootstrap script (handles everything automatically)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>./scripts/setup/bootstrap.sh<span class="w">          </span><span class="c1"># Production mode (interactive password)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># OR for development (uses default password &#39;Password1!&#39;):</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>./scripts/setup/bootstrap.sh<span class="w"> </span>--dev<span class="w">    </span><span class="c1"># Development mode (quick start)</span>
-</code></pre></div>
-<p><strong>What bootstrap.sh does:</strong>
-- ✅ Checks prerequisites (Docker, Python, Node.js)
-- ✅ Creates .env from .env.example
-- ✅ Starts PostgreSQL + Apache AGE database
-- ✅ Starts Garage object storage
-- ✅ Starts FastAPI server
-- ✅ Configures admin user, OAuth keys, encryption keys, embeddings
-- ✅ Installs kg CLI globally
-- ✅ Verifies system health</p>
-<p><strong>Total time:</strong> ~3-4 minutes for fresh system! 🚀</p>
-<h2 id="manual-step-by-step-alternative">Manual Step-by-Step (Alternative)</h2>
-<p>If you prefer to run each step manually:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1. Clone repository (30 seconds)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaronsb/knowledge-graph-system.git
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># 2. Start database - auto-applies schema + migrations (15 seconds)</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>./scripts/services/start-database.sh
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># 3. Start Garage object storage (10 seconds)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>./scripts/services/start-garage.sh<span class="w"> </span>-y
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># 4. Start API server - auto-creates venv + installs deps (15 seconds)</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>./scripts/services/start-api.sh<span class="w"> </span>-y
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1"># 5. Initialize auth + configure embeddings (interactive, 60 seconds)</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>./scripts/setup/initialize-platform.sh<span class="w">          </span><span class="c1"># Production mode (interactive password)</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># OR for development (uses default password &#39;Password1!&#39;):</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>./scripts/setup/initialize-platform.sh<span class="w"> </span>--dev<span class="w">    </span><span class="c1"># Development mode (quick start)</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="c1"># Steps:</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1"># → Set admin password (or uses Password1! in dev mode)</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="c1"># → Auto-generates OAuth signing keys</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="c1"># → Auto-generates encryption key</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="c1"># → Choose embedding option:</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1">#    Option 1: OpenAI (paste your API key when prompted)</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="c1">#    Option 2: Local embeddings (Nomic - no API key needed)</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="c1"># 6. Install kg CLI (20 seconds)</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="nb">cd</span><span class="w"> </span>client<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./install.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
-</code></pre></div>
-<p><strong>Verify it worked:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>health<span class="w">          </span><span class="c1"># Should show: API healthy</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Should show: 0 concepts (empty database ready)</span>
-</code></pre></div></p>
-<p><strong>Total time:</strong> ~3-4 minutes for fresh system! 🚀</p>
-<h2 id="configuration-notes">Configuration Notes</h2>
-<h3 id="development-vs-production-mode">Development vs Production Mode</h3>
-<p><strong>Development Mode (<code>--dev</code> flag):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/setup/initialize-platform.sh<span class="w"> </span>--dev
-</code></pre></div>
-- Sets admin password to <code>Password1!</code> (no prompts)
-- Fastest cold start (~30 seconds)
-- Perfect for local development, testing, demos
-- ⚠️ <strong>NEVER use in production!</strong></p>
-<p><strong>Production Mode (default):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./scripts/setup/initialize-platform.sh
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># OR in Docker with environment variable:</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nv">ADMIN_PASSWORD</span><span class="o">=</span><span class="s1">&#39;YourSecurePassword!&#39;</span><span class="w"> </span>./scripts/setup/initialize-platform.sh<span class="w"> </span>--non-interactive
-</code></pre></div>
-- Prompts for secure password (interactive)
-- OR accepts password via <code>ADMIN_PASSWORD</code> environment variable (Docker)
-- Required for production deployments
-- Password must meet requirements:
-  - Minimum 8 characters
-  - Uppercase, lowercase, digit, special character</p>
-<h3 id="openai-api-key-recommended-for-quick-start">OpenAI API Key (Recommended for Quick Start)</h3>
-<p>When running <code>initialize-platform.sh</code>, <strong>paste your OpenAI API key directly</strong> when prompted:
-- Uses OpenAI embeddings (1536 dimensions)
-- Fast and reliable
-- Costs ~$0.01 per 1000 concepts</p>
-<h3 id="local-embeddings-no-api-key-required">Local Embeddings (No API Key Required)</h3>
-<p>Alternative if you don't have OpenAI API key:
-- Select option 2 during <code>initialize-platform.sh</code>
-- Uses Nomic embeddings (768 dimensions)
-- Runs locally via Ollama
-- Free but requires more setup</p>
-<h2 id="restoring-a-backup">Restoring a Backup</h2>
-<p>If you have an existing backup to restore:</p>
-<p><strong>Step 1: Match embedder to backup</strong></p>
-<p>Check your backup's embedding dimensions:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># If backup was created with Nomic (768 dims):</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>activate<span class="w"> </span><span class="m">2</span><span class="w"> </span>--force<span class="w">  </span><span class="c1"># Activate Nomic</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
-</code></pre></div></p>
-<p><strong>Step 2: Restore</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>~/.local/share/kg/backups/your_backup.json
-</code></pre></div></p>
-<p><strong>Expected timing:</strong> ~5 minutes for 30k items (3,436 concepts, 814 sources, 5,535 instances)</p>
-<p><strong>What you'll see:</strong>
-- ✅ "Initializing AGE label" messages (normal, not errors!)
-- ✅ "Initializing edge type: MITIGATED_BY" (normal parallel processing messages)
-- Progress bars for Concepts, Sources, Instances, Relationships</p>
-<h2 id="mcp-server-integration-optional">MCP Server Integration (Optional)</h2>
-<p>The <code>kg</code> CLI installation automatically installs the MCP server at <code>~/.local/bin/kg-mcp-server</code>.</p>
-<p>To use with Claude Desktop:
-1. Restart Claude Desktop after installation (to detect new MCP server)
-2. MCP tools will appear automatically (search_concepts, get_database_stats, etc.)</p>
-<p>Test it works:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># In Claude Desktop, try:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s2">&quot;Show me database statistics&quot;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s2">&quot;Search for concepts related to parallel processing&quot;</span>
-</code></pre></div></p>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<h3 id="kg-command-not-found">"kg: command not found"</h3>
-<p>Add <code>~/.local/bin</code> to your PATH:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export PATH=&quot;$HOME/.local/bin:$PATH&quot;&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">source</span><span class="w"> </span>~/.bashrc
-</code></pre></div></p>
-<h3 id="api-server-errors-about-openai-key">API server errors about OpenAI key</h3>
-<p>If you see API key errors after starting the server:
-1. Run <code>./scripts/setup/initialize-platform.sh</code> to configure embeddings
-2. Paste your OpenAI API key when prompted
-3. OR choose option 2 for local embeddings</p>
-<h3 id="dimension-mismatch-when-restoring">Dimension mismatch when restoring</h3>
-<p>Your backup uses different embeddings than active config:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check what embedders are available</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>list
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Switch to match backup (use --force if database is empty)</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>activate<span class="w"> </span>&lt;config-id&gt;<span class="w"> </span>--force
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>reload
-</code></pre></div></p>
-<h3 id="database-wont-start">Database won't start</h3>
-<p>Hard reset:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker-compose<span class="w"> </span>down<span class="w"> </span>-v
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>./scripts/services/start-database.sh
-</code></pre></div></p>
-<h2 id="what-just-happened">What Just Happened?</h2>
-<p><strong>Bootstrap Script (bootstrap.sh) - Recommended:</strong>
-- Checked all prerequisites (Docker, Python, Node.js)
-- Created <code>.env</code> from <code>.env.example</code> if needed
-- Started PostgreSQL + Apache AGE + Garage + API server
-- Configured admin user, OAuth keys, encryption keys, embeddings
-- Installed kg CLI globally
-- Verified system health
-- <strong>Total time:</strong> ~3-4 minutes</p>
-<p><strong>OR if you ran individual scripts:</strong></p>
-<p><strong>Database (start-database.sh):</strong>
-- Created <code>.env</code> from <code>.env.example</code>
-- Started PostgreSQL + Apache AGE container
-- Applied baseline schema + all migrations automatically
-- Ready in ~15 seconds</p>
-<p><strong>Garage (start-garage.sh):</strong>
-- Started Garage object storage container
-- S3-compatible storage for image assets (ADR-057)
-- Ready in ~10 seconds</p>
-<p><strong>API Server (start-api.sh):</strong>
-- Created Python virtual environment
-- Installed all dependencies from requirements.txt
-- Started FastAPI server in background
-- Logs: <code>logs/api_*.log</code></p>
-<p><strong>Auth Setup (initialize-platform.sh):</strong>
-- Created admin user in database
-- Generated OAuth signing keys (ADR-054)
-- Generated encryption keys in <code>.env</code> (ADR-031)
-- Configured embedding provider (OpenAI or Nomic)
-- <strong>Dev mode (<code>--dev</code>)</strong>: Uses password <code>Password1!</code> for quick start
-- <strong>Production mode</strong>: Prompts for secure password or uses <code>ADMIN_PASSWORD</code> env var</p>
-<p><strong>CLI Install (client/install.sh):</strong>
-- Built TypeScript client
-- Linked <code>kg</code> command to <code>~/.local/bin/kg</code>
-- Installed <code>kg-mcp-server</code> for Claude Desktop integration</p>
-<h2 id="nuclear-test-validation">Nuclear Test Validation</h2>
-<p><strong>Test date:</strong> October 28, 2025</p>
-<p><strong>Test procedure:</strong>
-1. Deleted entire repository (<code>rm -rf knowledge-graph-system</code>)
-2. Fresh clone from GitHub
-3. Followed 5-command quick start
-4. Pasted OpenAI API key into <code>initialize-platform.sh</code>
-5. Switched to Nomic embeddings (to match backup)
-6. Restored production backup (3,436 concepts)</p>
-<p><strong>Results:</strong>
-- ✅ System operational in 3 minutes (fresh install)
-- ✅ Backup restored in 5 minutes
-- ✅ All 3,436 concepts verified intact
-- ✅ All 20,335 relationships verified
-- ✅ Embeddings working (92.4% similarity on test queries)
-- ✅ MCP server functional (all tools tested)
-- ✅ Clean logs (no scary ERROR messages)</p>
-<p><strong>Total time:</strong> 8 minutes from deletion to fully restored production system 🎉</p>
-<h2 id="next-steps">Next Steps</h2>
-<p>Once system is running:</p>
-<p><strong>Ingest your first document:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>document.txt
-</code></pre></div></p>
-<p><strong>Search the graph:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;your search term&quot;</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;concept A&quot;</span><span class="w"> </span><span class="s2">&quot;concept B&quot;</span>
-</code></pre></div></p>
-<p><strong>Backup your data:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Creates: ~/.local/share/kg/backups/full_backup_YYYYMMDD_HHMMSS.json</span>
-</code></pre></div></p>
-<p><strong>Explore via MCP (Claude Desktop):</strong>
-- Search concepts semantically
-- Find connections between ideas
-- Get database statistics
-- All through natural conversation!</p>
-<h2 id="performance-tips">Performance Tips</h2>
-<p><strong>For restore operations:</strong>
-- Default 2 parallel workers = stable and fast
-- Don't increase beyond 2 (causes AGE concurrency conflicts)
-- ~5 minutes is expected for 30k items</p>
-<p><strong>For ingestion:</strong>
-- Cloud APIs (OpenAI/Anthropic) = 2-5s per chunk
-- Local (Ollama) = 3-10s per chunk
-- Job approval workflow prevents surprise costs (ADR-014)</p>
-<h2 id="key-files-locations">Key Files &amp; Locations</h2>
-<p><strong>Configuration:</strong>
-- <code>.env</code> - Environment variables (auto-created)
-- <code>docker-compose.yml</code> - Database container config</p>
-<p><strong>Data:</strong>
-- Database: Docker volume <code>knowledge-graph-system_postgres_data</code>
-- Backups: <code>~/.local/share/kg/backups/</code>
-- Logs: <code>logs/api_*.log</code></p>
-<p><strong>Scripts:</strong>
-- <code>./scripts/services/start-database.sh</code> - Start database
-- <code>./scripts/services/start-api.sh</code> - Start API server
-- <code>./scripts/setup/initialize-platform.sh</code> - Configure auth + embeddings
-- <code>./scripts/services/stop-api.sh</code> - Stop API server
-- <code>./scripts/services/stop-database.sh</code> - Stop database</p>
-<p><strong>Documentation:</strong>
-- <code>docs/guides/QUICKSTART.md</code> - User quickstart guide
-- <code>CLAUDE.md</code> - Developer guide for Claude Code
-- <code>README.md</code> - Project overview</p>
-<h2 id="summary">Summary</h2>
-<p><strong>The entire cold start is just 5 commands and takes under 5 minutes.</strong> The system handles all complexity automatically:
-- ✅ Auto-creates configuration
-- ✅ Auto-applies database migrations
-- ✅ Auto-installs dependencies
-- ✅ Auto-configures embeddings
-- ✅ Ready for production use</p>
-<p>No manual configuration files to edit, no complex setup steps. Just run the scripts and go! 🚀</p>
+<h2 id="references">References</h2>
+<ul>
+<li>Kubernetes Operator Pattern: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/</li>
+<li>12-Factor App - Config: https://12factor.net/config</li>
+<li>Docker Secrets: https://docs.docker.com/engine/swarm/secrets/</li>
+</ul>
 <hr />
-<p><strong>Document Version:</strong> 2.0
-<strong>Last Updated:</strong> October 28, 2025
-<strong>Validation:</strong> Nuclear test (complete system deletion + rebuild)</p>
+<p><strong>Why this matters:</strong> This ADR establishes the foundational pattern for how the platform is deployed, configured, and managed. Getting this right enables clean Docker builds, CI/CD automation, and a vastly simpler user experience.</p>
 
 
 

@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../ADR-060-endpoint-security-architecture/">
+        <link rel="prev" href="../ADR-061-operator-pattern-lifecycle/">
       
       
         <link rel="next" href="../ARCHITECTURE_OVERVIEW/">
@@ -282,7 +282,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/COLD-START/" class="md-nav__link">
+      <a href="../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -518,29 +518,6 @@
             Getting Started
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/01-QUICKSTART/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Quick Start Guide
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
             
               
                 
@@ -4118,6 +4095,29 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-061: Operator Pattern for Platform Lifecycle Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -5452,6 +5452,12 @@
 <td>Proposed</td>
 <td>Per-endpoint dependency injection following FastAPI Full-Stack Template pattern - type-annotated dependencies (CurrentUser), superuser checks for admin routes, startup validation, and central security policy document for auditability</td>
 </tr>
+<tr>
+<td><a href="../ADR-061-operator-pattern-lifecycle/">ADR-061</a></td>
+<td>Operator Pattern for Platform Lifecycle</td>
+<td>Accepted</td>
+<td>Single kg-operator CLI managing four-layer architecture (Infrastructure → Schema → Configuration → Application) - eliminates script sprawl, enforces correct bootstrap sequence, enables clean Docker builds with secrets from environment not files</td>
+</tr>
 </tbody>
 </table>
 <h2 id="how-to-use-this-index">How to Use This Index</h2>
@@ -5504,7 +5510,7 @@
 <li><strong>Superseded:</strong> Decision replaced by specific ADR (noted in "Related" section)</li>
 </ol>
 <hr />
-<p><strong>Last Updated:</strong> 2025-11-04</p>
+<p><strong>Last Updated:</strong> 2025-01-07</p>
 <p><strong>Note:</strong> When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.</p>
 
 
