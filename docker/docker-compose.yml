@@ -103,6 +103,7 @@ services:
       # Infrastructure secrets (from .env)
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       OAUTH_SIGNING_KEY: ${OAUTH_SIGNING_KEY}
+      INTERNAL_KEY_SERVICE_SECRET: ${INTERNAL_KEY_SERVICE_SECRET}
 
       # Database connection
       POSTGRES_HOST: postgres
@@ -126,6 +127,17 @@ services:
         condition: service_healthy
       garage:
         condition: service_healthy
+
+    # GPU support for local embeddings (ADR-043)
+    # Enables GPU acceleration for sentence-transformers (nomic-embed-text-v1.5)
+    # Falls back to CPU when GPU VRAM is occupied by Ollama (dynamic device selection)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -181,6 +193,7 @@ services:
       # Infrastructure secrets (for configure.py operations)
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       OAUTH_SIGNING_KEY: ${OAUTH_SIGNING_KEY}
+      INTERNAL_KEY_SERVICE_SECRET: ${INTERNAL_KEY_SERVICE_SECRET}
 
     volumes:
       # Docker socket access (manage other containers)

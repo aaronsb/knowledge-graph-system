@@ -711,7 +711,7 @@ ag_catalog.system_api_keys
 
 ## Related Guides
 
-- **[../01-getting-started/01-QUICKSTART.md](../01-getting-started/01-QUICKSTART.md)** - Initial system setup
+- **[../../guides/QUICKSTART.md](../../guides/QUICKSTART.md)** - Initial system setup
 - **[../02-configuration/01-AI_PROVIDERS.md](../02-configuration/01-AI_PROVIDERS.md)** - Configure LLM providers
 - **[../05-maintenance/01-BACKUP_RESTORE.md](../05-maintenance/01-BACKUP_RESTORE.md)** - Database backup security
 

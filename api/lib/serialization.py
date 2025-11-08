@@ -15,7 +15,7 @@ import threading
 
 # Add parent directory to path for AGEClient import
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from api.lib.age_client import AGEClient
+from api.api.lib.age_client import AGEClient
 
 from .console import Console, Colors
 

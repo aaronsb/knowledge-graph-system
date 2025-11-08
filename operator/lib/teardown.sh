@@ -173,8 +173,8 @@ else
     echo -e "${YELLOW}→ Keeping .env file${NC}"
 fi
 
-# Check for Docker images
-IMAGES=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -E "knowledge-graph|kg-|docker-" | grep -v "<none>" || true)
+# Check for Docker images (catches both docker-api and docker_api naming)
+IMAGES=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -E "knowledge-graph|kg-|docker[-_](api|web|operator)" | grep -v "<none>" || true)
 
 # Prompt to remove images if not specified via flag
 if [ -n "$IMAGES" ] && [ "$REMOVE_IMAGES" = false ]; then
@@ -209,6 +209,16 @@ if [ "$REMOVE_IMAGES" = true ]; then
     else
         echo ""
         echo -e "${GREEN}✓ No Docker images to remove${NC}"
+    fi
+
+    # Also remove dangling images (untagged build layers)
+    echo -e "${BLUE}→ Removing dangling images...${NC}"
+    DANGLING=$(docker images -f "dangling=true" -q)
+    if [ -n "$DANGLING" ]; then
+        docker rmi -f $DANGLING 2>/dev/null || true
+        echo -e "${GREEN}✓ Dangling images removed${NC}"
+    else
+        echo -e "${GREEN}✓ No dangling images${NC}"
     fi
 fi
 

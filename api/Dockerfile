@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
-COPY api/requirements.txt .
+COPY requirements.txt .
 
 # Install Python dependencies into a virtual environment
 RUN python -m venv /opt/venv

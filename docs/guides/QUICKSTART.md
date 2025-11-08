@@ -1,8 +1,26 @@
-# Testing the New Operator Architecture
+# Knowledge Graph System - Quick Start Guide
 
-## Clean State - Ready to Test!
+**Get from zero to operational knowledge graph system in under 10 minutes.**
 
-All containers stopped and volumes cleaned. Follow these steps to test the new operator architecture.
+This guide uses the **operator architecture (ADR-061)** - the official containerized deployment method. All configuration happens through dedicated operator containers - no local Python installation required.
+
+**Status:** ✅ Fully tested end-to-end on November 8, 2025
+
+## Prerequisites
+
+- Docker or Podman with Docker Compose
+- Docker Compose or Podman Compose
+- OpenAI API key (or use local embeddings with Ollama)
+- (Optional) Node.js + npm for kg CLI tool
+
+## Overview
+
+The system uses 5 core containers:
+1. **PostgreSQL + Apache AGE** - Graph database
+2. **Garage** - S3-compatible object storage
+3. **kg-api** - FastAPI REST server
+4. **kg-web** - React visualization UI
+5. **kg-operator** - Platform configuration (admin, secrets, providers)
 
 ## Step 1: Generate Infrastructure Secrets
 

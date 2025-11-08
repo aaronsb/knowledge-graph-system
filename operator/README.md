@@ -241,7 +241,7 @@ echo "Next: ./scripts/services/start-api.sh"
 ## Documentation
 
 After modifying scripts, update:
-- `docs/guides/COLD-START.md` - Getting started guide
+- `docs/guides/QUICKSTART.md` - Getting started guide
 - `docs/guides/DEPLOYMENT.md` - Production deployment
 - `docs/manual/` - User manual references
 - `CLAUDE.md` - Development guide

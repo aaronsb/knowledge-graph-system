@@ -16,6 +16,7 @@ set -e
 # - OAUTH_SIGNING_KEY: Secret for signing JWT access tokens
 # - POSTGRES_PASSWORD: PostgreSQL admin password
 # - GARAGE_RPC_SECRET: Garage cluster coordination secret
+# - INTERNAL_KEY_SERVICE_SECRET: Internal service authorization token (ADR-031)
 #
 # WHAT IT DOES NOT TOUCH:
 # - Application config (AI providers, embedding settings)
@@ -79,10 +80,11 @@ while [[ $# -gt 0 ]]; do
             echo "  --help             Show this help"
             echo ""
             echo "Managed Secrets:"
-            echo "  ENCRYPTION_KEY     Master key for encrypting API keys at rest"
-            echo "  OAUTH_SIGNING_KEY  Secret for signing JWT tokens"
-            echo "  POSTGRES_PASSWORD  PostgreSQL admin password"
-            echo "  GARAGE_RPC_SECRET  Garage cluster coordination secret"
+            echo "  ENCRYPTION_KEY              Master key for encrypting API keys at rest"
+            echo "  OAUTH_SIGNING_KEY           Secret for signing JWT tokens"
+            echo "  POSTGRES_PASSWORD           PostgreSQL admin password"
+            echo "  GARAGE_RPC_SECRET           Garage cluster coordination secret"
+            echo "  INTERNAL_KEY_SERVICE_SECRET Internal service authorization token"
             echo ""
             exit 0
             ;;
@@ -146,7 +148,7 @@ else
     if [ "$RESET_ALL" = false ] && [ ${#RESET_KEYS[@]} -eq 0 ]; then
         # Check if any secrets are already valid
         SECRETS_EXIST=false
-        for key in ENCRYPTION_KEY OAUTH_SIGNING_KEY POSTGRES_PASSWORD GARAGE_RPC_SECRET; do
+        for key in ENCRYPTION_KEY OAUTH_SIGNING_KEY POSTGRES_PASSWORD GARAGE_RPC_SECRET INTERNAL_KEY_SERVICE_SECRET; do
             if is_secret_valid "$key"; then
                 SECRETS_EXIST=true
                 break
@@ -294,6 +296,17 @@ if should_reset "GARAGE_RPC_SECRET" || ! is_secret_valid "GARAGE_RPC_SECRET"; th
     echo -e "${GREEN}✓ GARAGE_RPC_SECRET${NC} - generated and saved"
 else
     echo -e "${GREEN}✓ GARAGE_RPC_SECRET${NC} - already configured"
+fi
+
+# 5. INTERNAL_KEY_SERVICE_SECRET (for internal service authorization)
+# This token authorizes services to access encrypted API keys (ADR-031)
+if should_reset "INTERNAL_KEY_SERVICE_SECRET" || ! is_secret_valid "INTERNAL_KEY_SERVICE_SECRET"; then
+    echo -e "${YELLOW}→ Generating INTERNAL_KEY_SERVICE_SECRET...${NC}"
+    VALUE=$(python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())")
+    update_env_file "INTERNAL_KEY_SERVICE_SECRET" "$VALUE" "Internal service authorization token (ADR-031)"
+    echo -e "${GREEN}✓ INTERNAL_KEY_SERVICE_SECRET${NC} - generated and saved"
+else
+    echo -e "${GREEN}✓ INTERNAL_KEY_SERVICE_SECRET${NC} - already configured"
 fi
 
 echo ""

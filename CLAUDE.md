@@ -32,17 +32,17 @@ The system runs entirely in Docker containers - **no local Python installation r
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Docker Containers                        │
+│                     Docker Containers                       │
 ├─────────────────────────────────────────────────────────────┤
-│                                                              │
+│                                                             │
 │  Documents → [API Container] → LLM Extraction → [Postgres]  │
-│                      ↓                               ↓       │
-│              [Garage S3 Storage]          [Apache AGE Graph] │
-│                      ↓                               ↓       │
-│                [Web Container] ← REST API ← [API Container]  │
-│                                                              │
+│                      ↓                               ↓      │
+│              [Garage S3 Storage]         [Apache AGE Graph] │
+│                      ↓                               ↓      │
+│               [Web Container] ← REST API ← [API Container]  │
+│                                                             │
 │  Configuration: [Operator Container] → [Postgres Config]    │
-│                                                              │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
                             ↑
                    kg CLI (optional)
@@ -750,6 +750,7 @@ open http://localhost:3000
   - `OAUTH_SIGNING_KEY` - JWT token signing key
   - `POSTGRES_PASSWORD` - Database password
   - `GARAGE_RPC_SECRET` - Garage cluster secret
+  - `INTERNAL_KEY_SERVICE_SECRET` - Internal service authorization token (ADR-031)
 - **Application Configuration**: Stored encrypted in PostgreSQL (ADR-031)
   - OpenAI/Anthropic API keys
   - Garage S3 credentials

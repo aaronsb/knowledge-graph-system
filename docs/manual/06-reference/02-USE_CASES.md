@@ -191,4 +191,4 @@ Tags: tag1, tag2, tag3
 - [03-INGESTION.md](../01-getting-started/03-INGESTION.md) - Detailed ingestion configuration
 - [03-EXAMPLES.md](03-EXAMPLES.md) - Query examples and results
 - [02-CLI_USAGE.md](../01-getting-started/02-CLI_USAGE.md) - Complete CLI command reference
-- [01-QUICKSTART.md](../01-getting-started/01-QUICKSTART.md) - Getting started guide
+- [QUICKSTART.md](../../guides/QUICKSTART.md) - Getting started guide
