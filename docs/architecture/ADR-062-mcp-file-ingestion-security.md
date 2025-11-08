@@ -103,25 +103,25 @@ Preview file contents before ingestion (prevents "oops" moments).
 
 For image files (`.png`, `.jpg`, `.jpeg`):
 - **metadata** mode returns: dimensions, format, file size, EXIF data
-- Optional: Quick vision AI description (if enabled, small cost)
+- No description needed - ingestion will auto-generate via vision AI
 
 **Example Workflow:**
 
 ```typescript
-// 1. Check what's in the file
+// 1. Check metadata of text file
 inspect-file({
-  path: "~/Documents/research/paper.pdf",
+  path: "~/Documents/notes.md",
   mode: "metadata"
 })
-// → { size: "2.3 MB", pages: 15, type: "application/pdf" }
+// → { size: "45 KB", lines: 823, type: "text/markdown" }
 
-// 2. Preview first few lines of text file
+// 2. Preview first few lines
 inspect-file({
   path: "~/Documents/notes.md",
   mode: "head",
   limit: 20
 })
-// → Returns first 20 lines
+// → Returns first 20 lines (verify it's the right file)
 
 // 3. Search for specific content
 inspect-file({
@@ -131,11 +131,24 @@ inspect-file({
 })
 // → Returns lines containing "database"
 
-// 4. Confirmed it's the right file, now ingest
+// 4. Check image metadata
+inspect-file({
+  path: "~/Documents/diagram.png",
+  mode: "metadata"
+})
+// → { size: "1.2 MB", dimensions: "1920x1080", format: "PNG" }
+
+// 5. Confirmed correct files, now ingest
 ingest-file({
   path: "~/Documents/notes.md",
   ontology: "Research Notes"
 })
+
+ingest-file({
+  path: "~/Documents/diagram.png",
+  ontology: "Architecture"
+})
+// → Auto-description via vision AI, no manual input needed
 ```
 
 **Security:**
@@ -155,6 +168,25 @@ Ingest a single file from local filesystem.
   auto_approve?: boolean,    // Default: true
   force?: boolean            // Re-ingest if exists (default: false)
 }
+```
+
+**Automatic Image Handling:**
+
+Images (`.png`, `.jpg`, `.jpeg`) are automatically processed:
+1. Detect image file by extension
+2. Use vision AI to generate description (ADR-057a)
+3. Extract concepts from description
+4. Store image in object storage with metadata
+
+**No manual description needed** - just throw the image path at it!
+
+```typescript
+// Images work exactly like text files
+ingest-file({
+  path: "~/Documents/diagrams/architecture.png",
+  ontology: "System Architecture"
+})
+// → Vision AI describes it → Concepts extracted → Image stored
 ```
 
 **Tool: `ingest-directory`**
@@ -379,15 +411,25 @@ const result = ingest-directory({
 // ~/Projects/project-b/docs/*.md → Ontology: "project-b"
 ```
 
-**Workflow 3: Image + Description Ingestion**
+**Workflow 3: Image Ingestion (Automatic)**
 
 ```typescript
-// Agent can ingest visual sources
+// Just throw images at it - vision AI handles description
 ingest-file({
   path: "~/Documents/diagrams/architecture.png",
-  ontology: "System Architecture",
-  description: "High-level architecture diagram showing microservices..."
+  ontology: "System Architecture"
 })
+// → Vision AI: "A diagram showing microservices architecture with..."
+// → Concepts extracted: "microservices architecture", "API gateway", etc.
+// → Image stored with metadata for later retrieval via source tool
+
+// Works for directories too
+ingest-directory({
+  path: "~/Documents/diagrams",
+  ontology: "Architecture Diagrams",
+  pattern: "*.png"
+})
+// → Processes all PNG images automatically
 ```
 
 ---
@@ -530,9 +572,11 @@ ingest-file({
 - [ ] `inspect-file` MCP tool (preview before commit)
   - Head/tail/range/search/metadata modes
   - Image metadata extraction (dimensions, EXIF)
-  - Optional vision AI quick description
 - [ ] `ingest-file` MCP tool
-- [ ] Image detection and handling
+  - Text file ingestion
+  - Automatic image detection (by extension)
+  - Vision AI auto-description for images (ADR-057a)
+  - Object storage integration for images
 - [ ] Access logging (INSPECT, INGEST, DENIED)
 
 ### Phase 3: Directory Ingestion (ADR-062c)
