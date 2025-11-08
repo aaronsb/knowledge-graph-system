@@ -189,6 +189,10 @@ echo -e "${GREEN}✓ Bucket permissions configured${NC}"
 echo ""
 echo -e "${BLUE}→ Starting operator container...${NC}"
 
+# Set build metadata
+export GIT_COMMIT=$(cd "$PROJECT_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
 # Check if operator is already running
 if docker ps --format '{{.Names}}' | grep -q "^kg-operator$"; then
     echo -e "${GREEN}✓ Operator already running${NC}"
