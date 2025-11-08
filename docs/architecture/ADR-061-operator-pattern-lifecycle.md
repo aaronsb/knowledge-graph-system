@@ -353,7 +353,7 @@ api_key = decrypt(api_key_encrypted, ENCRYPTION_KEY)  # Decrypt
 
 **Kept (developer tools):**
 - ✅ `operator/development/test/` - Testing tools
-- ✅ `operator/diagnostics/` - Debugging tools (monitor-db.sh, garage-status.sh)
+- ✅ `scripts/development/diagnostics/` - Debugging tools (monitor-db.sh, garage-status.sh, lint_queries.py)
 - ✅ `scripts/development/local/` - Manual service scripts for deep debugging (not for normal workflow)
 
 **Moved to internal lib:**

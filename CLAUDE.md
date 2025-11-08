@@ -99,7 +99,7 @@ The system runs entirely in Docker containers - **no local Python installation r
 - `operator/lib/stop.sh` - Stop all services
 - `operator/lib/teardown.sh` - Complete teardown with options
 - `operator/admin/` - Admin utilities and management scripts
-- `operator/diagnostics/` - Diagnostic and maintenance tools
+- `scripts/development/diagnostics/` - Diagnostic and maintenance tools
 
 ### Development Tools (Local)
 - `scripts/development/test/` - Unit and integration test scripts
@@ -423,10 +423,10 @@ CI enforces query safety via linter:
 
 ```bash
 # Run locally (via operator container)
-docker exec kg-operator python /workspace/operator/diagnostics/lint_queries.py --verbose
+docker exec kg-operator python /workspace/scripts/development/diagnostics/lint_queries.py --verbose
 
 # Check specific paths
-docker exec kg-operator python /workspace/operator/diagnostics/lint_queries.py /workspace/src/api/routes /workspace/src/api/workers
+docker exec kg-operator python /workspace/scripts/development/diagnostics/lint_queries.py /workspace/src/api/routes /workspace/src/api/workers
 ```
 
 **Current baseline:** 3 unsafe queries (documented in `docs/architecture/QUERY_SAFETY_BASELINE.md`)
@@ -436,7 +436,7 @@ docker exec kg-operator python /workspace/operator/diagnostics/lint_queries.py /
 **When writing new code:**
 1. Always use `client.facade` for graph queries
 2. Never use bare `MATCH (n)` without explicit label
-3. Run linter before committing: `docker exec kg-operator python /workspace/operator/diagnostics/lint_queries.py`
+3. Run linter before committing: `docker exec kg-operator python /workspace/scripts/development/diagnostics/lint_queries.py`
 
 **When fixing unsafe queries:**
 ```python

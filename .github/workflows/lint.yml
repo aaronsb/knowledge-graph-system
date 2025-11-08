@@ -22,7 +22,7 @@ jobs:
 
       - name: Run query safety linter
         run: |
-          python3 scripts/lint_queries.py src/api || true
+          python3 scripts/development/diagnostics/lint_queries.py src/api || true
 
       - name: Report baseline technical debt
         run: |
