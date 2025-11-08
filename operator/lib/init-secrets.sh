@@ -259,7 +259,7 @@ fi
 
 # 1. ENCRYPTION_KEY (Fernet key for encrypting API keys at rest)
 generate_secret "ENCRYPTION_KEY" \
-    "python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'" \
+    'python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"' \
     "Master encryption key for API keys (ADR-031)"
 
 # 2. OAUTH_SIGNING_KEY (for signing JWT tokens)
@@ -269,7 +269,7 @@ if command -v openssl &> /dev/null; then
         "OAuth 2.0 access token signing key (ADR-054)"
 else
     generate_secret "OAUTH_SIGNING_KEY" \
-        "python3 -c 'import secrets; print(secrets.token_hex(32))'" \
+        'python3 -c "import secrets; print(secrets.token_hex(32))"' \
         "OAuth 2.0 access token signing key (ADR-054)"
 fi
 
@@ -299,7 +299,7 @@ else
             "PostgreSQL admin password"
     else
         generate_secret "POSTGRES_PASSWORD" \
-            "python3 -c 'import secrets; print(secrets.token_urlsafe(32))'" \
+            'python3 -c "import secrets; print(secrets.token_urlsafe(32))"' \
             "PostgreSQL admin password"
     fi
 fi
@@ -311,7 +311,7 @@ if command -v openssl &> /dev/null; then
         "Garage cluster RPC secret"
 else
     generate_secret "GARAGE_RPC_SECRET" \
-        "python3 -c 'import secrets; print(secrets.token_hex(32))'" \
+        'python3 -c "import secrets; print(secrets.token_hex(32))"' \
         "Garage cluster RPC secret"
 fi
 
@@ -321,9 +321,10 @@ echo -e "${GREEN}✓ Infrastructure secrets ready${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "${BOLD}Next Steps:${NC}"
-echo "  1. Start infrastructure: docker-compose up -d postgres garage"
-echo "  2. Configure application: ./scripts/operator/configure.py"
-echo "  3. Start API server: docker-compose up -d api"
+echo "  1. Start infrastructure: ./operator/lib/start-infra.sh"
+echo "  2. Start operator: cd docker && docker-compose --env-file ../.env up -d operator"
+echo "  3. Configure platform: docker exec kg-operator python /workspace/operator/configure.py admin"
+echo "  4. Start application: ./operator/lib/start-app.sh"
 echo ""
 echo -e "${YELLOW}Note: .env file contains secrets - never commit to git${NC}"
 echo ""
