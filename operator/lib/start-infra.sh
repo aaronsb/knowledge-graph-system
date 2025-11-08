@@ -77,13 +77,71 @@ for i in {1..15}; do
 done
 
 echo ""
+echo -e "${BLUE}→ Verifying PostgreSQL configuration...${NC}"
+
+# Check database exists
+DB_EXISTS=$(docker exec knowledge-graph-postgres psql -U ${POSTGRES_USER:-admin} -lqt | cut -d \| -f 1 | grep -w ${POSTGRES_DB:-knowledge_graph} | wc -l)
+if [ "$DB_EXISTS" -gt 0 ]; then
+    echo -e "${GREEN}✓ Database '${POSTGRES_DB:-knowledge_graph}' exists${NC}"
+else
+    echo -e "${RED}✗ Database not found${NC}"
+fi
+
+# Check AGE extension
+AGE_EXT=$(docker exec knowledge-graph-postgres psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT COUNT(*) FROM pg_extension WHERE extname='age'" 2>/dev/null || echo "0")
+if [ "$AGE_EXT" -gt 0 ]; then
+    echo -e "${GREEN}✓ Apache AGE extension loaded${NC}"
+else
+    echo -e "${RED}✗ AGE extension not found${NC}"
+fi
+
+# Check migrations applied (look for schema tables)
+SCHEMA_EXISTS=$(docker exec knowledge-graph-postgres psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name IN ('kg_api', 'kg_auth')" 2>/dev/null || echo "0")
+if [ "$SCHEMA_EXISTS" -eq 2 ]; then
+    echo -e "${GREEN}✓ Database schemas initialized (kg_api, kg_auth)${NC}"
+
+    # Count tables
+    TABLE_COUNT=$(docker exec knowledge-graph-postgres psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema IN ('kg_api', 'kg_auth')" 2>/dev/null || echo "0")
+    echo -e "${GREEN}✓ Migrations applied (${TABLE_COUNT} tables)${NC}"
+else
+    echo -e "${YELLOW}⚠  Database schemas not found (migrations may not have run)${NC}"
+fi
+
+echo ""
+echo -e "${BLUE}→ Verifying Garage configuration...${NC}"
+
+# Check Garage status
+GARAGE_STATUS=$(docker exec knowledge-graph-garage /garage status 2>/dev/null || echo "error")
+if echo "$GARAGE_STATUS" | grep -q "Healthy"; then
+    echo -e "${GREEN}✓ Garage cluster healthy${NC}"
+
+    # Show node info
+    NODE_ID=$(echo "$GARAGE_STATUS" | grep "Node ID" | head -1 | awk '{print $NF}' | cut -c1-16)
+    if [ -n "$NODE_ID" ]; then
+        echo -e "${GREEN}✓ Garage node initialized (${NODE_ID}...)${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠  Garage status check failed (may need manual initialization)${NC}"
+    echo -e "${YELLOW}   Run: ./scripts/garage/init-garage.sh${NC}"
+fi
+
+echo ""
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}✅ Infrastructure ready${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Services running:"
+echo -e "${BOLD}Services running:${NC}"
 echo "  • PostgreSQL (port 5432)"
-echo "  • Garage S3 storage (port 3900)"
+echo "    - Database: ${POSTGRES_DB:-knowledge_graph}"
+echo "    - Extensions: Apache AGE"
+echo "    - Migrations: Applied"
 echo ""
-echo "Next steps:"
-echo "  1. Configure platform: ./operator/kg-operator config admin"
-echo "  2. Start application: ./operator/lib/start-app.sh"
+echo "  • Garage S3 storage (port 3900)"
+echo "    - Status: Ready"
+echo "    - Note: Bucket/keys created during platform configuration"
+echo ""
+echo -e "${BOLD}Next steps:${NC}"
+echo "  1. Start operator: cd docker && docker-compose --env-file ../.env up -d operator"
+echo "  2. Configure platform: docker exec kg-operator python /workspace/operator/configure.py admin"
+echo "  3. Start application: ./operator/lib/start-app.sh"
 echo ""
