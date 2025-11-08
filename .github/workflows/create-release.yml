@@ -1,0 +1,160 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.2.3 or patch/minor/major)'
+        required: true
+        default: 'patch'
+      dry_run:
+        description: 'Dry run (do not create tag)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create Version Tag and Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine version
+        id: version
+        run: |
+          INPUT_VERSION="${{ github.event.inputs.version }}"
+
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $LATEST_TAG"
+
+          # Remove 'v' prefix for version calculation
+          CURRENT_VERSION=${LATEST_TAG#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Determine next version
+          if [[ "$INPUT_VERSION" == "major" ]]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [[ "$INPUT_VERSION" == "minor" ]]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          elif [[ "$INPUT_VERSION" == "patch" ]]; then
+            PATCH=$((PATCH + 1))
+          elif [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Use the provided version directly
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$INPUT_VERSION"
+          else
+            echo "❌ Invalid version format: $INPUT_VERSION"
+            echo "   Use 'major', 'minor', 'patch', or a semver like '1.2.3'"
+            exit 1
+          fi
+
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version_no_v=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "First release"
+            CHANGELOG="🎉 Initial release"
+          else
+            echo "Generating changelog from $PREV_TAG to HEAD"
+            CHANGELOG=$(git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges | head -20)
+
+            if [ -z "$CHANGELOG" ]; then
+              CHANGELOG="- Minor updates and improvements"
+            fi
+          fi
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Display release info
+        run: |
+          echo "📦 Version: ${{ steps.version.outputs.version }}"
+          echo ""
+          echo "📝 Changelog:"
+          echo "${{ steps.changelog.outputs.changelog }}"
+          echo ""
+          echo "🐳 Container images will be built and pushed to:"
+          echo "   - ghcr.io/${{ github.repository }}/kg-api:${{ steps.version.outputs.version_no_v }}"
+          echo "   - ghcr.io/${{ github.repository }}/kg-web:${{ steps.version.outputs.version_no_v }}"
+          echo "   - ghcr.io/${{ github.repository }}/kg-operator:${{ steps.version.outputs.version_no_v }}"
+
+      - name: Create and push tag
+        if: ${{ !github.event.inputs.dry_run }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+      - name: Create GitHub Release
+        if: ${{ !github.event.inputs.dry_run }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 Release ${{ steps.version.outputs.version }}
+
+            ### Changes
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### Container Images
+
+            Pull the latest release images from GitHub Container Registry:
+
+            ```bash
+            # API Server
+            docker pull ghcr.io/${{ github.repository }}/kg-api:${{ steps.version.outputs.version_no_v }}
+
+            # Web UI
+            docker pull ghcr.io/${{ github.repository }}/kg-web:${{ steps.version.outputs.version_no_v }}
+
+            # Operator
+            docker pull ghcr.io/${{ github.repository }}/kg-operator:${{ steps.version.outputs.version_no_v }}
+            ```
+
+            Or use `latest` for the most recent stable version:
+
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}/kg-api:latest
+            docker pull ghcr.io/${{ github.repository }}/kg-web:latest
+            docker pull ghcr.io/${{ github.repository }}/kg-operator:latest
+            ```
+
+            ### Installation
+
+            See the [Quickstart Guide](https://github.com/${{ github.repository }}/blob/main/docs/guides/QUICKSTART.md) for installation instructions.
+          draft: false
+          prerelease: false
+
+      - name: Dry run summary
+        if: ${{ github.event.inputs.dry_run }}
+        run: |
+          echo "🏃 Dry run completed - no tag or release created"
+          echo "   To create the release, run again without dry_run"

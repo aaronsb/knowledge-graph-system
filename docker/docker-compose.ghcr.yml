@@ -1,0 +1,23 @@
+# ============================================================================
+# Knowledge Graph System - Docker Compose (GHCR Images)
+# ============================================================================
+# Use pre-built images from GitHub Container Registry instead of building locally
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+#
+# This override file replaces local builds with published container images.
+# ============================================================================
+
+services:
+  api:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-api:latest
+    build: null  # Disable local build
+
+  web:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-web:latest
+    build: null  # Disable local build
+
+  operator:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
+    build: null  # Disable local build
