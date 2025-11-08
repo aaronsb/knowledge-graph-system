@@ -360,20 +360,20 @@ api_key = decrypt(api_key_encrypted, ENCRYPTION_KEY)  # Decrypt
 
 ### Rollout Plan
 
-**Phase 1: Create operator infrastructure** ✅
+**Phase 1: Create operator infrastructure** ✅ COMPLETE
 - [x] Create `operator/kg-operator` CLI
 - [x] Create `operator/lib/init-secrets.sh`
 - [x] Restructure repository (src→api, scripts→operator, client→cli, viz-app→web)
-- [ ] Create `operator/configure.py` (Python database config tool)
-- [ ] Create `operator/lib/start-infra.sh`
-- [ ] Create `operator/lib/start-app.sh`
-- [ ] Create `operator/lib/stop.sh`
+- [x] Create `operator/configure.py` (Python database config tool)
+- [x] Create `operator/lib/start-infra.sh`
+- [x] Create `operator/lib/start-app.sh`
+- [x] Create `operator/lib/stop.sh`
 
-**Phase 2: Update Docker builds**
-- [ ] Create `operator/Dockerfile` (operator container)
-- [ ] Update `docker/docker-compose.yml` to include operator service
-- [ ] Create clean API Dockerfile (no secrets baked in)
-- [ ] Update `web/Dockerfile` to be clean
+**Phase 2: Update Docker builds** ✅ COMPLETE
+- [x] Create `operator/Dockerfile` (operator container)
+- [x] Update `docker/docker-compose.yml` to include all services (postgres, garage, api, web, operator)
+- [x] Create clean API Dockerfile (no secrets baked in)
+- [x] Update `web/Dockerfile` to be clean (already was clean)
 
 **Phase 3: Documentation**
 - [ ] Update `docs/guides/GETTING-STARTED.md` to use kg-operator
