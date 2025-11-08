@@ -63,16 +63,16 @@ if [ "$STOP_APP" = true ]; then
 
     if [ -n "$API_RUNNING" ] || [ -n "$WEB_RUNNING" ]; then
         # Stop web first
-        if docker-compose ps | grep -qE "web.*Up|viz.*Up"; then
+        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "web.*Up|viz.*Up"; then
             echo -e "${BLUE}→ Stopping web visualization...${NC}"
-            docker-compose stop web 2>/dev/null || docker-compose stop viz 2>/dev/null || true
+            docker-compose --env-file "$PROJECT_ROOT/.env" stop web 2>/dev/null || docker-compose --env-file "$PROJECT_ROOT/.env" stop viz 2>/dev/null || true
             echo -e "${GREEN}✓ Web stopped${NC}"
         fi
 
         # Stop API
-        if docker-compose ps | grep -qE "api.*Up"; then
+        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "api.*Up"; then
             echo -e "${BLUE}→ Stopping API server...${NC}"
-            docker-compose stop api
+            docker-compose --env-file "$PROJECT_ROOT/.env" stop api
             echo -e "${GREEN}✓ API stopped${NC}"
         fi
 
@@ -94,16 +94,16 @@ if [ "$STOP_INFRA" = true ]; then
 
     if [ -n "$POSTGRES_RUNNING" ] || [ -n "$GARAGE_RUNNING" ]; then
         # Stop garage
-        if docker-compose ps | grep -qE "garage.*Up"; then
+        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "garage.*Up"; then
             echo -e "${BLUE}→ Stopping Garage storage...${NC}"
-            docker-compose stop garage
+            docker-compose --env-file "$PROJECT_ROOT/.env" stop garage
             echo -e "${GREEN}✓ Garage stopped${NC}"
         fi
 
         # Stop postgres last (might have open connections)
-        if docker-compose ps | grep -qE "postgres.*Up"; then
+        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "postgres.*Up"; then
             echo -e "${BLUE}→ Stopping PostgreSQL...${NC}"
-            docker-compose stop postgres
+            docker-compose --env-file "$PROJECT_ROOT/.env" stop postgres
             echo -e "${GREEN}✓ PostgreSQL stopped${NC}"
         fi
 

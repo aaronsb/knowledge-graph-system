@@ -48,7 +48,7 @@ cd "$DOCKER_DIR"
 
 # Start API
 echo -e "${BLUE}→ Starting API server...${NC}"
-docker-compose up -d api
+docker-compose --env-file "$PROJECT_ROOT/.env" up -d api
 
 echo -e "${BLUE}→ Waiting for API to be healthy...${NC}"
 
@@ -68,10 +68,10 @@ for i in {1..30}; do
 done
 
 # Start web viz app (if defined in docker-compose)
-if docker-compose config --services 2>/dev/null | grep -q "^web$\|^viz$"; then
+if docker-compose --env-file "$PROJECT_ROOT/.env" config --services 2>/dev/null | grep -q "^web$\|^viz$"; then
     echo ""
     echo -e "${BLUE}→ Starting web visualization...${NC}"
-    docker-compose up -d web 2>/dev/null || docker-compose up -d viz 2>/dev/null || true
+    docker-compose --env-file "$PROJECT_ROOT/.env" up -d web 2>/dev/null || docker-compose --env-file "$PROJECT_ROOT/.env" up -d viz 2>/dev/null || true
     echo -e "${GREEN}✓ Web app starting${NC}"
 fi
 

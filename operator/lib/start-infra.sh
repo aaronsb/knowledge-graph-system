@@ -41,7 +41,7 @@ cd "$DOCKER_DIR"
 
 # Start postgres and garage
 echo -e "${BLUE}→ Starting postgres and garage...${NC}"
-docker-compose up -d postgres garage
+docker-compose --env-file "$PROJECT_ROOT/.env" up -d postgres garage
 
 echo ""
 echo -e "${BLUE}→ Waiting for PostgreSQL to be healthy...${NC}"
