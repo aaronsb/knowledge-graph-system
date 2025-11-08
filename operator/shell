@@ -1,0 +1,90 @@
+#!/bin/bash
+# ============================================================================
+# operator/shell
+# Drop into a shell inside the operator container for development
+# ============================================================================
+
+set -e
+
+# Colors
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+CONTAINER_NAME="kg-operator"
+
+# Check if container is running
+if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    echo -e "${GREEN}→ Entering running operator container...${NC}"
+    exec docker exec -it "$CONTAINER_NAME" /bin/bash
+fi
+
+# Container not running - check if it exists but stopped
+if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    echo -e "${YELLOW}→ Operator container exists but stopped, starting...${NC}"
+    docker start "$CONTAINER_NAME"
+    exec docker exec -it "$CONTAINER_NAME" /bin/bash
+fi
+
+# Container doesn't exist - need to create it
+echo -e "${BLUE}→ Operator container not found${NC}"
+echo ""
+echo "The operator container isn't running yet."
+echo "Would you like to:"
+echo ""
+echo "  1) Run a temporary shell (container removed on exit)"
+echo "  2) Start the operator service (persistent container)"
+echo "  q) Quit"
+echo ""
+read -p "Choice [1/2/q]: " -n 1 -r
+echo ""
+
+case $REPLY in
+    1)
+        echo -e "${BLUE}→ Starting temporary operator shell...${NC}"
+
+        # Check if image exists
+        if ! docker images | grep -q "kg-operator"; then
+            echo -e "${YELLOW}⚠  Operator image not found - you'll need to build it first${NC}"
+            echo ""
+            echo "Build with:"
+            echo "  docker build -f operator/Dockerfile -t kg-operator:latest ."
+            echo ""
+            exit 1
+        fi
+
+        # Run temporary container with project mounted
+        exec docker run -it --rm \
+            --name kg-operator-shell \
+            --network knowledge-graph-system_default \
+            -v "$(pwd):/workspace" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -e POSTGRES_HOST=kg-postgres-dev \
+            -e POSTGRES_DB=knowledge_graph \
+            -e POSTGRES_USER=admin \
+            --workdir /workspace \
+            kg-operator:latest \
+            /bin/bash
+        ;;
+
+    2)
+        echo -e "${BLUE}→ Starting operator service...${NC}"
+        echo ""
+        echo "Run this from project root:"
+        echo "  cd docker/"
+        echo "  docker-compose up -d operator"
+        echo ""
+        exit 0
+        ;;
+
+    q|Q)
+        echo "Cancelled"
+        exit 0
+        ;;
+
+    *)
+        echo "Invalid choice"
+        exit 1
+        ;;
+esac
