@@ -233,6 +233,182 @@ def temp_file(tmp_path):
 
 
 # ============================================================================
+# OAuth 2.0 Authentication Fixtures (ADR-054, ADR-060)
+# ============================================================================
+
+@pytest.fixture
+def test_user_credentials() -> Dict[str, Any]:
+    """
+    Provide test user credentials.
+
+    Returns credentials for a regular contributor role test account.
+    """
+    from datetime import datetime, timezone
+
+    return {
+        "id": 100,
+        "username": "testuser",
+        "password_hash": "$2b$12$...",  # Mock hash
+        "role": "contributor",
+        "disabled": False,
+        "created_at": datetime.now(timezone.utc),
+        "last_login": None
+    }
+
+
+@pytest.fixture
+def test_admin_credentials() -> Dict[str, Any]:
+    """
+    Provide test admin credentials.
+
+    Returns credentials for an ADMIN role test account.
+    """
+    from datetime import datetime, timezone
+
+    return {
+        "id": 101,
+        "username": "testadmin",
+        "password_hash": "$2b$12$...",  # Mock hash
+        "role": "admin",
+        "disabled": False,
+        "created_at": datetime.now(timezone.utc),
+        "last_login": None
+    }
+
+
+@pytest.fixture
+def create_test_oauth_token():
+    """
+    Factory fixture for creating test OAuth 2.0 tokens.
+
+    Returns a function that creates tokens with custom properties.
+
+    Usage:
+        def test_something(create_test_oauth_token):
+            token = create_test_oauth_token(user_id=1, role="admin")
+            # Use token in test
+    """
+    def _create_token(
+        user_id: int = 100,
+        username: str = "testuser",
+        role: str = "contributor",
+        disabled: bool = False,
+        expired: bool = False,
+        client_id: str = "test_client"
+    ) -> str:
+        """
+        Create a test OAuth 2.0 access token.
+
+        Args:
+            user_id: User ID to embed in token
+            username: Username to embed in token
+            role: User role (read_only, contributor, curator, admin)
+            disabled: Whether user is disabled
+            expired: Whether token should be expired
+            client_id: OAuth client ID
+
+        Returns:
+            Mock OAuth token string (not a real JWT, just a test identifier)
+        """
+        # Create a simple test token (not a real JWT since we're mocking)
+        # Real OAuth tokens are validated against database
+        parts = [
+            f"user_{user_id}",
+            role,
+            "expired" if expired else "valid",
+            client_id
+        ]
+        return f"test_oauth_token:{'|'.join(parts)}"
+
+    return _create_token
+
+
+@pytest.fixture
+def auth_headers_user(create_test_oauth_token):
+    """
+    Provide authorization headers for a regular contributor role.
+
+    Returns headers dict with valid OAuth token for testing USER endpoints.
+    """
+    token = create_test_oauth_token(user_id=100, role="contributor")
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def auth_headers_admin(create_test_oauth_token):
+    """
+    Provide authorization headers for an ADMIN role.
+
+    Returns headers dict with valid OAuth token for testing ADMIN endpoints.
+    """
+    token = create_test_oauth_token(user_id=101, role="admin")
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def expired_oauth_token(create_test_oauth_token):
+    """
+    Provide an expired OAuth token for testing token expiration.
+    """
+    return create_test_oauth_token(user_id=100, role="contributor", expired=True)
+
+
+@pytest.fixture
+def mock_oauth_validation(monkeypatch, test_user_credentials, test_admin_credentials):
+    """
+    Mock OAuth token validation for testing without database.
+
+    Patches validate_oauth_access_token to return test users based on token.
+    This allows testing authentication flows without a live database.
+
+    Usage:
+        def test_endpoint(api_client, mock_oauth_validation):
+            # OAuth validation is now mocked
+            response = api_client.get("/protected", headers=auth_headers_user)
+    """
+    from src.api.models.auth import UserInDB
+    from datetime import datetime, timezone
+
+    def mock_validate(token: str):
+        """Mock validate_oauth_access_token function"""
+        # Parse test token
+        if not token.startswith("test_oauth_token:"):
+            return None
+
+        try:
+            parts = token.replace("test_oauth_token:", "").split("|")
+            user_id_str = parts[0]  # e.g., "user_100"
+            role = parts[1]
+            validity = parts[2]
+
+            if validity == "expired":
+                return None
+
+            # Extract user ID
+            user_id = int(user_id_str.replace("user_", ""))
+
+            # Return appropriate test user
+            if role == "admin":
+                creds = test_admin_credentials.copy()
+                creds["id"] = user_id
+                return UserInDB(**creds)
+            else:
+                creds = test_user_credentials.copy()
+                creds["id"] = user_id
+                creds["role"] = role
+                return UserInDB(**creds)
+
+        except Exception:
+            return None
+
+    # Patch the validation function
+    monkeypatch.setattr(
+        "src.api.dependencies.auth.validate_oauth_access_token",
+        mock_validate
+    )
+
+
+# ============================================================================
 # Pytest Configuration Hooks
 # ============================================================================
 
@@ -248,6 +424,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "api: API endpoint tests")
     config.addinivalue_line("markers", "slow: Slow running tests")
     config.addinivalue_line("markers", "smoke: Smoke tests (quick sanity checks)")
+    config.addinivalue_line("markers", "security: Security and authentication tests")
 
 
 def pytest_collection_modifyitems(config, items):
