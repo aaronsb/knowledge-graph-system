@@ -46,6 +46,14 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Stage 2: Production runtime
 FROM python:3.11-slim
 
+# Build metadata (git commit, build time)
+ARG GIT_COMMIT=unknown
+ARG BUILD_DATE=unknown
+LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.title="Knowledge Graph API"
+LABEL org.opencontainers.image.description="FastAPI server for knowledge graph system"
+
 WORKDIR /app
 
 # Install runtime system dependencies

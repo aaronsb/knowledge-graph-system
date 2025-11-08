@@ -102,6 +102,9 @@ services:
     build:
       context: ..
       dockerfile: api/Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
     image: kg-api:latest
     container_name: kg-api-dev
     ports:
@@ -163,6 +166,9 @@ services:
     build:
       context: ../web
       dockerfile: Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
     image: kg-web:latest
     container_name: kg-web-dev
     ports:
@@ -195,6 +201,9 @@ services:
     build:
       context: ..
       dockerfile: operator/Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
     image: kg-operator:latest
     container_name: kg-operator
     environment:

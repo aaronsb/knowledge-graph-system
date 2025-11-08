@@ -1,5 +1,13 @@
 FROM python:3.11-slim
 
+# Build metadata (git commit, build time)
+ARG GIT_COMMIT=unknown
+ARG BUILD_DATE=unknown
+LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.title="Knowledge Graph Operator"
+LABEL org.opencontainers.image.description="Platform configuration and lifecycle management"
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     # Docker CLI for container management via socket

@@ -32,6 +32,14 @@ RUN npm run build
 # Stage 2: Serve with nginx
 FROM nginx:alpine
 
+# Build metadata (git commit, build time)
+ARG GIT_COMMIT=unknown
+ARG BUILD_DATE=unknown
+LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.title="Knowledge Graph Web UI"
+LABEL org.opencontainers.image.description="React visualization app for knowledge graph"
+
 # Copy built static files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
