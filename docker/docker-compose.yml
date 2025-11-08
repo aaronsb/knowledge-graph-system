@@ -96,6 +96,7 @@ services:
     build:
       context: ..
       dockerfile: api/Dockerfile
+    image: kg-api:latest
     container_name: kg-api-dev
     ports:
       - "8000:8000"  # API endpoint
@@ -153,6 +154,7 @@ services:
     build:
       context: ../web
       dockerfile: Dockerfile
+    image: kg-web:latest
     container_name: kg-web-dev
     ports:
       - "3000:80"  # Web UI
@@ -181,6 +183,7 @@ services:
     build:
       context: ..
       dockerfile: operator/Dockerfile
+    image: kg-operator:latest
     container_name: kg-operator
     environment:
       # Database connection (connects to postgres container)

@@ -173,8 +173,8 @@ else
     echo -e "${YELLOW}→ Keeping .env file${NC}"
 fi
 
-# Check for Docker images (catches both docker-api and docker_api naming)
-IMAGES=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -E "knowledge-graph|kg-|docker[-_](api|web|operator)" | grep -v "<none>" || true)
+# Check for Docker images
+IMAGES=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -E "knowledge-graph|^kg-" | grep -v "<none>" || true)
 
 # Prompt to remove images if not specified via flag
 if [ -n "$IMAGES" ] && [ "$REMOVE_IMAGES" = false ]; then
