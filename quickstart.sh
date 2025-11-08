@@ -126,6 +126,39 @@ else
     echo ""
 fi
 
+# Development mode choice
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Container Mode${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Choose how to run the application:"
+echo ""
+echo -e "  ${GREEN}[1] Regular mode${NC} (recommended for usage)"
+echo -e "      • Production-ready static builds"
+echo -e "      • Fast and stable performance"
+echo -e "      • ${BOLD}Choose this if you just want to use the system${NC}"
+echo ""
+echo -e "  ${YELLOW}[2] Hot reload mode${NC} (for development)"
+echo -e "      • Live code editing with automatic reload"
+echo -e "      • API and web restart after every file save"
+echo -e "      • ${BOLD}Choose this only if you plan to edit the source code${NC}"
+echo ""
+read -p "Choose option (1 or 2): " -r
+echo ""
+
+USE_HOT_RELOAD=false
+START_APP_FLAGS=""
+if [[ $REPLY == "2" ]]; then
+    USE_HOT_RELOAD=true
+    START_APP_FLAGS="--dev"
+    echo -e "${YELLOW}→${NC} Will use development mode with hot reload"
+    echo ""
+else
+    echo -e "${GREEN}→${NC} Will use regular mode"
+    echo ""
+fi
+
 # Check Docker is running
 echo -e "${BLUE}→${NC} Checking Docker..."
 if ! docker ps >/dev/null 2>&1; then
@@ -252,7 +285,7 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BOLD}Step 7/7: Starting application (API + Web)${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-./operator/lib/start-app.sh
+./operator/lib/start-app.sh $START_APP_FLAGS
 APP_STARTED=true
 echo ""
 
