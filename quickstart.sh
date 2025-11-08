@@ -92,6 +92,40 @@ if [[ ! $REPLY =~ ^[Yy]es$ ]]; then
     exit 0
 fi
 
+# Password configuration choice
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Password Configuration${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Choose password security level:"
+echo ""
+echo -e "  ${GREEN}[1] Randomized passwords${NC} (recommended for security)"
+echo "      • Strong random passwords generated automatically"
+echo "      • You'll need to save them (displayed after generation)"
+echo "      • Database password is harder to change later"
+echo ""
+echo -e "  ${YELLOW}[2] Simple defaults${NC} (quick evaluation)"
+echo "      • Admin: Password1!"
+echo "      • Database: password"
+echo "      • Easy to remember, but insecure"
+echo ""
+read -p "Choose option (1 or 2): " -r
+echo ""
+
+USE_RANDOM_PASSWORDS=false
+if [[ $REPLY == "1" ]]; then
+    USE_RANDOM_PASSWORDS=true
+    # Generate random admin password (16 chars, alphanumeric)
+    ADMIN_PASSWORD=$(openssl rand -base64 16 | tr -d '/+=' | cut -c1-16)
+    echo -e "${GREEN}→${NC} Will generate randomized passwords"
+    echo ""
+else
+    ADMIN_PASSWORD="Password1!"
+    echo -e "${YELLOW}→${NC} Using simple default passwords"
+    echo ""
+fi
+
 # Check Docker is running
 echo -e "${BLUE}→${NC} Checking Docker..."
 if ! docker ps >/dev/null 2>&1; then
@@ -107,7 +141,32 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BOLD}Step 1/7: Generating infrastructure secrets${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-./operator/lib/init-secrets.sh --dev -y
+
+if [ "$USE_RANDOM_PASSWORDS" = true ]; then
+    # Production mode - generates random database password
+    ./operator/lib/init-secrets.sh -y
+    # Read the generated database password from .env
+    POSTGRES_PASSWORD=$(grep '^POSTGRES_PASSWORD=' .env | cut -d'=' -f2)
+
+    # Display passwords for user to save
+    echo ""
+    echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║${NC}  ${BOLD}🔐 SAVE THESE PASSWORDS${NC}                               ${GREEN}║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${BOLD}Admin Password:${NC}     ${GREEN}$ADMIN_PASSWORD${NC}"
+    echo -e "${BOLD}Database Password:${NC}  ${GREEN}$POSTGRES_PASSWORD${NC}"
+    echo ""
+    echo -e "${YELLOW}⚠  Write these down now - you'll need them to access the system!${NC}"
+    echo ""
+    read -p "Press Enter after saving these passwords..." -r
+    echo ""
+else
+    # Development mode - uses simple default passwords
+    ./operator/lib/init-secrets.sh --dev -y
+    POSTGRES_PASSWORD="password"
+fi
+
 echo ""
 
 # Step 2: Start infrastructure
@@ -124,10 +183,14 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BOLD}Step 3/7: Creating admin user${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "Creating admin user with password: ${RED}Password1!${NC}"
-echo -e "${YELLOW}⚠ Please change this password immediately after setup!${NC}"
-echo ""
-docker exec kg-operator python /workspace/operator/configure.py admin --password "Password1!"
+
+if [ "$USE_RANDOM_PASSWORDS" = true ]; then
+    echo "Creating admin user with randomized password (shown earlier)..."
+else
+    echo -e "Creating admin user with password: ${RED}Password1!${NC}"
+fi
+
+docker exec kg-operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD"
 echo ""
 
 # Step 4: Configure AI provider
@@ -229,16 +292,24 @@ echo "  • API:      http://localhost:8000"
 echo "  • Web UI:   http://localhost:3000"
 echo "  • Postgres: localhost:5432"
 echo ""
-echo -e "${YELLOW}Development Credentials (for evaluation/testing):${NC}"
-echo "  • Admin username: admin"
-echo -e "  • Admin password: ${RED}Password1!${NC}"
-echo -e "  • Database password: ${RED}password${NC}"
+if [ "$USE_RANDOM_PASSWORDS" = true ]; then
+    echo -e "${YELLOW}Your Credentials (randomized - from earlier):${NC}"
+    echo "  • Admin username: admin"
+    echo -e "  • Admin password: ${GREEN}$ADMIN_PASSWORD${NC}"
+    echo -e "  • Database password: ${GREEN}$POSTGRES_PASSWORD${NC}"
+else
+    echo -e "${YELLOW}Development Credentials (for evaluation/testing):${NC}"
+    echo "  • Admin username: admin"
+    echo -e "  • Admin password: ${RED}$ADMIN_PASSWORD${NC}"
+    echo -e "  • Database password: ${RED}$POSTGRES_PASSWORD${NC}"
+fi
+
 echo ""
 echo -e "${BOLD}Next steps:${NC}"
 echo ""
 echo -e "  ${GREEN}1.${NC} Login with kg CLI:"
 echo "       kg login"
-echo "       (Use username: admin, password: Password1!)"
+echo "       (Use username: admin, password: $ADMIN_PASSWORD)"
 echo ""
 echo -e "  ${GREEN}2.${NC} Test the system:"
 echo "       kg health"
@@ -253,11 +324,15 @@ echo ""
 echo -e "  ${GREEN}5.${NC} Install MCP server for Claude Desktop:"
 echo "       See: docs/guides/MCP_SERVER.md"
 echo ""
-echo -e "${YELLOW}💡 Production Use:${NC}"
-echo "  If you plan to keep this system, consider changing the default passwords:"
-echo "    • Admin password:    kg admin update-password"
-echo "    • Database password: Update POSTGRES_PASSWORD in .env and restart"
-echo ""
+
+if [ "$USE_RANDOM_PASSWORDS" = false ]; then
+    echo -e "${YELLOW}💡 Production Use:${NC}"
+    echo "  If you plan to keep this system, consider changing the default passwords:"
+    echo "    • Admin password:    kg admin update-password"
+    echo "    • Database password: Update POSTGRES_PASSWORD in .env and restart"
+    echo ""
+fi
+
 echo -e "${YELLOW}To stop services:${NC}"
 echo "  ./operator/lib/stop.sh"
 echo ""
