@@ -91,6 +91,79 @@ services:
 
     restart: unless-stopped
 
+  api:
+    # FastAPI server (reads config from database)
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    container_name: kg-api-dev
+    ports:
+      - "8000:8000"  # API endpoint
+    environment:
+      # Infrastructure secrets (from .env)
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OAUTH_SIGNING_KEY: ${OAUTH_SIGNING_KEY}
+
+      # Database connection
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_graph}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+
+      # Garage S3 connection
+      GARAGE_ENDPOINT: ${GARAGE_ENDPOINT:-http://garage:3900}
+
+      # Application config comes from database (not env)
+      # Configured via: kg-operator config ai-provider, embedding, api-key
+
+    volumes:
+      # Hot reload: Mount source code for development
+      - ../api:/app/api
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    restart: unless-stopped
+
+  web:
+    # React visualization app (runtime config via env vars)
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    container_name: kg-web-dev
+    ports:
+      - "3000:80"  # Web UI
+    environment:
+      # Runtime config (no rebuild required)
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+      VITE_OAUTH_CLIENT_ID: ${VITE_OAUTH_CLIENT_ID:-kg-cli}
+      VITE_OAUTH_REDIRECT_URI: ${VITE_OAUTH_REDIRECT_URI:-http://localhost:3000/callback}
+      VITE_APP_NAME: ${VITE_APP_NAME:-Knowledge Graph}
+
+    depends_on:
+      api:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+    restart: unless-stopped
+
   operator:
     # Platform lifecycle operator (manages other containers via Docker socket)
     build:
