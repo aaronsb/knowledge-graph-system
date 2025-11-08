@@ -253,7 +253,7 @@ generate_secret() {
 
 # Check for required tools
 if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}✗ python3 not found (required for generating Fernet key)${NC}"
+    echo -e "${RED}✗ python3 not found (required for secret generation)${NC}"
     exit 1
 fi
 
@@ -263,15 +263,9 @@ generate_secret "ENCRYPTION_KEY" \
     "Master encryption key for API keys (ADR-031)"
 
 # 2. OAUTH_SIGNING_KEY (for signing JWT tokens)
-if command -v openssl &> /dev/null; then
-    generate_secret "OAUTH_SIGNING_KEY" \
-        "openssl rand -hex 32" \
-        "OAuth 2.0 access token signing key (ADR-054)"
-else
-    generate_secret "OAUTH_SIGNING_KEY" \
-        "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
-        "OAuth 2.0 access token signing key (ADR-054)"
-fi
+generate_secret "OAUTH_SIGNING_KEY" \
+    "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
+    "OAuth 2.0 access token signing key (ADR-054)"
 
 # 3. POSTGRES_PASSWORD (database admin password)
 if [ "$DEV_MODE" = true ]; then
@@ -293,27 +287,15 @@ if [ "$DEV_MODE" = true ]; then
     fi
 else
     # Prod mode: generate strong password
-    if command -v openssl &> /dev/null; then
-        generate_secret "POSTGRES_PASSWORD" \
-            "openssl rand -base64 32" \
-            "PostgreSQL admin password"
-    else
-        generate_secret "POSTGRES_PASSWORD" \
-            "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"" \
-            "PostgreSQL admin password"
-    fi
+    generate_secret "POSTGRES_PASSWORD" \
+        "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"" \
+        "PostgreSQL admin password"
 fi
 
 # 4. GARAGE_RPC_SECRET (for Garage cluster coordination)
-if command -v openssl &> /dev/null; then
-    generate_secret "GARAGE_RPC_SECRET" \
-        "openssl rand -hex 32" \
-        "Garage cluster RPC secret"
-else
-    generate_secret "GARAGE_RPC_SECRET" \
-        "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
-        "Garage cluster RPC secret"
-fi
+generate_secret "GARAGE_RPC_SECRET" \
+    "python3 -c \"import secrets; print(secrets.token_hex(32))\"" \
+    "Garage cluster RPC secret"
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
