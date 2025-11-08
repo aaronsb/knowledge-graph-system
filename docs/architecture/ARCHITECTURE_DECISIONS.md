@@ -78,6 +78,7 @@ All ADRs follow a consistent format:
 | [ADR-059](ADR-059-llm-determined-relationship-direction.md) | LLM-Determined Relationship Direction | Proposed | LLM-determined relationship semantics with directional validation - addresses extraction ambiguity through semantic analysis and bidirectional relationship type inference |
 | [ADR-060](ADR-060-endpoint-security-architecture.md) | API Endpoint Security Architecture | Proposed | Per-endpoint dependency injection following FastAPI Full-Stack Template pattern - type-annotated dependencies (CurrentUser), superuser checks for admin routes, startup validation, and central security policy document for auditability |
 | [ADR-061](ADR-061-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle | Accepted | Single kg-operator CLI managing four-layer architecture (Infrastructure → Schema → Configuration → Application) - eliminates script sprawl, enforces correct bootstrap sequence, enables clean Docker builds with secrets from environment not files |
+| [ADR-062](ADR-062-mcp-file-ingestion-security.md) | MCP File Ingestion Security Model | Draft | Path allowlist security for MCP file/directory ingestion - fail-secure validation prevents path traversal, agent-readable (not writable) allowlist enables bulk ingestion from pre-approved locations with auto-naming by directory structure |
 
 ## How to Use This Index
 
