@@ -59,6 +59,9 @@ services:
       retries: 5
       start_period: 30s
 
+    networks:
+      - kg-network
+
     restart: unless-stopped
 
   garage:
@@ -88,6 +91,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+    networks:
+      - kg-network
 
     restart: unless-stopped
 
@@ -147,6 +153,9 @@ services:
       retries: 5
       start_period: 30s
 
+    networks:
+      - kg-network
+
     restart: unless-stopped
 
   web:
@@ -175,6 +184,9 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+
+    networks:
+      - kg-network
 
     restart: unless-stopped
 
@@ -214,6 +226,9 @@ services:
     # Keep container running for exec commands
     command: ["tail", "-f", "/dev/null"]
 
+    networks:
+      - kg-network
+
     restart: unless-stopped
 
 volumes:
@@ -225,3 +240,8 @@ volumes:
     driver: local
   garage_meta:
     driver: local
+
+networks:
+  kg-network:
+    name: knowledge-graph-network
+    driver: bridge
