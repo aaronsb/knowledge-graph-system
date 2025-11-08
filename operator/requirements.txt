@@ -1,0 +1,14 @@
+# Operator minimal dependencies
+# For database configuration and credential management
+
+# Database access
+psycopg2-binary==2.9.9
+
+# Password hashing (for admin user creation)
+bcrypt==4.1.2
+
+# Encryption (for API key storage via api.api.lib.encrypted_keys)
+cryptography==42.0.2
+
+# Python dotenv (for reading .env files in diagnostics)
+python-dotenv==1.0.1
