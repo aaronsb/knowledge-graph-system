@@ -46,6 +46,7 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 DEV_MODE=false
 RESET_ALL=false
 RESET_KEYS=()
+AUTO_YES=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -61,6 +62,10 @@ while [[ $# -gt 0 ]]; do
             RESET_KEYS+=("$2")
             shift 2
             ;;
+        -y|--yes)
+            AUTO_YES=true
+            shift
+            ;;
         --help|-h)
             echo "Infrastructure Secret Initialization"
             echo ""
@@ -70,6 +75,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --dev              Development mode (weak passwords acceptable)"
             echo "  --reset            Reset ALL secrets (DANGEROUS - will break encryption)"
             echo "  --reset-key KEY    Reset specific secret (e.g., OAUTH_SIGNING_KEY)"
+            echo "  -y, --yes          Skip prompts (for automated scripts)"
             echo "  --help             Show this help"
             echo ""
             echo "Managed Secrets:"
@@ -112,6 +118,19 @@ else
 fi
 echo ""
 
+# Helper: Check if key exists and is not a placeholder
+is_secret_valid() {
+    local key=$1
+    if ! grep -q "^${key}=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+        return 1  # Key doesn't exist
+    fi
+    local value=$(grep "^${key}=" "$PROJECT_ROOT/.env" | cut -d'=' -f2-)
+    if [[ "$value" == *"CHANGE_THIS"* ]] || [[ "$value" == *"changeme"* ]] || [ -z "$value" ]; then
+        return 1  # Placeholder value
+    fi
+    return 0  # Valid secret
+}
+
 # Check if .env exists
 if [ ! -f "$PROJECT_ROOT/.env" ]; then
     if [ ! -f "$PROJECT_ROOT/.env.example" ]; then
@@ -122,20 +141,64 @@ if [ ! -f "$PROJECT_ROOT/.env" ]; then
     cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
     echo -e "${GREEN}✓ .env created${NC}"
     echo ""
-fi
+else
+    # .env exists - check if secrets are already configured
+    if [ "$RESET_ALL" = false ] && [ ${#RESET_KEYS[@]} -eq 0 ]; then
+        # Check if any secrets are already valid
+        SECRETS_EXIST=false
+        for key in ENCRYPTION_KEY OAUTH_SIGNING_KEY POSTGRES_PASSWORD GARAGE_RPC_SECRET; do
+            if is_secret_valid "$key"; then
+                SECRETS_EXIST=true
+                break
+            fi
+        done
 
-# Helper: Check if key exists and is not a placeholder
-is_secret_valid() {
-    local key=$1
-    if ! grep -q "^${key}=" "$PROJECT_ROOT/.env"; then
-        return 1  # Key doesn't exist
+        if [ "$SECRETS_EXIST" = true ]; then
+            echo -e "${YELLOW}⚠️  .env file already contains configured secrets${NC}"
+            echo ""
+            if [ "$AUTO_YES" = false ]; then
+                echo "Options:"
+                echo "  1) Keep existing secrets (recommended)"
+                echo "  2) Regenerate ALL secrets (will break encrypted data!)"
+                echo "  3) Exit"
+                echo ""
+                read -p "Choice [1/2/3]: " -n 1 -r
+                echo ""
+                echo ""
+
+                case $REPLY in
+                    1)
+                        echo -e "${GREEN}→ Keeping existing secrets${NC}"
+                        echo ""
+                        ;;
+                    2)
+                        echo -e "${RED}→ Regenerating ALL secrets${NC}"
+                        echo -e "${RED}⚠️  This will break existing encrypted API keys!${NC}"
+                        echo ""
+                        read -p "Type 'yes' to confirm: " -r
+                        if [ "$REPLY" = "yes" ]; then
+                            RESET_ALL=true
+                        else
+                            echo -e "${YELLOW}Cancelled${NC}"
+                            exit 0
+                        fi
+                        ;;
+                    3)
+                        echo -e "${YELLOW}Exiting${NC}"
+                        exit 0
+                        ;;
+                    *)
+                        echo -e "${YELLOW}Invalid choice, keeping existing secrets${NC}"
+                        echo ""
+                        ;;
+                esac
+            else
+                echo -e "${GREEN}→ Keeping existing secrets (--yes flag)${NC}"
+                echo ""
+            fi
+        fi
     fi
-    local value=$(grep "^${key}=" "$PROJECT_ROOT/.env" | cut -d'=' -f2-)
-    if [[ "$value" == *"CHANGE_THIS"* ]] || [[ "$value" == *"changeme"* ]] || [ -z "$value" ]; then
-        return 1  # Placeholder value
-    fi
-    return 0  # Valid secret
-}
+fi
 
 # Helper: Check if key should be reset
 should_reset() {
