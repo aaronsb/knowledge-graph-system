@@ -77,14 +77,14 @@ class OperatorConfig:
 
                 if exists:
                     cur.execute(
-                        "UPDATE kg_auth.users SET password_hash = %s, updated_at = NOW() WHERE username = %s",
+                        "UPDATE kg_auth.users SET password_hash = %s WHERE username = %s",
                         (password_hash, username)
                     )
                     print(f"✅ Updated password for user: {username}")
                 else:
                     cur.execute(
-                        """INSERT INTO kg_auth.users (username, password_hash, is_superuser, is_active)
-                           VALUES (%s, %s, true, true)""",
+                        """INSERT INTO kg_auth.users (username, password_hash, primary_role, disabled)
+                           VALUES (%s, %s, 'admin', false)""",
                         (username, password_hash)
                     )
                     print(f"✅ Created admin user: {username}")
@@ -154,64 +154,87 @@ class OperatorConfig:
             conn.close()
 
     def cmd_embedding(self, args):
-        """Configure embedding provider"""
-        provider = args.provider
-        model = args.model
+        """Configure embedding provider by activating a pre-configured profile"""
+        # If no profile_id provided, list available profiles
+        if not hasattr(args, 'profile_id') or args.profile_id is None:
+            return self.list_embedding_profiles()
 
-        if not provider:
-            print("❌ Provider required (openai or local)")
-            return False
-
-        # Default models and dimensions
-        config_map = {
-            "openai": {
-                "model": "text-embedding-3-small",
-                "dims": 1536
-            },
-            "local": {
-                "model": "nomic-ai/nomic-embed-text-v1.5",
-                "dims": 768
-            }
-        }
-
-        if provider not in config_map:
-            print(f"❌ Unknown provider: {provider} (use 'openai' or 'local')")
-            return False
-
-        cfg = config_map[provider]
-        model = model or cfg["model"]
-        dims = cfg["dims"]
+        profile_id = args.profile_id
 
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
-                # Check current config
-                cur.execute("SELECT provider, model_name FROM kg_api.embedding_config WHERE active = true")
-                current = cur.fetchone()
-
-                if current:
-                    print(f"📝 Current: {current['provider']} / {current['model_name']}")
-
-                # Insert configuration
+                # Get the requested profile
                 cur.execute(
-                    """INSERT INTO kg_api.embedding_config
-                       (provider, model_name, embedding_dimensions, active)
-                       VALUES (%s, %s, %s, true)
-                       ON CONFLICT (active) WHERE active = true
-                       DO UPDATE SET
-                         provider = EXCLUDED.provider,
-                         model_name = EXCLUDED.model_name,
-                         embedding_dimensions = EXCLUDED.embedding_dimensions,
-                         updated_at = NOW()""",
-                    (provider, model, dims)
+                    """SELECT id, provider, model_name, embedding_dimensions, precision, device
+                       FROM kg_api.embedding_config WHERE id = %s""",
+                    (profile_id,)
                 )
+                profile = cur.fetchone()
+
+                if not profile:
+                    print(f"❌ Profile ID {profile_id} not found")
+                    print("Run without arguments to list available profiles")
+                    return False
+
+                # Show current active profile
+                cur.execute("SELECT id, provider, model_name FROM kg_api.embedding_config WHERE active = true")
+                current = cur.fetchone()
+                if current:
+                    print(f"📝 Current: [{current['id']}] {current['provider']} / {current['model_name']}")
+
+                # Deactivate all profiles
+                cur.execute("UPDATE kg_api.embedding_config SET active = false")
+
+                # Activate selected profile
+                cur.execute("UPDATE kg_api.embedding_config SET active = true WHERE id = %s", (profile_id,))
+
                 conn.commit()
-                print(f"✅ Configured embedding: {provider} / {model} ({dims} dims)")
+
+                device_info = f" ({profile['device']})" if profile['device'] else ""
+                print(f"✅ Activated: [{profile['id']}] {profile['provider']} / {profile['model_name']} ({profile['embedding_dimensions']} dims, {profile['precision']}){device_info}")
                 return True
 
         except Exception as e:
             print(f"❌ Failed to configure embedding: {e}")
             conn.rollback()
+            return False
+        finally:
+            conn.close()
+
+    def list_embedding_profiles(self):
+        """List available embedding profiles"""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT id, provider, model_name, embedding_dimensions, precision, device, active
+                       FROM kg_api.embedding_config ORDER BY id"""
+                )
+                profiles = cur.fetchall()
+
+                if not profiles:
+                    print("❌ No embedding profiles found")
+                    return False
+
+                print("📋 Available Embedding Profiles:")
+                print()
+                for profile in profiles:
+                    status = "✓ ACTIVE" if profile['active'] else " "
+                    device_info = f" ({profile['device']})" if profile['device'] else ""
+                    print(f"  [{profile['id']}] {status:10} {profile['provider']:8} - {profile['model_name']}")
+                    print(f"       {profile['embedding_dimensions']} dims, {profile['precision']}{device_info}")
+                    print()
+
+                print("To activate a profile:")
+                print("  docker exec kg-operator python /workspace/operator/configure.py embedding <profile_id>")
+                print()
+                print("Example:")
+                print("  docker exec kg-operator python /workspace/operator/configure.py embedding 2")
+                return True
+
+        except Exception as e:
+            print(f"❌ Failed to list profiles: {e}")
             return False
         finally:
             conn.close()
@@ -260,7 +283,7 @@ class OperatorConfig:
                 print()
 
                 # Admin users
-                cur.execute("SELECT COUNT(*) as count FROM kg_auth.users WHERE is_superuser = true")
+                cur.execute("SELECT COUNT(*) as count FROM kg_auth.users WHERE primary_role = 'admin'")
                 admin_count = cur.fetchone()['count']
                 print(f"Admin users: {admin_count}")
 
@@ -313,9 +336,8 @@ def main():
     ai_parser.add_argument('--model', help='Model name (optional, uses default)')
 
     # embedding
-    embed_parser = subparsers.add_parser('embedding', help='Configure embedding provider')
-    embed_parser.add_argument('provider', nargs='?', help='Provider: openai, local')
-    embed_parser.add_argument('--model', help='Model name (optional, uses default)')
+    embed_parser = subparsers.add_parser('embedding', help='List or activate embedding profile')
+    embed_parser.add_argument('profile_id', nargs='?', type=int, help='Profile ID to activate (omit to list profiles)')
 
     # api-key
     key_parser = subparsers.add_parser('api-key', help='Store encrypted API key')

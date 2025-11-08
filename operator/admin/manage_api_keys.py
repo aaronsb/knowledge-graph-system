@@ -219,11 +219,11 @@ def interactive_mode() -> int:
 
             # Query configured providers
             with conn.cursor() as cur:
-                cur.execute("SELECT provider FROM kg_config.extraction_config WHERE is_active = true LIMIT 1")
+                cur.execute("SELECT provider FROM kg_api.ai_extraction_config WHERE active = true LIMIT 1")
                 row = cur.fetchone()
                 extraction_provider = row[0] if row else None
 
-                cur.execute("SELECT provider FROM kg_config.embedding_config WHERE is_active = true LIMIT 1")
+                cur.execute("SELECT provider FROM kg_api.embedding_config WHERE active = true LIMIT 1")
                 row = cur.fetchone()
                 embedding_provider = row[0] if row else None
 

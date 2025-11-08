@@ -36,64 +36,129 @@ All containers stopped and volumes cleaned. Follow these steps to test the new o
 
 **Expected output:**
 ```
+╔════════════════════════════════════════════════════════════╗
+║       Infrastructure Secret Initialization                 ║
+╚════════════════════════════════════════════════════════════╝
+
+Mode: Development (weak passwords allowed)
+
+→ Creating .env from .env.example...
+✓ .env created
+
+→ Generating ENCRYPTION_KEY...
 ✓ ENCRYPTION_KEY - generated and saved
+→ Generating OAUTH_SIGNING_KEY...
 ✓ OAUTH_SIGNING_KEY - generated and saved
-✓ POSTGRES_PASSWORD - set to 'password' (dev mode)
+✓ POSTGRES_PASSWORD - already configured
+→ Generating GARAGE_RPC_SECRET...
 ✓ GARAGE_RPC_SECRET - generated and saved
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✓ Infrastructure secrets ready
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## Step 2: Start Infrastructure (Postgres + Garage)
+## Step 2: Start Infrastructure (Postgres + Garage + Operator)
 
 ```bash
-# Start database and S3 storage
+# Start database, S3 storage, and operator
 ./operator/lib/start-infra.sh
 
 # What this does:
 # - Starts postgres container (with AGE extension)
 # - Starts garage container (S3-compatible storage)
 # - Waits for health checks
-# - Applies database migrations automatically
+# - Verifies PostgreSQL configuration (database, AGE extension, schemas)
+# - Shows applied migrations with table names
+# - Initializes Garage (node role, bucket, API keys, permissions)
+# - Starts operator container (for platform configuration)
 ```
 
 
-warnings on statrtup and inconclusive finish
-
- ./operator/lib/start-infra.sh
-Starting infrastructure containers...
-
+**Expected output:**
+```
 → Starting postgres and garage...
-WARN[0000] The "GARAGE_RPC_SECRET" variable is not set. Defaulting to a blank string. 
-WARN[0000] The "ENCRYPTION_KEY" variable is not set. Defaulting to a blank string. 
-WARN[0000] The "OAUTH_SIGNING_KEY" variable is not set. Defaulting to a blank string. 
-WARN[0000] The "ENCRYPTION_KEY" variable is not set. Defaulting to a blank string. 
-WARN[0000] The "OAUTH_SIGNING_KEY" variable is not set. Defaulting to a blank string. 
 [+] Running 7/7
- ✔ Network docker_default              Created                                                                                                          0.1s 
- ✔ Volume docker_postgres_import       Created                                                                                                          0.0s 
- ✔ Volume docker_garage_data           Created                                                                                                          0.0s 
- ✔ Volume docker_garage_meta           Created                                                                                                          0.0s 
- ✔ Volume docker_postgres_data         Created                                                                                                          0.0s 
- ✔ Container knowledge-graph-garage    Started                                                                                                          0.4s 
- ✔ Container knowledge-graph-postgres  Started                                                                                                          0.5s 
+ ✔ Network docker_default              Created
+ ✔ Volume docker_postgres_data         Created
+ ✔ Volume docker_garage_data           Created
+ ✔ Container knowledge-graph-postgres  Started
+ ✔ Container knowledge-graph-garage    Started
 
 → Waiting for PostgreSQL to be healthy...
 ✓ PostgreSQL is ready
 → Waiting for Garage to be healthy...
-⚠  Garage health check timeout (continuing anyway)
+✓ Garage is ready
 
+→ Verifying PostgreSQL configuration...
+  Waiting for database to accept queries...
+✓ Database ready for queries
+✓ Database 'knowledge_graph' exists
+  Applying database migrations...
+✓ Applied migrations: 1
+  → Migration 003 - add_embedding_config
+  → Migration 004 - add_ai_extraction_config
+  → Migration 005 - add_api_key_validation
+  ... (21 migrations total)
+→ Applying migration 003 (add_embedding_config)...
+  ✅ Migration 003 applied successfully
+→ Applying migration 004 (add_ai_extraction_config)...
+  ✅ Migration 004 applied successfully
+  ... (additional migrations)
+→ Applying migration 024 (add_concept_descriptions)...
+  ✅ Migration 024 applied successfully
+✅ Migration complete!
+✓ Migrations applied
+✓ Apache AGE extension loaded
+✓ Schema ready (37 tables, 21 migrations applied)
+    • 1 - baseline
+    • 3 - add_embedding_config
+    • 4 - add_ai_extraction_config
+    ... (17 more migrations)
+    • 22 - oauth_client_management
+    • 24 - add_concept_descriptions
+
+→ Initializing Garage configuration...
+  Assigning role to node 6f84a9a665a520fb...
+✓ Node role assigned and layout applied
+✓ Bucket 'knowledge-graph-images' created
+✓ API key 'kg-api-key' created
+✓ Bucket permissions configured
+
+→ Starting operator container...
+[+] Building (operator built successfully)
+[+] Running 4/4
+ ✔ Container knowledge-graph-postgres  Healthy
+ ✔ Container knowledge-graph-garage    Healthy
+ ✔ Container kg-operator               Started
+  Waiting for operator to start...
+✓ Operator is ready
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ Infrastructure ready
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Services running:
   • PostgreSQL (port 5432)
+    - Database: knowledge_graph
+    - Extensions: Apache AGE
+    - Migrations: Applied
+
   • Garage S3 storage (port 3900)
+    - Bucket: knowledge-graph-images
+    - API key: kg-api-key
 
+  • Operator container
+    - Status: Running
+    - Access: docker exec -it kg-operator /bin/bash
 
-
-**Expected output:**
-- ✓ PostgreSQL is ready
-- ✓ Garage is ready
+Next steps:
+  1. Configure admin user: docker exec kg-operator python /workspace/operator/configure.py admin
+  2. Configure AI provider: docker exec kg-operator python /workspace/operator/configure.py ai-provider openai --model gpt-4o
+  3. Configure embeddings: docker exec kg-operator python /workspace/operator/configure.py embedding local
+  4. Store API keys: docker exec -it kg-operator python /workspace/operator/configure.py api-key openai
+  5. Start application: ./operator/lib/start-app.sh
+```
 
 **Verify:**
 ```bash
@@ -101,32 +166,10 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 # Should show:
 # - knowledge-graph-postgres (healthy)
 # - knowledge-graph-garage (healthy)
+# - kg-operator (running)
 ```
 
-## Step 3: Start Operator Container
-
-```bash
-cd docker
-docker-compose up -d operator
-
-# What this does:
-# - Builds operator container (if needed)
-# - Starts operator with Docker socket access
-# - Connects to postgres and garage networks
-```
-
-**Verify:**
-```bash
-docker ps | grep kg-operator
-# Should show: kg-operator (running)
-
-# Test operator shell access
-docker exec -it kg-operator /bin/bash
-# Should drop into operator container
-# Type 'exit' to leave
-```
-
-## Step 4: Configure Admin User
+## Step 3: Configure Admin User
 
 ```bash
 # Create admin user in database
@@ -140,7 +183,7 @@ docker exec -it kg-operator python /workspace/operator/configure.py admin
 
 **Expected output:** ✅ Created admin user: admin
 
-## Step 5: Configure AI Extraction Provider (OpenAI)
+## Step 4: Configure AI Extraction Provider (OpenAI)
 
 ```bash
 # Set OpenAI as extraction provider
@@ -149,16 +192,44 @@ docker exec kg-operator python /workspace/operator/configure.py ai-provider open
 
 **Expected output:** ✅ Configured AI extraction: openai / gpt-4o
 
-## Step 6: Configure Embedding Provider (Local Nomic)
+## Step 5: Configure Embedding Provider
 
 ```bash
-# Set local Nomic embeddings
-docker exec kg-operator python /workspace/operator/configure.py embedding local
+# List available embedding profiles
+docker exec kg-operator python /workspace/operator/configure.py embedding
+
+# You'll see:
+# [1] ✓ ACTIVE   openai   - text-embedding-3-small (1536 dims, float32)
+# [2]            local    - nomic-ai/nomic-embed-text-v1.5 (768 dims, float16, cpu)
+
+# Activate Nomic local embeddings (profile ID 2)
+docker exec kg-operator python /workspace/operator/configure.py embedding 2
 ```
 
-**Expected output:** ✅ Configured embedding: local / nomic-ai/nomic-embed-text-v1.5 (768 dims)
+**Expected output:**
+```
+📋 Available Embedding Profiles:
 
-## Step 7: Store OpenAI API Key (Encrypted)
+  [1] ✓ ACTIVE   openai   - text-embedding-3-small
+       1536 dims, float32
+
+  [2]            local    - nomic-ai/nomic-embed-text-v1.5
+       768 dims, float16 (cpu)
+
+To activate a profile:
+  docker exec kg-operator python /workspace/operator/configure.py embedding <profile_id>
+
+Example:
+  docker exec kg-operator python /workspace/operator/configure.py embedding 2
+```
+
+**Then activate:**
+```
+📝 Current: [1] openai / text-embedding-3-small
+✅ Activated: [2] local / nomic-ai/nomic-embed-text-v1.5 (768 dims, float16) (cpu)
+```
+
+## Step 6: Store OpenAI API Key (Encrypted)
 
 ```bash
 # Store encrypted OpenAI API key
@@ -171,20 +242,7 @@ docker exec -it kg-operator python /workspace/operator/configure.py api-key open
 
 **Expected output:** ✅ Stored encrypted API key for: openai
 
-## Step 8: Initialize Garage S3 Storage
-
-**Note:** We need to create a Garage init script. For now, you can use the existing script:
-
-```bash
-# Initialize Garage bucket and keys
-./scripts/garage/init-garage.sh
-```
-
-**Expected output:**
-- ✓ Garage bucket created
-- ✓ Access keys generated
-
-## Step 9: Start Application Containers (API + Web)
+## Step 7: Start Application Containers (API + Web)
 
 ```bash
 # Start API server and web app
@@ -219,7 +277,7 @@ curl http://localhost:3000
 # Should return HTML
 ```
 
-## Step 10: Check Configuration Status
+## Step 8: Check Configuration Status
 
 ```bash
 # View all configuration
@@ -262,12 +320,14 @@ kg ingest file -o "Test Ontology" path/to/document.txt
 ## Cleanup (When Done Testing)
 
 ```bash
-# Stop everything
+# Stop services (keeps data)
 ./operator/lib/stop.sh
 
-# Or stop and remove volumes
-cd docker
-docker-compose down -v
+# Complete teardown (removes all data and volumes)
+./operator/lib/teardown.sh
+
+# Keep secrets but remove everything else
+./operator/lib/teardown.sh --keep-env
 ```
 
 ## Troubleshooting
