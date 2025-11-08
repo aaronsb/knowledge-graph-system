@@ -214,24 +214,11 @@ should_reset() {
     return 1
 }
 
-# Helper: Generate and update secret
-generate_secret() {
+# Helper: Update secret in .env file
+update_env_file() {
     local key=$1
-    local generator=$2
+    local value=$2
     local description=$3
-
-    # Check if we should skip this key
-    if should_reset "$key"; then
-        echo -e "${YELLOW}→ Resetting ${key}...${NC}"
-    elif is_secret_valid "$key"; then
-        echo -e "${GREEN}✓ ${key}${NC} - already configured"
-        return 0
-    else
-        echo -e "${YELLOW}→ Generating ${key}...${NC}"
-    fi
-
-    # Generate the secret
-    local value=$($generator)
 
     # Update .env file
     if grep -q "^${key}=" "$PROJECT_ROOT/.env"; then
@@ -247,8 +234,6 @@ generate_secret() {
         echo "# ${description}" >> "$PROJECT_ROOT/.env"
         echo "${key}=${value}" >> "$PROJECT_ROOT/.env"
     fi
-
-    echo -e "${GREEN}✓ ${key}${NC} - generated and saved"
 }
 
 # Check for required tools
@@ -260,44 +245,56 @@ fi
 # 1. ENCRYPTION_KEY (Fernet key for encrypting API keys at rest)
 # Fernet keys are 32 random bytes, URL-safe base64 encoded
 # Using stdlib only (no cryptography package needed)
-generate_secret "ENCRYPTION_KEY" \
-    'python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())"' \
-    "Master encryption key for API keys (ADR-031)"
+if should_reset "ENCRYPTION_KEY" || ! is_secret_valid "ENCRYPTION_KEY"; then
+    echo -e "${YELLOW}→ Generating ENCRYPTION_KEY...${NC}"
+    VALUE=$(python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())")
+    update_env_file "ENCRYPTION_KEY" "$VALUE" "Master encryption key for API keys (ADR-031)"
+    echo -e "${GREEN}✓ ENCRYPTION_KEY${NC} - generated and saved"
+else
+    echo -e "${GREEN}✓ ENCRYPTION_KEY${NC} - already configured"
+fi
 
 # 2. OAUTH_SIGNING_KEY (for signing JWT tokens)
-generate_secret "OAUTH_SIGNING_KEY" \
-    'python3 -c "import secrets; print(secrets.token_hex(32))"' \
-    "OAuth 2.0 access token signing key (ADR-054)"
+if should_reset "OAUTH_SIGNING_KEY" || ! is_secret_valid "OAUTH_SIGNING_KEY"; then
+    echo -e "${YELLOW}→ Generating OAUTH_SIGNING_KEY...${NC}"
+    VALUE=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+    update_env_file "OAUTH_SIGNING_KEY" "$VALUE" "OAuth 2.0 access token signing key (ADR-054)"
+    echo -e "${GREEN}✓ OAUTH_SIGNING_KEY${NC} - generated and saved"
+else
+    echo -e "${GREEN}✓ OAUTH_SIGNING_KEY${NC} - already configured"
+fi
 
 # 3. POSTGRES_PASSWORD (database admin password)
 if [ "$DEV_MODE" = true ]; then
     # Dev mode: use simple password
-    if ! is_secret_valid "POSTGRES_PASSWORD" || should_reset "POSTGRES_PASSWORD"; then
+    if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD"; then
         echo -e "${YELLOW}→ Setting POSTGRES_PASSWORD (dev mode)...${NC}"
-        if grep -q "^POSTGRES_PASSWORD=" "$PROJECT_ROOT/.env"; then
-            if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=password|" "$PROJECT_ROOT/.env"
-            else
-                sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=password|" "$PROJECT_ROOT/.env"
-            fi
-        else
-            echo "POSTGRES_PASSWORD=password" >> "$PROJECT_ROOT/.env"
-        fi
+        update_env_file "POSTGRES_PASSWORD" "password" "PostgreSQL admin password"
         echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - set to 'password' (dev mode)"
     else
         echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - already configured"
     fi
 else
     # Prod mode: generate strong password
-    generate_secret "POSTGRES_PASSWORD" \
-        'python3 -c "import secrets; print(secrets.token_urlsafe(32))"' \
-        "PostgreSQL admin password"
+    if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD"; then
+        echo -e "${YELLOW}→ Generating POSTGRES_PASSWORD...${NC}"
+        VALUE=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+        update_env_file "POSTGRES_PASSWORD" "$VALUE" "PostgreSQL admin password"
+        echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - generated and saved"
+    else
+        echo -e "${GREEN}✓ POSTGRES_PASSWORD${NC} - already configured"
+    fi
 fi
 
 # 4. GARAGE_RPC_SECRET (for Garage cluster coordination)
-generate_secret "GARAGE_RPC_SECRET" \
-    'python3 -c "import secrets; print(secrets.token_hex(32))"' \
-    "Garage cluster RPC secret"
+if should_reset "GARAGE_RPC_SECRET" || ! is_secret_valid "GARAGE_RPC_SECRET"; then
+    echo -e "${YELLOW}→ Generating GARAGE_RPC_SECRET...${NC}"
+    VALUE=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+    update_env_file "GARAGE_RPC_SECRET" "$VALUE" "Garage cluster RPC secret"
+    echo -e "${GREEN}✓ GARAGE_RPC_SECRET${NC} - generated and saved"
+else
+    echo -e "${GREEN}✓ GARAGE_RPC_SECRET${NC} - already configured"
+fi
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
