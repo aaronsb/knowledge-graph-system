@@ -219,7 +219,7 @@ The infrastructure (auth, RBAC, API, visualizer) exists to support the recursive
 
 ## Next Steps
 
-Ready to try it? Start with [Quickstart](../01-getting-started/01-QUICKSTART.md) to get running in 5 minutes.
+Ready to try it? Start with [Quickstart](../../guides/QUICKSTART.md) to get running in 5 minutes.
 
 Want to understand the architecture? See [Architecture Overview](../../architecture/ARCHITECTURE_OVERVIEW.md) and [ADR-016: Apache AGE Migration](../../architecture/ADR-016-apache-age-migration.md).
 

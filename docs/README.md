@@ -4,11 +4,11 @@ This directory contains all documentation for the Knowledge Graph System, organi
 
 ## 🚀 Quick Start
 
-**New to the system?** Get operational in under 5 minutes:
+**New to the system?** Get operational in under 10 minutes:
 
-→ **[5-Minute Cold Start Guide](guides/COLD-START.md)** - From zero to running system with 5 commands
+→ **[Quick Start Guide](guides/QUICKSTART.md)** - Operator architecture (containerized deployment)
 
-Nuclear tested on October 28, 2025 (complete system deletion and rebuild). Battle-tested procedure for fresh installations.
+Fully tested end-to-end on November 8, 2025. Uses the official operator pattern (ADR-061) with Docker containers - no local Python installation required.
 
 ## Directory Structure
 
@@ -34,7 +34,7 @@ Architecture decisions, design documents, and ADRs (Architectural Decision Recor
 ### 📖 `guides/`
 Standalone guides for specific topics and workflows.
 
-- **COLD-START.md** - 5-minute cold start from fresh clone (nuclear tested!)
+- **QUICKSTART.md** - Quick start guide using operator architecture
 - **DEPLOYMENT.md** - Comprehensive deployment guide for all environments
 - **VOCABULARY_CATEGORIES.md** - Understanding vocabulary category scores and confidence
 
@@ -55,7 +55,7 @@ Images, diagrams, and other media assets.
 ## Quick Navigation
 
 ### New Users
-1. Start with [QUICKSTART.md](manual/01-getting-started/01-QUICKSTART.md)
+1. Start with [QUICKSTART.md](guides/QUICKSTART.md) - Operator architecture setup
 2. Learn about [AI Providers](manual/02-configuration/01-AI_PROVIDERS.md)
 3. Read [INGESTION.md](manual/01-getting-started/03-INGESTION.md) for document ingestion workflow
 4. See [VOCABULARY_CONSOLIDATION.md](manual/03-integration/02-VOCABULARY_CONSOLIDATION.md) for managing edge vocabulary growth

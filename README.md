@@ -185,26 +185,28 @@ Vocabulary patterns emerge over time. After 100 documents, the system learns "*_
 
 ## Quick Start
 
-**Prerequisites:** Docker, Python 3.11+, Node.js 18+
+**Prerequisites:** Docker or Podman with Compose, (optional) Node.js 18+ for kg CLI
 
 ```bash
-# 1. Setup infrastructure
-./scripts/setup.sh
+# 1. Generate infrastructure secrets (encryption keys, database password, etc.)
+./operator/lib/init-secrets.sh --dev
 
-# 2. Configure AI provider
-./scripts/setup/configure-ai.sh
+# 2. Start infrastructure (PostgreSQL + Garage storage + operator container)
+./operator/lib/start-infra.sh
 
-# 3. Start API server
-./scripts/services/start-api.sh
+# 3. Configure via operator container (no local Python needed!)
+docker exec -it kg-operator python /workspace/operator/configure.py admin
+docker exec kg-operator python /workspace/operator/configure.py ai-provider openai --model gpt-4o
+docker exec kg-operator python /workspace/operator/configure.py embedding 2  # Activate local embeddings
+docker exec -it kg-operator python /workspace/operator/configure.py api-key openai
+
+# 4. Start application containers (API + web UI)
+./operator/lib/start-app.sh
 # API docs: http://localhost:8000/docs
-# ReDoc API: http://localhost:8000/redoc
+# Web UI: http://localhost:3000
 
-# 4. Install TypeScript CLI
-cd client && npm install && npm run build && ./install.sh && cd ..
-
-# 5. Start visualization explorer (optional)
-./scripts/start-viz.sh
-# Open browser to http://localhost:3000
+# 5. Install TypeScript CLI (optional, for command-line convenience)
+cd cli && ./install.sh && cd ..
 
 # 6. Ingest documents
 kg ingest file document.txt --ontology "My Research"
@@ -357,9 +359,9 @@ The pattern generalizes: any text-based content can become a queryable knowledge
 Navigate the documentation by purpose:
 
 **Getting Started:**
-- [Quick Start Guide](docs/guides/QUICKSTART.md) - Get running in 5 minutes
-- [MCP Setup Guide](docs/guides/MCP_SETUP.md) - Claude Desktop/Code integration
-- [AI Provider Configuration](docs/guides/AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
+- [Quick Start Guide](docs/guides/QUICKSTART.md) - Operator architecture setup in 10 minutes
+- [MCP Setup Guide](docs/manual/03-integration/01-MCP_SETUP.md) - Claude Desktop/Code integration
+- [AI Provider Configuration](docs/manual/02-configuration/01-AI_PROVIDERS.md) - OpenAI, Anthropic, or custom
 
 **Understanding the System:**
 - [Architecture Overview](docs/architecture/ARCHITECTURE.md) - How components fit together

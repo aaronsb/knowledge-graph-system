@@ -5,7 +5,7 @@ The Knowledge Graph MCP (Model Context Protocol) server enables Claude to query 
 ## Prerequisites
 
 - Node.js 18+ installed
-- PostgreSQL + Apache AGE database running (see `docs/guides/01-QUICKSTART.md`)
+- PostgreSQL + Apache AGE database running (see `docs/guides/QUICKSTART.md`)
 - FastAPI server running (`./scripts/services/start-api.sh`)
 - kg CLI installed globally (`cd client && ./install.sh`)
 - **User account created** - Run `kg login` to create an admin account if you haven't already

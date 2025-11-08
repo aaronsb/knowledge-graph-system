@@ -27,6 +27,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+!scripts/development/build/
 .pytest_cache/
 .coverage
 htmlcov/
@@ -44,8 +45,6 @@ yarn-debug.log*
 yarn-error.log*
 .npm
 .yarn-integrity
-mcp-server/build/
-mcp-server/dist/
 *.tsbuildinfo
 
 # ----------------------------------------------------------------------------
@@ -56,8 +55,6 @@ mcp-server/dist/
 *.swp
 *.swo
 *~
-.DS_Store
-Thumbs.db
 
 # ----------------------------------------------------------------------------
 # Database & Logs
@@ -88,8 +85,8 @@ temp/
 .LSOverride
 ._*
 Desktop.ini
+Thumbs.db
 $RECYCLE.BIN/
-.mcp.json
 # Obsidian workspace files (any level)
 **/.obsidian/
 
