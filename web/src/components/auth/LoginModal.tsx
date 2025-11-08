@@ -43,13 +43,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-card border border-border rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="bg-white dark:bg-gray-900 border border-border rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold">Login to Knowledge Graph</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Login to Knowledge Graph</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-accent rounded transition-colors"
+            className="p-1 hover:bg-accent rounded transition-colors text-gray-900 dark:text-gray-100"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -67,7 +67,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
           {/* Username Field */}
           <div>
-            <label htmlFor="username" className="block text-sm font-medium mb-1.5">
+            <label htmlFor="username" className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-gray-100">
               Username
             </label>
             <input
@@ -84,7 +84,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
           {/* Password Field */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1.5">
+            <label htmlFor="password" className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-gray-100">
               Password
             </label>
             <input
@@ -104,7 +104,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-border rounded hover:bg-accent transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-border rounded hover:bg-accent transition-colors disabled:opacity-50 text-gray-900 dark:text-gray-100"
             >
               Cancel
             </button>
