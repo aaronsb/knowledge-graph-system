@@ -29,6 +29,59 @@ Claude Desktop MCP agents have **read-only tool access** - they can call tools b
 
 Implement a **path allowlist** security model with fail-secure validation for MCP file ingestion.
 
+### Agent Responsibility vs System Responsibility
+
+**CRITICAL: Keep It Simple**
+
+The AI agent's job is **extremely simple** - just point at files. Everything else is handled by the system.
+
+**Agent Responsibilities (Minimal):**
+1. ✅ Know the file/directory path
+2. ✅ Choose which ontology to use
+3. ✅ Optionally check metadata first (via `inspect-file`)
+4. ✅ Submit the path via `ingest-file` or `ingest-directory`
+5. ✅ That's it. Done.
+
+**Agent Does NOT:**
+- ❌ Read file contents (except optional preview via `inspect-file`)
+- ❌ Describe images (vision AI does this automatically)
+- ❌ Analyze images (vision AI does this automatically)
+- ❌ Process text (extraction pipeline does this automatically)
+- ❌ Provide metadata (auto-detected by file type)
+- ❌ Wait for jobs to complete (async processing)
+- ❌ Poll job status (user checks when ready)
+
+**System Responsibilities (Automatic):**
+1. ✅ Validate path against allowlist
+2. ✅ Detect file type (text, image, PDF, etc.)
+3. ✅ Generate vision AI description for images
+4. ✅ Extract concepts from content
+5. ✅ Create graph nodes and relationships
+6. ✅ Store images in object storage
+7. ✅ Process jobs asynchronously
+8. ✅ Return job IDs for tracking
+
+**Example:**
+```typescript
+// Agent sees a directory of images
+// Agent does: submit path
+ingest-directory({
+  path: "~/Screenshots/ui-mockups",
+  ontology: "UI Design"
+})
+
+// System does: everything else
+// → Finds 50 PNG files
+// → Vision AI describes each image
+// → Extracts concepts from descriptions
+// → Creates graph nodes
+// → Stores images in S3
+// → Returns job IDs
+
+// Agent: done in 1 API call
+// System: processes for 5-10 minutes in background
+```
+
 ### 1. Allowlist Configuration
 
 **File:** `~/.config/kg/mcp-allowed-paths.json`
@@ -172,21 +225,36 @@ Ingest a single file from local filesystem.
 
 **Automatic Image Handling:**
 
-Images (`.png`, `.jpg`, `.jpeg`) are automatically processed:
+Images (`.png`, `.jpg`, `.jpeg`) are **fully automatic** - agent does NOTHING except submit path:
+
 1. Detect image file by extension
-2. Use vision AI to generate description (ADR-057a)
-3. Extract concepts from description
+2. Vision AI generates description automatically (ADR-057a)
+3. Extract concepts from AI description
 4. Store image in object storage with metadata
 
-**No manual description needed** - just throw the image path at it!
+**Agent does NOT need to:**
+- ❌ View the image
+- ❌ Describe the image
+- ❌ Analyze the image
+- ❌ Provide metadata
+- ❌ Do anything except submit the path
+
+**Agent ONLY needs to:**
+- ✅ Know the path to the image
+- ✅ Choose which ontology to use
+- ✅ Submit it (optionally after checking metadata)
 
 ```typescript
-// Images work exactly like text files
+// Literally the same as text files - zero special handling
 ingest-file({
   path: "~/Documents/diagrams/architecture.png",
   ontology: "System Architecture"
 })
-// → Vision AI describes it → Concepts extracted → Image stored
+// System handles everything:
+// → Detects it's an image
+// → Vision AI auto-generates description
+// → Extracts concepts automatically
+// → Stores image for later retrieval
 ```
 
 **Tool: `ingest-directory`**
@@ -411,25 +479,40 @@ const result = ingest-directory({
 // ~/Projects/project-b/docs/*.md → Ontology: "project-b"
 ```
 
-**Workflow 3: Image Ingestion (Automatic)**
+**Workflow 3: Image Ingestion (Zero Agent Effort)**
 
 ```typescript
-// Just throw images at it - vision AI handles description
+// Single image - agent does NOTHING but submit path
 ingest-file({
   path: "~/Documents/diagrams/architecture.png",
   ontology: "System Architecture"
 })
-// → Vision AI: "A diagram showing microservices architecture with..."
-// → Concepts extracted: "microservices architecture", "API gateway", etc.
-// → Image stored with metadata for later retrieval via source tool
+// Agent is done. System handles everything:
+// → Vision AI generates: "A diagram showing microservices architecture with..."
+// → Extracts concepts: "microservices architecture", "API gateway", etc.
+// → Stores image for later retrieval
 
-// Works for directories too
+// Directory of images - agent does NOTHING but point at folder
 ingest-directory({
-  path: "~/Documents/diagrams",
-  ontology: "Architecture Diagrams",
+  path: "~/Documents/screenshots",
+  ontology: "UI Screenshots",
   pattern: "*.png"
 })
-// → Processes all PNG images automatically
+// Agent is done. System processes each image:
+// → screenshot-1.png → Vision AI → concepts → stored
+// → screenshot-2.png → Vision AI → concepts → stored
+// → screenshot-3.png → Vision AI → concepts → stored
+// Agent doesn't see images, doesn't describe them, just submits the path
+
+// Mixed content (text + images) - still just submit path
+ingest-directory({
+  path: "~/Documents/project-docs",
+  ontology: "Project Documentation",
+  recursive: true
+})
+// → *.md files → direct text extraction
+// → *.png files → vision AI auto-description → extraction
+// Agent does the same thing regardless of file type
 ```
 
 ---
