@@ -95,12 +95,16 @@ A standalone analysis script that:
 
 ```python
 def calculate_semantic_diversity(concept_label, max_hops=2):
-    # Get concepts within N hops
+    # Get concepts within N hops (OMNIDIRECTIONAL traversal)
+    # Use undirected relationships (-[*]-) to capture full semantic neighborhood:
+    #   - Inbound: (c)-[:SUPPORTS]->(target)
+    #   - Outbound: (target)-[:USED]->(c)
+    # Both contribute to semantic diversity
     query = f"""
-    MATCH (source:Concept)-[*1..{max_hops}]->(target:Concept {{label: '{concept_label}'}})
-    WHERE source <> target
-    WITH DISTINCT source
-    RETURN source.embedding as embedding
+    MATCH (target:Concept {{label: '{concept_label}'}})-[*1..{max_hops}]-(related:Concept)
+    WHERE related <> target
+    WITH DISTINCT related
+    RETURN related.embedding as embedding
     LIMIT 100
     """
 
@@ -564,6 +568,10 @@ async def precompute_diversity():
 1. **Requires Embeddings**: All concepts must have embeddings (already true in our system)
 2. **Graph Topology Dependent**: Relies on relationship extraction quality
 3. **Complements, Doesn't Replace**: Should be used alongside grounding strength and human judgment
+4. **Embedding Model Dependency**: Diversity scores are downstream of the embedding model
+   - Changing embedding models (OpenAI → local, version upgrades) invalidates cached scores
+   - **Mitigation**: Use dataset sigma (relative scoring) which is more stable across models than absolute thresholds
+   - Recalculation required on model migration (handled by ADR-045 embedding worker)
 
 ## Alternatives Considered
 
@@ -776,6 +784,38 @@ Only implement if there's demand for detailed analysis tools:
 **Total estimate: ~10 hours for Pattern A implementation**
 
 Pattern B endpoints can be added later if needed (additional ~6-8 hours).
+
+### Critical Implementation Decisions
+
+**Query Directionality (OMNIDIRECTIONAL)**:
+
+The diversity calculation uses **undirected relationship traversal** (`-[*1..N]-`) to capture the full semantic neighborhood:
+
+```cypher
+MATCH (target:Concept {label: 'Apollo 11'})-[*1..2]-(related:Concept)
+```
+
+This is critical because both **inbound** and **outbound** relationships contribute to semantic diversity:
+- Inbound: `Moon Rocks -[:COLLECTED_BY]-> Apollo 11`
+- Outbound: `Apollo 11 -[:USED]-> Saturn V`
+
+Using directed traversal (`-[*1..2]->`) would miss half the conceptual neighborhood and dramatically underestimate diversity.
+
+**Parameter Sensitivity (max_hops)**:
+
+Default `max_hops=2` is chosen as the "sweet spot":
+- `max_hops=1`: Too sparse, only immediate neighbors (likely underestimates diversity)
+- `max_hops=2`: Captures both direct relationships and "friends of friends" (empirically validated)
+- `max_hops=3+`: Risk of conceptual explosion and noise from irrelevant distant concepts
+
+The limit parameter (default 100) provides a safety cap on N for O(N²) calculations.
+
+**Embedding Model Stability**:
+
+Diversity scores are sensitive to the embedding model. When migrating models:
+1. Absolute thresholds (< 0.25 = low) become invalid
+2. Relative scores (dataset sigma) are more stable
+3. Recommendation: Use sigma-based scoring for cross-model comparisons
 
 ### Performance Considerations
 
