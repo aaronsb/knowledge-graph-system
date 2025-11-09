@@ -7,12 +7,14 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogIn, LogOut, Shield } from 'lucide-react';
+import { User, LogIn, LogOut, Shield, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 import { LoginModal } from '../auth/LoginModal';
 
 export const UserProfile: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout, clearError } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const [isOpen, setIsOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -65,14 +67,23 @@ export const UserProfile: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        <button
-          onClick={handleLogin}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
-          title="Login with OAuth 2.0"
-        >
-          <LogIn className="w-4 h-4" />
-          <span>Login</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={handleLogin}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+            title="Login with OAuth 2.0"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Login</span>
+          </button>
+        </div>
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
       </>
     );
@@ -90,9 +101,9 @@ export const UserProfile: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-background border border-border rounded-lg shadow-lg overflow-hidden z-50">
           {/* User Info Header */}
-          <div className="px-4 py-3 border-b border-border bg-accent/50">
+          <div className="px-4 py-3 border-b border-border bg-accent">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                 <User className="w-5 h-5 text-primary" />
@@ -128,6 +139,22 @@ export const UserProfile: React.FC = () => {
 
           {/* Actions */}
           <div className="border-t border-border">
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-4 h-4" />
+                  <span>Light Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4" />
+                  <span>Dark Mode</span>
+                </>
+              )}
+            </button>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-2 px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors text-left"

@@ -14,6 +14,7 @@ import { OAuthCallback } from './components/auth/OAuthCallback';
 import { useGraphStore } from './store/graphStore';
 import { useVocabularyStore } from './store/vocabularyStore';
 import { useAuthStore } from './store/authStore';
+import { useThemeStore } from './store/themeStore';
 import { useSubgraph, useFindConnection } from './hooks/useGraphData';
 import { getExplorer } from './explorers';
 import { apiClient } from './api/client';
@@ -33,6 +34,12 @@ const AppContent: React.FC = () => {
   const { selectedExplorer, searchParams, graphData: storeGraphData, rawGraphData, setGraphData, setRawGraphData, queryMode, blockBuilderExpanded } = useGraphStore();
   const { setTypes, setLoading, setError } = useVocabularyStore();
   const { checkAuth } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
+
+  // Initialize theme on mount
+  useEffect(() => {
+    setTheme(theme);
+  }, []);
 
   // Check authentication status on mount
   useEffect(() => {
