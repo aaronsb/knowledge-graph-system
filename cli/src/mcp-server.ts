@@ -13,16 +13,30 @@ import {
   ListToolsRequestSchema,
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { createClientFromEnv, KnowledgeGraphClient } from './api/client.js';
 import { AuthClient } from './lib/auth/auth-client.js';
+import { McpAllowlistManager } from './lib/mcp-allowlist.js';
 import {
   formatSearchResults,
   formatConceptDetails,
   formatConnectionPaths,
   formatRelatedConcepts,
   formatJobStatus,
+  formatInspectFileResult,
+  formatIngestFileResult,
+  formatIngestDirectoryResult,
+  formatDatabaseStats,
+  formatDatabaseInfo,
+  formatDatabaseHealth,
+  formatSystemStatus,
+  formatApiHealth,
+  formatMcpAllowedPaths,
 } from './mcp/formatters.js';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Create server instance
 const server = new Server(
@@ -34,6 +48,7 @@ const server = new Server(
     capabilities: {
       tools: {},
       prompts: {},
+      resources: {},
     },
   }
 );
@@ -42,10 +57,16 @@ const server = new Server(
  * Knowledge Graph Server - Exploration Guide
  *
  * This system transforms documents into semantic concept graphs. Explore by:
- * 1. search_concepts - Find entry points (returns grounding + evidence samples)
- * 2. get_concept_details - See ALL evidence (even contradicted concepts are valuable!)
- * 3. find_connection_by_search - Trace problem→solution paths, discover narratives
- * 4. find_related_concepts - Explore neighborhoods and clusters
+ * 1. search - Find entry points (returns grounding + evidence samples)
+ * 2. concept - Work with concepts (details, related, connections)
+ * 3. ontology - Manage ontologies (list, info, files, delete)
+ * 4. job - Manage jobs (status, list, approve, cancel)
+ * 5. ingest - Submit text for concept extraction
+ * 6. source - Retrieve source images for visual verification
+ *
+ * Resources provide fresh data on-demand without consuming tool budget:
+ * - database/stats, database/info, database/health
+ * - system/status, api/health
  *
  * Grounding strength (-1.0 to 1.0) shows concept reliability. Negative = contradicted/problem.
  */
@@ -183,18 +204,16 @@ let client: KnowledgeGraphClient;
 /**
  * Tool Definitions
  *
- * Each tool wraps a method from the KnowledgeGraphClient,
- * reusing the same types and API calls as the CLI.
+ * Consolidated from 22 tools to 6 tools + 5 resources (ADR-013)
  */
 
 // List available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
-      // ========== Search & Query Tools ==========
       {
-        name: 'search_concepts',
-        description: `Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: get_concept_details (all evidence), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").`,
+        name: 'search',
+        description: `Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: concept (details, related, connect), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -222,329 +241,427 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'get_concept_details',
-        description: `Retrieve ALL evidence (quoted text) and relationships for a concept. Use to see the complete picture: ALL quotes, source locations, SUPPORTS/CONTRADICTS relationships. Contradicted concepts (negative grounding) are VALUABLE - show problems/outdated approaches.`,
+        name: 'concept',
+        description: 'Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.',
         inputSchema: {
           type: 'object',
           properties: {
+            action: {
+              type: 'string',
+              enum: ['details', 'related', 'connect'],
+              description: 'Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths)',
+            },
+            // For details and related
             concept_id: {
               type: 'string',
-              description: 'The unique concept identifier (from search results or graph traversal)',
+              description: 'Concept ID (required for details, related)',
             },
             include_grounding: {
               type: 'boolean',
-              description: 'Include grounding_strength calculation (ADR-044: probabilistic truth convergence). Default: true. Set to false only for faster queries when grounding not needed.',
+              description: 'Include grounding_strength (default: true)',
               default: true,
             },
-          },
-          required: ['concept_id'],
-        },
-      },
-      {
-        name: 'find_related_concepts',
-        description: `Explore concept neighborhood. Discovers what's connected and how (SUPPORTS, CONTRADICTS, ENABLES). Returns concepts grouped by distance. Use depth=1-2 for neighbors, 3-4 for broader exploration.`,
-        inputSchema: {
-          type: 'object',
-          properties: {
-            concept_id: {
-              type: 'string',
-              description: 'Starting concept ID for traversal',
-            },
+            // For related
             max_depth: {
               type: 'number',
-              description: 'Maximum traversal depth in hops (1-5, default: 2). Depth 1-2 is fast, 3-4 moderate, 5 can be slow.',
+              description: 'Max traversal depth for related (1-5, default: 2)',
               default: 2,
             },
             relationship_types: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Optional filter for specific relationship types (e.g., ["IMPLIES", "SUPPORTS", "CONTRADICTS"])',
+              description: 'Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])',
             },
-          },
-          required: ['concept_id'],
-        },
-      },
-      {
-        name: 'find_connection',
-        description: 'Find shortest paths between two concepts using exact concept IDs. Uses graph traversal to find up to 5 shortest paths. For semantic phrase matching, use find_connection_by_search instead.',
-        inputSchema: {
-          type: 'object',
-          properties: {
+            // For connect
+            connection_mode: {
+              type: 'string',
+              enum: ['exact', 'semantic'],
+              description: 'Connection mode: "exact" (IDs) or "semantic" (phrases)',
+              default: 'semantic',
+            },
             from_id: {
               type: 'string',
-              description: 'Starting concept ID (exact match required)',
+              description: 'Starting concept ID (for exact mode)',
             },
             to_id: {
               type: 'string',
-              description: 'Target concept ID (exact match required)',
+              description: 'Target concept ID (for exact mode)',
             },
-            max_hops: {
-              type: 'number',
-              description: 'Maximum path length to search (1-10 hops, default: 5)',
-              default: 5,
-            },
-          },
-          required: ['from_id', 'to_id'],
-        },
-      },
-      {
-        name: 'find_connection_by_search',
-        description: `Discover HOW concepts connect. Find paths between ideas, trace problem→solution chains, see grounding+evidence at each step. Returns narrative flow through the graph. Use 2-3 word phrases (e.g., "licensing issues", "AGE benefits").`,
-        inputSchema: {
-          type: 'object',
-          properties: {
             from_query: {
               type: 'string',
-              description: 'Semantic phrase for starting concept (use specific 2-3 word phrases for best results)',
+              description: 'Starting phrase (for semantic mode, 2-3 words)',
             },
             to_query: {
               type: 'string',
-              description: 'Semantic phrase for target concept (use specific 2-3 word phrases)',
+              description: 'Target phrase (for semantic mode, 2-3 words)',
             },
             max_hops: {
               type: 'number',
-              description: 'Maximum path length to search (default: 5)',
+              description: 'Max path length (default: 5)',
               default: 5,
             },
             threshold: {
               type: 'number',
-              description: 'Minimum similarity threshold 0.0-1.0 (default: 0.5 for 50%, lower to 0.3-0.4 for weaker matches)',
+              description: 'Similarity threshold for semantic mode (default: 0.5)',
               default: 0.5,
             },
           },
-          required: ['from_query', 'to_query'],
-        },
-      },
-
-      // ========== Database Tools ==========
-      {
-        name: 'get_database_stats',
-        description: 'Get database statistics including total counts of concepts, sources, instances, relationships, and ontologies. Useful for understanding graph size and structure.',
-        inputSchema: {
-          type: 'object',
-          properties: {},
+          required: ['action'],
         },
       },
       {
-        name: 'get_database_info',
-        description: 'Get database connection information including PostgreSQL version, Apache AGE extension details, and connection status.',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      {
-        name: 'get_database_health',
-        description: 'Check database health status. Verifies PostgreSQL connection and Apache AGE graph availability.',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-
-      // ========== Ontology Tools ==========
-      {
-        name: 'list_ontologies',
-        description: 'List all ontologies (collections) in the knowledge graph with concept counts and statistics.',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      {
-        name: 'get_ontology_info',
-        description: 'Get detailed information about a specific ontology including concept count, relationship types, and source documents.',
+        name: 'ontology',
+        description: 'Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.',
         inputSchema: {
           type: 'object',
           properties: {
-            ontology_name: {
+            action: {
               type: 'string',
-              description: 'Name of the ontology to retrieve',
+              enum: ['list', 'info', 'files', 'delete'],
+              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "delete" (remove)',
             },
-          },
-          required: ['ontology_name'],
-        },
-      },
-      {
-        name: 'get_ontology_files',
-        description: 'List all source files that have been ingested into a specific ontology with metadata.',
-        inputSchema: {
-          type: 'object',
-          properties: {
             ontology_name: {
               type: 'string',
-              description: 'Name of the ontology',
-            },
-          },
-          required: ['ontology_name'],
-        },
-      },
-      {
-        name: 'delete_ontology',
-        description: 'Delete an entire ontology and all its concepts, relationships, and evidence. Requires force=true for confirmation.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            ontology_name: {
-              type: 'string',
-              description: 'Name of the ontology to delete',
+              description: 'Ontology name (required for info, files, delete)',
             },
             force: {
               type: 'boolean',
-              description: 'Must be true to confirm deletion',
+              description: 'Confirm deletion (required for delete)',
               default: false,
             },
           },
-          required: ['ontology_name', 'force'],
+          required: ['action'],
         },
       },
-
-      // ========== Job Tools ==========
       {
-        name: 'get_job_status',
-        description: 'Get status of an ingestion job including progress, cost estimates, and any errors. Use job_id from ingest operations.',
+        name: 'job',
+        description: 'Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.',
         inputSchema: {
           type: 'object',
           properties: {
+            action: {
+              type: 'string',
+              enum: ['status', 'list', 'approve', 'cancel'],
+              description: 'Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job)',
+            },
             job_id: {
               type: 'string',
-              description: 'Job ID returned from ingest operation',
+              description: 'Job ID (required for status, approve, cancel)',
             },
-          },
-          required: ['job_id'],
-        },
-      },
-      {
-        name: 'list_jobs',
-        description: 'List recent ingestion jobs with optional filtering by status (pending, awaiting_approval, running, completed, failed).',
-        inputSchema: {
-          type: 'object',
-          properties: {
             status: {
               type: 'string',
-              description: 'Filter by job status (optional)',
+              description: 'Filter by status for list (pending, awaiting_approval, running, completed, failed)',
             },
             limit: {
               type: 'number',
-              description: 'Maximum number of jobs to return (default: 50)',
+              description: 'Max jobs to return for list (default: 50)',
               default: 50,
             },
           },
+          required: ['action'],
         },
       },
       {
-        name: 'approve_job',
-        description: 'Approve a job for processing after reviewing cost estimates (ADR-014 approval workflow). Job must be in awaiting_approval status.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            job_id: {
-              type: 'string',
-              description: 'Job ID to approve',
-            },
-          },
-          required: ['job_id'],
-        },
-      },
-      {
-        name: 'cancel_job',
-        description: 'Cancel a pending or running job. Cannot cancel completed or failed jobs.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            job_id: {
-              type: 'string',
-              description: 'Job ID to cancel',
-            },
-          },
-          required: ['job_id'],
-        },
-      },
-
-      // ========== Ingestion Tools ==========
-      {
-        name: 'ingest_text',
-        description: 'Submit text content to the knowledge graph for concept extraction. Automatically processes and extracts concepts, relationships, and evidence. Specify which ontology (knowledge domain) to add the concepts to. The system will chunk the text, extract concepts using LLM, and add them to the graph. Returns a job ID for tracking progress.',
+        name: 'ingest',
+        description: 'Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.',
         inputSchema: {
           type: 'object',
           properties: {
             text: {
               type: 'string',
-              description: 'Text content to ingest into the knowledge graph',
+              description: 'Text content to ingest',
             },
             ontology: {
               type: 'string',
-              description: 'Ontology/collection name (ask user which knowledge domain this belongs to, e.g., "Project Documentation", "Research Notes", "Meeting Notes")',
+              description: 'Ontology name (e.g., "Project Documentation", "Research Notes")',
             },
             filename: {
               type: 'string',
-              description: 'Optional filename for source tracking (default: "text_input")',
+              description: 'Optional filename for source tracking',
             },
             auto_approve: {
               type: 'boolean',
-              description: 'Auto-approve and start processing immediately (default: true). Set to false to require manual approval.',
+              description: 'Auto-approve processing (default: true)',
               default: true,
             },
             force: {
               type: 'boolean',
-              description: 'Force re-ingestion even if content already exists (default: false)',
+              description: 'Force re-ingestion (default: false)',
               default: false,
             },
             processing_mode: {
               type: 'string',
               enum: ['serial', 'parallel'],
-              description: 'Processing mode: serial (clean, recommended) or parallel (fast, may duplicate concepts)',
+              description: 'Processing mode (default: serial)',
               default: 'serial',
             },
             target_words: {
               type: 'number',
-              description: 'Target words per chunk (default: 1000, range: 500-2000)',
+              description: 'Words per chunk (default: 1000)',
               default: 1000,
             },
             overlap_words: {
               type: 'number',
-              description: 'Word overlap between chunks for context (default: 200)',
+              description: 'Overlap between chunks (default: 200)',
               default: 200,
             },
           },
           required: ['text', 'ontology'],
         },
       },
-
-      // ========== System Tools ==========
       {
-        name: 'get_api_health',
-        description: 'Check API server health status. Returns status and timestamp.',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      {
-        name: 'get_system_status',
-        description: 'Get comprehensive system status including database, job scheduler, and resource usage statistics.',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      // ========== Image Retrieval (ADR-057) ==========
-      {
-        name: 'get_source_image',
-        description: `Retrieve the original image for a source node (ADR-057). Use this when concept evidence has image metadata (has_image=true, image_uri set). Returns base64-encoded image data. **Use Case:** Visual verification of extracted concepts - compare image to extracted descriptions to check if anything was missed. This enables a refinement loop: view image → create new description → upsert → concepts get associated with image.`,
+        name: 'source',
+        description: 'Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.',
         inputSchema: {
           type: 'object',
           properties: {
             source_id: {
               type: 'string',
-              description: 'Source ID from concept instance (found in evidence with has_image=true)',
+              description: 'Source ID from evidence (has_image=true)',
             },
           },
           required: ['source_id'],
         },
       },
+      {
+        name: 'inspect-file',
+        description: 'Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'File path to inspect (absolute or relative, ~ supported)',
+            },
+          },
+          required: ['path'],
+        },
+      },
+      {
+        name: 'ingest-file',
+        description: 'Ingest one or more files into the knowledge graph (ADR-062). Validates against allowlist, reads content, handles images with vision AI automatically. Supports single file or array of files for selective batch ingestion.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            path: {
+              description: 'File path(s) to ingest - single path string OR array of paths for batch ingestion',
+              oneOf: [
+                { type: 'string' },
+                { type: 'array', items: { type: 'string' } }
+              ],
+            },
+            ontology: {
+              type: 'string',
+              description: 'Ontology name for categorization (all files go to same ontology)',
+            },
+            auto_approve: {
+              type: 'boolean',
+              description: 'Auto-approve processing (default: true)',
+              default: true,
+            },
+            force: {
+              type: 'boolean',
+              description: 'Force re-ingestion of already processed files (default: false)',
+              default: false,
+            },
+          },
+          required: ['path', 'ontology'],
+        },
+      },
+      {
+        name: 'ingest-directory',
+        description: 'Ingest all files from a directory (ADR-062). Validates against allowlist, processes recursively if requested, auto-names ontology by directory structure. Skips blocked files automatically.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'Directory path to ingest (absolute or relative, ~ supported)',
+            },
+            ontology: {
+              type: 'string',
+              description: 'Ontology name (optional - defaults to directory name)',
+            },
+            recursive: {
+              type: 'boolean',
+              description: 'Process subdirectories recursively (default: false)',
+              default: false,
+            },
+            auto_approve: {
+              type: 'boolean',
+              description: 'Auto-approve processing (default: true)',
+              default: true,
+            },
+            force: {
+              type: 'boolean',
+              description: 'Force re-ingestion (default: false)',
+              default: false,
+            },
+            limit: {
+              type: 'number',
+              description: 'Number of files to show per page (default: 10)',
+              default: 10,
+            },
+            offset: {
+              type: 'number',
+              description: 'Number of files to skip for pagination (default: 0)',
+              default: 0,
+            },
+          },
+          required: ['path'],
+        },
+      },
     ],
   };
+});
+
+// List available resources
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [
+      {
+        uri: 'database/stats',
+        name: 'Database Statistics',
+        description: 'Concept counts, relationship counts, ontology statistics',
+        mimeType: 'application/json'
+      },
+      {
+        uri: 'database/info',
+        name: 'Database Information',
+        description: 'PostgreSQL version, Apache AGE extension details',
+        mimeType: 'application/json'
+      },
+      {
+        uri: 'database/health',
+        name: 'Database Health',
+        description: 'Database connection status, graph availability',
+        mimeType: 'application/json'
+      },
+      {
+        uri: 'system/status',
+        name: 'System Status',
+        description: 'Job scheduler status, resource usage',
+        mimeType: 'application/json'
+      },
+      {
+        uri: 'api/health',
+        name: 'API Health',
+        description: 'API server health and timestamp',
+        mimeType: 'application/json'
+      },
+      {
+        uri: 'mcp/allowed-paths',
+        name: 'MCP File Access Allowlist',
+        description: 'Path allowlist configuration for secure file/directory ingestion (ADR-062)',
+        mimeType: 'application/json'
+      }
+    ]
+  };
+});
+
+// Read resource handler
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const { uri } = request.params;
+
+  try {
+    switch (uri) {
+      case 'database/stats': {
+        const result = await client.getDatabaseStats();
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: formatDatabaseStats(result)
+          }]
+        };
+      }
+
+      case 'database/info': {
+        const result = await client.getDatabaseInfo();
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: formatDatabaseInfo(result)
+          }]
+        };
+      }
+
+      case 'database/health': {
+        const result = await client.getDatabaseHealth();
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: formatDatabaseHealth(result)
+          }]
+        };
+      }
+
+      case 'system/status': {
+        const result = await client.getSystemStatus();
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: formatSystemStatus(result)
+          }]
+        };
+      }
+
+      case 'api/health': {
+        const result = await client.health();
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: formatApiHealth(result)
+          }]
+        };
+      }
+
+      case 'mcp/allowed-paths': {
+        const manager = new McpAllowlistManager();
+        const config = manager.getConfig();
+
+        if (!config) {
+          return {
+            contents: [{
+              uri,
+              mimeType: 'text/plain',
+              text: formatMcpAllowedPaths({
+                configured: false,
+                message: 'Allowlist not initialized. Run: kg mcp-config init-allowlist',
+                hint: 'Initialize with default safe patterns for .md, .txt, .pdf, .png, .jpg files'
+              })
+            }]
+          };
+        }
+
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: formatMcpAllowedPaths({
+              configured: true,
+              version: config.version,
+              allowed_directories: config.allowed_directories,
+              allowed_patterns: config.allowed_patterns,
+              blocked_patterns: config.blocked_patterns,
+              max_file_size_mb: config.max_file_size_mb,
+              max_files_per_directory: config.max_files_per_directory,
+              config_path: manager.getAllowlistPath()
+            })
+          }]
+        };
+      }
+
+      default:
+        throw new Error(`Unknown resource: ${uri}`);
+    }
+  } catch (error: any) {
+    throw new Error(`Failed to read resource ${uri}: ${error.message}`);
+  }
 });
 
 /**
@@ -585,6 +702,546 @@ function segmentPath(path: any): any {
   };
 }
 
+// Call tool handler with consolidated routing
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+  const toolArgs = args || {};
+
+  try {
+    switch (name) {
+      case 'search': {
+        const query = toolArgs.query as string;
+        const limit = toolArgs.limit as number || 10;
+        const min_similarity = toolArgs.min_similarity as number || 0.7;
+        const offset = toolArgs.offset as number || 0;
+
+        const result = await client.searchConcepts({
+          query,
+          limit,
+          min_similarity,
+          offset,
+          include_grounding: true,
+          include_evidence: true,
+        });
+
+        const formattedText = formatSearchResults(result);
+
+        return {
+          content: [{ type: 'text', text: formattedText }],
+        };
+      }
+
+      case 'concept': {
+        const action = toolArgs.action as string;
+
+        switch (action) {
+          case 'details': {
+            const includeGrounding = toolArgs.include_grounding !== false;
+            const result = await client.getConceptDetails(
+              toolArgs.concept_id as string,
+              includeGrounding
+            );
+
+            const formattedText = formatConceptDetails(result);
+
+            return {
+              content: [{ type: 'text', text: formattedText }],
+            };
+          }
+
+          case 'related': {
+            const result = await client.findRelatedConcepts({
+              concept_id: toolArgs.concept_id as string,
+              max_depth: toolArgs.max_depth as number || 2,
+              relationship_types: toolArgs.relationship_types as string[] | undefined,
+            });
+
+            const formattedText = formatRelatedConcepts(result);
+
+            return {
+              content: [{ type: 'text', text: formattedText }],
+            };
+          }
+
+          case 'connect': {
+            const mode = toolArgs.connection_mode as string || 'semantic';
+
+            if (mode === 'exact') {
+              const result = await client.findConnection({
+                from_id: toolArgs.from_id as string,
+                to_id: toolArgs.to_id as string,
+                max_hops: toolArgs.max_hops as number || 5,
+              });
+
+              // Segment long paths for readability
+              if (result.paths && result.paths.length > 0) {
+                result.paths = result.paths.map(segmentPath);
+              }
+
+              return {
+                content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              };
+            } else {
+              const result = await client.findConnectionBySearch({
+                from_query: toolArgs.from_query as string,
+                to_query: toolArgs.to_query as string,
+                max_hops: toolArgs.max_hops as number || 5,
+                threshold: toolArgs.threshold as number || 0.5,
+                include_grounding: true,
+                include_evidence: true,
+              });
+
+              const formattedText = formatConnectionPaths(result);
+
+              return {
+                content: [{ type: 'text', text: formattedText }],
+              };
+            }
+          }
+
+          default:
+            throw new Error(`Unknown concept action: ${action}`);
+        }
+      }
+
+      case 'ontology': {
+        const action = toolArgs.action as string;
+
+        switch (action) {
+          case 'list': {
+            const result = await client.listOntologies();
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'info': {
+            const result = await client.getOntologyInfo(toolArgs.ontology_name as string);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'files': {
+            const result = await client.getOntologyFiles(toolArgs.ontology_name as string);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'delete': {
+            const result = await client.deleteOntology(
+              toolArgs.ontology_name as string,
+              toolArgs.force as boolean || false
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown ontology action: ${action}`);
+        }
+      }
+
+      case 'job': {
+        const action = toolArgs.action as string;
+
+        switch (action) {
+          case 'status': {
+            const result = await client.getJobStatus(toolArgs.job_id as string);
+            const formattedText = formatJobStatus(result);
+            return {
+              content: [{ type: 'text', text: formattedText }],
+            };
+          }
+
+          case 'list': {
+            const result = await client.listJobs(
+              toolArgs.status as string | undefined,
+              undefined,
+              toolArgs.limit as number || 50
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'approve': {
+            const result = await client.approveJob(toolArgs.job_id as string);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'cancel': {
+            const result = await client.cancelJob(toolArgs.job_id as string);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown job action: ${action}`);
+        }
+      }
+
+      case 'ingest': {
+        const result = await client.ingestText(toolArgs.text as string, {
+          ontology: toolArgs.ontology as string,
+          filename: toolArgs.filename as string | undefined,
+          auto_approve: toolArgs.auto_approve !== undefined ? toolArgs.auto_approve as boolean : true,
+          force: toolArgs.force as boolean || false,
+          processing_mode: toolArgs.processing_mode as 'serial' | 'parallel' || 'serial',
+          options: {
+            target_words: toolArgs.target_words as number || 1000,
+            overlap_words: toolArgs.overlap_words as number || 200,
+          },
+          source_type: 'mcp',
+        });
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case 'source': {
+        const source_id = toolArgs.source_id as string;
+
+        if (!source_id) {
+          throw new Error('source_id is required');
+        }
+
+        try {
+          const base64Image = await client.getSourceImageBase64(source_id);
+
+          return {
+            content: [
+              {
+                type: 'image',
+                data: base64Image,
+                mimeType: 'image/jpeg',
+              },
+              {
+                type: 'text',
+                text: `Retrieved image for source: ${source_id}\n\nThis image was extracted from the knowledge graph. You can now:\n1. Compare the image to the extracted concepts to verify accuracy\n2. Create a new description if you notice anything that was missed\n3. Use kg ingest text to create a refined description that will be associated with this image\n\nThis creates an emergent refinement loop: visual verification → new description → concept association → improved graph understanding.`,
+              },
+            ],
+          };
+        } catch (error: any) {
+          if (error.response?.status === 404) {
+            throw new Error(`Source ${source_id} not found or is not an image source. Only image sources have retrievable images.`);
+          } else if (error.response?.status === 400) {
+            throw new Error(`Source ${source_id} is not an image (content_type != 'image')`);
+          }
+          throw error;
+        }
+      }
+
+      case 'inspect-file': {
+        const filePath = toolArgs.path as string;
+
+        if (!filePath) {
+          throw new Error('path is required');
+        }
+
+        // Validate against allowlist
+        const manager = new McpAllowlistManager();
+        const validation = manager.validatePath(filePath);
+
+        // Expand tilde and resolve path
+        const expandedPath = filePath.startsWith('~')
+          ? path.join(process.env.HOME || '', filePath.slice(1))
+          : filePath;
+        const absolutePath = path.resolve(expandedPath);
+
+        const result: any = {
+          path: absolutePath,
+          validation: {
+            allowed: validation.allowed,
+            reason: validation.reason,
+            hint: validation.hint,
+          },
+        };
+
+        // Get file metadata if exists
+        if (fs.existsSync(absolutePath)) {
+          try {
+            const stats = fs.statSync(absolutePath);
+            const sizeMB = stats.size / (1024 * 1024);
+
+            result.exists = true;
+            result.metadata = {
+              size_bytes: stats.size,
+              size_mb: parseFloat(sizeMB.toFixed(2)),
+              type: stats.isFile() ? 'file' : stats.isDirectory() ? 'directory' : 'other',
+              modified: stats.mtime.toISOString(),
+              permissions: {
+                readable: fs.constants.R_OK && true,
+                writable: fs.constants.W_OK && true,
+              },
+            };
+
+            // Detect mime type from extension
+            const ext = path.extname(absolutePath).toLowerCase();
+            const mimeTypes: Record<string, string> = {
+              '.md': 'text/markdown',
+              '.txt': 'text/plain',
+              '.pdf': 'application/pdf',
+              '.png': 'image/png',
+              '.jpg': 'image/jpeg',
+              '.jpeg': 'image/jpeg',
+            };
+            result.metadata.mime_type = mimeTypes[ext] || 'application/octet-stream';
+            result.metadata.is_image = ext in { '.png': 1, '.jpg': 1, '.jpeg': 1 };
+          } catch (error: any) {
+            result.exists = true;
+            result.error = `Failed to read metadata: ${error.message}`;
+          }
+        } else {
+          result.exists = false;
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: formatInspectFileResult(result),
+            },
+          ],
+        };
+      }
+
+      case 'ingest-file': {
+        const pathArg = toolArgs.path;
+        const ontology = toolArgs.ontology as string;
+        const auto_approve = toolArgs.auto_approve !== false;
+        const force = toolArgs.force === true;
+
+        if (!pathArg || !ontology) {
+          throw new Error('path and ontology are required');
+        }
+
+        // Support both single path and array of paths
+        const paths = Array.isArray(pathArg) ? pathArg : [pathArg];
+
+        if (paths.length === 0) {
+          throw new Error('At least one file path is required');
+        }
+
+        const manager = new McpAllowlistManager();
+        const results: any[] = [];
+        const errors: any[] = [];
+
+        // Process each file
+        for (const filePath of paths) {
+          try {
+            // Validate against allowlist
+            const validation = manager.validatePath(filePath);
+
+            if (!validation.allowed) {
+              errors.push({
+                file: filePath,
+                error: `File not allowed: ${validation.reason}. ${validation.hint || ''}`,
+              });
+              continue;
+            }
+
+            // Expand and resolve path
+            const expandedPath = filePath.startsWith('~')
+              ? path.join(process.env.HOME || '', filePath.slice(1))
+              : filePath;
+            const absolutePath = path.resolve(expandedPath);
+
+            if (!fs.existsSync(absolutePath)) {
+              errors.push({
+                file: absolutePath,
+                error: 'File not found',
+              });
+              continue;
+            }
+
+            const stats = fs.statSync(absolutePath);
+            if (!stats.isFile()) {
+              errors.push({
+                file: absolutePath,
+                error: 'Path is not a file',
+              });
+              continue;
+            }
+
+            // Detect if image
+            const ext = path.extname(absolutePath).toLowerCase();
+            const isImage = ['.png', '.jpg', '.jpeg'].includes(ext);
+
+            const filename = path.basename(absolutePath);
+
+            // Use unified ingestFile endpoint (same as CLI)
+            // Backend automatically detects file type and routes appropriately
+            const jobResponse = await client.ingestFile(absolutePath, {
+              ontology,
+              filename,
+              auto_approve,
+              force,
+            });
+
+            results.push({
+              status: 'job_id' in jobResponse ? 'submitted' : 'duplicate',
+              job_id: 'job_id' in jobResponse ? jobResponse.job_id : undefined,
+              duplicate_job_id: 'existing_job_id' in jobResponse ? jobResponse.existing_job_id : undefined,
+              file: absolutePath,
+              type: isImage ? 'image' : 'text',
+              size_bytes: stats.size,
+              ontology,
+            });
+          } catch (error: any) {
+            errors.push({
+              file: filePath,
+              error: error.message,
+            });
+          }
+        }
+
+        // Return batch result if multiple files, single result otherwise
+        const result = paths.length > 1 ? {
+          batch: true,
+          ontology,
+          total_files: paths.length,
+          successful: results.length,
+          failed: errors.length,
+          results,
+          errors: errors.length > 0 ? errors : undefined,
+        } : results[0] || errors[0];
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: formatIngestFileResult(result),
+            },
+          ],
+        };
+      }
+
+      case 'ingest-directory': {
+        const dirPath = toolArgs.path as string;
+        const ontology = toolArgs.ontology as string | undefined;
+        const recursive = toolArgs.recursive === true;
+        const auto_approve = toolArgs.auto_approve !== false;
+        const force = toolArgs.force === true;
+        const limit = (toolArgs.limit as number) || 10;
+        const offset = (toolArgs.offset as number) || 0;
+
+        if (!dirPath) {
+          throw new Error('path is required');
+        }
+
+        // Expand and resolve path
+        const expandedPath = dirPath.startsWith('~')
+          ? path.join(process.env.HOME || '', dirPath.slice(1))
+          : dirPath;
+        const absolutePath = path.resolve(expandedPath);
+
+        if (!fs.existsSync(absolutePath)) {
+          throw new Error(`Directory not found: ${absolutePath}`);
+        }
+
+        const stats = fs.statSync(absolutePath);
+        if (!stats.isDirectory()) {
+          throw new Error(`Path is not a directory: ${absolutePath}. Use ingest-file for files.`);
+        }
+
+        // Auto-name ontology from directory if not provided
+        const finalOntology = ontology || path.basename(absolutePath);
+
+        // Validate directory against allowlist
+        const manager = new McpAllowlistManager();
+        const dirValidation = manager.validateDirectory(absolutePath);
+
+        if (!dirValidation.allowed) {
+          throw new Error(`Directory not allowed: ${dirValidation.reason}. ${dirValidation.hint || ''}`);
+        }
+
+        // Collect files
+        const files: string[] = [];
+        const skipped: string[] = [];
+
+        function scanDirectory(dir: string) {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+          for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+
+            if (entry.isDirectory() && recursive) {
+              scanDirectory(fullPath);
+            } else if (entry.isFile()) {
+              // Validate each file
+              const fileValidation = manager.validatePath(fullPath);
+              if (fileValidation.allowed) {
+                files.push(fullPath);
+              } else {
+                skipped.push(fullPath);
+              }
+            }
+          }
+        }
+
+        scanDirectory(absolutePath);
+
+        // Apply pagination
+        const paginatedFiles = files.slice(offset, offset + limit);
+
+        // TODO: Implement batch ingestion
+        // For now, return summary with pagination
+        const result = {
+          status: 'not_implemented',
+          message: 'Batch directory ingestion not yet implemented',
+          directory: absolutePath,
+          ontology: finalOntology,
+          files_found: files.length,
+          files_skipped: skipped.length,
+          next_phase: 'Phase 3 - Batch ingestion implementation',
+          files: paginatedFiles,
+          pagination: {
+            offset,
+            limit,
+            total: files.length,
+            has_more: offset + limit < files.length,
+          },
+        };
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: formatIngestDirectoryResult(result),
+            },
+          ],
+        };
+      }
+
+      default:
+        throw new Error(`Unknown tool: ${name}`);
+    }
+  } catch (error: any) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              error: error.message,
+              details: error.response?.data || error.toString(),
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+});
+
 /**
  * Prompt Handlers - Provide exploration guidance
  */
@@ -622,23 +1279,32 @@ This system transforms documents into semantic concept graphs with grounding str
 
 ## Exploration Workflow:
 
-1. **search_concepts** - Your entry point. Find concepts by semantic similarity.
+1. **search** - Your entry point. Find concepts by semantic similarity.
    - Returns: Grounding strength + sample evidence
    - Use 2-3 word phrases (e.g., "configuration management", "licensing issues")
 
-2. **get_concept_details** - See the complete picture for any concept.
+2. **concept (action: details)** - See the complete picture for any concept.
    - Returns: ALL quoted evidence + relationships
    - IMPORTANT: Contradicted concepts (negative grounding) are VALUABLE - they show problems/outdated approaches
 
-3. **find_connection_by_search** - Discover HOW concepts connect.
+3. **concept (action: connect)** - Discover HOW concepts connect.
    - Trace problem→solution chains
    - See grounding + evidence at each step in the path
    - Reveals narrative flow through ideas
 
-4. **find_related_concepts** - Explore neighborhoods.
+4. **concept (action: related)** - Explore neighborhoods.
    - Find what's nearby in the concept graph
    - Discover clusters and themes
    - Use depth=1-2 for neighbors, 3-4 for broader exploration
+
+## Resources (Fresh Data):
+
+Use MCP resources for quick status checks without consuming tool budget:
+- **database/stats** - Concept counts, relationships, ontologies
+- **database/info** - PostgreSQL version, AGE extension
+- **database/health** - Connection status
+- **system/status** - Job scheduler, resource usage
+- **api/health** - API server status
 
 ## Grounding Strength (-1.0 to 1.0):
 - **Positive (>0.7)**: Well-supported, reliable concept
@@ -647,10 +1313,10 @@ This system transforms documents into semantic concept graphs with grounding str
 - **Contradicted (-1.0)**: Often the most interesting - shows pain points!
 
 ## Pro Tips:
-- Don't just search - explore connections and evidence
-- Contradicted concepts reveal problems that need solutions
-- Use retrieval hints in responses to dig deeper
-- Follow relationship chains (SUPPORTS, CONTRADICTS, ENABLES)`,
+- Start broad with search, then drill down with concept details
+- Contradicted concepts reveal what DIDN'T work - goldmines for learning
+- Connection paths tell stories - follow the evidence chain
+- Use resources for quick status checks instead of tools`,
           },
         },
       ],
@@ -658,288 +1324,6 @@ This system transforms documents into semantic concept graphs with grounding str
   }
 
   throw new Error(`Unknown prompt: ${name}`);
-});
-
-/**
- * Tool Call Handler
- *
- * Routes tool calls to the appropriate KnowledgeGraphClient method
- */
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  // Ensure args is defined (MCP spec requires it but TypeScript doesn't guarantee it)
-  const toolArgs = args || {};
-
-  try {
-    switch (name) {
-      // ========== Search & Query Tools ==========
-      case 'search_concepts': {
-        const query = toolArgs.query as string;
-        const limit = toolArgs.limit as number || 10;
-        const min_similarity = toolArgs.min_similarity as number || 0.7;
-        const offset = toolArgs.offset as number || 0;
-
-        const result = await client.searchConcepts({
-          query,
-          limit,
-          min_similarity,
-          offset,
-          include_grounding: true,  // Automatic grounding for AI agents
-          include_evidence: true,   // Include sample evidence quotes
-        });
-
-        const formattedText = formatSearchResults(result);
-
-        return {
-          content: [{ type: 'text', text: formattedText }],
-        };
-      }
-
-      case 'get_concept_details': {
-        const includeGrounding = toolArgs.include_grounding !== false; // Default: true (ADR-044)
-        const result = await client.getConceptDetails(
-          toolArgs.concept_id as string,
-          includeGrounding
-        );
-
-        const formattedText = formatConceptDetails(result);
-
-        return {
-          content: [{ type: 'text', text: formattedText }],
-        };
-      }
-
-      case 'find_related_concepts': {
-        const result = await client.findRelatedConcepts({
-          concept_id: toolArgs.concept_id as string,
-          max_depth: toolArgs.max_depth as number || 2,
-          relationship_types: toolArgs.relationship_types as string[] | undefined,
-        });
-
-        const formattedText = formatRelatedConcepts(result);
-
-        return {
-          content: [{ type: 'text', text: formattedText }],
-        };
-      }
-
-      case 'find_connection': {
-        const result = await client.findConnection({
-          from_id: toolArgs.from_id as string,
-          to_id: toolArgs.to_id as string,
-          max_hops: toolArgs.max_hops as number || 5,
-        });
-
-        // Segment long paths for readability
-        if (result.paths && result.paths.length > 0) {
-          result.paths = result.paths.map(segmentPath);
-        }
-
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'find_connection_by_search': {
-        const result = await client.findConnectionBySearch({
-          from_query: toolArgs.from_query as string,
-          to_query: toolArgs.to_query as string,
-          max_hops: toolArgs.max_hops as number || 5,
-          threshold: toolArgs.threshold as number || 0.5,
-          include_grounding: true,  // Automatic grounding for AI agents
-          include_evidence: true,   // Include sample evidence quotes
-        });
-
-        const formattedText = formatConnectionPaths(result);
-
-        return {
-          content: [{ type: 'text', text: formattedText }],
-        };
-      }
-
-      // ========== Database Tools ==========
-      case 'get_database_stats': {
-        const result = await client.getDatabaseStats();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'get_database_info': {
-        const result = await client.getDatabaseInfo();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'get_database_health': {
-        const result = await client.getDatabaseHealth();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      // ========== Ontology Tools ==========
-      case 'list_ontologies': {
-        const result = await client.listOntologies();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'get_ontology_info': {
-        const result = await client.getOntologyInfo(toolArgs.ontology_name as string);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'get_ontology_files': {
-        const result = await client.getOntologyFiles(toolArgs.ontology_name as string);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'delete_ontology': {
-        const result = await client.deleteOntology(
-          toolArgs.ontology_name as string,
-          toolArgs.force as boolean || false
-        );
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      // ========== Job Tools ==========
-      case 'get_job_status': {
-        const result = await client.getJobStatus(toolArgs.job_id as string);
-        const formattedText = formatJobStatus(result);
-        return {
-          content: [{ type: 'text', text: formattedText }],
-        };
-      }
-
-      case 'list_jobs': {
-        const result = await client.listJobs(
-          toolArgs.status as string | undefined,
-          undefined, // client_id - use default from environment
-          toolArgs.limit as number || 50
-        );
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'approve_job': {
-        const result = await client.approveJob(toolArgs.job_id as string);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'cancel_job': {
-        const result = await client.cancelJob(toolArgs.job_id as string);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      // ========== Ingestion Tools ==========
-      case 'ingest_text': {
-        const result = await client.ingestText(toolArgs.text as string, {
-          ontology: toolArgs.ontology as string,
-          filename: toolArgs.filename as string | undefined,
-          auto_approve: toolArgs.auto_approve !== undefined ? toolArgs.auto_approve as boolean : true,
-          force: toolArgs.force as boolean || false,
-          processing_mode: toolArgs.processing_mode as 'serial' | 'parallel' || 'serial',
-          options: {
-            target_words: toolArgs.target_words as number || 1000,
-            overlap_words: toolArgs.overlap_words as number || 200,
-          },
-          // ADR-051: Silent enrichment - MCP server adds source metadata
-          // This metadata is NOT exposed in the tool schema (ADR-044 compliance)
-          source_type: 'mcp',
-        });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      // ========== System Tools ==========
-      case 'get_api_health': {
-        const result = await client.health();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      case 'get_system_status': {
-        const result = await client.getSystemStatus();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
-      }
-
-      // ========== Image Retrieval (ADR-057) ==========
-      case 'get_source_image': {
-        const source_id = toolArgs.source_id as string;
-
-        if (!source_id) {
-          throw new Error('source_id is required');
-        }
-
-        try {
-          // Get image as base64
-          const base64Image = await client.getSourceImageBase64(source_id);
-
-          return {
-            content: [
-              {
-                type: 'image',
-                data: base64Image,
-                mimeType: 'image/jpeg', // Could be enhanced to detect actual MIME type
-              },
-              {
-                type: 'text',
-                text: `Retrieved image for source: ${source_id}\n\nThis image was extracted from the knowledge graph. You can now:\n1. Compare the image to the extracted concepts to verify accuracy\n2. Create a new description if you notice anything that was missed\n3. Use kg ingest text to create a refined description that will be associated with this image\n\nThis creates an emergent refinement loop: visual verification → new description → concept association → improved graph understanding.`,
-              },
-            ],
-          };
-        } catch (error: any) {
-          // Check if this is a 404 (source not found or not an image)
-          if (error.response?.status === 404) {
-            throw new Error(`Source ${source_id} not found or is not an image source. Only image sources have retrievable images.`);
-          } else if (error.response?.status === 400) {
-            throw new Error(`Source ${source_id} is not an image (content_type != 'image')`);
-          }
-          throw error;
-        }
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
-    }
-  } catch (error: any) {
-    // Return error details in a structured format
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              error: error.message,
-              details: error.response?.data || error.toString(),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-      isError: true,
-    };
-  }
 });
 
 /**

@@ -14,16 +14,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-export interface McpToolConfig {
-  enabled: boolean;
-  description?: string;
-}
-
-export interface McpConfig {
-  enabled: boolean;
-  tools: Record<string, McpToolConfig>;
-}
-
 export interface AuthTokenConfig {
   // ADR-054: OAuth 2.0 Client Credentials (Personal OAuth Client)
   oauth_client_id?: string;        // OAuth client ID (kg-cli-username-random)
@@ -60,7 +50,6 @@ export interface KgConfig {
   backup_dir?: string;
   auto_approve?: boolean;  // ADR-014: Auto-approve all jobs by default
   auth?: AuthTokenConfig;   // ADR-054: OAuth 2.0 client credentials
-  mcp?: McpConfig;
   aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
   display?: DisplayConfig;  // ADR-057: Display preferences
   search?: SearchConfig;    // ADR-057: Search command defaults
@@ -118,18 +107,6 @@ export class ConfigManager {
       api_url: 'http://localhost:8000',
       backup_dir: path.join(os.homedir(), '.local', 'share', 'kg', 'backups'),
       auto_approve: false,  // ADR-014: Require manual approval by default
-      mcp: {
-        enabled: true,
-        tools: {
-          search_concepts: { enabled: true, description: 'Search for concepts using natural language' },
-          get_concept_details: { enabled: true, description: 'Get detailed information about a concept' },
-          find_related_concepts: { enabled: true, description: 'Find concepts related through graph traversal' },
-          find_connection: { enabled: true, description: 'Find shortest path between concepts' },
-          ingest_document: { enabled: true, description: 'Ingest a document into the knowledge graph' },
-          list_ontologies: { enabled: true, description: 'List all ontologies' },
-          get_database_stats: { enabled: true, description: 'Get database statistics' }
-        }
-      },
       // ADR-029: Command aliases for shell compatibility
       // Example: zsh users with 'alias cat=bat' can use this to prevent expansion conflicts
       aliases: {
@@ -233,54 +210,6 @@ export class ConfigManager {
 
     delete obj[lastKey];
     this.save();
-  }
-
-  /**
-   * Enable an MCP tool
-   */
-  enableMcpTool(toolName: string): void {
-    if (!this.config.mcp) {
-      this.config.mcp = { enabled: true, tools: {} };
-    }
-
-    if (!this.config.mcp.tools[toolName]) {
-      this.config.mcp.tools[toolName] = { enabled: true };
-    } else {
-      this.config.mcp.tools[toolName].enabled = true;
-    }
-
-    this.save();
-  }
-
-  /**
-   * Disable an MCP tool
-   */
-  disableMcpTool(toolName: string): void {
-    if (!this.config.mcp) {
-      this.config.mcp = { enabled: true, tools: {} };
-    }
-
-    if (!this.config.mcp.tools[toolName]) {
-      this.config.mcp.tools[toolName] = { enabled: false };
-    } else {
-      this.config.mcp.tools[toolName].enabled = false;
-    }
-
-    this.save();
-  }
-
-  /**
-   * Get MCP tool status
-   */
-  getMcpToolStatus(toolName: string): boolean {
-    return this.config.mcp?.tools?.[toolName]?.enabled ?? false;
-  }
-
-  /**
-   * List all MCP tools
-   */
-  listMcpTools(): Record<string, McpToolConfig> {
-    return this.config.mcp?.tools ?? {};
   }
 
   /**

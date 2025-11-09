@@ -33,6 +33,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.0",
     "@types/asciichart": "^1.5.8",
+    "@types/minimatch": "^5.1.2",
     "@types/prompts": "^2.4.9",
     "ansis": "^4.2.0",
     "asciichart": "^1.5.25",
@@ -43,6 +44,7 @@
     "eventsource": "^4.0.0",
     "form-data": "^4.0.0",
     "log-update": "^6.1.0",
+    "minimatch": "^10.1.1",
     "ora": "^5.4.1",
     "prompts": "^2.4.2",
     "slice-ansi": "^7.1.2",

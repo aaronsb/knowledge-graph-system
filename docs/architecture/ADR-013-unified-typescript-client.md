@@ -1,7 +1,7 @@
 # ADR-013: Unified TypeScript Client (CLI + MCP Server)
 
-**Status:** Accepted (Phase 1: CLI, Phase 2: MCP)
-**Date:** 2025-10-06
+**Status:** Implemented
+**Date:** 2025-10-06 (Updated: 2025-11-08)
 **Deciders:** Development Team
 **Pattern Source:** Anthropic's `@modelcontextprotocol` packages
 
@@ -29,10 +29,10 @@ Build a **unified TypeScript client** in `client/` directory following Anthropic
 ```typescript
 // Entry point: client/src/index.ts
 if (process.env.MCP_SERVER_MODE === 'true') {
-    // MCP server mode (Phase 2)
+    // MCP server mode
     import('./mcp/server').then(startMcpServer);
 } else {
-    // CLI mode (Phase 1)
+    // CLI mode
     import('./cli/commands').then(runCli);
 }
 ```
@@ -47,13 +47,15 @@ client/
 │   │   └── index.ts          # TypeScript types matching FastAPI models
 │   ├── api/
 │   │   └── client.ts         # HTTP client wrapping REST API
-│   ├── cli/                  # CLI mode (Phase 1)
+│   ├── cli/                  # CLI mode
 │   │   ├── commands.ts       # Command registration
-│   │   ├── health.ts         # Health check command
-│   │   ├── ingest.ts         # Ingestion commands
-│   │   └── jobs.ts           # Job management commands
-│   └── mcp/                  # MCP server mode (Phase 2)
-│       └── (empty)           # Not yet implemented
+│   │   ├── search.ts         # Search commands
+│   │   ├── concept.ts        # Concept commands
+│   │   ├── ontology.ts       # Ontology commands
+│   │   └── job.ts            # Job management commands
+│   └── mcp/                  # MCP server mode
+│       ├── server.ts         # MCP server implementation
+│       └── formatters.ts     # Rich output formatters
 ├── dist/                     # Compiled output
 ├── package.json
 ├── tsconfig.json
@@ -178,7 +180,7 @@ kg --api-url http://prod.example.com health
 kg --client-id production-client jobs list
 ```
 
-## Phase 1: CLI Implementation
+## CLI Implementation
 
 ### Commands
 
@@ -280,7 +282,7 @@ kg health
 
 **Rationale for Wrapper Script**: Avoids npm link permission issues while providing clean UX.
 
-## Phase 2: MCP Server Implementation (Future)
+## MCP Server Implementation
 
 ### Mode Detection
 
@@ -337,6 +339,121 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   // ... handle other tools
 });
 ```
+
+### MCP Tool Organization (Context Budget Optimization)
+
+**Problem**: Initial MCP server exposed 22 individual tools, consuming significant context budget in Claude Desktop conversations. Many tools performed similar operations with different parameters (e.g., `list_ontologies`, `get_ontology_info`, `get_ontology_files`, `delete_ontology`).
+
+**Solution**: Consolidate tools using action parameters, mirroring the `kg` CLI command tree structure.
+
+**Tool Consolidation (22 → 6 tools, 73% reduction)**:
+
+```typescript
+// Core exploration tools (high frequency, keep separate)
+1. search
+   - query, limit, min_similarity, offset
+   - Primary entry point for graph exploration
+
+2. concept
+   - action: "details" | "related" | "connect"
+   - Consolidates: get_concept_details, find_related_concepts,
+                   find_connection, find_connection_by_search
+
+// Grouped management tools (mirror CLI structure)
+3. ontology
+   - action: "list" | "info" | "files" | "delete"
+   - Consolidates: list_ontologies, get_ontology_info,
+                   get_ontology_files, delete_ontology
+
+4. job
+   - action: "status" | "list" | "approve" | "cancel"
+   - Consolidates: get_job_status, list_jobs, approve_job, cancel_job
+
+5. ingest
+   - type: "text" (extensible to "file", "url")
+   - Core content ingestion
+
+6. source
+   - action: "image" (ADR-057 image retrieval)
+   - Retrieves original source images for verification
+```
+
+**MCP Resources** (5 resources for status/health queries):
+
+Status and health information moved to MCP resources for on-demand querying with fresh data:
+
+```typescript
+1. database/stats      - Concept counts, relationship counts, ontology stats
+2. database/info       - PostgreSQL version, Apache AGE extension details
+3. database/health     - Database connection status, graph availability
+4. system/status       - Job scheduler status, resource usage
+5. api/health          - API server health and timestamp
+```
+
+**Resources vs Tools**: Resources are queried on-demand for fresh data and don't consume tool budget in Claude's context. Perfect for status/health information that changes frequently.
+
+**Rich Output Preserved**: All formatters (`formatSearchResults`, `formatConceptDetails`, `formatConnectionPaths`, etc.) remain unchanged. Tools still return:
+- Grounding strength scores
+- Complete evidence chains
+- Relationship types and paths
+- Sample quotes with source locations
+- Image indicators for visual verification
+
+**Design Principle**: Reduce tool COUNT, not information QUALITY. The consolidation is purely organizational - using action parameters instead of separate tools. All the context-rich details stay intact.
+
+**Example Tool Definition**:
+```typescript
+{
+  name: 'concept',
+  description: 'Work with concepts: get details, find related, or discover connections',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      action: {
+        type: 'string',
+        enum: ['details', 'related', 'connect'],
+        description: 'Operation to perform'
+      },
+      concept_id: {
+        type: 'string',
+        description: 'Concept ID (for details, related)'
+      },
+      from_id: {
+        type: 'string',
+        description: 'Starting concept (for connect with exact IDs)'
+      },
+      to_id: {
+        type: 'string',
+        description: 'Target concept (for connect with exact IDs)'
+      },
+      from_query: {
+        type: 'string',
+        description: 'Starting phrase (for connect with semantic search)'
+      },
+      to_query: {
+        type: 'string',
+        description: 'Target phrase (for connect with semantic search)'
+      },
+      connection_mode: {
+        type: 'string',
+        enum: ['exact', 'semantic'],
+        description: 'Connection mode: exact IDs or semantic phrases'
+      },
+      max_depth: {
+        type: 'number',
+        description: 'Max depth for related, max hops for connect'
+      }
+    },
+    required: ['action']
+  }
+}
+```
+
+**CLI Alignment**: Tool structure mirrors `kg` CLI commands:
+- `kg search` → `search` tool
+- `kg concept details` → `concept` tool (action: "details")
+- `kg ontology list` → `ontology` tool (action: "list")
+- `kg job status` → `job` tool (action: "status")
 
 ### Claude Desktop Configuration
 
@@ -447,19 +564,19 @@ try {
 - `chalk` - Colored output
 - `ora` - Progress spinners
 
-**Future (MCP)**:
+**MCP**:
 - `@modelcontextprotocol/sdk` - MCP protocol implementation
 
 ## Consequences
 
 ### Positive
 
-1. **Code Reuse**: Types and API client shared between CLI and MCP
+1. **Code Reuse**: Types and API client shared between CLI and MCP server
 2. **Type Safety**: TypeScript types match FastAPI Pydantic models
 3. **Single Source of Truth**: API changes propagate automatically
-4. **Proven Pattern**: Following Anthropic's established approach
-5. **Incremental Implementation**: Phase 1 (CLI) works without Phase 2 (MCP)
-6. **Easy Migration**: Legacy Python CLI can be deprecated without breaking workflows
+4. **Proven Pattern**: Following Anthropic's established MCP SDK approach
+5. **Context Efficiency**: Consolidated MCP tools (73% reduction) preserve conversation budget
+6. **CLI Alignment**: Tool structure mirrors `kg` command tree for consistency
 
 ### Negative
 
@@ -469,39 +586,9 @@ try {
 
 ### Mitigations
 
-- **Wrapper Script**: `scripts/kg-cli.sh` handles build verification and execution
-- **Clear Docs**: README.md documents all installation options
-- **Gradual Adoption**: Legacy Python CLI remains in `scripts/` during transition
-
-## Migration Path
-
-### From Legacy Python CLI
-
-**Old**:
-```bash
-python cli.py search "query"
-python cli.py ontology list
-```
-
-**New**:
-```bash
-kg search "query"       # Not yet implemented (Phase 3)
-kg ontology list        # Not yet implemented (Phase 3)
-kg jobs list            # ✓ Phase 1 complete
-kg ingest file doc.txt  # ✓ Phase 1 complete
-```
-
-**Status**:
-- Phase 1 (Complete): Ingestion and job management only
-- Phase 2 (Future): MCP server mode
-- Phase 3 (Future): Full graph query commands (`search`, `details`, `related`, etc.)
-
-### Deprecation Plan
-
-1. **Phase 1**: CLI supports ingestion + jobs (current)
-2. **Phase 2**: Add MCP server mode
-3. **Phase 3**: Add remaining graph query commands
-4. **Phase 4**: Deprecate `scripts/cli.py`, update all docs to use `kg` command
+- **Build Step**: Handled transparently by `kg` wrapper script
+- **Clear Docs**: README.md documents installation and usage
+- **Type Safety**: TypeScript ensures correctness at compile time
 
 ## Related ADRs
 
@@ -516,5 +603,4 @@ kg ingest file doc.txt  # ✓ Phase 1 complete
 
 ---
 
-**Last Updated:** 2025-10-06
-**Next Review:** Before Phase 2 MCP implementation
+**Last Updated:** 2025-11-08

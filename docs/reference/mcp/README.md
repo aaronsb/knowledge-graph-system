@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2025-11-04
+> Last updated: 2025-11-08
 
 ---
 
@@ -16,32 +16,19 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 
 ## Available Tools
 
-- [`search_concepts`](#search-concepts) - Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: get_concept_details (all evidence), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").
-- [`get_concept_details`](#get-concept-details) - Retrieve ALL evidence (quoted text) and relationships for a concept. Use to see the complete picture: ALL quotes, source locations, SUPPORTS/CONTRADICTS relationships. Contradicted concepts (negative grounding) are VALUABLE - show problems/outdated approaches.
-- [`find_related_concepts`](#find-related-concepts) - Explore concept neighborhood. Discovers what's connected and how (SUPPORTS, CONTRADICTS, ENABLES). Returns concepts grouped by distance. Use depth=1-2 for neighbors, 3-4 for broader exploration.
-- [`find_connection`](#find-connection) - Find shortest paths between two concepts using exact concept IDs. Uses graph traversal to find up to 5 shortest paths. For semantic phrase matching, use find_connection_by_search instead.
-- [`find_connection_by_search`](#find-connection-by-search) - Discover HOW concepts connect. Find paths between ideas, trace problem→solution chains, see grounding+evidence at each step. Returns narrative flow through the graph. Use 2-3 word phrases (e.g., "licensing issues", "AGE benefits").
-- [`get_database_stats`](#get-database-stats) - Get database statistics including total counts of concepts, sources, instances, relationships, and ontologies. Useful for understanding graph size and structure.
-- [`get_database_info`](#get-database-info) - Get database connection information including PostgreSQL version, Apache AGE extension details, and connection status.
-- [`get_database_health`](#get-database-health) - Check database health status. Verifies PostgreSQL connection and Apache AGE graph availability.
-- [`list_ontologies`](#list-ontologies) - List all ontologies (collections) in the knowledge graph with concept counts and statistics.
-- [`get_ontology_info`](#get-ontology-info) - Get detailed information about a specific ontology including concept count, relationship types, and source documents.
-- [`get_ontology_files`](#get-ontology-files) - List all source files that have been ingested into a specific ontology with metadata.
-- [`delete_ontology`](#delete-ontology) - Delete an entire ontology and all its concepts, relationships, and evidence. Requires force=true for confirmation.
-- [`get_job_status`](#get-job-status) - Get status of an ingestion job including progress, cost estimates, and any errors. Use job_id from ingest operations.
-- [`list_jobs`](#list-jobs) - List recent ingestion jobs with optional filtering by status (pending, awaiting_approval, running, completed, failed).
-- [`approve_job`](#approve-job) - Approve a job for processing after reviewing cost estimates (ADR-014 approval workflow). Job must be in awaiting_approval status.
-- [`cancel_job`](#cancel-job) - Cancel a pending or running job. Cannot cancel completed or failed jobs.
-- [`ingest_text`](#ingest-text) - Submit text content to the knowledge graph for concept extraction. Automatically processes and extracts concepts, relationships, and evidence. Specify which ontology (knowledge domain) to add the concepts to. The system will chunk the text, extract concepts using LLM, and add them to the graph. Returns a job ID for tracking progress.
-- [`get_api_health`](#get-api-health) - Check API server health status. Returns status and timestamp.
-- [`get_system_status`](#get-system-status) - Get comprehensive system status including database, job scheduler, and resource usage statistics.
-- [`get_source_image`](#get-source-image) - Retrieve the original image for a source node (ADR-057). Use this when concept evidence has image metadata (has_image=true, image_uri set). Returns base64-encoded image data. **Use Case:** Visual verification of extracted concepts - compare image to extracted descriptions to check if anything was missed. This enables a refinement loop: view image → create new description → upsert → concepts get associated with image.
+- [`search`](#search) - Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: concept (details, related, connect), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").
+- [`concept`](#concept) - Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.
+- [`ontology`](#ontology) - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
+- [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
+- [`ingest`](#ingest) - Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.
+- [`source`](#source) - Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.
+- [`inspect-file`](#inspect-file) - Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.
 
 ---
 
-### search_concepts
+### search
 
-Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: get_concept_details (all evidence), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").
+Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: concept (details, related, connect), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**
 
@@ -55,222 +42,102 @@ Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Re
 
 ---
 
-### get_concept_details
+### concept
 
-Retrieve ALL evidence (quoted text) and relationships for a concept. Use to see the complete picture: ALL quotes, source locations, SUPPORTS/CONTRADICTS relationships. Contradicted concepts (negative grounding) are VALUABLE - show problems/outdated approaches.
+Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.
 
 **Parameters:**
 
-- `concept_id` (`string`) **(required)** - The unique concept identifier (from search results or graph traversal)
-- `include_grounding` (`boolean`) - Include grounding_strength calculation (ADR-044: probabilistic truth convergence). Default: true. Set to false only for faster queries when grounding not needed.
+- `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths)
+  - Allowed values: `details`, `related`, `connect`
+- `concept_id` (`string`) - Concept ID (required for details, related)
+- `include_grounding` (`boolean`) - Include grounding_strength (default: true)
   - Default: `true`
-
----
-
-### find_related_concepts
-
-Explore concept neighborhood. Discovers what's connected and how (SUPPORTS, CONTRADICTS, ENABLES). Returns concepts grouped by distance. Use depth=1-2 for neighbors, 3-4 for broader exploration.
-
-**Parameters:**
-
-- `concept_id` (`string`) **(required)** - Starting concept ID for traversal
-- `max_depth` (`number`) - Maximum traversal depth in hops (1-5, default: 2). Depth 1-2 is fast, 3-4 moderate, 5 can be slow.
+- `max_depth` (`number`) - Max traversal depth for related (1-5, default: 2)
   - Default: `2`
-- `relationship_types` (`array`) - Optional filter for specific relationship types (e.g., ["IMPLIES", "SUPPORTS", "CONTRADICTS"])
-
----
-
-### find_connection
-
-Find shortest paths between two concepts using exact concept IDs. Uses graph traversal to find up to 5 shortest paths. For semantic phrase matching, use find_connection_by_search instead.
-
-**Parameters:**
-
-- `from_id` (`string`) **(required)** - Starting concept ID (exact match required)
-- `to_id` (`string`) **(required)** - Target concept ID (exact match required)
-- `max_hops` (`number`) - Maximum path length to search (1-10 hops, default: 5)
+- `relationship_types` (`array`) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])
+- `connection_mode` (`string`) - Connection mode: "exact" (IDs) or "semantic" (phrases)
+  - Allowed values: `exact`, `semantic`
+  - Default: `"semantic"`
+- `from_id` (`string`) - Starting concept ID (for exact mode)
+- `to_id` (`string`) - Target concept ID (for exact mode)
+- `from_query` (`string`) - Starting phrase (for semantic mode, 2-3 words)
+- `to_query` (`string`) - Target phrase (for semantic mode, 2-3 words)
+- `max_hops` (`number`) - Max path length (default: 5)
   - Default: `5`
-
----
-
-### find_connection_by_search
-
-Discover HOW concepts connect. Find paths between ideas, trace problem→solution chains, see grounding+evidence at each step. Returns narrative flow through the graph. Use 2-3 word phrases (e.g., "licensing issues", "AGE benefits").
-
-**Parameters:**
-
-- `from_query` (`string`) **(required)** - Semantic phrase for starting concept (use specific 2-3 word phrases for best results)
-- `to_query` (`string`) **(required)** - Semantic phrase for target concept (use specific 2-3 word phrases)
-- `max_hops` (`number`) - Maximum path length to search (default: 5)
-  - Default: `5`
-- `threshold` (`number`) - Minimum similarity threshold 0.0-1.0 (default: 0.5 for 50%, lower to 0.3-0.4 for weaker matches)
+- `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5)
   - Default: `0.5`
 
 ---
 
-### get_database_stats
+### ontology
 
-Get database statistics including total counts of concepts, sources, instances, relationships, and ontologies. Useful for understanding graph size and structure.
-
-**Parameters:**
-
-
-
----
-
-### get_database_info
-
-Get database connection information including PostgreSQL version, Apache AGE extension details, and connection status.
+Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
 
 **Parameters:**
 
-
-
----
-
-### get_database_health
-
-Check database health status. Verifies PostgreSQL connection and Apache AGE graph availability.
-
-**Parameters:**
-
-
-
----
-
-### list_ontologies
-
-List all ontologies (collections) in the knowledge graph with concept counts and statistics.
-
-**Parameters:**
-
-
-
----
-
-### get_ontology_info
-
-Get detailed information about a specific ontology including concept count, relationship types, and source documents.
-
-**Parameters:**
-
-- `ontology_name` (`string`) **(required)** - Name of the ontology to retrieve
-
----
-
-### get_ontology_files
-
-List all source files that have been ingested into a specific ontology with metadata.
-
-**Parameters:**
-
-- `ontology_name` (`string`) **(required)** - Name of the ontology
-
----
-
-### delete_ontology
-
-Delete an entire ontology and all its concepts, relationships, and evidence. Requires force=true for confirmation.
-
-**Parameters:**
-
-- `ontology_name` (`string`) **(required)** - Name of the ontology to delete
-- `force` (`boolean`) **(required)** - Must be true to confirm deletion
+- `action` (`string`) **(required)** - Operation: "list" (all ontologies), "info" (details), "files" (source files), "delete" (remove)
+  - Allowed values: `list`, `info`, `files`, `delete`
+- `ontology_name` (`string`) - Ontology name (required for info, files, delete)
+- `force` (`boolean`) - Confirm deletion (required for delete)
   - Default: `false`
 
 ---
 
-### get_job_status
+### job
 
-Get status of an ingestion job including progress, cost estimates, and any errors. Use job_id from ingest operations.
-
-**Parameters:**
-
-- `job_id` (`string`) **(required)** - Job ID returned from ingest operation
-
----
-
-### list_jobs
-
-List recent ingestion jobs with optional filtering by status (pending, awaiting_approval, running, completed, failed).
+Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
 
 **Parameters:**
 
-- `status` (`string`) - Filter by job status (optional)
-- `limit` (`number`) - Maximum number of jobs to return (default: 50)
+- `action` (`string`) **(required)** - Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job)
+  - Allowed values: `status`, `list`, `approve`, `cancel`
+- `job_id` (`string`) - Job ID (required for status, approve, cancel)
+- `status` (`string`) - Filter by status for list (pending, awaiting_approval, running, completed, failed)
+- `limit` (`number`) - Max jobs to return for list (default: 50)
   - Default: `50`
 
 ---
 
-### approve_job
+### ingest
 
-Approve a job for processing after reviewing cost estimates (ADR-014 approval workflow). Job must be in awaiting_approval status.
-
-**Parameters:**
-
-- `job_id` (`string`) **(required)** - Job ID to approve
-
----
-
-### cancel_job
-
-Cancel a pending or running job. Cannot cancel completed or failed jobs.
+Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.
 
 **Parameters:**
 
-- `job_id` (`string`) **(required)** - Job ID to cancel
-
----
-
-### ingest_text
-
-Submit text content to the knowledge graph for concept extraction. Automatically processes and extracts concepts, relationships, and evidence. Specify which ontology (knowledge domain) to add the concepts to. The system will chunk the text, extract concepts using LLM, and add them to the graph. Returns a job ID for tracking progress.
-
-**Parameters:**
-
-- `text` (`string`) **(required)** - Text content to ingest into the knowledge graph
-- `ontology` (`string`) **(required)** - Ontology/collection name (ask user which knowledge domain this belongs to, e.g., "Project Documentation", "Research Notes", "Meeting Notes")
-- `filename` (`string`) - Optional filename for source tracking (default: "text_input")
-- `auto_approve` (`boolean`) - Auto-approve and start processing immediately (default: true). Set to false to require manual approval.
+- `text` (`string`) **(required)** - Text content to ingest
+- `ontology` (`string`) **(required)** - Ontology name (e.g., "Project Documentation", "Research Notes")
+- `filename` (`string`) - Optional filename for source tracking
+- `auto_approve` (`boolean`) - Auto-approve processing (default: true)
   - Default: `true`
-- `force` (`boolean`) - Force re-ingestion even if content already exists (default: false)
+- `force` (`boolean`) - Force re-ingestion (default: false)
   - Default: `false`
-- `processing_mode` (`string`) - Processing mode: serial (clean, recommended) or parallel (fast, may duplicate concepts)
+- `processing_mode` (`string`) - Processing mode (default: serial)
   - Allowed values: `serial`, `parallel`
   - Default: `"serial"`
-- `target_words` (`number`) - Target words per chunk (default: 1000, range: 500-2000)
+- `target_words` (`number`) - Words per chunk (default: 1000)
   - Default: `1000`
-- `overlap_words` (`number`) - Word overlap between chunks for context (default: 200)
+- `overlap_words` (`number`) - Overlap between chunks (default: 200)
   - Default: `200`
 
 ---
 
-### get_api_health
+### source
 
-Check API server health status. Returns status and timestamp.
+Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.
 
 **Parameters:**
 
-
+- `source_id` (`string`) **(required)** - Source ID from evidence (has_image=true)
 
 ---
 
-### get_system_status
+### inspect-file
 
-Get comprehensive system status including database, job scheduler, and resource usage statistics.
-
-**Parameters:**
-
-
-
----
-
-### get_source_image
-
-Retrieve the original image for a source node (ADR-057). Use this when concept evidence has image metadata (has_image=true, image_uri set). Returns base64-encoded image data. **Use Case:** Visual verification of extracted concepts - compare image to extracted descriptions to check if anything was missed. This enables a refinement loop: view image → create new description → upsert → concepts get associated with image.
+Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.
 
 **Parameters:**
 
-- `source_id` (`string`) **(required)** - Source ID from concept instance (found in evidence with has_image=true)
+- `path` (`string`) **(required)** - File path to inspect (absolute or relative, ~ supported)
 
 ---
