@@ -1127,7 +1127,7 @@ configure_garage() {
 # Configure via: ./scripts/setup/initialize-platform.sh (option 7)
 #
 # Only endpoint configuration in .env:
-GARAGE_S3_ENDPOINT=http://localhost:3900
+GARAGE_S3_ENDPOINT=http://garage:3900
 GARAGE_REGION=garage
 GARAGE_BUCKET=knowledge-graph-images
 

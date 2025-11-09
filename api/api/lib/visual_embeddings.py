@@ -60,10 +60,20 @@ class VisualEmbeddingGenerator:
 
         try:
             # Load model and processor
-            self.model = AutoModel.from_pretrained(
-                model_name,
-                trust_remote_code=True
-            ).to(self.device)
+            # Use device_map instead of .to() to handle meta tensors properly
+            if self.device == 'cuda':
+                self.model = AutoModel.from_pretrained(
+                    model_name,
+                    trust_remote_code=True,
+                    device_map="auto"
+                )
+            else:
+                # For CPU, use low_cpu_mem_usage to avoid meta tensor issues
+                self.model = AutoModel.from_pretrained(
+                    model_name,
+                    trust_remote_code=True,
+                    low_cpu_mem_usage=False
+                )
 
             self.processor = AutoProcessor.from_pretrained(
                 model_name,

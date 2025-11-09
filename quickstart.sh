@@ -247,7 +247,7 @@ echo ""
 
 # Step 6: Store OpenAI API key with validation loop
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 6/7: Storing OpenAI API key${NC}"
+echo -e "${BOLD}Step 6/8: Storing OpenAI API key${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "Please enter your OpenAI API key."
@@ -280,9 +280,60 @@ while [ "$API_KEY_STORED" = false ]; do
     fi
 done
 
-# Step 7: Start application
+# Step 7: Configure Garage credentials
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 7/7: Starting application (API + Web)${NC}"
+echo -e "${BOLD}Step 7/8: Configuring Garage object storage${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Configuring S3-compatible object storage for images..."
+echo ""
+
+# Recreate Garage API key to capture credentials
+echo -e "${BLUE}→${NC} Creating Garage API key..."
+
+# Delete existing key if it exists (silently)
+docker exec knowledge-graph-garage /garage key delete kg-api-key --yes >/dev/null 2>&1 || true
+
+# Create new key and capture output
+KEY_OUTPUT=$(docker exec knowledge-graph-garage /garage key create kg-api-key 2>&1)
+
+# Extract credentials from output
+GARAGE_KEY_ID=$(echo "$KEY_OUTPUT" | grep "Key ID:" | awk '{print $3}')
+GARAGE_SECRET=$(echo "$KEY_OUTPUT" | grep "Secret key:" | awk '{print $3}')
+
+if [ -z "$GARAGE_KEY_ID" ] || [ -z "$GARAGE_SECRET" ]; then
+    echo -e "${RED}✗${NC} Failed to create Garage API key"
+    echo ""
+    echo "Debug output:"
+    echo "$KEY_OUTPUT"
+    exit 1
+fi
+
+echo -e "${GREEN}✓${NC} Garage API key created"
+
+# Grant bucket permissions
+GARAGE_BUCKET="${GARAGE_BUCKET:-knowledge-graph-images}"
+docker exec knowledge-graph-garage /garage bucket allow --read --write --key kg-api-key "$GARAGE_BUCKET" >/dev/null 2>&1
+echo -e "${GREEN}✓${NC} Bucket permissions configured"
+
+# Store credentials in encrypted database
+echo -e "${BLUE}→${NC} Storing credentials in encrypted database..."
+GARAGE_CREDENTIALS="${GARAGE_KEY_ID}:${GARAGE_SECRET}"
+
+if docker exec kg-operator python /workspace/operator/configure.py api-key garage --key "$GARAGE_CREDENTIALS" 2>&1 | grep -q "stored successfully"; then
+    echo -e "${GREEN}✓${NC} Garage credentials stored securely"
+    echo ""
+else
+    echo -e "${RED}✗${NC} Failed to store Garage credentials"
+    echo ""
+    echo "You can store them manually later with:"
+    echo "  docker exec kg-operator python /workspace/operator/configure.py api-key garage --key \"${GARAGE_KEY_ID}:${GARAGE_SECRET}\""
+    echo ""
+fi
+
+# Step 8: Start application
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 8/8: Starting application (API + Web)${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 ./operator/lib/start-app.sh $START_APP_FLAGS
