@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../api/client';
-import { formatGrounding, getRelationshipTextColor } from './utils';
+import { formatGrounding, formatDiversity, formatAuthenticatedDiversity, getRelationshipTextColor } from './utils';
 
 /**
  * EvidenceImage - Display image from evidence source (ADR-057)
@@ -208,6 +208,28 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
                         <span className="text-gray-400">Grounding:</span>
                         <span className="font-medium" style={{ color: grounding.color }}>
                           {grounding.emoji} {grounding.label} ({grounding.percentage})
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  {detailedData?.diversity_score !== undefined && detailedData?.diversity_score !== null && detailedData?.diversity_related_count !== undefined && (() => {
+                    const diversity = formatDiversity(detailedData.diversity_score, detailedData.diversity_related_count);
+                    return diversity && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Diversity:</span>
+                        <span className="font-medium text-xs" style={{ color: diversity.color }}>
+                          {diversity.emoji} {diversity.label} ({diversity.percentage}, {diversity.count})
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  {detailedData?.authenticated_diversity !== undefined && detailedData?.authenticated_diversity !== null && (() => {
+                    const authDiv = formatAuthenticatedDiversity(detailedData.authenticated_diversity);
+                    return authDiv && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Authenticated:</span>
+                        <span className="font-medium text-xs" style={{ color: authDiv.color }}>
+                          {authDiv.emoji} {authDiv.label} ({authDiv.percentage})
                         </span>
                       </div>
                     );

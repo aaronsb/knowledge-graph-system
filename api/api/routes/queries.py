@@ -142,6 +142,24 @@ async def search_concepts(
                     except Exception as e:
                         logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
+                # Calculate semantic diversity if requested (ADR-063)
+                diversity_score = None
+                diversity_related_count = None
+                authenticated_diversity = None
+                if request.include_diversity:
+                    try:
+                        analyzer = DiversityAnalyzer(client)
+                        diversity_result = analyzer.calculate_diversity(
+                            concept_id=concept_id,
+                            max_hops=request.diversity_max_hops,
+                            grounding_strength=grounding_strength
+                        )
+                        diversity_score = diversity_result.get('diversity_score')
+                        diversity_related_count = diversity_result.get('related_concept_count')
+                        authenticated_diversity = diversity_result.get('authenticated_diversity')
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate diversity for {concept_id}: {e}")
+
                 # Fetch sample evidence instances if requested (ADR-057: include image metadata, ADR-051: include provenance)
                 sample_evidence = None
                 if request.include_evidence:
@@ -181,6 +199,9 @@ async def search_concepts(
                     documents=documents,
                     evidence_count=evidence_count,
                     grounding_strength=grounding_strength,
+                    diversity_score=diversity_score,
+                    diversity_related_count=diversity_related_count,
+                    authenticated_diversity=authenticated_diversity,
                     sample_evidence=sample_evidence
                 ))
 
@@ -233,6 +254,24 @@ async def search_concepts(
                         except Exception as e:
                             logger.warning(f"Failed to calculate grounding for top match {top_concept_id}: {e}")
 
+                    # Calculate diversity for top match if requested (ADR-063)
+                    top_diversity_score = None
+                    top_diversity_related_count = None
+                    top_authenticated_diversity = None
+                    if request.include_diversity:
+                        try:
+                            analyzer = DiversityAnalyzer(client)
+                            top_diversity_result = analyzer.calculate_diversity(
+                                concept_id=top_concept_id,
+                                max_hops=request.diversity_max_hops,
+                                grounding_strength=top_grounding
+                            )
+                            top_diversity_score = top_diversity_result.get('diversity_score')
+                            top_diversity_related_count = top_diversity_result.get('related_concept_count')
+                            top_authenticated_diversity = top_diversity_result.get('authenticated_diversity')
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate diversity for top match {top_concept_id}: {e}")
+
                     # Fetch sample evidence for top match if requested (ADR-057: include image metadata, ADR-051: include provenance)
                     top_sample_evidence = None
                     if request.include_evidence:
@@ -272,6 +311,9 @@ async def search_concepts(
                         documents=top_documents,
                         evidence_count=top_evidence_count,
                         grounding_strength=top_grounding,
+                        diversity_score=top_diversity_score,
+                        diversity_related_count=top_diversity_related_count,
+                        authenticated_diversity=top_authenticated_diversity,
                         sample_evidence=top_sample_evidence
                     )
 

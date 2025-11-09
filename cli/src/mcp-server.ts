@@ -667,6 +667,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           offset,
           include_grounding: true,
           include_evidence: true,
+          include_diversity: true,
+          diversity_max_hops: 2,
         });
 
         const formattedText = formatSearchResults(result);
