@@ -137,9 +137,10 @@ Response:
 {
   "concept_id": "sha256:...",
   "label": "Apollo 11 Mission",
-  "grounding_strength": 0.14,
-  "diversity_score": 0.377,        // Added when include_diversity=true
-  "diversity_related_count": 33,   // Number of concepts analyzed
+  "grounding_strength": 0.127,
+  "diversity_score": 0.377,              // Added when include_diversity=true
+  "diversity_related_count": 34,         // Number of concepts analyzed
+  "authenticated_diversity": 0.377,      // sign(grounding) × diversity
   ...
 }
 ```
@@ -159,14 +160,16 @@ Response:
   "results": [
     {
       "label": "Apollo 11 Mission",
-      "grounding_strength": 0.14,
+      "grounding_strength": 0.127,
       "diversity_score": 0.377,
+      "authenticated_diversity": 0.377,    // Positive: diverse support
       ...
     },
     {
       "label": "Moon Landing Conspiracy",
-      "grounding_strength": -0.06,
-      "diversity_score": 0.232,
+      "grounding_strength": -0.064,
+      "diversity_score": 0.369,
+      "authenticated_diversity": -0.369,   // Negative: diverse contradiction
       ...
     }
   ]
@@ -417,21 +420,49 @@ Store diversity score as a cached property on Concept nodes:
 })
 ```
 
-### Future: Composite Authenticity Score (Optional)
+### Authenticated Diversity: Combining Diversity with Grounding Polarity
 
-If combining multiple signals is desired in the future, diversity can be one dimension:
+**Problem Discovered**: Initial testing revealed that conspiracy theories can exhibit **high diversity scores** when they're parasitic on authentic information. Example:
+
+- **Apollo 11**: 37.7% diversity, 34 related concepts
+- **Moon Landing Conspiracy**: 36.9% diversity, 29 related concepts
+
+Both show high diversity! Why? The conspiracy is **connected to Apollo 11 via CONTRADICTS relationships**, so omnidirectional traversal reaches the entire authentic Apollo 11 information network. The conspiracy gains diversity by being embedded in what it opposes.
+
+**Solution: Sign-Weighted Diversity**
+
+Combine diversity with grounding polarity to distinguish supportive vs contradictory diversity:
 
 ```python
-# Hypothetical composite score (NOT part of core implementation)
-authenticity_score = (
-    0.4 * normalize(grounding_strength) +    # From ADR-058
-    0.3 * diversity_score +                  # From this ADR
-    0.2 * normalize(related_concept_count) + # Network breadth
-    0.1 * normalize(source_count)            # Document diversity
-)
+authenticated_diversity = sign(grounding_strength) × diversity_score
 ```
 
-**Decision**: Keep diversity analysis **standalone and decoupled**. Users can combine signals in application layer if needed, but the API doesn't force this coupling.
+Where `sign(x) = +1 if x >= 0 else -1`
+
+**Results**:
+- **Apollo 11**: sign(+0.127) × 0.377 = **+0.377** (✅ supported by diverse evidence)
+- **Conspiracy**: sign(-0.064) × 0.369 = **-0.369** (❌ contradicted by diverse evidence)
+
+**Interpretation**:
+- **Positive value**: Concept supported by this magnitude of diverse evidence
+- **Negative value**: Concept contradicted by this magnitude of diverse evidence
+- **Near zero**: Either low diversity OR neutral grounding
+
+This aligns with **signed graph theory** where edge polarity affects semantic propagation. The metric preserves the diversity magnitude while incorporating directionality from grounding (ADR-044 + ADR-058).
+
+**API Response**:
+```json
+{
+  "concept_id": "sha256:...",
+  "label": "Apollo 11 Mission",
+  "grounding_strength": 0.127,
+  "diversity_score": 0.377,
+  "diversity_related_count": 34,
+  "authenticated_diversity": 0.377  // New combined metric
+}
+```
+
+**Decision**: Provide both `diversity_score` (unsigned magnitude) and `authenticated_diversity` (sign-weighted) so users can analyze them separately or together depending on context.
 
 ## Performance Considerations
 
