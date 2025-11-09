@@ -61,7 +61,7 @@ const server = new Server(
  * 2. concept - Work with concepts (details, related, connections)
  * 3. ontology - Manage ontologies (list, info, files, delete)
  * 4. job - Manage jobs (status, list, approve, cancel)
- * 5. ingest - Submit text for concept extraction
+ * 5. ingest - Ingest content (text, inspect-file, file, directory)
  * 6. source - Retrieve source images for visual verification
  *
  * Resources provide fresh data on-demand without consuming tool budget:
@@ -363,50 +363,83 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'ingest',
-        description: 'Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.',
+        description: 'Ingest content into the knowledge graph: submit text, inspect files, ingest files, or ingest directories. Use action parameter to specify operation.',
         inputSchema: {
           type: 'object',
           properties: {
+            action: {
+              type: 'string',
+              enum: ['text', 'inspect-file', 'file', 'directory'],
+              description: 'Operation: "text" (raw text), "inspect-file" (validate), "file" (ingest files), "directory" (ingest directory)',
+            },
+            // For text action
             text: {
               type: 'string',
-              description: 'Text content to ingest',
+              description: 'Text content to ingest (required for text action)',
             },
+            // For all actions except inspect-file
             ontology: {
               type: 'string',
-              description: 'Ontology name (e.g., "Project Documentation", "Research Notes")',
+              description: 'Ontology name (required for text/file/directory, optional for directory - defaults to dir name)',
             },
+            // For text action
             filename: {
               type: 'string',
-              description: 'Optional filename for source tracking',
-            },
-            auto_approve: {
-              type: 'boolean',
-              description: 'Auto-approve processing (default: true)',
-              default: true,
-            },
-            force: {
-              type: 'boolean',
-              description: 'Force re-ingestion (default: false)',
-              default: false,
+              description: 'Optional filename for source tracking (text action)',
             },
             processing_mode: {
               type: 'string',
               enum: ['serial', 'parallel'],
-              description: 'Processing mode (default: serial)',
+              description: 'Processing mode (text action, default: serial)',
               default: 'serial',
             },
             target_words: {
               type: 'number',
-              description: 'Words per chunk (default: 1000)',
+              description: 'Words per chunk (text action, default: 1000)',
               default: 1000,
             },
             overlap_words: {
               type: 'number',
-              description: 'Overlap between chunks (default: 200)',
+              description: 'Overlap between chunks (text action, default: 200)',
               default: 200,
             },
+            // For file/directory/inspect-file actions
+            path: {
+              description: 'File/directory path (required for inspect-file/file/directory). For file action: single path string OR array for batch',
+              oneOf: [
+                { type: 'string' },
+                { type: 'array', items: { type: 'string' } }
+              ],
+            },
+            // For file/directory actions
+            auto_approve: {
+              type: 'boolean',
+              description: 'Auto-approve processing (file/directory actions, default: true)',
+              default: true,
+            },
+            force: {
+              type: 'boolean',
+              description: 'Force re-ingestion (file/directory actions, default: false)',
+              default: false,
+            },
+            // For directory action
+            recursive: {
+              type: 'boolean',
+              description: 'Process subdirectories recursively (directory action, default: false)',
+              default: false,
+            },
+            limit: {
+              type: 'number',
+              description: 'Number of files to show per page (directory action, default: 10)',
+              default: 10,
+            },
+            offset: {
+              type: 'number',
+              description: 'Number of files to skip for pagination (directory action, default: 0)',
+              default: 0,
+            },
           },
-          required: ['text', 'ontology'],
+          required: ['action'],
         },
       },
       {
@@ -421,94 +454,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['source_id'],
-        },
-      },
-      {
-        name: 'inspect-file',
-        description: 'Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              description: 'File path to inspect (absolute or relative, ~ supported)',
-            },
-          },
-          required: ['path'],
-        },
-      },
-      {
-        name: 'ingest-file',
-        description: 'Ingest one or more files into the knowledge graph (ADR-062). Validates against allowlist, reads content, handles images with vision AI automatically. Supports single file or array of files for selective batch ingestion.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            path: {
-              description: 'File path(s) to ingest - single path string OR array of paths for batch ingestion',
-              oneOf: [
-                { type: 'string' },
-                { type: 'array', items: { type: 'string' } }
-              ],
-            },
-            ontology: {
-              type: 'string',
-              description: 'Ontology name for categorization (all files go to same ontology)',
-            },
-            auto_approve: {
-              type: 'boolean',
-              description: 'Auto-approve processing (default: true)',
-              default: true,
-            },
-            force: {
-              type: 'boolean',
-              description: 'Force re-ingestion of already processed files (default: false)',
-              default: false,
-            },
-          },
-          required: ['path', 'ontology'],
-        },
-      },
-      {
-        name: 'ingest-directory',
-        description: 'Ingest all files from a directory (ADR-062). Validates against allowlist, processes recursively if requested, auto-names ontology by directory structure. Skips blocked files automatically.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              description: 'Directory path to ingest (absolute or relative, ~ supported)',
-            },
-            ontology: {
-              type: 'string',
-              description: 'Ontology name (optional - defaults to directory name)',
-            },
-            recursive: {
-              type: 'boolean',
-              description: 'Process subdirectories recursively (default: false)',
-              default: false,
-            },
-            auto_approve: {
-              type: 'boolean',
-              description: 'Auto-approve processing (default: true)',
-              default: true,
-            },
-            force: {
-              type: 'boolean',
-              description: 'Force re-ingestion (default: false)',
-              default: false,
-            },
-            limit: {
-              type: 'number',
-              description: 'Number of files to show per page (default: 10)',
-              default: 10,
-            },
-            offset: {
-              type: 'number',
-              description: 'Number of files to skip for pagination (default: 0)',
-              default: 0,
-            },
-          },
-          required: ['path'],
         },
       },
     ],
@@ -887,21 +832,312 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ingest': {
-        const result = await client.ingestText(toolArgs.text as string, {
-          ontology: toolArgs.ontology as string,
-          filename: toolArgs.filename as string | undefined,
-          auto_approve: toolArgs.auto_approve !== undefined ? toolArgs.auto_approve as boolean : true,
-          force: toolArgs.force as boolean || false,
-          processing_mode: toolArgs.processing_mode as 'serial' | 'parallel' || 'serial',
-          options: {
-            target_words: toolArgs.target_words as number || 1000,
-            overlap_words: toolArgs.overlap_words as number || 200,
-          },
-          source_type: 'mcp',
-        });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        };
+        const action = toolArgs.action as string;
+
+        switch (action) {
+          case 'text': {
+            const result = await client.ingestText(toolArgs.text as string, {
+              ontology: toolArgs.ontology as string,
+              filename: toolArgs.filename as string | undefined,
+              auto_approve: toolArgs.auto_approve !== undefined ? toolArgs.auto_approve as boolean : true,
+              force: toolArgs.force as boolean || false,
+              processing_mode: toolArgs.processing_mode as 'serial' | 'parallel' || 'serial',
+              options: {
+                target_words: toolArgs.target_words as number || 1000,
+                overlap_words: toolArgs.overlap_words as number || 200,
+              },
+              source_type: 'mcp',
+            });
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'inspect-file': {
+            const filePath = toolArgs.path as string;
+
+            if (!filePath) {
+              throw new Error('path is required');
+            }
+
+            // Validate against allowlist
+            const manager = new McpAllowlistManager();
+            const validation = manager.validatePath(filePath);
+
+            // Expand tilde and resolve path
+            const expandedPath = filePath.startsWith('~')
+              ? path.join(process.env.HOME || '', filePath.slice(1))
+              : filePath;
+            const absolutePath = path.resolve(expandedPath);
+
+            const result: any = {
+              path: absolutePath,
+              validation: {
+                allowed: validation.allowed,
+                reason: validation.reason,
+                hint: validation.hint,
+              },
+            };
+
+            // Get file metadata if exists
+            if (fs.existsSync(absolutePath)) {
+              try {
+                const stats = fs.statSync(absolutePath);
+                const sizeMB = stats.size / (1024 * 1024);
+
+                result.exists = true;
+                result.metadata = {
+                  size_bytes: stats.size,
+                  size_mb: parseFloat(sizeMB.toFixed(2)),
+                  type: stats.isFile() ? 'file' : stats.isDirectory() ? 'directory' : 'other',
+                  modified: stats.mtime.toISOString(),
+                  permissions: {
+                    readable: fs.constants.R_OK && true,
+                    writable: fs.constants.W_OK && true,
+                  },
+                };
+
+                // Detect mime type from extension
+                const ext = path.extname(absolutePath).toLowerCase();
+                const mimeTypes: Record<string, string> = {
+                  '.md': 'text/markdown',
+                  '.txt': 'text/plain',
+                  '.pdf': 'application/pdf',
+                  '.png': 'image/png',
+                  '.jpg': 'image/jpeg',
+                  '.jpeg': 'image/jpeg',
+                };
+                result.metadata.mime_type = mimeTypes[ext] || 'application/octet-stream';
+                result.metadata.is_image = ext in { '.png': 1, '.jpg': 1, '.jpeg': 1 };
+              } catch (error: any) {
+                result.exists = true;
+                result.error = `Failed to read metadata: ${error.message}`;
+              }
+            } else {
+              result.exists = false;
+            }
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: formatInspectFileResult(result),
+                },
+              ],
+            };
+          }
+
+          case 'file': {
+            const pathArg = toolArgs.path;
+            const ontology = toolArgs.ontology as string;
+            const auto_approve = toolArgs.auto_approve !== false;
+            const force = toolArgs.force === true;
+
+            if (!pathArg || !ontology) {
+              throw new Error('path and ontology are required');
+            }
+
+            // Support both single path and array of paths
+            const paths = Array.isArray(pathArg) ? pathArg : [pathArg];
+
+            if (paths.length === 0) {
+              throw new Error('At least one file path is required');
+            }
+
+            const manager = new McpAllowlistManager();
+            const results: any[] = [];
+            const errors: any[] = [];
+
+            // Process each file
+            for (const filePath of paths) {
+              try {
+                // Validate against allowlist
+                const validation = manager.validatePath(filePath);
+
+                if (!validation.allowed) {
+                  errors.push({
+                    file: filePath,
+                    error: `File not allowed: ${validation.reason}. ${validation.hint || ''}`,
+                  });
+                  continue;
+                }
+
+                // Expand and resolve path
+                const expandedPath = filePath.startsWith('~')
+                  ? path.join(process.env.HOME || '', filePath.slice(1))
+                  : filePath;
+                const absolutePath = path.resolve(expandedPath);
+
+                if (!fs.existsSync(absolutePath)) {
+                  errors.push({
+                    file: absolutePath,
+                    error: 'File not found',
+                  });
+                  continue;
+                }
+
+                const stats = fs.statSync(absolutePath);
+                if (!stats.isFile()) {
+                  errors.push({
+                    file: absolutePath,
+                    error: 'Path is not a file',
+                  });
+                  continue;
+                }
+
+                // Detect if image
+                const ext = path.extname(absolutePath).toLowerCase();
+                const isImage = ['.png', '.jpg', '.jpeg'].includes(ext);
+
+                const filename = path.basename(absolutePath);
+
+                // Use unified ingestFile endpoint (same as CLI)
+                // Backend automatically detects file type and routes appropriately
+                const jobResponse = await client.ingestFile(absolutePath, {
+                  ontology,
+                  filename,
+                  auto_approve,
+                  force,
+                });
+
+                results.push({
+                  status: 'job_id' in jobResponse ? 'submitted' : 'duplicate',
+                  job_id: 'job_id' in jobResponse ? jobResponse.job_id : undefined,
+                  duplicate_job_id: 'existing_job_id' in jobResponse ? jobResponse.existing_job_id : undefined,
+                  file: absolutePath,
+                  type: isImage ? 'image' : 'text',
+                  size_bytes: stats.size,
+                  ontology,
+                });
+              } catch (error: any) {
+                errors.push({
+                  file: filePath,
+                  error: error.message,
+                });
+              }
+            }
+
+            // Return batch result if multiple files, single result otherwise
+            const result = paths.length > 1 ? {
+              batch: true,
+              ontology,
+              total_files: paths.length,
+              successful: results.length,
+              failed: errors.length,
+              results,
+              errors: errors.length > 0 ? errors : undefined,
+            } : results[0] || errors[0];
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: formatIngestFileResult(result),
+                },
+              ],
+            };
+          }
+
+          case 'directory': {
+            const dirPath = toolArgs.path as string;
+            const ontology = toolArgs.ontology as string | undefined;
+            const recursive = toolArgs.recursive === true;
+            const auto_approve = toolArgs.auto_approve !== false;
+            const force = toolArgs.force === true;
+            const limit = (toolArgs.limit as number) || 10;
+            const offset = (toolArgs.offset as number) || 0;
+
+            if (!dirPath) {
+              throw new Error('path is required');
+            }
+
+            // Expand and resolve path
+            const expandedPath = dirPath.startsWith('~')
+              ? path.join(process.env.HOME || '', dirPath.slice(1))
+              : dirPath;
+            const absolutePath = path.resolve(expandedPath);
+
+            if (!fs.existsSync(absolutePath)) {
+              throw new Error(`Directory not found: ${absolutePath}`);
+            }
+
+            const stats = fs.statSync(absolutePath);
+            if (!stats.isDirectory()) {
+              throw new Error(`Path is not a directory: ${absolutePath}. Use action 'file' for files.`);
+            }
+
+            // Auto-name ontology from directory if not provided
+            const finalOntology = ontology || path.basename(absolutePath);
+
+            // Validate directory against allowlist
+            const manager = new McpAllowlistManager();
+            const dirValidation = manager.validateDirectory(absolutePath);
+
+            if (!dirValidation.allowed) {
+              throw new Error(`Directory not allowed: ${dirValidation.reason}. ${dirValidation.hint || ''}`);
+            }
+
+            // Collect files
+            const files: string[] = [];
+            const skipped: string[] = [];
+
+            function scanDirectory(dir: string) {
+              const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+              for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+
+                if (entry.isDirectory() && recursive) {
+                  scanDirectory(fullPath);
+                } else if (entry.isFile()) {
+                  // Validate each file
+                  const fileValidation = manager.validatePath(fullPath);
+                  if (fileValidation.allowed) {
+                    files.push(fullPath);
+                  } else {
+                    skipped.push(fullPath);
+                  }
+                }
+              }
+            }
+
+            scanDirectory(absolutePath);
+
+            // Apply pagination
+            const paginatedFiles = files.slice(offset, offset + limit);
+
+            // TODO: Implement batch ingestion
+            // For now, return summary with pagination
+            const result = {
+              status: 'not_implemented',
+              message: 'Batch directory ingestion not yet implemented',
+              directory: absolutePath,
+              ontology: finalOntology,
+              files_found: files.length,
+              files_skipped: skipped.length,
+              next_phase: 'Phase 3 - Batch ingestion implementation',
+              files: paginatedFiles,
+              pagination: {
+                offset,
+                limit,
+                total: files.length,
+                has_more: offset + limit < files.length,
+              },
+            };
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: formatIngestDirectoryResult(result),
+                },
+              ],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown ingest action: ${action}`);
+        }
       }
 
       case 'source': {
@@ -935,288 +1171,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }
           throw error;
         }
-      }
-
-      case 'inspect-file': {
-        const filePath = toolArgs.path as string;
-
-        if (!filePath) {
-          throw new Error('path is required');
-        }
-
-        // Validate against allowlist
-        const manager = new McpAllowlistManager();
-        const validation = manager.validatePath(filePath);
-
-        // Expand tilde and resolve path
-        const expandedPath = filePath.startsWith('~')
-          ? path.join(process.env.HOME || '', filePath.slice(1))
-          : filePath;
-        const absolutePath = path.resolve(expandedPath);
-
-        const result: any = {
-          path: absolutePath,
-          validation: {
-            allowed: validation.allowed,
-            reason: validation.reason,
-            hint: validation.hint,
-          },
-        };
-
-        // Get file metadata if exists
-        if (fs.existsSync(absolutePath)) {
-          try {
-            const stats = fs.statSync(absolutePath);
-            const sizeMB = stats.size / (1024 * 1024);
-
-            result.exists = true;
-            result.metadata = {
-              size_bytes: stats.size,
-              size_mb: parseFloat(sizeMB.toFixed(2)),
-              type: stats.isFile() ? 'file' : stats.isDirectory() ? 'directory' : 'other',
-              modified: stats.mtime.toISOString(),
-              permissions: {
-                readable: fs.constants.R_OK && true,
-                writable: fs.constants.W_OK && true,
-              },
-            };
-
-            // Detect mime type from extension
-            const ext = path.extname(absolutePath).toLowerCase();
-            const mimeTypes: Record<string, string> = {
-              '.md': 'text/markdown',
-              '.txt': 'text/plain',
-              '.pdf': 'application/pdf',
-              '.png': 'image/png',
-              '.jpg': 'image/jpeg',
-              '.jpeg': 'image/jpeg',
-            };
-            result.metadata.mime_type = mimeTypes[ext] || 'application/octet-stream';
-            result.metadata.is_image = ext in { '.png': 1, '.jpg': 1, '.jpeg': 1 };
-          } catch (error: any) {
-            result.exists = true;
-            result.error = `Failed to read metadata: ${error.message}`;
-          }
-        } else {
-          result.exists = false;
-        }
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: formatInspectFileResult(result),
-            },
-          ],
-        };
-      }
-
-      case 'ingest-file': {
-        const pathArg = toolArgs.path;
-        const ontology = toolArgs.ontology as string;
-        const auto_approve = toolArgs.auto_approve !== false;
-        const force = toolArgs.force === true;
-
-        if (!pathArg || !ontology) {
-          throw new Error('path and ontology are required');
-        }
-
-        // Support both single path and array of paths
-        const paths = Array.isArray(pathArg) ? pathArg : [pathArg];
-
-        if (paths.length === 0) {
-          throw new Error('At least one file path is required');
-        }
-
-        const manager = new McpAllowlistManager();
-        const results: any[] = [];
-        const errors: any[] = [];
-
-        // Process each file
-        for (const filePath of paths) {
-          try {
-            // Validate against allowlist
-            const validation = manager.validatePath(filePath);
-
-            if (!validation.allowed) {
-              errors.push({
-                file: filePath,
-                error: `File not allowed: ${validation.reason}. ${validation.hint || ''}`,
-              });
-              continue;
-            }
-
-            // Expand and resolve path
-            const expandedPath = filePath.startsWith('~')
-              ? path.join(process.env.HOME || '', filePath.slice(1))
-              : filePath;
-            const absolutePath = path.resolve(expandedPath);
-
-            if (!fs.existsSync(absolutePath)) {
-              errors.push({
-                file: absolutePath,
-                error: 'File not found',
-              });
-              continue;
-            }
-
-            const stats = fs.statSync(absolutePath);
-            if (!stats.isFile()) {
-              errors.push({
-                file: absolutePath,
-                error: 'Path is not a file',
-              });
-              continue;
-            }
-
-            // Detect if image
-            const ext = path.extname(absolutePath).toLowerCase();
-            const isImage = ['.png', '.jpg', '.jpeg'].includes(ext);
-
-            const filename = path.basename(absolutePath);
-
-            // Use unified ingestFile endpoint (same as CLI)
-            // Backend automatically detects file type and routes appropriately
-            const jobResponse = await client.ingestFile(absolutePath, {
-              ontology,
-              filename,
-              auto_approve,
-              force,
-            });
-
-            results.push({
-              status: 'job_id' in jobResponse ? 'submitted' : 'duplicate',
-              job_id: 'job_id' in jobResponse ? jobResponse.job_id : undefined,
-              duplicate_job_id: 'existing_job_id' in jobResponse ? jobResponse.existing_job_id : undefined,
-              file: absolutePath,
-              type: isImage ? 'image' : 'text',
-              size_bytes: stats.size,
-              ontology,
-            });
-          } catch (error: any) {
-            errors.push({
-              file: filePath,
-              error: error.message,
-            });
-          }
-        }
-
-        // Return batch result if multiple files, single result otherwise
-        const result = paths.length > 1 ? {
-          batch: true,
-          ontology,
-          total_files: paths.length,
-          successful: results.length,
-          failed: errors.length,
-          results,
-          errors: errors.length > 0 ? errors : undefined,
-        } : results[0] || errors[0];
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: formatIngestFileResult(result),
-            },
-          ],
-        };
-      }
-
-      case 'ingest-directory': {
-        const dirPath = toolArgs.path as string;
-        const ontology = toolArgs.ontology as string | undefined;
-        const recursive = toolArgs.recursive === true;
-        const auto_approve = toolArgs.auto_approve !== false;
-        const force = toolArgs.force === true;
-        const limit = (toolArgs.limit as number) || 10;
-        const offset = (toolArgs.offset as number) || 0;
-
-        if (!dirPath) {
-          throw new Error('path is required');
-        }
-
-        // Expand and resolve path
-        const expandedPath = dirPath.startsWith('~')
-          ? path.join(process.env.HOME || '', dirPath.slice(1))
-          : dirPath;
-        const absolutePath = path.resolve(expandedPath);
-
-        if (!fs.existsSync(absolutePath)) {
-          throw new Error(`Directory not found: ${absolutePath}`);
-        }
-
-        const stats = fs.statSync(absolutePath);
-        if (!stats.isDirectory()) {
-          throw new Error(`Path is not a directory: ${absolutePath}. Use ingest-file for files.`);
-        }
-
-        // Auto-name ontology from directory if not provided
-        const finalOntology = ontology || path.basename(absolutePath);
-
-        // Validate directory against allowlist
-        const manager = new McpAllowlistManager();
-        const dirValidation = manager.validateDirectory(absolutePath);
-
-        if (!dirValidation.allowed) {
-          throw new Error(`Directory not allowed: ${dirValidation.reason}. ${dirValidation.hint || ''}`);
-        }
-
-        // Collect files
-        const files: string[] = [];
-        const skipped: string[] = [];
-
-        function scanDirectory(dir: string) {
-          const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-          for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-
-            if (entry.isDirectory() && recursive) {
-              scanDirectory(fullPath);
-            } else if (entry.isFile()) {
-              // Validate each file
-              const fileValidation = manager.validatePath(fullPath);
-              if (fileValidation.allowed) {
-                files.push(fullPath);
-              } else {
-                skipped.push(fullPath);
-              }
-            }
-          }
-        }
-
-        scanDirectory(absolutePath);
-
-        // Apply pagination
-        const paginatedFiles = files.slice(offset, offset + limit);
-
-        // TODO: Implement batch ingestion
-        // For now, return summary with pagination
-        const result = {
-          status: 'not_implemented',
-          message: 'Batch directory ingestion not yet implemented',
-          directory: absolutePath,
-          ontology: finalOntology,
-          files_found: files.length,
-          files_skipped: skipped.length,
-          next_phase: 'Phase 3 - Batch ingestion implementation',
-          files: paginatedFiles,
-          pagination: {
-            offset,
-            limit,
-            total: files.length,
-            has_more: offset + limit < files.length,
-          },
-        };
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: formatIngestDirectoryResult(result),
-            },
-          ],
-        };
       }
 
       default:
