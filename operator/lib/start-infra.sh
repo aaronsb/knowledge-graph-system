@@ -177,9 +177,36 @@ fi
 KEY_NAME="kg-api-key"
 if docker exec knowledge-graph-garage /garage key info "${KEY_NAME}" > /dev/null 2>&1; then
     echo -e "${GREEN}✓ API key '${KEY_NAME}' exists${NC}"
+    echo -e "${YELLOW}  Note: Garage credentials must be configured separately${NC}"
+    echo -e "${YELLOW}  Run: ./operator/setup/initialize-platform.sh (option 7)${NC}"
+    echo -e "${YELLOW}  Or: ./quickstart.sh for automated setup${NC}"
 else
-    docker exec knowledge-graph-garage /garage key create "${KEY_NAME}" > /dev/null 2>&1
-    echo -e "${GREEN}✓ API key '${KEY_NAME}' created${NC}"
+    echo -e "${BLUE}  Creating Garage API key...${NC}"
+    KEY_OUTPUT=$(docker exec knowledge-graph-garage /garage key create "${KEY_NAME}" 2>&1)
+
+    # Extract credentials for display
+    GARAGE_KEY_ID=$(echo "$KEY_OUTPUT" | grep "Key ID:" | awk '{print $3}')
+    GARAGE_SECRET=$(echo "$KEY_OUTPUT" | grep "Secret key:" | awk '{print $3}')
+
+    if [ -n "$GARAGE_KEY_ID" ] && [ -n "$GARAGE_SECRET" ]; then
+        echo -e "${GREEN}✓ API key '${KEY_NAME}' created${NC}"
+        echo ""
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${YELLOW}⚠  IMPORTANT: Store Garage credentials${NC}"
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "  ${BOLD}Access Key ID:${NC}  ${GARAGE_KEY_ID}"
+        echo -e "  ${BOLD}Secret Key:${NC}     ${GARAGE_SECRET}"
+        echo ""
+        echo -e "${YELLOW}Store these credentials securely:${NC}"
+        echo -e "  docker exec kg-operator python /workspace/operator/configure.py api-key garage --key \"${GARAGE_KEY_ID}:${GARAGE_SECRET}\""
+        echo ""
+        echo -e "${YELLOW}Or run automated setup:${NC}"
+        echo -e "  ./quickstart.sh"
+        echo ""
+    else
+        echo -e "${RED}✗ Failed to create API key${NC}"
+    fi
 fi
 
 # Grant bucket permissions
