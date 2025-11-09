@@ -140,7 +140,8 @@ async function createMcpClientCommand(options: { name?: string }) {
     console.log('Add this to your Claude Desktop config:');
     console.log('');
     console.log('  "knowledge-graph": {');
-    console.log('    "command": "kg-mcp-server",');
+    const mcpServerPath = process.env.HOME ? `${process.env.HOME}/.local/bin/kg-mcp-server` : '/home/user/.local/bin/kg-mcp-server';
+    console.log(`    "command": "${mcpServerPath}",`);
     console.log('    "env": {');
     console.log(`      "KG_OAUTH_CLIENT_ID": "${client.client_id}",`);
     console.log(`      "KG_OAUTH_CLIENT_SECRET": "${client.client_secret}",`);
@@ -159,7 +160,7 @@ async function createMcpClientCommand(options: { name?: string }) {
     // Also show command to add via claude mcp
     console.log('\x1b[2mOr add using claude CLI:\x1b[0m');
     console.log('');
-    console.log(`  claude mcp add knowledge-graph kg-mcp-server \\`);
+    console.log(`  claude mcp add knowledge-graph ${mcpServerPath} \\`);
     console.log(`    --env KG_OAUTH_CLIENT_ID=${client.client_id} \\`);
     console.log(`    --env KG_OAUTH_CLIENT_SECRET=${client.client_secret} \\`);
     console.log(`    --env KG_API_URL=http://localhost:8000 \\`);
