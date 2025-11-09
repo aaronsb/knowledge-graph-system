@@ -123,7 +123,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
 
       # Garage S3 connection
-      GARAGE_ENDPOINT: ${GARAGE_ENDPOINT:-http://garage:3900}
+      GARAGE_S3_ENDPOINT: ${GARAGE_S3_ENDPOINT:-http://garage:3900}
 
       # Application config comes from database (not env)
       # Configured via: kg-operator config ai-provider, embedding, api-key
