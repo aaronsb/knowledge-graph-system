@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2025-11-08
+> Last updated: 2025-11-09
 
 ---
 
@@ -20,9 +20,6 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - [`concept`](#concept) - Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.
 - [`ontology`](#ontology) - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
 - [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
-- [`ingest`](#ingest) - Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.
-- [`source`](#source) - Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.
-- [`inspect-file`](#inspect-file) - Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.
 
 ---
 
@@ -96,48 +93,5 @@ Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action par
 - `status` (`string`) - Filter by status for list (pending, awaiting_approval, running, completed, failed)
 - `limit` (`number`) - Max jobs to return for list (default: 50)
   - Default: `50`
-
----
-
-### ingest
-
-Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.
-
-**Parameters:**
-
-- `text` (`string`) **(required)** - Text content to ingest
-- `ontology` (`string`) **(required)** - Ontology name (e.g., "Project Documentation", "Research Notes")
-- `filename` (`string`) - Optional filename for source tracking
-- `auto_approve` (`boolean`) - Auto-approve processing (default: true)
-  - Default: `true`
-- `force` (`boolean`) - Force re-ingestion (default: false)
-  - Default: `false`
-- `processing_mode` (`string`) - Processing mode (default: serial)
-  - Allowed values: `serial`, `parallel`
-  - Default: `"serial"`
-- `target_words` (`number`) - Words per chunk (default: 1000)
-  - Default: `1000`
-- `overlap_words` (`number`) - Overlap between chunks (default: 200)
-  - Default: `200`
-
----
-
-### source
-
-Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.
-
-**Parameters:**
-
-- `source_id` (`string`) **(required)** - Source ID from evidence (has_image=true)
-
----
-
-### inspect-file
-
-Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.
-
-**Parameters:**
-
-- `path` (`string`) **(required)** - File path to inspect (absolute or relative, ~ supported)
 
 ---
