@@ -28,6 +28,12 @@ import {
   formatInspectFileResult,
   formatIngestFileResult,
   formatIngestDirectoryResult,
+  formatDatabaseStats,
+  formatDatabaseInfo,
+  formatDatabaseHealth,
+  formatSystemStatus,
+  formatApiHealth,
+  formatMcpAllowedPaths,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -433,17 +439,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'ingest-file',
-        description: 'Ingest a single file into the knowledge graph (ADR-062). Validates against allowlist, reads content, handles images with vision AI automatically. Just submit the path - system handles everything else.',
+        description: 'Ingest one or more files into the knowledge graph (ADR-062). Validates against allowlist, reads content, handles images with vision AI automatically. Supports single file or array of files for selective batch ingestion.',
         inputSchema: {
           type: 'object',
           properties: {
             path: {
-              type: 'string',
-              description: 'File path to ingest (absolute or relative, ~ supported)',
+              description: 'File path(s) to ingest - single path string OR array of paths for batch ingestion',
+              oneOf: [
+                { type: 'string' },
+                { type: 'array', items: { type: 'string' } }
+              ],
             },
             ontology: {
               type: 'string',
-              description: 'Ontology name for categorization',
+              description: 'Ontology name for categorization (all files go to same ontology)',
             },
             auto_approve: {
               type: 'boolean',
@@ -561,8 +570,8 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         return {
           contents: [{
             uri,
-            mimeType: 'application/json',
-            text: JSON.stringify(result, null, 2)
+            mimeType: 'text/plain',
+            text: formatDatabaseStats(result)
           }]
         };
       }
@@ -572,8 +581,8 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         return {
           contents: [{
             uri,
-            mimeType: 'application/json',
-            text: JSON.stringify(result, null, 2)
+            mimeType: 'text/plain',
+            text: formatDatabaseInfo(result)
           }]
         };
       }
@@ -583,8 +592,8 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         return {
           contents: [{
             uri,
-            mimeType: 'application/json',
-            text: JSON.stringify(result, null, 2)
+            mimeType: 'text/plain',
+            text: formatDatabaseHealth(result)
           }]
         };
       }
@@ -594,8 +603,8 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         return {
           contents: [{
             uri,
-            mimeType: 'application/json',
-            text: JSON.stringify(result, null, 2)
+            mimeType: 'text/plain',
+            text: formatSystemStatus(result)
           }]
         };
       }
@@ -605,8 +614,8 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         return {
           contents: [{
             uri,
-            mimeType: 'application/json',
-            text: JSON.stringify(result, null, 2)
+            mimeType: 'text/plain',
+            text: formatApiHealth(result)
           }]
         };
       }
@@ -619,12 +628,12 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
           return {
             contents: [{
               uri,
-              mimeType: 'application/json',
-              text: JSON.stringify({
+              mimeType: 'text/plain',
+              text: formatMcpAllowedPaths({
                 configured: false,
                 message: 'Allowlist not initialized. Run: kg mcp-config init-allowlist',
                 hint: 'Initialize with default safe patterns for .md, .txt, .pdf, .png, .jpg files'
-              }, null, 2)
+              })
             }]
           };
         }
@@ -632,8 +641,8 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         return {
           contents: [{
             uri,
-            mimeType: 'application/json',
-            text: JSON.stringify({
+            mimeType: 'text/plain',
+            text: formatMcpAllowedPaths({
               configured: true,
               version: config.version,
               allowed_directories: config.allowed_directories,
@@ -642,7 +651,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
               max_file_size_mb: config.max_file_size_mb,
               max_files_per_directory: config.max_files_per_directory,
               config_path: manager.getAllowlistPath()
-            }, null, 2)
+            })
           }]
         };
       }
@@ -1003,76 +1012,105 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ingest-file': {
-        const filePath = toolArgs.path as string;
+        const pathArg = toolArgs.path;
         const ontology = toolArgs.ontology as string;
         const auto_approve = toolArgs.auto_approve !== false;
         const force = toolArgs.force === true;
 
-        if (!filePath || !ontology) {
+        if (!pathArg || !ontology) {
           throw new Error('path and ontology are required');
         }
 
-        // Validate against allowlist
+        // Support both single path and array of paths
+        const paths = Array.isArray(pathArg) ? pathArg : [pathArg];
+
+        if (paths.length === 0) {
+          throw new Error('At least one file path is required');
+        }
+
         const manager = new McpAllowlistManager();
-        const validation = manager.validatePath(filePath);
+        const results: any[] = [];
+        const errors: any[] = [];
 
-        if (!validation.allowed) {
-          throw new Error(`File not allowed: ${validation.reason}. ${validation.hint || ''}`);
+        // Process each file
+        for (const filePath of paths) {
+          try {
+            // Validate against allowlist
+            const validation = manager.validatePath(filePath);
+
+            if (!validation.allowed) {
+              errors.push({
+                file: filePath,
+                error: `File not allowed: ${validation.reason}. ${validation.hint || ''}`,
+              });
+              continue;
+            }
+
+            // Expand and resolve path
+            const expandedPath = filePath.startsWith('~')
+              ? path.join(process.env.HOME || '', filePath.slice(1))
+              : filePath;
+            const absolutePath = path.resolve(expandedPath);
+
+            if (!fs.existsSync(absolutePath)) {
+              errors.push({
+                file: absolutePath,
+                error: 'File not found',
+              });
+              continue;
+            }
+
+            const stats = fs.statSync(absolutePath);
+            if (!stats.isFile()) {
+              errors.push({
+                file: absolutePath,
+                error: 'Path is not a file',
+              });
+              continue;
+            }
+
+            // Detect if image
+            const ext = path.extname(absolutePath).toLowerCase();
+            const isImage = ['.png', '.jpg', '.jpeg'].includes(ext);
+
+            const filename = path.basename(absolutePath);
+
+            // Use unified ingestFile endpoint (same as CLI)
+            // Backend automatically detects file type and routes appropriately
+            const jobResponse = await client.ingestFile(absolutePath, {
+              ontology,
+              filename,
+              auto_approve,
+              force,
+            });
+
+            results.push({
+              status: 'job_id' in jobResponse ? 'submitted' : 'duplicate',
+              job_id: 'job_id' in jobResponse ? jobResponse.job_id : undefined,
+              duplicate_job_id: 'existing_job_id' in jobResponse ? jobResponse.existing_job_id : undefined,
+              file: absolutePath,
+              type: isImage ? 'image' : 'text',
+              size_bytes: stats.size,
+              ontology,
+            });
+          } catch (error: any) {
+            errors.push({
+              file: filePath,
+              error: error.message,
+            });
+          }
         }
 
-        // Expand and resolve path
-        const expandedPath = filePath.startsWith('~')
-          ? path.join(process.env.HOME || '', filePath.slice(1))
-          : filePath;
-        const absolutePath = path.resolve(expandedPath);
-
-        if (!fs.existsSync(absolutePath)) {
-          throw new Error(`File not found: ${absolutePath}`);
-        }
-
-        const stats = fs.statSync(absolutePath);
-        if (!stats.isFile()) {
-          throw new Error(`Path is not a file: ${absolutePath}. Use ingest-directory for directories.`);
-        }
-
-        // Detect if image
-        const ext = path.extname(absolutePath).toLowerCase();
-        const isImage = ['.png', '.jpg', '.jpeg'].includes(ext);
-
-        let result;
-
-        if (isImage) {
-          // TODO: Implement image ingestion with vision AI
-          // For now, return a placeholder
-          result = {
-            status: 'not_implemented',
-            message: 'Image ingestion with vision AI not yet implemented',
-            file: absolutePath,
-            type: 'image',
-            next_phase: 'Phase 2 - Vision AI integration',
-          };
-        } else {
-          // Read text file and ingest
-          const content = fs.readFileSync(absolutePath, 'utf-8');
-          const filename = path.basename(absolutePath);
-
-          const jobResponse = await client.ingestText(content, {
-            ontology,
-            filename,
-            auto_approve,
-            force,
-          });
-
-          result = {
-            status: 'job_id' in jobResponse ? 'submitted' : 'duplicate',
-            job_id: 'job_id' in jobResponse ? jobResponse.job_id : undefined,
-            duplicate_job_id: 'existing_job_id' in jobResponse ? jobResponse.existing_job_id : undefined,
-            file: absolutePath,
-            type: 'text',
-            size_bytes: stats.size,
-            ontology,
-          };
-        }
+        // Return batch result if multiple files, single result otherwise
+        const result = paths.length > 1 ? {
+          batch: true,
+          ontology,
+          total_files: paths.length,
+          successful: results.length,
+          failed: errors.length,
+          results,
+          errors: errors.length > 0 ? errors : undefined,
+        } : results[0] || errors[0];
 
         return {
           content: [

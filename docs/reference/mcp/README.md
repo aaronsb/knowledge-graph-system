@@ -23,8 +23,6 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - [`ingest`](#ingest) - Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.
 - [`source`](#source) - Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.
 - [`inspect-file`](#inspect-file) - Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.
-- [`ingest-file`](#ingest-file) - Ingest a single file into the knowledge graph (ADR-062). Validates against allowlist, reads content, handles images with vision AI automatically. Just submit the path - system handles everything else.
-- [`ingest-directory`](#ingest-directory) - Ingest all files from a directory (ADR-062). Validates against allowlist, processes recursively if requested, auto-names ontology by directory structure. Skips blocked files automatically.
 
 ---
 
@@ -141,41 +139,5 @@ Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, s
 **Parameters:**
 
 - `path` (`string`) **(required)** - File path to inspect (absolute or relative, ~ supported)
-
----
-
-### ingest-file
-
-Ingest a single file into the knowledge graph (ADR-062). Validates against allowlist, reads content, handles images with vision AI automatically. Just submit the path - system handles everything else.
-
-**Parameters:**
-
-- `path` (`string`) **(required)** - File path to ingest (absolute or relative, ~ supported)
-- `ontology` (`string`) **(required)** - Ontology name for categorization
-- `auto_approve` (`boolean`) - Auto-approve processing (default: true)
-  - Default: `true`
-- `force` (`boolean`) - Force re-ingestion of already processed files (default: false)
-  - Default: `false`
-
----
-
-### ingest-directory
-
-Ingest all files from a directory (ADR-062). Validates against allowlist, processes recursively if requested, auto-names ontology by directory structure. Skips blocked files automatically.
-
-**Parameters:**
-
-- `path` (`string`) **(required)** - Directory path to ingest (absolute or relative, ~ supported)
-- `ontology` (`string`) - Ontology name (optional - defaults to directory name)
-- `recursive` (`boolean`) - Process subdirectories recursively (default: false)
-  - Default: `false`
-- `auto_approve` (`boolean`) - Auto-approve processing (default: true)
-  - Default: `true`
-- `force` (`boolean`) - Force re-ingestion (default: false)
-  - Default: `false`
-- `limit` (`number`) - Number of files to show per page (default: 10)
-  - Default: `10`
-- `offset` (`number`) - Number of files to skip for pagination (default: 0)
-  - Default: `0`
 
 ---
