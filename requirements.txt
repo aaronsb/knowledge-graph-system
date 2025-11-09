@@ -7,6 +7,7 @@ sentence-transformers>=2.3.0  # Local embedding models for ADR-039 (nomic-embed-
 transformers>=4.35.0  # Required for Nomic Vision embeddings (ADR-057)
 torch>=2.0.0  # Required for visual embeddings (Nomic Vision)
 torchvision>=0.15.0  # Fast image preprocessing for transformers (ADR-057)
+accelerate>=0.20.0  # Required for device_map in transformers model loading
 Pillow>=10.0.0  # Image processing for visual embeddings (ADR-057)
 boto3>=1.28.0  # AWS S3 client for Garage object storage (ADR-057)
 botocore>=1.31.0  # Core functionality for boto3
