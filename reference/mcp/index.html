@@ -2059,33 +2059,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#ingest" class="md-nav__link">
-    <span class="md-ellipsis">
-      ingest
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source" class="md-nav__link">
-    <span class="md-ellipsis">
-      source
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inspect-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      inspect-file
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -4791,33 +4764,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#ingest" class="md-nav__link">
-    <span class="md-ellipsis">
-      ingest
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source" class="md-nav__link">
-    <span class="md-ellipsis">
-      source
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inspect-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      inspect-file
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -4846,7 +4792,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from MCP server tool schemas.
-Last updated: 2025-11-08</p>
+Last updated: 2025-11-09</p>
 </blockquote>
 <hr />
 <h2 id="overview">Overview</h2>
@@ -4859,9 +4805,6 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 <li><a href="#concept"><code>concept</code></a> - Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.</li>
 <li><a href="#ontology"><code>ontology</code></a> - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.</li>
 <li><a href="#job"><code>job</code></a> - Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.</li>
-<li><a href="#ingest"><code>ingest</code></a> - Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.</li>
-<li><a href="#source"><code>source</code></a> - Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.</li>
-<li><a href="#inspect-file"><code>inspect-file</code></a> - Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.</li>
 </ul>
 <hr />
 <h3 id="search">search</h3>
@@ -4923,40 +4866,6 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 <li><code>status</code> (<code>string</code>) - Filter by status for list (pending, awaiting_approval, running, completed, failed)</li>
 <li><code>limit</code> (<code>number</code>) - Max jobs to return for list (default: 50)</li>
 <li>Default: <code>50</code></li>
-</ul>
-<hr />
-<h3 id="ingest">ingest</h3>
-<p>Submit text content for concept extraction. Chunks text, extracts concepts using LLM, and adds them to the specified ontology. Returns job ID for tracking.</p>
-<p><strong>Parameters:</strong></p>
-<ul>
-<li><code>text</code> (<code>string</code>) <strong>(required)</strong> - Text content to ingest</li>
-<li><code>ontology</code> (<code>string</code>) <strong>(required)</strong> - Ontology name (e.g., "Project Documentation", "Research Notes")</li>
-<li><code>filename</code> (<code>string</code>) - Optional filename for source tracking</li>
-<li><code>auto_approve</code> (<code>boolean</code>) - Auto-approve processing (default: true)</li>
-<li>Default: <code>true</code></li>
-<li><code>force</code> (<code>boolean</code>) - Force re-ingestion (default: false)</li>
-<li>Default: <code>false</code></li>
-<li><code>processing_mode</code> (<code>string</code>) - Processing mode (default: serial)</li>
-<li>Allowed values: <code>serial</code>, <code>parallel</code></li>
-<li>Default: <code>"serial"</code></li>
-<li><code>target_words</code> (<code>number</code>) - Words per chunk (default: 1000)</li>
-<li>Default: <code>1000</code></li>
-<li><code>overlap_words</code> (<code>number</code>) - Overlap between chunks (default: 200)</li>
-<li>Default: <code>200</code></li>
-</ul>
-<hr />
-<h3 id="source">source</h3>
-<p>Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.</p>
-<p><strong>Parameters:</strong></p>
-<ul>
-<li><code>source_id</code> (<code>string</code>) <strong>(required)</strong> - Source ID from evidence (has_image=true)</li>
-</ul>
-<hr />
-<h3 id="inspect-file">inspect-file</h3>
-<p>Validate and inspect a file before ingestion (ADR-062). Checks path allowlist, shows metadata (size, type, permissions), and returns validation result. Use this to verify files are allowed before attempting ingestion.</p>
-<p><strong>Parameters:</strong></p>
-<ul>
-<li><code>path</code> (<code>string</code>) <strong>(required)</strong> - File path to inspect (absolute or relative, ~ supported)</li>
 </ul>
 <hr />
 
