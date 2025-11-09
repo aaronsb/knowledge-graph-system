@@ -61,6 +61,20 @@ export function formatSearchResults(result: SearchResponse): string {
       output += `Grounding: ${formatGroundingStrength(concept.grounding_strength)}\n`;
     }
 
+    if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
+      output += `Diversity: ${(concept.diversity_score * 100).toFixed(1)}% (${concept.diversity_related_count} related concepts)\n`;
+    }
+
+    if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
+      const authDiv = concept.authenticated_diversity;
+      const sign = authDiv >= 0 ? '+' : '';
+      const status = authDiv > 0.3 ? 'diverse support ✅' :
+                     authDiv > 0 ? 'some support ✓' :
+                     authDiv > -0.3 ? 'weak contradiction ⚠' :
+                     'diverse contradiction ❌';
+      output += `Authenticated: ${sign}${(Math.abs(authDiv) * 100).toFixed(1)}% (${status})\n`;
+    }
+
     if (concept.sample_evidence && concept.sample_evidence.length > 0) {
       output += `\nSample Evidence (${concept.sample_evidence.length} of ${concept.evidence_count}):\n`;
       concept.sample_evidence.forEach((inst, idx) => {
@@ -99,6 +113,20 @@ export function formatConceptDetails(concept: ConceptDetailsResponse): string {
 
   if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
     output += `Grounding: ${formatGroundingStrength(concept.grounding_strength)}\n`;
+  }
+
+  if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
+    output += `Diversity: ${(concept.diversity_score * 100).toFixed(1)}% (${concept.diversity_related_count} related concepts)\n`;
+  }
+
+  if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
+    const authDiv = concept.authenticated_diversity;
+    const sign = authDiv >= 0 ? '+' : '';
+    const status = authDiv > 0.3 ? 'diverse support ✅' :
+                   authDiv > 0 ? 'some support ✓' :
+                   authDiv > -0.3 ? 'weak contradiction ⚠' :
+                   'diverse contradiction ❌';
+    output += `Authenticated: ${sign}${(Math.abs(authDiv) * 100).toFixed(1)}% (${status})\n`;
   }
 
   output += `\n## Evidence (${concept.instances.length} instances)\n\n`;

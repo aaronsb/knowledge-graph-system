@@ -211,7 +211,11 @@ class APIClient {
    */
   async getConceptDetails(concept_id: string): Promise<any> {
     const response = await this.client.get(`/query/concept/${concept_id}`, {
-      params: { include_grounding: true }
+      params: {
+        include_grounding: true,
+        include_diversity: true,
+        diversity_max_hops: 2
+      }
     });
     return response.data;
   }

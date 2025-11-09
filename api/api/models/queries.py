@@ -17,6 +17,8 @@ class SearchRequest(BaseModel):
     offset: int = Field(0, description="Number of results to skip for pagination (default: 0)", ge=0)
     include_evidence: bool = Field(False, description="Include sample evidence instances (quotes from source text) for each concept")
     include_grounding: bool = Field(True, description="Include grounding strength (ADR-044: probabilistic truth score) for each concept")
+    include_diversity: bool = Field(False, description="Include semantic diversity score (ADR-063: authenticity signal) for each concept")
+    diversity_max_hops: int = Field(2, description="Maximum traversal depth for diversity calculation (1-3, default: 2)", ge=1, le=3)
 
 
 class ConceptSearchResult(BaseModel):
@@ -28,6 +30,9 @@ class ConceptSearchResult(BaseModel):
     documents: List[str] = Field(..., description="Documents where concept appears")
     evidence_count: int = Field(..., description="Number of evidence instances")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
+    diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) if requested (ADR-063)")
+    diversity_related_count: Optional[int] = Field(None, description="Number of related concepts analyzed for diversity")
+    authenticated_diversity: Optional[float] = Field(None, description="Sign-weighted diversity: sign(grounding) × diversity. Positive: diverse support, Negative: diverse contradiction (ADR-044 + ADR-063)")
     sample_evidence: Optional[List['ConceptInstance']] = Field(None, description="Sample evidence instances (quotes from source text) when include_evidence=true")
 
 
@@ -138,6 +143,10 @@ class ConceptDetailsResponse(BaseModel):
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-044)")
+    # ADR-063: Semantic diversity
+    diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) based on related concept embeddings (ADR-063)")
+    diversity_related_count: Optional[int] = Field(None, description="Number of related concepts analyzed for diversity calculation")
+    authenticated_diversity: Optional[float] = Field(None, description="Sign-weighted diversity: sign(grounding) × diversity. Positive: diverse support, Negative: diverse contradiction (ADR-044 + ADR-063)")
     # ADR-051: Provenance tracking
     provenance: Optional[ConceptProvenance] = Field(None, description="Provenance information (source documents or document metadata)")
 

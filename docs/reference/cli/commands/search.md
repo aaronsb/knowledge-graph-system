@@ -42,6 +42,8 @@ kg query <query>
 | `--no-evidence` | Hide evidence quotes (shown by default) | - |
 | `--no-images` | Hide inline image display (shown by default if chafa installed) | - |
 | `--no-grounding` | Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results | - |
+| `--no-diversity` | Disable semantic diversity calculation (ADR-063 authenticity signal) for faster results | - |
+| `--diversity-hops <number>` | Maximum traversal depth for diversity (1-3, default 2) | `"2"` |
 | `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
 

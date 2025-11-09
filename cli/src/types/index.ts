@@ -138,6 +138,8 @@ export interface SearchRequest {
   offset?: number; // Pagination offset
   include_evidence?: boolean; // Include sample evidence instances (quotes from source text)
   include_grounding?: boolean; // Include grounding strength (ADR-044: probabilistic truth score)
+  include_diversity?: boolean; // Include semantic diversity (ADR-063: authenticity signal)
+  diversity_max_hops?: number; // Maximum traversal depth for diversity (1-3, default 2)
 }
 
 export interface ConceptSearchResult {
@@ -148,6 +150,9 @@ export interface ConceptSearchResult {
   documents: string[];
   evidence_count: number;
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  diversity_score?: number; // ADR-063: Semantic diversity (0.0 to 1.0)
+  diversity_related_count?: number; // Number of related concepts analyzed for diversity
+  authenticated_diversity?: number; // ADR-044 + ADR-063: sign(grounding) × diversity
   sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }
 
@@ -190,6 +195,9 @@ export interface ConceptDetailsResponse {
   instances: ConceptInstance[];
   relationships: ConceptRelationship[];
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  diversity_score?: number; // ADR-063: Semantic diversity (0.0 to 1.0)
+  diversity_related_count?: number; // Number of related concepts analyzed for diversity
+  authenticated_diversity?: number; // ADR-044 + ADR-063: sign(grounding) × diversity
 }
 
 export interface RelatedConceptsRequest {

@@ -42,6 +42,42 @@ function formatGroundingStrength(grounding: number): string {
   }
 }
 
+/**
+ * Format diversity score for display (ADR-063)
+ */
+function formatDiversity(diversity: number, relatedCount: number): string {
+  const diversityPercent = (diversity * 100).toFixed(1);
+
+  if (diversity > 0.6) {
+    return colors.status.success(`🌐 Very High (${diversityPercent}%, ${relatedCount} concepts)`);
+  } else if (diversity > 0.4) {
+    return colors.status.success(`🌐 High (${diversityPercent}%, ${relatedCount} concepts)`);
+  } else if (diversity > 0.2) {
+    return colors.status.warning(`◐ Moderate (${diversityPercent}%, ${relatedCount} concepts)`);
+  } else if (diversity > 0.1) {
+    return colors.status.dim(`◑ Low (${diversityPercent}%, ${relatedCount} concepts)`);
+  } else {
+    return colors.status.error(`◯ Very Low (${diversityPercent}%, ${relatedCount} concepts)`);
+  }
+}
+
+/**
+ * Format authenticated diversity for display (ADR-044 + ADR-063)
+ */
+function formatAuthenticatedDiversity(authDiv: number): string {
+  const percent = (Math.abs(authDiv) * 100).toFixed(1);
+
+  if (authDiv > 0.3) {
+    return colors.status.success(`✅ +${percent}% (diverse support)`);
+  } else if (authDiv > 0) {
+    return colors.status.dim(`✓ +${percent}% (some support)`);
+  } else if (authDiv > -0.3) {
+    return colors.status.warning(`⚠ ${percent}% (weak contradiction)`);
+  } else {
+    return colors.status.error(`❌ ${percent}% (diverse contradiction)`);
+  }
+}
+
 const queryCommand = setCommandHelp(
   new Command('query'),
   'Search concepts by semantic similarity',
@@ -54,6 +90,8 @@ const queryCommand = setCommandHelp(
       .option('--no-evidence', 'Hide evidence quotes (shown by default)')
       .option('--no-images', 'Hide inline image display (shown by default if chafa installed)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
+      .option('--no-diversity', 'Disable semantic diversity calculation (ADR-063 authenticity signal) for faster results')
+      .option('--diversity-hops <number>', 'Maximum traversal depth for diversity (1-3, default 2)', '2')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (query, options) => {
@@ -66,13 +104,16 @@ const queryCommand = setCommandHelp(
           const includeEvidence = options.evidence !== undefined ? options.evidence : config.getSearchShowEvidence();
           const shouldShowImages = options.images !== undefined ? options.images : config.getSearchShowImages();
           const includeGrounding = options.grounding !== false; // Default: true
+          const includeDiversity = options.diversity !== false; // Default: true
 
           const result = await client.searchConcepts({
             query,
             limit: parseInt(options.limit),
             min_similarity: parseFloat(options.minSimilarity),
             include_evidence: includeEvidence,
-            include_grounding: includeGrounding
+            include_grounding: includeGrounding,
+            include_diversity: includeDiversity,
+            diversity_max_hops: parseInt(options.diversityHops)
           });
 
           // JSON output mode
@@ -100,6 +141,16 @@ const queryCommand = setCommandHelp(
             // Display grounding strength if available (ADR-044)
             if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
               console.log(`   ${colors.ui.key('Grounding:')} ${formatGroundingStrength(concept.grounding_strength)}`);
+            }
+
+            // Display diversity if available (ADR-063)
+            if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
+              console.log(`   ${colors.ui.key('Diversity:')} ${formatDiversity(concept.diversity_score, concept.diversity_related_count)}`);
+            }
+
+            // Display authenticated diversity if available (ADR-044 + ADR-063)
+            if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
+              console.log(`   ${colors.ui.key('Authenticated:')} ${formatAuthenticatedDiversity(concept.authenticated_diversity)}`);
             }
 
             // Display sample evidence if requested
