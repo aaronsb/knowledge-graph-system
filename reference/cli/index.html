@@ -5147,6 +5147,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../architecture/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ADR-063: Semantic Diversity as Authenticity Signal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -7096,7 +7119,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from CLI source code.
-Last updated: 2025-11-04</p>
+Last updated: 2025-11-09</p>
 </blockquote>
 <hr />
 <h2 id="commands">Commands</h2>
@@ -8144,6 +8167,16 @@ Last updated: 2025-11-04</p>
 <td><code>--no-grounding</code></td>
 <td>Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results</td>
 <td>-</td>
+</tr>
+<tr>
+<td><code>--no-diversity</code></td>
+<td>Disable semantic diversity calculation (ADR-063 authenticity signal) for faster results</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--diversity-hops &lt;number&gt;</code></td>
+<td>Maximum traversal depth for diversity (1-3, default 2)</td>
+<td><code>"2"</code></td>
 </tr>
 <tr>
 <td><code>--download &lt;directory&gt;</code></td>
