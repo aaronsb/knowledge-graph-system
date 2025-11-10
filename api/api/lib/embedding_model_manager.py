@@ -52,6 +52,9 @@ class EmbeddingModelManager:
 
         This is called once at startup. Model loading takes 1-2 seconds
         and allocates 300MB-1.3GB RAM depending on model size.
+
+        Uses local cache-first strategy to avoid HuggingFace network checks on every startup.
+        Falls back to downloading if model not cached.
         """
         if self.model is not None:
             logger.warning(f"Model {self.model_name} already loaded, skipping")
@@ -64,9 +67,30 @@ class EmbeddingModelManager:
         try:
             from sentence_transformers import SentenceTransformer
 
-            # Load model (downloads if not cached)
+            # TODO: Pin specific model version/revision for consistency and reproducibility
+            # Example: self.model_name = "nomic-ai/nomic-embed-text-v1.5@abc123"
+
+            # Try loading from local cache first (no network check)
             # trust_remote_code=True required for models like nomic-embed-text that have custom code
-            self.model = SentenceTransformer(self.model_name, trust_remote_code=True)
+            try:
+                logger.info(f"   Attempting to load from local cache...")
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    trust_remote_code=True,
+                    local_files_only=True  # Don't check HuggingFace, use cached version
+                )
+                logger.info(f"   ✓ Loaded from local cache")
+            except (OSError, ValueError) as cache_error:
+                # Model not cached, download it
+                logger.info(f"   Model not in cache, downloading from HuggingFace...")
+                logger.info(f"   (This is a one-time download, ~200-500MB)")
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    trust_remote_code=True
+                    # local_files_only=False is the default, will download
+                )
+                logger.info(f"   ✓ Downloaded and cached")
+
             self.dimensions = self.model.get_sentence_embedding_dimension()
 
             logger.info(f"✅ Embedding model loaded: {self.model_name}")
