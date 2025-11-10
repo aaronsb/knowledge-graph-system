@@ -58,39 +58,57 @@ class VisualEmbeddingGenerator:
 
         logger.info(f"Loading Nomic Vision model on {self.device}: {model_name}")
 
+        # TODO: Pin specific model version/revision for consistency
+        # Example: model_name = "nomic-ai/nomic-embed-vision-v1.5@abc123"
+
         try:
-            # Load model and processor
-            # Use device_map instead of .to() to handle meta tensors properly
+            # ALWAYS use local cache only - never download from HuggingFace
+            # Models should be pre-downloaded during initial setup
+            logger.info(f"   Loading from local cache...")
+
             if self.device == 'cuda':
                 self.model = AutoModel.from_pretrained(
                     model_name,
                     trust_remote_code=True,
-                    device_map="auto"
+                    device_map="auto",
+                    local_files_only=True  # NEVER check HuggingFace
                 )
             else:
                 # For CPU, use low_cpu_mem_usage to avoid meta tensor issues
                 self.model = AutoModel.from_pretrained(
                     model_name,
                     trust_remote_code=True,
-                    low_cpu_mem_usage=False
+                    low_cpu_mem_usage=False,
+                    local_files_only=True  # NEVER check HuggingFace
                 )
 
             self.processor = AutoProcessor.from_pretrained(
                 model_name,
                 trust_remote_code=True,
-                use_fast=True
+                use_fast=True,
+                local_files_only=True  # NEVER check HuggingFace
             )
 
             # Set model to eval mode
             self.model.eval()
 
+            logger.info(f"   ✓ Loaded from local cache")
             logger.info(
-                f"Nomic Vision model loaded successfully on {self.device}. "
+                f"✅ Nomic Vision model loaded successfully on {self.device}. "
                 f"Embedding dimension: 768"
             )
 
+        except (OSError, ValueError) as e:
+            logger.error(f"❌ Model not found in local cache: {model_name}")
+            logger.error(f"   Download the model first:")
+            logger.error(f"   python -c 'from transformers import AutoModel, AutoProcessor; "
+                        f"AutoModel.from_pretrained(\"{model_name}\", trust_remote_code=True); "
+                        f"AutoProcessor.from_pretrained(\"{model_name}\", trust_remote_code=True)'")
+            raise RuntimeError(
+                f"Model {model_name} not in cache. Download it first before starting the API."
+            ) from e
         except Exception as e:
-            logger.error(f"Failed to load Nomic Vision model: {e}")
+            logger.error(f"❌ Failed to load Nomic Vision model: {e}")
             raise
 
     def generate_embedding(self, image_bytes: bytes) -> np.ndarray:
