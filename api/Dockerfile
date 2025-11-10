@@ -3,6 +3,10 @@
 # This Dockerfile builds a clean FastAPI server image with NO secrets baked in.
 # All configuration comes from environment variables at runtime (12-Factor App).
 #
+# Build requirements:
+#   - Docker BuildKit enabled (for mount cache support)
+#   - Set DOCKER_BUILDKIT=1 or use docker-compose (BuildKit enabled by default)
+#
 # Runtime environment variables (no rebuild required):
 #   Infrastructure secrets (from .env or Docker secrets):
 #     - ENCRYPTION_KEY          # Master key for encrypting API keys (ADR-031)
@@ -40,8 +44,10 @@ COPY requirements.txt .
 # Install Python dependencies into a virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Use BuildKit mount cache for faster rebuilds while keeping images small
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip && \
+    pip install -r requirements.txt
 
 # Stage 2: Production runtime
 FROM python:3.11-slim

@@ -1,3 +1,9 @@
+# Knowledge Graph Operator - Docker Build
+#
+# Build requirements:
+#   - Docker BuildKit enabled (for mount cache support)
+#   - Set DOCKER_BUILDKIT=1 or use docker-compose (BuildKit enabled by default)
+
 FROM python:3.11-slim
 
 # Build metadata (git commit, build time)
@@ -26,7 +32,9 @@ WORKDIR /workspace
 
 # Copy Python requirements (operator needs subset of API dependencies)
 COPY operator/requirements.txt /workspace/operator/requirements.txt
-RUN pip install --no-cache-dir -r operator/requirements.txt
+# Use BuildKit mount cache for faster rebuilds while keeping images small
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r operator/requirements.txt
 
 # Copy operator scripts and tools
 COPY operator/ /workspace/operator/
