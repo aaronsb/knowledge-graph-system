@@ -381,12 +381,23 @@ export const ForceGraph3D: React.FC<
 
     const scene = fgRef.current.scene();
 
+    // Theme-aware grid colors - subtle colors close to background
+    const gridColors = theme === 'light'
+      ? {
+          centerLine: 0xa0a8b0,  // Slightly darker than light background (#bcc1c9)
+          gridLines: 0xb0b5bd    // Very close to light background
+        }
+      : {
+          centerLine: 0x2a2a3e,  // Slightly lighter than dark background (#1a1a2e)
+          gridLines: 0x20202e    // Very close to dark background
+        };
+
     // Create grid helper - pure geometry
     const grid = new THREE.GridHelper(
-      2000,      // Size
-      100,       // Divisions
-      0x444444,  // Center line color
-      0x222222   // Grid line color
+      2000,                    // Size
+      100,                     // Divisions
+      gridColors.centerLine,   // Center line color (theme-aware)
+      gridColors.gridLines     // Grid line color (theme-aware)
     );
 
     grid.position.y = floorPosition.current;  // Use tracked position
@@ -397,7 +408,7 @@ export const ForceGraph3D: React.FC<
       const existingGrid = scene.getObjectByName('ground-grid');
       if (existingGrid) scene.remove(existingGrid);
     };
-  }, [settings.visual.showGrid]);
+  }, [settings.visual.showGrid, theme]);
 
   // Dynamically position floor below lowest node with hysteresis
   useEffect(() => {
