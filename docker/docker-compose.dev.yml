@@ -31,6 +31,8 @@ services:
       # Mount source for hot reload
       - ../api:/app/api
       - ../schema:/app/schema
+      # Persistent HuggingFace model cache (must repeat from base when overriding volumes)
+      - hf_cache:/home/api/.cache
     environment:
       # Enable debug logging for development
       LOG_LEVEL: DEBUG

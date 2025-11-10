@@ -80,8 +80,11 @@ COPY schema/ /app/schema/
 ENV PYTHONPATH=/app
 
 # Create non-root user for running the API
+# Pre-create cache directory with proper ownership for volume mount
 RUN useradd -m -u 1000 api && \
-    chown -R api:api /app
+    chown -R api:api /app && \
+    mkdir -p /home/api/.cache && \
+    chown -R api:api /home/api/.cache
 
 USER api
 
