@@ -1253,7 +1253,7 @@ export const ForceGraph3D: React.FC<
         width={dimensions.width}
         height={dimensions.height}
         graphData={data}
-        backgroundColor="#1a1a2e"
+        backgroundColor={theme === 'light' ? '#bcc1c9' : '#1a1a2e'}
 
         // Node appearance
         // NOTE: nodeLabel shows HTML tooltips, not 3D geometry, so nodeLabelSize setting
