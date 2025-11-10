@@ -386,8 +386,8 @@ export const ForceGraph3D: React.FC<
 
     // Update link opacities
     scene.traverse((obj: any) => {
-      if (obj instanceof Line2 && obj.material instanceof LineMaterial && obj.parent?.__data) {
-        const link = obj.parent.__data;
+      if (obj instanceof Line2 && obj.material instanceof LineMaterial && (obj.parent as any)?.__data) {
+        const link = (obj.parent as any).__data;
         const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
         const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
 
@@ -412,8 +412,8 @@ export const ForceGraph3D: React.FC<
       }
 
       // Update node opacities (sphere meshes)
-      if (obj.type === 'Mesh' && obj.material?.type === 'MeshLambertMaterial' && obj.parent?.parent?.__data) {
-        const node = obj.parent.parent.__data;
+      if (obj.type === 'Mesh' && obj.material?.type === 'MeshLambertMaterial' && (obj.parent?.parent as any)?.__data) {
+        const node = (obj.parent.parent as any).__data;
 
         let nodeOpacity = 0.9;  // Default
         if (focusedNode) {
@@ -1354,23 +1354,6 @@ export const ForceGraph3D: React.FC<
           const volume = Math.pow(radius, 3);
           // Safety check to prevent NaN from breaking THREE.js geometry
           return isNaN(volume) ? 1000 : volume;
-        }}
-        nodeOpacity={(node: any) => {
-          // Focus mode (stronger fade)
-          if (focusedNode) {
-            if (node.id === focusedNode) return 0.9;
-            if (focusNeighbors.has(node.id)) return 0.9;
-            return 0.05;  // Much stronger fade for focus
-          }
-
-          // Hover mode (lighter fade)
-          if (hoveredNode) {
-            if (node.id === hoveredNode) return 0.9;
-            if (neighbors.has(node.id)) return 0.9;
-            return 0.2;  // Lighter fade for hover
-          }
-
-          return 0.9;  // No focus or hover
         }}
         nodeResolution={16}  // Sphere detail
 

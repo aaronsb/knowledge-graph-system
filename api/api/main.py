@@ -65,8 +65,12 @@ async def log_requests(request: Request, call_next):
     """Log all HTTP requests with timing"""
     start_time = time.time()
 
+    # Use debug level for health checks to reduce noise
+    is_health_check = request.url.path == "/health"
+    log_level = logger.debug if is_health_check else logger.info
+
     # Log request
-    logger.info(f"→ {request.method} {request.url.path}")
+    log_level(f"→ {request.method} {request.url.path}")
     if request.query_params:
         logger.debug(f"  Query params: {dict(request.query_params)}")
 
@@ -76,7 +80,7 @@ async def log_requests(request: Request, call_next):
         duration = time.time() - start_time
 
         # Log response
-        logger.info(f"← {request.method} {request.url.path} - {response.status_code} ({duration:.3f}s)")
+        log_level(f"← {request.method} {request.url.path} - {response.status_code} ({duration:.3f}s)")
 
         return response
     except Exception as e:
