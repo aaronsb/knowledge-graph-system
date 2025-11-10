@@ -17,6 +17,7 @@ import type { ForceGraph3DSettings, ForceGraph3DData } from './types';
 import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { useVocabularyStore } from '../../store/vocabularyStore';
+import { useThemeStore } from '../../store/themeStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import {
@@ -44,6 +45,9 @@ export const ForceGraph3D: React.FC<
   const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+
+  // Get current theme for label colors
+  const { theme } = useThemeStore();
 
   // Texture cache for edge labels - reuse textures across sprites for memory efficiency
   const edgeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
@@ -99,8 +103,8 @@ export const ForceGraph3D: React.FC<
   // 3. Stable memory allocation (no texture size churn)
   // 4. Real-time updates to existing geometry references
   const getEdgeLabelTexture = useCallback((text: string, color: string, fontSize: number): THREE.CanvasTexture => {
-    // Create cache key from text, color, and font size
-    const cacheKey = `${text}:${color}:${fontSize}`;
+    // Create cache key from text, color, font size, and theme
+    const cacheKey = `${text}:${color}:${fontSize}:${theme}`;
 
     // Return cached texture if available
     if (edgeLabelTextureCache.current.has(cacheKey)) {
@@ -108,7 +112,7 @@ export const ForceGraph3D: React.FC<
     }
 
     // Get unified label colors
-    const colors = ColorTransform.getLabelColors(color, 'edge');
+    const colors = ColorTransform.getLabelColors(color, 'edge', theme);
     const scale = LABEL_RENDERING.canvasScale;
     const padding = LABEL_RENDERING.padding;
 
@@ -152,7 +156,7 @@ export const ForceGraph3D: React.FC<
     edgeLabelTextureCache.current.set(cacheKey, texture);
 
     return texture;
-  }, []);
+  }, [theme]);
 
   // Calculate node colors (match 2D implementation)
   const nodeColors = useMemo(() => {
@@ -1306,7 +1310,7 @@ export const ForceGraph3D: React.FC<
           const sprite = new SpriteText(node.label);
 
           // Apply unified label styling
-          const colors = ColorTransform.getLabelColors(nodeColor, 'node');
+          const colors = ColorTransform.getLabelColors(nodeColor, 'node', theme);
           sprite.color = colors.fill;
           sprite.fontFace = LABEL_FONTS.family;
           sprite.fontWeight = String(LABEL_FONTS.weights.node3D);

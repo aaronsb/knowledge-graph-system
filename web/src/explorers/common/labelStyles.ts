@@ -53,17 +53,33 @@ export const LABEL_RENDERING = {
  *
  * Controls how base colors are transformed into text fill and stroke colors.
  * Unified across 2D and 3D for visual consistency.
+ *
+ * THEME-AWARE: Values are inverted for light mode.
  */
 export const LUMINANCE_TRANSFORMS = {
-  // Node labels: Very light fill (almost white), dark stroke
+  // Node labels: Very light fill (almost white), dark stroke for dark mode
+  // In light mode: Dark fill, light stroke
   node: {
-    fillLuminance: 0.92,       // Target luminance for fill (92% = nearly white)
-    strokeLuminance: 0.10,     // Target luminance for stroke (10% = very dark)
+    dark: {
+      fillLuminance: 0.92,       // Target luminance for fill (92% = nearly white)
+      strokeLuminance: 0.10,     // Target luminance for stroke (10% = very dark)
+    },
+    light: {
+      fillLuminance: 0.15,       // Target luminance for fill (15% = dark)
+      strokeLuminance: 0.95,     // Target luminance for stroke (95% = nearly white)
+    },
   },
-  // Edge labels: Lighter fill (readable), darker stroke
+  // Edge labels: Lighter fill (readable), darker stroke for dark mode
+  // In light mode: Darker fill, lighter stroke
   edge: {
-    fillLuminance: 0.80,       // Target luminance for fill (80% = light but with color)
-    strokeLuminance: 0.20,     // Target luminance for stroke (20% = dark)
+    dark: {
+      fillLuminance: 0.80,       // Target luminance for fill (80% = light but with color)
+      strokeLuminance: 0.20,     // Target luminance for stroke (20% = dark)
+    },
+    light: {
+      fillLuminance: 0.25,       // Target luminance for fill (25% = darker)
+      strokeLuminance: 0.85,     // Target luminance for stroke (85% = lighter)
+    },
   },
 } as const;
 
@@ -133,10 +149,11 @@ export const ColorTransform = {
    *
    * @param baseColor - Base color from visual settings (node/edge color)
    * @param type - Label type ('node' or 'edge')
+   * @param theme - Theme mode ('light' or 'dark'), defaults to 'dark' for backward compatibility
    * @returns Object with fill and stroke colors
    */
-  getLabelColors(baseColor: string, type: 'node' | 'edge'): { fill: string; stroke: string } {
-    const transforms = LUMINANCE_TRANSFORMS[type];
+  getLabelColors(baseColor: string, type: 'node' | 'edge', theme: 'light' | 'dark' = 'dark'): { fill: string; stroke: string } {
+    const transforms = LUMINANCE_TRANSFORMS[type][theme];
 
     return {
       fill: this.setLuminance(baseColor, transforms.fillLuminance),
@@ -152,10 +169,11 @@ export const ColorTransform = {
 export function applyEdgeLabelStyle(
   ctx: CanvasRenderingContext2D,
   baseColor: string,
-  fontSize: number
+  fontSize: number,
+  theme: 'light' | 'dark' = 'dark'
 ): void {
   const scale = LABEL_RENDERING.canvasScale;
-  const colors = ColorTransform.getLabelColors(baseColor, 'edge');
+  const colors = ColorTransform.getLabelColors(baseColor, 'edge', theme);
 
   // Set font
   ctx.font = `${LABEL_STYLE_3D.edge.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
@@ -175,10 +193,11 @@ export function applyEdgeLabelStyle(
 export function applyNodeLabelStyle(
   ctx: CanvasRenderingContext2D,
   baseColor: string,
-  fontSize: number
+  fontSize: number,
+  theme: 'light' | 'dark' = 'dark'
 ): void {
   const scale = LABEL_RENDERING.canvasScale;
-  const colors = ColorTransform.getLabelColors(baseColor, 'node');
+  const colors = ColorTransform.getLabelColors(baseColor, 'node', theme);
 
   // Set font
   ctx.font = `${LABEL_STYLE_3D.node.fontWeight} ${fontSize * scale}px ${LABEL_FONTS.family}`;
