@@ -62,7 +62,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: ontologyColors.get(ontology) || '#6b7280' }}
               />
-              <span className="text-gray-200 truncate" title={ontology}>
+              <span className="text-card-foreground dark:text-gray-200 truncate" title={ontology}>
                 {ontology}
               </span>
             </div>
@@ -72,14 +72,14 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
     } else if (nodeColorMode === 'degree') {
       return (
         <div className="space-y-2">
-          <div className="text-xs text-gray-300 font-medium">Degree (Connections)</div>
+          <div className="text-xs text-foreground dark:text-gray-300 font-medium">Degree (Connections)</div>
           <div
             className="h-4 rounded"
             style={{
               background: generateGradient(d3.interpolateViridis),
             }}
           />
-          <div className="flex justify-between text-[10px] text-gray-400">
+          <div className="flex justify-between text-[10px] text-muted-foreground dark:text-gray-400">
             <span>Low</span>
             <span>High</span>
           </div>
@@ -88,14 +88,14 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
     } else if (nodeColorMode === 'centrality') {
       return (
         <div className="space-y-2">
-          <div className="text-xs text-gray-300 font-medium">Centrality</div>
+          <div className="text-xs text-foreground dark:text-gray-300 font-medium">Centrality</div>
           <div
             className="h-4 rounded"
             style={{
               background: generateGradient(d3.interpolatePlasma),
             }}
           />
-          <div className="flex justify-between text-[10px] text-gray-400">
+          <div className="flex justify-between text-[10px] text-muted-foreground dark:text-gray-400">
             <span>Low</span>
             <span>High</span>
           </div>
@@ -106,22 +106,22 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
 
   return (
     <div
-      className="bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl flex flex-col"
+      className="bg-card/95 dark:bg-gray-800/95 border border-border dark:border-gray-600 rounded-lg shadow-xl flex flex-col"
       style={{ width: '240px', maxHeight: '95vh' }}
     >
       {/* Content */}
       <div className="overflow-y-auto overflow-x-hidden p-3 space-y-3">
         {/* Node Colors Section */}
-        <div className="border-b border-gray-700 pb-3">
+        <div className="border-b border-border dark:border-gray-700 pb-3">
           <button
             onClick={() => toggleSection('nodeColors')}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-200 hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Node Colors</span>
             {expandedSections.has('nodeColors') ? (
-              <ChevronDown size={14} className="text-gray-500" />
+              <ChevronDown size={14} className="text-muted-foreground dark:text-gray-500" />
             ) : (
-              <ChevronRight size={14} className="text-gray-500" />
+              <ChevronRight size={14} className="text-muted-foreground dark:text-gray-500" />
             )}
           </button>
           {expandedSections.has('nodeColors') && (
@@ -133,13 +133,13 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
         <div>
           <button
             onClick={() => toggleSection('edgeColors')}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-200 hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Edge Categories</span>
             {expandedSections.has('edgeColors') ? (
-              <ChevronDown size={14} className="text-gray-500" />
+              <ChevronDown size={14} className="text-muted-foreground dark:text-gray-500" />
             ) : (
-              <ChevronRight size={14} className="text-gray-500" />
+              <ChevronRight size={14} className="text-muted-foreground dark:text-gray-500" />
             )}
           </button>
           {expandedSections.has('edgeColors') && (

@@ -101,22 +101,22 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
 
   return (
     <div
-      className="bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl flex flex-col"
+      className="bg-card/95 dark:bg-gray-800/95 border border-border dark:border-gray-600 rounded-lg shadow-xl flex flex-col"
       style={{ width: '280px', maxHeight: '95vh' }}
     >
       {/* Content */}
       <div className="overflow-y-auto overflow-x-hidden p-3 space-y-3">
         {/* Physics Section */}
-        <div className="border-b border-gray-700 pb-3">
+        <div className="border-b border-border dark:border-gray-700 pb-3">
           <button
             onClick={() => toggleSection('physics')}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-200 hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Physics</span>
             {expandedSections.has('physics') ? (
-              <ChevronDown size={14} className="text-gray-500" />
+              <ChevronDown size={14} className="text-muted-foreground dark:text-gray-500" />
             ) : (
-              <ChevronRight size={14} className="text-gray-500" />
+              <ChevronRight size={14} className="text-muted-foreground dark:text-gray-500" />
             )}
           </button>
           {expandedSections.has('physics') && (
@@ -128,13 +128,13 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updatePhysics('enabled', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Enable Physics</span>
+                <span className="text-card-foreground dark:text-gray-200">Enable Physics</span>
               </label>
 
               {settings.physics.enabled && (
                 <>
                   <div>
-                    <label className="block text-xs text-gray-300 mb-1">
+                    <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
                       Charge: {settings.physics.charge}
                     </label>
                     <input
@@ -149,7 +149,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-gray-300 mb-1">
+                    <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
                       Link Distance: {settings.physics.linkDistance}
                     </label>
                     <input
@@ -164,7 +164,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   </div>
 
                   <div>
-                    <label className="block text-xs text-gray-300 mb-1">
+                    <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
                       Gravity: {settings.physics.gravity.toFixed(2)}
                     </label>
                     <input
@@ -184,26 +184,26 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
         </div>
 
         {/* Visual Section */}
-        <div className="border-b border-gray-700 pb-3">
+        <div className="border-b border-border dark:border-gray-700 pb-3">
           <button
             onClick={() => toggleSection('visual')}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-200 hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Visual</span>
             {expandedSections.has('visual') ? (
-              <ChevronDown size={14} className="text-gray-500" />
+              <ChevronDown size={14} className="text-muted-foreground dark:text-gray-500" />
             ) : (
-              <ChevronRight size={14} className="text-gray-500" />
+              <ChevronRight size={14} className="text-muted-foreground dark:text-gray-500" />
             )}
           </button>
           {expandedSections.has('visual') && (
             <div className="mt-3 space-y-3">
               <div>
-                <label className="block text-xs text-gray-300 mb-1">Node Color By</label>
+                <label className="block text-xs text-foreground dark:text-gray-300 mb-1">Node Color By</label>
                 <select
                   value={settings.visual.nodeColorBy}
                   onChange={(e) => updateVisual('nodeColorBy', e.target.value)}
-                  className="w-full rounded border border-gray-600 bg-gray-700 text-gray-200 p-1 text-xs"
+                  className="w-full rounded border border-border dark:border-gray-600 bg-muted dark:bg-gray-700 text-card-foreground dark:text-gray-200 p-1 text-xs"
                 >
                   <option value="ontology">Ontology</option>
                   <option value="degree">Degree (Connections)</option>
@@ -212,11 +212,11 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
               </div>
 
               <div>
-                <label className="block text-xs text-gray-300 mb-1">Edge Color By</label>
+                <label className="block text-xs text-foreground dark:text-gray-300 mb-1">Edge Color By</label>
                 <select
                   value={settings.visual.edgeColorBy}
                   onChange={(e) => updateVisual('edgeColorBy', e.target.value)}
-                  className="w-full rounded border border-gray-600 bg-gray-700 text-gray-200 p-1 text-xs"
+                  className="w-full rounded border border-border dark:border-gray-600 bg-muted dark:bg-gray-700 text-card-foreground dark:text-gray-200 p-1 text-xs"
                 >
                   <option value="category">Category</option>
                   <option value="confidence">Confidence</option>
@@ -231,7 +231,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showLabels', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Show Labels</span>
+                <span className="text-card-foreground dark:text-gray-200">Show Labels</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -241,7 +241,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showArrows', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Show Arrows</span>
+                <span className="text-card-foreground dark:text-gray-200">Show Arrows</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -251,7 +251,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showGrid', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Show Grid</span>
+                <span className="text-card-foreground dark:text-gray-200">Show Grid</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -261,11 +261,11 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showShadows', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Shadows</span>
+                <span className="text-card-foreground dark:text-gray-200">Shadows</span>
               </label>
 
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
                   Node Size: {settings.visual.nodeSize.toFixed(2)}x
                 </label>
                 <input
@@ -280,7 +280,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
               </div>
 
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
                   Link Width: {settings.visual.linkWidth.toFixed(1)}x
                 </label>
                 <input
@@ -295,7 +295,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
               </div>
 
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
                   Node Label Size: {settings.visual.nodeLabelSize}px
                 </label>
                 <input
@@ -310,7 +310,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
               </div>
 
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
                   Edge Label Size: {settings.visual.edgeLabelSize}px
                 </label>
                 <input
@@ -331,13 +331,13 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
         <div>
           <button
             onClick={() => toggleSection('interaction')}
-            className="w-full flex items-center justify-between text-sm font-medium text-gray-200 hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Interaction</span>
             {expandedSections.has('interaction') ? (
-              <ChevronDown size={14} className="text-gray-500" />
+              <ChevronDown size={14} className="text-muted-foreground dark:text-gray-500" />
             ) : (
-              <ChevronRight size={14} className="text-gray-500" />
+              <ChevronRight size={14} className="text-muted-foreground dark:text-gray-500" />
             )}
           </button>
           {expandedSections.has('interaction') && (
@@ -349,7 +349,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('enableDrag', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Enable Drag</span>
+                <span className="text-card-foreground dark:text-gray-200">Enable Drag</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -359,7 +359,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('enableZoom', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Enable Zoom</span>
+                <span className="text-card-foreground dark:text-gray-200">Enable Zoom</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -369,7 +369,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('enablePan', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Enable Pan</span>
+                <span className="text-card-foreground dark:text-gray-200">Enable Pan</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -379,7 +379,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('highlightNeighbors', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Highlight Neighbors</span>
+                <span className="text-card-foreground dark:text-gray-200">Highlight Neighbors</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -389,7 +389,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('showOriginNode', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-gray-200">Show Origin</span>
+                <span className="text-card-foreground dark:text-gray-200">Show Origin</span>
               </label>
             </div>
           )}

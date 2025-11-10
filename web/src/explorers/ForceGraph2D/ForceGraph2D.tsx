@@ -12,6 +12,7 @@ import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
+import { useThemeStore } from '../../store/themeStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import {
@@ -126,6 +127,9 @@ export const ForceGraph2D: React.FC<
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+
+  // Get current theme for label colors
+  const { theme } = useThemeStore();
 
   // Track zoom transform for info box positioning
   const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -703,13 +707,13 @@ export const ForceGraph2D: React.FC<
       .attr('fill', (d) => {
         // Use unified color transformation
         const baseColor = d.color || '#6b7280';
-        const colors = ColorTransform.getLabelColors(baseColor, 'edge');
+        const colors = ColorTransform.getLabelColors(baseColor, 'edge', theme);
         return colors.fill;
       })
       .attr('stroke', (d) => {
         // Use unified color transformation
         const baseColor = d.color || '#6b7280';
-        const colors = ColorTransform.getLabelColors(baseColor, 'edge');
+        const colors = ColorTransform.getLabelColors(baseColor, 'edge', theme);
         return colors.stroke;
       })
       .attr('stroke-width', LABEL_STYLE_2D.edge.strokeWidth)
@@ -851,13 +855,13 @@ export const ForceGraph2D: React.FC<
         .attr('fill', (d) => {
           // Use unified color transformation
           const baseColor = d.color || '#6b7280';
-          const colors = ColorTransform.getLabelColors(baseColor, 'node');
+          const colors = ColorTransform.getLabelColors(baseColor, 'node', theme);
           return colors.fill;
         })
         .attr('stroke', (d) => {
           // Use unified color transformation
           const baseColor = d.color || '#6b7280';
-          const colors = ColorTransform.getLabelColors(baseColor, 'node');
+          const colors = ColorTransform.getLabelColors(baseColor, 'node', theme);
           return colors.stroke;
         })
         .attr('stroke-width', LABEL_STYLE_2D.node.strokeWidth)
@@ -1185,7 +1189,7 @@ export const ForceGraph2D: React.FC<
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets]);
+  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets, theme]);
 
   // Helper function to render grid in graph coordinates
   const renderGrid = useCallback(() => {
@@ -1627,7 +1631,7 @@ export const ForceGraph2D: React.FC<
         ref={svgRef}
         width={dimensions.width}
         height={dimensions.height}
-        className="bg-white dark:bg-gray-900"
+        className="bg-gradient-to-br from-gray-300 to-gray-400 dark:bg-gradient-to-br dark:from-gray-900 dark:to-black"
         onClick={() => {
           // Close context menu when clicking on canvas background
           setContextMenu(null);
