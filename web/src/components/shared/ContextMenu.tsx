@@ -73,7 +73,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
     <>
       <div
         ref={menuRef}
-        className="fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
+        className="fixed bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
         style={{ left: x, top: y }}
       >
         {items.map((item, index) => {
@@ -116,17 +116,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
                 disabled={item.disabled}
                 className={`
                   w-full text-left px-4 py-2 flex items-center gap-3
-                  transition-colors text-gray-100
+                  transition-colors text-card-foreground dark:text-gray-100
                   ${
                     item.disabled
                       ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-gray-700 cursor-pointer'
+                      : 'hover:bg-muted dark:hover:bg-gray-700 cursor-pointer'
                   }
                 `}
               >
                 {Icon && <Icon className="w-4 h-4" />}
                 <span className="text-sm flex-1">{item.label}</span>
-                {hasSubmenu && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                {hasSubmenu && <ChevronRight className="w-4 h-4 text-muted-foreground dark:text-gray-400" />}
               </button>
             </div>
           );
@@ -137,7 +137,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       {openSubmenu !== null && items[openSubmenu]?.submenu && submenuPosition && (
         <div
           ref={submenuRef}
-          className="fixed bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
+          className="fixed bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
           style={{ left: submenuPosition.left, top: submenuPosition.top }}
           onMouseEnter={() => {
             // Cancel any pending close timeout when entering submenu
@@ -162,11 +162,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
                 disabled={subitem.disabled}
                 className={`
                   w-full text-left px-4 py-2 flex items-center gap-3
-                  transition-colors text-gray-100
+                  transition-colors text-card-foreground dark:text-gray-100
                   ${
                     subitem.disabled
                       ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-gray-700 cursor-pointer'
+                      : 'hover:bg-muted dark:hover:bg-gray-700 cursor-pointer'
                   }
                 `}
               >
