@@ -1,50 +1,52 @@
 /**
  * Common visual styles and theme for explorers
  * Centralized styling makes it easy to update visuals across all explorers
+ *
+ * NOTE: Components now use Tailwind's dark mode classes directly.
+ * This file serves as a reference for theme-aware patterns.
  */
 
 export const explorerTheme = {
-  // Info box styling
+  // Info box styling (theme-aware)
   infoBox: {
-    background: 'bg-gray-800',
-    border: 'border-gray-600',
-    shadow: '8px 8px 12px rgba(0, 0, 0, 0.8)',
-    textPrimary: 'text-gray-100',
-    textSecondary: 'text-gray-400',
-    textMuted: 'text-gray-500',
-    hoverBg: 'hover:bg-gray-700',
-    borderColor: 'rgb(31, 41, 55)', // gray-800 for speech bubble pointer
+    background: 'bg-card dark:bg-gray-800',
+    border: 'border-border dark:border-gray-600',
+    shadow: 'shadow-lg dark:shadow-[8px_8px_12px_rgba(0,0,0,0.8)]',
+    textPrimary: 'text-card-foreground dark:text-gray-100',
+    textSecondary: 'text-muted-foreground dark:text-gray-400',
+    textMuted: 'text-muted-foreground dark:text-gray-500',
+    hoverBg: 'hover:bg-muted dark:hover:bg-gray-700',
     minWidth: '280px',
     maxWidth: '400px',
     zIndex: 9999,
   },
 
-  // Panel styling (stats, legend, settings)
+  // Panel styling (stats, legend, settings) - theme-aware
   panel: {
-    background: 'bg-gray-800/95',
-    border: 'border-gray-600',
-    borderLine: 'border-b border-gray-700',
+    background: 'bg-card/95 dark:bg-gray-800/95',
+    border: 'border-border dark:border-gray-600',
+    borderLine: 'border-b border-border dark:border-gray-700',
     shadow: 'shadow-xl',
-    textPrimary: 'text-gray-200',
-    textSecondary: 'text-gray-400',
-    textMuted: 'text-gray-500',
+    textPrimary: 'text-card-foreground dark:text-gray-200',
+    textSecondary: 'text-muted-foreground dark:text-gray-400',
+    textMuted: 'text-muted-foreground dark:text-gray-500',
     zIndex: 10,
   },
 
-  // Context menu styling
+  // Context menu styling - theme-aware
   contextMenu: {
-    background: 'bg-gray-800',
-    border: 'border-gray-600',
+    background: 'bg-card dark:bg-gray-800',
+    border: 'border-border dark:border-gray-600',
     shadow: 'shadow-xl',
-    hoverBg: 'hover:bg-gray-700',
-    textPrimary: 'text-gray-100',
+    hoverBg: 'hover:bg-muted dark:hover:bg-gray-700',
+    textPrimary: 'text-card-foreground dark:text-gray-100',
     zIndex: 10000,
   },
 
-  // Canvas background colors
+  // Canvas background - theme-aware gradients
   canvas: {
-    light: '#ffffff',
-    dark: '#1a1a2e',
+    light: 'bg-gradient-to-br from-gray-100 to-gray-300',
+    dark: 'bg-gradient-to-br from-gray-900 to-black',
   },
 
   // Animation durations (ms)
