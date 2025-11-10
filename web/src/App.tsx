@@ -364,7 +364,7 @@ const AppContent: React.FC = () => {
       <div className="h-full flex flex-col">
         {/* Search Bar */}
         <div
-          className="border-b border-border bg-card relative z-10"
+          className="border-b border-border bg-card relative z-[50000]"
           style={{
             height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto',
             overflow: queryMode === 'block-builder' ? 'hidden' : 'visible',

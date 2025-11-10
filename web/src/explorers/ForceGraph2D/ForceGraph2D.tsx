@@ -125,6 +125,7 @@ export const ForceGraph2D: React.FC<
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
+  const [focusedNode, setFocusedNode] = useState<string | null>(null);
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
@@ -261,11 +262,17 @@ export const ForceGraph2D: React.FC<
   // Get navigation state and settings from store
   const { originNodeId, setOriginNodeId, destinationNodeId, setDestinationNodeId, setFocusedNodeId, setGraphData, graphData } = useGraphStore();
 
-  // Calculate neighbors for highlighting
+  // Calculate neighbors for highlighting (hover)
   const neighbors = useMemo(() => {
     if (!hoveredNode || !settings.interaction.highlightNeighbors) return new Set<string>();
     return getNeighbors(hoveredNode, data.links);
   }, [hoveredNode, data.links, settings.interaction.highlightNeighbors]);
+
+  // Calculate neighbors for focus mode (stronger highlight)
+  const focusNeighbors = useMemo(() => {
+    if (!focusedNode || !settings.interaction.highlightNeighbors) return new Set<string>();
+    return getNeighbors(focusedNode, data.links);
+  }, [focusedNode, data.links, settings.interaction.highlightNeighbors]);
 
   // Calculate node colors based on nodeColorBy setting
   const nodeColors = useMemo(() => {
@@ -1284,21 +1291,34 @@ export const ForceGraph2D: React.FC<
     return () => clearTimeout(timer);
   }, [renderGrid, data, settings, dimensions]);
 
-  // Update highlighting based on hover
+  // Update highlighting based on focus and hover
   useEffect(() => {
     if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
 
-    // Node highlighting
+    // Node highlighting (focus takes priority over hover)
     svg.selectAll<SVGCircleElement, D3Node>('circle').attr('opacity', (d) => {
-      if (!d || !hoveredNode) return 1;
-      if (d.id === hoveredNode) return 1;
-      if (neighbors.has(d.id)) return 1;
-      return 0.2;
+      if (!d) return 1;
+
+      // Focus mode (stronger fade)
+      if (focusedNode) {
+        if (d.id === focusedNode) return 1;
+        if (focusNeighbors.has(d.id)) return 1;
+        return 0.05;  // Much stronger fade for focus
+      }
+
+      // Hover mode (lighter fade)
+      if (hoveredNode) {
+        if (d.id === hoveredNode) return 1;
+        if (neighbors.has(d.id)) return 1;
+        return 0.2;  // Lighter fade for hover
+      }
+
+      return 1;  // No focus or hover
     });
 
-    // Edge highlighting (paths not lines)
+    // Edge highlighting (paths not lines) - focus takes priority
     svg.selectAll<SVGPathElement, D3Link>('path').each(function(link) {
       const path = d3.select(this);
       const linkKey = path.attr('data-link-key');
@@ -1308,6 +1328,9 @@ export const ForceGraph2D: React.FC<
         return;
       }
 
+      const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
+
       if (hoveredEdge) {
         // Edge hover mode
         if (linkKey === hoveredEdge) {
@@ -1315,24 +1338,32 @@ export const ForceGraph2D: React.FC<
         } else {
           path.attr('stroke-opacity', 0.2).attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
         }
+      } else if (focusedNode) {
+        // Focus mode (stronger fade)
+        if (!sourceId || !targetId) {
+          path.attr('stroke-opacity', 0.6);
+        } else if (sourceId === focusedNode || targetId === focusedNode) {
+          path.attr('stroke-opacity', 1);
+        } else {
+          path.attr('stroke-opacity', 0.02);  // Much stronger fade for focus
+        }
+        path.attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
       } else if (hoveredNode) {
-        // Node hover mode
-        const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
-        const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
+        // Node hover mode (lighter fade)
         if (!sourceId || !targetId) {
           path.attr('stroke-opacity', 0.6);
         } else if (sourceId === hoveredNode || targetId === hoveredNode) {
           path.attr('stroke-opacity', 1);
         } else {
-          path.attr('stroke-opacity', 0.1);
+          path.attr('stroke-opacity', 0.1);  // Lighter fade for hover
         }
         path.attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
       } else {
-        // No hover
+        // No focus or hover
         path.attr('stroke-opacity', 0.6).attr('stroke-width', (link.value || 1) * settings.visual.linkWidth);
       }
     });
-  }, [hoveredNode, hoveredEdge, neighbors, settings.visual.linkWidth]);
+  }, [focusedNode, hoveredNode, hoveredEdge, neighbors, focusNeighbors, settings.visual.linkWidth]);
 
   // "You Are Here" highlighting for origin node - async update after DOM ready
   useEffect(() => {
@@ -1603,6 +1634,8 @@ export const ForceGraph2D: React.FC<
           setDestinationNode: setDestinationNodeId,
           travelToOrigin,
           travelToDestination,
+          setFocusedNode,
+          focusedNodeId: focusedNode,
           isPinned,
           togglePinNode,
           unpinAllNodes,

@@ -345,7 +345,7 @@ LIMIT 50`);
   const ModeIcon = modeInfo.icon;
 
   return (
-    <div className="space-y-4">
+    <div className="relative z-[50000] space-y-4">
       {/* Header with Mode Info and Dial */}
       <div className="flex items-start justify-between gap-4">
         {/* Mode Description Panel */}

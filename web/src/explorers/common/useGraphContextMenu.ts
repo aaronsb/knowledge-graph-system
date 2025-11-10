@@ -23,6 +23,7 @@ import {
   PinOff,
   Circle,
   Grid3x3,
+  Eye,
   EyeOff,
   Navigation,
   Target,
@@ -43,6 +44,10 @@ export interface GraphContextMenuHandlers {
   setDestinationNode: (nodeId: string | null) => void;
   travelToOrigin?: () => void;  // Optional navigation to origin node
   travelToDestination?: () => void;  // Optional navigation to destination node
+
+  // Focus handlers
+  setFocusedNode: (nodeId: string | null) => void;
+  focusedNodeId: string | null;
 
   // Explorer-specific handlers (must be provided by explorer)
   isPinned: (nodeId: string) => boolean;
@@ -123,6 +128,8 @@ export function buildContextMenuItems(
     setDestinationNode,
     travelToOrigin,
     travelToDestination,
+    setFocusedNode,
+    focusedNodeId,
   } = handlers;
   const { onClose } = callbacks;
 
@@ -337,6 +344,30 @@ export function buildContextMenuItems(
       icon: Plus,
       onClick: () => {
         handleAddToGraph(nodeId);
+        onClose();
+      },
+    });
+
+    // Focus on Node (only if not already focused)
+    if (focusedNodeId !== nodeId) {
+      items.push({
+        label: 'Focus on Node',
+        icon: Eye,
+        onClick: () => {
+          setFocusedNode(nodeId);
+          onClose();
+        },
+      });
+    }
+  }
+
+  // Defocus (global - works on any right-click if focus is active)
+  if (focusedNodeId !== null) {
+    items.push({
+      label: 'Defocus',
+      icon: EyeOff,
+      onClick: () => {
+        setFocusedNode(null);
         onClose();
       },
     });
