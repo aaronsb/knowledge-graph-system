@@ -320,7 +320,7 @@ echo -e "${GREEN}✓${NC} Bucket permissions configured"
 echo -e "${BLUE}→${NC} Storing credentials in encrypted database..."
 GARAGE_CREDENTIALS="${GARAGE_KEY_ID}:${GARAGE_SECRET}"
 
-if docker exec kg-operator python /workspace/operator/configure.py api-key garage --key "$GARAGE_CREDENTIALS" 2>&1 | grep -q "stored successfully"; then
+if docker exec kg-operator python /workspace/operator/configure.py api-key garage --key "$GARAGE_CREDENTIALS" 2>&1 | grep -qi "stored"; then
     echo -e "${GREEN}✓${NC} Garage credentials stored securely"
     echo ""
 else
