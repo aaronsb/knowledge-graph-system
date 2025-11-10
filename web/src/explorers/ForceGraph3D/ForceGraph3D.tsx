@@ -45,6 +45,7 @@ export const ForceGraph3D: React.FC<
   const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [focusedNode, setFocusedNode] = useState<string | null>(null);
 
   // Get current theme for label colors
   const { theme } = useThemeStore();
@@ -277,11 +278,17 @@ export const ForceGraph3D: React.FC<
     return colors;
   }, [data.links, settings.visual.edgeColorBy]);
 
-  // Calculate neighbors for highlighting
+  // Calculate neighbors for highlighting (hover)
   const neighbors = useMemo(() => {
     if (!hoveredNode || !settings.interaction.highlightNeighbors) return new Set<string>();
     return getNeighbors(hoveredNode, data.links);
   }, [hoveredNode, data.links, settings.interaction.highlightNeighbors]);
+
+  // Calculate neighbors for focus mode (stronger highlight)
+  const focusNeighbors = useMemo(() => {
+    if (!focusedNode || !settings.interaction.highlightNeighbors) return new Set<string>();
+    return getNeighbors(focusedNode, data.links);
+  }, [focusedNode, data.links, settings.interaction.highlightNeighbors]);
 
   // Handle window resize
   useEffect(() => {
@@ -371,6 +378,69 @@ export const ForceGraph3D: React.FC<
       }
     });
   }, [settings.visual?.linkWidth]);
+
+  // Update link and node opacities when focus/hover changes
+  useEffect(() => {
+    if (!fgRef.current) return;
+
+    const scene = fgRef.current.scene();
+
+    // Update link opacities
+    scene.traverse((obj: any) => {
+      if (obj instanceof Line2 && obj.material instanceof LineMaterial && obj.parent?.__data) {
+        const link = obj.parent.__data;
+        const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
+
+        let linkOpacity = 0.6;  // Default
+        if (focusedNode) {
+          // Focus mode (stronger fade)
+          if (sourceId === focusedNode || targetId === focusedNode) {
+            linkOpacity = 1.0;
+          } else {
+            linkOpacity = 0.02;
+          }
+        } else if (hoveredNode) {
+          // Hover mode (lighter fade)
+          if (sourceId === hoveredNode || targetId === hoveredNode) {
+            linkOpacity = 1.0;
+          } else {
+            linkOpacity = 0.1;
+          }
+        }
+
+        obj.material.opacity = linkOpacity;
+      }
+
+      // Update node opacities (sphere meshes)
+      if (obj.type === 'Mesh' && obj.material?.type === 'MeshLambertMaterial' && obj.parent?.parent?.__data) {
+        const node = obj.parent.parent.__data;
+
+        let nodeOpacity = 0.9;  // Default
+        if (focusedNode) {
+          // Focus mode (stronger fade)
+          if (node.id === focusedNode) {
+            nodeOpacity = 0.9;
+          } else if (focusNeighbors.has(node.id)) {
+            nodeOpacity = 0.9;
+          } else {
+            nodeOpacity = 0.05;
+          }
+        } else if (hoveredNode) {
+          // Hover mode (lighter fade)
+          if (node.id === hoveredNode) {
+            nodeOpacity = 0.9;
+          } else if (neighbors.has(node.id)) {
+            nodeOpacity = 0.9;
+          } else {
+            nodeOpacity = 0.2;
+          }
+        }
+
+        obj.material.opacity = nodeOpacity;
+      }
+    });
+  }, [focusedNode, hoveredNode, neighbors, focusNeighbors]);
 
   // Track floor position with hysteresis to prevent jitter
   const floorPosition = useRef<number>(200);  // Initial position
@@ -1244,6 +1314,8 @@ export const ForceGraph3D: React.FC<
           setDestinationNode: setDestinationNodeId,
           travelToOrigin,
           travelToDestination,
+          setFocusedNode,
+          focusedNodeId: focusedNode,
           isPinned,
           togglePinNode,
           unpinAllNodes,
@@ -1284,7 +1356,23 @@ export const ForceGraph3D: React.FC<
           // Safety check to prevent NaN from breaking THREE.js geometry
           return isNaN(volume) ? 1000 : volume;
         }}
-        nodeOpacity={0.9}
+        nodeOpacity={(node: any) => {
+          // Focus mode (stronger fade)
+          if (focusedNode) {
+            if (node.id === focusedNode) return 0.9;
+            if (focusNeighbors.has(node.id)) return 0.9;
+            return 0.05;  // Much stronger fade for focus
+          }
+
+          // Hover mode (lighter fade)
+          if (hoveredNode) {
+            if (node.id === hoveredNode) return 0.9;
+            if (neighbors.has(node.id)) return 0.9;
+            return 0.2;  // Lighter fade for hover
+          }
+
+          return 0.9;  // No focus or hover
+        }}
         nodeResolution={16}  // Sphere detail
 
         // Node representation - create group with sphere + label (transform together)
@@ -1372,7 +1460,24 @@ export const ForceGraph3D: React.FC<
           geometry.setPositions(positions);
           geometry.setColors(colors);
 
-          const linkOpacity = 0.6;
+          // Calculate opacity based on focus/hover state
+          let linkOpacity = 0.6;  // Default
+          if (focusedNode) {
+            // Focus mode (stronger fade)
+            if (sourceId === focusedNode || targetId === focusedNode) {
+              linkOpacity = 1.0;  // Full opacity for connected edges
+            } else {
+              linkOpacity = 0.02;  // Much stronger fade for focus
+            }
+          } else if (hoveredNode) {
+            // Hover mode (lighter fade)
+            if (sourceId === hoveredNode || targetId === hoveredNode) {
+              linkOpacity = 1.0;  // Full opacity for connected edges
+            } else {
+              linkOpacity = 0.1;  // Lighter fade for hover
+            }
+          }
+
           const lineWidth = settings.visual?.linkWidth ?? 1;
 
           // LineMaterial for shader-based thick lines
