@@ -43,13 +43,13 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
           style={{
             borderLeft: '8px solid transparent',
             borderRight: '8px solid transparent',
-            borderTop: '8px solid rgb(31, 41, 55)', // gray-800
+            borderTop: '8px solid hsl(var(--card))', // Theme-aware
             transform: 'translateX(-50%) translateY(100%)',
           }}
         />
         {/* Info box content - always dark theme */}
         <div
-          className="bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 cursor-pointer transition-shadow"
+          className="bg-card dark:bg-gray-800 rounded-lg border border-border dark:border-gray-600 px-4 py-3 cursor-pointer transition-shadow"
           onClick={(e) => {
             e.stopPropagation();
             onDismiss();
@@ -60,71 +60,71 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
           }}
         >
           <div className="space-y-2 text-sm">
-            <div className="font-semibold text-gray-100 border-b border-gray-700 pb-2">
+            <div className="font-semibold text-card-foreground dark:text-gray-100 border-b border-border dark:border-gray-700 pb-2">
               Edge Information
             </div>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-gray-400">Type:</span>
-                <span className="font-medium text-gray-100">{info.type}</span>
+                <span className="text-muted-foreground dark:text-gray-400">Type:</span>
+                <span className="font-medium text-card-foreground dark:text-gray-100">{info.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Confidence:</span>
-                <span className="font-medium text-gray-100">
+                <span className="text-muted-foreground dark:text-gray-400">Confidence:</span>
+                <span className="font-medium text-card-foreground dark:text-gray-100">
                   {(info.confidence * 100).toFixed(1)}%
                 </span>
               </div>
               {info.category && (
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Category:</span>
-                  <span className="font-medium text-gray-100">{info.category}</span>
+                  <span className="text-muted-foreground dark:text-gray-400">Category:</span>
+                  <span className="font-medium text-card-foreground dark:text-gray-100">{info.category}</span>
                 </div>
               )}
               {/* ADR-051: Provenance metadata section */}
               {(info.created_by || info.source || info.job_id || info.document_id || info.created_at) && (
                 <>
-                  <div className="pt-2 border-t border-gray-700">
-                    <div className="text-xs font-semibold text-gray-300 mb-1">Provenance</div>
+                  <div className="pt-2 border-t border-border dark:border-gray-700">
+                    <div className="text-xs font-semibold text-foreground dark:text-gray-300 mb-1">Provenance</div>
                   </div>
                   {info.source && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400 text-xs">Source:</span>
-                      <span className="font-medium text-gray-100 text-xs">{info.source}</span>
+                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Source:</span>
+                      <span className="font-medium text-card-foreground dark:text-gray-100 text-xs">{info.source}</span>
                     </div>
                   )}
                   {info.created_by && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400 text-xs">Created By:</span>
-                      <span className="font-medium text-gray-100 text-xs">{info.created_by}</span>
+                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Created By:</span>
+                      <span className="font-medium text-card-foreground dark:text-gray-100 text-xs">{info.created_by}</span>
                     </div>
                   )}
                   {info.created_at && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400 text-xs">Created:</span>
-                      <span className="font-medium text-gray-100 text-xs">
+                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Created:</span>
+                      <span className="font-medium text-card-foreground dark:text-gray-100 text-xs">
                         {new Date(info.created_at).toLocaleString()}
                       </span>
                     </div>
                   )}
                   {info.job_id && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400 text-xs">Job ID:</span>
-                      <span className="font-mono text-gray-100 text-xs">
+                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Job ID:</span>
+                      <span className="font-mono text-card-foreground dark:text-gray-100 text-xs">
                         {info.job_id.substring(0, 8)}...
                       </span>
                     </div>
                   )}
                   {info.document_id && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400 text-xs">Document:</span>
-                      <span className="font-mono text-gray-100 text-xs">
+                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Document:</span>
+                      <span className="font-mono text-card-foreground dark:text-gray-100 text-xs">
                         {info.document_id.substring(0, 8)}...
                       </span>
                     </div>
                   )}
                 </>
               )}
-              <div className="text-xs text-gray-400 pt-2 border-t border-gray-700">
+              <div className="text-xs text-muted-foreground dark:text-gray-400 pt-2 border-t border-border dark:border-gray-700">
                 Click to dismiss
               </div>
             </div>

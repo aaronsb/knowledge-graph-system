@@ -1627,7 +1627,7 @@ export const ForceGraph2D: React.FC<
         ref={svgRef}
         width={dimensions.width}
         height={dimensions.height}
-        className="bg-white dark:bg-gray-900"
+        className="bg-gradient-to-br from-gray-100 to-gray-300 dark:bg-gradient-to-br dark:from-gray-900 dark:to-black"
         onClick={() => {
           // Close context menu when clicking on canvas background
           setContextMenu(null);

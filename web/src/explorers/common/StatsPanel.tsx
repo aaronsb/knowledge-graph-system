@@ -13,8 +13,8 @@ export interface StatsPanelProps {
 
 export const StatsPanel: React.FC<StatsPanelProps> = ({ nodeCount, edgeCount, className }) => {
   return (
-    <div className={`bg-gray-800/95 border border-gray-600 rounded-lg shadow-xl px-3 py-2 text-sm ${className || ''}`}>
-      <div className="text-gray-200">
+    <div className={`bg-card/95 dark:bg-gray-800/95 border border-border dark:border-gray-600 rounded-lg shadow-xl px-3 py-2 text-sm ${className || ''}`}>
+      <div className="text-card-foreground dark:text-gray-200">
         {nodeCount} nodes • {edgeCount} edges
       </div>
     </div>
