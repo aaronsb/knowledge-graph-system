@@ -125,12 +125,20 @@ services:
       # Garage S3 connection
       GARAGE_S3_ENDPOINT: ${GARAGE_S3_ENDPOINT:-http://garage:3900}
 
+      # HuggingFace: Force offline mode (never check network for models)
+      # Temporarily disabled to allow initial model download to persistent cache
+      # HF_HUB_OFFLINE: "1"
+      # TRANSFORMERS_OFFLINE: "1"
+
       # Application config comes from database (not env)
       # Configured via: kg-operator config ai-provider, embedding, api-key
 
     volumes:
       # Hot reload: Mount source code for development
       - ../api:/app/api
+      # Persistent HuggingFace model cache (prevents re-downloading on restart)
+      # Note: API runs as 'api' user, so cache is in /home/api/.cache
+      - hf_cache:/home/api/.cache
 
     depends_on:
       postgres:
@@ -248,6 +256,8 @@ volumes:
   garage_data:
     driver: local
   garage_meta:
+    driver: local
+  hf_cache:
     driver: local
 
 networks:

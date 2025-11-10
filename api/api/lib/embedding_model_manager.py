@@ -70,33 +70,40 @@ class EmbeddingModelManager:
             # TODO: Pin specific model version/revision for consistency and reproducibility
             # Example: self.model_name = "nomic-ai/nomic-embed-text-v1.5@abc123"
 
-            # ALWAYS use local cache only - never download from HuggingFace
-            # Models should be pre-downloaded during initial setup
+            # Try loading from local cache first (fast, no network)
+            # If not cached, download ONCE to persistent volume
             # trust_remote_code=True required for models like nomic-embed-text that have custom code
-            logger.info(f"   Loading from local cache...")
-            self.model = SentenceTransformer(
-                self.model_name,
-                trust_remote_code=True,
-                local_files_only=True  # NEVER check HuggingFace
-            )
+            try:
+                logger.info(f"   Attempting to load from local cache...")
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    trust_remote_code=True,
+                    local_files_only=True  # Try cache first
+                )
+                logger.info(f"   ✓ Loaded from local cache")
+
+            except (OSError, ValueError) as cache_error:
+                # Model not in cache - download to persistent volume (one-time operation)
+                logger.warning(f"   Model not in cache, downloading from HuggingFace...")
+                logger.warning(f"   This is a one-time download (~200-500MB)")
+                logger.warning(f"   Model will be cached in persistent volume for future startups")
+
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    trust_remote_code=True
+                    # local_files_only=False (default) - will download
+                )
+                logger.info(f"   ✓ Downloaded and cached to persistent volume")
 
             self.dimensions = self.model.get_sentence_embedding_dimension()
 
-            logger.info(f"   ✓ Loaded from local cache")
             logger.info(f"✅ Embedding model loaded: {self.model_name}")
             logger.info(f"   Dimensions: {self.dimensions}")
             logger.info(f"   Max sequence length: {self.model.max_seq_length}")
 
-        except (OSError, ValueError) as e:
-            logger.error(f"❌ Model not found in local cache: {self.model_name}")
-            logger.error(f"   Download the model first:")
-            logger.error(f"   python -c 'from sentence_transformers import SentenceTransformer; "
-                        f"SentenceTransformer(\"{self.model_name}\", trust_remote_code=True)'")
-            raise RuntimeError(
-                f"Model {self.model_name} not in cache. Download it first before starting the API."
-            ) from e
         except Exception as e:
             logger.error(f"❌ Failed to load embedding model: {e}")
+            logger.error(f"   This indicates a network or configuration issue")
             raise RuntimeError(f"Failed to load embedding model {self.model_name}: {e}")
 
     def generate_embedding(self, text: str) -> List[float]:
