@@ -246,7 +246,7 @@ export const ForceGraph3D: React.FC<
     return offsets;
   }, [data.links]);
 
-  // Calculate link colors
+  // Calculate link colors (match 2D implementation)
   const linkColors = useMemo(() => {
     const colors = new Map<string, string>();
 
@@ -259,9 +259,8 @@ export const ForceGraph3D: React.FC<
 
       switch (settings.visual.edgeColorBy) {
         case 'category':
-          const vocabStore = useVocabularyStore.getState();
-          const category = vocabStore.getCategory(link.type) || 'default';
-          color = getCategoryColor(category);
+          // Use pre-computed color from transformForD3 (same as 2D)
+          color = link.color || '#999';
           break;
         case 'confidence':
           const confidence = link.confidence || 0.5;
