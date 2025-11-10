@@ -36,27 +36,23 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
         zIndex: 9999, // Ensure info box draws on top of everything
       }}
     >
-      {/* Speech bubble pointer - always dark */}
+      {/* Speech bubble pointer - theme-aware */}
       <div className="relative">
         <div
-          className="absolute left-1/2 bottom-0 w-0 h-0"
+          className="absolute left-1/2 bottom-0 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-card dark:border-t-gray-800"
           style={{
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '8px solid hsl(var(--card))', // Theme-aware
             transform: 'translateX(-50%) translateY(100%)',
           }}
         />
-        {/* Info box content - always dark theme */}
+        {/* Info box content - theme-aware */}
         <div
-          className="bg-card dark:bg-gray-800 rounded-lg border border-border dark:border-gray-600 px-4 py-3 cursor-pointer transition-shadow"
+          className="bg-card dark:bg-gray-800 rounded-lg border border-border dark:border-gray-600 px-4 py-3 cursor-pointer transition-shadow shadow-lg dark:shadow-[8px_8px_12px_rgba(0,0,0,0.8)]"
           onClick={(e) => {
             e.stopPropagation();
             onDismiss();
           }}
           style={{
             minWidth: '200px',
-            boxShadow: '8px 8px 12px rgba(0, 0, 0, 0.8)'
           }}
         >
           <div className="space-y-2 text-sm">
