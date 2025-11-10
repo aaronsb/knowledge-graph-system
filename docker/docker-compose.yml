@@ -164,6 +164,11 @@ services:
       retries: 5
       start_period: 600s  # 10 min grace period for initial model downloads (~500MB-1GB)
 
+    # Use public DNS servers to prevent DNS failures when switching WiFi networks
+    dns:
+      - 8.8.8.8      # Google DNS
+      - 1.1.1.1      # Cloudflare DNS
+
     networks:
       - kg-network
 
