@@ -38,6 +38,19 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * Default parameters for graph queries (ADR-048 Query Safety)
+ *
+ * These defaults balance performance and result quality:
+ * - Higher thresholds (0.75+) prevent expensive full-graph scans
+ * - Lower max_hops (3) prevent exponential traversal explosion
+ * - Adjust based on graph size and performance characteristics
+ */
+const DEFAULT_SEARCH_SIMILARITY = 0.7;  // Search tool minimum similarity
+const DEFAULT_SEMANTIC_THRESHOLD = 0.75; // Connect queries semantic matching
+const DEFAULT_MAX_HOPS = 3;              // Maximum path traversal depth
+const DEFAULT_MAX_DEPTH = 2;             // Related concepts neighborhood depth
+
 // Create server instance
 const server = new Server(
   {
@@ -677,7 +690,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'search': {
         const query = toolArgs.query as string;
         const limit = toolArgs.limit as number || 10;
-        const min_similarity = toolArgs.min_similarity as number || 0.7;
+        const min_similarity = toolArgs.min_similarity as number || DEFAULT_SEARCH_SIMILARITY;
         const offset = toolArgs.offset as number || 0;
 
         const result = await client.searchConcepts({
@@ -719,7 +732,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           case 'related': {
             const result = await client.findRelatedConcepts({
               concept_id: toolArgs.concept_id as string,
-              max_depth: toolArgs.max_depth as number || 2,
+              max_depth: toolArgs.max_depth as number || DEFAULT_MAX_DEPTH,
               relationship_types: toolArgs.relationship_types as string[] | undefined,
             });
 
@@ -737,7 +750,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               const result = await client.findConnection({
                 from_id: toolArgs.from_id as string,
                 to_id: toolArgs.to_id as string,
-                max_hops: toolArgs.max_hops as number || 5,
+                max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
               });
 
               // Segment long paths for readability
@@ -752,8 +765,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               const result = await client.findConnectionBySearch({
                 from_query: toolArgs.from_query as string,
                 to_query: toolArgs.to_query as string,
-                max_hops: toolArgs.max_hops as number || 3,
-                threshold: toolArgs.threshold as number || 0.75,
+                max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
+                threshold: toolArgs.threshold as number || DEFAULT_SEMANTIC_THRESHOLD,
                 include_grounding: true,
                 include_evidence: true,
               });
