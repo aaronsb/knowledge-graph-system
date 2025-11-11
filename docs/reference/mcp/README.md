@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2025-11-09
+> Last updated: 2025-11-11
 
 ---
 
@@ -16,8 +16,22 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 
 ## Available Tools
 
-- [`search`](#search) - Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: concept (details, related, connect), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").
-- [`concept`](#concept) - Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.
+- [`search`](#search) - Search for concepts using semantic similarity. Your ENTRY POINT to the graph.
+
+RETURNS RICH DATA FOR EACH CONCEPT:
+- Grounding strength (-1.0 to 1.0): Reliability/contradiction score
+- Diversity score: Conceptual richness (% of diverse connections)
+- Authenticated diversity: Support vs contradiction indicator (✅✓⚠❌)
+- Evidence samples: Quoted text from source documents
+- Image indicators: Visual evidence when available
+- Document sources: Where concepts originated
+
+RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
+
+Use 2-3 word phrases (e.g., "linear thinking patterns").
+- [`concept`](#concept) - Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
+
+PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 - [`ontology`](#ontology) - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
 - [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
 
@@ -25,7 +39,19 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 
 ### search
 
-Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: concept (details, related, connect), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").
+Search for concepts using semantic similarity. Your ENTRY POINT to the graph.
+
+RETURNS RICH DATA FOR EACH CONCEPT:
+- Grounding strength (-1.0 to 1.0): Reliability/contradiction score
+- Diversity score: Conceptual richness (% of diverse connections)
+- Authenticated diversity: Support vs contradiction indicator (✅✓⚠❌)
+- Evidence samples: Quoted text from source documents
+- Image indicators: Visual evidence when available
+- Document sources: Where concepts originated
+
+RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
+
+Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**
 
@@ -41,7 +67,9 @@ Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Re
 
 ### concept
 
-Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.
+Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
+
+PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 
 **Parameters:**
 
@@ -60,10 +88,10 @@ Work with concepts: get details (ALL evidence + relationships), find related con
 - `to_id` (`string`) - Target concept ID (for exact mode)
 - `from_query` (`string`) - Starting phrase (for semantic mode, 2-3 words)
 - `to_query` (`string`) - Target phrase (for semantic mode, 2-3 words)
-- `max_hops` (`number`) - Max path length (default: 5)
-  - Default: `5`
-- `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5)
-  - Default: `0.5`
+- `max_hops` (`number`) - Max path length (default: 3). WARNING: Values >5 combined with threshold <0.75 can cause severe performance issues.
+  - Default: `3`
+- `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.75). PERFORMANCE GUIDE: 0.85+ = precise/fast, 0.75-0.84 = balanced, 0.60-0.74 = exploratory/SLOW, <0.60 = DANGEROUS (can hang database for minutes)
+  - Default: `0.75`
 
 ---
 

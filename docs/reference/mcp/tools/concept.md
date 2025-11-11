@@ -4,7 +4,9 @@
 
 ### concept
 
-Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.
+Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
+
+PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 
 **Parameters:**
 
@@ -23,9 +25,9 @@ Work with concepts: get details (ALL evidence + relationships), find related con
 - `to_id` (`string`) - Target concept ID (for exact mode)
 - `from_query` (`string`) - Starting phrase (for semantic mode, 2-3 words)
 - `to_query` (`string`) - Target phrase (for semantic mode, 2-3 words)
-- `max_hops` (`number`) - Max path length (default: 5)
-  - Default: `5`
-- `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5)
-  - Default: `0.5`
+- `max_hops` (`number`) - Max path length (default: 3). WARNING: Values >5 combined with threshold <0.75 can cause severe performance issues.
+  - Default: `3`
+- `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.75). PERFORMANCE GUIDE: 0.85+ = precise/fast, 0.75-0.84 = balanced, 0.60-0.74 = exploratory/SLOW, <0.60 = DANGEROUS (can hang database for minutes)
+  - Default: `0.75`
 
 ---

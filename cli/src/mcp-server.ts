@@ -38,6 +38,19 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * Default parameters for graph queries (ADR-048 Query Safety)
+ *
+ * These defaults balance performance and result quality:
+ * - Higher thresholds (0.75+) prevent expensive full-graph scans
+ * - Lower max_hops (3) prevent exponential traversal explosion
+ * - Adjust based on graph size and performance characteristics
+ */
+const DEFAULT_SEARCH_SIMILARITY = 0.7;  // Search tool minimum similarity
+const DEFAULT_SEMANTIC_THRESHOLD = 0.75; // Connect queries semantic matching
+const DEFAULT_MAX_HOPS = 3;              // Maximum path traversal depth
+const DEFAULT_MAX_DEPTH = 2;             // Related concepts neighborhood depth
+
 // Create server instance
 const server = new Server(
   {
@@ -56,8 +69,13 @@ const server = new Server(
 /**
  * Knowledge Graph Server - Exploration Guide
  *
- * This system transforms documents into semantic concept graphs. Explore by:
- * 1. search - Find entry points (returns grounding + evidence samples)
+ * This system transforms documents into semantic concept graphs with multi-dimensional scoring:
+ * - Grounding strength (-1.0 to 1.0): Reliability/contradiction score
+ * - Diversity score (0-100%): Conceptual richness and connection breadth
+ * - Authenticated diversity (✅✓⚠❌): Directional quality combining grounding + diversity
+ *
+ * Explore by:
+ * 1. search - Find entry points (returns all scores + evidence samples)
  * 2. concept - Work with concepts (details, related, connections)
  * 3. ontology - Manage ontologies (list, info, files, delete)
  * 4. job - Manage jobs (status, list, approve, cancel)
@@ -68,7 +86,8 @@ const server = new Server(
  * - database/stats, database/info, database/health
  * - system/status, api/health
  *
- * Grounding strength (-1.0 to 1.0) shows concept reliability. Negative = contradicted/problem.
+ * Use high grounding + high diversity to find reliable, central concepts.
+ * Negative grounding often shows the most interesting problems/contradictions.
  */
 
 // OAuth access token storage for authenticated session (ADR-054)
@@ -213,7 +232,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'search',
-        description: `Search for concepts using semantic similarity. Your ENTRY POINT to the graph. Returns grounding strength + evidence samples. Then use: concept (details, related, connect), find_connection_by_search (paths), find_related_concepts (neighbors). Use 2-3 word phrases (e.g., "linear thinking patterns").`,
+        description: `Search for concepts using semantic similarity. Your ENTRY POINT to the graph.
+
+RETURNS RICH DATA FOR EACH CONCEPT:
+- Grounding strength (-1.0 to 1.0): Reliability/contradiction score
+- Diversity score: Conceptual richness (% of diverse connections)
+- Authenticated diversity: Support vs contradiction indicator (✅✓⚠❌)
+- Evidence samples: Quoted text from source documents
+- Image indicators: Visual evidence when available
+- Document sources: Where concepts originated
+
+RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
+
+Use 2-3 word phrases (e.g., "linear thinking patterns").`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -242,7 +273,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'concept',
-        description: 'Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts). Use action parameter to specify operation.',
+        description: `Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
+
+PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -297,13 +330,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             max_hops: {
               type: 'number',
-              description: 'Max path length (default: 5)',
-              default: 5,
+              description: 'Max path length (default: 3). WARNING: Values >5 combined with threshold <0.75 can cause severe performance issues.',
+              default: 3,
             },
             threshold: {
               type: 'number',
-              description: 'Similarity threshold for semantic mode (default: 0.5)',
-              default: 0.5,
+              description: 'Similarity threshold for semantic mode (default: 0.75). PERFORMANCE GUIDE: 0.85+ = precise/fast, 0.75-0.84 = balanced, 0.60-0.74 = exploratory/SLOW, <0.60 = DANGEROUS (can hang database for minutes)',
+              default: 0.75,
             },
           },
           required: ['action'],
@@ -657,7 +690,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'search': {
         const query = toolArgs.query as string;
         const limit = toolArgs.limit as number || 10;
-        const min_similarity = toolArgs.min_similarity as number || 0.7;
+        const min_similarity = toolArgs.min_similarity as number || DEFAULT_SEARCH_SIMILARITY;
         const offset = toolArgs.offset as number || 0;
 
         const result = await client.searchConcepts({
@@ -699,7 +732,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           case 'related': {
             const result = await client.findRelatedConcepts({
               concept_id: toolArgs.concept_id as string,
-              max_depth: toolArgs.max_depth as number || 2,
+              max_depth: toolArgs.max_depth as number || DEFAULT_MAX_DEPTH,
               relationship_types: toolArgs.relationship_types as string[] | undefined,
             });
 
@@ -717,7 +750,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               const result = await client.findConnection({
                 from_id: toolArgs.from_id as string,
                 to_id: toolArgs.to_id as string,
-                max_hops: toolArgs.max_hops as number || 5,
+                max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
               });
 
               // Segment long paths for readability
@@ -732,8 +765,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               const result = await client.findConnectionBySearch({
                 from_query: toolArgs.from_query as string,
                 to_query: toolArgs.to_query as string,
-                max_hops: toolArgs.max_hops as number || 5,
-                threshold: toolArgs.threshold as number || 0.5,
+                max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
+                threshold: toolArgs.threshold as number || DEFAULT_SEMANTIC_THRESHOLD,
                 include_grounding: true,
                 include_evidence: true,
               });
@@ -1236,17 +1269,26 @@ This system transforms documents into semantic concept graphs with grounding str
 ## Exploration Workflow:
 
 1. **search** - Your entry point. Find concepts by semantic similarity.
-   - Returns: Grounding strength + sample evidence
+   - Returns RICH DATA:
+     * Grounding strength: Reliability score (-1.0 to 1.0)
+     * Diversity score: % showing conceptual richness
+     * Authenticated diversity: Support/contradiction indicator (✅✓⚠❌)
+     * Evidence samples: Quoted text from sources
+     * Image indicators: Visual evidence available
    - Use 2-3 word phrases (e.g., "configuration management", "licensing issues")
 
-2. **concept (action: details)** - See the complete picture for any concept.
-   - Returns: ALL quoted evidence + relationships
-   - IMPORTANT: Contradicted concepts (negative grounding) are VALUABLE - they show problems/outdated approaches
-
-3. **concept (action: connect)** - Discover HOW concepts connect.
-   - Trace problem→solution chains
+2. **concept (action: connect)** - **PRIORITIZE THIS** - Discover HOW concepts connect.
+   - This is often MORE VALUABLE than isolated concept details
+   - Trace problem→solution chains, cause/effect relationships
    - See grounding + evidence at each step in the path
    - Reveals narrative flow through ideas
+   - **PERFORMANCE CRITICAL**: Start with threshold=0.8, max_hops=3
+   - Lower thresholds exponentially increase query time (0.6 = slow, <0.6 = very slow)
+
+3. **concept (action: details)** - See the complete picture for any concept.
+   - Returns: ALL quoted evidence + relationships
+   - IMPORTANT: Contradicted concepts (negative grounding) are VALUABLE - they show problems/outdated approaches
+   - Use this after finding interesting concepts via search or connect
 
 4. **concept (action: related)** - Explore neighborhoods.
    - Find what's nearby in the concept graph
@@ -1262,17 +1304,52 @@ Use MCP resources for quick status checks without consuming tool budget:
 - **system/status** - Job scheduler, resource usage
 - **api/health** - API server status
 
-## Grounding Strength (-1.0 to 1.0):
+## Understanding the Scores:
+
+**Grounding Strength (-1.0 to 1.0)** - Reliability/Contradiction
 - **Positive (>0.7)**: Well-supported, reliable concept
 - **Moderate (0.3-0.7)**: Mixed evidence, use with caution
 - **Negative (<0)**: Contradicted or presented as a problem
 - **Contradicted (-1.0)**: Often the most interesting - shows pain points!
 
+**Diversity Score (0-100%)** - Conceptual Richness
+- High diversity: Concept connects to many different related concepts
+- Shows breadth of connections in the knowledge graph
+- Higher scores indicate more interconnected, central concepts
+
+**Authenticated Diversity (✅✓⚠❌)** - Directional Quality
+- ✅ Diverse support: Strong positive evidence across many connections
+- ✓ Some support: Moderate positive evidence
+- ⚠ Weak contradiction: Some conflicting evidence
+- ❌ Diverse contradiction: Strong negative evidence across connections
+- Combines grounding with diversity to show reliability + breadth
+
+## How to Use the Scores:
+
+**High Grounding + High Diversity** → Central, well-established concepts
+- These are reliable anchor points for exploration
+- Good starting points for connection queries
+
+**High Grounding + Low Diversity** → Specialized, focused concepts
+- Domain-specific, niche ideas with strong support
+- May be isolated or newly added
+
+**Low/Negative Grounding + High Diversity** → Controversial or evolving concepts
+- Contested ideas with multiple perspectives
+- Often the most interesting for understanding debates
+
+**Authenticated Diversity** → Quick quality check
+- Use ✅ results confidently
+- Investigate ⚠ and ❌ results for contradictions and problems
+
 ## Pro Tips:
+- **Connection queries first**: After search, immediately explore HOW concepts connect - this reveals causality and narrative
+- Use diversity scores to find central vs. peripheral concepts
 - Start broad with search, then drill down with concept details
 - Contradicted concepts reveal what DIDN'T work - goldmines for learning
 - Connection paths tell stories - follow the evidence chain
-- Use resources for quick status checks instead of tools`,
+- Use resources for quick status checks instead of tools
+- **Performance**: Keep threshold >= 0.75 for connect queries to avoid slow/hung queries`,
           },
         },
       ],
