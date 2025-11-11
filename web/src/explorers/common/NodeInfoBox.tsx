@@ -155,7 +155,7 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
               onDismiss();
             }}
           >
-            <div className="font-semibold text-card-foreground dark:text-gray-100 text-base">
+            <div className="font-semibold text-card-foreground text-base">
               {info.label}
             </div>
             <div className="text-xs text-muted-foreground dark:text-gray-400 mt-1">
@@ -191,11 +191,11 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground dark:text-gray-400">Ontology:</span>
-                    <span className="font-medium text-card-foreground dark:text-gray-100">{info.group}</span>
+                    <span className="font-medium text-card-foreground">{info.group}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground dark:text-gray-400">Connections:</span>
-                    <span className="font-medium text-card-foreground dark:text-gray-100">{info.degree}</span>
+                    <span className="font-medium text-card-foreground">{info.degree}</span>
                   </div>
                   {detailedData?.grounding_strength !== undefined && detailedData?.grounding_strength !== null && (() => {
                     const grounding = formatGrounding(detailedData.grounding_strength);
@@ -342,36 +342,36 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
                       <div className="space-y-1">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground dark:text-gray-400">Filename:</span>
-                          <span className="font-medium text-card-foreground dark:text-gray-100">{detailedData.provenance.filename}</span>
+                          <span className="font-medium text-card-foreground">{detailedData.provenance.filename}</span>
                         </div>
                         {detailedData.provenance.source_type && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground dark:text-gray-400">Source Type:</span>
-                            <span className="font-medium text-card-foreground dark:text-gray-100">{detailedData.provenance.source_type}</span>
+                            <span className="font-medium text-card-foreground">{detailedData.provenance.source_type}</span>
                           </div>
                         )}
                         {detailedData.provenance.source_path && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground dark:text-gray-400">Path:</span>
-                            <span className="font-mono text-card-foreground dark:text-gray-100 text-xs break-all">{detailedData.provenance.source_path}</span>
+                            <span className="font-mono text-card-foreground text-xs break-all">{detailedData.provenance.source_path}</span>
                           </div>
                         )}
                         {detailedData.provenance.hostname && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground dark:text-gray-400">Hostname:</span>
-                            <span className="font-medium text-card-foreground dark:text-gray-100">{detailedData.provenance.hostname}</span>
+                            <span className="font-medium text-card-foreground">{detailedData.provenance.hostname}</span>
                           </div>
                         )}
                         {detailedData.provenance.ingested_by && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground dark:text-gray-400">Ingested By:</span>
-                            <span className="font-medium text-card-foreground dark:text-gray-100">{detailedData.provenance.ingested_by}</span>
+                            <span className="font-medium text-card-foreground">{detailedData.provenance.ingested_by}</span>
                           </div>
                         )}
                         {detailedData.provenance.created_at && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground dark:text-gray-400">Ingested:</span>
-                            <span className="font-medium text-card-foreground dark:text-gray-100">
+                            <span className="font-medium text-card-foreground">
                               {new Date(detailedData.provenance.created_at).toLocaleString()}
                             </span>
                           </div>
@@ -379,13 +379,13 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
                         {detailedData.provenance.job_id && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground dark:text-gray-400">Job ID:</span>
-                            <span className="font-mono text-card-foreground dark:text-gray-100">{detailedData.provenance.job_id.substring(0, 12)}...</span>
+                            <span className="font-mono text-card-foreground">{detailedData.provenance.job_id.substring(0, 12)}...</span>
                           </div>
                         )}
                         {detailedData.provenance.source_count && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground dark:text-gray-400">Source Nodes:</span>
-                            <span className="font-medium text-card-foreground dark:text-gray-100">{detailedData.provenance.source_count}</span>
+                            <span className="font-medium text-card-foreground">{detailedData.provenance.source_count}</span>
                           </div>
                         )}
                       </div>

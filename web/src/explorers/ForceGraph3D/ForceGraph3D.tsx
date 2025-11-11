@@ -35,6 +35,7 @@ import {
   LABEL_STYLE_3D,
   ColorTransform,
   createTextCanvas,
+  explorerTheme,
 } from '../common';
 import { SLIDER_RANGES } from './types';
 
@@ -56,6 +57,15 @@ export const ForceGraph3D: React.FC<
   // Store camera-facing rotation angles for each edge (rotation around edge axis)
   // Key: linkKey (sourceId->targetId-type), Value: angle in radians
   const labelCameraAngles = useRef<Map<string, number>>(new Map());
+
+  // Clear texture cache when theme changes to prevent memory leak
+  useEffect(() => {
+    // Dispose of all cached textures to free GPU memory
+    edgeLabelTextureCache.current.forEach(texture => {
+      texture.dispose();
+    });
+    edgeLabelTextureCache.current.clear();
+  }, [theme]);
 
   // Unified context menu state (handles both node and background clicks)
   const [contextMenu, setContextMenu] = useState<{
@@ -450,16 +460,8 @@ export const ForceGraph3D: React.FC<
 
     const scene = fgRef.current.scene();
 
-    // Theme-aware grid colors - subtle colors close to background
-    const gridColors = theme === 'light'
-      ? {
-          centerLine: 0xa0a8b0,  // Slightly darker than light background (#bcc1c9)
-          gridLines: 0xb0b5bd    // Very close to light background
-        }
-      : {
-          centerLine: 0x2a2a3e,  // Slightly lighter than dark background (#1a1a2e)
-          gridLines: 0x20202e    // Very close to dark background
-        };
+    // Theme-aware grid colors from centralized config
+    const gridColors = explorerTheme.grid3D[theme];
 
     // Create grid helper - pure geometry
     const grid = new THREE.GridHelper(
@@ -1335,7 +1337,7 @@ export const ForceGraph3D: React.FC<
         width={dimensions.width}
         height={dimensions.height}
         graphData={data}
-        backgroundColor={theme === 'light' ? '#bcc1c9' : '#1a1a2e'}
+        backgroundColor={explorerTheme.canvas3D[theme]}
 
         // Node appearance
         // NOTE: nodeLabel shows HTML tooltips, not 3D geometry, so nodeLabelSize setting

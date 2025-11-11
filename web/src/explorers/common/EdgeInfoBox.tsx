@@ -56,24 +56,24 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
           }}
         >
           <div className="space-y-2 text-sm">
-            <div className="font-semibold text-card-foreground dark:text-gray-100 border-b border-border dark:border-gray-700 pb-2">
+            <div className="font-semibold text-card-foreground border-b border-border dark:border-gray-700 pb-2">
               Edge Information
             </div>
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-muted-foreground dark:text-gray-400">Type:</span>
-                <span className="font-medium text-card-foreground dark:text-gray-100">{info.type}</span>
+                <span className="font-medium text-card-foreground">{info.type}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground dark:text-gray-400">Confidence:</span>
-                <span className="font-medium text-card-foreground dark:text-gray-100">
+                <span className="font-medium text-card-foreground">
                   {(info.confidence * 100).toFixed(1)}%
                 </span>
               </div>
               {info.category && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground dark:text-gray-400">Category:</span>
-                  <span className="font-medium text-card-foreground dark:text-gray-100">{info.category}</span>
+                  <span className="font-medium text-card-foreground">{info.category}</span>
                 </div>
               )}
               {/* ADR-051: Provenance metadata section */}
@@ -85,19 +85,19 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   {info.source && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground dark:text-gray-400 text-xs">Source:</span>
-                      <span className="font-medium text-card-foreground dark:text-gray-100 text-xs">{info.source}</span>
+                      <span className="font-medium text-card-foreground text-xs">{info.source}</span>
                     </div>
                   )}
                   {info.created_by && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground dark:text-gray-400 text-xs">Created By:</span>
-                      <span className="font-medium text-card-foreground dark:text-gray-100 text-xs">{info.created_by}</span>
+                      <span className="font-medium text-card-foreground text-xs">{info.created_by}</span>
                     </div>
                   )}
                   {info.created_at && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground dark:text-gray-400 text-xs">Created:</span>
-                      <span className="font-medium text-card-foreground dark:text-gray-100 text-xs">
+                      <span className="font-medium text-card-foreground text-xs">
                         {new Date(info.created_at).toLocaleString()}
                       </span>
                     </div>
@@ -105,7 +105,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   {info.job_id && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground dark:text-gray-400 text-xs">Job ID:</span>
-                      <span className="font-mono text-card-foreground dark:text-gray-100 text-xs">
+                      <span className="font-mono text-card-foreground text-xs">
                         {info.job_id.substring(0, 8)}...
                       </span>
                     </div>
@@ -113,7 +113,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   {info.document_id && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground dark:text-gray-400 text-xs">Document:</span>
-                      <span className="font-mono text-card-foreground dark:text-gray-100 text-xs">
+                      <span className="font-mono text-card-foreground text-xs">
                         {info.document_id.substring(0, 8)}...
                       </span>
                     </div>

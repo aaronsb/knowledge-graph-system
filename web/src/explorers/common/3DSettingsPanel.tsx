@@ -64,7 +64,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
         <div>
           <button
             onClick={() => toggleSection('camera')}
-            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Camera Controls</span>
             {expandedSections.has('camera') ? (
@@ -101,7 +101,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
                   onChange={(e) => updateCamera('autoLevel', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Auto-Level on Release</span>
+                <span className="text-card-foreground">Auto-Level on Release</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -111,7 +111,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
                   onChange={(e) => updateCamera('clampToFloor', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Keep Camera Above Floor</span>
+                <span className="text-card-foreground">Keep Camera Above Floor</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -121,7 +121,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
                   onChange={(e) => updateCamera('orientLabels', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Orient Labels to Camera</span>
+                <span className="text-card-foreground">Orient Labels to Camera</span>
               </label>
 
               <div className="mt-3 p-2 bg-muted/50 dark:bg-gray-700/50 rounded text-xs text-foreground dark:text-gray-300">
