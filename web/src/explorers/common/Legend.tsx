@@ -62,7 +62,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: ontologyColors.get(ontology) || '#6b7280' }}
               />
-              <span className="text-card-foreground dark:text-gray-200 truncate" title={ontology}>
+              <span className="text-card-foreground truncate" title={ontology}>
                 {ontology}
               </span>
             </div>
@@ -115,7 +115,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
         <div className="border-b border-border dark:border-gray-700 pb-3">
           <button
             onClick={() => toggleSection('nodeColors')}
-            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Node Colors</span>
             {expandedSections.has('nodeColors') ? (
@@ -133,7 +133,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
         <div>
           <button
             onClick={() => toggleSection('edgeColors')}
-            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Edge Categories</span>
             {expandedSections.has('edgeColors') ? (

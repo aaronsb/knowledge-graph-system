@@ -45,8 +45,26 @@ export const explorerTheme = {
 
   // Canvas background - theme-aware gradients
   canvas: {
-    light: 'bg-gradient-to-br from-gray-100 to-gray-300',
+    light: 'bg-gradient-to-br from-gray-300 to-gray-400',
     dark: 'bg-gradient-to-br from-gray-900 to-black',
+  },
+
+  // 3D Canvas background colors (Three.js backgroundColor prop)
+  canvas3D: {
+    light: '#bcc1c9',
+    dark: '#1a1a2e',
+  },
+
+  // 3D Grid colors (Three.js GridHelper colors)
+  grid3D: {
+    light: {
+      centerLine: 0xa0a8b0,  // Slightly darker than light background
+      gridLines: 0xb0b5bd,   // Very close to light background
+    },
+    dark: {
+      centerLine: 0x2a2a3e,  // Slightly lighter than dark background
+      gridLines: 0x20202e,   // Very close to dark background
+    },
   },
 
   // Animation durations (ms)

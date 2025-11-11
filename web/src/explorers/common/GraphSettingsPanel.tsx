@@ -110,7 +110,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
         <div className="border-b border-border dark:border-gray-700 pb-3">
           <button
             onClick={() => toggleSection('physics')}
-            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Physics</span>
             {expandedSections.has('physics') ? (
@@ -128,7 +128,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updatePhysics('enabled', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Enable Physics</span>
+                <span className="text-card-foreground">Enable Physics</span>
               </label>
 
               {settings.physics.enabled && (
@@ -187,7 +187,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
         <div className="border-b border-border dark:border-gray-700 pb-3">
           <button
             onClick={() => toggleSection('visual')}
-            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Visual</span>
             {expandedSections.has('visual') ? (
@@ -203,7 +203,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                 <select
                   value={settings.visual.nodeColorBy}
                   onChange={(e) => updateVisual('nodeColorBy', e.target.value)}
-                  className="w-full rounded border border-border dark:border-gray-600 bg-muted dark:bg-gray-700 text-card-foreground dark:text-gray-200 p-1 text-xs"
+                  className="w-full rounded border border-border dark:border-gray-600 bg-muted dark:bg-gray-700 text-card-foreground p-1 text-xs"
                 >
                   <option value="ontology">Ontology</option>
                   <option value="degree">Degree (Connections)</option>
@@ -216,7 +216,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                 <select
                   value={settings.visual.edgeColorBy}
                   onChange={(e) => updateVisual('edgeColorBy', e.target.value)}
-                  className="w-full rounded border border-border dark:border-gray-600 bg-muted dark:bg-gray-700 text-card-foreground dark:text-gray-200 p-1 text-xs"
+                  className="w-full rounded border border-border dark:border-gray-600 bg-muted dark:bg-gray-700 text-card-foreground p-1 text-xs"
                 >
                   <option value="category">Category</option>
                   <option value="confidence">Confidence</option>
@@ -231,7 +231,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showLabels', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Show Labels</span>
+                <span className="text-card-foreground">Show Labels</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -241,7 +241,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showArrows', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Show Arrows</span>
+                <span className="text-card-foreground">Show Arrows</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -251,7 +251,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showGrid', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Show Grid</span>
+                <span className="text-card-foreground">Show Grid</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -261,7 +261,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateVisual('showShadows', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Shadows</span>
+                <span className="text-card-foreground">Shadows</span>
               </label>
 
               <div>
@@ -331,7 +331,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
         <div>
           <button
             onClick={() => toggleSection('interaction')}
-            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground dark:hover:text-gray-100 transition-colors"
           >
             <span>Interaction</span>
             {expandedSections.has('interaction') ? (
@@ -349,7 +349,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('enableDrag', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Enable Drag</span>
+                <span className="text-card-foreground">Enable Drag</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -359,7 +359,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('enableZoom', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Enable Zoom</span>
+                <span className="text-card-foreground">Enable Zoom</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -369,7 +369,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('enablePan', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Enable Pan</span>
+                <span className="text-card-foreground">Enable Pan</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -379,7 +379,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('highlightNeighbors', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Highlight Neighbors</span>
+                <span className="text-card-foreground">Highlight Neighbors</span>
               </label>
 
               <label className="flex items-center space-x-2 text-xs">
@@ -389,7 +389,7 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                   onChange={(e) => updateInteraction('showOriginNode', e.target.checked)}
                   className="rounded"
                 />
-                <span className="text-card-foreground dark:text-gray-200">Show Origin</span>
+                <span className="text-card-foreground">Show Origin</span>
               </label>
             </div>
           )}
