@@ -86,11 +86,45 @@ echo ""
 
 cd "$DOCKER_DIR"
 
-# Prepare docker-compose command with optional dev override
+# Detect platform and GPU availability
+detect_platform() {
+    local USE_MAC_OVERRIDE=false
+
+    # Check if running on Mac
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo -e "${YELLOW}⚠  Mac platform detected (no NVIDIA GPU support)${NC}"
+        USE_MAC_OVERRIDE=true
+    # Check if NVIDIA GPU available on Linux
+    elif [[ "$OSTYPE" == "linux"* ]]; then
+        if ! command -v nvidia-smi &> /dev/null; then
+            echo -e "${YELLOW}⚠  NVIDIA GPU not detected (nvidia-smi not available)${NC}"
+            USE_MAC_OVERRIDE=true
+        elif ! nvidia-smi &> /dev/null; then
+            echo -e "${YELLOW}⚠  NVIDIA GPU not available${NC}"
+            USE_MAC_OVERRIDE=true
+        else
+            echo -e "${GREEN}✓ NVIDIA GPU detected${NC}"
+        fi
+    fi
+
+    echo "$USE_MAC_OVERRIDE"
+}
+
+# Prepare docker-compose command with optional dev and platform overrides
 COMPOSE_FILES="-f docker-compose.yml"
+
+# Add dev mode override if requested
 if [ "$DEV_MODE" = true ]; then
     COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.dev.yml"
 fi
+
+# Add Mac/non-GPU override if needed
+USE_MAC_OVERRIDE=$(detect_platform)
+if [ "$USE_MAC_OVERRIDE" = true ]; then
+    COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.override.mac.yml"
+    echo -e "${BLUE}→ Using CPU-only mode for embeddings${NC}"
+fi
+echo ""
 
 # Start API
 echo -e "${BLUE}→ Starting API server...${NC}"
