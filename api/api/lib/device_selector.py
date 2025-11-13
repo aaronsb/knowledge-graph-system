@@ -57,8 +57,15 @@ def get_best_device(prefer_cpu: bool = False) -> DeviceType:
         # MPS must be checked BEFORE CUDA because torch.cuda.is_available()
         # may return false positives on some ARM systems
         if torch.backends.mps.is_available():
-            logger.info("🍎 MPS (Metal Performance Shaders) detected - Using Apple GPU")
-            return "mps"
+            # Verify MPS actually works with a small tensor operation
+            try:
+                test_tensor = torch.zeros(1, device="mps")
+                test_tensor.cpu()  # Force synchronization
+                logger.info("🍎 MPS (Metal Performance Shaders) detected and verified - Using Apple GPU")
+                return "mps"
+            except Exception as e:
+                logger.warning(f"⚠️  MPS available but not usable: {e} - Falling back to next available device")
+                # Continue to CUDA check, then CPU
 
         # Check for CUDA (NVIDIA GPUs)
         if torch.cuda.is_available():
@@ -170,11 +177,45 @@ def check_device_health() -> dict:
                     "Embeddings may be slow or fail. Consider using CPU mode."
                 )
 
+        elif device == "mps":
+            # Check MPS functionality with a small operation
+            try:
+                test_tensor = torch.randn(10, 10, device="mps")
+                result = test_tensor @ test_tensor.T
+                result.cpu()  # Force synchronization
+            except Exception as e:
+                warnings.append(
+                    f"MPS device selected but operations failing: {e}. "
+                    "Consider forcing CPU mode or updating macOS/PyTorch."
+                )
+
+            # Check macOS version (MPS requires macOS 12.3+)
+            try:
+                import platform
+                mac_version = platform.mac_ver()[0]
+                if mac_version:
+                    version_parts = tuple(map(int, mac_version.split('.')[:2]))
+                    if version_parts < (12, 3):
+                        warnings.append(
+                            f"macOS {mac_version} may have limited MPS support. "
+                            "Recommended: macOS 12.3 or later for best performance."
+                        )
+            except Exception as version_check_error:
+                # Don't fail health check if version detection fails
+                pass
+
         elif device == "cpu":
             # Check if CUDA was expected but unavailable
             if torch.cuda.is_available():
                 warnings.append(
                     "CUDA is available but not being used. "
+                    "Check device selection logic."
+                )
+
+            # Check if MPS was expected but unavailable
+            if torch.backends.mps.is_available():
+                warnings.append(
+                    "MPS is available but not being used. "
                     "Check device selection logic."
                 )
 
