@@ -1,0 +1,22 @@
+# ============================================================================
+# Knowledge Graph System - Mac Platform Override
+# ============================================================================
+# This override removes NVIDIA GPU configuration for Mac systems.
+# Mac systems (especially Apple Silicon M1/M2/M3) don't support nvidia runtime.
+#
+# Works with both standard and dev modes:
+#   Standard: docker-compose -f docker-compose.yml -f docker-compose.override.mac.yml up -d
+#   Dev mode: docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.override.mac.yml up -d
+#
+# Automatic detection: The start-infra.sh and start-app.sh scripts will auto-detect
+# Mac platform and apply this override automatically.
+# ============================================================================
+
+services:
+  api:
+    # Remove NVIDIA GPU configuration for Mac
+    # The API embedding code will automatically detect and use the best available device:
+    #   - MPS (Metal Performance Shaders) on Apple Silicon M1/M2/M3
+    #   - CPU fallback if MPS unavailable
+    # Performance: CPU embeddings add ~5-10ms per concept vs ~1-2ms on CUDA GPU
+    deploy: {}

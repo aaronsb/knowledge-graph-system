@@ -13,6 +13,14 @@ This guide uses the **operator architecture (ADR-061)** - the official container
 - OpenAI API key (or use local embeddings with Ollama)
 - (Optional) Node.js + npm for kg CLI tool
 
+**Supported Platforms:**
+- ✅ **Linux with NVIDIA GPU** - Full GPU acceleration (CUDA)
+- ✅ **Linux without GPU** - CPU-based embeddings
+- ✅ **Mac (Intel/Apple Silicon)** - MPS acceleration on M1/M2/M3, CPU on Intel
+- ✅ **Windows with WSL2** - Same as Linux
+
+The system automatically detects your platform and configures GPU/CPU accordingly.
+
 ## Overview
 
 The system uses 5 core containers:
@@ -92,6 +100,8 @@ Mode: Development (weak passwords allowed)
 # - Initializes Garage (node role, bucket, API keys, permissions)
 # - Starts operator container (for platform configuration)
 ```
+
+**Note:** Infrastructure containers don't require GPU access - they work identically on all platforms.
 
 
 **Expected output:**
@@ -253,6 +263,15 @@ Example:
 ✅ Activated: [2] local / nomic-ai/nomic-embed-text-v1.5 (768 dims, float16) (cpu)
 ```
 
+**Local Embeddings Device Selection (Automatic):**
+
+When you activate local embeddings (profile 2), the system automatically detects the best available device at API startup:
+- **Apple Silicon Macs (M1/M2/M3):** Uses MPS (Metal Performance Shaders) for GPU acceleration
+- **Linux with NVIDIA GPU:** Uses CUDA for GPU acceleration (~1-2ms per embedding)
+- **No GPU available:** Falls back to CPU (~5-10ms per embedding)
+
+**No manual configuration needed** - device selection happens automatically based on your hardware.
+
 ## Step 6: Store OpenAI API Key (Encrypted)
 
 ```bash
@@ -285,9 +304,25 @@ docker exec kg-operator python /workspace/operator/configure.py api-key openai -
 ./operator/lib/start-app.sh
 
 # What this does:
+# - Detects your platform (Mac/Linux, GPU availability)
 # - Checks infrastructure is running
-# - Starts API server (waits for health check)
+# - Starts API server with appropriate GPU configuration
 # - Starts web visualization app
+```
+
+**Platform Detection (Automatic):**
+
+The startup script automatically detects your platform and applies the correct configuration:
+
+- **Mac (Intel/Apple Silicon):** Removes NVIDIA GPU requirements, embeddings use MPS or CPU
+- **Linux with NVIDIA GPU:** Enables GPU acceleration for embeddings
+- **Linux without GPU:** Uses CPU-only mode
+
+You'll see one of these messages:
+```
+✓ NVIDIA GPU detected
+🍎 Mac platform detected (no NVIDIA GPU support)
+→ Using CPU-only mode for embeddings
 ```
 
 **Expected output:**
@@ -336,10 +371,11 @@ Your Knowledge Graph platform is now fully configured and running with:
 - ✅ Clean infrastructure secrets (not baked into images)
 - ✅ Admin user configured
 - ✅ OpenAI extraction provider
-- ✅ Local Nomic embeddings
+- ✅ Local Nomic embeddings (with automatic GPU/CPU selection)
 - ✅ Encrypted API key storage
 - ✅ Garage S3 storage initialized
 - ✅ All services running and healthy
+- ✅ Cross-platform compatibility (Mac, Linux, Windows/WSL2)
 
 ## Next Steps
 

@@ -44,19 +44,19 @@ class VisualEmbeddingGenerator:
 
         Args:
             model_name: Hugging Face model name (default: nomic-ai/nomic-embed-vision-v1.5)
-            device: Device to use ('cuda', 'cpu', or None for auto-detect)
+            device: Device to use ('mps', 'cuda', 'cpu', or None for auto-detect)
         """
         from transformers import AutoModel, AutoProcessor
-        import torch
+        from .device_selector import get_best_device, log_device_selection
 
         self.model_name = model_name
 
         # Auto-detect device if not specified
         if device is None:
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            device = get_best_device()
         self.device = device
 
-        logger.info(f"Loading Nomic Vision model on {self.device}: {model_name}")
+        log_device_selection(model_name)
 
         # TODO: Pin specific model version/revision for consistency
         # Example: model_name = "nomic-ai/nomic-embed-vision-v1.5@abc123"
@@ -68,7 +68,8 @@ class VisualEmbeddingGenerator:
             try:
                 logger.info(f"   Attempting to load from local cache...")
 
-                if self.device == 'cuda':
+                if self.device in ('cuda', 'mps'):
+                    # GPU devices (CUDA/MPS) use device_map for optimal placement
                     self.model = AutoModel.from_pretrained(
                         model_name,
                         trust_remote_code=True,
@@ -99,7 +100,8 @@ class VisualEmbeddingGenerator:
                 logger.warning(f"   This is a one-time download (~500MB-1GB)")
                 logger.warning(f"   Model will be cached in persistent volume for future startups")
 
-                if self.device == 'cuda':
+                if self.device in ('cuda', 'mps'):
+                    # GPU devices (CUDA/MPS) use device_map for optimal placement
                     self.model = AutoModel.from_pretrained(
                         model_name,
                         trust_remote_code=True,

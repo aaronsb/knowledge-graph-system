@@ -55,13 +55,26 @@ class EmbeddingModelManager:
 
         Uses local cache-first strategy to avoid HuggingFace network checks on every startup.
         Falls back to downloading if model not cached.
+
+        Device selection:
+        - Automatically detects MPS (Apple Silicon), CUDA (NVIDIA), or CPU
+        - MPS: Apple M1/M2/M3 and other ARM platforms with Metal support
+        - CUDA: NVIDIA GPUs on Linux/Windows
+        - CPU: Fallback when no GPU available
         """
         if self.model is not None:
             logger.warning(f"Model {self.model_name} already loaded, skipping")
             return
 
+        # Detect best available device
+        from .device_selector import get_best_device, log_device_selection
+
+        device = get_best_device()
+        log_device_selection(self.model_name)
+
         logger.info(f"📥 Loading embedding model: {self.model_name}")
         logger.info(f"   Precision: {self.precision}")
+        logger.info(f"   Device: {device}")
         logger.info(f"   This may take 1-2 seconds...")
 
         try:
@@ -78,6 +91,7 @@ class EmbeddingModelManager:
                 self.model = SentenceTransformer(
                     self.model_name,
                     trust_remote_code=True,
+                    device=device,  # Use detected device (mps/cuda/cpu)
                     local_files_only=True  # Try cache first
                 )
                 logger.info(f"   ✓ Loaded from local cache")
@@ -90,7 +104,8 @@ class EmbeddingModelManager:
 
                 self.model = SentenceTransformer(
                     self.model_name,
-                    trust_remote_code=True
+                    trust_remote_code=True,
+                    device=device  # Use detected device (mps/cuda/cpu)
                     # local_files_only=False (default) - will download
                 )
                 logger.info(f"   ✓ Downloaded and cached to persistent volume")
@@ -99,6 +114,7 @@ class EmbeddingModelManager:
 
             logger.info(f"✅ Embedding model loaded: {self.model_name}")
             logger.info(f"   Dimensions: {self.dimensions}")
+            logger.info(f"   Device: {device}")
             logger.info(f"   Max sequence length: {self.model.max_seq_length}")
 
         except Exception as e:
