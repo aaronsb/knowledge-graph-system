@@ -5754,6 +5754,12 @@
 <li>OpenAI API key (or use local embeddings with Ollama)</li>
 <li>(Optional) Node.js + npm for kg CLI tool</li>
 </ul>
+<p><strong>Supported Platforms:</strong>
+- ✅ <strong>Linux with NVIDIA GPU</strong> - Full GPU acceleration (CUDA)
+- ✅ <strong>Linux without GPU</strong> - CPU-based embeddings
+- ✅ <strong>Mac (Intel/Apple Silicon)</strong> - MPS acceleration on M1/M2/M3, CPU on Intel
+- ✅ <strong>Windows with WSL2</strong> - Same as Linux</p>
+<p>The system automatically detects your platform and configures GPU/CPU accordingly.</p>
 <h2 id="overview">Overview</h2>
 <p>The system uses 5 core containers:
 1. <strong>PostgreSQL + Apache AGE</strong> - Graph database
@@ -5819,6 +5825,7 @@
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># - Initializes Garage (node role, bucket, API keys, permissions)</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># - Starts operator container (for platform configuration)</span>
 </code></pre></div>
+<p><strong>Note:</strong> Infrastructure containers don't require GPU access - they work identically on all platforms.</p>
 <p><strong>Expected output:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>→ Starting postgres and garage...
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>[+] Running 7/7
@@ -5957,6 +5964,12 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>📝 Current: [1] openai / text-embedding-3-small
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>✅ Activated: [2] local / nomic-ai/nomic-embed-text-v1.5 (768 dims, float16) (cpu)
 </code></pre></div></p>
+<p><strong>Local Embeddings Device Selection (Automatic):</strong></p>
+<p>When you activate local embeddings (profile 2), the system automatically detects the best available device at API startup:
+- <strong>Apple Silicon Macs (M1/M2/M3):</strong> Uses MPS (Metal Performance Shaders) for GPU acceleration
+- <strong>Linux with NVIDIA GPU:</strong> Uses CUDA for GPU acceleration (~1-2ms per embedding)
+- <strong>No GPU available:</strong> Falls back to CPU (~5-10ms per embedding)</p>
+<p><strong>No manual configuration needed</strong> - device selection happens automatically based on your hardware.</p>
 <h2 id="step-6-store-openai-api-key-encrypted">Step 6: Store OpenAI API Key (Encrypted)</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Store encrypted OpenAI API key (interactive)</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/workspace/operator/configure.py<span class="w"> </span>api-key<span class="w"> </span>openai
@@ -5979,93 +5992,107 @@
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>./operator/lib/start-app.sh
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># What this does:</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># - Checks infrastructure is running</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># - Starts API server (waits for health check)</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># - Starts web visualization app</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># - Detects your platform (Mac/Linux, GPU availability)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># - Checks infrastructure is running</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># - Starts API server with appropriate GPU configuration</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># - Starts web visualization app</span>
 </code></pre></div>
+<p><strong>Platform Detection (Automatic):</strong></p>
+<p>The startup script automatically detects your platform and applies the correct configuration:</p>
+<ul>
+<li><strong>Mac (Intel/Apple Silicon):</strong> Removes NVIDIA GPU requirements, embeddings use MPS or CPU</li>
+<li><strong>Linux with NVIDIA GPU:</strong> Enables GPU acceleration for embeddings</li>
+<li><strong>Linux without GPU:</strong> Uses CPU-only mode</li>
+</ul>
+<p>You'll see one of these messages:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>✓ NVIDIA GPU detected
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>🍎 Mac platform detected (no NVIDIA GPU support)
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>→ Using CPU-only mode for embeddings
+</code></pre></div></p>
 <p><strong>Expected output:</strong>
 - ✓ API server is ready
 - ✓ Web app starting</p>
 <p><strong>Verify:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.Names}}\t{{.Status}}&quot;</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># Should show all 5 containers healthy:</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># - knowledge-graph-postgres (healthy)</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># - knowledge-graph-garage (healthy)</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># - kg-api-dev (healthy)</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># - kg-web-dev (healthy)</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># - kg-operator (running)</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1"># Test API</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>curl<span class="w"> </span>http://localhost:8000/health
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="c1"># Should return: {&quot;status&quot;:&quot;healthy&quot;}</span>
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1"># Test web app</span>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>curl<span class="w"> </span>http://localhost:3000
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="c1"># Should return HTML</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.Names}}\t{{.Status}}&quot;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="c1"># Should show all 5 containers healthy:</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1"># - knowledge-graph-postgres (healthy)</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># - knowledge-graph-garage (healthy)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="c1"># - kg-api-dev (healthy)</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1"># - kg-web-dev (healthy)</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># - kg-operator (running)</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="c1"># Test API</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>curl<span class="w"> </span>http://localhost:8000/health
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="c1"># Should return: {&quot;status&quot;:&quot;healthy&quot;}</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="c1"># Test web app</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>curl<span class="w"> </span>http://localhost:3000
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="c1"># Should return HTML</span>
 </code></pre></div></p>
 <h2 id="step-8-check-configuration-status">Step 8: Check Configuration Status</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># View all configuration</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/workspace/operator/configure.py<span class="w"> </span>status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># View all configuration</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/workspace/operator/configure.py<span class="w"> </span>status
 </code></pre></div>
 <p><strong>Expected output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>📊 Platform Configuration Status
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>Admin users: 1
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>AI Extraction: openai / gpt-4o
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>Embedding: local / nomic-ai/nomic-embed-text-v1.5 (768 dims)
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>API Keys: openai
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>📊 Platform Configuration Status
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>Admin users: 1
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>AI Extraction: openai / gpt-4o
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>Embedding: local / nomic-ai/nomic-embed-text-v1.5 (768 dims)
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>API Keys: openai
 </code></pre></div></p>
 <h2 id="complete">Complete! 🎉</h2>
 <p>Your Knowledge Graph platform is now fully configured and running with:
 - ✅ Clean infrastructure secrets (not baked into images)
 - ✅ Admin user configured
 - ✅ OpenAI extraction provider
-- ✅ Local Nomic embeddings
+- ✅ Local Nomic embeddings (with automatic GPU/CPU selection)
 - ✅ Encrypted API key storage
 - ✅ Garage S3 storage initialized
-- ✅ All services running and healthy</p>
+- ✅ All services running and healthy
+- ✅ Cross-platform compatibility (Mac, Linux, Windows/WSL2)</p>
 <h2 id="next-steps">Next Steps</h2>
 <p>Test the platform:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Test with kg CLI</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>health
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1"># Ingest a test document</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test Ontology&quot;</span><span class="w"> </span>path/to/document.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Test with kg CLI</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kg<span class="w"> </span>health
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="c1"># Ingest a test document</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test Ontology&quot;</span><span class="w"> </span>path/to/document.txt
 </code></pre></div></p>
 <h2 id="cleanup-when-done-testing">Cleanup (When Done Testing)</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Stop services (keeps data)</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>./operator/lib/stop.sh
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Complete teardown (removes all data and volumes)</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>./operator/lib/teardown.sh
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1"># Keep secrets but remove everything else</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>./operator/lib/teardown.sh<span class="w"> </span>--keep-env
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Stop services (keeps data)</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>./operator/lib/stop.sh
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Complete teardown (removes all data and volumes)</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>./operator/lib/teardown.sh
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># Keep secrets but remove everything else</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>./operator/lib/teardown.sh<span class="w"> </span>--keep-env
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <p><strong>Problem: Container won't start</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Check logs</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>knowledge-graph-postgres
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>kg-api-dev
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1"># Check docker-compose status</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="nb">cd</span><span class="w"> </span>docker<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker-compose<span class="w"> </span>ps
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Check logs</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>knowledge-graph-postgres
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>kg-api-dev
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1"># Check docker-compose status</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="nb">cd</span><span class="w"> </span>docker<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker-compose<span class="w"> </span>ps
 </code></pre></div></p>
 <p><strong>Problem: Health check timeout</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Check if services are actually running</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>docker<span class="w"> </span>ps<span class="w"> </span>-a
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Restart specific service</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="nb">cd</span><span class="w"> </span>docker
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>docker-compose<span class="w"> </span>restart<span class="w"> </span>api
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Check if services are actually running</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>docker<span class="w"> </span>ps<span class="w"> </span>-a
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Restart specific service</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="nb">cd</span><span class="w"> </span>docker
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>docker-compose<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div></p>
 <p><strong>Problem: Can't connect to database</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Check postgres logs</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>knowledge-graph-postgres
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Check if migrations ran</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\dt&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Check postgres logs</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>knowledge-graph-postgres
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Check if migrations ran</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\dt&quot;</span>
 </code></pre></div></p>
 <h2 id="notes">Notes</h2>
 <ul>
