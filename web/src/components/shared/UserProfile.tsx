@@ -11,6 +11,7 @@ import { User, LogIn, LogOut, Shield, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { LoginModal } from '../auth/LoginModal';
+import { getZIndexClass } from '../../config/zIndex';
 
 export const UserProfile: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout, clearError } = useAuthStore();
@@ -101,7 +102,7 @@ export const UserProfile: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-background border border-border rounded-lg shadow-lg overflow-hidden z-50">
+        <div className={`absolute right-0 mt-2 w-64 bg-background border border-border rounded-lg shadow-lg overflow-hidden ${getZIndexClass('userMenu')}`}>
           {/* User Info Header */}
           <div className="px-4 py-3 border-b border-border bg-accent">
             <div className="flex items-center gap-3">
