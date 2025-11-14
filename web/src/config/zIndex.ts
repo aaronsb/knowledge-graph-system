@@ -4,19 +4,27 @@
  * Centralized z-index constants to prevent layering conflicts.
  * Lower values appear behind higher values.
  *
+ * USAGE:
+ *   import { getZIndexClass, getZIndexValue } from '@/config/zIndex';
+ *
+ *   // In component className (recommended):
+ *   <div className={`fixed ${getZIndexClass('userMenu')}`}>...</div>
+ *
+ *   // In inline styles (when needed):
+ *   <div style={{ zIndex: getZIndexValue('userMenu') }}>...</div>
+ *
  * Layer organization (lowest to highest):
- * - Base layer (0-9): Default document flow
  * - Content layer (10-19): Main content elements
  * - Overlay layer (20-29): Search bars, toolbars
  * - Dropdown layer (30-39): Dropdown menus, tooltips
- * - Modal layer (40-49): Modals, dialogs
+ * - Modal layer (40-49): Modals, dialogs, top-level menus
  * - Notification layer (50+): Critical notifications, toasts
+ *
+ * IMPORTANT: When adding new z-index values here, you MUST also add them to
+ * web/tailwind.config.js theme.extend.zIndex for Tailwind JIT compilation.
  */
 
 export const Z_INDEX = {
-  // Base layer - Default elements
-  base: 0,
-
   // Content layer - Main visualization and content
   content: 10,
 
@@ -27,11 +35,11 @@ export const Z_INDEX = {
   // Dropdown layer - Dropdowns, popovers, tooltips
   dropdown: 30,
   searchResults: 35,
-  userMenu: 40,
 
-  // Modal layer - Dialogs and modals
-  modal: 50,
+  // Modal layer - Dialogs, modals, and top-level menus
+  userMenu: 40,
   modalOverlay: 45,
+  modal: 50,
 
   // Notification layer - Critical UI elements
   notification: 60,

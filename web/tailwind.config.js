@@ -44,7 +44,6 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       zIndex: {
-        '0': '0',
         '10': '10',
         '20': '20',
         '25': '25',
