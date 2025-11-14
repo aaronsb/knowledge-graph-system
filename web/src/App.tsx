@@ -18,6 +18,7 @@ import { useThemeStore } from './store/themeStore';
 import { useSubgraph, useFindConnection } from './hooks/useGraphData';
 import { getExplorer } from './explorers';
 import { apiClient } from './api/client';
+import { getZIndexClass } from './config/zIndex';
 import './explorers'; // Import to register explorers
 
 // Create React Query client
@@ -364,7 +365,7 @@ const AppContent: React.FC = () => {
       <div className="h-full flex flex-col">
         {/* Search Bar */}
         <div
-          className="border-b border-border bg-card relative z-[50000]"
+          className={`border-b border-border bg-card relative ${getZIndexClass('searchBar')}`}
           style={{
             height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto',
             overflow: queryMode === 'block-builder' ? 'hidden' : 'visible',
@@ -417,7 +418,7 @@ const AppContent: React.FC = () => {
           )}
 
           {!graphData && !isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className={`absolute inset-0 flex items-center justify-center ${getZIndexClass('content')}`}>
               <div className="text-center max-w-md">
                 <h3 className="text-xl font-semibold mb-2">Welcome to Knowledge Graph Visualization</h3>
                 <p className="text-muted-foreground mb-4">

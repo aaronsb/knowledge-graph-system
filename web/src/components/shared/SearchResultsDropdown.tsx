@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { getZIndexClass } from '../../config/zIndex';
 
 interface SearchResult {
   concept_id: string;
@@ -19,7 +20,7 @@ interface SearchResultsDropdownProps {
 
 export const SearchResultsDropdown: React.FC<SearchResultsDropdownProps> = ({ results, onSelect }) => {
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 space-y-2 bg-background/95 backdrop-blur-sm rounded-lg p-2 shadow-lg max-h-80 overflow-y-auto z-[9999]">
+    <div className={`absolute top-full left-0 right-0 mt-2 space-y-2 bg-background/95 backdrop-blur-sm rounded-lg p-2 shadow-lg max-h-80 overflow-y-auto ${getZIndexClass('searchResults')}`}>
       {results.map((result) => (
         <button
           key={result.concept_id}
