@@ -21,10 +21,15 @@ DOCKER_DIR="$PROJECT_ROOT/docker"
 
 # Parse arguments
 DEV_MODE=false
+FORCE_MAC_MODE=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dev)
             DEV_MODE=true
+            shift
+            ;;
+        --mac)
+            FORCE_MAC_MODE=true
             shift
             ;;
         --help|-h)
@@ -37,6 +42,9 @@ while [[ $# -gt 0 ]]; do
             echo "           • API: uvicorn --reload (already enabled)"
             echo "           • Web: Vite dev server with hot module replacement"
             echo "           • Source code mounted as volumes"
+            echo "  --mac    Force Mac/CPU-only mode (disable NVIDIA GPU)"
+            echo "           • Use this on Mac or systems without NVIDIA GPU"
+            echo "           • Skips GPU detection and uses CPU for embeddings"
             echo "  --help   Show this help"
             echo ""
             exit 0
@@ -90,12 +98,15 @@ cd "$DOCKER_DIR"
 detect_platform() {
     local USE_MAC_OVERRIDE=false
 
+    # Detect OS using uname (more reliable than $OSTYPE)
+    local OS_TYPE=$(uname -s)
+
     # Check if running on Mac
-    if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
         echo -e "${YELLOW}⚠  Mac platform detected (no NVIDIA GPU support)${NC}"
         USE_MAC_OVERRIDE=true
     # Check if NVIDIA GPU available on Linux
-    elif [[ "$OSTYPE" == "linux"* ]]; then
+    elif [[ "$OS_TYPE" == "Linux" ]]; then
         if ! command -v nvidia-smi &> /dev/null; then
             echo -e "${YELLOW}⚠  NVIDIA GPU not detected (nvidia-smi not available)${NC}"
             USE_MAC_OVERRIDE=true
@@ -119,7 +130,15 @@ if [ "$DEV_MODE" = true ]; then
 fi
 
 # Add Mac/non-GPU override if needed
-USE_MAC_OVERRIDE=$(detect_platform)
+if [ "$FORCE_MAC_MODE" = true ]; then
+    # Mac mode forced via --mac flag (from quickstart or manual)
+    USE_MAC_OVERRIDE=true
+    echo -e "${YELLOW}→ Mac mode forced via --mac flag${NC}"
+else
+    # Auto-detect platform
+    USE_MAC_OVERRIDE=$(detect_platform)
+fi
+
 if [ "$USE_MAC_OVERRIDE" = true ]; then
     COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.override.mac.yml"
     echo -e "${BLUE}→ Using CPU-only mode for embeddings${NC}"

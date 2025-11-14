@@ -164,6 +164,35 @@ else
     echo ""
 fi
 
+# Platform detection choice
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Platform Configuration${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Are you running on a Mac (macOS)?"
+echo ""
+echo -e "  ${GREEN}[1] Yes${NC} - Mac (Intel or Apple Silicon)"
+echo "      • Will use CPU-only mode for embeddings"
+echo "      • No NVIDIA GPU support required"
+echo ""
+echo -e "  ${GREEN}[2] No${NC} - Linux or Windows WSL2"
+echo "      • Will auto-detect NVIDIA GPU if available"
+echo "      • GPU acceleration for embeddings (if GPU present)"
+echo ""
+read -p "Choose option (1 or 2): " -r
+echo ""
+
+USE_MAC_MODE=false
+if [[ $REPLY == "1" ]]; then
+    USE_MAC_MODE=true
+    echo -e "${YELLOW}→${NC} Will configure for Mac platform (CPU-only)"
+    echo ""
+else
+    echo -e "${GREEN}→${NC} Will auto-detect GPU availability"
+    echo ""
+fi
+
 # Check Docker is running
 echo -e "${BLUE}→${NC} Checking Docker..."
 if ! docker ps >/dev/null 2>&1; then
@@ -341,7 +370,12 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BOLD}Step 8/8: Starting application (API + Web)${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-./operator/lib/start-app.sh $START_APP_FLAGS
+# Add --mac flag if Mac mode selected
+if [ "$USE_MAC_MODE" = true ]; then
+    ./operator/lib/start-app.sh $START_APP_FLAGS --mac
+else
+    ./operator/lib/start-app.sh $START_APP_FLAGS
+fi
 APP_STARTED=true
 echo ""
 

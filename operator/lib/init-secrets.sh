@@ -231,7 +231,8 @@ update_env_file() {
     # Update .env file
     if grep -q "^${key}=" "$PROJECT_ROOT/.env"; then
         # Key exists, replace it
-        if [[ "$OSTYPE" == "darwin"* ]]; then
+        # Mac requires sed -i '', Linux uses sed -i
+        if [[ "$(uname -s)" == "Darwin" ]]; then
             sed -i '' "s|^${key}=.*|${key}=${value}|" "$PROJECT_ROOT/.env"
         else
             sed -i "s|^${key}=.*|${key}=${value}|" "$PROJECT_ROOT/.env"
