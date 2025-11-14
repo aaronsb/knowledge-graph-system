@@ -80,6 +80,7 @@ All ADRs follow a consistent format:
 | [ADR-061](ADR-061-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle | Accepted | Single kg-operator CLI managing four-layer architecture (Infrastructure → Schema → Configuration → Application) - eliminates script sprawl, enforces correct bootstrap sequence, enables clean Docker builds with secrets from environment not files |
 | [ADR-062](ADR-062-mcp-file-ingestion-security.md) | MCP File Ingestion Security Model | Draft | Path allowlist security for MCP file/directory ingestion - fail-secure validation prevents path traversal, agent-readable (not writable) allowlist enables bulk ingestion from pre-approved locations with auto-naming by directory structure |
 | [ADR-063](ADR-063-semantic-diversity-authenticity-signal.md) | Semantic Diversity as Authenticity Signal | Proposed | Measures semantic diversity of related concepts within N-hop traversal - authentic facts supported by diverse independent domains (37.7% diversity), fabricated claims show homogeneous circular reasoning (23.2% diversity) - complements grounding strength for authenticity assessment |
+| [ADR-064](ADR-064-specialized-truth-convergence-visualizations.md) | Specialized Truth Convergence Visualizations | Proposed | Expands web visualization beyond force graphs with specialized explorers: confidence heatmaps, polarity spectrums, provenance Sankey diagrams, concept lifecycle timelines, semantic diversity sunbursts, and 3D evidence mountains - leverages platform's unique truth convergence, semantic diversity, and provenance capabilities |
 
 ## How to Use This Index
 
@@ -153,6 +154,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-01-08
+**Last Updated:** 2025-11-13
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
