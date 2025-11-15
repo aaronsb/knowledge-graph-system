@@ -33,7 +33,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 What gets pruned:
-  - Relationships pointing to concepts that don't exist (no APPEARS_IN)
+  - Relationships pointing to concepts that don't exist (no APPEARS)
   - Relationships from orphaned concepts
 
 Why prune:

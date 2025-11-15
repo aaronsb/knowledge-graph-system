@@ -113,7 +113,7 @@ class DataExporter:
         """
         if ontology:
             query = """
-                MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})
+                MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $ontology})
                 WITH DISTINCT c
                 RETURN c.concept_id as concept_id,
                        c.label as label,
@@ -272,7 +272,7 @@ class DataExporter:
             # Apache AGE: Can't use path patterns in WHERE clause
             # Instead, MATCH concepts via their source relationships first
             query = """
-                MATCH (c1:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})
+                MATCH (c1:Concept)-[:APPEARS]->(s:Source {document: $ontology})
                 MATCH (c1)-[r]->(c2:Concept)
                 RETURN c1.concept_id as from_concept,
                        c2.concept_id as to_concept,
@@ -796,7 +796,7 @@ class DataImporter:
                 SET i.quote = $quote
                 MERGE (c)-[:EVIDENCED_BY]->(i)
                 MERGE (i)-[:FROM_SOURCE]->(s)
-                MERGE (c)-[:APPEARS_IN]->(s)
+                MERGE (c)-[:APPEARS]->(s)
             """
 
             try:

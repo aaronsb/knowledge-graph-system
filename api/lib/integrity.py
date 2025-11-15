@@ -209,11 +209,11 @@ class DatabaseIntegrity:
             "warnings": []
         }
 
-        # Check for orphaned concepts (no APPEARS_IN relationships)
+        # Check for orphaned concepts (no APPEARS relationships)
         if ontology:
             query = """
                 MATCH (c:Concept)
-                WHERE NOT EXISTS((c)-[:APPEARS_IN]->(:Source {document: $ontology}))
+                WHERE NOT EXISTS((c)-[:APPEARS]->(:Source {document: $ontology}))
                   AND EXISTS((c)-[:EVIDENCED_BY]->(:Instance)-[:FROM_SOURCE]->(:Source {document: $ontology}))
                 RETURN count(c) as orphan_count, collect(c.concept_id)[..10] as sample_ids
             """
@@ -221,7 +221,7 @@ class DatabaseIntegrity:
         else:
             query = """
                 MATCH (c:Concept)
-                WHERE NOT EXISTS((c)-[:APPEARS_IN]->(:Source))
+                WHERE NOT EXISTS((c)-[:APPEARS]->(:Source))
                 RETURN count(c) as orphan_count, collect(c.concept_id)[..10] as sample_ids
             """
             result = client._execute_cypher(query, fetch_one=True)
@@ -235,7 +235,7 @@ class DatabaseIntegrity:
             except json.JSONDecodeError:
                 sample_ids = []
 
-            report["issues"].append(f"{orphan_count} orphaned concepts (no APPEARS_IN relationship)")
+            report["issues"].append(f"{orphan_count} orphaned concepts (no APPEARS relationship)")
             report["checks"]["orphaned_concepts"] = {
                 "count": orphan_count,
                 "sample": sample_ids
@@ -256,7 +256,7 @@ class DatabaseIntegrity:
         # Check for concepts missing embeddings
         if ontology:
             query = """
-                MATCH (c:Concept)-[:APPEARS_IN]->(:Source {document: $ontology})
+                MATCH (c:Concept)-[:APPEARS]->(:Source {document: $ontology})
                 WHERE c.embedding IS NULL OR size(c.embedding) = 0
                 RETURN count(c) as missing_embedding_count, collect(c.concept_id)[..10] as sample_ids
             """
@@ -310,9 +310,9 @@ class DatabaseIntegrity:
         # Check for cross-ontology relationships (if checking specific ontology)
         if ontology:
             query = """
-                MATCH (c1:Concept)-[:APPEARS_IN]->(:Source {document: $ontology})
+                MATCH (c1:Concept)-[:APPEARS]->(:Source {document: $ontology})
                 MATCH (c1)-[r]->(c2:Concept)
-                WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source {document: $ontology}))
+                WHERE NOT EXISTS((c2)-[:APPEARS]->(:Source {document: $ontology}))
                 RETURN count(r) as cross_ontology_rels,
                        collect(DISTINCT type(r)) as rel_types,
                        collect(DISTINCT c2.concept_id)[..10] as external_concepts
@@ -399,7 +399,7 @@ class DatabaseIntegrity:
     @staticmethod
     def repair_orphaned_concepts(client: AGEClient, ontology: Optional[str] = None) -> int:
         """
-        Repair orphaned concepts by creating missing APPEARS_IN relationships
+        Repair orphaned concepts by creating missing APPEARS relationships
 
         Args:
             client: AGEClient instance
@@ -411,20 +411,20 @@ class DatabaseIntegrity:
         if ontology:
             query = """
                 MATCH (c:Concept)
-                WHERE NOT EXISTS((c)-[:APPEARS_IN]->(:Source {document: $ontology}))
+                WHERE NOT EXISTS((c)-[:APPEARS]->(:Source {document: $ontology}))
                 MATCH (c)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source {document: $ontology})
                 WITH c, s
-                MERGE (c)-[:APPEARS_IN]->(s)
+                MERGE (c)-[:APPEARS]->(s)
                 RETURN count(*) as repairs
             """
             result = client._execute_cypher(query, params={"ontology": ontology}, fetch_one=True)
         else:
             query = """
                 MATCH (c:Concept)
-                WHERE NOT EXISTS((c)-[:APPEARS_IN]->(:Source))
+                WHERE NOT EXISTS((c)-[:APPEARS]->(:Source))
                 MATCH (c)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source)
                 WITH c, s
-                MERGE (c)-[:APPEARS_IN]->(s)
+                MERGE (c)-[:APPEARS]->(s)
                 RETURN count(*) as repairs
             """
             result = client._execute_cypher(query, fetch_one=True)
@@ -461,9 +461,9 @@ class DatabaseIntegrity:
         if ontology:
             # Find relationships from concepts in this ontology pointing to non-existent concepts
             query = """
-                MATCH (c1:Concept)-[:APPEARS_IN]->(:Source {document: $ontology})
+                MATCH (c1:Concept)-[:APPEARS]->(:Source {document: $ontology})
                 MATCH (c1)-[r]->(c2:Concept)
-                WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
+                WHERE NOT EXISTS((c2)-[:APPEARS]->(:Source))
                 RETURN type(r) as rel_type,
                        c1.concept_id as from_id,
                        c1.label as from_label,
@@ -477,8 +477,8 @@ class DatabaseIntegrity:
             # Find all dangling relationships in database
             query = """
                 MATCH (c1:Concept)-[r]->(c2:Concept)
-                WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
-                   OR NOT EXISTS((c1)-[:APPEARS_IN]->(:Source))
+                WHERE NOT EXISTS((c2)-[:APPEARS]->(:Source))
+                   OR NOT EXISTS((c1)-[:APPEARS]->(:Source))
                 RETURN type(r) as rel_type,
                        c1.concept_id as from_id,
                        c1.label as from_label,
@@ -512,9 +512,9 @@ class DatabaseIntegrity:
         if not dry_run and result["total_pruned"] > 0:
             if ontology:
                 delete_query = """
-                    MATCH (c1:Concept)-[:APPEARS_IN]->(:Source {document: $ontology})
+                    MATCH (c1:Concept)-[:APPEARS]->(:Source {document: $ontology})
                     MATCH (c1)-[r]->(c2:Concept)
-                    WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
+                    WHERE NOT EXISTS((c2)-[:APPEARS]->(:Source))
                     DELETE r
                     RETURN count(r) as deleted
                 """
@@ -522,8 +522,8 @@ class DatabaseIntegrity:
             else:
                 delete_query = """
                     MATCH (c1:Concept)-[r]->(c2:Concept)
-                    WHERE NOT EXISTS((c2)-[:APPEARS_IN]->(:Source))
-                       OR NOT EXISTS((c1)-[:APPEARS_IN]->(:Source))
+                    WHERE NOT EXISTS((c2)-[:APPEARS]->(:Source))
+                       OR NOT EXISTS((c1)-[:APPEARS]->(:Source))
                     DELETE r
                     RETURN count(r) as deleted
                 """

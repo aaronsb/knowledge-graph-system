@@ -124,7 +124,7 @@ async def search_concepts(
                 # Get documents and evidence count
                 concept_id = match['concept_id']
                 docs_query = client._execute_cypher(
-                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS_IN]->(s:Source) RETURN DISTINCT s.document as doc"
+                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc"
                 )
                 documents = [r['doc'] for r in (docs_query or [])]
 
@@ -236,7 +236,7 @@ async def search_concepts(
                     # Get documents and evidence for top match
                     top_concept_id = top_match_data['concept_id']
                     top_docs_query = client._execute_cypher(
-                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:APPEARS_IN]->(s:Source) RETURN DISTINCT s.document as doc"
+                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc"
                     )
                     top_documents = [r['doc'] for r in (top_docs_query or [])]
 
@@ -509,7 +509,7 @@ async def get_concept_details(
 
             # Query for source documents via DocumentMeta nodes
             provenance_result = client._execute_cypher(f"""
-                MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS_IN]->(s:Source)
+                MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS]->(s:Source)
                 MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s)
                 RETURN DISTINCT
                     d.document_id as document_id,

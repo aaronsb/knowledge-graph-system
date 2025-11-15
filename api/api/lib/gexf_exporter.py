@@ -115,7 +115,7 @@ Our GEXF export includes:
 - PART_OF: Purple (rgb(168,85,247)) - hierarchical
 - RELATED_TO: Gray (rgb(156,163,175)) - general relation
 - EVIDENCED_BY: Yellow (rgb(251,191,36)) - evidence
-- APPEARS_IN: Teal (rgb(20,184,166)) - source reference
+- APPEARS: Teal (rgb(20,184,166)) - source reference
 - Unknown: Gray (rgb(100,100,100))
 
 ## References
@@ -208,7 +208,7 @@ def _relationship_type_to_color(rel_type: str) -> str:
         "PART_OF": "rgb(168,85,247)",      # Purple - hierarchical
         "RELATED_TO": "rgb(156,163,175)",  # Gray - general relation
         "EVIDENCED_BY": "rgb(251,191,36)", # Yellow - evidence
-        "APPEARS_IN": "rgb(20,184,166)",   # Teal - source reference
+        "APPEARS": "rgb(20,184,166)",   # Teal - source reference
     }
 
     return colors.get(rel_type, "rgb(100,100,100)")  # Default gray

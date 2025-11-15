@@ -506,7 +506,7 @@ class AGEClient:
         source_id: str
     ) -> bool:
         """
-        Create APPEARS_IN relationship from Concept to Source.
+        Create APPEARS relationship from Concept to Source.
 
         Args:
             concept_id: ID of the concept node
@@ -521,7 +521,7 @@ class AGEClient:
         query = """
         MATCH (c:Concept {concept_id: $concept_id})
         MATCH (s:Source {source_id: $source_id})
-        MERGE (c)-[:APPEARS_IN]->(s)
+        MERGE (c)-[:APPEARS]->(s)
         RETURN c, s
         """
 
@@ -789,7 +789,7 @@ class AGEClient:
         if recent_chunks_only:
             # Get concepts from recent chunks only
             query = f"""
-            MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {{document: $document}})
+            MATCH (c:Concept)-[:APPEARS]->(s:Source {{document: $document}})
             WITH c, s
             ORDER BY s.paragraph DESC
             LIMIT {recent_chunks_only * 10}
@@ -800,7 +800,7 @@ class AGEClient:
         else:
             # Get all concepts from document
             query = f"""
-            MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {{document: $document}})
+            MATCH (c:Concept)-[:APPEARS]->(s:Source {{document: $document}})
             RETURN DISTINCT c.concept_id AS concept_id, c.label AS label
             LIMIT {limit}
             """

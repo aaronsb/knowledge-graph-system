@@ -3,7 +3,7 @@
 Integrity Check CLI - Validate database integrity
 
 Checks for:
-- Orphaned concepts (no APPEARS_IN relationships)
+- Orphaned concepts (no APPEARS relationships)
 - Dangling relationships (pointing to non-existent concepts)
 - Missing embeddings
 - Cross-ontology relationships
