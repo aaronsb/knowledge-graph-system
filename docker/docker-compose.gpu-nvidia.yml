@@ -1,0 +1,34 @@
+# ============================================================================
+# Knowledge Graph System - NVIDIA GPU Override
+# ============================================================================
+# This override enables NVIDIA GPU acceleration for local embedding models.
+# Only use this on systems with:
+#   - NVIDIA GPU hardware
+#   - nvidia-docker / NVIDIA Container Toolkit installed
+#   - nvidia-smi command working
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.gpu-nvidia.yml up -d
+#
+# The API will automatically use CUDA for:
+#   - Local text embeddings (sentence-transformers)
+#   - Local visual embeddings (vision transformers)
+#
+# Performance:
+#   - CUDA: ~1-2ms per embedding
+#   - CPU: ~5-10ms per embedding
+#
+# See ADR-043 for resource management details.
+# ============================================================================
+
+services:
+  api:
+    # Enable NVIDIA GPU access for local embeddings
+    # Falls back to CPU when GPU VRAM is occupied (dynamic device selection)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
