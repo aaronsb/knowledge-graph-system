@@ -384,7 +384,7 @@ async def get_concept_details(
         concept_result = client._execute_cypher(
             f"""
             MATCH (c:Concept {{concept_id: '{concept_id}'}})
-            OPTIONAL MATCH (c)-[:APPEARS_IN]->(s:Source)
+            OPTIONAL MATCH (c)-[:APPEARS]->(s:Source)
             WITH c, collect(DISTINCT s.document) as documents
             RETURN c, documents
             """,
