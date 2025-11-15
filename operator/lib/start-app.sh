@@ -95,30 +95,36 @@ echo ""
 cd "$DOCKER_DIR"
 
 # Detect platform and GPU availability
+# Returns: "mac" | "nvidia" | "cpu"
 detect_platform() {
-    local USE_MAC_OVERRIDE=false
-
     # Detect OS using uname (more reliable than $OSTYPE)
     local OS_TYPE=$(uname -s)
 
     # Check if running on Mac
     if [[ "$OS_TYPE" == "Darwin" ]]; then
-        echo -e "${YELLOW}⚠  Mac platform detected (no NVIDIA GPU support)${NC}"
-        USE_MAC_OVERRIDE=true
-    # Check if NVIDIA GPU available on Linux
-    elif [[ "$OS_TYPE" == "Linux" ]]; then
-        if ! command -v nvidia-smi &> /dev/null; then
-            echo -e "${YELLOW}⚠  NVIDIA GPU not detected (nvidia-smi not available)${NC}"
-            USE_MAC_OVERRIDE=true
-        elif ! nvidia-smi &> /dev/null; then
-            echo -e "${YELLOW}⚠  NVIDIA GPU not available${NC}"
-            USE_MAC_OVERRIDE=true
+        echo -e "${YELLOW}🍎 Mac platform detected${NC}"
+        echo "mac"
+        return
+    fi
+
+    # Check if NVIDIA GPU available on Linux/Windows
+    if [[ "$OS_TYPE" == "Linux" ]] || [[ "$OS_TYPE" =~ ^MINGW|^MSYS|^CYGWIN ]]; then
+        if command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null; then
+            # Get GPU info
+            GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
+            echo -e "${GREEN}✓ NVIDIA GPU detected: ${GPU_NAME}${NC}"
+            echo "nvidia"
+            return
         else
-            echo -e "${GREEN}✓ NVIDIA GPU detected${NC}"
+            echo -e "${YELLOW}⚠  No NVIDIA GPU detected${NC}"
+            echo "cpu"
+            return
         fi
     fi
 
-    echo "$USE_MAC_OVERRIDE"
+    # Unknown OS or no GPU
+    echo -e "${YELLOW}⚠  Unknown platform, using CPU-only mode${NC}"
+    echo "cpu"
 }
 
 # Prepare docker-compose command with optional dev and platform overrides
@@ -129,20 +135,32 @@ if [ "$DEV_MODE" = true ]; then
     COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.dev.yml"
 fi
 
-# Add Mac/non-GPU override if needed
+# Add platform-specific GPU override
 if [ "$FORCE_MAC_MODE" = true ]; then
     # Mac mode forced via --mac flag (from quickstart or manual)
-    USE_MAC_OVERRIDE=true
+    PLATFORM="mac"
     echo -e "${YELLOW}→ Mac mode forced via --mac flag${NC}"
 else
     # Auto-detect platform
-    USE_MAC_OVERRIDE=$(detect_platform)
+    PLATFORM=$(detect_platform)
 fi
 
-if [ "$USE_MAC_OVERRIDE" = true ]; then
-    COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.override.mac.yml"
-    echo -e "${BLUE}→ Using CPU-only mode for embeddings${NC}"
-fi
+case "$PLATFORM" in
+    mac)
+        COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.override.mac.yml"
+        echo -e "${BLUE}→ Using Mac configuration (MPS GPU acceleration via Metal)${NC}"
+        ;;
+    nvidia)
+        COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.gpu-nvidia.yml"
+        echo -e "${BLUE}→ Using NVIDIA GPU configuration (CUDA acceleration)${NC}"
+        ;;
+    cpu)
+        echo -e "${BLUE}→ Using CPU-only mode (no GPU acceleration)${NC}"
+        ;;
+    *)
+        echo -e "${YELLOW}⚠  Unknown platform: $PLATFORM, using CPU-only mode${NC}"
+        ;;
+esac
 echo ""
 
 # Start API

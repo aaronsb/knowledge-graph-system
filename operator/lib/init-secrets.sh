@@ -286,7 +286,7 @@ if [ "$DEV_MODE" = true ]; then
 else
     # Prod mode: generate strong password
     # Check if we're upgrading from dev (password is weak, missing, or empty)
-    CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2)
+    CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2)
     NEEDS_UPGRADE=false
     if [ "$UPGRADE_MODE" = true ]; then
         # Upgrade if password is weak OR doesn't exist OR is empty

@@ -170,15 +170,22 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BOLD}Platform Configuration${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Are you running on a Mac (macOS)?"
+echo "Choose your platform (this configures GPU acceleration for LOCAL embeddings):"
 echo ""
-echo -e "  ${GREEN}[1] Yes${NC} - Mac (Intel or Apple Silicon)"
-echo "      • Will use CPU-only mode for embeddings"
-echo "      • No NVIDIA GPU support required"
+echo -e "  ${GREEN}[1] Mac (macOS)${NC}"
+echo "      • Intel Mac: CPU-based local embeddings"
+echo "      • Apple Silicon (M1/M2/M3/M4): MPS GPU acceleration"
+echo "      • Note: This only affects local embedding compute, not AI extraction"
 echo ""
-echo -e "  ${GREEN}[2] No${NC} - Linux or Windows WSL2"
-echo "      • Will auto-detect NVIDIA GPU if available"
-echo "      • GPU acceleration for embeddings (if GPU present)"
+echo -e "  ${GREEN}[2] Linux / Windows WSL2${NC}"
+echo "      • Auto-detects NVIDIA GPU (CUDA acceleration if available)"
+echo "      • Falls back to CPU if no NVIDIA GPU found"
+echo "      • Note: This only affects local embedding compute, not AI extraction"
+echo ""
+echo -e "${YELLOW}ℹ️  What this affects:${NC}"
+echo "  • WHERE local embeddings are computed (MPS/CUDA/CPU)"
+echo "  • Does NOT affect WHICH models are used (local vs API)"
+echo "  • AI extraction always uses remote API (OpenAI/Anthropic)"
 echo ""
 read -p "Choose option (1 or 2): " -r
 echo ""
@@ -186,7 +193,7 @@ echo ""
 USE_MAC_MODE=false
 if [[ $REPLY == "1" ]]; then
     USE_MAC_MODE=true
-    echo -e "${YELLOW}→${NC} Will configure for Mac platform (CPU-only)"
+    echo -e "${YELLOW}→${NC} Will configure for Mac platform"
     echo ""
 else
     echo -e "${GREEN}→${NC} Will auto-detect GPU availability"
@@ -211,8 +218,14 @@ echo ""
 
 if [ "$USE_RANDOM_PASSWORDS" = true ]; then
     # Production mode - generates random database password
-    # Use --upgrade to handle dev→prod transition (upgrades weak "password" to strong random)
-    ./operator/lib/init-secrets.sh --upgrade -y
+    # Check if .env exists (upgrade vs fresh install)
+    if [ -f ".env" ]; then
+        # Existing .env: Use --upgrade to transition dev→prod (upgrades weak "password" to strong random)
+        ./operator/lib/init-secrets.sh --upgrade -y
+    else
+        # Fresh install: Use production mode (no --dev flag, generates strong passwords)
+        ./operator/lib/init-secrets.sh -y
+    fi
     # Read the generated database password from .env
     POSTGRES_PASSWORD=$(grep '^POSTGRES_PASSWORD=' .env | cut -d'=' -f2)
 

@@ -1,22 +1,28 @@
 # ============================================================================
 # Knowledge Graph System - Mac Platform Override
 # ============================================================================
-# This override removes NVIDIA GPU configuration for Mac systems.
-# Mac systems (especially Apple Silicon M1/M2/M3) don't support nvidia runtime.
+# This override ensures Mac systems use MPS (Metal Performance Shaders) for GPU
+# acceleration instead of NVIDIA CUDA.
+#
+# Apple Silicon M1/M2/M3/M4 Macs have powerful integrated GPUs that support MPS.
+# The API code auto-detects MPS at runtime and uses it for local embedding models.
 #
 # Works with both standard and dev modes:
 #   Standard: docker-compose -f docker-compose.yml -f docker-compose.override.mac.yml up -d
 #   Dev mode: docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.override.mac.yml up -d
 #
-# Automatic detection: The start-infra.sh and start-app.sh scripts will auto-detect
-# Mac platform and apply this override automatically.
+# Automatic detection: The start-app.sh script auto-detects Mac platform
+# and applies this override automatically.
+#
+# Performance:
+#   - MPS (Apple Silicon): ~2-3ms per embedding
+#   - CPU (Intel Mac): ~5-10ms per embedding
 # ============================================================================
 
 services:
   api:
-    # Remove NVIDIA GPU configuration for Mac
+    # No deploy block needed for Mac
     # The API embedding code will automatically detect and use the best available device:
-    #   - MPS (Metal Performance Shaders) on Apple Silicon M1/M2/M3
-    #   - CPU fallback if MPS unavailable
-    # Performance: CPU embeddings add ~5-10ms per concept vs ~1-2ms on CUDA GPU
+    #   - MPS (Metal Performance Shaders) on Apple Silicon M1/M2/M3/M4
+    #   - CPU fallback on Intel Macs or if MPS unavailable
     deploy: {}
