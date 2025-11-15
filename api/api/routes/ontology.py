@@ -61,7 +61,7 @@ async def list_ontologies(
             WITH ontology,
                  count(DISTINCT src) as source_count,
                  count(DISTINCT src.file_path) as file_count
-            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: ontology})
+            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {document: ontology})
             WITH ontology, source_count, file_count, count(DISTINCT c) as concept_count
             RETURN ontology, source_count, file_count, concept_count
             ORDER BY ontology
