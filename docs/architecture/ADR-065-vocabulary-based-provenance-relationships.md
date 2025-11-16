@@ -5,7 +5,7 @@
 **Deciders:** Engineering Team
 **Related ADRs:**
 - ADR-058 (Polarity Axis Triangulation) - Pattern we're replicating
-- ADR-050 (Vocabulary Consolidation) - Similarity-based clustering
+- ADR-052 (Vocabulary Expansion-Consolidation Cycle) - Similarity-based clustering
 - ADR-048 (Query Safety via GraphQueryFacade) - Abstraction layer
 - ADR-044 (Probabilistic Truth Convergence) - Grounding calculation
 
@@ -109,7 +109,7 @@ RETURN s
 
 ### The Emergent Pattern
 
-Through successive design decisions—vocabulary-based relationships (ADR-050), polarity axis triangulation (ADR-058), and now vocabulary-based provenance—we've been **systematically eliminating boolean logic in favor of probabilistic values**.
+Through successive design decisions—vocabulary expansion-consolidation (ADR-052), polarity axis triangulation (ADR-058), and now vocabulary-based provenance—we've been **systematically eliminating boolean logic in favor of probabilistic values**.
 
 **What we thought we were building:** A graph database with semantic enrichment
 
@@ -162,7 +162,7 @@ grounding = weighted_avg(projections, confidences)  # [-1, 1]
 
 Each decision eliminated discrete categories in favor of continuous values:
 
-1. **ADR-050 (Vocabulary Consolidation):** Instead of hardcoded relationship types, use similarity-based clustering
+1. **ADR-052 (Vocabulary Expansion-Consolidation):** Instead of hardcoded relationship types, use similarity-based clustering
    - Boolean: "Is this SUPPORTS?" → Probabilistic: "87% similar to SUPPORTS"
 
 2. **ADR-058 (Polarity Axis):** Instead of binary support/contradict, project onto axis
