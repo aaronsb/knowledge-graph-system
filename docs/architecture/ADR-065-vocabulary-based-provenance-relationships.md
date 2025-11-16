@@ -1076,14 +1076,14 @@ CREATE (c)-[new:{variant}]->(s)
 
 - **ADR-058:** Polarity Axis Triangulation for Grounding Calculation (pattern we're replicating)
 - **ADR-048:** Query Safety via GraphQueryFacade (abstraction layer for vocabulary complexity)
-- **ADR-050:** Vocabulary Consolidation via AITL Hysteresis (applies to appearance types)
+- **ADR-052:** Vocabulary Expansion-Consolidation Cycle (applies to appearance types)
 - **Issue #134:** APPEARS_IN vs APPEARS naming bug (prerequisite fix)
 
 ---
 
 ## References
 
-- Vocabulary consolidation: ADR-050
+- Vocabulary consolidation: ADR-052
 - Relationship mapper: `api/api/lib/relationship_mapper.py`
 - Polarity axis: `api/api/lib/age_client.py:_compute_polarity_axis()`
 - Query facade: `api/api/lib/query_facade.py`
