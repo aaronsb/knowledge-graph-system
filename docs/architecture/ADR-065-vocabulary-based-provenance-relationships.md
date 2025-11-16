@@ -461,6 +461,387 @@ if not canonical:
 
 ---
 
+## Open Question: LLM Interface Design
+
+### Problem Statement
+
+The vocabulary cluster is backend infrastructure for semantic richness and query flexibility. But how do we determine appearance types without burdening the LLM with vocabulary cluster complexity?
+
+**Core tension:**
+- **Backend needs:** Rich appearance types (CENTRAL_TO, MENTIONED_IN, PROPHESIED_IN, etc.)
+- **LLM should see:** Simple, straightforward extraction task
+
+**Critical constraint:** Avoid domain-specific overfitting. Solution must work across:
+- Technical documentation (introduced, deprecated, explained, referenced)
+- Research papers (foundational, cited, critiqued, extended)
+- Narrative text (central, peripheral, foreshadowed, recalled)
+- Code documentation (defined, used, imported, exported)
+- Legal documents (enacted, amended, superseded, referenced)
+
+### Interface Options
+
+#### Option 1: Zero LLM Involvement (Pure Structural Inference)
+
+**LLM sees:** Current extraction prompt (no changes)
+
+```
+Extract concepts from this text. For each concept:
+- Label
+- Description
+- Relationships to other concepts
+- Quote (evidence)
+```
+
+**LLM does:** Extracts concepts with quotes (exactly as today)
+
+**Backend does:** Infers appearance type from structural signals
+
+```python
+def infer_appearance_type(instance, source, all_instances):
+    """Pure structural inference - no LLM involvement"""
+
+    # Structural signals
+    centrality = len(instance['quote']) / len(source['full_text'])
+    frequency = len(all_instances)  # How many times in source
+    position = instance['paragraph'] / source['total_paragraphs']
+
+    # Domain-agnostic heuristics
+    if centrality > 0.3:
+        return "CENTRAL_TO"
+    elif frequency > 5:
+        return "FREQUENTLY_MENTIONED_IN"
+    elif position < 0.1:
+        return "INTRODUCED_IN"
+    else:
+        return "APPEARS"
+```
+
+**Pros:**
+- Zero LLM cognitive load (truly transparent)
+- No prompt engineering required
+- No extraction cost increase
+- Works across all domains identically
+
+**Cons:**
+- Misses semantic nuances structure can't capture
+- Example failures:
+  - Short prophetic statement → "MENTIONED_IN" (should be "PROPHESIED_IN")
+  - Lengthy critique → "CENTRAL_TO" (should be "CRITIQUED_IN")
+  - Referenced theorem → "MENTIONED_IN" (should be "APPLIED")
+
+**Domain-agnostic effectiveness:** Medium - structure approximates semantics but misses intent
+
+---
+
+#### Option 2: Simple Categorical Hint (Recommended Balance)
+
+**LLM sees:** One additional simple question (no vocabulary exposure)
+
+```
+Extract concepts from this text. For each concept:
+- Label
+- Description
+- Quote (evidence)
+- [OPTIONAL] Prominence: how prominent is this concept?
+  - "central" (primary theme/subject)
+  - "discussed" (explained in detail)
+  - "mentioned" (brief reference)
+  - "peripheral" (tangential or implied)
+```
+
+**LLM does:** Picks from 4 simple, semantic categories
+
+**Backend does:** Maps category to vocabulary cluster
+
+```python
+# LLM output (simple):
+{
+    "concept": "microservices architecture",
+    "prominence": "discussed",  # Simple semantic judgment
+    "quote": "...",
+}
+
+# Backend mapping (complex, invisible):
+PROMINENCE_MAPPING = {
+    "central": "CENTRAL_TO",
+    "discussed": "THOROUGHLY_DISCUSSED_IN",
+    "mentioned": "MENTIONED_IN",
+    "peripheral": "TANGENTIALLY_REFERENCED_IN"
+}
+
+hint = PROMINENCE_MAPPING[prominence]
+
+# Normalize to cluster (vocabulary infrastructure)
+canonical = normalize_to_cluster(hint, "APPEARS", threshold=0.80)
+```
+
+**Pros:**
+- LLM provides semantic understanding (better than structure alone)
+- Categories are domain-agnostic and intuitive
+- LLM never sees vocabulary cluster complexity
+- Minimal prompt addition (4 simple choices)
+- Optional field (fallback to structural inference)
+
+**Cons:**
+- Slight increase in extraction prompt complexity
+- Requires LLM to make prominence judgment
+- Categories may not capture all nuances (prophesy, critique, definition)
+
+**Domain-agnostic effectiveness:** High - prominence is universally meaningful
+
+**Example across domains:**
+
+| Domain | Concept | Prominence | Backend Mapping |
+|--------|---------|------------|-----------------|
+| Technical | "API versioning" | discussed | THOROUGHLY_DISCUSSED_IN |
+| Research | "relativity" | central | CENTRAL_TO |
+| Narrative | "betrayal theme" | peripheral | TANGENTIALLY_REFERENCED_IN |
+| Code | "Logger class" | mentioned | MENTIONED_IN |
+| Legal | "due process" | central | CENTRAL_TO |
+
+---
+
+#### Option 3: Domain-Specific Semantic Characterization
+
+**LLM sees:** Domain-specific characterization prompt
+
+```
+# For technical documentation:
+Indicate relationship to this concept:
+- "introduces" (defines or explains for first time)
+- "uses" (applies or implements)
+- "deprecates" (marks as obsolete)
+- "references" (cites or mentions)
+
+# For research papers:
+Indicate relationship to this concept:
+- "proposes" (introduces new idea)
+- "validates" (provides evidence for)
+- "critiques" (challenges or questions)
+- "extends" (builds upon)
+
+# For narrative text:
+Indicate relationship to this concept:
+- "develops" (central theme)
+- "foreshadows" (hints at future)
+- "recalls" (references earlier)
+- "mentions" (brief appearance)
+```
+
+**LLM does:** Picks from domain-specific semantic categories
+
+**Backend does:** Maps domain category to vocabulary
+
+**Pros:**
+- Rich semantic characterization
+- Domain-appropriate nuance
+- LLM leverages domain understanding
+
+**Cons:**
+- **Requires domain detection** (how do we know which prompt to use?)
+- Prompt engineering per domain
+- Different vocabularies per domain (harder to consolidate)
+- **Overfitting risk** - categories may not transfer
+
+**Domain-agnostic effectiveness:** Low - explicitly domain-specific
+
+**Rejected because:** Violates domain-agnostic constraint, adds complexity
+
+---
+
+#### Option 4: Natural Language Description + Parsing
+
+**LLM sees:** Open-ended question
+
+```
+Extract concepts. For each, briefly describe how it appears in this text.
+
+Examples:
+- "discussed extensively as central argument"
+- "referenced briefly in passing"
+- "introduced early then developed throughout"
+- "implied but not explicitly stated"
+```
+
+**LLM does:** Writes 1-2 sentence natural language description
+
+**Backend does:** NLP extraction + vocabulary normalization
+
+```python
+# LLM output (natural):
+{
+    "concept": "observer pattern",
+    "appearance_description": "introduced early in the document and used throughout as the primary design example",
+    "quote": "..."
+}
+
+# Backend NLP (complex):
+keywords = extract_keywords(appearance_description)
+# → ["introduced", "primary", "design", "example", "throughout"]
+
+if "primary" in keywords or "central" in keywords:
+    hint = "CENTRAL_TO"
+elif "introduced" in keywords:
+    hint = "INTRODUCED_IN"
+elif "throughout" in keywords:
+    hint = "THOROUGHLY_DISCUSSED_IN"
+
+canonical = normalize_to_cluster(hint, "APPEARS", threshold=0.80)
+```
+
+**Pros:**
+- Most natural for LLM (no categorization)
+- Rich semantic information
+- Domain-agnostic (LLM writes in own words)
+- Captures nuances categories might miss
+
+**Cons:**
+- Requires NLP parsing (brittle, language-dependent)
+- Inconsistent phrasing makes extraction harder
+- Higher token cost (longer outputs)
+- Validation difficult (free text)
+
+**Domain-agnostic effectiveness:** High potential, high complexity
+
+---
+
+### Evaluation Criteria
+
+| Criterion | Option 1:<br/>Structural | Option 2:<br/>Categorical | Option 3:<br/>Domain-Specific | Option 4:<br/>Natural Language |
+|-----------|---------------------------|---------------------------|-------------------------------|--------------------------------|
+| **LLM cognitive load** | None | Minimal | Medium | Low |
+| **Prompt complexity** | Zero change | +4 categories | +domain detection | +open question |
+| **Domain agnostic** | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes |
+| **Semantic accuracy** | Medium | High | Very High* | Very High |
+| **Implementation complexity** | Low | Low | High | Medium |
+| **Token cost** | No change | +~5 tokens | +~5 tokens | +~20 tokens |
+| **Validation** | Easy (deterministic) | Easy (enum) | Medium (enum per domain) | Hard (free text) |
+| **Extensibility** | Limited | Good | Domain-specific | Excellent |
+
+*Per domain only
+
+### Recommendation: Hybrid Approach (Option 1 + Optional Option 2)
+
+**Default:** Structural inference (Option 1) - works transparently
+**Enhancement:** Optional prominence hint (Option 2) - when extraction model supports it
+
+```python
+def determine_appearance_type(
+    prominence_hint: Optional[str],  # From LLM if provided
+    instance: Dict,
+    source: Dict,
+    all_instances: List
+) -> str:
+    """
+    Determine appearance type using LLM hint OR structural fallback.
+
+    LLM never sees vocabulary cluster - that's all backend.
+    """
+
+    # Priority 1: Use LLM's semantic hint if provided
+    if prominence_hint:
+        mapping = {
+            "central": "CENTRAL_TO",
+            "discussed": "THOROUGHLY_DISCUSSED_IN",
+            "mentioned": "MENTIONED_IN",
+            "peripheral": "TANGENTIALLY_REFERENCED_IN"
+        }
+        hint = mapping.get(prominence_hint.lower(), "APPEARS")
+
+    # Priority 2: Infer from structure (always available)
+    else:
+        hint = infer_from_structure(instance, source, all_instances)
+
+    # Normalize to vocabulary cluster (always backend)
+    return normalize_to_cluster(hint, "APPEARS", threshold=0.80)
+```
+
+**Benefits of hybrid:**
+- Works with current extraction (no changes required)
+- Improves when extraction model enhanced (gradual upgrade)
+- LLM never sees vocabulary cluster (maintains simplicity)
+- Domain-agnostic (prominence is universal)
+- Graceful degradation (structural fallback)
+
+### Domain-Agnostic Examples
+
+**Technical documentation:**
+```
+Concept: "dependency injection"
+Structural signals: 15 mentions, 25% of text → "THOROUGHLY_DISCUSSED_IN"
+LLM hint: "discussed" → "THOROUGHLY_DISCUSSED_IN"
+Vocabulary cluster: Normalized, same result
+```
+
+**Research paper:**
+```
+Concept: "Nash equilibrium"
+Structural signals: 2 mentions, 5% of text → "MENTIONED_IN"
+LLM hint: "central" (it's the core theorem) → "CENTRAL_TO"
+Vocabulary cluster: LLM hint more accurate than structure
+```
+
+**Code documentation:**
+```
+Concept: "Logger interface"
+Structural signals: 1 mention, early in file → "INTRODUCED_IN"
+LLM hint: "mentioned" (just referenced, not explained) → "MENTIONED_IN"
+Vocabulary cluster: LLM provides nuance
+```
+
+**Legal document:**
+```
+Concept: "reasonable doubt"
+Structural signals: 8 mentions, 18% of text → "FREQUENTLY_MENTIONED_IN"
+LLM hint: "central" (foundational principle) → "CENTRAL_TO"
+Vocabulary cluster: LLM understands legal importance
+```
+
+### Open Questions for Further Discussion
+
+1. **Should prominence hint be required or optional?**
+   - Optional: Graceful degradation, backward compatible
+   - Required: Better quality, consistent across corpus
+
+2. **Are 4 prominence categories sufficient?**
+   - Could add "foundational" vs "derivative"
+   - Could add "predictive" vs "retrospective"
+   - Risk: More categories = harder for LLM to choose
+
+3. **Should we support corpus-specific category extensions?**
+   - User defines custom categories for their domain
+   - Maps to vocabulary cluster via similarity
+   - Risk: Inconsistency across ontologies
+
+4. **How to handle multi-document context?**
+   - Concept "central" to one chapter but "mentioned" in another
+   - Need document-scoped vs corpus-scoped prominence
+   - Affects relationship granularity
+
+5. **Should appearance strength affect grounding calculation?**
+   - Central appearances have more grounding weight?
+   - Peripheral mentions contribute less to truth convergence?
+   - Needs testing with real corpora
+
+### Decision Timeline
+
+**Phase 1 (MVP):** Option 1 only (structural inference)
+- Validate basic vocabulary clustering works
+- Measure structural inference accuracy
+- Gather real-world appearance type distribution
+
+**Phase 2 (Enhancement):** Add Option 2 (optional prominence)
+- Extend extraction prompt with optional field
+- Compare LLM vs structural inference accuracy
+- Measure impact on semantic query quality
+
+**Phase 3 (Evaluation):** Consider Option 4 if needed
+- If prominence categories insufficient
+- If domain-specific nuance critical
+- Only after Option 2 data collection
+
+---
+
 ## Alternatives Considered
 
 ### Alternative 1: Keep APPEARS Hardcoded, Add Properties
