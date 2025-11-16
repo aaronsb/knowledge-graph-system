@@ -1073,11 +1073,11 @@ CREATE (c)-[new:{variant}]->(s)
 
 ---
 
-## Future Work: Semantic Role Classification
+## Future Work: Epistemic Status Classification
 
 **Status Update (2025-11-16):**
-- **Phase 1 (measurement):** ✅ Complete. See `docs/VALIDATION-RESULTS.md`. First CONTESTED semantic role detected (ENABLES: +0.232 avg grounding). Measurement script: `operator/admin/calculate_vocab_semantic_roles.py`.
-- **Phase 2 (query enhancement):** ✅ Complete. GraphQueryFacade now supports optional role filtering via `include_roles` and `exclude_roles` parameters. Test script: `operator/admin/test_semantic_role_queries.py`.
+- **Phase 1 (measurement):** ✅ Complete. See `docs/VALIDATION-RESULTS.md`. First CONTESTED epistemic status detected (ENABLES: +0.232 avg grounding). Measurement script: `operator/admin/calculate_vocab_epistemic_statuss.py`.
+- **Phase 2 (query enhancement):** ✅ Complete. GraphQueryFacade now supports optional role filtering via `include_roles` and `exclude_roles` parameters. Test script: `operator/admin/test_epistemic_status_queries.py`.
 
 ### Formal Connections to KG Research
 
@@ -1097,13 +1097,13 @@ External review (Gemini 2.5) identified that our emergent design maps directly t
 
 **Phase 1: Calculate and Store (Read-Only)**
 
-Add semantic role metadata **without changing any core logic**:
+Add epistemic status metadata **without changing any core logic**:
 
 ```python
-# NEW: scripts/calculate_vocab_semantic_roles.py
-def calculate_semantic_roles(age_client):
+# NEW: scripts/calculate_vocab_epistemic_statuss.py
+def calculate_epistemic_statuss(age_client):
     """
-    Calculate semantic role for each vocabulary type based on grounding impact.
+    Calculate epistemic status for each vocabulary type based on grounding impact.
 
     Purely additive - does not change ingestion, grounding, or queries.
     """
@@ -1125,7 +1125,7 @@ def calculate_semantic_roles(age_client):
             'count': len(edges)
         }
 
-        # Classify semantic role
+        # Classify epistemic status
         if stats['avg_grounding'] > 0.8:
             role = "AFFIRMATIVE"
         elif stats['avg_grounding'] < -0.5:
@@ -1140,8 +1140,8 @@ def calculate_semantic_roles(age_client):
         # ADD new properties (non-destructive)
         age_client.execute("""
             MATCH (v:VocabType {name: $type})
-            SET v.semantic_role = $role,
-                v.grounding_stats = $stats
+            SET v.epistemic_status = $role,
+                v.epistemic_stats = $stats
         """, {"type": vocab_type, "role": role, "stats": stats})
 ```
 
@@ -1149,7 +1149,7 @@ def calculate_semantic_roles(age_client):
 
 **Phase 2: Enhance Querying (Additive Logic)**
 
-Extend GraphQueryFacade with **optional** semantic role filtering:
+Extend GraphQueryFacade with **optional** epistemic status filtering:
 
 ```python
 # api/api/lib/query_facade.py
@@ -1162,7 +1162,7 @@ class GraphQueryFacade:
         exclude_roles: Optional[List[str]] = None   # NEW
     ):
         """
-        Match relationships with optional semantic role filtering.
+        Match relationships with optional epistemic status filtering.
 
         Args:
             include_roles: Only include these roles (e.g., ["AFFIRMATIVE"])
@@ -1174,9 +1174,9 @@ class GraphQueryFacade:
         if include_roles or exclude_roles:
             role_filter = []
             if include_roles:
-                role_filter.append(f"v.semantic_role IN {include_roles}")
+                role_filter.append(f"v.epistemic_status IN {include_roles}")
             if exclude_roles:
-                role_filter.append(f"v.semantic_role NOT IN {exclude_roles}")
+                role_filter.append(f"v.epistemic_status NOT IN {exclude_roles}")
 
             vocab_query = f"""
                 MATCH (v:VocabType)
@@ -1226,7 +1226,7 @@ facade.match_concept_relationships(concept_id="covenant_name")
 **Phase 3: Integration (Only After Validation)**
 
 Only if Phase 1-2 prove valuable:
-- Add semantic role to pruning logic (preserve dialectical tension)
+- Add epistemic status to pruning logic (preserve dialectical tension)
 - Add temporal queries (point-in-time semantic state)
 - Integrate role-aware grounding (dialectical synthesis)
 
@@ -1250,7 +1250,7 @@ Only if Phase 1-2 prove valuable:
 ### Implementation Plan
 
 **Week 1: Phase 1 (Calculation Script)**
-- Create `scripts/calculate_vocab_semantic_roles.py`
+- Create `scripts/calculate_vocab_epistemic_statuss.py`
 - Run on existing vocabulary
 - Analyze role distribution
 - Document findings

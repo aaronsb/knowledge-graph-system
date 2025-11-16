@@ -390,7 +390,7 @@ if avg_grounding < 0.20:
 
 **CORRECT approach** (grounding-aware classification):
 ```python
-# Calculate semantic role based on average grounding of connected concepts
+# Calculate epistemic status based on average grounding of connected concepts
 for vocab_type in active_vocabulary:
     edges = get_edges_using_vocabulary_type(vocab_type)
 
@@ -407,7 +407,7 @@ for vocab_type in active_vocabulary:
     avg_grounding = mean(groundings)
     max_grounding = max(groundings)
 
-    # CLASSIFY semantic role, don't prune
+    # CLASSIFY epistemic status, don't prune
     vocab_type.semantic_role = classify_semantic_role(avg_grounding)
     vocab_type.grounding_stats = {
         'avg': avg_grounding,
@@ -554,7 +554,7 @@ for vocab_type in vocabulary:
     update_vocab_type(vocab_type, grounding_stats=stats)
 ```
 
-**Phase 2**: Classify semantic roles
+**Phase 2**: Classify epistemic statuses
 ```python
 # Assign role based on average grounding
 vocab_type.semantic_role = classify_semantic_role(

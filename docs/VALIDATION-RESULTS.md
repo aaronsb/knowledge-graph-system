@@ -29,7 +29,7 @@ Ingested 5 Architecture Decision Records:
 
 ---
 
-## Semantic Role Measurement Results
+## Epistemic Status Measurement Results
 
 **Pre-Shift Data (Old Architecture):**
 - Grounding range: -0.1 to +0.1 (weak polarization)
@@ -50,7 +50,7 @@ Ingested 5 Architecture Decision Records:
 **Classification Details:**
 ```
 Vocabulary Type: ENABLES
-Semantic Role: CONTESTED
+Epistemic Status: CONTESTED
 Sample Size: 8 edges (100% of total)
 Average Grounding: +0.232
 Range: [+0.056, +0.273]
@@ -59,7 +59,7 @@ Rationale: Mixed grounding (0.232) within CONTESTED threshold (0.2-0.8)
 ```
 
 **Why This Matters:**
-- First semantic role classification with new architecture
+- First epistemic status classification with new architecture
 - Shows genuine mixed grounding pattern (not random noise)
 - Validates that vocabulary-based extraction creates richer polarization
 - Proves measurement philosophy works (bounded locality + satisficing)
@@ -84,7 +84,7 @@ Rationale: Mixed grounding (0.232) within CONTESTED threshold (0.2-0.8)
 |--------|-----------|------------|-------------|
 | **Grounding Strength** | -0.1 to +0.1 | +0.056 to +0.273 | **2-3x stronger** |
 | **Edges/Vocabulary Type** | 1-2 | 8+ | **4-8x more** |
-| **Semantic Roles** | 0 | 1 CONTESTED | **∞ improvement** |
+| **Epistemic Statuses** | 0 | 1 CONTESTED | **∞ improvement** |
 | **Measurement Success Rate** | 0/2567 (0%) | 66/66 (100%) | **Perfect** |
 | **Polarity Patterns** | Weak, near-zero | Mixed, measurable | **Detected** |
 
@@ -126,7 +126,7 @@ Rationale: Mixed grounding (0.232) within CONTESTED threshold (0.2-0.8)
 - Ingest more ADRs to reach AFFIRMATIVE threshold (>0.8)
 - Test with diverse content (not just technical docs)
 - Compare biblical text ingestion (old vs new architecture)
-- Measure whether semantic roles stabilize or continue evolving
+- Measure whether epistemic statuses stabilize or continue evolving
 
 **Implementation:**
 - Phase 2: Query enhancement with optional role filtering
@@ -139,7 +139,7 @@ Rationale: Mixed grounding (0.232) within CONTESTED threshold (0.2-0.8)
 
 **The vocabulary-based architecture produces measurably richer semantic patterns.**
 
-Pre-shift data showed weak polarization and no semantic role classifications. Post-shift data (just 5 ADRs) already shows:
+Pre-shift data showed weak polarization and no epistemic status classifications. Post-shift data (just 5 ADRs) already shows:
 - 2-3x stronger grounding values
 - 4-8x more edges per vocabulary type
 - First CONTESTED role detected (ENABLES: +0.232 avg grounding)

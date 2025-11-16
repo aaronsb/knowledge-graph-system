@@ -1,4 +1,4 @@
-# Semantic Role Query Filtering
+# Epistemic Status Query Filtering
 
 **Feature:** ADR-065 Phase 2
 **Status:** Implemented (2025-11-16)
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Semantic role filtering allows you to query relationships based on their **semantic role** - a classification derived from grounding patterns that indicates whether a relationship type tends to be affirmative, contested, contradictory, or historical.
+Semantic role filtering allows you to query relationships based on their **epistemic status** - a classification derived from grounding patterns that indicates whether a relationship type tends to be affirmative, contested, contradictory, or historical.
 
 This enables powerful dialectical queries such as:
 - "Show me only high-confidence relationships" (AFFIRMATIVE)
@@ -16,7 +16,7 @@ This enables powerful dialectical queries such as:
 - "Exclude outdated relationships" (exclude HISTORICAL)
 - "Find relationships that are actively debated" (CONTESTED only)
 
-### Semantic Role Classifications
+### Epistemic Status Classifications
 
 Roles are automatically detected by measuring grounding patterns across vocabulary types:
 
@@ -31,9 +31,9 @@ Roles are automatically detected by measuring grounding patterns across vocabula
 
 ### How It Works
 
-1. **Measurement:** Run `calculate_vocab_semantic_roles.py --store` to analyze grounding patterns
-2. **Storage:** Semantic roles stored as VocabType properties (`v.semantic_role`, `v.grounding_stats`)
-3. **Querying:** Use `include_roles` or `exclude_roles` parameters in GraphQueryFacade
+1. **Measurement:** Run `calculate_vocab_epistemic_status.py --store` to analyze grounding patterns
+2. **Storage:** Semantic roles stored as VocabType properties (`v.epistemic_status`, `v.epistemic_stats`)
+3. **Querying:** Use `include_epistemic_status` or `exclude_epistemic_status` parameters in GraphQueryFacade
 4. **Filtering:** Facade queries VocabType nodes, builds relationship type list dynamically
 5. **Results:** Only relationships matching role criteria are returned
 
@@ -41,29 +41,29 @@ Roles are automatically detected by measuring grounding patterns across vocabula
 
 ---
 
-## Enabling Semantic Role Filtering
+## Enabling Epistemic Status Filtering
 
-### Step 1: Measure Semantic Roles
+### Step 1: Measure Epistemic Status
 
 Run the measurement script to analyze grounding patterns:
 
 ```bash
 # Basic measurement (no storage - report only)
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_semantic_roles.py
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py
 
 # Measure and store to enable query filtering
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_semantic_roles.py --store
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --store
 
 # Larger sample for more precision
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_semantic_roles.py --sample-size 500 --store
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --sample-size 500 --store
 
 # Detailed analysis with uncertainty metrics
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_semantic_roles.py --verbose --store
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --verbose --store
 ```
 
 **Output Example:**
 ```
-Semantic Role Measurement Report
+Epistemic Status Measurement Report
 =================================
 
 Summary:
@@ -75,14 +75,14 @@ CONTESTED (1)
   • ENABLES
     8 measurements from 8/8 edges | avg grounding: +0.232
 
-📝 Storing semantic roles to VocabType nodes...
-✓ Stored 35/35 semantic roles to VocabType nodes
+📝 Storing epistemic statuss to VocabType nodes...
+✓ Stored 35/35 epistemic statuss to VocabType nodes
   Phase 2 query filtering now available via GraphQueryFacade.match_concept_relationships()
 ```
 
 ### Step 2: Verify Storage
 
-Check that semantic roles were stored:
+Check that epistemic statuss were stored:
 
 ```python
 from api.api.lib.age_client import AGEClient
@@ -90,14 +90,14 @@ from api.api.lib.age_client import AGEClient
 client = AGEClient()
 facade = client.facade
 
-# List vocabulary types with semantic roles
+# List vocabulary types with epistemic statuss
 vocab_types = facade.match_vocab_types(
-    where="v.semantic_role IS NOT NULL"
+    where="v.epistemic_status IS NOT NULL"
 )
 
 for vt in vocab_types:
     props = vt['v']['properties']
-    print(f"{props['name']}: {props['semantic_role']} (avg: {props['grounding_stats']['avg_grounding']:.3f})")
+    print(f"{props['name']}: {props['semantic_role']} (avg: {props['epistemic_stats']['avg_grounding']:.3f})")
 ```
 
 **Example Output:**
@@ -121,13 +121,13 @@ facade = client.facade
 
 # Include only AFFIRMATIVE relationships (high confidence)
 affirmative = facade.match_concept_relationships(
-    include_roles=["AFFIRMATIVE"],
+    include_epistemic_status=["AFFIRMATIVE"],
     limit=10
 )
 
 # Exclude HISTORICAL relationships (current state only)
 current = facade.match_concept_relationships(
-    exclude_roles=["HISTORICAL"],
+    exclude_epistemic_status=["HISTORICAL"],
     limit=10
 )
 ```
@@ -137,41 +137,41 @@ current = facade.match_concept_relationships(
 ```python
 # Explore areas of tension and contradiction
 dialectical = facade.match_concept_relationships(
-    include_roles=["CONTESTED", "CONTRADICTORY"],
+    include_epistemic_status=["CONTESTED", "CONTRADICTORY"],
     limit=20
 )
 
 # Find well-established connections (thesis)
 thesis = facade.match_concept_relationships(
-    include_roles=["AFFIRMATIVE"]
+    include_epistemic_status=["AFFIRMATIVE"]
 )
 
 # Find points of disagreement (antithesis)
 antithesis = facade.match_concept_relationships(
-    include_roles=["CONTESTED", "CONTRADICTORY"]
+    include_epistemic_status=["CONTESTED", "CONTRADICTORY"]
 )
 ```
 
 ### Combined Filtering
 
 ```python
-# Specific relationship type + semantic role
+# Specific relationship type + epistemic status
 enables_contested = facade.match_concept_relationships(
     rel_types=["ENABLES"],
-    include_roles=["CONTESTED"],
+    include_epistemic_status=["CONTESTED"],
     limit=10
 )
 
 # Multiple types + role filter
 causal_affirmative = facade.match_concept_relationships(
     rel_types=["ENABLES", "CAUSES", "REQUIRES"],
-    include_roles=["AFFIRMATIVE"]
+    include_epistemic_status=["AFFIRMATIVE"]
 )
 
 # Type filter + exclude historical
 current_supports = facade.match_concept_relationships(
     rel_types=["SUPPORTS", "VALIDATES"],
-    exclude_roles=["HISTORICAL"]
+    exclude_epistemic_status=["HISTORICAL"]
 )
 ```
 
@@ -198,7 +198,7 @@ all_rels = facade.match_concept_relationships(limit=100)
 ```python
 # Get only AFFIRMATIVE relationships
 consensus = facade.match_concept_relationships(
-    include_roles=["AFFIRMATIVE"]
+    include_epistemic_status=["AFFIRMATIVE"]
 )
 
 # Build consensus graph
@@ -223,7 +223,7 @@ for rel in consensus:
 ```python
 # Find contested relationships (mixed evidence)
 contested = facade.match_concept_relationships(
-    include_roles=["CONTESTED"],
+    include_epistemic_status=["CONTESTED"],
     where="r.confidence > 0.5"  # Still reasonably confident despite mixed grounding
 )
 
@@ -250,12 +250,12 @@ for rel in contested:
 ```python
 # Thesis: Established connections
 thesis_rels = facade.match_concept_relationships(
-    include_roles=["AFFIRMATIVE"]
+    include_epistemic_status=["AFFIRMATIVE"]
 )
 
 # Antithesis: Points of contradiction
 antithesis_rels = facade.match_concept_relationships(
-    include_roles=["CONTESTED", "CONTRADICTORY"]
+    include_epistemic_status=["CONTESTED", "CONTRADICTORY"]
 )
 
 # Analyze dialectical tension
@@ -277,12 +277,12 @@ print(f"Dialectical ratio: {len(antithesis_rels) / len(thesis_rels):.2f}")
 ```python
 # Current state (exclude historical)
 current_state = facade.match_concept_relationships(
-    exclude_roles=["HISTORICAL"]
+    exclude_epistemic_status=["HISTORICAL"]
 )
 
 # Historical context (only historical)
 historical_context = facade.match_concept_relationships(
-    include_roles=["HISTORICAL"]
+    include_epistemic_status=["HISTORICAL"]
 )
 
 # Evolution analysis
@@ -303,19 +303,19 @@ print(f"Historical relationships: {len(historical_context)}")
 ```python
 # High confidence + high grounding
 reliable = facade.match_concept_relationships(
-    include_roles=["AFFIRMATIVE"],
+    include_epistemic_status=["AFFIRMATIVE"],
     where="r.confidence > 0.8"
 )
 
 # Mixed evidence but still valuable
 uncertain = facade.match_concept_relationships(
-    include_roles=["CONTESTED"],
+    include_epistemic_status=["CONTESTED"],
     where="r.confidence > 0.5"
 )
 
 # Low confidence relationships (may need review)
 low_confidence = facade.match_concept_relationships(
-    include_roles=["UNCLASSIFIED"],
+    include_epistemic_status=["UNCLASSIFIED"],
     where="r.confidence < 0.5"
 )
 ```
@@ -334,14 +334,14 @@ low_confidence = facade.match_concept_relationships(
 
 ```python
 def analyze_concept_roles(concept_id: str):
-    """Analyze semantic role distribution for a specific concept."""
+    """Analyze epistemic status distribution for a specific concept."""
 
     roles = ["AFFIRMATIVE", "CONTESTED", "CONTRADICTORY", "HISTORICAL"]
     role_counts = {}
 
     for role in roles:
         rels = facade.match_concept_relationships(
-            include_roles=[role],
+            include_epistemic_status=[role],
             where=f"c1.concept_id = '{concept_id}' OR c2.concept_id = '{concept_id}'"
         )
         role_counts[role] = len(rels)
@@ -363,13 +363,13 @@ def extract_dialectical_subgraph(topic_concept_id: str):
 
     # Thesis (well-supported)
     thesis = facade.match_concept_relationships(
-        include_roles=["AFFIRMATIVE"],
+        include_epistemic_status=["AFFIRMATIVE"],
         where=f"c1.concept_id = '{topic_concept_id}'"
     )
 
     # Antithesis (contested/contradictory)
     antithesis = facade.match_concept_relationships(
-        include_roles=["CONTESTED", "CONTRADICTORY"],
+        include_epistemic_status=["CONTESTED", "CONTRADICTORY"],
         where=f"c1.concept_id = '{topic_concept_id}'"
     )
 
@@ -387,7 +387,7 @@ import json
 from datetime import datetime
 
 def track_role_evolution(vocab_type: str):
-    """Track how a vocabulary type's semantic role changes over time."""
+    """Track how a vocabulary type's epistemic status changes over time."""
 
     # Get current role and stats
     vt = facade.match_vocab_types(where=f"v.name = '{vocab_type}'")
@@ -398,8 +398,8 @@ def track_role_evolution(vocab_type: str):
             "timestamp": datetime.now().isoformat(),
             "vocab_type": vocab_type,
             "semantic_role": props.get('semantic_role'),
-            "avg_grounding": props.get('grounding_stats', {}).get('avg_grounding'),
-            "measured_concepts": props.get('grounding_stats', {}).get('measured_concepts')
+            "avg_grounding": props.get('epistemic_stats', {}).get('avg_grounding'),
+            "measured_concepts": props.get('epistemic_stats', {}).get('measured_concepts')
         }
 
         # Append to evolution log
@@ -421,7 +421,7 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 
 ```python
 # Two queries executed:
-# 1. MATCH (v:VocabType) WHERE v.semantic_role IN ['AFFIRMATIVE'] RETURN v.name
+# 1. MATCH (v:VocabType) WHERE v.epistemic_status IN ['AFFIRMATIVE'] RETURN v.name
 # 2. MATCH (c1:Concept)-[r:TYPE1|TYPE2|...]->(c2:Concept) RETURN c1, r, c2
 ```
 
@@ -517,9 +517,9 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 ### ✅ Do
 
 1. **Re-measure periodically** as your graph evolves (weekly, monthly, or after major ingestion)
-2. **Check timestamps** to know when roles were last measured (`v.role_measured_at`)
+2. **Check timestamps** to know when roles were last measured (`v.status_measured_at`)
 3. **Use appropriate sample sizes** for your use case (default 100 is usually fine)
-4. **Combine with confidence filtering** for robust queries (`include_roles + where="r.confidence > 0.8"`)
+4. **Combine with confidence filtering** for robust queries (`include_epistemic_status + where="r.confidence > 0.8"`)
 5. **Document role-based decisions** (e.g., "Used AFFIRMATIVE filter for consensus view on 2025-11-16")
 
 ### ❌ Don't
@@ -534,20 +534,20 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 
 ## Troubleshooting
 
-### Problem: No results with include_roles
+### Problem: No results with include_epistemic_status
 
 ```python
 # Query returns empty
 results = facade.match_concept_relationships(
-    include_roles=["AFFIRMATIVE"]
+    include_epistemic_status=["AFFIRMATIVE"]
 )
 # → []
 ```
 
 **Solution:**
-1. Check if semantic roles are stored: `facade.match_vocab_types(where="v.semantic_role IS NOT NULL")`
-2. Run measurement with --store: `calculate_vocab_semantic_roles.py --store`
-3. Check if any types have that role: `facade.match_vocab_types(where="v.semantic_role = 'AFFIRMATIVE'")`
+1. Check if epistemic statuss are stored: `facade.match_vocab_types(where="v.epistemic_status IS NOT NULL")`
+2. Run measurement with --store: `calculate_vocab_epistemic_status.py --store`
+3. Check if any types have that role: `facade.match_vocab_types(where="v.epistemic_status = 'AFFIRMATIVE'")`
 
 ### Problem: All relationships are INSUFFICIENT_DATA
 
@@ -570,7 +570,7 @@ results = facade.match_concept_relationships(
 
 **Solution:**
 1. Run with --verbose to see detailed stats
-2. Check grounding distribution: `v.grounding_stats.grounding_distribution`
+2. Check grounding distribution: `v.epistemic_stats.grounding_distribution`
 3. Verify sample size was adequate
 4. Re-run measurement with larger sample: `--sample-size 500`
 5. Check if new data shifted grounding patterns
@@ -579,22 +579,22 @@ results = facade.match_concept_relationships(
 
 ## Testing
 
-Test script: `operator/admin/test_semantic_role_queries.py`
+Test script: `operator/admin/test_epistemic_status_queries.py`
 
 ```bash
 # Run all tests
-docker exec kg-operator python /workspace/operator/admin/test_semantic_role_queries.py
+docker exec kg-operator python /workspace/operator/admin/test_epistemic_status_queries.py
 
 # Expected output:
 # ✓ All tests completed
-# Phase 2 semantic role filtering is working correctly
+# Phase 2 epistemic status filtering is working correctly
 ```
 
 **Test Coverage:**
-- ✅ include_roles with single role
-- ✅ include_roles with multiple roles
-- ✅ exclude_roles
-- ✅ Combined rel_types + include_roles
+- ✅ include_epistemic_status with single role
+- ✅ include_epistemic_status with multiple roles
+- ✅ exclude_epistemic_status
+- ✅ Combined rel_types + include_epistemic_status
 - ✅ Backward compatibility (no role parameters)
 - ✅ Dialectical queries (CONTESTED + CONTRADICTORY)
 
@@ -618,7 +618,7 @@ Potential future work:
 2. **Role-aware pruning:** Preserve dialectical tension when pruning edges
 3. **Temporal queries:** Point-in-time semantic state reconstruction
 4. **Role-weighted grounding:** Adjust grounding calculation based on relationship roles
-5. **Visualization:** Graph coloring by semantic role
+5. **Visualization:** Graph coloring by epistemic status
 6. **API endpoints:** REST API support for role filtering
 7. **CLI commands:** `kg search --role AFFIRMATIVE` syntax
 

@@ -570,22 +570,22 @@ docker exec kg-operator python /workspace/operator/admin/manage_api_keys.py list
 docker exec kg-operator python /workspace/operator/admin/manage_api_keys.py delete openai
 ```
 
-### Measure Semantic Roles for Vocabulary Types
+### Measure Epistemic Status for Vocabulary Types
 
-Measure semantic role patterns for vocabulary relationship types (ADR-065):
+Measure epistemic status patterns for vocabulary relationship types (ADR-065):
 
 ```bash
 # Measure current state (100 edge sample per type)
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_semantic_roles.py
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py
 
 # Larger sample for more precision
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_semantic_roles.py --sample-size 500
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --sample-size 500
 
 # Detailed output with uncertainty metrics
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_semantic_roles.py --verbose
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --verbose
 ```
 
-**Semantic Roles (Estimated from Measurements):**
+**Epistemic Status (Estimated from Measurements):**
 - **AFFIRMATIVE** - Consistently high grounding (avg > 0.8)
 - **CONTESTED** - Mixed grounding (0.2 ≤ avg ≤ 0.8)
 - **CONTRADICTORY** - Consistently low/negative grounding (avg < -0.5)
