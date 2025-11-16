@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Measure Semantic Roles for Vocabulary Types (Dynamic Analysis)
+Measure Epistemic Status for Vocabulary Types (Dynamic Analysis)
 
-Phase 1 of ADR-065 semantic role classification: Measure current semantic
-role patterns for vocabulary types by sampling edges and calculating grounding
+Phase 1 of ADR-065 epistemic status classification: Measure current epistemic
+status patterns for vocabulary types by sampling edges and calculating grounding
 dynamically.
 
 Philosophy (Bounded Locality + Satisficing):
@@ -13,10 +13,10 @@ Philosophy (Bounded Locality + Satisficing):
 - Each run is a "measurement" - results are temporal, observer-dependent
 - Larger graphs → sampling becomes more important (avoid computational churn)
 
-Semantic Roles (Estimated from Sampled Edges):
-- AFFIRMATIVE: Consistently high grounding (avg > 0.8)
-- CONTESTED: Mixed grounding (0.2 <= avg <= 0.8)
-- CONTRADICTORY: Consistently low/negative grounding (avg < -0.5)
+Epistemic Status (Estimated from Sampled Edges):
+- AFFIRMATIVE: Consistently high grounding (avg > 0.8) - well-established knowledge
+- CONTESTED: Mixed grounding (0.2 <= avg <= 0.8) - debated/mixed validation
+- CONTRADICTORY: Consistently low/negative grounding (avg < -0.5) - contradicted knowledge
 - HISTORICAL: Explicitly temporal vocabulary (detected by name)
 
 This is a MEASUREMENT tool, not a storage tool. Results reflect the graph
@@ -25,13 +25,13 @@ as the graph evolves.
 
 Usage:
     # Measure current state (default: 100 edge sample per type)
-    python -m operator.admin.calculate_vocab_semantic_roles
+    python -m operator.admin.calculate_vocab_epistemic_status
 
     # Larger sample for more precision
-    python -m operator.admin.calculate_vocab_semantic_roles --sample-size 500
+    python -m operator.admin.calculate_vocab_epistemic_status --sample-size 500
 
     # Detailed output with uncertainty metrics
-    python -m operator.admin.calculate_vocab_semantic_roles --verbose
+    python -m operator.admin.calculate_vocab_epistemic_status --verbose
 """
 
 import argparse
@@ -51,18 +51,18 @@ from api.lib.config import Config
 from api.api.lib.age_client import AGEClient
 
 
-def classify_semantic_role(
+def classify_epistemic_status(
     vocab_type: str,
     grounding_stats: Dict
 ) -> Tuple[str, str]:
     """
-    Estimate semantic role based on measured grounding patterns.
+    Estimate epistemic status based on measured grounding patterns.
 
     Note: This is a MEASUREMENT, not a classification. Results are temporal
     and observer-dependent (sample-based, bounded calculation).
 
     Returns:
-        (role, rationale)
+        (status, rationale)
     """
     avg_grounding = grounding_stats.get('avg_grounding', 0.0)
     measured = grounding_stats.get('measured_concepts', 0)
@@ -248,17 +248,17 @@ def get_all_vocab_types(client) -> List[str]:
 
 
 
-def print_role_report(
-    role_assignments: Dict[str, Tuple[str, Dict, str]],
+def print_epistemic_status_report(
+    status_assignments: Dict[str, Tuple[str, Dict, str]],
     verbose: bool = False,
     measurement_time: str = None
 ):
     """
-    Print semantic role measurement report.
+    Print epistemic status measurement report.
 
-    role_assignments: {vocab_type: (role, stats, rationale)}
+    status_assignments: {vocab_type: (status, stats, rationale)}
     """
-    Console.section("Semantic Role Measurement Report")
+    Console.section("Epistemic Status Measurement Report")
 
     # Measurement metadata
     if measurement_time:
@@ -266,22 +266,22 @@ def print_role_report(
         Console.info("Note: Results are temporal - rerunning will give different values as graph evolves")
         print()
 
-    # Count by role
-    role_counts = {}
+    # Count by status
+    status_counts = {}
     total_measured = 0
     total_sampled = 0
     total_edges = 0
 
-    for vocab_type, (role, stats, rationale) in role_assignments.items():
-        role_counts[role] = role_counts.get(role, 0) + 1
+    for vocab_type, (status, stats, rationale) in status_assignments.items():
+        status_counts[status] = status_counts.get(status, 0) + 1
         total_measured += stats.get('measured_concepts', 0)
         total_sampled += stats.get('sampled_edges', 0)
         total_edges += stats.get('total_edges', 0)
 
     # Summary
     Console.info("Summary:")
-    for role, count in sorted(role_counts.items(), key=lambda x: -x[1]):
-        Console.info(f"  {role}: {count}")
+    for status, count in sorted(status_counts.items(), key=lambda x: -x[1]):
+        Console.info(f"  {status}: {count}")
 
     Console.info(f"\nMeasurement scope:")
     Console.info(f"  Total edges in graph: {total_edges:,}")
@@ -291,11 +291,11 @@ def print_role_report(
     print()
 
     # Detailed breakdown
-    for role in sorted(role_counts.keys()):
-        Console.header(f"\n{role} ({role_counts[role]})")
+    for status in sorted(status_counts.keys()):
+        Console.header(f"\n{status} ({status_counts[status]})")
 
-        for vocab_type, (r, stats, rationale) in role_assignments.items():
-            if r != role:
+        for vocab_type, (s, stats, rationale) in status_assignments.items():
+            if s != status:
                 continue
 
             total = stats.get('total_edges', 0)
@@ -320,10 +320,10 @@ def print_role_report(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Measure semantic roles for vocabulary types (dynamic analysis)",
+        description="Measure epistemic status for vocabulary types (dynamic analysis)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Semantic Roles (Estimated from Measurements):
+Epistemic Status (Estimated from Measurements):
   AFFIRMATIVE    - Consistently high grounding (avg > 0.8)
   CONTESTED      - Mixed grounding (0.2 <= avg <= 0.8)
   CONTRADICTORY  - Consistently low/negative grounding (avg < -0.5)
@@ -337,13 +337,13 @@ Philosophy:
 
 Examples:
   # Measure current state (100 edge sample per type)
-  python -m operator.admin.calculate_vocab_semantic_roles
+  python -m operator.admin.calculate_vocab_epistemic_status
 
   # Larger sample for more precision (slower)
-  python -m operator.admin.calculate_vocab_semantic_roles --sample-size 500
+  python -m operator.admin.calculate_vocab_epistemic_status --sample-size 500
 
   # Detailed analysis with uncertainty metrics
-  python -m operator.admin.calculate_vocab_semantic_roles --verbose
+  python -m operator.admin.calculate_vocab_epistemic_status --verbose
         """
     )
 
@@ -352,11 +352,11 @@ Examples:
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Show detailed statistics and uncertainty metrics')
     parser.add_argument('--store', action='store_true',
-                       help='Store semantic role and grounding stats as VocabType properties (ADR-065 Phase 2)')
+                       help='Store epistemic status and grounding stats as VocabType properties (ADR-065 Phase 2)')
 
     args = parser.parse_args()
 
-    Console.section("Vocabulary Semantic Role Measurement")
+    Console.section("Vocabulary Epistemic Status Measurement")
 
     # Measurement start time
     measurement_start = datetime.now().isoformat()
@@ -381,35 +381,35 @@ Examples:
     Console.info(f"Sample size: {args.sample_size} edges per type")
     Console.info(f"Starting measurement at {measurement_start}\n")
 
-    # Measure roles for each type
+    # Measure epistemic status for each type
     Console.info("Measuring grounding patterns (this may take a while)...")
-    role_assignments = {}
+    status_assignments = {}
 
     for i, vocab_type in enumerate(vocab_types, 1):
         if i % 50 == 0:
             Console.info(f"  Progress: {i}/{len(vocab_types)} vocabulary types measured...")
 
         stats = calculate_grounding_stats(client, vocab_type, sample_size=args.sample_size)
-        role, rationale = classify_semantic_role(vocab_type, stats)
-        role_assignments[vocab_type] = (role, stats, rationale)
+        status, rationale = classify_epistemic_status(vocab_type, stats)
+        status_assignments[vocab_type] = (status, stats, rationale)
 
     # Store results if requested (ADR-065 Phase 2)
     if args.store:
-        Console.info("\n📝 Storing semantic roles to VocabType nodes...")
+        Console.info("\n📝 Storing epistemic status to VocabType nodes...")
         stored_count = 0
 
-        for vocab_type, (role, stats, rationale) in role_assignments.items():
+        for vocab_type, (status, stats, rationale) in status_assignments.items():
             try:
-                # Store semantic_role and grounding_stats as VocabType properties
+                # Store epistemic_status and epistemic_stats as VocabType properties
                 query = """
                     MATCH (v:VocabType {name: $vocab_type})
-                    SET v.semantic_role = $role,
-                        v.grounding_stats = $stats,
-                        v.role_measured_at = $timestamp
+                    SET v.epistemic_status = $status,
+                        v.epistemic_stats = $stats,
+                        v.status_measured_at = $timestamp
                 """
                 client._execute_cypher(query, {
                     "vocab_type": vocab_type,
-                    "role": role,
+                    "status": status,
                     "stats": {
                         "avg_grounding": stats.get('avg_grounding', 0.0),
                         "std_grounding": stats.get('std_grounding', 0.0),
@@ -424,24 +424,24 @@ Examples:
                 stored_count += 1
 
                 if stored_count % 50 == 0:
-                    Console.info(f"  Progress: {stored_count}/{len(role_assignments)} roles stored...")
+                    Console.info(f"  Progress: {stored_count}/{len(status_assignments)} statuses stored...")
 
             except Exception as e:
-                Console.warning(f"  Failed to store role for {vocab_type}: {e}")
+                Console.warning(f"  Failed to store status for {vocab_type}: {e}")
 
-        Console.success(f"✓ Stored {stored_count}/{len(role_assignments)} semantic roles to VocabType nodes")
+        Console.success(f"✓ Stored {stored_count}/{len(status_assignments)} epistemic statuses to VocabType nodes")
         Console.info("  Phase 2 query filtering now available via GraphQueryFacade.match_concept_relationships()")
 
     # Print report
     print()
-    print_role_report(role_assignments, verbose=args.verbose, measurement_time=measurement_start)
+    print_epistemic_status_report(status_assignments, verbose=args.verbose, measurement_time=measurement_start)
 
     # Measurement complete
     if args.store:
         Console.info("\n💡 Measurement complete and stored. Results are temporal - rerun with --store to remeasure.")
     else:
         Console.info("\n💡 Measurement complete. Results are temporal - rerun to remeasure as graph evolves.")
-        Console.info("   Use --store flag to persist semantic roles for Phase 2 query filtering.")
+        Console.info("   Use --store flag to persist epistemic status for Phase 2 query filtering.")
 
 
 if __name__ == '__main__':

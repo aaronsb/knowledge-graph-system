@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Test Semantic Role Query Filtering (ADR-065 Phase 2)
+Test Epistemic Status Query Filtering (ADR-065 Phase 2)
 
 Verifies that GraphQueryFacade.match_concept_relationships() correctly
-filters relationships by semantic role.
+filters relationships by epistemic status.
 
 Usage:
-    python -m operator.admin.test_semantic_role_queries
+    python -m operator.admin.test_epistemic_status_queries
 """
 
 import sys
@@ -19,10 +19,10 @@ from api.lib.console import Console
 from api.api.lib.age_client import AGEClient
 
 
-def test_role_filtering():
-    """Test semantic role filtering functionality."""
+def test_epistemic_status_filtering():
+    """Test epistemic status filtering functionality."""
 
-    Console.section("Testing Semantic Role Query Filtering (ADR-065 Phase 2)")
+    Console.section("Testing Epistemic Status Query Filtering (ADR-065 Phase 2)")
 
     # Connect to database
     try:
@@ -41,26 +41,26 @@ def test_role_filtering():
     if all_rels:
         Console.info(f"  Sample: {all_rels[0]}")
 
-    # Test 2: Filter by AFFIRMATIVE role (if any exist)
-    Console.info("\n[Test 2] Filter: include_roles=['AFFIRMATIVE']")
+    # Test 2: Filter by AFFIRMATIVE status (if any exist)
+    Console.info("\n[Test 2] Filter: include_epistemic_status=['AFFIRMATIVE']")
     try:
         affirmative = facade.match_concept_relationships(
-            include_roles=["AFFIRMATIVE"],
+            include_epistemic_status=["AFFIRMATIVE"],
             limit=5
         )
         Console.success(f"  ✓ Found {len(affirmative)} AFFIRMATIVE relationships")
         if affirmative:
             Console.info(f"  Sample: {affirmative[0]}")
         else:
-            Console.warning("  No AFFIRMATIVE roles in current graph (expected if fresh data)")
+            Console.warning("  No AFFIRMATIVE status in current graph (expected if fresh data)")
     except Exception as e:
         Console.error(f"  ✗ Error: {e}")
 
-    # Test 3: Filter by CONTESTED role
-    Console.info("\n[Test 3] Filter: include_roles=['CONTESTED']")
+    # Test 3: Filter by CONTESTED status
+    Console.info("\n[Test 3] Filter: include_epistemic_status=['CONTESTED']")
     try:
         contested = facade.match_concept_relationships(
-            include_roles=["CONTESTED"],
+            include_epistemic_status=["CONTESTED"],
             limit=5
         )
         Console.success(f"  ✓ Found {len(contested)} CONTESTED relationships")
@@ -71,15 +71,15 @@ def test_role_filtering():
                 rel_type = contested[0]['r'].get('type') or 'unknown'
                 Console.info(f"  Relationship type: {rel_type}")
         else:
-            Console.warning("  No CONTESTED roles in current graph")
+            Console.warning("  No CONTESTED status in current graph")
     except Exception as e:
         Console.error(f"  ✗ Error: {e}")
 
-    # Test 4: Exclude HISTORICAL role
-    Console.info("\n[Test 4] Filter: exclude_roles=['HISTORICAL']")
+    # Test 4: Exclude HISTORICAL status
+    Console.info("\n[Test 4] Filter: exclude_epistemic_status=['HISTORICAL']")
     try:
         non_historical = facade.match_concept_relationships(
-            exclude_roles=["HISTORICAL"],
+            exclude_epistemic_status=["HISTORICAL"],
             limit=5
         )
         Console.success(f"  ✓ Found {len(non_historical)} non-HISTORICAL relationships")
@@ -88,11 +88,11 @@ def test_role_filtering():
     except Exception as e:
         Console.error(f"  ✗ Error: {e}")
 
-    # Test 5: Multiple roles (dialectical query)
-    Console.info("\n[Test 5] Dialectical: include_roles=['CONTESTED', 'CONTRADICTORY']")
+    # Test 5: Multiple statuses (dialectical query)
+    Console.info("\n[Test 5] Dialectical: include_epistemic_status=['CONTESTED', 'CONTRADICTORY']")
     try:
         dialectical = facade.match_concept_relationships(
-            include_roles=["CONTESTED", "CONTRADICTORY"],
+            include_epistemic_status=["CONTESTED", "CONTRADICTORY"],
             limit=5
         )
         Console.success(f"  ✓ Found {len(dialectical)} dialectical relationships")
@@ -101,15 +101,15 @@ def test_role_filtering():
     except Exception as e:
         Console.error(f"  ✗ Error: {e}")
 
-    # Test 6: Combine role filter with explicit relationship types
-    Console.info("\n[Test 6] Combined: rel_types=['ENABLES'] + include_roles=['CONTESTED']")
+    # Test 6: Combine epistemic status filter with explicit relationship types
+    Console.info("\n[Test 6] Combined: rel_types=['ENABLES'] + include_epistemic_status=['CONTESTED']")
     try:
         combined = facade.match_concept_relationships(
             rel_types=["ENABLES"],
-            include_roles=["CONTESTED"],
+            include_epistemic_status=["CONTESTED"],
             limit=5
         )
-        Console.success(f"  ✓ Found {len(combined)} ENABLES relationships with CONTESTED role")
+        Console.success(f"  ✓ Found {len(combined)} ENABLES relationships with CONTESTED status")
         if combined:
             Console.info(f"  Sample: {combined[0]}")
         else:
@@ -120,9 +120,9 @@ def test_role_filtering():
     # Summary
     Console.section("Test Summary")
     Console.success("✓ All tests completed")
-    Console.info("Phase 2 semantic role filtering is working correctly")
+    Console.info("Phase 2 epistemic status filtering is working correctly")
     Console.info("\nNext: Integrate into query endpoints and CLI")
 
 
 if __name__ == '__main__':
-    test_role_filtering()
+    test_epistemic_status_filtering()

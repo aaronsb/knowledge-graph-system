@@ -147,19 +147,19 @@ class GraphQueryFacade:
         where: Optional[str] = None,
         params: Optional[Dict] = None,
         limit: Optional[int] = None,
-        include_roles: Optional[List[str]] = None,
-        exclude_roles: Optional[List[str]] = None
+        include_epistemic_status: Optional[List[str]] = None,
+        exclude_epistemic_status: Optional[List[str]] = None
     ) -> List[Dict]:
         """
-        Match relationships between concepts with optional semantic role filtering.
+        Match relationships between concepts with optional epistemic status filtering.
 
         Args:
             rel_types: Optional list of relationship types (e.g., ["IMPLIES", "SUPPORTS"])
             where: Optional WHERE clause
             params: Query parameters
             limit: Optional result limit
-            include_roles: Only include relationships with these semantic roles (ADR-065 Phase 2)
-            exclude_roles: Exclude relationships with these semantic roles (ADR-065 Phase 2)
+            include_epistemic_status: Only include relationships with these epistemic statuses (ADR-065 Phase 2)
+            exclude_epistemic_status: Exclude relationships with these epistemic statuses (ADR-065 Phase 2)
 
         Returns:
             List of (source, relationship, target) dictionaries
@@ -173,48 +173,48 @@ class GraphQueryFacade:
 
             # Find only high-confidence relationships (ADR-065)
             affirmative = facade.match_concept_relationships(
-                include_roles=["AFFIRMATIVE"]
+                include_epistemic_status=["AFFIRMATIVE"]
             )
 
             # Exclude historical relationships (current state only)
             current = facade.match_concept_relationships(
-                exclude_roles=["HISTORICAL"]
+                exclude_epistemic_status=["HISTORICAL"]
             )
 
             # Explore dialectical tension (contested + contradictory)
             dialectical = facade.match_concept_relationships(
-                include_roles=["CONTESTED", "CONTRADICTORY"]
+                include_epistemic_status=["CONTESTED", "CONTRADICTORY"]
             )
         """
-        # Phase 2 (ADR-065): Get vocabulary types matching semantic role filters
-        if include_roles or exclude_roles:
-            role_filters = []
+        # Phase 2 (ADR-065): Get vocabulary types matching epistemic status filters
+        if include_epistemic_status or exclude_epistemic_status:
+            status_filters = []
 
-            if include_roles:
-                role_list = ", ".join([f"'{r}'" for r in include_roles])
-                role_filters.append(f"v.semantic_role IN [{role_list}]")
+            if include_epistemic_status:
+                status_list = ", ".join([f"'{s}'" for s in include_epistemic_status])
+                status_filters.append(f"v.epistemic_status IN [{status_list}]")
 
-            if exclude_roles:
-                role_list = ", ".join([f"'{r}'" for r in exclude_roles])
-                role_filters.append(f"NOT v.semantic_role IN [{role_list}]")
+            if exclude_epistemic_status:
+                status_list = ", ".join([f"'{s}'" for s in exclude_epistemic_status])
+                status_filters.append(f"NOT v.epistemic_status IN [{status_list}]")
 
             vocab_query = f"""
                 MATCH (v:VocabType)
-                WHERE {' AND '.join(role_filters)}
+                WHERE {' AND '.join(status_filters)}
                 RETURN v.name as type_name
             """
 
             self.audit.log_query(vocab_query, namespace="vocabulary", params={})
             vocab_results = self.db._execute_cypher(vocab_query, params={})
-            role_filtered_types = [row['type_name'] for row in vocab_results]
+            status_filtered_types = [row['type_name'] for row in vocab_results]
 
             # Combine with explicit rel_types if provided
             if rel_types:
                 # Intersection: only types that match both filters
-                rel_types = [t for t in rel_types if t in role_filtered_types]
+                rel_types = [t for t in rel_types if t in status_filtered_types]
             else:
-                # Use role-filtered types as the relationship type list
-                rel_types = role_filtered_types
+                # Use status-filtered types as the relationship type list
+                rel_types = status_filtered_types
 
         # Build relationship pattern
         rel_pattern = ""
