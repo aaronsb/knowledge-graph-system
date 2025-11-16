@@ -97,7 +97,7 @@ vocab_types = facade.match_vocab_types(
 
 for vt in vocab_types:
     props = vt['v']['properties']
-    print(f"{props['name']}: {props['semantic_role']} (avg: {props['epistemic_stats']['avg_grounding']:.3f})")
+    print(f"{props['name']}: {props['epistemic_status']} (avg: {props['epistemic_stats']['avg_grounding']:.3f})")
 ```
 
 **Example Output:**
@@ -397,7 +397,7 @@ def track_role_evolution(vocab_type: str):
         measurement = {
             "timestamp": datetime.now().isoformat(),
             "vocab_type": vocab_type,
-            "semantic_role": props.get('semantic_role'),
+            "epistemic_status": props.get('epistemic_status'),
             "avg_grounding": props.get('epistemic_stats', {}).get('avg_grounding'),
             "measured_concepts": props.get('epistemic_stats', {}).get('measured_concepts')
         }
@@ -432,7 +432,7 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 
 **Optimization:**
 - VocabType nodes are small (35 in test graph)
-- Lookup query is simple (indexed on semantic_role if needed)
+- Lookup query is simple (indexed on epistemic_status if needed)
 - Relationship query benefits from reduced type list
 
 ### Sample Size Tradeoffs

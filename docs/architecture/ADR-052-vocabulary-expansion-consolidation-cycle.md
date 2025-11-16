@@ -408,14 +408,14 @@ for vocab_type in active_vocabulary:
     max_grounding = max(groundings)
 
     # CLASSIFY epistemic status, don't prune
-    vocab_type.semantic_role = classify_semantic_role(avg_grounding)
+    vocab_type.epistemic_status = classify_epistemic_status(avg_grounding)
     vocab_type.grounding_stats = {
         'avg': avg_grounding,
         'max': max_grounding,
         'distribution': histogram(groundings)
     }
 
-def classify_semantic_role(avg_grounding):
+def classify_epistemic_status(avg_grounding):
     """
     Classify vocabulary by the typical grounding of concepts it connects.
 
@@ -450,12 +450,12 @@ def classify_semantic_role(avg_grounding):
 ```cypher
 // Show me contradictory relationships (explore alternatives)
 MATCH (c1)-[r]-(c2)
-WHERE r.semantic_role = 'CONTRADICTORY'
+WHERE r.epistemic_status = 'CONTRADICTORY'
 RETURN c1, r, c2
 
 // Show me historical evolution (how did we get here?)
 MATCH (c1)-[r]-(c2)
-WHERE r.semantic_role = 'HISTORICAL'
+WHERE r.epistemic_status = 'HISTORICAL'
 RETURN c1, r, c2
 ```
 
@@ -557,7 +557,7 @@ for vocab_type in vocabulary:
 **Phase 2**: Classify epistemic statuses
 ```python
 # Assign role based on average grounding
-vocab_type.semantic_role = classify_semantic_role(
+vocab_type.epistemic_status = classify_epistemic_status(
     stats['avg_grounding']
 )
 ```
@@ -566,12 +566,12 @@ vocab_type.semantic_role = classify_semantic_role(
 ```cypher
 // Find all vocabulary describing contradictions
 MATCH (v:VocabType)
-WHERE v.semantic_role = 'CONTRADICTORY'
+WHERE v.epistemic_status = 'CONTRADICTORY'
 RETURN v.name, v.grounding_stats
 
 // Find all vocabulary describing current truth
 MATCH (v:VocabType)
-WHERE v.semantic_role = 'AFFIRMATIVE'
+WHERE v.epistemic_status = 'AFFIRMATIVE'
 RETURN v.name, v.grounding_stats
 ```
 
