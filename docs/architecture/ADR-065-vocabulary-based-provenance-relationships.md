@@ -1075,7 +1075,9 @@ CREATE (c)-[new:{variant}]->(s)
 
 ## Future Work: Semantic Role Classification
 
-**Status Update (2025-11-16):** Phase 1 (measurement) validated and implemented. See `docs/VALIDATION-RESULTS.md` for details. First CONTESTED semantic role detected (ENABLES: +0.232 avg grounding). Measurement script: `operator/admin/calculate_vocab_semantic_roles.py`.
+**Status Update (2025-11-16):**
+- **Phase 1 (measurement):** ✅ Complete. See `docs/VALIDATION-RESULTS.md`. First CONTESTED semantic role detected (ENABLES: +0.232 avg grounding). Measurement script: `operator/admin/calculate_vocab_semantic_roles.py`.
+- **Phase 2 (query enhancement):** ✅ Complete. GraphQueryFacade now supports optional role filtering via `include_roles` and `exclude_roles` parameters. Test script: `operator/admin/test_semantic_role_queries.py`.
 
 ### Formal Connections to KG Research
 

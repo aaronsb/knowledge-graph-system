@@ -351,6 +351,8 @@ Examples:
                        help='Maximum edges to sample per vocabulary type (default: 100)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Show detailed statistics and uncertainty metrics')
+    parser.add_argument('--store', action='store_true',
+                       help='Store semantic role and grounding stats as VocabType properties (ADR-065 Phase 2)')
 
     args = parser.parse_args()
 
@@ -391,12 +393,55 @@ Examples:
         role, rationale = classify_semantic_role(vocab_type, stats)
         role_assignments[vocab_type] = (role, stats, rationale)
 
+    # Store results if requested (ADR-065 Phase 2)
+    if args.store:
+        Console.info("\n📝 Storing semantic roles to VocabType nodes...")
+        stored_count = 0
+
+        for vocab_type, (role, stats, rationale) in role_assignments.items():
+            try:
+                # Store semantic_role and grounding_stats as VocabType properties
+                query = """
+                    MATCH (v:VocabType {name: $vocab_type})
+                    SET v.semantic_role = $role,
+                        v.grounding_stats = $stats,
+                        v.role_measured_at = $timestamp
+                """
+                client._execute_cypher(query, {
+                    "vocab_type": vocab_type,
+                    "role": role,
+                    "stats": {
+                        "avg_grounding": stats.get('avg_grounding', 0.0),
+                        "std_grounding": stats.get('std_grounding', 0.0),
+                        "min_grounding": stats.get('min_grounding', 0.0),
+                        "max_grounding": stats.get('max_grounding', 0.0),
+                        "measured_concepts": stats.get('measured_concepts', 0),
+                        "sampled_edges": stats.get('sampled_edges', 0),
+                        "total_edges": stats.get('total_edges', 0)
+                    },
+                    "timestamp": measurement_start
+                })
+                stored_count += 1
+
+                if stored_count % 50 == 0:
+                    Console.info(f"  Progress: {stored_count}/{len(role_assignments)} roles stored...")
+
+            except Exception as e:
+                Console.warning(f"  Failed to store role for {vocab_type}: {e}")
+
+        Console.success(f"✓ Stored {stored_count}/{len(role_assignments)} semantic roles to VocabType nodes")
+        Console.info("  Phase 2 query filtering now available via GraphQueryFacade.match_concept_relationships()")
+
     # Print report
     print()
     print_role_report(role_assignments, verbose=args.verbose, measurement_time=measurement_start)
 
     # Measurement complete
-    Console.info("\n💡 Measurement complete. Results are temporal - rerun to remeasure as graph evolves.")
+    if args.store:
+        Console.info("\n💡 Measurement complete and stored. Results are temporal - rerun with --store to remeasure.")
+    else:
+        Console.info("\n💡 Measurement complete. Results are temporal - rerun to remeasure as graph evolves.")
+        Console.info("   Use --store flag to persist semantic roles for Phase 2 query filtering.")
 
 
 if __name__ == '__main__':
