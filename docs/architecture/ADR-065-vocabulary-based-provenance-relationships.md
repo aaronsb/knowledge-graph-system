@@ -1072,6 +1072,196 @@ CREATE (c)-[new:{variant}]->(s)
 
 ---
 
+## Future Work: Semantic Role Classification
+
+### Formal Connections to KG Research
+
+External review (Gemini 2.5) identified that our emergent design maps directly to established KG research:
+
+| Our System | Formal Research Area | Mapping |
+|------------|---------------------|---------|
+| **Grounding score** | Uncertain/Probabilistic KGs (UKG/PKG) | Confidence measure for fact veracity |
+| **AFFIRMATIVE role** | Classification of Uncertainty | High confidence facts (> 0.8) |
+| **CONTESTED role** | Classification of Uncertainty | Moderate/disputed confidence (0.2-0.8) |
+| **HISTORICAL role** | Temporal Knowledge Graphs (TKG) | Vocabulary evolution tracking |
+| **CONTRADICTORY role** | Dialectical Reasoning | Thesis/antithesis preservation |
+
+**Key insight:** We didn't implement these paradigms—we **derived them from first principles** through successive design decisions.
+
+### Phased Exploration (Non-Breaking)
+
+**Phase 1: Calculate and Store (Read-Only)**
+
+Add semantic role metadata **without changing any core logic**:
+
+```python
+# NEW: scripts/calculate_vocab_semantic_roles.py
+def calculate_semantic_roles(age_client):
+    """
+    Calculate semantic role for each vocabulary type based on grounding impact.
+
+    Purely additive - does not change ingestion, grounding, or queries.
+    """
+    vocab_types = age_client.get_all_vocabulary_types()
+
+    for vocab_type in vocab_types:
+        # Get all edges using this type
+        edges = age_client.query(f"""
+            MATCH (c1)-[r:{vocab_type}]->(c2)
+            RETURN c1.grounding_strength as from_grounding,
+                   c2.grounding_strength as to_grounding
+        """)
+
+        # Calculate grounding statistics
+        stats = {
+            'avg_grounding': mean([e['to_grounding'] for e in edges]),
+            'max_grounding': max([e['to_grounding'] for e in edges]),
+            'min_grounding': min([e['to_grounding'] for e in edges]),
+            'count': len(edges)
+        }
+
+        # Classify semantic role
+        if stats['avg_grounding'] > 0.8:
+            role = "AFFIRMATIVE"
+        elif stats['avg_grounding'] < -0.5:
+            role = "CONTRADICTORY"
+        elif 0.2 <= stats['avg_grounding'] <= 0.8:
+            role = "CONTESTED"
+        elif vocab_type in ['REPLACED_BY', 'SUPERSEDED_BY', 'DEPRECATED']:
+            role = "HISTORICAL"
+        else:
+            role = "NEUTRAL"
+
+        # ADD new properties (non-destructive)
+        age_client.execute("""
+            MATCH (v:VocabType {name: $type})
+            SET v.semantic_role = $role,
+                v.grounding_stats = $stats
+        """, {"type": vocab_type, "role": role, "stats": stats})
+```
+
+**Result:** Core system unchanged, new metadata available for exploration.
+
+**Phase 2: Enhance Querying (Additive Logic)**
+
+Extend GraphQueryFacade with **optional** semantic role filtering:
+
+```python
+# api/api/lib/query_facade.py
+class GraphQueryFacade:
+
+    def match_concept_relationships(
+        self,
+        concept_id: str,
+        include_roles: Optional[List[str]] = None,  # NEW
+        exclude_roles: Optional[List[str]] = None   # NEW
+    ):
+        """
+        Match relationships with optional semantic role filtering.
+
+        Args:
+            include_roles: Only include these roles (e.g., ["AFFIRMATIVE"])
+            exclude_roles: Exclude these roles (e.g., ["HISTORICAL"])
+
+        Backward compatible: If both None, behaves exactly as before.
+        """
+        # Get vocabulary types matching role filters
+        if include_roles or exclude_roles:
+            role_filter = []
+            if include_roles:
+                role_filter.append(f"v.semantic_role IN {include_roles}")
+            if exclude_roles:
+                role_filter.append(f"v.semantic_role NOT IN {exclude_roles}")
+
+            vocab_query = f"""
+                MATCH (v:VocabType)
+                WHERE {' AND '.join(role_filter)}
+                RETURN v.name as type_name
+            """
+            allowed_types = [r['type_name'] for r in self.client.execute(vocab_query)]
+        else:
+            allowed_types = None  # No filtering, use all types
+
+        # Build main query (existing logic + optional type filter)
+        type_pattern = f":{('|'.join(allowed_types))}" if allowed_types else ""
+
+        query = f"""
+            MATCH (c:Concept {{concept_id: $concept_id}})-[r{type_pattern}]->(c2)
+            RETURN c2, type(r), r.confidence
+        """
+
+        return self.client.execute(query, {"concept_id": concept_id})
+```
+
+**New capabilities enabled:**
+
+```python
+# Explore only high-confidence relationships (thesis)
+facade.match_concept_relationships(
+    concept_id="covenant_name",
+    include_roles=["AFFIRMATIVE"]
+)
+
+# Explore contradictions (antithesis)
+facade.match_concept_relationships(
+    concept_id="covenant_name",
+    include_roles=["CONTRADICTORY", "CONTESTED"]
+)
+
+# Exclude historical relationships (current state only)
+facade.match_concept_relationships(
+    concept_id="covenant_name",
+    exclude_roles=["HISTORICAL"]
+)
+
+# Default behavior unchanged (backward compatible)
+facade.match_concept_relationships(concept_id="covenant_name")
+```
+
+**Phase 3: Integration (Only After Validation)**
+
+Only if Phase 1-2 prove valuable:
+- Add semantic role to pruning logic (preserve dialectical tension)
+- Add temporal queries (point-in-time semantic state)
+- Integrate role-aware grounding (dialectical synthesis)
+
+### Benefits of Phased Approach
+
+**Safety:**
+- Phase 1: Zero risk (read-only metadata)
+- Phase 2: Backward compatible (optional parameters)
+- Phase 3: Informed decision (validated with real data)
+
+**Reversibility:**
+- Git revert if exploration fails
+- No breaking changes until Phase 3
+- Can explore indefinitely in safe mode
+
+**Learning:**
+- Validate formal KG paradigms against our data
+- Understand grounding distribution across roles
+- Discover dialectical patterns in corpus
+
+### Implementation Plan
+
+**Week 1: Phase 1 (Calculation Script)**
+- Create `scripts/calculate_vocab_semantic_roles.py`
+- Run on existing vocabulary
+- Analyze role distribution
+- Document findings
+
+**Week 2: Phase 2 (Query Enhancement)**
+- Extend GraphQueryFacade
+- Add CLI flags (e.g., `kg search --role AFFIRMATIVE`)
+- Test dialectical queries
+- Measure semantic value
+
+**Week 3+: Evaluation**
+- Use cases: Dialectical reasoning, temporal queries, uncertainty visualization
+- Decision: Proceed to Phase 3 or keep as optional feature
+
+---
+
 ## Related
 
 - **ADR-058:** Polarity Axis Triangulation for Grounding Calculation (pattern we're replicating)
