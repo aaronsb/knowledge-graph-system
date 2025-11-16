@@ -1,9 +1,15 @@
 # ADR-065: Vocabulary-Based Provenance Relationships
 
-**Status:** Accepted
+**Status:** Proposed
 **Date:** 2025-01-15
 **Deciders:** Engineering Team
-**Related ADRs:** ADR-058 (Polarity Axis Triangulation), ADR-048 (Query Safety via GraphQueryFacade)
+**Related ADRs:**
+- ADR-058 (Polarity Axis Triangulation) - Pattern we're replicating
+- ADR-050 (Vocabulary Consolidation) - Similarity-based clustering
+- ADR-048 (Query Safety via GraphQueryFacade) - Abstraction layer
+- ADR-044 (Probabilistic Truth Convergence) - Grounding calculation
+
+**Mathematical Foundation:** Hybrid symbolic-tensor network (emergent, not prescribed)
 
 ---
 
@@ -99,9 +105,150 @@ RETURN s
 
 ---
 
-## Decision
+## Architectural Realization: From Boolean to Probabilistic, From Graph to Tensor Network
+
+### The Emergent Pattern
+
+Through successive design decisions—vocabulary-based relationships (ADR-050), polarity axis triangulation (ADR-058), and now vocabulary-based provenance—we've been **systematically eliminating boolean logic in favor of probabilistic values**.
+
+**What we thought we were building:** A graph database with semantic enrichment
+
+**What we're actually building:** A hybrid symbolic-tensor network represented in a graph
+
+### The Shift from Boolean to Probabilistic
+
+**Before (boolean):**
+```python
+# Binary membership
+relationship = "APPEARS" or "SUPPORTS" or "CONTRADICTS"  # Discrete choice
+
+# Binary queries
+has_relationship = (c)-[:APPEARS]->(s)  # True or False
+
+# Binary grounding
+grounded = all_edges_support  # True or False
+```
+
+**After (probabilistic):**
+```python
+# Gradient membership
+similarity_to_appears = 0.87  # Continuous [0, 1]
+in_cluster = similarity >= threshold  # Threshold-based
+
+# Gradient relationships
+relationship_strength = dot(edge_embedding, polarity_axis)  # [-1, 1]
+confidence = 0.92  # [0, 1]
+
+# Gradient grounding
+grounding = weighted_avg(projections, confidences)  # [-1, 1]
+```
+
+### If It Walks Like a Tensor...
+
+**Tensor network properties we've inadvertently created:**
+
+| Property | Our System | Tensor Network Equivalent |
+|----------|------------|---------------------------|
+| **Nodes** | Concepts with embeddings | Tensors (vectors in R^n) |
+| **Edges** | Relationships with type embeddings | Tensor indices/contractions |
+| **Operations** | Dot products, projections, weighted sums | Tensor contractions |
+| **Clustering** | Similarity threshold filtering | Contraction-based membership |
+| **Grounding** | Weighted projection aggregation | Multi-edge tensor contraction |
+| **Vocabulary** | Type embeddings in semantic space | Tensor factorization/basis vectors |
+
+**We're not forcing a tensor paradigm—we're recognizing that our design naturally creates one.**
+
+### Why This Happened
+
+Each decision eliminated discrete categories in favor of continuous values:
+
+1. **ADR-050 (Vocabulary Consolidation):** Instead of hardcoded relationship types, use similarity-based clustering
+   - Boolean: "Is this SUPPORTS?" → Probabilistic: "87% similar to SUPPORTS"
+
+2. **ADR-058 (Polarity Axis):** Instead of binary support/contradict, project onto axis
+   - Boolean: "Supporting or contradicting?" → Probabilistic: "+0.73 projection (leaning support)"
+
+3. **ADR-065 (Vocabulary-Based APPEARS):** Instead of binary presence, use appearance strength
+   - Boolean: "Does concept appear?" → Probabilistic: "92% central, 0.15 tangential"
+
+**Result: A probabilistic tensor network indexed by graph structure**
+
+### What This Means Architecturally
+
+We're building a **hybrid system:**
+
+**Graph layer (symbolic):**
+- Structural queries (Cypher patterns)
+- Ontology organization (human-readable)
+- Provenance chains (source → instance → concept)
+
+**Tensor layer (continuous):**
+- Embeddings (vectors in semantic space)
+- Projections (dot products onto axes)
+- Clustering (similarity thresholds)
+- Grounding (weighted contractions)
+
+**Integration:**
+- Relationship types bridge both layers (symbolic labels + vector embeddings)
+- Graph topology indexes tensor network structure
+- Queries combine symbolic patterns + probabilistic operations
+
+### Examples of Tensor Operations in the Graph
+
+**Example 1: Grounding calculation**
+```python
+# This is a tensor contraction
+grounding = Σ(confidence_i * dot(edge_embedding_i, polarity_axis)) / Σ(confidence_i)
+            └──────────────────────┬──────────────────────┘
+                          Weighted tensor contraction
+```
+
+**Example 2: Appearance clustering**
+```python
+# This is tensor filtering via contraction
+cluster = {r | dot(embed(r), embed("APPEARS")) >= 0.75}
+               └──────────────┬─────────────┘
+                    Tensor similarity (normalized contraction)
+```
+
+**Example 3: Vocabulary consolidation**
+```python
+# This is tensor proximity detection
+should_merge = cosine_sim(embed(type1), embed(type2)) >= threshold
+               └─────────────────┬────────────────┘
+                    Normalized tensor contraction
+```
+
+### Implications
+
+**If we acknowledge this is a tensor network:**
+
+**Benefits we gain:**
+- Leverage tensor network optimization theory
+- GPU acceleration for batch operations (dot products, projections)
+- Tensor decomposition methods (reduce dimensionality, find patterns)
+- Anomaly detection (outliers in tensor space)
+
+**Clarity we gain:**
+- Honest about mathematical foundation
+- Probabilistic semantics (not boolean approximations)
+- Gradient-based reasoning (smooth transitions, not hard boundaries)
+
+**Risks we avoid:**
+- Pretending discrete when actually continuous
+- Binary queries on probabilistic data (threshold confusion)
+- Losing semantic richness through forced categorization
+
+**Architecture we maintain:**
+- Graph remains primary interface (Cypher, ontologies)
+- Tensors are implementation detail (users see probabilities)
+- Hybrid symbolic-continuous reasoning
+
+### Decision: Embrace the Pattern
 
 **Treat APPEARS as a semantic prototype in embedding space**, identical to how SUPPORTS/CONTRADICTS function as polarity prototypes in ADR-058.
+
+**But acknowledge:** This creates tensor network structure, and that's okay. We're not forcing tensors—they're emerging from our design principles.
 
 ### Core Principle
 
