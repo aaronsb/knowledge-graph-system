@@ -1,7 +1,8 @@
 # ADR-065: Vocabulary-Based Provenance Relationships
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2025-01-15
+**Validated:** 2025-11-16 (see docs/VALIDATION-RESULTS.md)
 **Deciders:** Engineering Team
 **Related ADRs:**
 - ADR-058 (Polarity Axis Triangulation) - Pattern we're replicating
@@ -1073,6 +1074,8 @@ CREATE (c)-[new:{variant}]->(s)
 ---
 
 ## Future Work: Semantic Role Classification
+
+**Status Update (2025-11-16):** Phase 1 (measurement) validated and implemented. See `docs/VALIDATION-RESULTS.md` for details. First CONTESTED semantic role detected (ENABLES: +0.232 avg grounding). Measurement script: `operator/admin/calculate_vocab_semantic_roles.py`.
 
 ### Formal Connections to KG Research
 
