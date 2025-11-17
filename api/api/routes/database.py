@@ -17,9 +17,11 @@ from ..models.database import (
     DatabaseInfoResponse,
     DatabaseHealthResponse,
     CypherQueryRequest,
-    CypherQueryResponse
+    CypherQueryResponse,
+    MetricCounter
 )
 from api.api.lib.age_client import AGEClient
+from api.api.services.vocabulary_metrics_service import VocabularyMetricsService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/database", tags=["database"])
@@ -75,6 +77,30 @@ async def get_database_stats(
             for record in (rel_types or [])
         ]
 
+        # Fetch graph metrics (change counters)
+        metrics_dict = None
+        try:
+            # Get database connection from AGE client's pool
+            import psycopg2
+            conn = client.pool.getconn()
+            try:
+                metrics_service = VocabularyMetricsService(conn)
+                all_metrics = metrics_service.get_all_metrics()
+
+                # Convert to MetricCounter objects
+                metrics_dict = {}
+                for metric_name, metric_data in all_metrics.items():
+                    metrics_dict[metric_name] = MetricCounter(
+                        counter=metric_data['counter'],
+                        delta=metric_data['delta'],
+                        last_measured_at=metric_data['last_measured_at'].isoformat() if metric_data['last_measured_at'] else None
+                    )
+            finally:
+                client.pool.putconn(conn)
+        except Exception as metrics_error:
+            logger.warning(f"Failed to fetch graph metrics: {metrics_error}")
+            # Don't fail the whole request if metrics fetch fails
+
         return DatabaseStatsResponse(
             nodes={
                 "concepts": stats['Concept'],
@@ -84,7 +110,8 @@ async def get_database_stats(
             relationships={
                 "total": total_relationships,
                 "by_type": rel_type_list
-            }
+            },
+            metrics=metrics_dict
         )
 
     except Exception as e:

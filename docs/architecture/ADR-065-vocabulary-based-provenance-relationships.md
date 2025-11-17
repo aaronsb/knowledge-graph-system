@@ -1075,9 +1075,9 @@ CREATE (c)-[new:{variant}]->(s)
 
 ## Future Work: Epistemic Status Classification
 
-**Status Update (2025-11-16):**
-- **Phase 1 (measurement):** ✅ Complete. See `docs/VALIDATION-RESULTS.md`. First CONTESTED epistemic status detected (ENABLES: +0.232 avg grounding). Measurement script: `operator/admin/calculate_vocab_epistemic_statuss.py`.
-- **Phase 2 (query enhancement):** ✅ Complete. GraphQueryFacade now supports optional role filtering via `include_roles` and `exclude_roles` parameters. Test script: `operator/admin/test_epistemic_status_queries.py`.
+**Status Update (2025-11-17):**
+- **Phase 1 (measurement):** ✅ Complete. Moved to API service (`api/api/services/epistemic_status_service.py`). See `docs/VALIDATION-RESULTS.md`. First CONTESTED epistemic status detected (ENABLES: +0.232 avg grounding). CLI: `kg vocab epistemic-status measure`.
+- **Phase 2 (query enhancement):** ✅ Complete. GraphQueryFacade supports optional status filtering via `include_epistemic_status` and `exclude_epistemic_status` parameters. Tests: `tests/test_query_facade.py::TestEpistemicStatusFiltering`.
 
 ### Formal Connections to KG Research
 
@@ -1100,8 +1100,9 @@ External review (Gemini 2.5) identified that our emergent design maps directly t
 Add epistemic status metadata **without changing any core logic**:
 
 ```python
-# NEW: scripts/calculate_vocab_epistemic_statuss.py
-def calculate_epistemic_statuss(age_client):
+# NEW: api/api/services/epistemic_status_service.py (replaces operator script)
+# CLI: kg vocab epistemic-status measure
+def calculate_epistemic_status(age_client):
     """
     Calculate epistemic status for each vocabulary type based on grounding impact.
 
@@ -1249,11 +1250,11 @@ Only if Phase 1-2 prove valuable:
 
 ### Implementation Plan
 
-**Week 1: Phase 1 (Calculation Script)**
-- Create `scripts/calculate_vocab_epistemic_statuss.py`
-- Run on existing vocabulary
-- Analyze role distribution
-- Document findings
+**Week 1: Phase 1 (Calculation Service)** ✅ Complete
+- Create `api/api/services/epistemic_status_service.py`
+- Integrate with API endpoints
+- CLI interface: `kg vocab epistemic-status measure`
+- Run on existing vocabulary and analyze distribution
 
 **Week 2: Phase 2 (Query Enhancement)**
 - Extend GraphQueryFacade

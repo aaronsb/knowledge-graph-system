@@ -31,7 +31,7 @@ Roles are automatically detected by measuring grounding patterns across vocabula
 
 ### How It Works
 
-1. **Measurement:** Run `calculate_vocab_epistemic_status.py --store` to analyze grounding patterns
+1. **Measurement:** Run `kg vocab epistemic-status measure` to analyze grounding patterns
 2. **Storage:** Semantic roles stored as VocabType properties (`v.epistemic_status`, `v.epistemic_stats`)
 3. **Querying:** Use `include_epistemic_status` or `exclude_epistemic_status` parameters in GraphQueryFacade
 4. **Filtering:** Facade queries VocabType nodes, builds relationship type list dynamically
@@ -45,20 +45,20 @@ Roles are automatically detected by measuring grounding patterns across vocabula
 
 ### Step 1: Measure Epistemic Status
 
-Run the measurement script to analyze grounding patterns:
+Run the measurement command via kg CLI to analyze grounding patterns:
 
 ```bash
-# Basic measurement (no storage - report only)
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py
+# Basic measurement (stores to database by default)
+kg vocab epistemic-status measure
 
-# Measure and store to enable query filtering
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --store
+# Measure without storing (analysis only)
+kg vocab epistemic-status measure --no-store
 
 # Larger sample for more precision
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --sample-size 500 --store
+kg vocab epistemic-status measure --sample-size 500
 
 # Detailed analysis with uncertainty metrics
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --verbose --store
+kg vocab epistemic-status measure --sample-size 200 --verbose
 ```
 
 **Output Example:**
@@ -545,9 +545,9 @@ results = facade.match_concept_relationships(
 ```
 
 **Solution:**
-1. Check if epistemic statuss are stored: `facade.match_vocab_types(where="v.epistemic_status IS NOT NULL")`
-2. Run measurement with --store: `calculate_vocab_epistemic_status.py --store`
-3. Check if any types have that role: `facade.match_vocab_types(where="v.epistemic_status = 'AFFIRMATIVE'")`
+1. Check if epistemic statuses are stored: `facade.match_vocab_types(where="v.epistemic_status IS NOT NULL")`
+2. Run measurement: `kg vocab epistemic-status measure`
+3. Check if any types have that status: `facade.match_vocab_types(where="v.epistemic_status = 'AFFIRMATIVE'")`
 
 ### Problem: All relationships are INSUFFICIENT_DATA
 
@@ -579,11 +579,11 @@ results = facade.match_concept_relationships(
 
 ## Testing
 
-Test script: `operator/admin/test_epistemic_status_queries.py`
+Tests: `tests/test_query_facade.py::TestEpistemicStatusFiltering`
 
 ```bash
-# Run all tests
-docker exec kg-operator python /workspace/operator/admin/test_epistemic_status_queries.py
+# Run epistemic status filtering tests
+pytest tests/test_query_facade.py::TestEpistemicStatusFiltering -v
 
 # Expected output:
 # ✓ All tests completed

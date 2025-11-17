@@ -520,10 +520,11 @@ class EpistemicStatusStats(BaseModel):
 class EpistemicStatusInfo(BaseModel):
     """Epistemic status information for a vocabulary type"""
     relationship_type: str
-    epistemic_status: str  # AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED
+    epistemic_status: str  # AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED, EMERGING
     stats: Optional[EpistemicStatusStats] = None
     rationale: Optional[str] = None
     status_measured_at: Optional[str] = None
+    vocabulary_changes_since_measurement: Optional[int] = None  # Staleness delta (for show command)
 
 
 class EpistemicStatusMeasureResponse(BaseModel):
@@ -541,3 +542,5 @@ class EpistemicStatusListResponse(BaseModel):
     """List of vocabulary types with epistemic status"""
     total: int
     types: List[EpistemicStatusInfo]
+    last_measurement_at: Optional[str] = None  # Global measurement timestamp
+    vocabulary_changes_since_measurement: Optional[int] = None  # Staleness delta

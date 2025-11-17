@@ -10,10 +10,18 @@ class RelationshipTypeCount(BaseModel):
     count: int
 
 
+class MetricCounter(BaseModel):
+    """Individual metric counter"""
+    counter: int
+    delta: int
+    last_measured_at: Optional[str] = None
+
+
 class DatabaseStatsResponse(BaseModel):
     """Database statistics"""
     nodes: Dict[str, int]  # {"concepts": 100, "sources": 50, "instances": 200}
     relationships: Dict[str, Any]  # {"total": 150, "by_type": [...]}
+    metrics: Optional[Dict[str, MetricCounter]] = None  # Graph change counters
 
 
 class DatabaseInfoResponse(BaseModel):
