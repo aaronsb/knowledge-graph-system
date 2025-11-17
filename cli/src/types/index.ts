@@ -276,6 +276,12 @@ export interface FindConnectionBySearchResponse {
 }
 
 // Database types
+export interface MetricCounter {
+  counter: number;
+  delta: number;
+  last_measured_at?: string | null;
+}
+
 export interface DatabaseStatsResponse {
   nodes: {
     concepts: number;
@@ -285,6 +291,11 @@ export interface DatabaseStatsResponse {
   relationships: {
     total: number;
     by_type: Array<{ rel_type: string; count: number }>;
+  };
+  metrics?: {
+    vocabulary_change_counter?: MetricCounter;
+    epistemic_measurement_counter?: MetricCounter;
+    [key: string]: MetricCounter | undefined;
   };
 }
 
