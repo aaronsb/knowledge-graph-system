@@ -37,6 +37,8 @@ Standalone guides for specific topics and workflows.
 - **QUICKSTART.md** - Quick start guide using operator architecture
 - **DEPLOYMENT.md** - Comprehensive deployment guide for all environments
 - **VOCABULARY_CATEGORIES.md** - Understanding vocabulary category scores and confidence
+- **SCHEDULED-JOBS.md** - Background maintenance tasks and automated jobs
+- **EPISTEMIC-STATUS-FILTERING.md** - Using epistemic status to filter relationships
 
 ### 🔨 `development/`
 Development journals, learnings, and internal notes.
@@ -71,6 +73,7 @@ Images, diagrams, and other media assets.
 5. **Important:** Read [SECURITY.md](manual/04-security-and-access/03-SECURITY.md) for encrypted API key management and security infrastructure
 6. Learn about [BACKUP_RESTORE.md](manual/05-maintenance/01-BACKUP_RESTORE.md) for data protection
 7. Reference [MCP_SETUP.md](manual/03-integration/01-MCP_SETUP.md) for service account configuration
+8. Review [SCHEDULED-JOBS.md](guides/SCHEDULED-JOBS.md) for understanding background maintenance tasks
 
 ### Developers
 1. Read [ARCHITECTURE_OVERVIEW.md](architecture/ARCHITECTURE_OVERVIEW.md)
