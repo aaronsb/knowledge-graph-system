@@ -439,14 +439,18 @@ async def get_concept_details(
             for record in (instances_result or [])
         ]
 
-        # Get relationships with ADR-051 edge provenance metadata
+        # Get relationships with ADR-051 edge provenance metadata and ADR-065 vocabulary epistemic status
         relationships_result = client._execute_cypher(f"""
             MATCH (c:Concept {{concept_id: '{concept_id}'}})-[r]->(related:Concept)
+            OPTIONAL MATCH (v:VocabType {{name: type(r)}})
             RETURN
                 related.concept_id as to_id,
                 related.label as to_label,
                 type(r) as rel_type,
-                properties(r) as props
+                properties(r) as props,
+                v.category as vocab_category,
+                v.epistemic_status as vocab_epistemic_status,
+                v.epistemic_stats as vocab_epistemic_stats
         """)
 
         relationships = []
@@ -458,6 +462,12 @@ async def get_concept_details(
             if created_by is not None:
                 created_by = str(created_by)
 
+            # ADR-065: Extract avg_grounding from epistemic_stats JSON
+            avg_grounding = None
+            vocab_epistemic_stats = record.get('vocab_epistemic_stats')
+            if vocab_epistemic_stats and isinstance(vocab_epistemic_stats, dict):
+                avg_grounding = vocab_epistemic_stats.get('avg_grounding')
+
             relationships.append(ConceptRelationship(
                 to_id=record['to_id'],
                 to_label=record['to_label'],
@@ -468,7 +478,11 @@ async def get_concept_details(
                 source=props.get('source'),
                 job_id=props.get('job_id'),
                 document_id=props.get('document_id'),
-                created_at=props.get('created_at')
+                created_at=props.get('created_at'),
+                # ADR-065: Vocabulary epistemic status metadata
+                category=record.get('vocab_category'),
+                avg_grounding=avg_grounding,
+                epistemic_status=record.get('vocab_epistemic_status')
             ))
 
 
