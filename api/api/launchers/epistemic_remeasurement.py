@@ -57,14 +57,8 @@ class EpistemicRemeasurementLauncher(JobLauncher):
             try:
                 metrics_service = VocabularyMetricsService(conn)
 
-                # Get vocabulary change counter
-                metric = metrics_service.get_metric('vocabulary_change_counter')
-
-                if not metric:
-                    logger.debug("EpistemicRemeasurementLauncher: No vocabulary_change_counter found")
-                    return False
-
-                delta = metric.get('delta', 0)
+                # Get vocabulary change counter delta
+                delta = metrics_service.get_counter_delta('vocabulary_change_counter')
 
                 if delta >= self.threshold:
                     logger.info(
