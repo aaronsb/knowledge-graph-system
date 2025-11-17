@@ -12,9 +12,11 @@ The existing job queue handles execution, progress, approval, etc.
 from .base import JobLauncher
 from .category_refresh import CategoryRefreshLauncher
 from .vocab_consolidation import VocabConsolidationLauncher
+from .epistemic_remeasurement import EpistemicRemeasurementLauncher
 
 __all__ = [
     "JobLauncher",
     "CategoryRefreshLauncher",
     "VocabConsolidationLauncher",
+    "EpistemicRemeasurementLauncher",
 ]
