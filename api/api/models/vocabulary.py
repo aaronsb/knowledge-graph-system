@@ -160,6 +160,7 @@ class EdgeTypeScoreResponse(BaseModel):
     value_score: float
     is_builtin: bool
     last_used: Optional[datetime] = None
+    epistemic_status: Optional[str] = None  # ADR-065: Epistemic status for quality gates
 
 
 class SynonymCandidateResponse(BaseModel):
@@ -494,3 +495,49 @@ class VocabularyAnalysisDetailResponse(BaseModel):
     most_similar_other_categories: List[SimilarEdgeType]
     potential_miscategorization: bool
     suggestion: Optional[str]
+
+
+# Epistemic Status Models (ADR-065 Phase 2)
+
+class EpistemicStatusMeasureRequest(BaseModel):
+    """Request to measure epistemic status for vocabulary types"""
+    sample_size: int = 100  # Number of edges to sample per type
+    store: bool = True  # Whether to store results to VocabType nodes
+    verbose: bool = False  # Include detailed output
+
+
+class EpistemicStatusStats(BaseModel):
+    """Statistics for epistemic status measurement"""
+    avg_grounding: float
+    std_grounding: float
+    min_grounding: float
+    max_grounding: float
+    measured_concepts: int
+    sampled_edges: int
+    total_edges: int
+
+
+class EpistemicStatusInfo(BaseModel):
+    """Epistemic status information for a vocabulary type"""
+    relationship_type: str
+    epistemic_status: str  # AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED
+    stats: Optional[EpistemicStatusStats] = None
+    rationale: Optional[str] = None
+    status_measured_at: Optional[str] = None
+
+
+class EpistemicStatusMeasureResponse(BaseModel):
+    """Response from epistemic status measurement"""
+    success: bool
+    message: str
+    measurement_timestamp: str
+    total_types: int
+    stored_count: int
+    classifications: dict  # Status -> count
+    sample_results: List[EpistemicStatusInfo]
+
+
+class EpistemicStatusListResponse(BaseModel):
+    """List of vocabulary types with epistemic status"""
+    total: int
+    types: List[EpistemicStatusInfo]

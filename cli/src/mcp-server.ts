@@ -489,6 +489,62 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
           required: ['source_id'],
         },
       },
+      {
+        name: 'epistemic_status',
+        description: `Vocabulary epistemic status classification (ADR-065 Phase 2). Knowledge validation state for relationship types.
+
+Three actions available:
+- "list": List all vocabulary types with epistemic status classifications (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL/INSUFFICIENT_DATA/UNCLASSIFIED)
+- "show": Get detailed status for a specific relationship type
+- "measure": Run measurement to calculate epistemic status for all types (admin operation)
+
+EPISTEMIC STATUS CLASSIFICATIONS:
+- AFFIRMATIVE: High avg grounding >0.8 (well-established knowledge)
+- CONTESTED: Mixed grounding 0.2-0.8 (debated/mixed validation)
+- CONTRADICTORY: Low grounding <-0.5 (contradicted knowledge)
+- HISTORICAL: Temporal vocabulary (detected by name)
+- INSUFFICIENT_DATA: <3 successful measurements
+- UNCLASSIFIED: Doesn't fit known patterns
+
+Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['list', 'show', 'measure'],
+              description: 'Operation: "list" (all types), "show" (specific type), "measure" (run measurement)',
+            },
+            // For list action
+            status_filter: {
+              type: 'string',
+              description: 'Filter by status for list action: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED',
+            },
+            // For show action
+            relationship_type: {
+              type: 'string',
+              description: 'Relationship type to show (required for show action, e.g., "IMPLIES", "SUPPORTS")',
+            },
+            // For measure action
+            sample_size: {
+              type: 'number',
+              description: 'Edges to sample per type for measure action (default: 100)',
+              default: 100,
+            },
+            store: {
+              type: 'boolean',
+              description: 'Store results to database for measure action (default: true)',
+              default: true,
+            },
+            verbose: {
+              type: 'boolean',
+              description: 'Include detailed statistics for measure action (default: false)',
+              default: false,
+            },
+          },
+          required: ['action'],
+        },
+      },
     ],
   };
 });
@@ -1205,6 +1261,133 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             throw new Error(`Source ${source_id} is not an image (content_type != 'image')`);
           }
           throw error;
+        }
+      }
+
+      case 'epistemic_status': {
+        const action = toolArgs.action as string;
+
+        switch (action) {
+          case 'list': {
+            const statusFilter = toolArgs.status_filter as string | undefined;
+            const result = await client.listEpistemicStatus(statusFilter);
+
+            let output = '# Epistemic Status Classification\n\n';
+            output += `Total types: ${result.total}\n\n`;
+
+            if (result.types && result.types.length > 0) {
+              output += '| Type | Status | Avg Grounding | Sampled Edges | Measured At |\n';
+              output += '|------|--------|---------------|---------------|-------------|\n';
+
+              result.types.forEach((type: any) => {
+                const avgGrounding = type.stats?.avg_grounding !== undefined
+                  ? type.stats.avg_grounding.toFixed(3)
+                  : '--';
+                const sampledEdges = type.stats?.sampled_edges !== undefined
+                  ? type.stats.sampled_edges.toString()
+                  : '--';
+                const measuredAt = type.status_measured_at
+                  ? new Date(type.status_measured_at).toLocaleString()
+                  : '--';
+
+                output += `| ${type.relationship_type} | ${type.epistemic_status} | ${avgGrounding} | ${sampledEdges} | ${measuredAt} |\n`;
+              });
+            } else {
+              output += 'No epistemic status data available. Run measurement first using action: "measure".\n';
+            }
+
+            return {
+              content: [{ type: 'text', text: output }],
+            };
+          }
+
+          case 'show': {
+            const relationshipType = toolArgs.relationship_type as string;
+            if (!relationshipType) {
+              throw new Error('relationship_type is required for show action');
+            }
+
+            const result = await client.getEpistemicStatus(relationshipType);
+
+            let output = `# Epistemic Status: ${relationshipType}\n\n`;
+            output += `**Status:** ${result.epistemic_status}\n\n`;
+
+            if (result.stats) {
+              output += '## Grounding Statistics\n\n';
+              output += `- Average Grounding: ${result.stats.avg_grounding.toFixed(3)}\n`;
+              output += `- Std Deviation: ${result.stats.std_grounding.toFixed(3)}\n`;
+              output += `- Min Grounding: ${result.stats.min_grounding.toFixed(3)}\n`;
+              output += `- Max Grounding: ${result.stats.max_grounding.toFixed(3)}\n\n`;
+
+              output += '## Measurement Scope\n\n';
+              output += `- Measured Concepts: ${result.stats.measured_concepts}\n`;
+              output += `- Sampled Edges: ${result.stats.sampled_edges}\n`;
+              output += `- Total Edges: ${result.stats.total_edges}\n\n`;
+            }
+
+            if (result.status_measured_at) {
+              output += `**Measured At:** ${new Date(result.status_measured_at).toLocaleString()}\n\n`;
+              output += '*Note: Results are temporal - rerun measurement to remeasure as graph evolves.*\n';
+            }
+
+            return {
+              content: [{ type: 'text', text: output }],
+            };
+          }
+
+          case 'measure': {
+            const sampleSize = (toolArgs.sample_size as number) || 100;
+            const store = (toolArgs.store as boolean) !== false;
+            const verbose = (toolArgs.verbose as boolean) || false;
+
+            const result = await client.measureEpistemicStatus({
+              sample_size: sampleSize,
+              store: store,
+              verbose: verbose,
+            });
+
+            let output = '# Epistemic Status Measurement Results\n\n';
+            output += `**Total Types:** ${result.total_types}\n`;
+            output += `**Stored:** ${store ? result.stored_count : 'N/A (store=false)'}\n`;
+            output += `**Timestamp:** ${result.measurement_timestamp}\n\n`;
+
+            if (result.classifications) {
+              output += '## Classifications\n\n';
+              const sorted = Object.entries(result.classifications).sort((a, b) => (b[1] as number) - (a[1] as number));
+              for (const [status, count] of sorted) {
+                output += `- ${status}: ${count}\n`;
+              }
+              output += '\n';
+            }
+
+            if (result.sample_results && result.sample_results.length > 0) {
+              const sampleCount = Math.min(10, result.sample_results.length);
+              output += `## Sample Results (${sampleCount} of ${result.sample_results.length})\n\n`;
+
+              for (let i = 0; i < sampleCount; i++) {
+                const sample = result.sample_results[i];
+                const avgGrounding = sample.stats?.avg_grounding !== undefined
+                  ? sample.stats.avg_grounding.toFixed(3)
+                  : '--';
+                output += `- ${sample.relationship_type} → ${sample.epistemic_status} (avg: ${avgGrounding})\n`;
+              }
+              output += '\n';
+            }
+
+            output += `✓ ${result.message}\n\n`;
+            if (store) {
+              output += 'Phase 2 query filtering now available via API.\n';
+            } else {
+              output += 'Use store=true to enable Phase 2 query filtering.\n';
+            }
+
+            return {
+              content: [{ type: 'text', text: output }],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown epistemic_status action: ${action}`);
         }
       }
 

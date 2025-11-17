@@ -410,7 +410,7 @@ Examples:
                 client._execute_cypher(query, {
                     "vocab_type": vocab_type,
                     "status": status,
-                    "stats": {
+                    "stats": json.dumps({
                         "avg_grounding": stats.get('avg_grounding', 0.0),
                         "std_grounding": stats.get('std_grounding', 0.0),
                         "min_grounding": stats.get('min_grounding', 0.0),
@@ -418,7 +418,7 @@ Examples:
                         "measured_concepts": stats.get('measured_concepts', 0),
                         "sampled_edges": stats.get('sampled_edges', 0),
                         "total_edges": stats.get('total_edges', 0)
-                    },
+                    }),
                     "timestamp": measurement_start
                 })
                 stored_count += 1

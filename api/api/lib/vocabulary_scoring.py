@@ -91,6 +91,7 @@ class EdgeTypeScore:
         avg_grounding_contribution: Average grounding strength contribution (ADR-046)
         supports_concepts: Number of concepts this edge type helps ground (ADR-046)
         embedding: Edge type embedding vector for semantic analysis (ADR-046)
+        epistemic_status: Epistemic status classification (ADR-065)
     """
     relationship_type: str
     edge_count: int
@@ -103,6 +104,7 @@ class EdgeTypeScore:
     avg_grounding_contribution: Optional[float] = None
     supports_concepts: Optional[int] = None
     embedding: Optional[List[float]] = None
+    epistemic_status: Optional[str] = None
 
     def __repr__(self) -> str:
         grounding_info = ""
@@ -215,6 +217,9 @@ class VocabularyScorer:
                 except Exception as e:
                     logger.warning(f"Failed to calculate grounding for {rel_type}: {e}")
 
+            # Get epistemic status from metadata (ADR-065)
+            epistemic_status = vocab_metadata.get(rel_type, {}).get("epistemic_status")
+
             scores[rel_type] = EdgeTypeScore(
                 relationship_type=rel_type,
                 edge_count=edge_count,
@@ -226,7 +231,8 @@ class VocabularyScorer:
                 last_used=last_used,
                 avg_grounding_contribution=avg_grounding_contribution,
                 supports_concepts=supports_concepts,
-                embedding=embedding
+                embedding=embedding,
+                epistemic_status=epistemic_status
             )
 
         return scores
@@ -390,11 +396,12 @@ class VocabularyScorer:
 
     async def _get_vocabulary_metadata(self) -> Dict[str, Dict]:
         """
-        Get metadata about edge types from vocabulary table.
+        Get metadata about edge types from vocabulary table and graph.
 
         Returns:
-            Dict mapping relationship_type to {is_builtin, is_active, embedding}
+            Dict mapping relationship_type to {is_builtin, is_active, embedding, epistemic_status}
         """
+        # Get SQL metadata
         query = """
             SELECT
                 relationship_type,
@@ -413,14 +420,38 @@ class VocabularyScorer:
                 metadata[rel_type] = {
                     "is_builtin": row["is_builtin"],
                     "is_active": row["is_active"],
-                    "embedding": row.get("embedding")
+                    "embedding": row.get("embedding"),
+                    "epistemic_status": None  # Will be populated from graph
                 }
 
-            return metadata
+        except Exception as e:
+            logger.error(f"Error getting vocabulary metadata from SQL: {e}")
+            metadata = {}
+
+        # Get epistemic_status from graph (ADR-065)
+        try:
+            epistemic_query = """
+                SELECT * FROM cypher('knowledge_graph', $$
+                    MATCH (v:VocabType)
+                    WHERE v.epistemic_status IS NOT NULL
+                    RETURN v.name AS relationship_type, v.epistemic_status AS epistemic_status
+                $$) AS (relationship_type agtype, epistemic_status agtype);
+            """
+
+            epistemic_result = await self._execute_query(epistemic_query)
+
+            for row in epistemic_result:
+                rel_type = self.db._unwrap_agtype(row["relationship_type"])
+                epistemic_status = self.db._unwrap_agtype(row["epistemic_status"])
+
+                if rel_type in metadata:
+                    metadata[rel_type]["epistemic_status"] = epistemic_status
 
         except Exception as e:
-            logger.error(f"Error getting vocabulary metadata: {e}")
-            return {}
+            logger.warning(f"Could not fetch epistemic_status from graph: {e}")
+            # Continue without epistemic status - it's optional
+
+        return metadata
 
     async def calculate_grounding_contribution(
         self,

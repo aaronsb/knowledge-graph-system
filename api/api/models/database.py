@@ -44,3 +44,24 @@ class DatabaseHealthResponse(BaseModel):
     responsive: bool
     checks: Dict[str, Any]  # {"connectivity": "ok", "indexes": {...}}
     error: Optional[str] = None
+
+
+# =============================================================================
+# Cypher Query Models (ADR-048)
+# =============================================================================
+
+class CypherQueryRequest(BaseModel):
+    """Request to execute a cypher query"""
+    query: str
+    params: Optional[Dict[str, Any]] = None
+    namespace: Optional[str] = None  # 'concept', 'vocab', or None for raw
+
+
+class CypherQueryResponse(BaseModel):
+    """Response from cypher query execution"""
+    success: bool
+    results: List[Dict[str, Any]]
+    rows_returned: int
+    namespace_used: Optional[str] = None
+    warning: Optional[str] = None
+    error: Optional[str] = None

@@ -501,6 +501,21 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Execute a custom cypher query (ADR-048)
+   * @param query - openCypher/GQL query string
+   * @param params - Optional query parameters
+   * @param namespace - Optional namespace: 'concept', 'vocab', or null for raw
+   */
+  async executeCypherQuery(query: string, params?: Record<string, any>, namespace?: string | null): Promise<any> {
+    const response = await this.client.post('/database/query', {
+      query,
+      params: params || null,
+      namespace: namespace === undefined ? null : namespace
+    });
+    return response.data;
+  }
+
   // ========== Ontology Methods ==========
 
   /**
@@ -1062,6 +1077,40 @@ export class KnowledgeGraphClient {
       dry_run: request.dry_run ?? false,
       prune_unused: request.prune_unused ?? true  // Default: prune unused types
     });
+    return response.data;
+  }
+
+  /**
+   * Measure epistemic status for vocabulary types (ADR-065 Phase 2)
+   */
+  async measureEpistemicStatus(request: {
+    sample_size?: number;
+    store?: boolean;
+    verbose?: boolean;
+  }): Promise<any> {
+    const response = await this.client.post('/vocabulary/epistemic-status/measure', {
+      sample_size: request.sample_size ?? 100,
+      store: request.store ?? true,
+      verbose: request.verbose ?? false
+    });
+    return response.data;
+  }
+
+  /**
+   * List vocabulary types with epistemic status (ADR-065 Phase 2)
+   */
+  async listEpistemicStatus(statusFilter?: string): Promise<any> {
+    const response = await this.client.get('/vocabulary/epistemic-status', {
+      params: statusFilter ? { status_filter: statusFilter } : {}
+    });
+    return response.data;
+  }
+
+  /**
+   * Get epistemic status for a specific vocabulary type (ADR-065 Phase 2)
+   */
+  async getEpistemicStatus(relationshipType: string): Promise<any> {
+    const response = await this.client.get(`/vocabulary/epistemic-status/${encodeURIComponent(relationshipType)}`);
     return response.data;
   }
 

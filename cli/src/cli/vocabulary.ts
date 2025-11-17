@@ -1117,4 +1117,237 @@ export const vocabularyCommand = setCommandHelp(
           process.exit(1);
         }
       })
+  )
+  .addCommand(
+    new Command('epistemic-status')
+      .description('Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: AFFIRMATIVE (high avg grounding >0.8, well-established), CONTESTED (mixed grounding 0.2-0.8, debated), CONTRADICTORY (low grounding <-0.5, contradicted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements), UNCLASSIFIED (doesn\'t fit). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.')
+      .addCommand(
+        new Command('list')
+          .description('List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.')
+          .option('--status <status>', 'Filter by status: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED')
+          .action(async (options) => {
+            try {
+              const client = createClientFromEnv();
+              const result = await client.listEpistemicStatus(options.status);
+
+              console.log('\n' + separator());
+              console.log(colors.ui.title('📊 Epistemic Status'));
+              console.log(separator());
+
+              console.log(`\n${colors.ui.key('Total Types:')} ${coloredCount(result.total)}`);
+
+              if (result.types.length > 0) {
+                console.log('\n' + separator(95, '─'));
+                console.log(
+                  colors.status.dim(
+                    `${'TYPE'.padEnd(25)} ${'STATUS'.padEnd(20)} ${'AVG GROUNDING'.padStart(13)} ${'SAMPLED'.padStart(10)} ${'MEASURED AT'.padStart(22)}`
+                  )
+                );
+                console.log(separator(95, '─'));
+
+                result.types.forEach((type: any) => {
+                  const relColor = colors.getRelationshipColor(type.relationship_type);
+
+                  // Color-code status
+                  const statusColors: Record<string, (text: string) => string> = {
+                    AFFIRMATIVE: colors.status.success,
+                    CONTESTED: colors.status.warning,
+                    CONTRADICTORY: colors.status.error,
+                    HISTORICAL: colors.ui.value,
+                    INSUFFICIENT_DATA: colors.status.dim,
+                    UNCLASSIFIED: colors.status.dim
+                  };
+                  const statusColor = statusColors[type.epistemic_status] || colors.ui.value;
+
+                  const avgGrounding = type.stats?.avg_grounding !== undefined
+                    ? type.stats.avg_grounding.toFixed(3).padStart(6)
+                    : '  --  ';
+
+                  const sampledEdges = type.stats?.sampled_edges !== undefined
+                    ? String(type.stats.sampled_edges).padStart(7)
+                    : '    -- ';
+
+                  const measuredAt = type.status_measured_at
+                    ? new Date(type.status_measured_at).toLocaleString().substring(0, 19)
+                    : '         --          ';
+
+                  console.log(
+                    `${relColor(type.relationship_type.padEnd(25))} ` +
+                    `${statusColor(type.epistemic_status.padEnd(20))} ` +
+                    `${avgGrounding.padStart(13)} ` +
+                    `${sampledEdges.padStart(10)} ` +
+                    `${colors.status.dim(measuredAt.padStart(22))}`
+                  );
+                });
+
+                console.log(separator(95, '─'));
+              }
+
+              console.log();
+            } catch (error: any) {
+              console.error(colors.status.error('✗ Failed to list epistemic status'));
+              console.error(colors.status.error(error.response?.data?.detail || error.message));
+              process.exit(1);
+            }
+          })
+      )
+      .addCommand(
+        new Command('show')
+          .description('Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (AFFIRMATIVE/CONTESTED/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.')
+          .argument('<type>', 'Relationship type to show (e.g., IMPLIES, SUPPORTS)')
+          .action(async (type: string) => {
+            try {
+              const client = createClientFromEnv();
+              const result = await client.getEpistemicStatus(type);
+
+              console.log('\n' + separator());
+              console.log(colors.ui.title(`📊 Epistemic Status: ${colors.getRelationshipColor(type)(type)}`));
+              console.log(separator());
+
+              // Status with color
+              const statusColors: Record<string, (text: string) => string> = {
+                AFFIRMATIVE: colors.status.success,
+                CONTESTED: colors.status.warning,
+                CONTRADICTORY: colors.status.error,
+                HISTORICAL: colors.ui.value,
+                INSUFFICIENT_DATA: colors.status.dim,
+                UNCLASSIFIED: colors.status.dim
+              };
+              const statusColor = statusColors[result.epistemic_status] || colors.ui.value;
+
+              console.log(`\n${colors.stats.section('Classification')}`);
+              console.log(`  ${colors.stats.label('Status:')} ${statusColor(result.epistemic_status)}`);
+
+              if (result.stats) {
+                console.log(`\n${colors.stats.section('Grounding Statistics')}`);
+                console.log(`  ${colors.stats.label('Average Grounding:')} ${colors.ui.value(result.stats.avg_grounding.toFixed(3))}`);
+                console.log(`  ${colors.stats.label('Std Deviation:')} ${colors.ui.value(result.stats.std_grounding.toFixed(3))}`);
+                console.log(`  ${colors.stats.label('Min Grounding:')} ${colors.ui.value(result.stats.min_grounding.toFixed(3))}`);
+                console.log(`  ${colors.stats.label('Max Grounding:')} ${colors.ui.value(result.stats.max_grounding.toFixed(3))}`);
+
+                console.log(`\n${colors.stats.section('Measurement Scope')}`);
+                console.log(`  ${colors.stats.label('Measured Concepts:')} ${coloredCount(result.stats.measured_concepts)}`);
+                console.log(`  ${colors.stats.label('Sampled Edges:')} ${coloredCount(result.stats.sampled_edges)}`);
+                console.log(`  ${colors.stats.label('Total Edges:')} ${coloredCount(result.stats.total_edges)}`);
+              }
+
+              if (result.status_measured_at) {
+                console.log(`\n${colors.stats.section('Temporal Context')}`);
+                console.log(`  ${colors.stats.label('Measured At:')} ${colors.status.dim(new Date(result.status_measured_at).toLocaleString())}`);
+                console.log(`  ${colors.status.dim('Note: Results are temporal - rerun measurement to remeasure as graph evolves')}`);
+              }
+
+              console.log('\n' + separator());
+
+            } catch (error: any) {
+              if (error.response?.status === 404) {
+                console.error(colors.status.error(`✗ Vocabulary type not found: ${type}`));
+              } else {
+                console.error(colors.status.error('✗ Failed to get epistemic status'));
+                console.error(colors.status.error(error.response?.data?.detail || error.message));
+              }
+              process.exit(1);
+            }
+          })
+      )
+      .addCommand(
+        new Command('measure')
+          .description('Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().')
+          .option('--sample-size <n>', 'Edges to sample per type (default: 100)', parseInt, 100)
+          .option('--no-store', 'Run measurement without storing to database')
+          .option('--verbose', 'Include detailed statistics in output')
+          .action(async (options) => {
+            try {
+              const client = createClientFromEnv();
+
+              const sampleSize = options.sampleSize || 100;
+              const store = options.store !== false;  // Default: true
+              const verbose = options.verbose || false;
+
+              console.log('\n' + separator());
+              console.log(colors.ui.title('🔬 Measuring Epistemic Status'));
+              console.log(separator());
+
+              console.log(`\n  ${colors.ui.key('Sample Size:')} ${coloredCount(sampleSize)} edges per type`);
+              console.log(`  ${colors.ui.key('Store Results:')} ${store ? colors.status.success('Yes') : colors.status.dim('No')}`);
+              console.log(`  ${colors.ui.key('Verbose Output:')} ${verbose ? colors.ui.value('Yes') : colors.status.dim('No')}`);
+
+              console.log('\n' + colors.status.dim('Running dynamic grounding measurement...'));
+              console.log(colors.status.dim('This may take several minutes depending on vocabulary size and sample size.\n'));
+
+              const result = await client.measureEpistemicStatus({
+                sample_size: sampleSize,
+                store: store,
+                verbose: verbose
+              });
+
+              console.log('\n' + separator());
+              console.log(colors.ui.title('📊 Measurement Results'));
+              console.log(separator());
+
+              console.log('\n' + colors.stats.section('Summary'));
+              console.log(`  ${colors.stats.label('Total Types:')} ${coloredCount(result.total_types)}`);
+              console.log(`  ${colors.stats.label('Stored:')} ${store ? coloredCount(result.stored_count) : colors.status.dim('N/A (--no-store)')}`);
+              console.log(`  ${colors.stats.label('Timestamp:')} ${colors.status.dim(result.measurement_timestamp)}`);
+
+              if (result.classifications) {
+                console.log('\n' + colors.stats.section('Classifications'));
+                const statusColors: Record<string, (text: string) => string> = {
+                  AFFIRMATIVE: colors.status.success,
+                  CONTESTED: colors.status.warning,
+                  CONTRADICTORY: colors.status.error,
+                  HISTORICAL: colors.ui.value,
+                  INSUFFICIENT_DATA: colors.status.dim,
+                  UNCLASSIFIED: colors.status.dim
+                };
+
+                for (const [status, count] of Object.entries(result.classifications).sort((a, b) => (b[1] as number) - (a[1] as number))) {
+                  const statusColor = statusColors[status] || colors.ui.value;
+                  console.log(`  ${statusColor(status.padEnd(20))}: ${coloredCount(count as number)}`);
+                }
+              }
+
+              if (result.sample_results && result.sample_results.length > 0) {
+                const sampleSize = Math.min(10, result.sample_results.length);
+                console.log(`\n${colors.stats.section(`Sample Results (${sampleSize} of ${result.sample_results.length})`)}`);
+
+                for (let i = 0; i < sampleSize; i++) {
+                  const sample = result.sample_results[i];
+                  const statusColors: Record<string, (text: string) => string> = {
+                    AFFIRMATIVE: colors.status.success,
+                    CONTESTED: colors.status.warning,
+                    CONTRADICTORY: colors.status.error,
+                    HISTORICAL: colors.ui.value,
+                    INSUFFICIENT_DATA: colors.status.dim,
+                    UNCLASSIFIED: colors.status.dim
+                  };
+                  const statusColor = statusColors[sample.epistemic_status] || colors.ui.value;
+
+                  const avgGrounding = sample.stats?.avg_grounding !== undefined
+                    ? sample.stats.avg_grounding.toFixed(3)
+                    : '--';
+
+                  console.log(
+                    `  ${colors.getRelationshipColor(sample.relationship_type)(sample.relationship_type.padEnd(25))} → ` +
+                    `${statusColor(sample.epistemic_status.padEnd(18))} (avg: ${avgGrounding})`
+                  );
+                }
+              }
+
+              console.log('\n' + separator());
+              console.log(colors.status.success('✓ ' + result.message));
+              if (store) {
+                console.log(colors.status.dim('\n  Phase 2 query filtering now available via API'));
+              } else {
+                console.log(colors.status.dim('\n  Use without --no-store to enable Phase 2 query filtering'));
+              }
+              console.log(separator());
+
+            } catch (error: any) {
+              console.error(colors.status.error('✗ Failed to measure epistemic status'));
+              console.error(colors.status.error(error.response?.data?.detail || error.message));
+              process.exit(1);
+            }
+          })
+      )
   );
