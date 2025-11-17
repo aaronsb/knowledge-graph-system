@@ -212,6 +212,26 @@ async def list_edge_types(
         try:
             all_types = client.get_all_edge_types(include_inactive=include_inactive)
 
+            # Fetch epistemic status for all types in one query (ADR-065)
+            epistemic_lookup = {}
+            try:
+                epistemic_query = """
+                    MATCH (v:VocabType)
+                    RETURN v.name as name,
+                           v.epistemic_status as status,
+                           v.epistemic_stats as stats
+                """
+                epistemic_results = client._execute_cypher(epistemic_query)
+                for row in epistemic_results:
+                    if row.get('name'):
+                        stats = row.get('stats') or {}
+                        epistemic_lookup[row['name']] = {
+                            'status': row.get('status'),
+                            'avg_grounding': stats.get('avg_grounding') if isinstance(stats, dict) else None
+                        }
+            except Exception as e:
+                logger.warning(f"Failed to fetch epistemic status: {e}")
+
             type_info_list = []
             builtin_count = 0
             custom_count = 0
@@ -235,6 +255,9 @@ async def list_edge_types(
                 if info.get("is_active"):
                     active_count += 1
 
+                # Get epistemic status from lookup
+                epistemic_data = epistemic_lookup.get(edge_type, {})
+
                 type_info_list.append(EdgeTypeInfo(
                     relationship_type=info["relationship_type"],
                     category=info.get("category", "unknown"),
@@ -252,7 +275,10 @@ async def list_edge_types(
                     category_source=info.get("category_source"),
                     category_confidence=info.get("category_confidence"),
                     category_scores=info.get("category_scores"),
-                    category_ambiguous=info.get("category_ambiguous")
+                    category_ambiguous=info.get("category_ambiguous"),
+                    # ADR-065: Epistemic status fields
+                    epistemic_status=epistemic_data.get('status'),
+                    avg_grounding=epistemic_data.get('avg_grounding')
                 ))
 
             return EdgeTypeListResponse(
