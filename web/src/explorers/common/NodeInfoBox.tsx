@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { formatGrounding, formatDiversity, formatAuthenticatedDiversity, getRelationshipTextColor } from './utils';
+import { getZIndexValue } from '../../config/zIndex';
 
 /**
  * EvidenceImage - Display image from evidence source (ADR-057)
@@ -127,7 +128,7 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
         left: `${info.x}px`,
         top: `${info.y}px`,
         transform: 'translate(-50%, calc(-100% - 20px))', // Position above node with offset
-        zIndex: 9999, // Ensure info box draws on top of everything
+        zIndex: getZIndexValue('infoBox'), // Info boxes appear below search results
       }}
     >
       <div className="relative">

@@ -115,8 +115,8 @@ ingestCommand
   .description('Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-057), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.')
   .option('-o, --ontology <name>', 'Ontology/collection name (required unless --directories-as-ontologies). Single ontology receives all files.')
   .option('-p, --pattern <patterns...>', 'File patterns to match (glob patterns). Text and image extensions supported.', ['*.md', '*.txt', '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.bmp'])
-  .option('-r, --recurse', 'Recursively scan subdirectories. Use "--recurse --depth all" for unlimited depth, "--recurse --depth 2" for 2 levels, etc.', false)
-  .option('-d, --depth <n>', 'Maximum recursion depth: 0=current dir only, 1=one level, 2=two levels, "all"=unlimited (use with --recurse)', '0')
+  .option('-r, --recurse', 'Enable recursive scanning of subdirectories. MUST combine with --depth. Examples: "--recurse --depth 1" (one level), "--recurse --depth 2" (two levels), "--recurse --depth all" (unlimited). Default depth is 0 (current dir only).', false)
+  .option('-d, --depth <n>', 'Maximum recursion depth (use with --recurse). 0=current dir only (default), 1=one level deep, 2=two levels, "all"=unlimited depth. WITHOUT --recurse, only current directory is scanned.', '0')
   .option('--directories-as-ontologies', 'Use directory names as ontology names (auto-creates ontologies from folder structure, cannot be combined with -o)', false)
   .option('-f, --force', 'Force re-ingestion even if duplicate (bypasses hash check for all files)', false)
   .option('--dry-run', 'Show what would be ingested without submitting jobs (validates files, checks duplicates, displays skip/submit counts, cancels test jobs)', false)
@@ -157,6 +157,14 @@ ingestCommand
       // Determine depth
       const maxDepth = options.depth === 'all' ? Infinity : parseInt(options.depth);
       const recurse = options.recurse || maxDepth > 0;
+
+      // Warn if user specified --recurse but didn't set --depth (will only scan current dir)
+      if (options.recurse && options.depth === '0') {
+        console.log(chalk.yellow('\n⚠️  Warning: --recurse specified but --depth is 0 (default)'));
+        console.log(chalk.gray('   This will only scan the current directory, not subdirectories.'));
+        console.log(chalk.gray('   Did you mean: --recurse --depth 1 (or --depth 2, etc.)?'));
+        console.log(chalk.gray('   Continuing with current directory only...\n'));
+      }
 
       // Collect matching files (with directory info if using directories as ontologies)
       const filesWithDirs = options.directoriesAsOntologies

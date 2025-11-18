@@ -216,16 +216,22 @@ class GraphQueryFacade:
                 # Use status-filtered types as the relationship type list
                 rel_types = status_filtered_types
 
-        # Build relationship pattern
-        rel_pattern = ""
-        if rel_types:
-            type_str = "|".join(rel_types)
-            rel_pattern = f":{type_str}"
+        # Build query (AGE doesn't support TYPE1|TYPE2 syntax, use WHERE instead)
+        query = "MATCH (c1:Concept)-[r]->(c2:Concept)"
 
-        query = f"MATCH (c1:Concept)-[r{rel_pattern}]->(c2:Concept)"
+        # Build WHERE clause
+        where_clauses = []
+
+        if rel_types:
+            # Filter by relationship type using WHERE type(r) IN [...]
+            type_list = ", ".join([f"'{t}'" for t in rel_types])
+            where_clauses.append(f"type(r) IN [{type_list}]")
 
         if where:
-            query += f" WHERE {where}"
+            where_clauses.append(where)
+
+        if where_clauses:
+            query += f" WHERE {' AND '.join(where_clauses)}"
 
         query += " RETURN c1, r, c2"
 

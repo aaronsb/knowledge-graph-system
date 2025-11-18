@@ -128,6 +128,7 @@ ON-DEMAND JOB         → API endpoint          → enqueue()        → run_wor
 |-----------|----------|----------|--------|---------|
 | `category_refresh` | Every 6 hours | `CategoryRefreshLauncher` | `vocab_refresh_worker` | Re-integrate llm_generated vocabulary categories |
 | `vocab_consolidation` | Every 12 hours | `VocabConsolidationLauncher` | `vocab_consolidate_worker` | Auto-consolidate vocabulary based on hysteresis |
+| `epistemic_remeasurement` | Every hour | `EpistemicRemeasurementLauncher` | `epistemic_remeasurement_worker` | Re-measure epistemic status when vocabulary changes exceed threshold (ADR-065 Phase 2) |
 
 **Key Point:** Scheduled tasks = timing + condition check → enqueue job
 

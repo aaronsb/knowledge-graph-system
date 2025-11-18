@@ -632,27 +632,35 @@ class VocabularyManager:
                 continue
 
             # ADR-065: Epistemic quality gates - block divergent epistemic states
+            # NOTE: Only apply to CUSTOM vocabulary (non-builtin). Built-in types
+            # are pre-defined and unused, so INSUFFICIENT_DATA is expected and
+            # should not block consolidation of initial vocabulary.
             status1 = score1.epistemic_status
             status2 = score2.epistemic_status
+            is_custom_merge = not (score1.is_builtin or score2.is_builtin)
 
-            # Block merges with insufficient epistemic data
-            if status1 == 'INSUFFICIENT_DATA' or status2 == 'INSUFFICIENT_DATA':
-                logger.debug(
-                    f"Blocking merge with insufficient epistemic data: "
-                    f"{candidate.type1} ({status1}) / {candidate.type2} ({status2})"
-                )
-                continue
+            if is_custom_merge:
+                logger.debug(f"Epistemic gate check (custom vocab): {candidate.type1} ({status1}) / {candidate.type2} ({status2})")
 
-            # Block HISTORICAL merges (temporal semantics matter)
-            if status1 == 'HISTORICAL' or status2 == 'HISTORICAL':
-                logger.debug(
-                    f"Blocking merge with temporal/historical vocabulary: "
-                    f"{candidate.type1} ({status1}) / {candidate.type2} ({status2})"
-                )
-                continue
+                # Block merges with insufficient epistemic data
+                if status1 == 'INSUFFICIENT_DATA' or status2 == 'INSUFFICIENT_DATA':
+                    logger.info(
+                        f"✋ BLOCKED (INSUFFICIENT_DATA): "
+                        f"{candidate.type1} ({status1}) / {candidate.type2} ({status2})"
+                    )
+                    continue
+
+                # Block HISTORICAL merges (temporal semantics matter)
+                if status1 == 'HISTORICAL' or status2 == 'HISTORICAL':
+                    logger.info(
+                        f"✋ BLOCKED (HISTORICAL): "
+                        f"{candidate.type1} ({status1}) / {candidate.type2} ({status2})"
+                    )
+                    continue
 
             # Block divergent epistemic states (incompatible validation levels)
-            if status1 and status2:  # Only apply if both have status
+            # Apply to ALL types (builtin + custom) to prevent semantic pollution
+            if is_custom_merge and status1 and status2:  # Only apply if both have status
                 blocked_pairs = [
                     ('AFFIRMATIVE', 'CONTRADICTORY'),
                     ('AFFIRMATIVE', 'CONTESTED'),

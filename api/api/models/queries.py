@@ -93,6 +93,10 @@ class ConceptRelationship(BaseModel):
     job_id: Optional[str] = Field(None, description="Job ID that created this relationship")
     document_id: Optional[str] = Field(None, description="Document hash (content_hash) that created this relationship")
     created_at: Optional[str] = Field(None, description="Timestamp when relationship was created")
+    # ADR-065: Vocabulary epistemic status metadata
+    category: Optional[str] = Field(None, description="Vocabulary category (causality, identity, temporal, etc.)")
+    avg_grounding: Optional[float] = Field(None, description="Average grounding strength for this vocabulary type (-1.0 to 1.0)")
+    epistemic_status: Optional[str] = Field(None, description="Epistemic status classification (WELL_GROUNDED, MIXED_GROUNDING, WEAK_GROUNDING, POORLY_GROUNDED, CONTRADICTED, HISTORICAL, INSUFFICIENT_DATA)")
 
 
 class ProvenanceDocument(BaseModel):

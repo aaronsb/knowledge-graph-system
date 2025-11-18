@@ -19,6 +19,7 @@ import { useGraphStore } from '../../store/graphStore';
 import { useVocabularyStore } from '../../store/vocabularyStore';
 import { useThemeStore } from '../../store/themeStore';
 import { getCategoryColor } from '../../config/categoryColors';
+import { getZIndexValue } from '../../config/zIndex';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
 import {
   NodeInfoBox,
@@ -1950,7 +1951,7 @@ export const ForceGraph3D: React.FC<
       )}
 
       {/* Node Info Boxes */}
-      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10000 }}>
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: getZIndexValue('infoBox') }}>
         {activeNodeInfos.map(info => (
           <NodeInfoBox
             key={info.nodeId}
@@ -1961,7 +1962,7 @@ export const ForceGraph3D: React.FC<
       </div>
 
       {/* Edge Info Boxes */}
-      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10000 }}>
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: getZIndexValue('infoBox') }}>
         {activeEdgeInfos.map(info => (
           <EdgeInfoBox
             key={info.linkKey}

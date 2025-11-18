@@ -20,4 +20,4 @@ openai==2.7.1  # Latest stable
 anthropic==0.72.0  # Latest stable
 
 # Numeric computation (for grounding calculation in admin scripts)
-numpy==2.3.4  # Required for calculate_vocab_epistemic_status.py and other measurement tools
+numpy==2.3.4  # Required for measurement tools and statistical calculations

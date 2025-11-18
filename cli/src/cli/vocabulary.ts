@@ -126,9 +126,10 @@ export const vocabularyCommand = setCommandHelp(
   )
   .addCommand(
     new Command('list')
-      .description('List all edge types with statistics, categories, and confidence scores (ADR-047). Shows TYPE (colored by semantic), CATEGORY (composition, causation, logical, etc.), CONF (confidence score with ⚠ for ambiguous), EDGES (usage count), STATUS (active ✓), and [B] flag for builtin types. Use this for vocabulary overview, finding consolidation candidates, reviewing auto-categorization accuracy, identifying unused types, and auditing quality.')
+      .description('List all edge types with statistics, categories, and confidence scores (ADR-047). Shows TYPE (colored by semantic), CATEGORY (composition, causation, logical, etc.), CONF (confidence score with ⚠ for ambiguous), GROUNDING (epistemic status avg_grounding), EDGES (usage count), STATUS (active ✓), and [B] flag for builtin types. Use this for vocabulary overview, finding consolidation candidates, reviewing auto-categorization accuracy, identifying unused types, and auditing quality.')
       .option('--inactive', 'Include inactive/deprecated types')
       .option('--no-builtin', 'Exclude builtin types')
+      .option('--sort <fields>', 'Sort by comma-separated fields: edges, type, conf, grounding, category, status (case-insensitive). Default: edges (descending)')
       .action(async (options) => {
         try {
           const client = createClientFromEnv();
@@ -136,6 +137,60 @@ export const vocabularyCommand = setCommandHelp(
             options.inactive || false,
             options.builtin !== false
           );
+
+          // Sort types based on --sort option (default: edges descending)
+          if (response.types.length > 0) {
+            const sortFields = options.sort
+              ? options.sort.toLowerCase().split(',').map((f: string) => f.trim())
+              : ['edges'];
+
+            response.types.sort((a: any, b: any) => {
+              for (const field of sortFields) {
+                let aVal: any, bVal: any;
+
+                switch (field) {
+                  case 'edges':
+                    aVal = a.edge_count ?? 0;
+                    bVal = b.edge_count ?? 0;
+                    // Descending for edges
+                    if (aVal !== bVal) return bVal - aVal;
+                    break;
+                  case 'type':
+                    aVal = a.relationship_type?.toLowerCase() ?? '';
+                    bVal = b.relationship_type?.toLowerCase() ?? '';
+                    if (aVal !== bVal) return aVal.localeCompare(bVal);
+                    break;
+                  case 'conf':
+                  case 'confidence':
+                    aVal = a.category_confidence ?? -1;
+                    bVal = b.category_confidence ?? -1;
+                    // Descending for confidence
+                    if (aVal !== bVal) return bVal - aVal;
+                    break;
+                  case 'grounding':
+                    aVal = a.avg_grounding ?? -999;
+                    bVal = b.avg_grounding ?? -999;
+                    // Descending for grounding
+                    if (aVal !== bVal) return bVal - aVal;
+                    break;
+                  case 'category':
+                    aVal = a.category?.toLowerCase() ?? '';
+                    bVal = b.category?.toLowerCase() ?? '';
+                    if (aVal !== bVal) return aVal.localeCompare(bVal);
+                    break;
+                  case 'status':
+                    aVal = a.epistemic_status?.toLowerCase() ?? 'zzz';
+                    bVal = b.epistemic_status?.toLowerCase() ?? 'zzz';
+                    if (aVal !== bVal) return aVal.localeCompare(bVal);
+                    break;
+                  default:
+                    // Unknown field, skip
+                    break;
+                }
+              }
+              return 0;
+            });
+          }
 
           console.log('\n' + separator());
           console.log(colors.ui.title('📋 Edge Types'));
@@ -147,13 +202,13 @@ export const vocabularyCommand = setCommandHelp(
           console.log(`${colors.ui.key('Custom:')} ${coloredCount(response.custom)}`);
 
           if (response.types.length > 0) {
-            console.log('\n' + separator(95, '─'));
+            console.log('\n' + separator(105, '─'));
             console.log(
               colors.status.dim(
-                `${'TYPE'.padEnd(25)} ${'CATEGORY'.padEnd(15)} ${'CONF'.padStart(6)} ${'EDGES'.padStart(8)} ${'STATUS'.padStart(10)}`
+                `${'TYPE'.padEnd(25)} ${'CATEGORY'.padEnd(15)} ${'CONF'.padStart(6)} ${'GROUNDING'.padStart(10)} ${'EDGES'.padStart(8)} ${'STATUS'.padStart(10)}`
               )
             );
-            console.log(separator(95, '─'));
+            console.log(separator(105, '─'));
 
             response.types.forEach((type: any) => {
               const relColor = colors.getRelationshipColor(type.relationship_type);
@@ -180,16 +235,35 @@ export const vocabularyCommand = setCommandHelp(
                 confDisplay = colors.status.dim('  --  ');
               }
 
+              // ADR-065: Show grounding if available
+              let groundingDisplay = '';
+              if (type.avg_grounding !== null && type.avg_grounding !== undefined) {
+                const groundingVal = type.avg_grounding;
+                let groundingColor = colors.status.dim;
+
+                // Color based on grounding value
+                if (groundingVal > 0.8) groundingColor = colors.status.success;
+                else if (groundingVal >= 0.15) groundingColor = colors.status.warning;
+                else if (groundingVal >= 0.0) groundingColor = colors.ui.value;
+                else if (groundingVal >= -0.5) groundingColor = colors.status.dim;
+                else groundingColor = colors.status.error;
+
+                groundingDisplay = groundingColor(groundingVal.toFixed(3).padStart(6));
+              } else {
+                groundingDisplay = colors.status.dim('    --');
+              }
+
               console.log(
                 `${relColor(type.relationship_type.padEnd(25))} ` +
                 `${colors.ui.value(type.category.padEnd(15))} ` +
                 `${confDisplay.padStart(6)} ` +
+                `${groundingDisplay.padStart(10)} ` +
                 `${String(edgeCount).padStart(8)} ` +
                 `${statusColor(statusIcon.padStart(10))}${builtinMark}`
               );
             });
 
-            console.log(separator(95, '─'));
+            console.log(separator(105, '─'));
           }
 
           console.log();
@@ -1120,11 +1194,11 @@ export const vocabularyCommand = setCommandHelp(
   )
   .addCommand(
     new Command('epistemic-status')
-      .description('Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: AFFIRMATIVE (high avg grounding >0.8, well-established), CONTESTED (mixed grounding 0.2-0.8, debated), CONTRADICTORY (low grounding <-0.5, contradicted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements), UNCLASSIFIED (doesn\'t fit). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.')
+      .description('Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: WELL_GROUNDED (avg >0.8, well-established), MIXED_GROUNDING (0.15-0.8, variable validation), WEAK_GROUNDING (0.0-0.15, emerging evidence), POORLY_GROUNDED (-0.5-0.0, uncertain), CONTRADICTED (<-0.5, refuted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.')
       .addCommand(
         new Command('list')
-          .description('List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.')
-          .option('--status <status>', 'Filter by status: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED')
+          .description('List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Sorted by highest grounding first. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.')
+          .option('--status <status>', 'Filter by status: WELL_GROUNDED, MIXED_GROUNDING, WEAK_GROUNDING, POORLY_GROUNDED, CONTRADICTED, HISTORICAL, INSUFFICIENT_DATA')
           .action(async (options) => {
             try {
               const client = createClientFromEnv();
@@ -1134,28 +1208,62 @@ export const vocabularyCommand = setCommandHelp(
               console.log(colors.ui.title('📊 Epistemic Status'));
               console.log(separator());
 
+              // Display staleness information
+              if (result.last_measurement_at) {
+                const measurementDate = new Date(result.last_measurement_at).toLocaleString();
+                console.log(`\n${colors.ui.key('Last Measurement:')} ${colors.ui.value(measurementDate)}`);
+
+                const delta = result.vocabulary_changes_since_measurement ?? 0;
+                let stalenessText = '';
+                let stalenessColor = colors.status.success;
+
+                if (delta === 0) {
+                  stalenessText = 'No changes since measurement (fresh)';
+                  stalenessColor = colors.status.success;
+                } else if (delta < 5) {
+                  stalenessText = `${delta} vocabulary change${delta > 1 ? 's' : ''} since measurement`;
+                  stalenessColor = colors.ui.value;
+                } else if (delta < 10) {
+                  stalenessText = `${delta} vocabulary changes since measurement (consider re-measuring)`;
+                  stalenessColor = colors.status.warning;
+                } else {
+                  stalenessText = `${delta} vocabulary changes since measurement (re-measurement recommended)`;
+                  stalenessColor = colors.status.warning;
+                }
+
+                console.log(`${colors.ui.key('Staleness:')} ${stalenessColor(stalenessText)}`);
+              }
+
               console.log(`\n${colors.ui.key('Total Types:')} ${coloredCount(result.total)}`);
 
               if (result.types.length > 0) {
-                console.log('\n' + separator(95, '─'));
+                // Sort by avg_grounding descending (highest first)
+                const sortedTypes = [...result.types].sort((a, b) => {
+                  const aGrounding = a.stats?.avg_grounding ?? -999;
+                  const bGrounding = b.stats?.avg_grounding ?? -999;
+                  return bGrounding - aGrounding;
+                });
+
+                console.log('\n' + separator(75, '─'));
                 console.log(
                   colors.status.dim(
-                    `${'TYPE'.padEnd(25)} ${'STATUS'.padEnd(20)} ${'AVG GROUNDING'.padStart(13)} ${'SAMPLED'.padStart(10)} ${'MEASURED AT'.padStart(22)}`
+                    `${'TYPE'.padEnd(25)} ${'STATUS'.padEnd(20)} ${'AVG GROUNDING'.padStart(13)} ${'SAMPLED'.padStart(10)}`
                   )
                 );
-                console.log(separator(95, '─'));
+                console.log(separator(75, '─'));
 
-                result.types.forEach((type: any) => {
+                sortedTypes.forEach((type: any) => {
                   const relColor = colors.getRelationshipColor(type.relationship_type);
 
-                  // Color-code status
+                  // Color-code status (grounding-based terminology)
                   const statusColors: Record<string, (text: string) => string> = {
-                    AFFIRMATIVE: colors.status.success,
-                    CONTESTED: colors.status.warning,
-                    CONTRADICTORY: colors.status.error,
+                    WELL_GROUNDED: colors.status.success,
+                    MIXED_GROUNDING: colors.status.warning,
+                    WEAK_GROUNDING: colors.ui.value,
+                    POORLY_GROUNDED: colors.status.dim,
+                    CONTRADICTED: colors.status.error,
                     HISTORICAL: colors.ui.value,
-                    INSUFFICIENT_DATA: colors.status.dim,
-                    UNCLASSIFIED: colors.status.dim
+                    INSUFFICIENT_DATA: colors.status.dim
                   };
                   const statusColor = statusColors[type.epistemic_status] || colors.ui.value;
 
@@ -1167,20 +1275,15 @@ export const vocabularyCommand = setCommandHelp(
                     ? String(type.stats.sampled_edges).padStart(7)
                     : '    -- ';
 
-                  const measuredAt = type.status_measured_at
-                    ? new Date(type.status_measured_at).toLocaleString().substring(0, 19)
-                    : '         --          ';
-
                   console.log(
                     `${relColor(type.relationship_type.padEnd(25))} ` +
                     `${statusColor(type.epistemic_status.padEnd(20))} ` +
                     `${avgGrounding.padStart(13)} ` +
-                    `${sampledEdges.padStart(10)} ` +
-                    `${colors.status.dim(measuredAt.padStart(22))}`
+                    `${sampledEdges.padStart(10)}`
                   );
                 });
 
-                console.log(separator(95, '─'));
+                console.log(separator(75, '─'));
               }
 
               console.log();
@@ -1193,7 +1296,7 @@ export const vocabularyCommand = setCommandHelp(
       )
       .addCommand(
         new Command('show')
-          .description('Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (AFFIRMATIVE/CONTESTED/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.')
+          .description('Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (WELL_GROUNDED/MIXED_GROUNDING/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.')
           .argument('<type>', 'Relationship type to show (e.g., IMPLIES, SUPPORTS)')
           .action(async (type: string) => {
             try {
@@ -1204,14 +1307,15 @@ export const vocabularyCommand = setCommandHelp(
               console.log(colors.ui.title(`📊 Epistemic Status: ${colors.getRelationshipColor(type)(type)}`));
               console.log(separator());
 
-              // Status with color
+              // Status with color (grounding-based terminology)
               const statusColors: Record<string, (text: string) => string> = {
-                AFFIRMATIVE: colors.status.success,
-                CONTESTED: colors.status.warning,
-                CONTRADICTORY: colors.status.error,
+                WELL_GROUNDED: colors.status.success,
+                MIXED_GROUNDING: colors.status.warning,
+                WEAK_GROUNDING: colors.ui.value,
+                POORLY_GROUNDED: colors.status.dim,
+                CONTRADICTED: colors.status.error,
                 HISTORICAL: colors.ui.value,
-                INSUFFICIENT_DATA: colors.status.dim,
-                UNCLASSIFIED: colors.status.dim
+                INSUFFICIENT_DATA: colors.status.dim
               };
               const statusColor = statusColors[result.epistemic_status] || colors.ui.value;
 
@@ -1231,10 +1335,36 @@ export const vocabularyCommand = setCommandHelp(
                 console.log(`  ${colors.stats.label('Total Edges:')} ${coloredCount(result.stats.total_edges)}`);
               }
 
-              if (result.status_measured_at) {
-                console.log(`\n${colors.stats.section('Temporal Context')}`);
-                console.log(`  ${colors.stats.label('Measured At:')} ${colors.status.dim(new Date(result.status_measured_at).toLocaleString())}`);
-                console.log(`  ${colors.status.dim('Note: Results are temporal - rerun measurement to remeasure as graph evolves')}`);
+              if (result.status_measured_at || result.vocabulary_changes_since_measurement !== undefined) {
+                console.log(`\n${colors.stats.section('Measurement Context')}`);
+
+                if (result.status_measured_at) {
+                  console.log(`  ${colors.stats.label('Measured At:')} ${colors.status.dim(new Date(result.status_measured_at).toLocaleString())}`);
+                }
+
+                if (result.vocabulary_changes_since_measurement !== undefined) {
+                  const delta = result.vocabulary_changes_since_measurement;
+                  let stalenessText = '';
+                  let stalenessColor = colors.status.success;
+
+                  if (delta === 0) {
+                    stalenessText = 'No changes since measurement (fresh)';
+                    stalenessColor = colors.status.success;
+                  } else if (delta < 5) {
+                    stalenessText = `${delta} vocabulary change${delta > 1 ? 's' : ''} since measurement`;
+                    stalenessColor = colors.ui.value;
+                  } else if (delta < 10) {
+                    stalenessText = `${delta} vocabulary changes since measurement (consider re-measuring)`;
+                    stalenessColor = colors.status.warning;
+                  } else {
+                    stalenessText = `${delta} vocabulary changes since measurement (re-measurement recommended)`;
+                    stalenessColor = colors.status.warning;
+                  }
+
+                  console.log(`  ${colors.stats.label('Staleness:')} ${stalenessColor(stalenessText)}`);
+                }
+
+                console.log(`  ${colors.status.dim('Note: Results are temporal - rerun measurement as graph evolves')}`);
               }
 
               console.log('\n' + separator());
@@ -1253,7 +1383,7 @@ export const vocabularyCommand = setCommandHelp(
       .addCommand(
         new Command('measure')
           .description('Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().')
-          .option('--sample-size <n>', 'Edges to sample per type (default: 100)', parseInt, 100)
+          .option('--sample-size <n>', 'Edges to sample per type (default: 100)', (val) => parseInt(val, 10), 100)
           .option('--no-store', 'Run measurement without storing to database')
           .option('--verbose', 'Include detailed statistics in output')
           .action(async (options) => {
@@ -1293,33 +1423,62 @@ export const vocabularyCommand = setCommandHelp(
               if (result.classifications) {
                 console.log('\n' + colors.stats.section('Classifications'));
                 const statusColors: Record<string, (text: string) => string> = {
-                  AFFIRMATIVE: colors.status.success,
-                  CONTESTED: colors.status.warning,
-                  CONTRADICTORY: colors.status.error,
+                  WELL_GROUNDED: colors.status.success,
+                  MIXED_GROUNDING: colors.status.warning,
+                  WEAK_GROUNDING: colors.ui.value,
+                  POORLY_GROUNDED: colors.status.dim,
+                  CONTRADICTED: colors.status.error,
                   HISTORICAL: colors.ui.value,
-                  INSUFFICIENT_DATA: colors.status.dim,
-                  UNCLASSIFIED: colors.status.dim
+                  INSUFFICIENT_DATA: colors.status.dim
                 };
 
-                for (const [status, count] of Object.entries(result.classifications).sort((a, b) => (b[1] as number) - (a[1] as number))) {
+                // Sort by grounding quality (best to worst)
+                const statusOrder = [
+                  'WELL_GROUNDED',
+                  'MIXED_GROUNDING',
+                  'WEAK_GROUNDING',
+                  'POORLY_GROUNDED',
+                  'CONTRADICTED',
+                  'HISTORICAL',
+                  'INSUFFICIENT_DATA'
+                ];
+
+                const sortedEntries = Object.entries(result.classifications).sort((a, b) => {
+                  const aIndex = statusOrder.indexOf(a[0]);
+                  const bIndex = statusOrder.indexOf(b[0]);
+                  // If status not in order list, put at end
+                  if (aIndex === -1) return 1;
+                  if (bIndex === -1) return -1;
+                  return aIndex - bIndex;
+                });
+
+                for (const [status, count] of sortedEntries) {
                   const statusColor = statusColors[status] || colors.ui.value;
                   console.log(`  ${statusColor(status.padEnd(20))}: ${coloredCount(count as number)}`);
                 }
               }
 
               if (result.sample_results && result.sample_results.length > 0) {
-                const sampleSize = Math.min(10, result.sample_results.length);
-                console.log(`\n${colors.stats.section(`Sample Results (${sampleSize} of ${result.sample_results.length})`)}`);
+                // Sort by avg_grounding descending (highest first)
+                const sortedResults = [...result.sample_results].sort((a, b) => {
+                  const aGrounding = a.stats?.avg_grounding ?? -999;
+                  const bGrounding = b.stats?.avg_grounding ?? -999;
+                  return bGrounding - aGrounding;
+                });
+
+                const sampleSize = Math.min(10, sortedResults.length);
+                console.log(`\n${colors.stats.section(`Sample Results (${sampleSize} of ${sortedResults.length})`)}`);
 
                 for (let i = 0; i < sampleSize; i++) {
-                  const sample = result.sample_results[i];
+                  const sample = sortedResults[i];
                   const statusColors: Record<string, (text: string) => string> = {
-                    AFFIRMATIVE: colors.status.success,
-                    CONTESTED: colors.status.warning,
-                    CONTRADICTORY: colors.status.error,
+                    WELL_GROUNDED: colors.status.success,
+                    MIXED_GROUNDING: colors.status.warning,
+                    WEAK_GROUNDING: colors.ui.value,
+                    POORLY_GROUNDED: colors.status.dim,
+                    CONTRADICTED: colors.status.error,
                     HISTORICAL: colors.ui.value,
-                    INSUFFICIENT_DATA: colors.status.dim,
-                    UNCLASSIFIED: colors.status.dim
+                    INSUFFICIENT_DATA: colors.status.dim
                   };
                   const statusColor = statusColors[sample.epistemic_status] || colors.ui.value;
 

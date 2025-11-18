@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { getZIndexValue } from '../../config/zIndex';
 
 export interface EdgeInfoBoxProps {
   info: {
@@ -19,6 +20,9 @@ export interface EdgeInfoBoxProps {
     job_id?: string;
     document_id?: string;
     created_at?: string;
+    // ADR-065: Vocabulary epistemic status metadata
+    avg_grounding?: number;
+    epistemic_status?: string;
     x: number;
     y: number;
   };
@@ -33,7 +37,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
         left: `${info.x}px`,
         top: `${info.y}px`,
         transform: 'translate(-50%, -100%)', // Position above the edge midpoint
-        zIndex: 9999, // Ensure info box draws on top of everything
+        zIndex: getZIndexValue('infoBox'), // Info boxes appear below search results
       }}
     >
       {/* Speech bubble pointer - theme-aware */}
@@ -74,6 +78,21 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground dark:text-gray-400">Category:</span>
                   <span className="font-medium text-card-foreground">{info.category}</span>
+                </div>
+              )}
+              {/* ADR-065: Epistemic status metadata */}
+              {info.avg_grounding !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground dark:text-gray-400">Grounding:</span>
+                  <span className="font-medium text-card-foreground">
+                    {info.avg_grounding.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {info.epistemic_status && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground dark:text-gray-400">Status:</span>
+                  <span className="font-medium text-card-foreground text-xs">{info.epistemic_status}</span>
                 </div>
               )}
               {/* ADR-051: Provenance metadata section */}

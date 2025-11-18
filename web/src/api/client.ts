@@ -108,6 +108,10 @@ class APIClient {
                 to_id: rel.to_id,
                 relationship_type: rel.rel_type,
                 confidence: rel.confidence,
+                // ADR-065: Vocabulary epistemic status metadata
+                category: rel.category,
+                avg_grounding: rel.avg_grounding,
+                epistemic_status: rel.epistemic_status,
               });
             }
           }

@@ -67,6 +67,9 @@ class EdgeTypeInfo(BaseModel):
     category_ambiguous: Optional[bool] = None  # True if runner-up > 0.70
     # ADR-049: LLM-determined direction semantics
     direction_semantics: Optional[str] = None  # 'outward', 'inward', 'bidirectional', or None
+    # ADR-065: Epistemic status (grounding-based)
+    epistemic_status: Optional[str] = None  # WELL_GROUNDED, MIXED_GROUNDING, etc.
+    avg_grounding: Optional[float] = None  # Average grounding strength (-1.0 to 1.0)
 
 
 class AddEdgeTypeRequest(BaseModel):

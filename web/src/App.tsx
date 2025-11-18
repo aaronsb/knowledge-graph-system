@@ -18,7 +18,7 @@ import { useThemeStore } from './store/themeStore';
 import { useSubgraph, useFindConnection } from './hooks/useGraphData';
 import { getExplorer } from './explorers';
 import { apiClient } from './api/client';
-import { getZIndexClass } from './config/zIndex';
+import { getZIndexClass, getZIndexValue } from './config/zIndex';
 import './explorers'; // Import to register explorers
 
 // Create React Query client
@@ -369,6 +369,7 @@ const AppContent: React.FC = () => {
           style={{
             height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto',
             overflow: queryMode === 'block-builder' ? 'hidden' : 'visible',
+            zIndex: getZIndexValue('searchBar'),
           }}
         >
           <div
@@ -398,7 +399,10 @@ const AppContent: React.FC = () => {
         )}
 
         {/* Visualization Area */}
-        <div className={`flex-1 relative ${!graphData && !isLoading ? 'pointer-events-none' : ''}`}>
+        <div
+          className={`flex-1 relative ${!graphData && !isLoading ? 'pointer-events-none' : ''}`}
+          style={{ zIndex: getZIndexValue('content') }}
+        >
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
               <div className="text-center">
