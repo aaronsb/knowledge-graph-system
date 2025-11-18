@@ -4902,6 +4902,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#beyond-pure-opencypher-smart-block-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Beyond Pure openCypher: Smart Block Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#start-block-execution-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6129,6 +6140,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#beyond-pure-opencypher-smart-block-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Beyond Pure openCypher: Smart Block Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#start-block-execution-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6463,6 +6485,24 @@
 <li><strong>Authorize</strong>: User grants access to specific OAuth clients</li>
 <li><strong>Execute</strong>: External systems call endpoint with client credentials + flow ID</li>
 </ol>
+<h3 id="beyond-pure-opencypher-smart-block-operations">Beyond Pure openCypher: Smart Block Operations</h3>
+<p>Query flows are more than graph traversals. The Block Builder compiles to <strong>annotated openCypher</strong> - valid Cypher with embedded markers that trigger additional operations:</p>
+<p><strong>Smart Blocks (non-Cypher operations):</strong>
+- <strong>Vector Search</strong> - Semantic similarity via embedding API
+- <strong>Epistemic Filter</strong> - Filter by vocabulary epistemic status
+- <strong>Enrich</strong> - Fetch concept details (grounding, ontology, search terms)</p>
+<p><strong>Cypher Blocks (pure graph operations):</strong>
+- <strong>Neighborhood</strong> - Graph traversal
+- <strong>Filter</strong> - WHERE clauses
+- <strong>Limit</strong> - Result constraints</p>
+<p>This is conceptually similar to Neo4j's Cypher extensions or stored procedures - the execution engine interprets the annotated query and orchestrates calls to various services (embedding API, concept details API) alongside the graph database.</p>
+<p><strong>Implication for Published Endpoints:</strong>
+The execution engine must be an internal worker that can:
+1. Parse annotated openCypher
+2. Execute Cypher portions against Apache AGE
+3. Invoke smart block services (vector search, enrichment)
+4. Compose final results</p>
+<p>This makes published flows more powerful than raw Cypher endpoints - they're curated data pipelines that encapsulate complex multi-service operations behind a simple API call.</p>
 <h3 id="start-block-execution-mode">Start Block: Execution Mode</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">StartBlockParams</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nx">executionMode</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;interactive&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;published&#39;</span><span class="p">;</span>
