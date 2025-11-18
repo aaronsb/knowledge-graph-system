@@ -33,13 +33,14 @@ import { NotBlock } from './NotBlock';
 import { LimitBlock } from './LimitBlock';
 import { EnrichBlock } from './EnrichBlock';
 import { VectorSearchBlock } from './VectorSearchBlock';
+import { EpistemicFilterBlock } from './EpistemicFilterBlock';
 import { BlockHelpPopup } from './BlockHelpPopup';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 
-import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EnrichBlockParams } from '../../types/blocks';
+import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
 
 interface BlockBuilderProps {
   onSendToEditor?: (cypher: string) => void;
@@ -92,6 +93,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       limit: LimitBlock,
       // Smart blocks
       vectorSearch: VectorSearchBlock,
+      epistemicFilter: EpistemicFilterBlock,
       enrich: EnrichBlock,
     }),
     []
@@ -153,6 +155,10 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       case 'limit':
         params = { count: 10 } as LimitBlockParams;
         label = 'Limit Results';
+        break;
+      case 'epistemicFilter':
+        params = { includeStatuses: [], excludeStatuses: [] } as EpistemicFilterBlockParams;
+        label = 'Epistemic Filter';
         break;
       case 'enrich':
         params = { fetchOntology: true, fetchGrounding: true, fetchSearchTerms: false } as EnrichBlockParams;

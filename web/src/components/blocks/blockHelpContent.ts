@@ -199,6 +199,24 @@ export const blockHelpContent: Record<BlockType, BlockHelpContent> = {
     ],
   },
 
+  epistemicFilter: {
+    title: 'Epistemic Filter',
+    tag: 'SMART',
+    tagColor: 'indigo',
+    description: 'Filter relationships by their epistemic status - the reliability classification of knowledge based on grounding measurements.',
+    parameters: [
+      { name: 'Include Only', description: 'Only show relationships with these statuses' },
+      { name: 'Exclude', description: 'Hide relationships with these statuses' },
+    ],
+    tips: [
+      'AFFIRMATIVE = well-established, high confidence',
+      'CONTESTED = debated, mixed evidence',
+      'CONTRADICTORY = contradicted by evidence',
+      'Use to focus on reliable knowledge or explore uncertain areas',
+    ],
+    example: 'Include AFFIRMATIVE to see only well-supported relationships',
+  },
+
   enrich: {
     title: 'Enrich',
     tag: 'SMART',

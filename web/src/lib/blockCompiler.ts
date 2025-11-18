@@ -21,6 +21,7 @@ import type {
   OrBlockParams,
   NotBlockParams,
   LimitBlockParams,
+  EpistemicFilterBlockParams,
   EnrichBlockParams,
   CompiledQuery,
 } from '../types/blocks';
@@ -220,6 +221,16 @@ function compileBlock(
 
     case 'limit':
       return compileLimitBlock(params as LimitBlockParams);
+
+    case 'epistemicFilter':
+      // Smart block - filters relationships by epistemic status
+      const efParams = params as EpistemicFilterBlockParams;
+      const includeStr = efParams.includeStatuses?.length > 0 ? efParams.includeStatuses.join(', ') : 'all';
+      const excludeStr = efParams.excludeStatuses?.length > 0 ? efParams.excludeStatuses.join(', ') : 'none';
+      return {
+        cypher: `// Epistemic Filter (Smart Block): include [${includeStr}], exclude [${excludeStr}]`,
+        outputVariable: inputVariable
+      };
 
     case 'enrich':
       // Enrich block doesn't generate Cypher - it's a post-processing marker

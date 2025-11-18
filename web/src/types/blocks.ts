@@ -27,6 +27,7 @@ export type BlockType =
   | 'limit'
   // Smart blocks (use API calls)
   | 'vectorSearch'  // Semantic search with embeddings
+  | 'epistemicFilter' // Filter by epistemic status
   | 'enrich';
 
 // ============================================================================
@@ -111,6 +112,13 @@ export interface NotBlockParams {
   excludeProperty?: 'label' | 'ontology';
 }
 
+export interface EpistemicFilterBlockParams {
+  // Epistemic statuses to include (if empty, no include filter)
+  includeStatuses: string[];
+  // Epistemic statuses to exclude
+  excludeStatuses: string[];
+}
+
 export interface EnrichBlockParams {
   // Options for what to enrich
   fetchOntology: boolean;
@@ -140,6 +148,7 @@ export interface BlockData {
     | OrBlockParams
     | NotBlockParams
     | LimitBlockParams
+    | EpistemicFilterBlockParams
     | EnrichBlockParams;
 }
 
