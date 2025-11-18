@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../CLI_AUTHENTICATION_ARCHITECTURE/">
+        <link rel="prev" href="../ADR-065-vocabulary-based-provenance-relationships/">
       
       
-        <link rel="next" href="../DATA_CONTRACT/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Code Changes Analysis: ADR-045/046 Implementation - Knowledge Graph System</title>
+        <title>ADR-066: Published Query Endpoints - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#code-changes-analysis-adr-045046-implementation" class="md-skip">
+        <a href="#adr-066-published-query-endpoints" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Code Changes Analysis: ADR-045/046 Implementation
+              ADR-066: Published Query Endpoints
             
           </span>
         </div>
@@ -4755,10 +4755,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-066-published-query-endpoints/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-066: Published Query Endpoints
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4774,6 +4801,375 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-state-interactive-only-query-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current State: Interactive-Only Query Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-opportunity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Opportunity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#published-query-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Published Query Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flow-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-block-execution-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start Block: Execution Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#end-block-output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End Block: Output Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-schema-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Schema (Future)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-graphql-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. GraphQL Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-webhook-push-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Webhook Push Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-export-only-no-live-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Export Only (No Live API)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-ui-placeholders-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: UI Placeholders (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-flow-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Flow Registry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-execution-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Execution Engine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-authorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Authorization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -4867,37 +5263,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Code Changes Analysis: ADR-045/046 Implementation
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../CODE-CHANGES-ANALYSIS/" class="md-nav__link">
         
   
   
@@ -4913,414 +5282,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#design-philosophy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design Philosophy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#files-requiring-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Files Requiring Changes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Files Requiring Changes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-srcapilibvocabulary_scoringpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. src/api/lib/vocabulary_scoring.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-srcapilibsynonym_detectorpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. src/api/lib/synonym_detector.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-srcapiservicesvocabulary_managerpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. src/api/services/vocabulary_manager.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-srcapilibage_clientpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. src/api/lib/age_client.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-new-file-srcapiservicesembedding_workerpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. NEW FILE: src/api/services/embedding_worker.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#files-not-requiring-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Files NOT Requiring Changes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Files NOT Requiring Changes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#srcapiroutesvocabularypy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ✅ src/api/routes/vocabulary.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#srcapimodelsvocabularypy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ✅ src/api/models/vocabulary.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#clientsrcclivocabts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ✅ client/src/cli/vocab.ts
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ✅ Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-strategy-gradual-enhancement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration Strategy: Gradual Enhancement
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Migration Strategy: Gradual Enhancement">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-add-without-breaking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Add without Breaking
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-internal-replacements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Internal Replacements
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-optional-adoption" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Optional Adoption
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#backward-compatibility-guarantee" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backward Compatibility Guarantee
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Backward Compatibility Guarantee">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#database-schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database Schema
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#python-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Python API
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rest-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        REST API
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#code-change-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code Change Summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-strategy-prove-backward-compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing Strategy: Prove Backward Compatibility
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Strategy: Prove Backward Compatibility">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-run-existing-tests-first" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Run Existing Tests First
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-make-changes-incrementally" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Make Changes Incrementally
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-add-new-tests-separately" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Add New Tests Separately
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#risk-assessment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Risk Assessment
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Risk Assessment">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#low-risk-areas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Low Risk Areas ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#medium-risk-areas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Medium Risk Areas ⚠️
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#zero-risk-areas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Zero Risk Areas 🛡️
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verification-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification Checklist
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-insight-extension-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Insight: Extension Pattern
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -6084,33 +6045,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#design-philosophy" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design Philosophy
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#files-requiring-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Files Requiring Changes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Files Requiring Changes">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-srcapilibvocabulary_scoringpy" class="md-nav__link">
+  <a href="#current-state-interactive-only-query-execution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. src/api/lib/vocabulary_scoring.py
+        Current State: Interactive-Only Query Execution
       
     </span>
   </a>
@@ -6118,43 +6068,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-srcapilibsynonym_detectorpy" class="md-nav__link">
+  <a href="#the-opportunity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. src/api/lib/synonym_detector.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-srcapiservicesvocabulary_managerpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. src/api/services/vocabulary_manager.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-srcapilibage_clientpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. src/api/lib/age_client.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-new-file-srcapiservicesembedding_workerpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. NEW FILE: src/api/services/embedding_worker.py
+        The Opportunity
       
     </span>
   </a>
@@ -6167,22 +6084,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#files-not-requiring-changes" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Files NOT Requiring Changes
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Files NOT Requiring Changes">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#srcapiroutesvocabularypy" class="md-nav__link">
+  <a href="#published-query-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ✅ src/api/routes/vocabulary.py
+        Published Query Endpoints
       
     </span>
   </a>
@@ -6190,10 +6107,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#srcapimodelsvocabularypy" class="md-nav__link">
+  <a href="#architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ✅ src/api/models/vocabulary.py
+        Architecture Overview
       
     </span>
   </a>
@@ -6201,10 +6118,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#clientsrcclivocabts" class="md-nav__link">
+  <a href="#flow-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ✅ client/src/cli/vocab.ts
+        Flow Lifecycle
       
     </span>
   </a>
@@ -6212,10 +6129,65 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tests" class="md-nav__link">
+  <a href="#start-block-execution-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ✅ Tests
+        Start Block: Execution Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#end-block-output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End Block: Output Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-schema-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Schema (Future)
       
     </span>
   </a>
@@ -6228,22 +6200,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#migration-strategy-gradual-enhancement" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Migration Strategy: Gradual Enhancement
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Migration Strategy: Gradual Enhancement">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-add-without-breaking" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 1: Add without Breaking
+        Positive
       
     </span>
   </a>
@@ -6251,10 +6223,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-internal-replacements" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2: Internal Replacements
+        Negative
       
     </span>
   </a>
@@ -6262,10 +6234,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-optional-adoption" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 3: Optional Adoption
+        Neutral
       
     </span>
   </a>
@@ -6278,22 +6250,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#backward-compatibility-guarantee" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backward Compatibility Guarantee
+        Alternatives Considered
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Backward Compatibility Guarantee">
+    <nav class="md-nav" aria-label="Alternatives Considered">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#database-schema" class="md-nav__link">
+  <a href="#1-graphql-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Database Schema
+        1. GraphQL Endpoint
       
     </span>
   </a>
@@ -6301,10 +6273,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#python-api" class="md-nav__link">
+  <a href="#2-webhook-push-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python API
+        2. Webhook Push Model
       
     </span>
   </a>
@@ -6312,21 +6284,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#rest-api" class="md-nav__link">
+  <a href="#3-export-only-no-live-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        REST API
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
+        3. Export Only (No Live API)
       
     </span>
   </a>
@@ -6339,33 +6300,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-change-summary" class="md-nav__link">
+  <a href="#implementation-phases" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Code Change Summary
+        Implementation Phases
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-strategy-prove-backward-compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing Strategy: Prove Backward Compatibility
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Strategy: Prove Backward Compatibility">
+    <nav class="md-nav" aria-label="Implementation Phases">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-run-existing-tests-first" class="md-nav__link">
+  <a href="#phase-1-ui-placeholders-current" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Run Existing Tests First
+        Phase 1: UI Placeholders (Current)
       
     </span>
   </a>
@@ -6373,10 +6323,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-make-changes-incrementally" class="md-nav__link">
+  <a href="#phase-2-flow-registry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Make Changes Incrementally
+        Phase 2: Flow Registry
       
     </span>
   </a>
@@ -6384,10 +6334,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-add-new-tests-separately" class="md-nav__link">
+  <a href="#phase-3-execution-engine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Add New Tests Separately
+        Phase 3: Execution Engine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-authorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Authorization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Operations
       
     </span>
   </a>
@@ -6400,60 +6372,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#risk-assessment" class="md-nav__link">
+  <a href="#open-questions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Risk Assessment
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Risk Assessment">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#low-risk-areas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Low Risk Areas ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#medium-risk-areas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Medium Risk Areas ⚠️
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#zero-risk-areas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Zero Risk Areas 🛡️
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verification-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification Checklist
+        Open Questions
       
     </span>
   </a>
@@ -6461,10 +6383,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#key-insight-extension-pattern" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Insight: Extension Pattern
+        References
       
     </span>
   </a>
@@ -6491,429 +6413,228 @@
   
 
 
-<h1 id="code-changes-analysis-adr-045046-implementation">Code Changes Analysis: ADR-045/046 Implementation</h1>
-<p><strong>Date:</strong> 2025-10-25
-<strong>Branch:</strong> <code>refactor/embedding-grounding-system</code>
-<strong>Principle:</strong> Minimize changes by extending, not replacing</p>
-<h2 id="design-philosophy">Design Philosophy</h2>
-<blockquote>
-<p><strong>"If we do it right, we won't have to change a lot of code"</strong></p>
-</blockquote>
-<p>The key to minimal disruption is:
-1. <strong>Extend existing data structures</strong> (add fields, don't change existing ones)
-2. <strong>Enhance existing methods</strong> (add optional parameters, keep defaults backward-compatible)
-3. <strong>Keep public APIs unchanged</strong> (same function signatures, same return types where possible)
-4. <strong>Replace internals, not interfaces</strong> (synonym detection logic changes, but API stays same)</p>
-<h2 id="files-requiring-changes">Files Requiring Changes</h2>
-<h3 id="1-srcapilibvocabulary_scoringpy">1. <code>src/api/lib/vocabulary_scoring.py</code></h3>
-<p><strong>Status:</strong> ✅ EXTEND (NOT REPLACE)</p>
-<p><strong>Current:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">EdgeTypeScore</span><span class="p">:</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">edge_count</span><span class="p">:</span> <span class="nb">int</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">avg_traversal</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">bridge_count</span><span class="p">:</span> <span class="nb">int</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">trend</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">value_score</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">is_builtin</span><span class="p">:</span> <span class="nb">bool</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">last_used</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span>
-</code></pre></div></p>
-<p><strong>Enhanced (ADR-046):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">EdgeTypeScore</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="c1"># Existing fields (KEEP ALL - backward compatibility)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">edge_count</span><span class="p">:</span> <span class="nb">int</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">avg_traversal</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">bridge_count</span><span class="p">:</span> <span class="nb">int</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">trend</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">value_score</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">is_builtin</span><span class="p">:</span> <span class="nb">bool</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">last_used</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="c1"># New fields (ADR-046) - all optional with defaults</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">grounding_contribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>      <span class="c1"># 0.0-1.0</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">avg_confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>              <span class="c1"># 0.0-1.0</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">semantic_diversity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>          <span class="c1"># 0.0-1.0</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="n">synonym_cluster_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>            <span class="c1"># UUID if clustered</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="n">embedding_quality_score</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>     <span class="c1"># 0.0-1.0</span>
-</code></pre></div></p>
-<p><strong>Changes to <code>VocabularyScorer</code> class:</strong></p>
+<h1 id="adr-066-published-query-endpoints">ADR-066: Published Query Endpoints</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2025-11-18
+<strong>Deciders:</strong> Engineering Team
+<strong>Related ADRs:</strong>
+- ADR-031 (Encrypted API Key Storage) - OAuth/auth infrastructure
+- ADR-014 (Job Approval Workflow) - Existing approval patterns</p>
+<hr />
+<h2 id="context">Context</h2>
+<h3 id="current-state-interactive-only-query-execution">Current State: Interactive-Only Query Execution</h3>
+<p>The Visual Block Builder creates query flows that can only be executed interactively within the web UI. Users must:</p>
 <ol>
-<li>
-<p><strong>Add new method</strong> (doesn't change existing ones):
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">calculate_grounding_contribution</span><span class="p">(</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate grounding contribution for a single type (ADR-046)&quot;&quot;&quot;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="c1"># Implementation details...</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Enhance <code>get_value_scores()</code></strong> with optional grounding:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_value_scores</span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">include_builtin</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">include_grounding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># NEW - default False for backward compat</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EdgeTypeScore</span><span class="p">]:</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="c1"># Existing implementation...</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="c1"># NEW: Optionally add grounding metrics</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="k">if</span> <span class="n">include_grounding</span><span class="p">:</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="k">for</span> <span class="n">rel_type</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>            <span class="n">score</span><span class="o">.</span><span class="n">grounding_contribution</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>            <span class="c1"># ... other grounding metrics</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="k">return</span> <span class="n">scores</span>
-</code></pre></div></p>
-</li>
+<li>Build query in Block Builder</li>
+<li>Execute via "Run Query" button</li>
+<li>View results in graph visualization</li>
+<li>Repeat for each query invocation</li>
 </ol>
-<p><strong>Result:</strong> ✅ Existing code continues to work without changes!</p>
-<hr />
-<h3 id="2-srcapilibsynonym_detectorpy">2. <code>src/api/lib/synonym_detector.py</code></h3>
-<p><strong>Status:</strong> ⚠️ REPLACE INTERNALS (keep same public API)</p>
-<p><strong>Current Implementation:</strong>
-- Uses Porter stemmer for string similarity
-- Returns <code>SynonymCandidate</code> dataclass</p>
-<p><strong>New Implementation (ADR-046):</strong>
-- Uses embedding cosine similarity (threshold &gt; 0.85)
-- <strong>KEEPS SAME</strong> return type: <code>List[SynonymCandidate]</code>
-- <strong>KEEPS SAME</strong> method signature: <code>detect_synonyms(...) -&gt; List[SynonymCandidate]</code></p>
-<p><strong>Public API stays identical:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Before (ADR-032)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">SynonymDetector</span><span class="p">:</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">detect_synonyms</span><span class="p">(</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="n">scores</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EdgeTypeScore</span><span class="p">],</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SynonymCandidate</span><span class="p">]:</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="c1"># OLD: Porter stemmer logic</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="k">pass</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># After (ADR-046)</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="k">class</span><span class="w"> </span><span class="nc">SynonymDetector</span><span class="p">:</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">detect_synonyms</span><span class="p">(</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="n">scores</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EdgeTypeScore</span><span class="p">],</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.85</span>  <span class="c1"># NEW default (embeddings, not strings)</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SynonymCandidate</span><span class="p">]:</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="c1"># NEW: Embedding similarity logic</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="c1"># But SAME return type and signature!</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>        <span class="k">pass</span>
-</code></pre></div></p>
-<p><strong>Changes to <code>SynonymCandidate</code> dataclass:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">SynonymCandidate</span><span class="p">:</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="c1"># Existing fields (KEEP)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">type1</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">type2</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">similarity_score</span><span class="p">:</span> <span class="nb">float</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="c1"># New fields (optional, for backward compat)</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">embedding_similarity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># NEW</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">detection_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;embedding&quot;</span>            <span class="c1"># NEW (was &quot;porter_stem&quot;)</span>
-</code></pre></div></p>
-<p><strong>Result:</strong> ✅ Callers don't need to change - same function signature!</p>
-<hr />
-<h3 id="3-srcapiservicesvocabulary_managerpy">3. <code>src/api/services/vocabulary_manager.py</code></h3>
-<p><strong>Status:</strong> ✅ MINOR UPDATES (mostly unchanged)</p>
-<p><strong>Current:</strong>
-- Orchestrates vocabulary operations
-- Uses <code>VocabularyScorer</code> and <code>SynonymDetector</code></p>
-<p><strong>Changes:</strong>
-1. Update to use enhanced scorer (but same method names!)
-2. No changes to public methods like <code>analyze_vocabulary()</code>
-3. Add optional <code>include_grounding</code> parameter where needed</p>
-<p><strong>Example change:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Before</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">analyze_vocabulary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VocabularyAnalysis</span><span class="p">:</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">scores</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">get_value_scores</span><span class="p">()</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="c1"># ...</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># After (minimal change)</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">analyze_vocabulary</span><span class="p">(</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">include_grounding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># NEW optional parameter</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VocabularyAnalysis</span><span class="p">:</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">scores</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorer</span><span class="o">.</span><span class="n">get_value_scores</span><span class="p">(</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">include_grounding</span><span class="o">=</span><span class="n">include_grounding</span>  <span class="c1"># Pass through</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="p">)</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="c1"># Rest of code UNCHANGED</span>
-</code></pre></div></p>
-<p><strong>Result:</strong> ✅ Existing callers work without changes!</p>
-<hr />
-<h3 id="4-srcapilibage_clientpy">4. <code>src/api/lib/age_client.py</code></h3>
-<p><strong>Status:</strong> ✅ ADD NEW METHODS (don't change existing)</p>
-<p><strong>New Methods to Add:</strong></p>
-<ol>
-<li>
-<p><strong>Grounding calculation</strong> (ADR-044):
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_grounding_strength_semantic</span><span class="p">(</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">include_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">exclude_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate grounding strength using embedding-based edge semantics&quot;&quot;&quot;</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="c1"># NEW method - doesn&#39;t affect existing code</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Enhanced merge with embedding handling</strong> (ADR-046):
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Existing method signature UNCHANGED</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">merge_edge_types</span><span class="p">(</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">source_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">target_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="c1"># ENHANCED implementation (check for embeddings)</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="c1"># But same signature!</span>
-</code></pre></div></p>
-</li>
-</ol>
-<p><strong>Result:</strong> ✅ No breaking changes to existing methods!</p>
-<hr />
-<h3 id="5-new-file-srcapiservicesembedding_workerpy">5. NEW FILE: <code>src/api/services/embedding_worker.py</code></h3>
-<p><strong>Status:</strong> ✨ CREATE NEW (doesn't replace anything)</p>
-<p><strong>Purpose:</strong>
-- Centralized embedding generation (ADR-045)
-- Called by other services, doesn't replace them</p>
-<p><strong>Integration Points:</strong>
-1. Used by <code>age_client.add_relationship_type()</code> (existing method enhanced)
-2. Used by new admin endpoints
-3. Called during startup for cold start</p>
-<p><strong>Example integration:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># In age_client.py - existing method enhanced</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">add_relationship_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="c1"># Existing logic...</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="c1"># NEW: Generate embedding via EmbeddingWorker</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="k">if</span> <span class="n">ai_provider</span><span class="p">:</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">src.api.services.embedding_worker</span><span class="w"> </span><span class="kn">import</span> <span class="n">embedding_worker</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>        <span class="k">await</span> <span class="n">embedding_worker</span><span class="o">.</span><span class="n">generate_vocabulary_embedding</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">)</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="c1"># Rest of existing logic...</span>
-</code></pre></div></p>
-<p><strong>Result:</strong> ✅ No breaking changes - just adds new capability!</p>
-<hr />
-<h2 id="files-not-requiring-changes">Files NOT Requiring Changes</h2>
-<h3 id="srcapiroutesvocabularypy">✅ <code>src/api/routes/vocabulary.py</code></h3>
+<p>This works well for exploration and analysis, but limits the platform's utility for:</p>
 <ul>
-<li>Existing routes continue to work</li>
-<li>Can add new optional parameters to existing endpoints</li>
-<li>No breaking changes to response schemas</li>
+<li><strong>Automated pipelines</strong> - CI/CD systems needing knowledge graph data</li>
+<li><strong>External applications</strong> - Third-party tools integrating with the knowledge graph</li>
+<li><strong>Scheduled queries</strong> - Periodic data extraction for reporting</li>
+<li><strong>Multi-tenant access</strong> - Different applications accessing shared knowledge</li>
 </ul>
-<h3 id="srcapimodelsvocabularypy">✅ <code>src/api/models/vocabulary.py</code></h3>
-<ul>
-<li>Existing Pydantic models unchanged</li>
-<li>Can add optional fields to models (backward compatible)</li>
-</ul>
-<h3 id="clientsrcclivocabts">✅ <code>client/src/cli/vocab.ts</code></h3>
-<ul>
-<li>CLI commands continue to work</li>
-<li>Can add new subcommands without affecting existing ones</li>
-</ul>
-<h3 id="tests">✅ Tests</h3>
-<ul>
-<li>Existing tests continue to pass</li>
-<li>New tests added for new functionality</li>
-</ul>
-<hr />
-<h2 id="migration-strategy-gradual-enhancement">Migration Strategy: Gradual Enhancement</h2>
-<h3 id="phase-1-add-without-breaking">Phase 1: Add without Breaking</h3>
-<ol>
-<li>Apply SQL migrations (add columns, don't change existing)</li>
-<li>Extend <code>EdgeTypeScore</code> with optional fields (default <code>None</code>)</li>
-<li>Enhance <code>VocabularyScorer</code> with optional <code>include_grounding</code> parameter</li>
-</ol>
-<p><strong>Result:</strong> All existing code works unchanged!</p>
-<h3 id="phase-2-internal-replacements">Phase 2: Internal Replacements</h3>
-<ol>
-<li>Replace <code>SynonymDetector</code> internals (keep same public API)</li>
-<li>Add <code>EmbeddingWorker</code> service (new file, doesn't replace anything)</li>
-<li>Enhance <code>merge_edge_types()</code> implementation (same signature)</li>
-</ol>
-<p><strong>Result:</strong> Public APIs unchanged, internals modernized!</p>
-<h3 id="phase-3-optional-adoption">Phase 3: Optional Adoption</h3>
-<ol>
-<li>Add new admin endpoints for grounding analysis</li>
-<li>Add optional <code>include_grounding</code> to query responses</li>
-<li>Update CLI with new commands (old commands still work)</li>
-</ol>
-<p><strong>Result:</strong> Users can opt-in to new features!</p>
-<hr />
-<h2 id="backward-compatibility-guarantee">Backward Compatibility Guarantee</h2>
-<h3 id="database-schema">Database Schema</h3>
-<ul>
-<li>✅ All new columns nullable with sensible defaults</li>
-<li>✅ No columns removed or renamed</li>
-<li>✅ No datatype changes to existing columns</li>
-</ul>
-<h3 id="python-api">Python API</h3>
-<ul>
-<li>✅ All new parameters optional with defaults</li>
-<li>✅ No function signature changes (only additions)</li>
-<li>✅ Return types backward-compatible (extended, not changed)</li>
-</ul>
-<h3 id="rest-api">REST API</h3>
-<ul>
-<li>✅ Existing endpoints unchanged</li>
-<li>✅ New fields in responses are optional</li>
-<li>✅ No required request parameter changes</li>
-</ul>
-<h3 id="cli">CLI</h3>
-<ul>
-<li>✅ Existing commands work unchanged</li>
-<li>✅ New subcommands added, old ones preserved</li>
-<li>✅ Output formats backward-compatible</li>
-</ul>
-<hr />
-<h2 id="code-change-summary">Code Change Summary</h2>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Change Type</th>
-<th>Breaking?</th>
-<th>LOC Changed (est.)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>vocabulary_scoring.py</code></td>
-<td>Extend</td>
-<td>❌ No</td>
-<td>+150</td>
-</tr>
-<tr>
-<td><code>synonym_detector.py</code></td>
-<td>Replace internals</td>
-<td>❌ No</td>
-<td>±200 (similar size)</td>
-</tr>
-<tr>
-<td><code>vocabulary_manager.py</code></td>
-<td>Minor updates</td>
-<td>❌ No</td>
-<td>+50</td>
-</tr>
-<tr>
-<td><code>age_client.py</code></td>
-<td>Add methods</td>
-<td>❌ No</td>
-<td>+200</td>
-</tr>
-<tr>
-<td><code>embedding_worker.py</code></td>
-<td>NEW FILE</td>
-<td>❌ No</td>
-<td>+300</td>
-</tr>
-<tr>
-<td>SQL migrations</td>
-<td>Additive</td>
-<td>❌ No</td>
-<td>+250</td>
-</tr>
-<tr>
-<td><strong>TOTAL</strong></td>
-<td></td>
-<td>❌ <strong>NO BREAKING CHANGES</strong></td>
-<td><strong>~1,150 LOC</strong></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="testing-strategy-prove-backward-compatibility">Testing Strategy: Prove Backward Compatibility</h2>
-<h3 id="1-run-existing-tests-first">1. Run Existing Tests First</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Before any changes</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>pytest<span class="w"> </span>tests/
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># All tests should pass ✅</span>
+<h3 id="the-opportunity">The Opportunity</h3>
+<p>Users invest significant effort designing query flows that extract valuable subsets of their knowledge graph. These flows should be reusable as programmatic endpoints without requiring the creator to be logged in or manually executing them.</p>
+<h2 id="decision">Decision</h2>
+<h3 id="published-query-endpoints">Published Query Endpoints</h3>
+<p>Introduce the concept of <strong>Published Query Endpoints</strong> - saved query flows that become accessible via REST API using OAuth 2.0 client credentials.</p>
+<h3 id="architecture-overview">Architecture Overview</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│  Block Builder  │─────▶│  Query Registry  │◀─────│   REST API      │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  (Create Flow)  │      │  (Store Flows)   │      │  (Execute Flow) │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└─────────────────┘      └──────────────────┘      └─────────────────┘
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                                            │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                                            ▼
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                              ┌─────────────────────────┐
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                                              │   External Consumers    │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                                              │  (OAuth client creds)   │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                              └─────────────────────────┘
 </code></pre></div>
-<h3 id="2-make-changes-incrementally">2. Make Changes Incrementally</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># After each phase</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>pytest<span class="w"> </span>tests/
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># All original tests should STILL pass ✅</span>
+<h3 id="flow-lifecycle">Flow Lifecycle</h3>
+<ol>
+<li><strong>Create</strong>: User builds query flow in Block Builder</li>
+<li><strong>Publish</strong>: User marks flow as "Published" (Start block execution mode)</li>
+<li><strong>Register</strong>: System generates unique Flow ID and registers endpoint</li>
+<li><strong>Configure</strong>: User sets output format (End block: JSON, CSV, or Graph data)</li>
+<li><strong>Authorize</strong>: User grants access to specific OAuth clients</li>
+<li><strong>Execute</strong>: External systems call endpoint with client credentials + flow ID</li>
+</ol>
+<h3 id="start-block-execution-mode">Start Block: Execution Mode</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">StartBlockParams</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nx">executionMode</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;interactive&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;published&#39;</span><span class="p">;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nx">flowName?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">  </span><span class="c1">// Human-readable name</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="c1">// Future: flowSlug, description, tags</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">}</span>
 </code></pre></div>
-<h3 id="3-add-new-tests-separately">3. Add New Tests Separately</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># New tests for new functionality</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>pytest<span class="w"> </span>tests/test_grounding_*.py
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>pytest<span class="w"> </span>tests/test_embedding_worker.py
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># Don&#39;t modify existing test expectations!</span>
+<ul>
+<li><strong>Interactive</strong> (default): Execute in UI, results render to graph</li>
+<li><strong>Published</strong>: Register as API endpoint, callable externally</li>
+</ul>
+<h3 id="end-block-output-format">End Block: Output Format</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">EndBlockParams</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nx">outputFormat</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;visualization&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;json&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;csv&#39;</span><span class="p">;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="c1">// Future: pagination, field selection, transformations</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">}</span>
 </code></pre></div>
-<hr />
-<h2 id="risk-assessment">Risk Assessment</h2>
-<h3 id="low-risk-areas">Low Risk Areas ✅</h3>
 <ul>
-<li>Adding new dataclass fields with defaults</li>
-<li>Adding new optional parameters to functions</li>
-<li>Creating new files and services</li>
-<li>Adding database columns (nullable)</li>
+<li><strong>Visualization</strong> (default): Render to graph UI</li>
+<li><strong>JSON</strong>: Return structured node/edge data</li>
+<li><strong>CSV</strong>: Return flattened tabular data</li>
 </ul>
-<h3 id="medium-risk-areas">Medium Risk Areas ⚠️</h3>
+<h3 id="api-design">API Design</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>POST /api/v1/flows/{flow_id}/execute
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Authorization: Bearer &lt;access_token&gt;
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Content-Type: application/json
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>{
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  &quot;parameters&quot;: {
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    // Flow-specific parameters if any
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  }
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>}
+</code></pre></div>
+<p>Response varies by output format:
+- <strong>JSON</strong>: <code>{ "nodes": [...], "edges": [...], "metadata": {...} }</code>
+- <strong>CSV</strong>: Text/CSV with appropriate headers</p>
+<h3 id="authentication-model">Authentication Model</h3>
+<p>Uses existing OAuth 2.0 infrastructure (ADR-031):</p>
+<ol>
+<li><strong>Client Registration</strong>: External applications register as OAuth clients</li>
+<li><strong>Client Credentials Grant</strong>: <code>client_id</code> + <code>client_secret</code> → <code>access_token</code></li>
+<li><strong>Flow Authorization</strong>: Access tokens are scoped to specific published flows</li>
+<li><strong>No User Session</strong>: Machine-to-machine, not user-interactive</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
 <ul>
-<li>Replacing <code>SynonymDetector</code> internals</li>
-<li>
-<p><strong>Mitigation:</strong> Keep old implementation in <code>_legacy_detect()</code> fallback</p>
-</li>
-<li>
-<p>Changing <code>merge_edge_types()</code> implementation</p>
-</li>
-<li><strong>Mitigation:</strong> Extensive testing with existing merge operations</li>
+<li><strong>Flow Ownership</strong>: Only flow owner can publish/unpublish</li>
+<li><strong>Scoped Access</strong>: Clients authorized per-flow, not blanket access</li>
+<li><strong>Rate Limiting</strong>: Prevent abuse of published endpoints</li>
+<li><strong>Audit Logging</strong>: Track all external executions</li>
+<li><strong>Revocation</strong>: Owner can unpublish or revoke client access</li>
 </ul>
-<h3 id="zero-risk-areas">Zero Risk Areas 🛡️</h3>
+<h3 id="database-schema-future">Database Schema (Future)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Published query flows</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">published_flows</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="n">flow_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="n">owner_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="n">name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="n">slug</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">UNIQUE</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="n">flow_definition</span><span class="w"> </span><span class="n">JSONB</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Serialized nodes/edges</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="n">output_format</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;json&#39;</span><span class="p">,</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="n">is_active</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="n">created_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="n">updated_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="p">);</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="c1">-- Client authorization for flows</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">flow_authorizations</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">  </span><span class="n">flow_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">published_flows</span><span class="p">(</span><span class="n">flow_id</span><span class="p">),</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">  </span><span class="n">client_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">  </span><span class="n">granted_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">  </span><span class="n">granted_by</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">  </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="n">flow_id</span><span class="p">,</span><span class="w"> </span><span class="n">client_id</span><span class="p">)</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="p">);</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="c1">-- Execution audit log</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">flow_executions</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">  </span><span class="n">execution_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="w">  </span><span class="n">flow_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">published_flows</span><span class="p">(</span><span class="n">flow_id</span><span class="p">),</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="w">  </span><span class="n">client_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="w">  </span><span class="n">executed_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="w">  </span><span class="n">duration_ms</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="w">  </span><span class="n">result_count</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="w">  </span><span class="n">status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a><span class="p">);</span>
+</code></pre></div>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ul>
-<li>No existing code removed</li>
-<li>No existing signatures changed</li>
-<li>No existing tests modified</li>
-<li>No existing database constraints changed</li>
+<li><strong>Reusability</strong>: Query flows become first-class platform resources</li>
+<li><strong>Integration</strong>: External systems can consume knowledge graph data</li>
+<li><strong>Automation</strong>: Enables scheduled and triggered query execution</li>
+<li><strong>Value extraction</strong>: Users can share curated views without sharing raw data</li>
+<li><strong>API-first</strong>: Moves platform toward headless/API-driven architecture</li>
 </ul>
-<hr />
-<h2 id="verification-checklist">Verification Checklist</h2>
-<p>Before merging to main:</p>
+<h3 id="negative">Negative</h3>
 <ul>
-<li>[ ] All existing unit tests pass</li>
-<li>[ ] All existing integration tests pass</li>
-<li>[ ] New functionality tested with new tests</li>
-<li>[ ] Can run <code>kg ingest</code> successfully (existing workflow)</li>
-<li>[ ] Can run <code>kg search</code> successfully (existing workflow)</li>
-<li>[ ] Can run <code>kg vocab list</code> (existing command)</li>
-<li>[ ] New <code>kg vocab</code> subcommands work (new functionality)</li>
-<li>[ ] API <code>/query/*</code> endpoints unchanged</li>
-<li>[ ] Database rollback tested</li>
+<li><strong>Complexity</strong>: Adds OAuth scoping, flow registry, execution engine</li>
+<li><strong>Security surface</strong>: External API access requires careful authorization</li>
+<li><strong>Versioning</strong>: Published flows may need versioning for breaking changes</li>
+<li><strong>Monitoring</strong>: Must track performance and usage of published endpoints</li>
 </ul>
+<h3 id="neutral">Neutral</h3>
+<ul>
+<li><strong>UI changes</strong>: Start/End blocks gain controls (already implemented as placeholders)</li>
+<li><strong>Migration path</strong>: Existing saved diagrams remain interactive-only until published</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="1-graphql-endpoint">1. GraphQL Endpoint</h3>
+<p>Expose full graph via GraphQL, let consumers write their own queries.</p>
+<p><strong>Rejected because:</strong>
+- Exposes entire graph structure to external consumers
+- No curation - users can't limit what's accessible
+- Complex query language for non-technical users</p>
+<h3 id="2-webhook-push-model">2. Webhook Push Model</h3>
+<p>Flows push results to configured webhooks instead of pull API.</p>
+<p><strong>Partially applicable:</strong>
+- Could complement pull API as output option
+- Useful for event-driven architectures
+- May add as future output format</p>
+<h3 id="3-export-only-no-live-api">3. Export Only (No Live API)</h3>
+<p>Users export flow results as static files (JSON/CSV) for sharing.</p>
+<p><strong>Rejected because:</strong>
+- No live data - results stale immediately
+- Manual process for updates
+- Doesn't enable automation</p>
+<h2 id="implementation-phases">Implementation Phases</h2>
+<h3 id="phase-1-ui-placeholders-current">Phase 1: UI Placeholders (Current)</h3>
+<ul>
+<li>Add execution mode to Start block (interactive/published toggle)</li>
+<li>Add output format to End block (visualization/json/csv)</li>
+<li>Controls are visible but non-functional</li>
+</ul>
+<h3 id="phase-2-flow-registry">Phase 2: Flow Registry</h3>
+<ul>
+<li>Database schema for published flows</li>
+<li>Save/load flows with publication metadata</li>
+<li>List published flows in UI</li>
+</ul>
+<h3 id="phase-3-execution-engine">Phase 3: Execution Engine</h3>
+<ul>
+<li>REST endpoint for flow execution</li>
+<li>Query compilation from flow definition</li>
+<li>Output format rendering (JSON, CSV)</li>
+</ul>
+<h3 id="phase-4-authorization">Phase 4: Authorization</h3>
+<ul>
+<li>OAuth client registration</li>
+<li>Per-flow client authorization</li>
+<li>Access token scoping</li>
+</ul>
+<h3 id="phase-5-operations">Phase 5: Operations</h3>
+<ul>
+<li>Rate limiting</li>
+<li>Audit logging</li>
+<li>Usage analytics</li>
+<li>Flow versioning</li>
+</ul>
+<h2 id="open-questions">Open Questions</h2>
+<ol>
+<li><strong>Parameterization</strong>: Should published flows accept runtime parameters (e.g., search terms)?</li>
+<li><strong>Caching</strong>: Should results be cached for performance? How to invalidate?</li>
+<li><strong>Versioning</strong>: How to handle flow updates without breaking consumers?</li>
+<li><strong>Pricing</strong>: Should published endpoint usage be metered/billed differently?</li>
+</ol>
 <hr />
-<h2 id="key-insight-extension-pattern">Key Insight: Extension Pattern</h2>
-<p>Instead of:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># ❌ BAD: Replacing everything</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">NewVocabularyScorer</span><span class="p">:</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="c1"># Completely different implementation</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="k">pass</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1"># Breaks all existing code!</span>
-</code></pre></div></p>
-<p>We do:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># ✅ GOOD: Extending existing</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">VocabularyScorer</span><span class="p">:</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="c1"># Existing methods stay the same</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_value_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>        <span class="k">pass</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="c1"># New methods added</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">calculate_grounding_contribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>        <span class="k">pass</span>  <span class="c1"># NEW</span>
-</code></pre></div></p>
-<p>This is the <strong>Open-Closed Principle</strong>:
-- <strong>Open</strong> for extension (add new features)
-- <strong>Closed</strong> for modification (don't break existing code)</p>
-<hr />
-<p><strong>Bottom Line:</strong> We can implement the entire ADR-044/045/046 trio with <strong>ZERO breaking changes</strong> by following the extension pattern throughout.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>OAuth 2.0 Client Credentials: <a href="https://tools.ietf.org/html/rfc6749#section-4.4">RFC 6749 Section 4.4</a></li>
+<li>Existing auth infrastructure: ADR-031</li>
+</ul>
 
 
 
