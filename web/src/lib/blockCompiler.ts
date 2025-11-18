@@ -90,15 +90,9 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
   let variableCounter = 0;
   let currentVariable = 'start';
   let limitValue: number | null = null;
-  let hasNeighborhoodBlock = false;
 
-  // Check if we have a neighborhood block
-  for (const block of executionChain) {
-    if (block.data.type === 'neighborhood') {
-      hasNeighborhoodBlock = true;
-      break;
-    }
-  }
+  // Track all variables to return (nodes and paths)
+  const returnVariables: string[] = [];
 
   for (let i = 0; i < executionChain.length; i++) {
     const block = executionChain[i];
@@ -112,8 +106,17 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
     }
 
     try {
-      const { cypher, outputVariable } = compileBlock(block, currentVariable, isFirst, variableCounter);
+      const { cypher, outputVariable, pathVariable } = compileBlock(block, currentVariable, isFirst, variableCounter);
       cypherParts.push(cypher);
+
+      // Track variables to return
+      if (isFirst && outputVariable) {
+        returnVariables.push(outputVariable);
+      }
+      if (pathVariable) {
+        returnVariables.push(pathVariable);
+      }
+
       currentVariable = outputVariable;
       variableCounter++;
     } catch (error: any) {
@@ -122,8 +125,13 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
     }
   }
 
-  // Add final RETURN statement
-  cypherParts.push(`RETURN DISTINCT ${currentVariable}`);
+  // Add final RETURN statement with all tracked variables
+  // This ensures we get both nodes and relationships (via paths)
+  const uniqueVars = [...new Set(returnVariables)];
+  if (uniqueVars.length === 0) {
+    uniqueVars.push(currentVariable);
+  }
+  cypherParts.push(`RETURN DISTINCT ${uniqueVars.join(', ')}`);
 
   // Add LIMIT after RETURN if present
   if (limitValue !== null) {
@@ -141,14 +149,14 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
 
 /**
  * Compile a single block to openCypher
- * Returns the cypher clause and the output variable name
+ * Returns the cypher clause, output variable name, and optional path variable
  */
 function compileBlock(
   node: Node<BlockData>,
   inputVariable: string,
   isFirst: boolean,
   counter: number
-): { cypher: string; outputVariable: string } {
+): { cypher: string; outputVariable: string; pathVariable?: string } {
   const { type, params } = node.data;
 
   switch (type) {
@@ -267,8 +275,8 @@ function compileNeighborhoodBlock(
 
   const cypher = `MATCH ${pattern}`;
 
-  // Return the path variable to get both nodes and relationships
-  return { cypher, outputVariable: pathVar };
+  // Return both the neighbor node (for chaining) and path (for relationships)
+  return { cypher, outputVariable: outputVar, pathVariable: pathVar };
 }
 
 function compilePathToBlock(
