@@ -97,17 +97,7 @@ const AppContent: React.FC = () => {
     loadVocabulary();
   }, []); // Run once on mount
 
-  // Resizable SearchBar state
-  const BLOCK_BUILDER_MIN_HEIGHT = 500; // Minimum for block builder to show all components
-  const [searchBarHeight, setSearchBarHeight] = useState(300); // Default 300px
-  const [isDraggingSearchBar, setIsDraggingSearchBar] = useState(false);
-
-  // Watch queryMode - ensure adequate height when switching to block-builder
-  useEffect(() => {
-    if (queryMode === 'block-builder' && searchBarHeight < BLOCK_BUILDER_MIN_HEIGHT) {
-      setSearchBarHeight(BLOCK_BUILDER_MIN_HEIGHT);
-    }
-  }, [queryMode, searchBarHeight, BLOCK_BUILDER_MIN_HEIGHT]);
+  // No resize state needed - BlockBuilder sizes itself naturally
 
   // React to searchParams - fetch data based on mode
   // Concept mode: load single concept with neighbors
@@ -311,41 +301,6 @@ const AppContent: React.FC = () => {
   const ExplorerComponent = explorerPlugin.component;
   const SettingsPanelComponent = explorerPlugin.settingsPanel;
 
-  // Resize handlers for SearchBar
-  const handleSearchBarMouseDown = React.useCallback(() => {
-    setIsDraggingSearchBar(true);
-  }, []);
-
-  const handleSearchBarMouseMove = React.useCallback((e: MouseEvent) => {
-    if (!isDraggingSearchBar) return;
-
-    const newHeight = e.clientY - 60; // 60px is AppLayout header height
-
-    // Minimum visible height (just showing header)
-    const minVisibleHeight = 60;
-    // Maximum height
-    const maxHeight = 800;
-
-    // Constrain between minimum visible and maximum
-    const constrainedHeight = Math.max(minVisibleHeight, Math.min(maxHeight, newHeight));
-    setSearchBarHeight(constrainedHeight);
-  }, [isDraggingSearchBar]);
-
-  const handleSearchBarMouseUp = React.useCallback(() => {
-    setIsDraggingSearchBar(false);
-  }, []);
-
-  // Attach global mouse listeners when dragging
-  useEffect(() => {
-    if (isDraggingSearchBar) {
-      document.addEventListener('mousemove', handleSearchBarMouseMove);
-      document.addEventListener('mouseup', handleSearchBarMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleSearchBarMouseMove);
-        document.removeEventListener('mouseup', handleSearchBarMouseUp);
-      };
-    }
-  }, [isDraggingSearchBar, handleSearchBarMouseMove, handleSearchBarMouseUp]);
 
   // Stable callback for node clicks to prevent simulation restarts
   const handleNodeClick = useCallback((nodeId: string) => {
@@ -363,40 +318,15 @@ const AppContent: React.FC = () => {
   return (
     <AppLayout>
       <div className="h-full flex flex-col">
-        {/* Search Bar */}
+        {/* Search Bar / Query Interface */}
         <div
-          className="border-b border-border bg-card relative"
-          style={{
-            height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto',
-            overflow: queryMode === 'block-builder' ? 'hidden' : 'visible',
-            zIndex: getZIndexValue('searchBar'),
-          }}
+          className="border-b border-border bg-card"
+          style={{ zIndex: getZIndexValue('searchBar') }}
         >
-          <div
-            className="p-4 h-full"
-            style={{
-              // When searchBarHeight < content minimum, slide content down (block-builder only)
-              transform: queryMode === 'block-builder' && searchBarHeight < BLOCK_BUILDER_MIN_HEIGHT
-                ? `translateY(${searchBarHeight - BLOCK_BUILDER_MIN_HEIGHT}px)`
-                : 'translateY(0)',
-              transition: isDraggingSearchBar ? 'none' : 'transform 0.2s ease-out',
-              minHeight: queryMode === 'block-builder' ? `${BLOCK_BUILDER_MIN_HEIGHT}px` : 'auto',
-              overflow: queryMode === 'block-builder' ? 'auto' : 'visible',
-            }}
-          >
+          <div className="p-4">
             <SearchBar />
           </div>
         </div>
-
-        {/* Draggable Divider - Only in block-builder mode when expanded */}
-        {queryMode === 'block-builder' && blockBuilderExpanded && (
-          <div
-            onMouseDown={handleSearchBarMouseDown}
-            className="h-1 bg-gray-300 hover:bg-blue-500 cursor-ns-resize transition-colors flex items-center justify-center group"
-          >
-            <div className="w-16 h-0.5 bg-gray-400 group-hover:bg-blue-600 rounded-full" />
-          </div>
-        )}
 
         {/* Visualization Area */}
         <div

@@ -18,15 +18,23 @@ import 'reactflow/dist/style.css';
 
 import { Code, Play, Trash2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { BlockPalette } from './BlockPalette';
+import { StartBlock } from './StartBlock';
+import { EndBlock } from './EndBlock';
 import { SearchBlock } from './SearchBlock';
 import { NeighborhoodBlock } from './NeighborhoodBlock';
-import { FilterBlock } from './FilterBlock';
+import { OntologyFilterBlock } from './OntologyFilterBlock';
+import { EdgeFilterBlock } from './EdgeFilterBlock';
+import { NodeFilterBlock } from './NodeFilterBlock';
+import { AndBlock } from './AndBlock';
+import { OrBlock } from './OrBlock';
+import { NotBlock } from './NotBlock';
 import { LimitBlock } from './LimitBlock';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
+import { useThemeStore } from '../../store/themeStore';
 
-import type { BlockType, BlockData, SearchBlockParams, NeighborhoodBlockParams, FilterBlockParams, LimitBlockParams } from '../../types/blocks';
+import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams } from '../../types/blocks';
 
 interface BlockBuilderProps {
   onSendToEditor?: (cypher: string) => void;
@@ -45,12 +53,22 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const [isDragging, setIsDragging] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  // Get theme for MiniMap styling
+  const { theme } = useThemeStore();
+
   // Register custom node types
   const nodeTypes: NodeTypes = useMemo(
     () => ({
+      start: StartBlock,
+      end: EndBlock,
       search: SearchBlock,
       neighborhood: NeighborhoodBlock,
-      filter: FilterBlock,
+      filterOntology: OntologyFilterBlock,
+      filterEdge: EdgeFilterBlock,
+      filterNode: NodeFilterBlock,
+      and: AndBlock,
+      or: OrBlock,
+      not: NotBlock,
       limit: LimitBlock,
     }),
     []
@@ -65,6 +83,14 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     let label: string;
 
     switch (type) {
+      case 'start':
+        params = {} as StartBlockParams;
+        label = 'Start';
+        break;
+      case 'end':
+        params = {} as EndBlockParams;
+        label = 'End';
+        break;
       case 'search':
         params = { query: '', similarity: 0.6 } as SearchBlockParams;
         label = 'Search Concepts';
@@ -73,9 +99,29 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         params = { depth: 2, direction: 'both' } as NeighborhoodBlockParams;
         label = 'Expand Neighborhood';
         break;
-      case 'filter':
-        params = { ontologies: [], minConfidence: 0 } as FilterBlockParams;
-        label = 'Filter Results';
+      case 'filterOntology':
+        params = { ontologies: [] } as OntologyFilterBlockParams;
+        label = 'Filter by Ontology';
+        break;
+      case 'filterEdge':
+        params = { relationshipTypes: [] } as EdgeFilterBlockParams;
+        label = 'Filter by Edge';
+        break;
+      case 'filterNode':
+        params = { nodeLabels: [], minConfidence: 0 } as NodeFilterBlockParams;
+        label = 'Filter by Node';
+        break;
+      case 'and':
+        params = {} as AndBlockParams;
+        label = 'AND Gate';
+        break;
+      case 'or':
+        params = {} as OrBlockParams;
+        label = 'OR Gate';
+        break;
+      case 'not':
+        params = {} as NotBlockParams;
+        label = 'NOT Gate';
         break;
       case 'limit':
         params = { count: 10 } as LimitBlockParams;
@@ -214,24 +260,24 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const currentPanelHeight = isCollapsed ? 0 : bottomPanelHeight;
 
   return (
-    <div className="flex h-full">
+    <div className="flex">
       {/* Block Palette */}
       <BlockPalette onAddBlock={handleAddBlock} />
 
       {/* Main Canvas Area */}
       <div className="flex-1 flex flex-col block-builder-container">
         {/* Top Toolbar */}
-        <div className="h-14 bg-white border-b border-gray-200 px-4 flex items-center justify-between">
+        <div className="h-14 bg-card dark:bg-gray-800 border-b border-border dark:border-gray-700 px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h3 className="font-semibold text-gray-700">Visual Query Builder</h3>
-            <span className="text-xs text-gray-500">{nodes.length} blocks</span>
+            <h3 className="font-semibold text-card-foreground dark:text-gray-100">Visual Query Builder</h3>
+            <span className="text-xs text-muted-foreground dark:text-gray-400">{nodes.length} blocks</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleClear}
               disabled={nodes.length === 0}
-              className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-3 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Trash2 className="w-4 h-4" />
               Clear
@@ -240,7 +286,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             <button
               onClick={handleSendToEditor}
               disabled={!compiledCypher || hasErrors}
-              className="px-3 py-1.5 text-sm text-blue-700 bg-blue-50 border border-blue-300 rounded hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-3 py-1.5 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Code className="w-4 h-4" />
               Send to Editor
@@ -249,7 +295,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             <button
               onClick={handleExecute}
               disabled={!canExecute}
-              className="px-3 py-1.5 text-sm text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-3 py-1.5 text-sm text-white bg-green-600 dark:bg-green-700 rounded hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Play className="w-4 h-4" />
               {isExecuting ? 'Executing...' : 'Execute Query'}
@@ -257,11 +303,8 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
           </div>
         </div>
 
-        {/* React Flow Canvas */}
-        <div
-          className="bg-gray-50"
-          style={{ height: `calc(100% - 56px - ${currentPanelHeight}px${currentPanelHeight > 0 ? ' - 4px' : ''})` }}
-        >
+        {/* React Flow Canvas - grows to fill available space */}
+        <div className="flex-1 bg-muted dark:bg-gray-900 min-h-0">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -273,9 +316,16 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             minZoom={0.5}
             maxZoom={1.5}
           >
-            <Background />
-            <Controls />
-            <MiniMap />
+            <Background className="dark:bg-gray-800" />
+            <Controls className="dark:bg-gray-800 dark:border-gray-600" />
+            <MiniMap
+              className="dark:bg-gray-800 dark:border-gray-600"
+              maskColor={theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.1)'}
+              nodeColor={() => theme === 'dark' ? '#374151' : '#e2e8f0'}
+              style={{
+                backgroundColor: theme === 'dark' ? 'rgb(31, 41, 55)' : 'rgb(249, 250, 251)',
+              }}
+            />
           </ReactFlow>
         </div>
 
@@ -283,35 +333,35 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         {!isCollapsed && (
           <div
             onMouseDown={handleMouseDown}
-            className="h-1 bg-gray-300 hover:bg-blue-500 cursor-ns-resize transition-colors flex items-center justify-center group"
+            className="h-1 bg-border dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-400 cursor-ns-resize transition-colors flex items-center justify-center group"
           >
-            <div className="w-16 h-0.5 bg-gray-400 group-hover:bg-blue-600 rounded-full" />
+            <div className="w-16 h-0.5 bg-muted-foreground dark:bg-gray-500 group-hover:bg-blue-600 dark:group-hover:bg-blue-400 rounded-full" />
           </div>
         )}
 
         {/* Bottom Panel - openCypher Preview */}
         <div
-          className="bg-gray-900 text-gray-100 p-4 overflow-auto border-t border-gray-700"
+          className="bg-gray-900 dark:bg-black text-gray-100 dark:text-gray-200 p-4 overflow-auto border-t border-border dark:border-gray-700"
           style={{ height: `${currentPanelHeight}px` }}
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleCollapse}
-                className="hover:bg-gray-800 p-1 rounded transition-colors"
+                className="hover:bg-gray-800 dark:hover:bg-gray-900 p-1 rounded transition-colors"
                 title={isCollapsed ? "Expand panel" : "Collapse panel"}
               >
                 {isCollapsed ? (
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 ) : (
-                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                  <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 )}
               </button>
-              <Code className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-300">Generated openCypher</span>
+              <Code className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <span className="text-sm font-medium text-gray-300 dark:text-gray-400">Generated openCypher</span>
             </div>
             {hasErrors && (
-              <div className="flex items-center gap-1 text-red-400 text-xs">
+              <div className="flex items-center gap-1 text-red-400 dark:text-red-500 text-xs">
                 <AlertCircle className="w-3 h-3" />
                 {compileErrors.length} error{compileErrors.length > 1 ? 's' : ''}
               </div>
@@ -321,22 +371,22 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
           {hasErrors ? (
             <div className="space-y-2">
               {compileErrors.map((error, i) => (
-                <div key={i} className="flex items-start gap-2 text-red-400 text-sm">
+                <div key={i} className="flex items-start gap-2 text-red-400 dark:text-red-500 text-sm">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
               ))}
             </div>
           ) : compiledCypher ? (
-            <pre className="font-mono text-sm text-green-400">{compiledCypher}</pre>
+            <pre className="font-mono text-sm text-green-400 dark:text-green-500">{compiledCypher}</pre>
           ) : (
-            <div className="text-gray-500 text-sm italic">
+            <div className="text-gray-500 dark:text-gray-600 text-sm italic">
               Add blocks from the palette to build your query
             </div>
           )}
 
           {executionError && (
-            <div className="mt-3 p-3 bg-red-900/20 border border-red-700 rounded text-red-300 text-sm">
+            <div className="mt-3 p-3 bg-red-900/20 dark:bg-red-900/30 border border-red-700 dark:border-red-800 rounded text-red-300 dark:text-red-400 text-sm">
               {executionError}
             </div>
           )}

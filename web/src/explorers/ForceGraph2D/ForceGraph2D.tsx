@@ -10,7 +10,7 @@ import * as d3 from 'd3';
 import type { ExplorerProps } from '../../types/explorer';
 import type { D3Node, D3Link } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
-import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
+import { getNeighbors, transformForD3, filterByEdgeCategory } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
@@ -131,6 +131,14 @@ export const ForceGraph2D: React.FC<
 
   // Get current theme for label colors
   const { theme } = useThemeStore();
+
+  // Get edge category filters from store
+  const { filters } = useGraphStore();
+
+  // Apply edge category filter to data
+  const filteredData = useMemo(() => {
+    return filterByEdgeCategory(data, filters.visibleEdgeCategories);
+  }, [data, filters.visibleEdgeCategories]);
 
   // Track zoom transform for info box positioning
   const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -265,14 +273,14 @@ export const ForceGraph2D: React.FC<
   // Calculate neighbors for highlighting (hover)
   const neighbors = useMemo(() => {
     if (!hoveredNode || !settings.interaction.highlightNeighbors) return new Set<string>();
-    return getNeighbors(hoveredNode, data.links);
-  }, [hoveredNode, data.links, settings.interaction.highlightNeighbors]);
+    return getNeighbors(hoveredNode, filteredData.links);
+  }, [hoveredNode, filteredData.links, settings.interaction.highlightNeighbors]);
 
   // Calculate neighbors for focus mode (stronger highlight)
   const focusNeighbors = useMemo(() => {
     if (!focusedNode || !settings.interaction.highlightNeighbors) return new Set<string>();
-    return getNeighbors(focusedNode, data.links);
-  }, [focusedNode, data.links, settings.interaction.highlightNeighbors]);
+    return getNeighbors(focusedNode, filteredData.links);
+  }, [focusedNode, filteredData.links, settings.interaction.highlightNeighbors]);
 
   // Calculate node colors based on nodeColorBy setting
   const nodeColors = useMemo(() => {
@@ -280,13 +288,13 @@ export const ForceGraph2D: React.FC<
 
     if (settings.visual.nodeColorBy === 'ontology') {
       // Color by ontology (default behavior from transformForD3)
-      data.nodes.forEach(node => {
+      filteredData.nodes.forEach(node => {
         colors.set(node.id, node.color);
       });
     } else if (settings.visual.nodeColorBy === 'degree') {
       // Color by degree (number of connections)
       const degrees = new Map<string, number>();
-      data.links.forEach(link => {
+      filteredData.links.forEach(link => {
         const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
         const targetId = typeof link.target === 'string' ? link.target : link.target.id;
         degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
@@ -296,7 +304,7 @@ export const ForceGraph2D: React.FC<
       const maxDegree = Math.max(...Array.from(degrees.values()), 1);
       const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, maxDegree]);
 
-      data.nodes.forEach(node => {
+      filteredData.nodes.forEach(node => {
         const degree = degrees.get(node.id) || 0;
         colors.set(node.id, colorScale(degree));
       });
@@ -320,7 +328,7 @@ export const ForceGraph2D: React.FC<
     }
 
     return colors;
-  }, [data.nodes, data.links, settings.visual.nodeColorBy]);
+  }, [filteredData.nodes, data.links, settings.visual.nodeColorBy]);
 
   // Calculate edge colors based on edgeColorBy setting
   const linkColors = useMemo(() => {
@@ -364,7 +372,7 @@ export const ForceGraph2D: React.FC<
     }
 
     return colors;
-  }, [data.links, settings.visual.edgeColorBy]);
+  }, [filteredData.links, settings.visual.edgeColorBy]);
 
   // Calculate curve offsets for multiple edges between same nodes
   // This ensures edges don't overlap and their labels are visible
@@ -520,15 +528,15 @@ export const ForceGraph2D: React.FC<
     }
 
     // Check if nodes already have positions (from merge/previous simulation)
-    const hasExistingPositions = data.nodes.some(n => n.x !== undefined && n.y !== undefined);
+    const hasExistingPositions = filteredData.nodes.some(n => n.x !== undefined && n.y !== undefined);
 
     // Create force simulation
     const simulation = d3
-      .forceSimulation<D3Node>(data.nodes)
+      .forceSimulation<D3Node>(filteredData.nodes)
       .force(
         'link',
         d3
-          .forceLink<D3Node, D3Link>(data.links)
+          .forceLink<D3Node, D3Link>(filteredData.links)
           .id((d) => d.id)
           .distance(settings.physics.linkDistance)
       )
@@ -556,7 +564,7 @@ export const ForceGraph2D: React.FC<
     // Draw links as paths (supports curves for multiple edges)
     const link = linksGroup
       .selectAll<SVGPathElement, D3Link>('path')
-      .data(data.links)
+      .data(filteredData.links)
       .join('path')
       .attr('stroke', (d) => {
         const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
@@ -705,7 +713,7 @@ export const ForceGraph2D: React.FC<
     // Add edge labels showing relationship types
     const edgeLabels = linksGroup
       .selectAll<SVGTextElement, D3Link>('text')
-      .data(data.links)
+      .data(filteredData.links)
       .join('text')
       .text((d) => d.type)
       .attr('font-family', LABEL_FONTS.family)
@@ -788,7 +796,7 @@ export const ForceGraph2D: React.FC<
     // Draw nodes (AFTER highlights so they're on top and receive events)
     const node = nodesGroup
       .selectAll<SVGCircleElement, D3Node>('circle')
-      .data(data.nodes)
+      .data(filteredData.nodes)
       .join('circle')
       .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
       .attr('fill', (d) => nodeColors.get(d.id) || d.color)
@@ -853,7 +861,7 @@ export const ForceGraph2D: React.FC<
     if (settings.visual.showLabels) {
       labels = nodesGroup
         .selectAll<SVGTextElement, D3Node>('text')
-        .data(data.nodes)
+        .data(filteredData.nodes)
         .join('text')
         .text((d) => d.label)
         .attr('font-family', LABEL_FONTS.family)
@@ -1196,7 +1204,7 @@ export const ForceGraph2D: React.FC<
     return () => {
       simulation.stop();
     };
-  }, [data, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets, theme]);
+  }, [filteredData, settings, dimensions, onNodeClick, nodeColors, linkColors, linkCurveOffsets, theme]);
 
   // Helper function to render grid in graph coordinates
   const renderGrid = useCallback(() => {
@@ -1546,7 +1554,7 @@ export const ForceGraph2D: React.FC<
         simulationRef.current.alpha(0.1).restart();
       }
     }
-  }, [data.nodes, settings.physics.enabled]);
+  }, [filteredData.nodes, settings.physics.enabled]);
 
   const unpinAllNodes = useCallback(() => {
     if (!svgRef.current) return;
@@ -1721,12 +1729,12 @@ export const ForceGraph2D: React.FC<
 
       {/* Left-side panel stack */}
       <PanelStack side="left" gap={16} initialTop={16}>
-        <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+        <Legend data={filteredData} nodeColorMode={settings.visual.nodeColorBy} />
       </PanelStack>
 
       {/* Right-side panel stack */}
       <PanelStack side="right" gap={16} initialTop={16}>
-        <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
+        <StatsPanel nodeCount={filteredData.nodes.length} edgeCount={filteredData.links.length} />
 
         {onSettingsChange && (
           <GraphSettingsPanel

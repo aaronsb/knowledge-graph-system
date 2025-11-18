@@ -14,7 +14,7 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DSettings, ForceGraph3DData } from './types';
-import { getNeighbors, transformForD3 } from '../../utils/graphTransform';
+import { getNeighbors, transformForD3, filterByEdgeCategory } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
 import { useVocabularyStore } from '../../store/vocabularyStore';
 import { useThemeStore } from '../../store/themeStore';
@@ -51,6 +51,14 @@ export const ForceGraph3D: React.FC<
 
   // Get current theme for label colors
   const { theme } = useThemeStore();
+
+  // Get edge category filters from store
+  const { filters } = useGraphStore();
+
+  // Apply edge category filter to data
+  const filteredData = useMemo(() => {
+    return filterByEdgeCategory(data, filters.visibleEdgeCategories);
+  }, [data, filters.visibleEdgeCategories]);
 
   // Texture cache for edge labels - reuse textures across sprites for memory efficiency
   const edgeLabelTextureCache = useRef<Map<string, THREE.CanvasTexture>>(new Map());
@@ -1337,7 +1345,7 @@ export const ForceGraph3D: React.FC<
         ref={fgRef}
         width={dimensions.width}
         height={dimensions.height}
-        graphData={data}
+        graphData={filteredData}
         backgroundColor={explorerTheme.canvas3D[theme]}
 
         // Node appearance
@@ -1917,12 +1925,12 @@ export const ForceGraph3D: React.FC<
 
       {/* Left-side panel stack */}
       <PanelStack side="left" gap={16} initialTop={16}>
-        <Legend data={data} nodeColorMode={settings.visual.nodeColorBy} />
+        <Legend data={filteredData} nodeColorMode={settings.visual.nodeColorBy} />
       </PanelStack>
 
       {/* Right-side panel stack */}
       <PanelStack side="right" gap={16} initialTop={16}>
-        <StatsPanel nodeCount={data.nodes.length} edgeCount={data.links.length} />
+        <StatsPanel nodeCount={filteredData.nodes.length} edgeCount={filteredData.links.length} />
 
         {onSettingsChange && (
           <GraphSettingsPanel

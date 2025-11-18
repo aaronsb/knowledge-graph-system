@@ -7,11 +7,18 @@
 import type { Node, Edge } from 'reactflow';
 import type {
   BlockData,
+  StartBlockParams,
+  EndBlockParams,
   SearchBlockParams,
   SelectConceptBlockParams,
   NeighborhoodBlockParams,
   PathToBlockParams,
-  FilterBlockParams,
+  OntologyFilterBlockParams,
+  EdgeFilterBlockParams,
+  NodeFilterBlockParams,
+  AndBlockParams,
+  OrBlockParams,
+  NotBlockParams,
   LimitBlockParams,
   CompiledQuery,
 } from '../types/blocks';
@@ -29,27 +36,34 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
     return { cypher: '', errors, warnings };
   }
 
-  // Find the starting block (no incoming edges)
-  const startingNodes = nodes.filter(node => {
-    return !edges.some(edge => edge.target === node.id);
-  });
+  // Find explicit Start blocks
+  const startBlocks = nodes.filter(node => node.data.type === 'start');
 
-  if (startingNodes.length === 0) {
-    errors.push('No starting block found (every block has an input)');
+  if (startBlocks.length === 0) {
+    errors.push('No Start block found - add a Start block to begin your query');
     return { cypher: '', errors, warnings };
   }
 
-  if (startingNodes.length > 1) {
-    errors.push('Multiple starting blocks found - only one starting block is allowed');
+  if (startBlocks.length > 1) {
+    errors.push('Multiple Start blocks found - only one Start block is allowed');
     return { cypher: '', errors, warnings };
   }
 
-  // Build execution chain by following edges
+  // Find explicit End blocks
+  const endBlocks = nodes.filter(node => node.data.type === 'end');
+  if (endBlocks.length === 0) {
+    warnings.push('No End block found - consider adding an End block to mark query completion');
+  }
+
+  // Build execution chain by following edges from Start block
   const executionChain: Node<BlockData>[] = [];
-  let currentNode = startingNodes[0];
+  let currentNode = startBlocks[0];
 
   while (currentNode) {
-    executionChain.push(currentNode);
+    // Add to execution chain (skip Start/End blocks - they're flow markers only)
+    if (currentNode.data.type !== 'start' && currentNode.data.type !== 'end') {
+      executionChain.push(currentNode);
+    }
 
     // Find next node
     const outgoingEdge = edges.find(edge => edge.source === currentNode.id);
@@ -129,6 +143,11 @@ function compileBlock(
   const { type, params } = node.data;
 
   switch (type) {
+    case 'start':
+    case 'end':
+      // Flow control blocks - no Cypher generation
+      return { cypher: '', outputVariable: inputVariable };
+
     case 'search':
       return compileSearchBlock(params as SearchBlockParams, isFirst, counter);
 
@@ -141,8 +160,21 @@ function compileBlock(
     case 'pathTo':
       return compilePathToBlock(params as PathToBlockParams, inputVariable, counter);
 
-    case 'filter':
-      return compileFilterBlock(params as FilterBlockParams, inputVariable);
+    case 'filterOntology':
+      return compileOntologyFilterBlock(params as OntologyFilterBlockParams, inputVariable);
+
+    case 'filterEdge':
+      return compileEdgeFilterBlock(params as EdgeFilterBlockParams, inputVariable);
+
+    case 'filterNode':
+      return compileNodeFilterBlock(params as NodeFilterBlockParams, inputVariable);
+
+    case 'and':
+    case 'or':
+    case 'not':
+      // Boolean logic blocks - not yet fully implemented
+      // For now, pass through the input variable
+      return { cypher: `// ${type.toUpperCase()} gate (not yet implemented in compiler)`, outputVariable: inputVariable };
 
     case 'limit':
       return compileLimitBlock(params as LimitBlockParams);
@@ -256,27 +288,61 @@ function compilePathToBlock(
   return { cypher, outputVariable: pathVar };
 }
 
-function compileFilterBlock(params: FilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
-  const conditions: string[] = [];
-
-  if (params.ontologies && params.ontologies.length > 0) {
-    const ontologyList = params.ontologies.map(o => `'${escapeString(o)}'`).join(', ');
-    conditions.push(`${inputVariable}.ontology IN [${ontologyList}]`);
+function compileOntologyFilterBlock(params: OntologyFilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  if (!params.ontologies || params.ontologies.length === 0) {
+    throw new Error('Ontology filter block has no ontologies specified');
   }
 
-  // Note: Relationship type filtering is better done in neighborhood blocks
-  // but we can add it here too if needed
+  const conditions = params.ontologies.map(ont => {
+    // Check if it looks like a regex pattern
+    if (/[.*+?^${}()|[\]\\]/.test(ont)) {
+      return `${inputVariable}.ontology =~ '${escapeString(ont)}'`;
+    } else {
+      return `${inputVariable}.ontology = '${escapeString(ont)}'`;
+    }
+  });
+
+  const cypher = `WHERE ${conditions.join(' OR ')}`;
+  return { cypher, outputVariable: inputVariable };
+}
+
+function compileEdgeFilterBlock(params: EdgeFilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  if (!params.relationshipTypes || params.relationshipTypes.length === 0) {
+    throw new Error('Edge filter block has no relationship types specified');
+  }
+
+  // Note: Edge filtering is complex in openCypher because we need to reference
+  // relationships from a previous MATCH. This works best when used with neighborhood blocks.
+  // For now, we'll generate a comment indicating this limitation.
+  const cypher = `// Edge filter (relationship types: ${params.relationshipTypes.join(', ')}) - best used with Neighborhood block`;
+
+  return { cypher, outputVariable: inputVariable };
+}
+
+function compileNodeFilterBlock(params: NodeFilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  const conditions: string[] = [];
+
+  if (params.nodeLabels && params.nodeLabels.length > 0) {
+    const labelConditions = params.nodeLabels.map(label => {
+      // Check if it looks like a regex pattern
+      if (/[.*+?^${}()|[\]\\]/.test(label)) {
+        return `${inputVariable}.label =~ '${escapeString(label)}'`;
+      } else {
+        return `${inputVariable}.label = '${escapeString(label)}'`;
+      }
+    });
+    conditions.push(`(${labelConditions.join(' OR ')})`);
+  }
 
   if (params.minConfidence !== undefined && params.minConfidence > 0) {
     conditions.push(`${inputVariable}.confidence >= ${params.minConfidence}`);
   }
 
   if (conditions.length === 0) {
-    throw new Error('Filter block has no conditions');
+    throw new Error('Node filter block has no conditions specified');
   }
 
   const cypher = `WHERE ${conditions.join(' AND ')}`;
-
   return { cypher, outputVariable: inputVariable };
 }
 

@@ -10,7 +10,20 @@ import type { Node } from 'reactflow';
 // Block Types
 // ============================================================================
 
-export type BlockType = 'search' | 'selectConcept' | 'neighborhood' | 'pathTo' | 'filter' | 'limit';
+export type BlockType =
+  | 'start'
+  | 'end'
+  | 'search'
+  | 'selectConcept'
+  | 'neighborhood'
+  | 'pathTo'
+  | 'filterOntology'
+  | 'filterEdge'
+  | 'filterNode'
+  | 'and'
+  | 'or'
+  | 'not'
+  | 'limit';
 
 // ============================================================================
 // Block Parameters
@@ -48,14 +61,41 @@ export interface PathToBlockParams {
   maxHops: number; // 1-10
 }
 
-export interface FilterBlockParams {
+export interface OntologyFilterBlockParams {
   ontologies?: string[];
+}
+
+export interface EdgeFilterBlockParams {
   relationshipTypes?: string[];
+}
+
+export interface NodeFilterBlockParams {
+  nodeLabels?: string[];
   minConfidence?: number; // 0.0 - 1.0
 }
 
 export interface LimitBlockParams {
   count: number;
+}
+
+export interface StartBlockParams {
+  // No parameters needed for start block
+}
+
+export interface EndBlockParams {
+  // No parameters needed for end block
+}
+
+export interface AndBlockParams {
+  // Automatically accepts multiple connections - no manual configuration needed
+}
+
+export interface OrBlockParams {
+  // Automatically accepts multiple connections - no manual configuration needed
+}
+
+export interface NotBlockParams {
+  // No parameters needed - single input, single output
 }
 
 // ============================================================================
@@ -65,7 +105,20 @@ export interface LimitBlockParams {
 export interface BlockData {
   type: BlockType;
   label: string;
-  params: SearchBlockParams | SelectConceptBlockParams | NeighborhoodBlockParams | PathToBlockParams | FilterBlockParams | LimitBlockParams;
+  params:
+    | StartBlockParams
+    | EndBlockParams
+    | SearchBlockParams
+    | SelectConceptBlockParams
+    | NeighborhoodBlockParams
+    | PathToBlockParams
+    | OntologyFilterBlockParams
+    | EdgeFilterBlockParams
+    | NodeFilterBlockParams
+    | AndBlockParams
+    | OrBlockParams
+    | NotBlockParams
+    | LimitBlockParams;
 }
 
 // ============================================================================
