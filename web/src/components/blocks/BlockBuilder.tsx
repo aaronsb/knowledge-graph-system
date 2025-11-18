@@ -33,6 +33,7 @@ import { NotBlock } from './NotBlock';
 import { LimitBlock } from './LimitBlock';
 import { EnrichBlock } from './EnrichBlock';
 import { VectorSearchBlock } from './VectorSearchBlock';
+import { BlockHelpPopup } from './BlockHelpPopup';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
@@ -63,6 +64,12 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     type: 'node' | 'edge';
     top: number;
     left: number;
+  } | null>(null);
+
+  // Help popup state
+  const [helpPopup, setHelpPopup] = useState<{
+    blockType: BlockType;
+    position: { x: number; y: number };
   } | null>(null);
 
   // Get theme for MiniMap styling
@@ -239,6 +246,24 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null);
   }, []);
+
+  // Show help for a node
+  const handleHelp = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (!node) return;
+
+      // Position popup near where the context menu was
+      setHelpPopup({
+        blockType: node.data.type,
+        position: {
+          x: contextMenu?.left || 200,
+          y: contextMenu?.top || 200,
+        },
+      });
+    },
+    [nodes, contextMenu]
+  );
 
   // Compile blocks to openCypher whenever nodes or edges change
   React.useEffect(() => {
@@ -605,7 +630,17 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
           left={contextMenu.left}
           onDelete={handleDelete}
           onDuplicate={contextMenu.type === 'node' ? handleDuplicateNode : undefined}
+          onHelp={contextMenu.type === 'node' ? handleHelp : undefined}
           onClose={handleCloseContextMenu}
+        />
+      )}
+
+      {/* Help Popup */}
+      {helpPopup && (
+        <BlockHelpPopup
+          blockType={helpPopup.blockType}
+          position={helpPopup.position}
+          onClose={() => setHelpPopup(null)}
         />
       )}
     </div>
