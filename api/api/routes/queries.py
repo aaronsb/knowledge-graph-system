@@ -1182,10 +1182,13 @@ async def execute_cypher_query(
                     if 'id' in value:
                         node_id = str(value['id'])
                         if node_id not in nodes_map:
+                            # Prefer properties.label (actual name) over AGE label (node type like "Concept")
+                            props = value.get('properties', {})
+                            node_label = props.get('label') or value.get('label', node_id)
                             nodes_map[node_id] = CypherNode(
                                 id=node_id,
-                                label=value.get('label', value.get('properties', {}).get('label', node_id)),
-                                properties=value.get('properties', {})
+                                label=node_label,
+                                properties=props
                             )
 
                 elif isinstance(value, (list, tuple)):
@@ -1206,10 +1209,13 @@ async def execute_cypher_query(
                             elif 'id' in item:  # Node
                                 node_id = str(item['id'])
                                 if node_id not in nodes_map:
+                                    # Prefer properties.label (actual name) over AGE label (node type)
+                                    props = item.get('properties', {})
+                                    node_label = props.get('label') or item.get('label', node_id)
                                     nodes_map[node_id] = CypherNode(
                                         id=node_id,
-                                        label=item.get('label', item.get('properties', {}).get('label', node_id)),
-                                        properties=item.get('properties', {})
+                                        label=node_label,
+                                        properties=props
                                     )
 
         logger.info(f"Query returned {len(nodes_map)} nodes, {len(relationships)} relationships in {execution_time:.2f}ms")
