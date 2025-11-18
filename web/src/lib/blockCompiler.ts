@@ -90,6 +90,15 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
   let variableCounter = 0;
   let currentVariable = 'start';
   let limitValue: number | null = null;
+  let hasNeighborhoodBlock = false;
+
+  // Check if we have a neighborhood block
+  for (const block of executionChain) {
+    if (block.data.type === 'neighborhood') {
+      hasNeighborhoodBlock = true;
+      break;
+    }
+  }
 
   for (let i = 0; i < executionChain.length; i++) {
     const block = executionChain[i];
@@ -196,9 +205,9 @@ function compileSearchBlock(params: SearchBlockParams, _isFirst: boolean, counte
   // Note: This generates a pattern match, but doesn't actually do semantic search
   // The semantic search would need to happen via the search endpoint first,
   // then we'd use the returned concept IDs here
-  // For now, we do a simple CONTAINS match
+  // For now, we do a case-insensitive CONTAINS match
   const outputVar = `c${counter}`;
-  const cypher = `MATCH (${outputVar}:Concept)\nWHERE ${outputVar}.label CONTAINS '${escapeString(params.query)}'`;
+  const cypher = `MATCH (${outputVar}:Concept)\nWHERE toLower(${outputVar}.label) CONTAINS toLower('${escapeString(params.query)}')`;
 
   return { cypher, outputVariable: outputVar };
 }
@@ -225,6 +234,7 @@ function compileNeighborhoodBlock(
   }
 
   const outputVar = `neighbor${counter}`;
+  const pathVar = `p${counter}`;
 
   // ADR-065: Build relationship type filter
   // Priority: explicit relationshipTypes > epistemic filtering > all types
@@ -245,18 +255,20 @@ function compileNeighborhoodBlock(
     ? `:${relTypes.join('|')}`
     : '';
 
+  // Use path pattern to capture both nodes and relationships
   let pattern: string;
   if (params.direction === 'outgoing') {
-    pattern = `(${inputVariable})-[${relFilter}*1..${params.depth}]->(${outputVar}:Concept)`;
+    pattern = `${pathVar} = (${inputVariable})-[${relFilter}*1..${params.depth}]->(${outputVar}:Concept)`;
   } else if (params.direction === 'incoming') {
-    pattern = `(${inputVariable})<-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
+    pattern = `${pathVar} = (${inputVariable})<-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
   } else {
-    pattern = `(${inputVariable})-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
+    pattern = `${pathVar} = (${inputVariable})-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
   }
 
   const cypher = `MATCH ${pattern}`;
 
-  return { cypher, outputVariable: outputVar };
+  // Return the path variable to get both nodes and relationships
+  return { cypher, outputVariable: pathVar };
 }
 
 function compilePathToBlock(

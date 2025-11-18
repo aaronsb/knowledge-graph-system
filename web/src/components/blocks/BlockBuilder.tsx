@@ -259,16 +259,25 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       // Transform to graph format
       const { transformForD3 } = await import('../../utils/graphTransform');
 
+      // Build a map of internal vertex IDs to concept_ids
+      // The API returns internal AGE vertex IDs, but we need concept_ids
+      const internalToConceptId = new Map<string, string>();
+      result.nodes.forEach((n: any) => {
+        const conceptId = n.properties?.concept_id || n.id;
+        internalToConceptId.set(n.id, conceptId);
+      });
+
       const graphNodes = result.nodes.map((n: any) => ({
-        concept_id: n.id,
+        concept_id: n.properties?.concept_id || n.id,
         label: n.label,
         ontology: n.properties?.ontology || 'default',
         grounding_strength: n.properties?.grounding_strength,
       }));
 
+      // Map relationship IDs from internal vertex IDs to concept_ids
       const links = result.relationships.map((r: any) => ({
-        from_id: r.from_id,
-        to_id: r.to_id,
+        from_id: internalToConceptId.get(r.from_id) || r.from_id,
+        to_id: internalToConceptId.get(r.to_id) || r.to_id,
         relationship_type: r.type,
         category: r.properties?.category,
       }));
