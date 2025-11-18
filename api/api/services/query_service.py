@@ -142,15 +142,19 @@ class QueryService:
         return query
 
     @staticmethod
-    def build_shortest_path_query(max_hops: int) -> str:
+    def build_shortest_path_query(
+        max_hops: int,
+        allowed_rel_types: Optional[List[str]] = None
+    ) -> str:
         """
         Build shortest path query between two concepts (AGE-compatible).
 
         Query flow:
         1. Find all variable-length paths up to max_hops
-        2. Return the path itself (nodes and relationships as AGE vertex/edge objects)
-        3. Sort by length (shortest first)
-        4. Limit to 10 paths for performance (filtered to 5 in Python)
+        2. Filter by relationship types if provided (ADR-065: epistemic status filtering)
+        3. Return the path itself (nodes and relationships as AGE vertex/edge objects)
+        4. Sort by length (shortest first)
+        5. Limit to 10 paths for performance (filtered to 5 in Python)
 
         Note: AGE doesn't support Neo4j's shortestPath(), all() predicate, or
         advanced list comprehensions. We fetch paths and filter metadata nodes
@@ -162,14 +166,29 @@ class QueryService:
         - Instance nodes (evidence quotes via EVIDENCED_BY)
         This ensures paths show only semantic relationships: Concept → Concept
 
+        **Epistemic Status Filtering (ADR-065):**
+        When allowed_rel_types is provided (typically from epistemic status filtering),
+        only paths using those relationship types are returned. This enables filtering
+        like "only AFFIRMATIVE relationships" or "exclude HISTORICAL relationships".
+
         Args:
             max_hops: Maximum path length (1-10)
+            allowed_rel_types: Optional list of allowed relationship types for filtering
 
         Returns:
             Cypher query string (returns extra paths for post-filtering)
         """
+        # Build relationship pattern with type filtering if needed
+        if allowed_rel_types and len(allowed_rel_types) > 0:
+            # Build OR-based type filter for variable-length path
+            type_pattern = "|".join(allowed_rel_types)
+            rel_pattern = f"[:{type_pattern}*1..{max_hops}]"
+        else:
+            # No filtering - all relationship types
+            rel_pattern = f"[*1..{max_hops}]"
+
         return f"""
-            MATCH path = (from:Concept {{concept_id: $from_id}})-[*1..{max_hops}]-(to:Concept {{concept_id: $to_id}})
+            MATCH path = (from:Concept {{concept_id: $from_id}})-{rel_pattern}-(to:Concept {{concept_id: $to_id}})
             WITH path, length(path) as hops
             RETURN nodes(path) as path_nodes, relationships(path) as path_rels, hops
             ORDER BY hops ASC

@@ -18,6 +18,8 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
 - `max_depth` (`number`) - Max traversal depth for related (1-5, default: 2)
   - Default: `2`
 - `relationship_types` (`array`) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])
+- `include_epistemic_status` (`array`) - Only include relationships with these epistemic statuses (e.g., ["AFFIRMATIVE", "CONTESTED"])
+- `exclude_epistemic_status` (`array`) - Exclude relationships with these epistemic statuses (e.g., ["HISTORICAL", "INSUFFICIENT_DATA"])
 - `connection_mode` (`string`) - Connection mode: "exact" (IDs) or "semantic" (phrases)
   - Allowed values: `exact`, `semantic`
   - Default: `"semantic"`

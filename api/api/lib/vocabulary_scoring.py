@@ -441,8 +441,9 @@ class VocabularyScorer:
             epistemic_result = await self._execute_query(epistemic_query)
 
             for row in epistemic_result:
-                rel_type = self.db._unwrap_agtype(row["relationship_type"])
-                epistemic_status = self.db._unwrap_agtype(row["epistemic_status"])
+                # Values are already unwrapped by psycopg2/age adapter
+                rel_type = row["relationship_type"]
+                epistemic_status = row["epistemic_status"]
 
                 if rel_type in metadata:
                     metadata[rel_type]["epistemic_status"] = epistemic_status

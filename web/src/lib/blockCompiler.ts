@@ -193,8 +193,24 @@ function compileNeighborhoodBlock(
   }
 
   const outputVar = `neighbor${counter}`;
-  const relFilter = params.relationshipTypes && params.relationshipTypes.length > 0
-    ? `:${params.relationshipTypes.join('|')}`
+
+  // ADR-065: Build relationship type filter
+  // Priority: explicit relationshipTypes > epistemic filtering > all types
+  let relTypes: string[] = [];
+
+  if (params.relationshipTypes && params.relationshipTypes.length > 0) {
+    // Explicit relationship types specified
+    relTypes = params.relationshipTypes;
+  } else if (params.includeEpistemicStatus || params.excludeEpistemicStatus) {
+    // Need to resolve epistemic filters to relationship types
+    // Note: This would require a VocabType query in the Cypher, which is complex
+    // For now, we'll add a comment that this needs backend filtering
+    // In practice, epistemic filtering should use the REST API, not raw Cypher
+    throw new Error('Epistemic status filtering requires using the REST API (/query/related endpoint), not raw Cypher queries');
+  }
+
+  const relFilter = relTypes.length > 0
+    ? `:${relTypes.join('|')}`
     : '';
 
   let pattern: string;

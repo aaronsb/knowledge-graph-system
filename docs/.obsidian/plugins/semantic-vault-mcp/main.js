@@ -76690,7 +76690,7 @@ var path4 = __toESM(require("path"));
 
 // src/version.ts
 function getVersion() {
-  return "0.9.14b";
+  return "0.10.1";
 }
 
 // src/security/path-validator.ts
@@ -77122,6 +77122,7 @@ var import_obsidian4 = require("obsidian");
 var import_crypto = require("crypto");
 
 // src/utils/content-handler.ts
+init_debug();
 function ensureStringContent(content, context) {
   var _a;
   try {
@@ -77154,7 +77155,7 @@ function ensureStringContent(content, context) {
     }
     return String(content);
   } catch (error) {
-    console.warn(`Content conversion failed${context ? ` in ${context}` : ""}:`, {
+    Debug.warn(`Content conversion failed${context ? ` in ${context}` : ""}:`, {
       contentType: typeof content,
       contentConstructor: (_a = content == null ? void 0 : content.constructor) == null ? void 0 : _a.name,
       error: error instanceof Error ? error.message : "Unknown error"
@@ -77313,6 +77314,7 @@ function paginateFiles(files, page = 1, pageSize = 20, directory) {
 }
 
 // src/utils/image-handler.ts
+init_debug();
 var import_path = __toESM(require("path"));
 var IMAGE_EXTENSIONS = [
   ".png",
@@ -77364,17 +77366,17 @@ async function processImageResponse(filePath, arrayBuffer, config = IMAGE_PROCES
   }
   const mimeType = getMimeType(filePath);
   try {
-    console.log(`Processing image ${filePath} with config:`, config);
+    Debug.log(`Processing image ${filePath} with config:`, config);
     const resizedBuffer = await resizeImageWithCanvas(buffer, mimeType, config);
-    console.log(`Successfully resized image from ${buffer.length} to ${resizedBuffer.length} bytes`);
+    Debug.log(`Successfully resized image from ${buffer.length} to ${resizedBuffer.length} bytes`);
     return {
       path: filePath,
       mimeType,
       base64Data: resizedBuffer.toString("base64")
     };
   } catch (error) {
-    console.warn("Failed to process image with Canvas:", error);
-    console.log(`Returning original image (${buffer.length} bytes)`);
+    Debug.warn("Failed to process image with Canvas:", error);
+    Debug.log(`Returning original image (${buffer.length} bytes)`);
     return {
       path: filePath,
       mimeType,
@@ -81400,15 +81402,15 @@ var ObsidianAPI = class {
         };
       }
     } catch (error) {
-      console.warn("Internal search failed, using official API:", error);
+      Debug.warn("Internal search failed, using official API:", error);
     }
     const searchResults = await this.performVaultSearch(query, strategy, includeContent);
-    console.log(`Search found ${searchResults.length} results for query: ${query}`);
+    Debug.log(`Search found ${searchResults.length} results for query: ${query}`);
     if (searchResults.length > 0) {
-      console.log("First few results:", searchResults.slice(0, 3).map((r) => ({ path: r.path, score: r.score })));
+      Debug.log("First few results:", searchResults.slice(0, 3).map((r) => ({ path: r.path, score: r.score })));
     }
     const paginatedResponse = paginateResults(searchResults, page, pageSize);
-    console.log(`After pagination: ${paginatedResponse.results.length} results shown, ${paginatedResponse.totalResults} total`);
+    Debug.log(`After pagination: ${paginatedResponse.results.length} results shown, ${paginatedResponse.totalResults} total`);
     const response = {
       query,
       page: paginatedResponse.page,
@@ -81461,30 +81463,30 @@ var ObsidianAPI = class {
   async tryInternalSearch(query) {
     var _a, _b, _c, _d, _e;
     if (this.app.search) {
-      console.log("Found app.search method");
+      Debug.log("Found app.search method");
       return this.app.search(query);
     }
     const internalPlugins = this.app.internalPlugins;
     if (internalPlugins) {
-      console.log("Available internal plugins:", Object.keys(internalPlugins.plugins || {}));
+      Debug.log("Available internal plugins:", Object.keys(internalPlugins.plugins || {}));
       const searchPluginNames = ["global-search", "search", "core-search", "file-search"];
       for (const name of searchPluginNames) {
         const plugin = (_a = internalPlugins.plugins) == null ? void 0 : _a[name];
         if ((_b = plugin == null ? void 0 : plugin.instance) == null ? void 0 : _b.search) {
-          console.log(`Found search method in ${name} plugin`);
+          Debug.log(`Found search method in ${name} plugin`);
           return plugin.instance.search(query);
         }
         if ((_d = (_c = plugin == null ? void 0 : plugin.instance) == null ? void 0 : _c.searchIndex) == null ? void 0 : _d.search) {
-          console.log(`Found searchIndex.search in ${name} plugin`);
+          Debug.log(`Found searchIndex.search in ${name} plugin`);
           return plugin.instance.searchIndex.search(query);
         }
       }
     }
     if ((_e = this.app.workspace) == null ? void 0 : _e.search) {
-      console.log("Found workspace.search method");
+      Debug.log("Found workspace.search method");
       return this.app.workspace.search(query);
     }
-    console.log("No internal search API found");
+    Debug.log("No internal search API found");
     return null;
   }
   /**
@@ -81530,7 +81532,7 @@ var ObsidianAPI = class {
         const regex = new RegExp(pattern, flags);
         return { type: "general", term: pattern, originalQuery: query, isRegex: true, regex };
       } catch (e) {
-        console.warn("Invalid regex pattern:", e);
+        Debug.warn("Invalid regex pattern:", e);
       }
     }
     if (trimmed.startsWith("file:")) {
@@ -81697,12 +81699,12 @@ var ObsidianAPI = class {
               result.snippet = snippet2;
             }
           } catch (error) {
-            console.warn(`Could not read file for snippet: ${file.path}`, error);
+            Debug.warn(`Could not read file for snippet: ${file.path}`, error);
           }
         }
         results.push(result);
       } catch (error) {
-        console.warn("Error processing native search result:", error);
+        Debug.warn("Error processing native search result:", error);
         continue;
       }
     }
@@ -81802,7 +81804,7 @@ var ObsidianAPI = class {
         error.message.includes("EPERM"));
         if (isSyncConflictError && attempt < maxRetries - 1) {
           const delay = Math.pow(2, attempt) * baseDelayMs;
-          console.log(`${operationType} failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms... Error: ${error.message}`);
+          Debug.log(`${operationType} failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms... Error: ${error.message}`);
           await new Promise((resolve2) => setTimeout(resolve2, delay));
           continue;
         }
@@ -81992,7 +81994,11 @@ var SecureObsidianAPI = class extends ObsidianAPI {
   }
 };
 
+// src/tools/semantic-tools.ts
+init_debug();
+
 // src/semantic/router.ts
+init_debug();
 init_content_buffer();
 
 // src/semantic/state-tokens.ts
@@ -84526,7 +84532,7 @@ var SemanticRouter = class {
                   await this.fragmentRetriever.indexDocument(docId, filePath, content);
                 }
               } catch (e) {
-                console.debug(`Skipping file during fragment indexing:`, e);
+                Debug.log(`Skipping file during fragment indexing:`, e);
               }
             }
           }
@@ -84536,7 +84542,7 @@ var SemanticRouter = class {
           });
           return fragmentResponse;
         } catch (error) {
-          console.error("Fragment search failed:", error);
+          Debug.error("Fragment search failed:", error);
           return {
             result: [],
             context: {
@@ -84584,7 +84590,7 @@ var SemanticRouter = class {
           }
           return searchResults;
         } catch (searchError) {
-          console.error("Search failed:", searchError);
+          Debug.error("Search failed:", searchError);
           try {
             const fallbackResults = await this.api.searchPaginated(
               params.query,
@@ -84603,7 +84609,7 @@ var SemanticRouter = class {
               };
             }
           } catch (fallbackError) {
-            console.error("Fallback search also failed:", fallbackError);
+            Debug.error("Fallback search also failed:", fallbackError);
           }
           return {
             query: params.query,
@@ -85145,7 +85151,7 @@ var SemanticRouter = class {
           try {
             const sourceFile = await this.api.getFile(srcPath);
             if (isImageFile2(sourceFile)) {
-              console.warn(`Skipping image file: ${srcPath}`);
+              Debug.warn(`Skipping image file: ${srcPath}`);
               skippedFiles.push(srcPath);
               continue;
             }
@@ -85169,7 +85175,7 @@ var SemanticRouter = class {
             if ((_b = error.message) == null ? void 0 : _b.includes("Destination exists")) {
               throw error;
             }
-            console.warn(`Failed to copy ${srcPath}: ${error.message}`);
+            Debug.warn(`Failed to copy ${srcPath}: ${error.message}`);
             skippedFiles.push(srcPath);
           }
         }
@@ -85282,12 +85288,12 @@ var SemanticRouter = class {
                 }
               }
             } catch (e) {
-              console.warn(`Failed to search file ${filePath}:`, e);
+              Debug.warn(`Failed to search file ${filePath}:`, e);
             }
           }
         }
       } catch (e) {
-        console.warn(`Failed to search directory ${directory}:`, e);
+        Debug.warn(`Failed to search directory ${directory}:`, e);
       }
     };
     await searchDirectory();
@@ -85344,12 +85350,12 @@ var SemanticRouter = class {
               const docId = `file:${filePath}`;
               await this.fragmentRetriever.indexDocument(docId, filePath, content);
             } catch (e) {
-              console.warn(`Failed to index ${filePath}:`, e);
+              Debug.warn(`Failed to index ${filePath}:`, e);
             }
           }
         }
       } catch (e) {
-        console.warn(`Failed to index directory ${directory}:`, e);
+        Debug.warn(`Failed to index directory ${directory}:`, e);
       }
     };
     await indexDirectory();
@@ -86762,7 +86768,7 @@ var createSemanticTool = (operation) => ({
         }]
       };
     } catch (error) {
-      console.error("JSON serialization failed:", error);
+      Debug.error("JSON serialization failed:", error);
       return {
         content: [{
           type: "text",
@@ -91123,7 +91129,7 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
             if (info) {
               statusEl.createEl("p", {
                 text: `\u2705 Certificate valid until: ${info.validTo.toLocaleDateString()}`,
-                cls: "setting-item-description"
+                cls: "setting-item-description mcp-security-note"
               });
               if (info.daysUntilExpiry < 30) {
                 statusEl.createEl("p", {
@@ -91136,7 +91142,7 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
         } else {
           statusEl.createEl("p", {
             text: "\u{1F4DD} No certificate found - will auto-generate on server start",
-            cls: "setting-item-description"
+            cls: "setting-item-description mcp-security-note"
           });
         }
       });
@@ -91146,9 +91152,7 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     containerEl.createEl("h3", { text: "Authentication" });
     new import_obsidian15.Setting(containerEl).setName("API Key").setDesc("Secure API key for authenticating MCP clients").addText((text) => {
       const input = text.setPlaceholder("API key will be shown here").setValue(this.plugin.settings.apiKey).setDisabled(true);
-      input.inputEl.style.width = "300px";
-      input.inputEl.style.fontFamily = "monospace";
-      input.inputEl.classList.add("mcp-api-key-input");
+      input.inputEl.classList.add("mcp-api-key-input", "mcp-monospace-input");
       return input;
     }).addButton((button) => button.setButtonText("Copy").setTooltip("Copy API key to clipboard").onClick(async () => {
       await navigator.clipboard.writeText(this.plugin.settings.apiKey);
@@ -91164,16 +91168,12 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     }));
     const securityNote = containerEl.createEl("p", {
       text: "Note: The API key is stored in the plugin settings file. Anyone with access to your vault can read it.",
-      cls: "setting-item-description"
+      cls: "setting-item-description mcp-security-note"
     });
-    securityNote.style.marginTop = "-10px";
-    securityNote.style.marginBottom = "10px";
     const authNote = containerEl.createEl("p", {
       text: "Supports both Bearer token (recommended) and Basic authentication.",
-      cls: "setting-item-description"
+      cls: "setting-item-description mcp-security-note"
     });
-    authNote.style.marginTop = "-10px";
-    authNote.style.marginBottom = "20px";
     new import_obsidian15.Setting(containerEl).setName("Disable Authentication").setDesc("\u26A0\uFE0F DANGEROUS: Disable authentication entirely. Only use for testing or if you fully trust your local environment.").addToggle((toggle) => toggle.setValue(this.plugin.settings.dangerouslyDisableAuth).onChange(async (value) => {
       this.plugin.settings.dangerouslyDisableAuth = value;
       await this.plugin.saveSettings();
@@ -91241,16 +91241,16 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
       const statusEl = exclusionSection.createDiv("mcp-exclusion-status");
       statusEl.createEl("p", {
         text: `Current exclusions: ${stats.patternCount} patterns active`,
-        cls: "setting-item-description"
+        cls: "setting-item-description mcp-security-note"
       });
       statusEl.createEl("p", {
         text: "Save patterns in .mcpignore file before reloading",
-        cls: "setting-item-description"
+        cls: "setting-item-description mcp-security-note"
       });
       if (stats.lastModified > 0) {
         statusEl.createEl("p", {
           text: `Last modified: ${new Date(stats.lastModified).toLocaleString()}`,
-          cls: "setting-item-description"
+          cls: "setting-item-description mcp-security-note"
         });
       }
       const buttonContainer = exclusionSection.createDiv("mcp-exclusion-buttons");
@@ -91367,12 +91367,12 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
       examples.forEach((example) => {
         examplesList.createEl("li", {
           text: example,
-          cls: "setting-item-description"
+          cls: "setting-item-description mcp-security-note"
         });
       });
       helpEl.createEl("p", {
         text: "Full syntax documentation: https://git-scm.com/docs/gitignore",
-        cls: "setting-item-description"
+        cls: "setting-item-description mcp-security-note"
       });
     }
   }
@@ -91408,14 +91408,8 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     if (this.plugin.settings.dangerouslyDisableAuth) {
       const warningEl = info.createEl("div", {
         text: "\u26A0\uFE0F WARNING: Authentication is disabled. Your vault is accessible without credentials!",
-        cls: "mcp-auth-warning"
+        cls: "mcp-warning-box"
       });
-      warningEl.style.backgroundColor = "var(--background-modifier-error)";
-      warningEl.style.color = "var(--text-error)";
-      warningEl.style.padding = "10px";
-      warningEl.style.borderRadius = "5px";
-      warningEl.style.marginBottom = "15px";
-      warningEl.style.fontWeight = "bold";
     }
     const baseToolsList = [
       "\u{1F5C2}\uFE0F vault - File and folder operations with fragment support",
@@ -91443,17 +91437,11 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
         text: `\u{1F50C} Plugin Integrations: Dataview v${dataviewStatus.version} (enabled)`,
         cls: "plugin-integration-status"
       });
-      statusEl.style.color = "var(--text-success)";
-      statusEl.style.fontSize = "0.9em";
-      statusEl.style.marginTop = "10px";
     } else {
       const statusEl = info.createEl("p", {
         text: "\u{1F50C} Plugin Integrations: None detected (install Dataview for additional functionality)",
         cls: "plugin-integration-status"
       });
-      statusEl.style.color = "var(--text-muted)";
-      statusEl.style.fontSize = "0.9em";
-      statusEl.style.marginTop = "10px";
     }
     const resourceCount = this.plugin.settings.enableConcurrentSessions ? 2 : 1;
     info.createEl("h4", { text: `Available Resources (${resourceCount})` });
@@ -91476,7 +91464,7 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     const desktopDesc = info.createEl("p", {
       text: "Add this to your MCP client configuration file:"
     });
-    info.createEl("p", { text: "Option 1: Direct HTTP Transport (if supported by your client):" }).style.fontWeight = "bold";
+    info.createEl("p", { text: "Option 1: Direct HTTP Transport (if supported by your client):", cls: "mcp-section-header" });
     const configExample = info.createDiv("desktop-config-example");
     const configEl = configExample.createEl("pre");
     configEl.classList.add("mcp-config-example");
@@ -91502,10 +91490,10 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     const configJsonText = JSON.stringify(configJson, null, 2);
     configEl.textContent = configJsonText;
     this.addCopyButton(configExample, configJsonText);
-    info.createEl("p", { text: "Option 2: Via mcp-remote (for Claude Desktop):" }).style.fontWeight = "bold";
+    info.createEl("p", { text: "Option 2: Via mcp-remote (for Claude Desktop):", cls: "mcp-section-header" });
     const remoteDesc = info.createEl("p", {
       text: "mcp-remote supports authentication headers via the --header flag:",
-      cls: "setting-item-description"
+      cls: "setting-item-description mcp-security-note"
     });
     const remoteExample = info.createDiv("desktop-config-example");
     const remoteEl = remoteExample.createEl("pre");
@@ -91555,15 +91543,13 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     if (isUsingSelfSignedCert) {
       const certNote = info.createEl("p", {
         text: "\u{1F4DD} Self-signed certificate detected: NODE_TLS_REJECT_UNAUTHORIZED=0 is included to allow the secure connection.",
-        cls: "setting-item-description"
+        cls: "setting-item-description mcp-cert-note"
       });
-      certNote.style.fontStyle = "italic";
-      certNote.style.color = "var(--text-muted)";
     }
-    info.createEl("p", { text: "Option 2a: Windows Configuration (via mcp-remote):" }).style.fontWeight = "bold";
+    info.createEl("p", { text: "Option 2a: Windows Configuration (via mcp-remote):", cls: "mcp-section-header" });
     const windowsNote = info.createEl("p", {
       text: "Windows has issues with spaces in npx arguments. Use environment variables to work around this:",
-      cls: "setting-item-description"
+      cls: "setting-item-description mcp-security-note"
     });
     const windowsExample = info.createDiv("desktop-config-example");
     const windowsEl = windowsExample.createEl("pre");
@@ -91608,38 +91594,25 @@ var MCPSettingTab = class extends import_obsidian15.PluginSettingTab {
     pathList.createEl("li", { text: "Linux: ~/.config/Claude/claude_desktop_config.json" });
   }
   addCopyButton(container, textToCopy) {
-    container.style.position = "relative";
+    container.classList.add("mcp-config-container");
     const copyButton = container.createEl("button", {
       cls: "mcp-copy-button"
     });
     copyButton.setAttribute("aria-label", "Copy to clipboard");
     (0, import_obsidian15.setIcon)(copyButton, "copy");
-    copyButton.style.position = "absolute";
-    copyButton.style.top = "8px";
-    copyButton.style.right = "8px";
-    copyButton.style.padding = "4px";
-    copyButton.style.background = "var(--interactive-normal)";
-    copyButton.style.border = "1px solid var(--background-modifier-border)";
-    copyButton.style.borderRadius = "4px";
-    copyButton.style.cursor = "pointer";
-    copyButton.style.opacity = "0.7";
-    copyButton.style.transition = "opacity 0.2s, background 0.2s";
+    copyButton.classList.remove("success");
     copyButton.addEventListener("mouseenter", () => {
-      copyButton.style.opacity = "1";
-      copyButton.style.background = "var(--interactive-hover)";
     });
     copyButton.addEventListener("mouseleave", () => {
-      copyButton.style.opacity = "0.7";
-      copyButton.style.background = "var(--interactive-normal)";
     });
     copyButton.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(textToCopy);
+        copyButton.classList.add("success");
         (0, import_obsidian15.setIcon)(copyButton, "check");
-        copyButton.style.background = "var(--interactive-success)";
         setTimeout(() => {
           (0, import_obsidian15.setIcon)(copyButton, "copy");
-          copyButton.style.background = "var(--interactive-normal)";
+          copyButton.classList.remove("success");
         }, 2e3);
       } catch (error) {
         new import_obsidian15.Notice("Failed to copy to clipboard");

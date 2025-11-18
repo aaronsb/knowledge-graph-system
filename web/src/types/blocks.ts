@@ -31,6 +31,9 @@ export interface NeighborhoodBlockParams {
   depth: number; // 1-5
   direction: 'outgoing' | 'incoming' | 'both';
   relationshipTypes?: string[]; // Empty = all types
+  // ADR-065: Epistemic status filtering
+  includeEpistemicStatus?: string[];
+  excludeEpistemicStatus?: string[];
 }
 
 export interface PathToBlockParams {

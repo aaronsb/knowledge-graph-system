@@ -34,6 +34,9 @@ import {
   formatSystemStatus,
   formatApiHealth,
   formatMcpAllowedPaths,
+  formatEpistemicStatusList,
+  formatEpistemicStatusDetails,
+  formatEpistemicStatusMeasurement,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -304,6 +307,17 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
               type: 'array',
               items: { type: 'string' },
               description: 'Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])',
+            },
+            // ADR-065: Epistemic status filtering (for related and connect)
+            include_epistemic_status: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Only include relationships with these epistemic statuses (e.g., ["AFFIRMATIVE", "CONTESTED"])',
+            },
+            exclude_epistemic_status: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Exclude relationships with these epistemic statuses (e.g., ["HISTORICAL", "INSUFFICIENT_DATA"])',
             },
             // For connect
             connection_mode: {
@@ -790,6 +804,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               concept_id: toolArgs.concept_id as string,
               max_depth: toolArgs.max_depth as number || DEFAULT_MAX_DEPTH,
               relationship_types: toolArgs.relationship_types as string[] | undefined,
+              // ADR-065: Epistemic status filtering
+              include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
+              exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
             });
 
             const formattedText = formatRelatedConcepts(result);
@@ -807,6 +824,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 from_id: toolArgs.from_id as string,
                 to_id: toolArgs.to_id as string,
                 max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
+                // ADR-065: Epistemic status filtering
+                include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
+                exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
               });
 
               // Segment long paths for readability
@@ -825,6 +845,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 threshold: toolArgs.threshold as number || DEFAULT_SEMANTIC_THRESHOLD,
                 include_grounding: true,
                 include_evidence: true,
+                // ADR-065: Epistemic status filtering
+                include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
+                exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
               });
 
               const formattedText = formatConnectionPaths(result);
@@ -1271,30 +1294,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           case 'list': {
             const statusFilter = toolArgs.status_filter as string | undefined;
             const result = await client.listEpistemicStatus(statusFilter);
-
-            let output = '# Epistemic Status Classification\n\n';
-            output += `Total types: ${result.total}\n\n`;
-
-            if (result.types && result.types.length > 0) {
-              output += '| Type | Status | Avg Grounding | Sampled Edges | Measured At |\n';
-              output += '|------|--------|---------------|---------------|-------------|\n';
-
-              result.types.forEach((type: any) => {
-                const avgGrounding = type.stats?.avg_grounding !== undefined
-                  ? type.stats.avg_grounding.toFixed(3)
-                  : '--';
-                const sampledEdges = type.stats?.sampled_edges !== undefined
-                  ? type.stats.sampled_edges.toString()
-                  : '--';
-                const measuredAt = type.status_measured_at
-                  ? new Date(type.status_measured_at).toLocaleString()
-                  : '--';
-
-                output += `| ${type.relationship_type} | ${type.epistemic_status} | ${avgGrounding} | ${sampledEdges} | ${measuredAt} |\n`;
-              });
-            } else {
-              output += 'No epistemic status data available. Run measurement first using action: "measure".\n';
-            }
+            const output = formatEpistemicStatusList(result);
 
             return {
               content: [{ type: 'text', text: output }],
@@ -1308,27 +1308,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
 
             const result = await client.getEpistemicStatus(relationshipType);
-
-            let output = `# Epistemic Status: ${relationshipType}\n\n`;
-            output += `**Status:** ${result.epistemic_status}\n\n`;
-
-            if (result.stats) {
-              output += '## Grounding Statistics\n\n';
-              output += `- Average Grounding: ${result.stats.avg_grounding.toFixed(3)}\n`;
-              output += `- Std Deviation: ${result.stats.std_grounding.toFixed(3)}\n`;
-              output += `- Min Grounding: ${result.stats.min_grounding.toFixed(3)}\n`;
-              output += `- Max Grounding: ${result.stats.max_grounding.toFixed(3)}\n\n`;
-
-              output += '## Measurement Scope\n\n';
-              output += `- Measured Concepts: ${result.stats.measured_concepts}\n`;
-              output += `- Sampled Edges: ${result.stats.sampled_edges}\n`;
-              output += `- Total Edges: ${result.stats.total_edges}\n\n`;
-            }
-
-            if (result.status_measured_at) {
-              output += `**Measured At:** ${new Date(result.status_measured_at).toLocaleString()}\n\n`;
-              output += '*Note: Results are temporal - rerun measurement to remeasure as graph evolves.*\n';
-            }
+            const output = formatEpistemicStatusDetails(result);
 
             return {
               content: [{ type: 'text', text: output }],
@@ -1346,40 +1326,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               verbose: verbose,
             });
 
-            let output = '# Epistemic Status Measurement Results\n\n';
-            output += `**Total Types:** ${result.total_types}\n`;
-            output += `**Stored:** ${store ? result.stored_count : 'N/A (store=false)'}\n`;
-            output += `**Timestamp:** ${result.measurement_timestamp}\n\n`;
-
-            if (result.classifications) {
-              output += '## Classifications\n\n';
-              const sorted = Object.entries(result.classifications).sort((a, b) => (b[1] as number) - (a[1] as number));
-              for (const [status, count] of sorted) {
-                output += `- ${status}: ${count}\n`;
-              }
-              output += '\n';
-            }
-
-            if (result.sample_results && result.sample_results.length > 0) {
-              const sampleCount = Math.min(10, result.sample_results.length);
-              output += `## Sample Results (${sampleCount} of ${result.sample_results.length})\n\n`;
-
-              for (let i = 0; i < sampleCount; i++) {
-                const sample = result.sample_results[i];
-                const avgGrounding = sample.stats?.avg_grounding !== undefined
-                  ? sample.stats.avg_grounding.toFixed(3)
-                  : '--';
-                output += `- ${sample.relationship_type} → ${sample.epistemic_status} (avg: ${avgGrounding})\n`;
-              }
-              output += '\n';
-            }
-
-            output += `✓ ${result.message}\n\n`;
-            if (store) {
-              output += 'Phase 2 query filtering now available via API.\n';
-            } else {
-              output += 'Use store=true to enable Phase 2 query filtering.\n';
-            }
+            const output = formatEpistemicStatusMeasurement(result);
 
             return {
               content: [{ type: 'text', text: output }],

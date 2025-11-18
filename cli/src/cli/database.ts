@@ -43,6 +43,36 @@ export const databaseCommand = setCommandHelp(
               console.log(`  ${relColor(rel.rel_type)}: ${coloredCount(rel.count)}`);
             });
           }
+
+          // Display graph metrics counters (ADR-065)
+          if (stats.metrics) {
+            console.log('\n' + colors.stats.section('Graph Metrics'));
+
+            // Show vocabulary change counter
+            if (stats.metrics.vocabulary_change_counter) {
+              const vocabMetric = stats.metrics.vocabulary_change_counter;
+              const deltaColor = vocabMetric.delta === 0
+                ? colors.status.success
+                : vocabMetric.delta < 5
+                  ? colors.ui.value
+                  : colors.status.warning;
+
+              console.log(`  ${colors.stats.label('Vocabulary Changes:')} ${coloredCount(vocabMetric.counter)}`);
+              console.log(`  ${colors.stats.label('Since Last Measurement:')} ${deltaColor(vocabMetric.delta + ' changes')}`);
+
+              if (vocabMetric.last_measured_at) {
+                const measuredDate = new Date(vocabMetric.last_measured_at).toLocaleString();
+                console.log(`  ${colors.stats.label('Last Measured:')} ${colors.status.dim(measuredDate)}`);
+              }
+            }
+
+            // Show epistemic measurement counter
+            if (stats.metrics.epistemic_measurement_counter) {
+              const epistemicMetric = stats.metrics.epistemic_measurement_counter;
+              console.log(`  ${colors.stats.label('Epistemic Measurements:')} ${coloredCount(epistemicMetric.counter)}`);
+            }
+          }
+
           console.log('\n' + separator());
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to get database stats'));

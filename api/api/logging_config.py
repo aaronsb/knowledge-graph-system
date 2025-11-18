@@ -11,6 +11,19 @@ from datetime import datetime
 from pathlib import Path
 
 
+class HealthCheckFilter(logging.Filter):
+    """
+    Filter out health check requests from Uvicorn access logs.
+
+    Health checks run every 10 seconds and create excessive log noise.
+    This filter suppresses /health endpoint logs while keeping all other requests visible.
+    """
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Suppress logs containing "/health" path
+        message = record.getMessage()
+        return "/health" not in message
+
+
 def setup_logging(log_level: str = "INFO") -> logging.Logger:
     """
     Configure logging for the API server.
@@ -65,6 +78,32 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     file_handler.setLevel(logging.DEBUG)  # File gets everything
     file_handler.setFormatter(detailed_formatter)
     root_logger.addHandler(file_handler)
+
+    # Configure Uvicorn loggers for consistent formatting and filtering
+    # 1. uvicorn.access - HTTP access logs (filter out health checks)
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.addFilter(HealthCheckFilter())
+    uvicorn_access.handlers.clear()
+    uvicorn_access_handler = logging.StreamHandler()
+    uvicorn_access_handler.setFormatter(console_formatter)
+    uvicorn_access.addHandler(uvicorn_access_handler)
+    uvicorn_access.propagate = False
+
+    # 2. uvicorn.error - Server lifecycle logs (startup, shutdown, etc.)
+    uvicorn_error = logging.getLogger("uvicorn.error")
+    uvicorn_error.handlers.clear()
+    uvicorn_error_handler = logging.StreamHandler()
+    uvicorn_error_handler.setFormatter(console_formatter)
+    uvicorn_error.addHandler(uvicorn_error_handler)
+    uvicorn_error.propagate = False
+
+    # 3. uvicorn - Main Uvicorn logger
+    uvicorn_main = logging.getLogger("uvicorn")
+    uvicorn_main.handlers.clear()
+    uvicorn_main_handler = logging.StreamHandler()
+    uvicorn_main_handler.setFormatter(console_formatter)
+    uvicorn_main.addHandler(uvicorn_main_handler)
+    uvicorn_main.propagate = False
 
     # Get a named logger for this module
     logger = logging.getLogger("src.api.main")

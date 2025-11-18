@@ -32,7 +32,8 @@ from .workers.ingestion_worker import run_ingestion_worker
 from .workers.restore_worker import run_restore_worker
 from .workers.vocab_refresh_worker import run_vocab_refresh_worker
 from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
-from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher
+from .workers.epistemic_remeasurement_worker import run_epistemic_remeasurement_worker
+from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
@@ -148,7 +149,8 @@ async def startup_event():
     queue.register_worker("restore", run_restore_worker)
     queue.register_worker("vocab_refresh", run_vocab_refresh_worker)  # ADR-050
     queue.register_worker("vocab_consolidate", run_vocab_consolidate_worker)  # ADR-050
-    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate")
+    queue.register_worker("epistemic_remeasurement", run_epistemic_remeasurement_worker)  # ADR-065 Phase 2
+    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement")
 
     # Resume interrupted jobs (jobs that were processing when server stopped)
     # Note: SQLite queue uses "processing", PostgreSQL queue uses "running"
@@ -223,7 +225,8 @@ async def startup_event():
     global scheduled_jobs_manager
     launcher_registry = {
         'CategoryRefreshLauncher': CategoryRefreshLauncher,
-        'VocabConsolidationLauncher': VocabConsolidationLauncher
+        'VocabConsolidationLauncher': VocabConsolidationLauncher,
+        'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher
     }
     scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
     await scheduled_jobs_manager.start()

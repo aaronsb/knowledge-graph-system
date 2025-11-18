@@ -10,14 +10,14 @@ Philosophy (Bounded Locality + Satisficing):
 - We satisfice: sample edges, calculate bounded grounding, estimate patterns
 - Each run is a "measurement" - results are temporal, observer-dependent
 
-Epistemic Status Classifications:
-- AFFIRMATIVE: Consistently high grounding (avg > 0.8) - well-established
-- CONTESTED: Mixed grounding (0.15 <= avg <= 0.8) - debated/mixed validation
-- EMERGING: Weak positive grounding (0.0 < avg < 0.15) - new/developing evidence
-- CONTRADICTORY: Low/negative grounding (avg < -0.5) - contradicted
+Epistemic Status Classifications (Grounding-Based):
+- WELL_GROUNDED: Consistently high grounding (avg > 0.8) - well-established
+- MIXED_GROUNDING: Mixed grounding (0.15 <= avg <= 0.8) - variable validation
+- WEAK_GROUNDING: Weak positive grounding (0.0 < avg < 0.15) - emerging evidence
+- POORLY_GROUNDED: Weak negative grounding (-0.5 <= avg <= 0.0) - uncertain
+- CONTRADICTED: Strong negative grounding (avg < -0.5) - refuted
 - HISTORICAL: Explicitly temporal vocabulary (detected by name)
 - INSUFFICIENT_DATA: < 3 successful measurements
-- UNCLASSIFIED: Doesn't fit known patterns (liminal: -0.5 to 0.0)
 """
 
 import logging
@@ -79,38 +79,38 @@ class EpistemicStatusService:
                 f"Only {measured} successful measurements from {sampled} sampled edges (total: {total})"
             )
 
-        # Affirmative: Consistently high grounding
+        # Well-Grounded: Consistently high grounding
         if avg_grounding > 0.8:
             return (
-                "AFFIRMATIVE",
+                "WELL_GROUNDED",
                 f"High avg grounding ({avg_grounding:.3f}) from {measured} measurements ({sampled}/{total} edges sampled)"
             )
 
-        # Contested: Mixed grounding (lowered threshold from 0.2 to 0.15)
+        # Mixed Grounding: Variable validation (lowered threshold from 0.2 to 0.15)
         if 0.15 <= avg_grounding <= 0.8:
             return (
-                "CONTESTED",
+                "MIXED_GROUNDING",
                 f"Mixed grounding ({avg_grounding:.3f}) from {measured} measurements ({sampled}/{total} edges sampled)"
             )
 
-        # Emerging: Weak positive grounding (new classification for sparse knowledge bases)
+        # Weak Grounding: Weak positive grounding (emerging evidence)
         if 0.0 < avg_grounding < 0.15:
             return (
-                "EMERGING",
+                "WEAK_GROUNDING",
                 f"Weak positive grounding ({avg_grounding:.3f}) from {measured} measurements ({sampled}/{total} edges sampled) - developing evidence"
             )
 
-        # Contradictory: Consistently low/negative grounding
+        # Contradicted: Strong negative grounding (refuted)
         if avg_grounding < -0.5:
             return (
-                "CONTRADICTORY",
-                f"Low avg grounding ({avg_grounding:.3f}) from {measured} measurements ({sampled}/{total} edges sampled)"
+                "CONTRADICTED",
+                f"Strong negative grounding ({avg_grounding:.3f}) from {measured} measurements ({sampled}/{total} edges sampled)"
             )
 
-        # Unclassified: Liminal zone (0.0 to -0.5)
+        # Poorly Grounded: Weak negative grounding (uncertain, liminal zone -0.5 to 0.0)
         return (
-            "UNCLASSIFIED",
-            f"Liminal grounding ({avg_grounding:.3f}) from {measured} measurements ({sampled}/{total} edges sampled)"
+            "POORLY_GROUNDED",
+            f"Weak negative grounding ({avg_grounding:.3f}) from {measured} measurements ({sampled}/{total} edges sampled)"
         )
 
     def calculate_grounding_stats(
@@ -279,12 +279,13 @@ class EpistemicStatusService:
 
         for vocab_type, data in results.items():
             try:
-                # Update VocabType node with epistemic_status
+                # Update VocabType node with epistemic_status and stats
                 update_query = """
                     MATCH (v:VocabType {name: $vocab_type})
                     SET v.epistemic_status = $status,
                         v.epistemic_rationale = $rationale,
-                        v.epistemic_measured_at = $timestamp
+                        v.epistemic_measured_at = $timestamp,
+                        v.epistemic_stats = $stats
                     RETURN v.name as name
                 """
 
@@ -292,7 +293,8 @@ class EpistemicStatusService:
                     'vocab_type': vocab_type,
                     'status': data['status'],
                     'rationale': data['rationale'],
-                    'timestamp': data['stats']['measurement_timestamp']
+                    'timestamp': data['stats']['measurement_timestamp'],
+                    'stats': data['stats']
                 }
 
                 result = self.client._execute_cypher(update_query, params)

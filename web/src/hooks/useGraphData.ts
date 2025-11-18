@@ -19,10 +19,21 @@ export function useSubgraph(
     relationshipTypes?: string[];
     limit?: number;
     enabled?: boolean;
+    // ADR-065: Epistemic status filtering
+    includeEpistemicStatus?: string[];
+    excludeEpistemicStatus?: string[];
   }
 ) {
   return useQuery({
-    queryKey: ['subgraph', conceptId, options?.depth, options?.relationshipTypes, options?.limit],
+    queryKey: [
+      'subgraph',
+      conceptId,
+      options?.depth,
+      options?.relationshipTypes,
+      options?.limit,
+      options?.includeEpistemicStatus,
+      options?.excludeEpistemicStatus,
+    ],
     queryFn: async () => {
       if (!conceptId) throw new Error('Concept ID is required');
 
@@ -31,6 +42,9 @@ export function useSubgraph(
         depth: options?.depth,
         relationship_types: options?.relationshipTypes,
         limit: options?.limit,
+        // ADR-065: Epistemic status filtering
+        include_epistemic_status: options?.includeEpistemicStatus,
+        exclude_epistemic_status: options?.excludeEpistemicStatus,
       });
 
       // Return raw API data (transformation happens in explorer-specific dataTransformer)

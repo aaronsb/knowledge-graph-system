@@ -575,14 +575,17 @@ docker exec kg-operator python /workspace/operator/admin/manage_api_keys.py dele
 Measure epistemic status patterns for vocabulary relationship types (ADR-065):
 
 ```bash
-# Measure current state (100 edge sample per type)
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py
+# Measure current state (default: 100 edge sample per type)
+kg vocab epistemic-status measure
 
 # Larger sample for more precision
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --sample-size 500
+kg vocab epistemic-status measure --sample-size 500
 
 # Detailed output with uncertainty metrics
-docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --verbose
+kg vocab epistemic-status measure --verbose
+
+# Analysis only (don't store results)
+kg vocab epistemic-status measure --no-store
 ```
 
 **Epistemic Status (Estimated from Measurements):**

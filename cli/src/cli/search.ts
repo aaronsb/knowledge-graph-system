@@ -297,6 +297,8 @@ const relatedCommand = setCommandHelp(
       .argument('<concept-id>', 'Starting concept ID for traversal')
       .option('-d, --depth <number>', 'Maximum traversal depth in hops (1-2 fast, 3-4 moderate, 5 slow)', '2')
       .option('-t, --types <types...>', 'Filter by relationship types (IMPLIES, ENABLES, SUPPORTS, etc. - see kg vocab list)')
+      .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
+      .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-065)')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (conceptId, options) => {
         try {
@@ -304,7 +306,10 @@ const relatedCommand = setCommandHelp(
           const result = await client.findRelatedConcepts({
             concept_id: conceptId,
             max_depth: parseInt(options.depth),
-            relationship_types: options.types
+            relationship_types: options.types,
+            // ADR-065: Epistemic status filtering
+            include_epistemic_status: options.includeEpistemic,
+            exclude_epistemic_status: options.excludeEpistemic
           });
 
           // JSON output mode
@@ -354,18 +359,23 @@ const connectCommand = setCommandHelp(
       .option('--no-grounding', 'Disable grounding strength calculation (faster)')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text')
+      .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
+      .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-065)')
       .addHelpText('after', `
 Examples:
   $ kg search connect concept-id-123 concept-id-456
   $ kg search connect "licensing issues" "AGE benefits"
   $ kg search connect "Apache AGE" "graph database" --min-similarity 0.3
   $ kg search connect "my concept" "another concept" --show-evidence
+  $ kg search connect "concept-a" "concept-b" --include-epistemic AFFIRMATIVE
+  $ kg search connect "concept-a" "concept-b" --exclude-epistemic HISTORICAL INSUFFICIENT_DATA
 
 Notes:
   - Generic single words ("features", "issues") may not match well
   - Use specific 2-3 word phrases for better semantic matching
   - Lower --min-similarity (e.g., 0.3) to find weaker concept matches
   - Error messages suggest threshold adjustments when near-misses exist
+  - Use --include-epistemic to filter by relationship confidence level (ADR-065)
       `)
       .action(async (from, to, options) => {
         try {
@@ -392,7 +402,10 @@ Notes:
               to_id: to,
               max_hops: parseInt(options.maxHops),
               include_evidence: includeEvidence,
-              include_grounding: includeGrounding
+              include_grounding: includeGrounding,
+              // ADR-065: Epistemic status filtering
+              include_epistemic_status: options.includeEpistemic,
+              exclude_epistemic_status: options.excludeEpistemic
             });
           } else {
             // At least one is a natural language query - use search-based
@@ -402,7 +415,10 @@ Notes:
               max_hops: parseInt(options.maxHops),
               threshold: parseFloat(options.minSimilarity),
               include_evidence: includeEvidence,
-              include_grounding: includeGrounding
+              include_grounding: includeGrounding,
+              // ADR-065: Epistemic status filtering
+              include_epistemic_status: options.includeEpistemic,
+              exclude_epistemic_status: options.excludeEpistemic
             });
 
             // Update labels with matched concepts
