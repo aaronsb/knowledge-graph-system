@@ -1192,7 +1192,18 @@ async def execute_cypher_query(
                     # Could be a path - extract nodes and relationships
                     for item in value:
                         if isinstance(item, dict):
-                            if 'id' in item and 'start' not in item:  # Node
+                            # Check for relationship first (AGE uses start_id/end_id)
+                            start_id = item.get('start_id') or item.get('start')
+                            end_id = item.get('end_id') or item.get('end')
+
+                            if start_id and end_id:  # Relationship
+                                relationships.append(CypherRelationship(
+                                    from_id=str(start_id),
+                                    to_id=str(end_id),
+                                    type=item.get('label', item.get('type', 'RELATED')),
+                                    properties=item.get('properties', {})
+                                ))
+                            elif 'id' in item:  # Node
                                 node_id = str(item['id'])
                                 if node_id not in nodes_map:
                                     nodes_map[node_id] = CypherNode(
@@ -1200,13 +1211,6 @@ async def execute_cypher_query(
                                         label=item.get('label', item.get('properties', {}).get('label', node_id)),
                                         properties=item.get('properties', {})
                                     )
-                            elif 'start' in item and 'end' in item:  # Relationship
-                                relationships.append(CypherRelationship(
-                                    from_id=str(item['start']),
-                                    to_id=str(item['end']),
-                                    type=item.get('label', item.get('type', 'RELATED')),
-                                    properties=item.get('properties', {})
-                                ))
 
         logger.info(f"Query returned {len(nodes_map)} nodes, {len(relationships)} relationships in {execution_time:.2f}ms")
 
