@@ -18,6 +18,7 @@ import 'reactflow/dist/style.css';
 
 import { Code, Play, Trash2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { BlockPalette } from './BlockPalette';
+import { BlockContextMenu } from './BlockContextMenu';
 import { StartBlock } from './StartBlock';
 import { EndBlock } from './EndBlock';
 import { SearchBlock } from './SearchBlock';
@@ -52,6 +53,13 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const [bottomPanelHeight, setBottomPanelHeight] = useState(200); // Default 200px
   const [isDragging, setIsDragging] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    nodeId: string;
+    top: number;
+    left: number;
+  } | null>(null);
 
   // Get theme for MiniMap styling
   const { theme } = useThemeStore();
@@ -148,6 +156,54 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     },
     [setEdges]
   );
+
+  // Handle right-click on node
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      event.preventDefault();
+      setContextMenu({
+        nodeId: node.id,
+        top: event.clientY,
+        left: event.clientX,
+      });
+    },
+    []
+  );
+
+  // Delete a node
+  const handleDeleteNode = useCallback(
+    (nodeId: string) => {
+      setNodes(nds => nds.filter(n => n.id !== nodeId));
+      setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
+    },
+    [setNodes, setEdges]
+  );
+
+  // Duplicate a node
+  const handleDuplicateNode = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (!node) return;
+
+      const newId = `${node.type}-${Date.now()}`;
+      const newNode: Node<BlockData> = {
+        ...node,
+        id: newId,
+        position: {
+          x: node.position.x + 50,
+          y: node.position.y + 50,
+        },
+      };
+
+      setNodes(nds => [...nds, newNode]);
+    },
+    [nodes, setNodes]
+  );
+
+  // Close context menu
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
 
   // Compile blocks to openCypher whenever nodes or edges change
   React.useEffect(() => {
@@ -311,6 +367,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeContextMenu={onNodeContextMenu}
             nodeTypes={nodeTypes}
             fitView
             minZoom={0.5}
@@ -392,6 +449,18 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
           )}
         </div>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <BlockContextMenu
+          id={contextMenu.nodeId}
+          top={contextMenu.top}
+          left={contextMenu.left}
+          onDelete={handleDeleteNode}
+          onDuplicate={handleDuplicateNode}
+          onClose={handleCloseContextMenu}
+        />
+      )}
     </div>
   );
 };
