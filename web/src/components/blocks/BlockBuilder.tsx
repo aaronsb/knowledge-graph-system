@@ -12,6 +12,7 @@ import ReactFlow, {
   useEdgesState,
   type Connection,
   type Node,
+  type Edge,
   type NodeTypes,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -56,7 +57,8 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
-    nodeId: string;
+    id: string;
+    type: 'node' | 'edge';
     top: number;
     left: number;
   } | null>(null);
@@ -162,7 +164,8 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     (event: React.MouseEvent, node: Node) => {
       event.preventDefault();
       setContextMenu({
-        nodeId: node.id,
+        id: node.id,
+        type: 'node',
         top: event.clientY,
         left: event.clientX,
       });
@@ -170,13 +173,31 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     []
   );
 
-  // Delete a node
-  const handleDeleteNode = useCallback(
-    (nodeId: string) => {
-      setNodes(nds => nds.filter(n => n.id !== nodeId));
-      setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
+  // Handle right-click on edge
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      setContextMenu({
+        id: edge.id,
+        type: 'edge',
+        top: event.clientY,
+        left: event.clientX,
+      });
     },
-    [setNodes, setEdges]
+    []
+  );
+
+  // Delete a node or edge
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (contextMenu?.type === 'edge') {
+        setEdges(eds => eds.filter(e => e.id !== id));
+      } else {
+        setNodes(nds => nds.filter(n => n.id !== id));
+        setEdges(eds => eds.filter(e => e.source !== id && e.target !== id));
+      }
+    },
+    [contextMenu?.type, setNodes, setEdges]
   );
 
   // Duplicate a node
@@ -397,6 +418,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeContextMenu={onNodeContextMenu}
+            onEdgeContextMenu={onEdgeContextMenu}
             nodeTypes={nodeTypes}
             fitView
             minZoom={0.5}
@@ -482,11 +504,11 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       {/* Context Menu */}
       {contextMenu && (
         <BlockContextMenu
-          id={contextMenu.nodeId}
+          id={contextMenu.id}
           top={contextMenu.top}
           left={contextMenu.left}
-          onDelete={handleDeleteNode}
-          onDuplicate={handleDuplicateNode}
+          onDelete={handleDelete}
+          onDuplicate={contextMenu.type === 'node' ? handleDuplicateNode : undefined}
           onClose={handleCloseContextMenu}
         />
       )}
