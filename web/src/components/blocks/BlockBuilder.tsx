@@ -241,10 +241,20 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     setExecutionError(null);
 
     try {
+      console.log('[BlockBuilder] Executing query:', compiledCypher);
+
       const result = await apiClient.executeCypherQuery({
         query: compiledCypher,
         limit: 100,
       });
+
+      console.log('[BlockBuilder] API result:', result);
+
+      // Check if we got any results
+      if (!result.nodes || result.nodes.length === 0) {
+        setExecutionError(`Query executed successfully but returned 0 nodes. This could mean:\n- No concepts match your search criteria\n- The Start block query returned no results\n- Check the openCypher output for the actual query`);
+        return;
+      }
 
       // Transform to graph format
       const { transformForD3 } = await import('../../utils/graphTransform');
@@ -253,17 +263,27 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         concept_id: n.id,
         label: n.label,
         ontology: n.properties?.ontology || 'default',
+        grounding_strength: n.properties?.grounding_strength,
       }));
 
       const links = result.relationships.map((r: any) => ({
         from_id: r.from_id,
         to_id: r.to_id,
         relationship_type: r.type,
+        category: r.properties?.category,
       }));
 
+      console.log('[BlockBuilder] Transformed nodes:', graphNodes.length, 'links:', links.length);
+
       const graphData = transformForD3(graphNodes, links);
+
+      console.log('[BlockBuilder] Final graph data:', graphData);
+
       useGraphStore.getState().setGraphData(graphData);
+
+      console.log('[BlockBuilder] Graph data set in store');
     } catch (error: any) {
+      console.error('[BlockBuilder] Execution error:', error);
       setExecutionError(error.response?.data?.detail || error.message || 'Query execution failed');
     } finally {
       setIsExecuting(false);
