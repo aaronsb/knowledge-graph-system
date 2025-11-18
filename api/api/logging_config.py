@@ -11,6 +11,19 @@ from datetime import datetime
 from pathlib import Path
 
 
+class HealthCheckFilter(logging.Filter):
+    """
+    Filter out health check requests from Uvicorn access logs.
+
+    Health checks run every 10 seconds and create excessive log noise.
+    This filter suppresses /health endpoint logs while keeping all other requests visible.
+    """
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Suppress logs containing "/health" path
+        message = record.getMessage()
+        return "/health" not in message
+
+
 def setup_logging(log_level: str = "INFO") -> logging.Logger:
     """
     Configure logging for the API server.
@@ -65,6 +78,11 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     file_handler.setLevel(logging.DEBUG)  # File gets everything
     file_handler.setFormatter(detailed_formatter)
     root_logger.addHandler(file_handler)
+
+    # Configure Uvicorn access logger to filter out health checks
+    # Health checks run every 10s and create excessive log noise
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.addFilter(HealthCheckFilter())
 
     # Get a named logger for this module
     logger = logging.getLogger("src.api.main")
