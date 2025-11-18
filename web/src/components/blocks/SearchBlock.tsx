@@ -36,7 +36,10 @@ export const SearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <Search className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-        <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Search Concepts</span>
+        <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Text Search</span>
+        <span className="ml-auto px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded text-[10px] font-medium">
+          CYPHER
+        </span>
       </div>
 
       {/* Search Input */}

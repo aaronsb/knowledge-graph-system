@@ -68,9 +68,13 @@ Search semantically, find paths between ideas, and visualize how knowledge conne
 
 ![Smart Search](docs/media/screenshots/smart_search.png)
 
-**Visual Query Builder** - Drag-and-drop block-based openCypher query construction
+**Visual Query Builder** - Drag-and-drop block-based query construction with categorized blocks (Flow, Cypher, Logic, Smart) that compile to annotated openCypher
 
-![Visual Query Builder](docs/media/screenshots/visual_opencypher_query_builder.png)
+![Visual Query Builder](docs/media/screenshots/visual-block-builder/query-blocks-to-annotated-cypher.png)
+
+*Build queries visually with connected blocks, then execute to see results in the graph visualization*
+
+![Query Builder Results](docs/media/screenshots/visual-block-builder/query-block-result.png)
 
 **Direct openCypher** - Write openCypher queries directly for advanced graph traversal
 

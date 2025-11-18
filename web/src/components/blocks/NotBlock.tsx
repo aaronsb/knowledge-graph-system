@@ -30,6 +30,9 @@ export const NotBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
       <div className="flex items-center gap-2 mb-3">
         <Ban className="w-4 h-4 text-rose-600 dark:text-rose-400" />
         <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Exclude (NOT)</span>
+        <span className="ml-auto px-1.5 py-0.5 bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded text-[10px] font-medium">
+          CYPHER
+        </span>
       </div>
 
       {/* Property Selector */}

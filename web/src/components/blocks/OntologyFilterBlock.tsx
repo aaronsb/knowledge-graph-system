@@ -4,7 +4,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, HelpCircle } from 'lucide-react';
 import type { BlockData, OntologyFilterBlockParams } from '../../types/blocks';
 
 export const OntologyFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
@@ -13,6 +13,7 @@ export const OntologyFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =>
   const [ontologyInput, setOntologyInput] = useState('');
   const [useRegex, setUseRegex] = useState(false);
   const [regexError, setRegexError] = useState<string | null>(null);
+  const [showRegexHelp, setShowRegexHelp] = useState(false);
 
   const handleAddOntology = useCallback(() => {
     const trimmed = ontologyInput.trim();
@@ -56,6 +57,9 @@ export const OntologyFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =>
       <div className="flex items-center gap-2 mb-3">
         <Filter className="w-4 h-4 text-orange-600 dark:text-orange-400" />
         <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Filter by Ontology</span>
+        <span className="ml-auto px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded text-[10px] font-medium">
+          CYPHER
+        </span>
       </div>
 
       {/* Ontology Filter */}
@@ -64,18 +68,44 @@ export const OntologyFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =>
           <label className="text-xs text-muted-foreground dark:text-gray-400">
             Ontologies {!useRegex && '(case sensitive)'}
           </label>
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={useRegex}
-              onChange={(e) => {
-                setUseRegex(e.target.checked);
-                setRegexError(null);
-              }}
-              className="w-3 h-3 text-orange-500 dark:text-orange-400 rounded"
-            />
-            <span className="text-[10px] text-muted-foreground dark:text-gray-500">Regex</span>
-          </label>
+          <div className="flex items-center gap-1">
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useRegex}
+                onChange={(e) => {
+                  setUseRegex(e.target.checked);
+                  setRegexError(null);
+                }}
+                className="w-3 h-3 text-orange-500 dark:text-orange-400 rounded"
+              />
+              <span className="text-[10px] text-muted-foreground dark:text-gray-500">Regex</span>
+            </label>
+            {useRegex && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowRegexHelp(!showRegexHelp)}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="p-0.5 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded"
+                  title="Regex help"
+                >
+                  <HelpCircle className="w-3 h-3 text-muted-foreground dark:text-gray-500" />
+                </button>
+                {showRegexHelp && (
+                  <div className="absolute right-0 top-5 z-50 w-48 p-2 bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded shadow-lg text-[10px]">
+                    <div className="font-medium text-card-foreground dark:text-gray-100 mb-1">Regex Examples</div>
+                    <div className="space-y-0.5 text-muted-foreground dark:text-gray-400">
+                      <div><code className="text-orange-600 dark:text-orange-400">.*</code> any characters</div>
+                      <div><code className="text-orange-600 dark:text-orange-400">^prefix</code> starts with</div>
+                      <div><code className="text-orange-600 dark:text-orange-400">suffix$</code> ends with</div>
+                      <div><code className="text-orange-600 dark:text-orange-400">a|b</code> a or b</div>
+                      <div><code className="text-orange-600 dark:text-orange-400">(?i)</code> case insensitive</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Input field */}

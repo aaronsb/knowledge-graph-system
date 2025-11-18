@@ -17,7 +17,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { Code, Play, Trash2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Code, Play, Trash2, AlertCircle, ChevronDown, ChevronUp, Save, FolderOpen, Download, Upload } from 'lucide-react';
 import { BlockPalette } from './BlockPalette';
 import { BlockContextMenu } from './BlockContextMenu';
 import { StartBlock } from './StartBlock';
@@ -39,6 +39,7 @@ import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
+import { useBlockDiagramStore, type DiagramMetadata } from '../../store/blockDiagramStore';
 
 import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
 
@@ -47,8 +48,11 @@ interface BlockBuilderProps {
 }
 
 export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  // Get initial state from store (persists across view switches)
+  const { workingNodes: initialNodes, workingEdges: initialEdges } = useBlockDiagramStore.getState();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [compiledCypher, setCompiledCypher] = useState('');
   const [compileErrors, setCompileErrors] = useState<string[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -73,8 +77,36 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     position: { x: number; y: number };
   } | null>(null);
 
+  // Save/Load dialog state
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const [saveDescription, setSaveDescription] = useState('');
+  const [savedDiagrams, setSavedDiagrams] = useState<DiagramMetadata[]>([]);
+
+  // File input ref for import
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   // Get theme for MiniMap styling
   const { theme } = useThemeStore();
+
+  // Block diagram persistence
+  const {
+    currentDiagramId,
+    currentDiagramName,
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    workingNodes,
+    workingEdges,
+    setWorkingCanvas,
+    clearWorkingCanvas,
+    saveDiagram,
+    loadDiagram,
+    listDiagrams,
+    deleteDiagram,
+    exportToFile,
+    importFromFile,
+  } = useBlockDiagramStore();
 
   // Register custom node types
   const nodeTypes: NodeTypes = useMemo(
@@ -176,14 +208,16 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     };
 
     setNodes(nds => [...nds, newNode]);
-  }, [nodes.length, setNodes]);
+    setHasUnsavedChanges(true);
+  }, [nodes.length, setNodes, setHasUnsavedChanges]);
 
   // Handle edge connections
   const onConnect = useCallback(
     (connection: Connection) => {
       setEdges(eds => addEdge(connection, eds));
+      setHasUnsavedChanges(true);
     },
-    [setEdges]
+    [setEdges, setHasUnsavedChanges]
   );
 
   // Handle right-click on node
@@ -223,8 +257,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         setNodes(nds => nds.filter(n => n.id !== id));
         setEdges(eds => eds.filter(e => e.source !== id && e.target !== id));
       }
+      setHasUnsavedChanges(true);
     },
-    [contextMenu?.type, setNodes, setEdges]
+    [contextMenu?.type, setNodes, setEdges, setHasUnsavedChanges]
   );
 
   // Duplicate a node
@@ -244,8 +279,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       };
 
       setNodes(nds => [...nds, newNode]);
+      setHasUnsavedChanges(true);
     },
-    [nodes, setNodes]
+    [nodes, setNodes, setHasUnsavedChanges]
   );
 
   // Close context menu
@@ -283,12 +319,97 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     }
   }, [nodes, edges]);
 
+  // Sync canvas state to store (persists across view switches)
+  React.useEffect(() => {
+    setWorkingCanvas(nodes, edges);
+  }, [nodes, edges, setWorkingCanvas]);
+
   // Clear all blocks
   const handleClear = useCallback(() => {
     setNodes([]);
     setEdges([]);
     setExecutionError(null);
-  }, [setNodes, setEdges]);
+    setHasUnsavedChanges(true);
+  }, [setNodes, setEdges, setHasUnsavedChanges]);
+
+  // Save diagram
+  const handleSave = useCallback(() => {
+    if (currentDiagramName) {
+      // Quick save to existing diagram
+      saveDiagram(currentDiagramName, nodes, edges);
+    } else {
+      // Open save dialog for new diagram
+      setSaveName('');
+      setSaveDescription('');
+      setShowSaveDialog(true);
+    }
+  }, [currentDiagramName, nodes, edges, saveDiagram]);
+
+  // Save As (always show dialog)
+  const handleSaveAs = useCallback(() => {
+    setSaveName(currentDiagramName || '');
+    setSaveDescription('');
+    setShowSaveDialog(true);
+  }, [currentDiagramName]);
+
+  // Confirm save from dialog
+  const handleConfirmSave = useCallback(() => {
+    if (!saveName.trim()) return;
+    saveDiagram(saveName.trim(), nodes, edges, saveDescription.trim() || undefined);
+    setShowSaveDialog(false);
+  }, [saveName, saveDescription, nodes, edges, saveDiagram]);
+
+  // Open load dialog
+  const handleOpenLoadDialog = useCallback(() => {
+    setSavedDiagrams(listDiagrams());
+    setShowLoadDialog(true);
+  }, [listDiagrams]);
+
+  // Load a diagram
+  const handleLoadDiagram = useCallback((id: string) => {
+    const diagram = loadDiagram(id);
+    if (diagram) {
+      setNodes(diagram.nodes);
+      setEdges(diagram.edges);
+      setShowLoadDialog(false);
+      setExecutionError(null);
+    }
+  }, [loadDiagram, setNodes, setEdges]);
+
+  // Delete a saved diagram
+  const handleDeleteDiagram = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Delete this diagram?')) {
+      deleteDiagram(id);
+      setSavedDiagrams(listDiagrams());
+    }
+  }, [deleteDiagram, listDiagrams]);
+
+  // Export current diagram to file
+  const handleExport = useCallback(() => {
+    const name = currentDiagramName || 'untitled-diagram';
+    exportToFile(nodes, edges, name);
+  }, [currentDiagramName, nodes, edges, exportToFile]);
+
+  // Import diagram from file
+  const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const diagram = await importFromFile(file);
+    if (diagram) {
+      setNodes(diagram.nodes);
+      setEdges(diagram.edges);
+      setExecutionError(null);
+      // Note: imported diagram is not auto-saved, user must save it
+      setHasUnsavedChanges(true);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [importFromFile, setNodes, setEdges, setHasUnsavedChanges]);
 
   // Send to openCypher editor
   const handleSendToEditor = useCallback(() => {
@@ -503,10 +624,53 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         <div className="h-14 bg-card dark:bg-gray-800 border-b border-border dark:border-gray-700 px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h3 className="font-semibold text-card-foreground dark:text-gray-100">Visual Query Builder</h3>
-            <span className="text-xs text-muted-foreground dark:text-gray-400">{nodes.length} blocks</span>
+            {currentDiagramName ? (
+              <span className="text-xs text-muted-foreground dark:text-gray-400">
+                {currentDiagramName}{hasUnsavedChanges ? ' *' : ''}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground dark:text-gray-400">{nodes.length} blocks</span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Save/Load/Export/Import buttons */}
+            <button
+              onClick={handleSave}
+              disabled={nodes.length === 0}
+              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={currentDiagramName ? `Save "${currentDiagramName}"` : 'Save diagram'}
+            >
+              <Save className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={handleOpenLoadDialog}
+              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600"
+              title="Load diagram"
+            >
+              <FolderOpen className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={handleExport}
+              disabled={nodes.length === 0}
+              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export to file"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600"
+              title="Import from file"
+            >
+              <Upload className="w-4 h-4" />
+            </button>
+
+            <div className="w-px h-6 bg-border dark:bg-gray-600 mx-1" />
+
             <button
               onClick={handleClear}
               disabled={nodes.length === 0}
@@ -535,6 +699,15 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             </button>
           </div>
         </div>
+
+        {/* Hidden file input for import */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImport}
+          accept=".json"
+          className="hidden"
+        />
 
         {/* React Flow Canvas - grows to fill available space */}
         <div className="flex-1 bg-muted dark:bg-gray-900 min-h-0">
@@ -648,6 +821,117 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
           position={helpPopup.position}
           onClose={() => setHelpPopup(null)}
         />
+      )}
+
+      {/* Save Dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-800 rounded-lg shadow-xl w-96 p-6">
+            <h3 className="text-lg font-semibold text-card-foreground dark:text-gray-100 mb-4">Save Diagram</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  placeholder="My Query Diagram"
+                  className="w-full px-3 py-2 border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-1">Description (optional)</label>
+                <textarea
+                  value={saveDescription}
+                  onChange={(e) => setSaveDescription(e.target.value)}
+                  placeholder="What does this query do?"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setShowSaveDialog(false)}
+                className="px-4 py-2 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                disabled={!saveName.trim()}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load Dialog */}
+      {showLoadDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-800 rounded-lg shadow-xl w-[500px] max-h-[600px] flex flex-col">
+            <div className="p-6 border-b border-border dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-card-foreground dark:text-gray-100">Load Diagram</h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {savedDiagrams.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground dark:text-gray-400">
+                  No saved diagrams yet
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {savedDiagrams.map((diagram) => (
+                    <div
+                      key={diagram.id}
+                      onClick={() => handleLoadDiagram(diagram.id)}
+                      className="p-3 border border-border dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-gray-700 cursor-pointer group"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-card-foreground dark:text-gray-100 truncate">
+                            {diagram.name}
+                          </div>
+                          {diagram.description && (
+                            <div className="text-xs text-muted-foreground dark:text-gray-400 truncate mt-0.5">
+                              {diagram.description}
+                            </div>
+                          )}
+                          <div className="text-[10px] text-muted-foreground dark:text-gray-500 mt-1">
+                            {diagram.nodeCount} blocks, {diagram.edgeCount} connections
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => handleDeleteDiagram(diagram.id, e)}
+                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400 transition-opacity"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => setShowLoadDialog(false)}
+                className="w-full px-4 py-2 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

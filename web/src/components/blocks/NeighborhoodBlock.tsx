@@ -62,6 +62,9 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
       <div className="flex items-center gap-2 mb-3">
         <Network className="w-4 h-4 text-purple-600 dark:text-purple-400" />
         <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Expand Neighborhood</span>
+        <span className="ml-auto px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded text-[10px] font-medium">
+          CYPHER
+        </span>
       </div>
 
       {/* Depth Control */}
