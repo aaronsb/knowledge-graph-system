@@ -61,6 +61,31 @@ Introduce the concept of **Published Query Endpoints** - saved query flows that 
 5. **Authorize**: User grants access to specific OAuth clients
 6. **Execute**: External systems call endpoint with client credentials + flow ID
 
+### Beyond Pure openCypher: Smart Block Operations
+
+Query flows are more than graph traversals. The Block Builder compiles to **annotated openCypher** - valid Cypher with embedded markers that trigger additional operations:
+
+**Smart Blocks (non-Cypher operations):**
+- **Vector Search** - Semantic similarity via embedding API
+- **Epistemic Filter** - Filter by vocabulary epistemic status
+- **Enrich** - Fetch concept details (grounding, ontology, search terms)
+
+**Cypher Blocks (pure graph operations):**
+- **Neighborhood** - Graph traversal
+- **Filter** - WHERE clauses
+- **Limit** - Result constraints
+
+This is conceptually similar to Neo4j's Cypher extensions or stored procedures - the execution engine interprets the annotated query and orchestrates calls to various services (embedding API, concept details API) alongside the graph database.
+
+**Implication for Published Endpoints:**
+The execution engine must be an internal worker that can:
+1. Parse annotated openCypher
+2. Execute Cypher portions against Apache AGE
+3. Invoke smart block services (vector search, enrichment)
+4. Compose final results
+
+This makes published flows more powerful than raw Cypher endpoints - they're curated data pipelines that encapsulate complex multi-service operations behind a simple API call.
+
 ### Start Block: Execution Mode
 
 ```typescript
