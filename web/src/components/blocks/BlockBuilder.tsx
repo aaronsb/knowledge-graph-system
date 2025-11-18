@@ -507,7 +507,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         search_terms: n.properties?.search_terms || [],
       }));
 
-      // If Enrich block is present, fetch full concept details
+      // If Enrich block is present, fetch full concept details (same as Smart Search)
       if (shouldEnrich) {
         console.log('[BlockBuilder] Enrich block detected, fetching concept details for', rawNodes.length, 'nodes');
 
@@ -516,22 +516,18 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             try {
               const details = await apiClient.getConceptDetails(node.concept_id);
 
-              // Enrich with requested data
-              const enriched = { ...node };
-
-              if (enrichParams?.fetchOntology && details.documents && details.documents.length > 0) {
-                enriched.ontology = details.documents[0];
-              }
-
-              if (enrichParams?.fetchGrounding && details.grounding_strength !== undefined) {
-                enriched.grounding_strength = details.grounding_strength;
-              }
-
-              if (enrichParams?.fetchSearchTerms && details.search_terms) {
-                enriched.search_terms = details.search_terms;
-              }
-
-              return enriched;
+              // Build enriched node matching Smart Search format (getSubgraph)
+              // Always include all available data for consistent visualization
+              return {
+                concept_id: node.concept_id,
+                label: details.label || node.label,
+                // Use first document as ontology (same as getSubgraph line 87)
+                ontology: details.documents?.[0] || node.ontology || 'Unknown',
+                // Always include grounding_strength for node info display
+                grounding_strength: details.grounding_strength ?? node.grounding_strength,
+                // Include search_terms for display
+                search_terms: details.search_terms || node.search_terms || [],
+              };
             } catch (error) {
               console.warn(`[BlockBuilder] Failed to enrich concept ${node.concept_id}:`, error);
               return node; // Return unenriched node on error
