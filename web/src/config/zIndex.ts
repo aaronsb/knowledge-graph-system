@@ -34,6 +34,8 @@ export const Z_INDEX = {
 
   // Dropdown layer - Dropdowns, popovers, tooltips
   dropdown: 30,
+  infoBox: 32, // Node/Edge info boxes (below context menu)
+  contextMenu: 33, // Right-click context menu (below search results)
   searchResults: 35,
 
   // Modal layer - Dialogs, modals, and top-level menus

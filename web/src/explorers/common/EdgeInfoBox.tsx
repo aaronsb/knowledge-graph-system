@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { getZIndexValue } from '../../config/zIndex';
 
 export interface EdgeInfoBoxProps {
   info: {
@@ -36,7 +37,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
         left: `${info.x}px`,
         top: `${info.y}px`,
         transform: 'translate(-50%, -100%)', // Position above the edge midpoint
-        zIndex: 9999, // Ensure info box draws on top of everything
+        zIndex: getZIndexValue('infoBox'), // Info boxes appear below search results
       }}
     >
       {/* Speech bubble pointer - theme-aware */}
