@@ -16,6 +16,7 @@ interface GraphFilters {
   relationshipTypes: string[];
   ontologies: string[];
   minConfidence: number;
+  visibleEdgeCategories: Set<string>; // Track which edge categories are visible
 }
 
 interface UISettings {
@@ -66,6 +67,8 @@ interface GraphStore {
   filters: GraphFilters;
   setFilters: (filters: Partial<GraphFilters>) => void;
   resetFilters: () => void;
+  toggleEdgeCategoryVisibility: (category: string) => void;
+  setAllEdgeCategoriesVisible: (categories: string[], visible: boolean) => void;
 
   // Selection state
   selectedNodes: Set<string>;
@@ -120,6 +123,7 @@ const defaultFilters: GraphFilters = {
   relationshipTypes: [],
   ontologies: [],
   minConfidence: 0.0,
+  visibleEdgeCategories: new Set(), // Start with all visible (empty set = show all)
 };
 
 const defaultUISettings: UISettings = {
@@ -154,6 +158,32 @@ export const useGraphStore = create<GraphStore>((set) => ({
       filters: { ...state.filters, ...newFilters },
     })),
   resetFilters: () => set({ filters: defaultFilters }),
+
+  // Toggle edge category visibility
+  toggleEdgeCategoryVisibility: (category) =>
+    set((state) => {
+      const newVisible = new Set(state.filters.visibleEdgeCategories);
+      if (newVisible.has(category)) {
+        newVisible.delete(category);
+      } else {
+        newVisible.add(category);
+      }
+      return {
+        filters: {
+          ...state.filters,
+          visibleEdgeCategories: newVisible,
+        },
+      };
+    }),
+
+  // Set all edge categories visible/invisible
+  setAllEdgeCategoriesVisible: (categories, visible) =>
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        visibleEdgeCategories: visible ? new Set(categories) : new Set(),
+      },
+    })),
 
   // Selection state
   selectedNodes: new Set(),

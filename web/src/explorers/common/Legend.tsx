@@ -5,10 +5,11 @@
  * with collapsible sections and vertical resize capability.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as d3 from 'd3';
 import { categoryColors } from '../../config/categoryColors';
+import { useGraphStore } from '../../store/graphStore';
 import type { GraphData } from '../../types/graph';
 
 interface LegendProps {
@@ -20,6 +21,12 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['nodeColors', 'edgeColors'])
   );
+
+  const {
+    filters,
+    toggleEdgeCategoryVisibility,
+    setAllEdgeCategoriesVisible,
+  } = useGraphStore();
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
@@ -44,6 +51,19 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
 
   // Extract edge categories
   const categories = Array.from(new Set(data.links.map((l) => l.category).filter(Boolean))).sort();
+
+  // Initialize all categories as visible when categories change
+  useEffect(() => {
+    if (categories.length > 0 && filters.visibleEdgeCategories.size === 0) {
+      setAllEdgeCategoriesVisible(categories, true);
+    }
+  }, [categories.length]); // Only run when number of categories changes
+
+  // Check if a category is visible (empty set = all visible)
+  const isCategoryVisible = (category: string) => {
+    if (filters.visibleEdgeCategories.size === 0) return true;
+    return filters.visibleEdgeCategories.has(category);
+  };
 
   // Generate gradient string from D3 color scale
   const generateGradient = (interpolator: (t: number) => string, steps: number = 10) => {
@@ -146,9 +166,23 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
             <div className="mt-3 space-y-1.5">
               {categories.map((category) => {
                 const color = categoryColors[category || 'default'] || categoryColors.default;
+                const isVisible = isCategoryVisible(category);
                 return (
-                  <div key={category} className="text-xs">
-                    <span style={{ color }} className="font-medium capitalize">
+                  <div key={category} className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={isVisible}
+                      onChange={() => toggleEdgeCategoryVisibility(category)}
+                      className="w-3 h-3 rounded cursor-pointer"
+                      style={{
+                        accentColor: color,
+                      }}
+                    />
+                    <span
+                      style={{ color: isVisible ? color : '#6b7280' }}
+                      className={`font-medium capitalize cursor-pointer ${!isVisible ? 'opacity-50' : ''}`}
+                      onClick={() => toggleEdgeCategoryVisibility(category)}
+                    >
                       {category}
                     </span>
                   </div>

@@ -39,8 +39,20 @@ export const SearchBar: React.FC = () => {
     path: true,
   });
 
+  // Collapsible state for Smart Search
+  const [smartSearchExpanded, setSmartSearchExpanded] = useState(true);
+
   // Collapsible state for openCypher editor
   const [cypherEditorExpanded, setCypherEditorExpanded] = useState(true);
+
+  const toggleSmartSearch = () => {
+    setSmartSearchExpanded(!smartSearchExpanded);
+
+    // Trigger window resize event after a short delay to let the DOM update
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  };
 
   const toggleSection = (mode: SmartSearchSubMode) => {
     setExpandedSections(prev => ({
@@ -364,30 +376,33 @@ LIMIT 50`);
           </div>
         </div>
 
-        {/* Mode Dial and Collapse Button */}
-        <div className="flex items-center gap-2">
-          {queryMode === 'block-builder' && (
-            <button
-              onClick={toggleBlockBuilder}
-              className="p-2 hover:bg-muted rounded transition-colors"
-              title={blockBuilderExpanded ? "Collapse block builder" : "Expand block builder"}
-            >
-              {blockBuilderExpanded ? (
-                <ChevronDown className="w-5 h-5" />
-              ) : (
-                <ChevronRight className="w-5 h-5" />
-              )}
-            </button>
-          )}
-          <ModeDial mode={queryMode} onChange={setQueryMode} />
-        </div>
+        {/* Mode Dial */}
+        <ModeDial mode={queryMode} onChange={setQueryMode} />
       </div>
 
       {/* Smart Search Mode */}
       {queryMode === 'smart-search' && (
         <div className="space-y-3">
-          {/* Sub-mode Selector (Pill Buttons) */}
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          {/* Collapsible Header */}
+          <button
+            onClick={toggleSmartSearch}
+            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Smart Search</span>
+            </div>
+            {smartSearchExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+
+          {smartSearchExpanded && (
+            <>
+              {/* Sub-mode Selector (Pill Buttons) */}
+              <div className="flex gap-1 p-1 bg-muted rounded-lg">
             <button
               onClick={() => setSmartSearchMode('concept')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -1032,13 +1047,35 @@ LIMIT 50`);
               )}
             </div>
           )}
+            </>
+          )}
         </div>
       )}
 
       {/* Block Builder Mode */}
-      {queryMode === 'block-builder' && blockBuilderExpanded && (
-        <div className="flex-1 min-h-0">
-          <BlockBuilder onSendToEditor={handleSendToEditor} />
+      {queryMode === 'block-builder' && (
+        <div className="space-y-3">
+          {/* Collapsible Header */}
+          <button
+            onClick={toggleBlockBuilder}
+            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Blocks className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Visual Block Builder</span>
+            </div>
+            {blockBuilderExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+
+          {blockBuilderExpanded && (
+            <div className="w-full">
+              <BlockBuilder onSendToEditor={handleSendToEditor} />
+            </div>
+          )}
         </div>
       )}
 

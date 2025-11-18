@@ -1,16 +1,15 @@
 /**
- * Filter Block - Filter results by ontology, relationship type, or confidence
+ * Ontology Filter Block - Filter results by ontology
  */
 
 import React, { useState, useCallback } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { Filter, X, HelpCircle } from 'lucide-react';
-import type { BlockData, FilterBlockParams } from '../../types/blocks';
+import type { BlockData, OntologyFilterBlockParams } from '../../types/blocks';
 
-export const FilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
-  const params = data.params as FilterBlockParams;
+export const OntologyFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
+  const params = data.params as OntologyFilterBlockParams;
   const [selectedOntologies, setSelectedOntologies] = useState<string[]>(params.ontologies || []);
-  const [minConfidence, setMinConfidence] = useState(params.minConfidence || 0);
   const [ontologyInput, setOntologyInput] = useState('');
   const [useRegex, setUseRegex] = useState(false);
   const [regexError, setRegexError] = useState<string | null>(null);
@@ -52,25 +51,19 @@ export const FilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
     }
   }, [handleAddOntology]);
 
-  const handleConfidenceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newConfidence = parseFloat(e.target.value);
-    setMinConfidence(newConfidence);
-    params.minConfidence = newConfidence;
-  }, [params]);
-
   return (
     <div className="px-4 py-3 rounded-lg border-2 border-orange-500 dark:border-orange-600 bg-card dark:bg-gray-800/95 shadow-lg min-w-[280px]">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <Filter className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-        <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Filter Results</span>
+        <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Filter by Ontology</span>
         <span className="ml-auto px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded text-[10px] font-medium">
           CYPHER
         </span>
       </div>
 
       {/* Ontology Filter */}
-      <div className="space-y-2 mb-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-xs text-muted-foreground dark:text-gray-400">
             Ontologies {!useRegex && '(case sensitive)'}
@@ -163,25 +156,6 @@ export const FilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Min Confidence Slider */}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <label className="text-xs text-muted-foreground dark:text-gray-400">Min Confidence</label>
-          <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
-            {minConfidence > 0 ? `${Math.round(minConfidence * 100)}%` : 'Any'}
-          </span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={minConfidence}
-          onChange={handleConfidenceChange}
-          className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500 dark:accent-orange-400"
-        />
       </div>
 
       {/* Handles */}

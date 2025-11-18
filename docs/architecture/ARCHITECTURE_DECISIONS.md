@@ -81,6 +81,8 @@ All ADRs follow a consistent format:
 | [ADR-062](ADR-062-mcp-file-ingestion-security.md) | MCP File Ingestion Security Model | Draft | Path allowlist security for MCP file/directory ingestion - fail-secure validation prevents path traversal, agent-readable (not writable) allowlist enables bulk ingestion from pre-approved locations with auto-naming by directory structure |
 | [ADR-063](ADR-063-semantic-diversity-authenticity-signal.md) | Semantic Diversity as Authenticity Signal | Proposed | Measures semantic diversity of related concepts within N-hop traversal - authentic facts supported by diverse independent domains (37.7% diversity), fabricated claims show homogeneous circular reasoning (23.2% diversity) - complements grounding strength for authenticity assessment |
 | [ADR-064](ADR-064-specialized-truth-convergence-visualizations.md) | Specialized Truth Convergence Visualizations | Proposed | Expands web visualization beyond force graphs with specialized explorers: confidence heatmaps, polarity spectrums, provenance Sankey diagrams, concept lifecycle timelines, semantic diversity sunbursts, and 3D evidence mountains - leverages platform's unique truth convergence, semantic diversity, and provenance capabilities |
+| [ADR-065](ADR-065-vocabulary-based-provenance-relationships.md) | Vocabulary-Based Provenance Relationships | Accepted | Extends vocabulary system to provenance relationships (APPEARS, EVIDENCED_BY, FROM_SOURCE) - treats structural relationships as emergent vocabulary with embeddings and semantic matching, eliminating architectural asymmetry between concept-concept and concept-source relationships |
+| [ADR-066](ADR-066-published-query-endpoints.md) | Published Query Endpoints | Proposed | Saved query flows become REST API endpoints accessible via OAuth client credentials - enables external systems to execute curated queries without user sessions, supports JSON/CSV output formats, machine-to-machine authentication |
 
 ## How to Use This Index
 
@@ -154,6 +156,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-11-13
+**Last Updated:** 2025-11-18
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.

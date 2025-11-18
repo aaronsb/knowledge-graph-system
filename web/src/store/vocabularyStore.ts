@@ -64,17 +64,56 @@ export const useVocabularyStore = create<VocabularyStore>((set, get) => ({
 
   // Helpers
   getCategory: (relationshipType) => {
-    const type = get().typesMap.get(relationshipType);
+    // Try exact match first
+    let type = get().typesMap.get(relationshipType);
+
+    // If not found, try case-insensitive match
+    if (!type && relationshipType) {
+      const lowerType = relationshipType.toLowerCase();
+      for (const [key, value] of get().typesMap.entries()) {
+        if (key.toLowerCase() === lowerType) {
+          type = value;
+          break;
+        }
+      }
+    }
+
     return type?.category ?? null;
   },
 
   getConfidence: (relationshipType) => {
-    const type = get().typesMap.get(relationshipType);
+    // Try exact match first
+    let type = get().typesMap.get(relationshipType);
+
+    // If not found, try case-insensitive match
+    if (!type && relationshipType) {
+      const lowerType = relationshipType.toLowerCase();
+      for (const [key, value] of get().typesMap.entries()) {
+        if (key.toLowerCase() === lowerType) {
+          type = value;
+          break;
+        }
+      }
+    }
+
     return type?.category_confidence ?? null;
   },
 
   isAmbiguous: (relationshipType) => {
-    const type = get().typesMap.get(relationshipType);
+    // Try exact match first
+    let type = get().typesMap.get(relationshipType);
+
+    // If not found, try case-insensitive match
+    if (!type && relationshipType) {
+      const lowerType = relationshipType.toLowerCase();
+      for (const [key, value] of get().typesMap.entries()) {
+        if (key.toLowerCase() === lowerType) {
+          type = value;
+          break;
+        }
+      }
+    }
+
     return type?.category_ambiguous ?? false;
   },
 }));

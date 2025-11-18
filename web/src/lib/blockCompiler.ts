@@ -7,12 +7,22 @@
 import type { Node, Edge } from 'reactflow';
 import type {
   BlockData,
+  StartBlockParams,
+  EndBlockParams,
   SearchBlockParams,
+  VectorSearchBlockParams,
   SelectConceptBlockParams,
   NeighborhoodBlockParams,
   PathToBlockParams,
-  FilterBlockParams,
+  OntologyFilterBlockParams,
+  EdgeFilterBlockParams,
+  NodeFilterBlockParams,
+  AndBlockParams,
+  OrBlockParams,
+  NotBlockParams,
   LimitBlockParams,
+  EpistemicFilterBlockParams,
+  EnrichBlockParams,
   CompiledQuery,
 } from '../types/blocks';
 
@@ -29,27 +39,34 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
     return { cypher: '', errors, warnings };
   }
 
-  // Find the starting block (no incoming edges)
-  const startingNodes = nodes.filter(node => {
-    return !edges.some(edge => edge.target === node.id);
-  });
+  // Find explicit Start blocks
+  const startBlocks = nodes.filter(node => node.data.type === 'start');
 
-  if (startingNodes.length === 0) {
-    errors.push('No starting block found (every block has an input)');
+  if (startBlocks.length === 0) {
+    errors.push('No Start block found - add a Start block to begin your query');
     return { cypher: '', errors, warnings };
   }
 
-  if (startingNodes.length > 1) {
-    errors.push('Multiple starting blocks found - only one starting block is allowed');
+  if (startBlocks.length > 1) {
+    errors.push('Multiple Start blocks found - only one Start block is allowed');
     return { cypher: '', errors, warnings };
   }
 
-  // Build execution chain by following edges
+  // Find explicit End blocks
+  const endBlocks = nodes.filter(node => node.data.type === 'end');
+  if (endBlocks.length === 0) {
+    warnings.push('No End block found - consider adding an End block to mark query completion');
+  }
+
+  // Build execution chain by following edges from Start block
   const executionChain: Node<BlockData>[] = [];
-  let currentNode = startingNodes[0];
+  let currentNode = startBlocks[0];
 
   while (currentNode) {
-    executionChain.push(currentNode);
+    // Add to execution chain (skip Start/End blocks - they're flow markers only)
+    if (currentNode.data.type !== 'start' && currentNode.data.type !== 'end') {
+      executionChain.push(currentNode);
+    }
 
     // Find next node
     const outgoingEdge = edges.find(edge => edge.source === currentNode.id);
@@ -77,6 +94,9 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
   let currentVariable = 'start';
   let limitValue: number | null = null;
 
+  // Track all variables to return (nodes and paths)
+  const returnVariables: string[] = [];
+
   for (let i = 0; i < executionChain.length; i++) {
     const block = executionChain[i];
     const isFirst = i === 0;
@@ -89,8 +109,17 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
     }
 
     try {
-      const { cypher, outputVariable } = compileBlock(block, currentVariable, isFirst, variableCounter);
+      const { cypher, outputVariable, pathVariable } = compileBlock(block, currentVariable, isFirst, variableCounter);
       cypherParts.push(cypher);
+
+      // Track variables to return
+      if (isFirst && outputVariable) {
+        returnVariables.push(outputVariable);
+      }
+      if (pathVariable) {
+        returnVariables.push(pathVariable);
+      }
+
       currentVariable = outputVariable;
       variableCounter++;
     } catch (error: any) {
@@ -99,8 +128,13 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
     }
   }
 
-  // Add final RETURN statement
-  cypherParts.push(`RETURN DISTINCT ${currentVariable}`);
+  // Add final RETURN statement with all tracked variables
+  // This ensures we get both nodes and relationships (via paths)
+  const uniqueVars = [...new Set(returnVariables)];
+  if (uniqueVars.length === 0) {
+    uniqueVars.push(currentVariable);
+  }
+  cypherParts.push(`RETURN DISTINCT ${uniqueVars.join(', ')}`);
 
   // Add LIMIT after RETURN if present
   if (limitValue !== null) {
@@ -118,19 +152,33 @@ export function compileBlocksToOpenCypher(nodes: Node<BlockData>[], edges: Edge[
 
 /**
  * Compile a single block to openCypher
- * Returns the cypher clause and the output variable name
+ * Returns the cypher clause, output variable name, and optional path variable
  */
 function compileBlock(
   node: Node<BlockData>,
   inputVariable: string,
   isFirst: boolean,
   counter: number
-): { cypher: string; outputVariable: string } {
+): { cypher: string; outputVariable: string; pathVariable?: string } {
   const { type, params } = node.data;
 
   switch (type) {
+    case 'start':
+    case 'end':
+      // Flow control blocks - no Cypher generation
+      return { cypher: '', outputVariable: inputVariable };
+
     case 'search':
       return compileSearchBlock(params as SearchBlockParams, isFirst, counter);
+
+    case 'vectorSearch':
+      // Smart block - uses API semantic search endpoint
+      // The execution handler will detect this and use the search API
+      const vsParams = params as VectorSearchBlockParams;
+      return {
+        cypher: `// Vector Search (Smart Block): "${vsParams.query}" @ ${Math.round((vsParams.similarity || 0.7) * 100)}% similarity, limit ${vsParams.limit || 10}`,
+        outputVariable: `vs${counter}`
+      };
 
     case 'selectConcept':
       return compileSelectConceptBlock(params as SelectConceptBlockParams, isFirst);
@@ -141,11 +189,53 @@ function compileBlock(
     case 'pathTo':
       return compilePathToBlock(params as PathToBlockParams, inputVariable, counter);
 
-    case 'filter':
-      return compileFilterBlock(params as FilterBlockParams, inputVariable);
+    case 'filterOntology':
+      return compileOntologyFilterBlock(params as OntologyFilterBlockParams, inputVariable);
+
+    case 'filterEdge':
+      return compileEdgeFilterBlock(params as EdgeFilterBlockParams, inputVariable);
+
+    case 'filterNode':
+      return compileNodeFilterBlock(params as NodeFilterBlockParams, inputVariable);
+
+    case 'and':
+      // AND requires multiple inputs for true intersection
+      // In linear flow, it acts as a pass-through marker
+      // Full implementation needs DAG traversal support
+      return {
+        cypher: `// AND: Intersection point (requires multiple input branches for full effect)`,
+        outputVariable: inputVariable
+      };
+
+    case 'or':
+      // OR requires multiple inputs for true union
+      // In linear flow, it acts as a pass-through marker
+      // Full implementation needs DAG traversal support
+      return {
+        cypher: `// OR: Union point (requires multiple input branches for full effect)`,
+        outputVariable: inputVariable
+      };
+
+    case 'not':
+      return compileNotBlock(params as NotBlockParams, inputVariable);
 
     case 'limit':
       return compileLimitBlock(params as LimitBlockParams);
+
+    case 'epistemicFilter':
+      // Smart block - filters relationships by epistemic status
+      const efParams = params as EpistemicFilterBlockParams;
+      const includeStr = efParams.includeStatuses?.length > 0 ? efParams.includeStatuses.join(', ') : 'all';
+      const excludeStr = efParams.excludeStatuses?.length > 0 ? efParams.excludeStatuses.join(', ') : 'none';
+      return {
+        cypher: `// Epistemic Filter (Smart Block): include [${includeStr}], exclude [${excludeStr}]`,
+        outputVariable: inputVariable
+      };
+
+    case 'enrich':
+      // Enrich block doesn't generate Cypher - it's a post-processing marker
+      // The execution handler will detect this block and fetch concept details
+      return { cypher: '// Enrich: fetch full concept details after query', outputVariable: inputVariable };
 
     default:
       throw new Error(`Unknown block type: ${type}`);
@@ -164,9 +254,12 @@ function compileSearchBlock(params: SearchBlockParams, _isFirst: boolean, counte
   // Note: This generates a pattern match, but doesn't actually do semantic search
   // The semantic search would need to happen via the search endpoint first,
   // then we'd use the returned concept IDs here
-  // For now, we do a simple CONTAINS match
+  // For now, we do a case-insensitive CONTAINS match
   const outputVar = `c${counter}`;
-  const cypher = `MATCH (${outputVar}:Concept)\nWHERE ${outputVar}.label CONTAINS '${escapeString(params.query)}'`;
+  const limit = params.limit || 1;
+
+  // Use WITH clause to limit results before subsequent operations
+  const cypher = `MATCH (${outputVar}:Concept)\nWHERE toLower(${outputVar}.label) CONTAINS toLower('${escapeString(params.query)}')\nWITH ${outputVar} LIMIT ${limit}`;
 
   return { cypher, outputVariable: outputVar };
 }
@@ -193,6 +286,7 @@ function compileNeighborhoodBlock(
   }
 
   const outputVar = `neighbor${counter}`;
+  const pathVar = `p${counter}`;
 
   // ADR-065: Build relationship type filter
   // Priority: explicit relationshipTypes > epistemic filtering > all types
@@ -213,18 +307,20 @@ function compileNeighborhoodBlock(
     ? `:${relTypes.join('|')}`
     : '';
 
+  // Use path pattern to capture both nodes and relationships
   let pattern: string;
   if (params.direction === 'outgoing') {
-    pattern = `(${inputVariable})-[${relFilter}*1..${params.depth}]->(${outputVar}:Concept)`;
+    pattern = `${pathVar} = (${inputVariable})-[${relFilter}*1..${params.depth}]->(${outputVar}:Concept)`;
   } else if (params.direction === 'incoming') {
-    pattern = `(${inputVariable})<-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
+    pattern = `${pathVar} = (${inputVariable})<-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
   } else {
-    pattern = `(${inputVariable})-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
+    pattern = `${pathVar} = (${inputVariable})-[${relFilter}*1..${params.depth}]-(${outputVar}:Concept)`;
   }
 
   const cypher = `MATCH ${pattern}`;
 
-  return { cypher, outputVariable: outputVar };
+  // Return both the neighbor node (for chaining) and path (for relationships)
+  return { cypher, outputVariable: outputVar, pathVariable: pathVar };
 }
 
 function compilePathToBlock(
@@ -256,27 +352,61 @@ function compilePathToBlock(
   return { cypher, outputVariable: pathVar };
 }
 
-function compileFilterBlock(params: FilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
-  const conditions: string[] = [];
-
-  if (params.ontologies && params.ontologies.length > 0) {
-    const ontologyList = params.ontologies.map(o => `'${escapeString(o)}'`).join(', ');
-    conditions.push(`${inputVariable}.ontology IN [${ontologyList}]`);
+function compileOntologyFilterBlock(params: OntologyFilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  if (!params.ontologies || params.ontologies.length === 0) {
+    throw new Error('Ontology filter block has no ontologies specified');
   }
 
-  // Note: Relationship type filtering is better done in neighborhood blocks
-  // but we can add it here too if needed
+  const conditions = params.ontologies.map(ont => {
+    // Check if it looks like a regex pattern
+    if (/[.*+?^${}()|[\]\\]/.test(ont)) {
+      return `${inputVariable}.ontology =~ '${escapeString(ont)}'`;
+    } else {
+      return `${inputVariable}.ontology = '${escapeString(ont)}'`;
+    }
+  });
+
+  const cypher = `WHERE ${conditions.join(' OR ')}`;
+  return { cypher, outputVariable: inputVariable };
+}
+
+function compileEdgeFilterBlock(params: EdgeFilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  if (!params.relationshipTypes || params.relationshipTypes.length === 0) {
+    throw new Error('Edge filter block has no relationship types specified');
+  }
+
+  // Note: Edge filtering is complex in openCypher because we need to reference
+  // relationships from a previous MATCH. This works best when used with neighborhood blocks.
+  // For now, we'll generate a comment indicating this limitation.
+  const cypher = `// Edge filter (relationship types: ${params.relationshipTypes.join(', ')}) - best used with Neighborhood block`;
+
+  return { cypher, outputVariable: inputVariable };
+}
+
+function compileNodeFilterBlock(params: NodeFilterBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  const conditions: string[] = [];
+
+  if (params.nodeLabels && params.nodeLabels.length > 0) {
+    const labelConditions = params.nodeLabels.map(label => {
+      // Check if it looks like a regex pattern
+      if (/[.*+?^${}()|[\]\\]/.test(label)) {
+        return `${inputVariable}.label =~ '${escapeString(label)}'`;
+      } else {
+        return `${inputVariable}.label = '${escapeString(label)}'`;
+      }
+    });
+    conditions.push(`(${labelConditions.join(' OR ')})`);
+  }
 
   if (params.minConfidence !== undefined && params.minConfidence > 0) {
     conditions.push(`${inputVariable}.confidence >= ${params.minConfidence}`);
   }
 
   if (conditions.length === 0) {
-    throw new Error('Filter block has no conditions');
+    throw new Error('Node filter block has no conditions specified');
   }
 
   const cypher = `WHERE ${conditions.join(' AND ')}`;
-
   return { cypher, outputVariable: inputVariable };
 }
 
@@ -290,6 +420,17 @@ function compileLimitBlock(params: LimitBlockParams): { cypher: string; outputVa
   const cypher = `LIMIT ${params.count}`;
 
   return { cypher, outputVariable: '' }; // Empty because LIMIT doesn't produce a variable
+}
+
+function compileNotBlock(params: NotBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  if (!params.excludePattern || params.excludePattern.trim() === '') {
+    throw new Error('NOT block requires an exclude pattern');
+  }
+
+  const property = params.excludeProperty || 'label';
+  const cypher = `WHERE NOT toLower(${inputVariable}.${property}) CONTAINS toLower('${escapeString(params.excludePattern)}')`;
+
+  return { cypher, outputVariable: inputVariable };
 }
 
 // ============================================================================

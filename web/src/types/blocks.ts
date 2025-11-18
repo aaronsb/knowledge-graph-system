@@ -10,7 +10,25 @@ import type { Node } from 'reactflow';
 // Block Types
 // ============================================================================
 
-export type BlockType = 'search' | 'selectConcept' | 'neighborhood' | 'pathTo' | 'filter' | 'limit';
+export type BlockType =
+  | 'start'
+  | 'end'
+  // Cypher blocks (generate openCypher)
+  | 'search'        // Text contains search
+  | 'selectConcept'
+  | 'neighborhood'
+  | 'pathTo'
+  | 'filterOntology'
+  | 'filterEdge'
+  | 'filterNode'
+  | 'and'
+  | 'or'
+  | 'not'
+  | 'limit'
+  // Smart blocks (use API calls)
+  | 'vectorSearch'  // Semantic search with embeddings
+  | 'epistemicFilter' // Filter by epistemic status
+  | 'enrich';
 
 // ============================================================================
 // Block Parameters
@@ -18,8 +36,14 @@ export type BlockType = 'search' | 'selectConcept' | 'neighborhood' | 'pathTo' |
 
 export interface SearchBlockParams {
   query: string;
-  similarity: number; // 0.0 - 1.0
+  similarity: number; // 0.0 - 1.0 (not used in text search, kept for compatibility)
   limit?: number;
+}
+
+export interface VectorSearchBlockParams {
+  query: string;
+  similarity: number; // 0.0 - 1.0 threshold for semantic matching
+  limit: number;
 }
 
 export interface SelectConceptBlockParams {
@@ -48,14 +72,62 @@ export interface PathToBlockParams {
   maxHops: number; // 1-10
 }
 
-export interface FilterBlockParams {
+export interface OntologyFilterBlockParams {
   ontologies?: string[];
+}
+
+export interface EdgeFilterBlockParams {
   relationshipTypes?: string[];
+}
+
+export interface NodeFilterBlockParams {
+  nodeLabels?: string[];
   minConfidence?: number; // 0.0 - 1.0
 }
 
 export interface LimitBlockParams {
   count: number;
+}
+
+export interface StartBlockParams {
+  // Execution mode for the query flow
+  executionMode: 'interactive' | 'published';
+  // Optional name for the query flow (used for saving and future API endpoints)
+  flowName?: string;
+}
+
+export interface EndBlockParams {
+  // Output format for query results
+  outputFormat: 'visualization' | 'json' | 'csv';
+}
+
+export interface AndBlockParams {
+  // Automatically accepts multiple connections - no manual configuration needed
+}
+
+export interface OrBlockParams {
+  // Automatically accepts multiple connections - no manual configuration needed
+}
+
+export interface NotBlockParams {
+  // Pattern to exclude from results
+  excludePattern?: string;
+  // Property-based exclusion
+  excludeProperty?: 'label' | 'ontology';
+}
+
+export interface EpistemicFilterBlockParams {
+  // Epistemic statuses to include (if empty, no include filter)
+  includeStatuses: string[];
+  // Epistemic statuses to exclude
+  excludeStatuses: string[];
+}
+
+export interface EnrichBlockParams {
+  // Options for what to enrich
+  fetchOntology: boolean;
+  fetchGrounding: boolean;
+  fetchSearchTerms: boolean;
 }
 
 // ============================================================================
@@ -65,7 +137,23 @@ export interface LimitBlockParams {
 export interface BlockData {
   type: BlockType;
   label: string;
-  params: SearchBlockParams | SelectConceptBlockParams | NeighborhoodBlockParams | PathToBlockParams | FilterBlockParams | LimitBlockParams;
+  params:
+    | StartBlockParams
+    | EndBlockParams
+    | SearchBlockParams
+    | VectorSearchBlockParams
+    | SelectConceptBlockParams
+    | NeighborhoodBlockParams
+    | PathToBlockParams
+    | OntologyFilterBlockParams
+    | EdgeFilterBlockParams
+    | NodeFilterBlockParams
+    | AndBlockParams
+    | OrBlockParams
+    | NotBlockParams
+    | LimitBlockParams
+    | EpistemicFilterBlockParams
+    | EnrichBlockParams;
 }
 
 // ============================================================================

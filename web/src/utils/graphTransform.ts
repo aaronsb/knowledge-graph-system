@@ -53,7 +53,19 @@ export function transformForD3(
   // Transform links - enrich with vocabulary data from store
   const links: D3Link[] = apiLinks.map(link => {
     // Look up category from vocabulary store
-    const category = vocabStore.getCategory(link.relationship_type) || link.category || 'default';
+    let category = vocabStore.getCategory(link.relationship_type);
+
+    if (!category) {
+      // If vocabulary lookup failed, check if API provided category
+      category = link.category;
+    }
+
+    if (!category || category === 'default') {
+      // If still no category, group under "Uncategorized" instead of individual types
+      // This keeps the legend cleaner and indicates these need categorization
+      category = 'Uncategorized';
+    }
+
     const categoryConfidence = vocabStore.getConfidence(link.relationship_type) || 1.0;
 
     return {
@@ -128,6 +140,43 @@ export function filterByRelationshipType(
   });
 
   // Filter nodes to only include connected ones
+  const filteredNodes = data.nodes.filter(node => connectedNodeIds.has(node.id));
+
+  return {
+    nodes: filteredNodes,
+    links: filteredLinks,
+  };
+}
+
+/**
+ * Filter graph data by edge categories
+ * Hides edges with invisible categories AND their target nodes
+ * (keeps source nodes as they may have other visible connections)
+ */
+export function filterByEdgeCategory(
+  data: GraphData,
+  visibleCategories: Set<string>
+): GraphData {
+  // If empty set, show all (default state)
+  if (visibleCategories.size === 0) {
+    return data;
+  }
+
+  // Filter links to only include visible categories
+  const filteredLinks = data.links.filter(link =>
+    visibleCategories.has(link.category || 'default')
+  );
+
+  // Get all node IDs that have visible connections
+  const connectedNodeIds = new Set<string>();
+  filteredLinks.forEach(link => {
+    const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+    const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+    connectedNodeIds.add(sourceId);
+    connectedNodeIds.add(targetId);
+  });
+
+  // Filter nodes to only include those with visible connections
   const filteredNodes = data.nodes.filter(node => connectedNodeIds.has(node.id));
 
   return {
