@@ -73,7 +73,9 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
           max="5"
           value={depth}
           onChange={handleDepthChange}
-          className="w-16 px-2 py-1 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-16 px-2 py-1 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 nodrag"
         />
         <span className="text-xs text-muted-foreground dark:text-gray-400">hops</span>
       </div>

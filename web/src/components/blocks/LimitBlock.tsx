@@ -38,7 +38,9 @@ export const LimitBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
           max="1000"
           value={count}
           onChange={handleCountChange}
-          className="flex-1 px-2 py-1.5 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="flex-1 px-2 py-1.5 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 nodrag"
         />
       </div>
 
