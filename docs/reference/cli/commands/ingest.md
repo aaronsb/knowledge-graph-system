@@ -65,8 +65,8 @@ kg directory <dir>
 |--------|-------------|---------|
 | `-o, --ontology <name>` | Ontology/collection name (required unless --directories-as-ontologies). Single ontology receives all files. | - |
 | `-p, --pattern <patterns...>` | File patterns to match (glob patterns). Text and image extensions supported. | `["*.md","*.txt","*.png","*.jpg","*.jpeg","*.gif","*.webp","*.bmp"]` |
-| `-r, --recurse` | Recursively scan subdirectories. Use "--recurse --depth all" for unlimited depth, "--recurse --depth 2" for 2 levels, etc. | `false` |
-| `-d, --depth <n>` | Maximum recursion depth: 0=current dir only, 1=one level, 2=two levels, "all"=unlimited (use with --recurse) | `"0"` |
+| `-r, --recurse` | Enable recursive scanning of subdirectories. MUST combine with --depth. Examples: "--recurse --depth 1" (one level), "--recurse --depth 2" (two levels), "--recurse --depth all" (unlimited). Default depth is 0 (current dir only). | `false` |
+| `-d, --depth <n>` | Maximum recursion depth (use with --recurse). 0=current dir only (default), 1=one level deep, 2=two levels, "all"=unlimited depth. WITHOUT --recurse, only current directory is scanned. | `"0"` |
 | `--directories-as-ontologies` | Use directory names as ontology names (auto-creates ontologies from folder structure, cannot be combined with -o) | `false` |
 | `-f, --force` | Force re-ingestion even if duplicate (bypasses hash check for all files) | `false` |
 | `--dry-run` | Show what would be ingested without submitting jobs (validates files, checks duplicates, displays skip/submit counts, cancels test jobs) | `false` |
