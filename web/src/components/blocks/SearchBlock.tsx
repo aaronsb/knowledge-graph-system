@@ -11,6 +11,7 @@ export const SearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
   const params = data.params as SearchBlockParams;
   const [query, setQuery] = useState(params.query || '');
   const [similarity, setSimilarity] = useState(params.similarity || 0.6);
+  const [limit, setLimit] = useState(params.limit || 1);
 
   const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
@@ -22,6 +23,12 @@ export const SearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
     const newSimilarity = parseFloat(e.target.value);
     setSimilarity(newSimilarity);
     params.similarity = newSimilarity;
+  }, [params]);
+
+  const handleLimitChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLimit = parseInt(e.target.value, 10);
+    setLimit(newLimit);
+    params.limit = newLimit;
   }, [params]);
 
   return (
@@ -42,7 +49,7 @@ export const SearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
       />
 
       {/* Similarity Slider */}
-      <div className="space-y-1">
+      <div className="space-y-1 mb-3">
         <div className="flex items-center justify-between">
           <label className="text-xs text-muted-foreground dark:text-gray-400">Similarity</label>
           <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{Math.round(similarity * 100)}%</span>
@@ -54,6 +61,23 @@ export const SearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
           step="0.01"
           value={similarity}
           onChange={handleSimilarityChange}
+          className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-blue-400"
+        />
+      </div>
+
+      {/* Result Count */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-muted-foreground dark:text-gray-400">Max Results</label>
+          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{limit}</span>
+        </div>
+        <input
+          type="range"
+          min="1"
+          max="50"
+          step="1"
+          value={limit}
+          onChange={handleLimitChange}
           className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-blue-400"
         />
       </div>

@@ -215,7 +215,10 @@ function compileSearchBlock(params: SearchBlockParams, _isFirst: boolean, counte
   // then we'd use the returned concept IDs here
   // For now, we do a case-insensitive CONTAINS match
   const outputVar = `c${counter}`;
-  const cypher = `MATCH (${outputVar}:Concept)\nWHERE toLower(${outputVar}.label) CONTAINS toLower('${escapeString(params.query)}')`;
+  const limit = params.limit || 1;
+
+  // Use WITH clause to limit results before subsequent operations
+  const cypher = `MATCH (${outputVar}:Concept)\nWHERE toLower(${outputVar}.label) CONTAINS toLower('${escapeString(params.query)}')\nWITH ${outputVar} LIMIT ${limit}`;
 
   return { cypher, outputVariable: outputVar };
 }

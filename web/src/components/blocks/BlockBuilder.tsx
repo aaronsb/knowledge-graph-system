@@ -100,7 +100,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         label = 'End';
         break;
       case 'search':
-        params = { query: '', similarity: 0.6 } as SearchBlockParams;
+        params = { query: '', similarity: 0.6, limit: 1 } as SearchBlockParams;
         label = 'Search Concepts';
         break;
       case 'neighborhood':
