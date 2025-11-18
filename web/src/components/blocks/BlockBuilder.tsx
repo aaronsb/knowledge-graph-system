@@ -141,11 +141,11 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
 
     switch (type) {
       case 'start':
-        params = {} as StartBlockParams;
+        params = { executionMode: 'interactive' } as StartBlockParams;
         label = 'Start';
         break;
       case 'end':
-        params = {} as EndBlockParams;
+        params = { outputFormat: 'visualization' } as EndBlockParams;
         label = 'End';
         break;
       case 'search':

@@ -90,11 +90,15 @@ export interface LimitBlockParams {
 }
 
 export interface StartBlockParams {
-  // No parameters needed for start block
+  // Execution mode for the query flow
+  executionMode: 'interactive' | 'published';
+  // Optional name for the query flow (used for saving and future API endpoints)
+  flowName?: string;
 }
 
 export interface EndBlockParams {
-  // No parameters needed for end block
+  // Output format for query results
+  outputFormat: 'visualization' | 'json' | 'csv';
 }
 
 export interface AndBlockParams {
