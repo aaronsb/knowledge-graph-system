@@ -2003,6 +2003,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4831,6 +4842,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../architecture/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-065: Vocabulary-Based Provenance Relationships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -5738,6 +5777,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5777,6 +5827,7 @@
 <li><code>stats</code> - Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.</li>
 <li><code>info</code> - Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.</li>
 <li><code>health</code> - Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.</li>
+<li><code>query</code> - Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.<em>recursive.</em>' RETURN c.label LIMIT 5" --namespace concept</li>
 </ul>
 <hr />
 <h3 id="stats">stats</h3>
@@ -5794,6 +5845,42 @@
 <p><strong>Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
+<h3 id="query">query</h3>
+<p>Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.<em>recursive.</em>' RETURN c.label LIMIT 5" --namespace concept</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>query<span class="w"> </span>&lt;query&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;query&gt;</code> - openCypher/GQL query string</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--namespace &lt;type&gt;</code></td>
+<td>Namespace for safety: "concept", "vocab", or omit for raw (ADR-048)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--params &lt;json&gt;</code></td>
+<td>Query parameters as JSON string (e.g., '{"min_score": 0.8}')</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--limit &lt;n&gt;</code></td>
+<td>Convenience: Append LIMIT to query (overrides query LIMIT)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 
 
 

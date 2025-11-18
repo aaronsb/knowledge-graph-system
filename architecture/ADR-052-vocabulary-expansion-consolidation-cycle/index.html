@@ -5349,6 +5349,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-065: Vocabulary-Based Provenance Relationships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -7114,7 +7142,7 @@
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="n">prune</span><span class="p">()</span>  <span class="c1"># &quot;Toxic&quot; vocabulary ❌ DESTROYS REASONING CAPABILITY</span>
 </code></pre></div></p>
 <p><strong>CORRECT approach</strong> (grounding-aware classification):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Calculate semantic role based on average grounding of connected concepts</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Calculate epistemic status based on average grounding of connected concepts</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">for</span> <span class="n">vocab_type</span> <span class="ow">in</span> <span class="n">active_vocabulary</span><span class="p">:</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">edges</span> <span class="o">=</span> <span class="n">get_edges_using_vocabulary_type</span><span class="p">(</span><span class="n">vocab_type</span><span class="p">)</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
@@ -7131,15 +7159,15 @@
 <a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>    <span class="n">avg_grounding</span> <span class="o">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
 <a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>    <span class="n">max_grounding</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
 <a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>
-<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    <span class="c1"># CLASSIFY semantic role, don&#39;t prune</span>
-<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>    <span class="n">vocab_type</span><span class="o">.</span><span class="n">semantic_role</span> <span class="o">=</span> <span class="n">classify_semantic_role</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">)</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    <span class="c1"># CLASSIFY epistemic status, don&#39;t prune</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>    <span class="n">vocab_type</span><span class="o">.</span><span class="n">epistemic_status</span> <span class="o">=</span> <span class="n">classify_epistemic_status</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">)</span>
 <a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>    <span class="n">vocab_type</span><span class="o">.</span><span class="n">grounding_stats</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>        <span class="s1">&#39;avg&#39;</span><span class="p">:</span> <span class="n">avg_grounding</span><span class="p">,</span>
 <a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>        <span class="s1">&#39;max&#39;</span><span class="p">:</span> <span class="n">max_grounding</span><span class="p">,</span>
 <a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>        <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">histogram</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
 <a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>    <span class="p">}</span>
 <a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>
-<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="k">def</span><span class="w"> </span><span class="nf">classify_semantic_role</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">):</span>
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="k">def</span><span class="w"> </span><span class="nf">classify_epistemic_status</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">):</span>
 <a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a><span class="sd">    Classify vocabulary by the typical grounding of concepts it connects.</span>
 <a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>
@@ -7171,12 +7199,12 @@
 <p><strong>1. Contextual Query Filtering:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// Show me contradictory relationships (explore alternatives)</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">semantic_role</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;CONTRADICTORY&#39;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;CONTRADICTORY&#39;</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1">// Show me historical evolution (how did we get here?)</span>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">semantic_role</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;HISTORICAL&#39;</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;HISTORICAL&#39;</span>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
 </code></pre></div></p>
 <p><strong>2. Dialectical Analysis:</strong>
@@ -7251,21 +7279,21 @@
 <a id="__codelineno-21-22" name="__codelineno-21-22" href="#__codelineno-21-22"></a>    <span class="c1"># Store as vocabulary metadata (ADR-048)</span>
 <a id="__codelineno-21-23" name="__codelineno-21-23" href="#__codelineno-21-23"></a>    <span class="n">update_vocab_type</span><span class="p">(</span><span class="n">vocab_type</span><span class="p">,</span> <span class="n">grounding_stats</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span>
 </code></pre></div></p>
-<p><strong>Phase 2</strong>: Classify semantic roles
+<p><strong>Phase 2</strong>: Classify epistemic statuses
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Assign role based on average grounding</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">vocab_type</span><span class="o">.</span><span class="n">semantic_role</span> <span class="o">=</span> <span class="n">classify_semantic_role</span><span class="p">(</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">vocab_type</span><span class="o">.</span><span class="n">epistemic_status</span> <span class="o">=</span> <span class="n">classify_epistemic_status</span><span class="p">(</span>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;avg_grounding&#39;</span><span class="p">]</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Phase 3</strong>: Enable role-based querying
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1">// Find all vocabulary describing contradictions</span>
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="p">)</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">semantic_role</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;CONTRADICTORY&#39;</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;CONTRADICTORY&#39;</span>
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">grounding_stats</span>
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="c1">// Find all vocabulary describing current truth</span>
 <a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="p">)</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">semantic_role</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;AFFIRMATIVE&#39;</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;AFFIRMATIVE&#39;</span>
 <a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">grounding_stats</span>
 </code></pre></div></p>
 <p><strong>Phase 4</strong>: Dialectical query patterns

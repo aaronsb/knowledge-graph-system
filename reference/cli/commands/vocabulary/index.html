@@ -2398,6 +2398,56 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#epistemic-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        epistemic-status
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="epistemic-status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        show
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#measure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        measure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4974,6 +5024,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../architecture/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-065: Vocabulary-Based Provenance Relationships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
@@ -6024,6 +6102,56 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#epistemic-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        epistemic-status
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="epistemic-status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        show
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#measure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        measure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6076,6 +6204,7 @@
 <li><code>profiles-show</code> - Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.</li>
 <li><code>profiles-create</code> - Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.</li>
 <li><code>profiles-delete</code> - Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.</li>
+<li><code>epistemic-status</code> - Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: AFFIRMATIVE (high avg grounding &gt;0.8, well-established), CONTESTED (mixed grounding 0.2-0.8, debated), CONTRADICTORY (low grounding &lt;-0.5, contradicted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (&lt;3 measurements), UNCLASSIFIED (doesn't fit). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.</li>
 </ul>
 <hr />
 <h3 id="status">status</h3>
@@ -6454,6 +6583,81 @@
 <ul>
 <li><code>&lt;name&gt;</code> - Profile name to delete</li>
 </ul>
+<h3 id="epistemic-status">epistemic-status</h3>
+<p>Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: AFFIRMATIVE (high avg grounding &gt;0.8, well-established), CONTESTED (mixed grounding 0.2-0.8, debated), CONTRADICTORY (low grounding &lt;-0.5, contradicted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (&lt;3 measurements), UNCLASSIFIED (doesn't fit). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>epistemic-status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Subcommands:</strong></p>
+<ul>
+<li><code>list</code> - List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.</li>
+<li><code>show</code> - Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (AFFIRMATIVE/CONTESTED/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.</li>
+<li><code>measure</code> - Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().</li>
+</ul>
+<hr />
+<h4 id="list_1">list</h4>
+<p>List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--status &lt;status&gt;</code></td>
+<td>Filter by status: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h4 id="show">show</h4>
+<p>Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (AFFIRMATIVE/CONTESTED/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;type&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;type&gt;</code> - Relationship type to show (e.g., IMPLIES, SUPPORTS)</li>
+</ul>
+<h4 id="measure">measure</h4>
+<p>Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>measure<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--sample-size &lt;n&gt;</code></td>
+<td>Edges to sample per type (default: 100)</td>
+<td><code>100</code></td>
+</tr>
+<tr>
+<td><code>--no-store</code></td>
+<td>Run measurement without storing to database</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--verbose</code></td>
+<td>Include detailed statistics in output</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 
 
 
