@@ -115,7 +115,7 @@ const paletteSections: PaletteSection[] = [
   },
   {
     title: 'Smart Blocks',
-    description: 'API-powered operations',
+    description: 'Intelligent operations',
     blocks: [
       {
         type: 'vectorSearch',
