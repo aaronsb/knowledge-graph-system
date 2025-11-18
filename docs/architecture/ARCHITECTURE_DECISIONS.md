@@ -83,6 +83,7 @@ All ADRs follow a consistent format:
 | [ADR-064](ADR-064-specialized-truth-convergence-visualizations.md) | Specialized Truth Convergence Visualizations | Proposed | Expands web visualization beyond force graphs with specialized explorers: confidence heatmaps, polarity spectrums, provenance Sankey diagrams, concept lifecycle timelines, semantic diversity sunbursts, and 3D evidence mountains - leverages platform's unique truth convergence, semantic diversity, and provenance capabilities |
 | [ADR-065](ADR-065-vocabulary-based-provenance-relationships.md) | Vocabulary-Based Provenance Relationships | Accepted | Extends vocabulary system to provenance relationships (APPEARS, EVIDENCED_BY, FROM_SOURCE) - treats structural relationships as emergent vocabulary with embeddings and semantic matching, eliminating architectural asymmetry between concept-concept and concept-source relationships |
 | [ADR-066](ADR-066-published-query-endpoints.md) | Published Query Endpoints | Proposed | Saved query flows become REST API endpoints accessible via OAuth client credentials - enables external systems to execute curated queries without user sessions, supports JSON/CSV output formats, machine-to-machine authentication |
+| [ADR-067](ADR-067-web-app-workstation-architecture.md) | Web Application Workstation Architecture | Proposed | Restructure web app from visualization tool to knowledge workstation with sidebar categories: Explorers, Block Editor, Ingest, Jobs, Report, Edit, Admin - unified interface for all platform capabilities |
 
 ## How to Use This Index
 
