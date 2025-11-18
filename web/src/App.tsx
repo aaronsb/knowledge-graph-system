@@ -365,7 +365,7 @@ const AppContent: React.FC = () => {
       <div className="h-full flex flex-col">
         {/* Search Bar */}
         <div
-          className={`border-b border-border bg-card relative ${getZIndexClass('searchBar')}`}
+          className="border-b border-border bg-card relative"
           style={{
             height: queryMode === 'block-builder' ? `${searchBarHeight}px` : 'auto',
             overflow: queryMode === 'block-builder' ? 'hidden' : 'visible',
@@ -398,7 +398,7 @@ const AppContent: React.FC = () => {
         )}
 
         {/* Visualization Area */}
-        <div className="flex-1 relative">
+        <div className={`flex-1 relative ${!graphData && !isLoading ? 'pointer-events-none' : ''}`}>
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
               <div className="text-center">
@@ -418,7 +418,7 @@ const AppContent: React.FC = () => {
           )}
 
           {!graphData && !isLoading && (
-            <div className={`absolute inset-0 flex items-center justify-center ${getZIndexClass('content')}`}>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
               <div className="text-center max-w-md">
                 <h3 className="text-xl font-semibold mb-2">Welcome to Knowledge Graph Visualization</h3>
                 <p className="text-muted-foreground mb-4">

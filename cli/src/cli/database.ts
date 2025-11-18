@@ -134,4 +134,90 @@ export const databaseCommand = setCommandHelp(
           process.exit(1);
         }
       })
+  )
+  .addCommand(
+    new Command('query')
+      .description('Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ \'.*recursive.*\' RETURN c.label LIMIT 5" --namespace concept')
+      .argument('<query>', 'openCypher/GQL query string')
+      .option('--namespace <type>', 'Namespace for safety: "concept", "vocab", or omit for raw (ADR-048)')
+      .option('--params <json>', 'Query parameters as JSON string (e.g., \'{"min_score": 0.8}\')')
+      .option('--limit <n>', 'Convenience: Append LIMIT to query (overrides query LIMIT)', parseInt)
+      .action(async (query: string, options) => {
+        try {
+          const client = createClientFromEnv();
+
+          // Add LIMIT if provided via --limit flag
+          let finalQuery = query;
+          if (options.limit) {
+            // Simple append - user can use this or put LIMIT in query
+            if (!query.toUpperCase().includes('LIMIT')) {
+              finalQuery = `${query} LIMIT ${options.limit}`;
+            }
+          }
+
+          // Parse params if provided
+          let params = undefined;
+          if (options.params) {
+            try {
+              params = JSON.parse(options.params);
+            } catch (e) {
+              console.error(colors.status.error('✗ Invalid JSON in --params'));
+              process.exit(1);
+            }
+          }
+
+          // Determine namespace (undefined means null for raw queries)
+          const namespace = options.namespace || null;
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('🔍 Cypher Query'));
+          console.log(separator());
+          console.log(`\n${colors.ui.key('Query:')} ${colors.status.dim(finalQuery)}`);
+
+          if (namespace) {
+            console.log(`${colors.ui.key('Namespace:')} ${colors.status.success(namespace)} ${colors.status.dim('(namespace-safe, ADR-048)')}`);
+          } else {
+            console.log(`${colors.ui.key('Namespace:')} ${colors.status.warning('raw')} ${colors.status.dim('(no label injection, use with caution)')}`);
+          }
+
+          if (params) {
+            console.log(`${colors.ui.key('Parameters:')} ${colors.status.dim(JSON.stringify(params))}`);
+          }
+
+          const result = await client.executeCypherQuery(finalQuery, params, namespace);
+
+          if (!result.success) {
+            console.log('\n' + colors.status.error('✗ Query failed'));
+            console.log(colors.status.error(result.error || 'Unknown error'));
+            console.log('\n' + separator());
+            process.exit(1);
+          }
+
+          if (result.warning) {
+            console.log('\n' + colors.status.warning(`⚠ ${result.warning}`));
+          }
+
+          console.log('\n' + colors.stats.section(`Results (${result.rows_returned} rows)`));
+          console.log(separator(80, '─'));
+
+          if (result.rows_returned === 0) {
+            console.log(colors.status.dim('  No results returned'));
+          } else {
+            // Pretty-print results as table
+            result.results.forEach((row: any, idx: number) => {
+              console.log(`\n${colors.stats.label(`Row ${idx + 1}:`)}`);
+              for (const [key, value] of Object.entries(row)) {
+                const valueStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+                console.log(`  ${colors.ui.key(key + ':')} ${colors.ui.value(valueStr)}`);
+              }
+            });
+          }
+
+          console.log('\n' + separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Query execution failed'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
   );

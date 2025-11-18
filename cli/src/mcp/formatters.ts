@@ -132,6 +132,21 @@ export function formatConceptDetails(concept: ConceptDetailsResponse): string {
   output += `\n## Evidence (${concept.instances.length} instances)\n\n`;
   concept.instances.forEach((inst, i) => {
     output += `${i + 1}. ${inst.document} (para ${inst.paragraph}): "${inst.quote}"\n`;
+
+    // Include full context for chapter/verse citation if available
+    if (inst.full_text) {
+      // Extract chapter/verse from full_text (e.g., "# Chapter 46\n\n1. So Israel...")
+      const chapterMatch = inst.full_text.match(/^#\s*Chapter\s+(\d+)/i);
+      if (chapterMatch) {
+        output += `   Context: Chapter ${chapterMatch[1]}\n`;
+      }
+      // Show first 200 chars of full context for grounding
+      const contextPreview = inst.full_text.replace(/^#[^\n]*\n+/, '').substring(0, 200);
+      if (contextPreview && contextPreview !== inst.quote) {
+        output += `   Full context: ${contextPreview}${inst.full_text.length > 200 ? '...' : ''}\n`;
+      }
+    }
+
     // ADR-057: Indicate if this evidence has an image
     if (inst.has_image && inst.source_id) {
       output += `   Source: ${inst.source_id} [IMAGE AVAILABLE]\n`;

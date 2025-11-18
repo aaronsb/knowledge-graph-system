@@ -346,7 +346,7 @@ LIMIT 50`);
   const ModeIcon = modeInfo.icon;
 
   return (
-    <div className={`relative ${getZIndexClass('searchBar')} space-y-4`}>
+    <div className="relative space-y-4">
       {/* Header with Mode Info and Dial */}
       <div className="flex items-start justify-between gap-4">
         {/* Mode Description Panel */}

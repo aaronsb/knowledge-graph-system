@@ -61,7 +61,7 @@ async def list_ontologies(
             WITH ontology,
                  count(DISTINCT src) as source_count,
                  count(DISTINCT src.file_path) as file_count
-            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: ontology})
+            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {document: ontology})
             WITH ontology, source_count, file_count, count(DISTINCT c) as concept_count
             RETURN ontology, source_count, file_count, concept_count
             ORDER BY ontology
@@ -135,11 +135,11 @@ async def get_ontology_info(
             WITH count(DISTINCT s) as source_count,
                  count(DISTINCT s.file_path) as file_count,
                  collect(DISTINCT s.file_path) as files
-            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(src:Source {{document: '{ontology_name}'}})
+            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(src:Source {{document: '{ontology_name}'}})
             WITH source_count, file_count, files, count(DISTINCT c) as concept_count
             OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {{document: '{ontology_name}'}})
             WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
-            OPTIONAL MATCH (ontology_concept:Concept)-[:APPEARS_IN]->(:Source {{document: '{ontology_name}'}})
+            OPTIONAL MATCH (ontology_concept:Concept)-[:APPEARS]->(:Source {{document: '{ontology_name}'}})
             OPTIONAL MATCH (ontology_concept)-[r]->(other:Concept)
             RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
         """, fetch_one=True)
@@ -200,7 +200,7 @@ async def get_ontology_files(
             WHERE file_path IS NOT NULL
             MATCH (src:Source {{document: '{ontology_name}', file_path: file_path}})
             WITH file_path, count(src) as chunk_count
-            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {{document: '{ontology_name}', file_path: file_path}})
+            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {{document: '{ontology_name}', file_path: file_path}})
             WITH file_path, chunk_count, count(DISTINCT c) as concept_count
             RETURN file_path, chunk_count, concept_count
             ORDER BY file_path
@@ -280,7 +280,7 @@ async def delete_ontology(
             check = client._execute_cypher(f"""
                 MATCH (s:Source {{document: '{ontology_name}'}})
                 WITH count(s) as source_count
-                OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {{document: '{ontology_name}'}})
+                OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {{document: '{ontology_name}'}})
                 RETURN source_count, count(DISTINCT c) as concept_count
             """, fetch_one=True)
 
@@ -354,7 +354,7 @@ async def delete_ontology(
         # AGE doesn't support WHERE NOT with patterns, use OPTIONAL MATCH instead
         orphaned_result = client._execute_cypher("""
             MATCH (c:Concept)
-            OPTIONAL MATCH (c)-[:APPEARS_IN]->(s:Source)
+            OPTIONAL MATCH (c)-[:APPEARS]->(s:Source)
             WITH c, s
             WHERE s IS NULL
             DETACH DELETE c

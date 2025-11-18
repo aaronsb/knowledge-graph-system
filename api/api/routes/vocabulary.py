@@ -69,6 +69,13 @@ from ..models.vocabulary import (
     ReviewInfo,
     RejectionInfo,
 
+    # Epistemic Status (ADR-065 Phase 2)
+    EpistemicStatusMeasureRequest,
+    EpistemicStatusMeasureResponse,
+    EpistemicStatusListResponse,
+    EpistemicStatusInfo,
+    EpistemicStatusStats,
+
     # Enums
     ZoneEnum,
     PruningModeEnum,
@@ -1042,3 +1049,266 @@ async def analyze_vocabulary_type(
     except Exception as e:
         logger.error(f"Failed to analyze {relationship_type}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to analyze vocabulary type: {str(e)}")
+
+
+# =============================================================================
+# Epistemic Status Endpoints (ADR-065 Phase 2)
+# =============================================================================
+
+@router.post(
+    "/epistemic-status/measure",
+    response_model=EpistemicStatusMeasureResponse,
+    summary="Measure epistemic status for vocabulary types",
+    description="Run epistemic status classification measurement. Samples edges, calculates grounding patterns, and optionally stores results to VocabType nodes."
+)
+async def measure_epistemic_status(
+    request: EpistemicStatusMeasureRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin"))
+):
+    """
+    Measure epistemic status for all vocabulary types (ADR-065 Phase 2).
+
+    Uses EpistemicStatusService to:
+    - Sample edges for each vocabulary type
+    - Calculate grounding patterns dynamically
+    - Classify types as AFFIRMATIVE, CONTESTED, CONTRADICTORY, etc.
+    - Optionally store results to VocabType nodes
+
+    Requires admin role.
+    """
+    from datetime import datetime
+    from api.api.services.epistemic_status_service import EpistemicStatusService
+
+    try:
+        # Create service instance
+        client = AGEClient()
+        service = EpistemicStatusService(client)
+
+        # Run measurement
+        logger.info(f"Running epistemic status measurement (sample_size={request.sample_size}, store={request.store})")
+        results = service.measure_all_vocabulary(
+            sample_size=request.sample_size,
+            store=request.store
+        )
+
+        # Count classifications
+        classifications = {}
+        for vocab_type, data in results.items():
+            status = data['status']
+            classifications[status] = classifications.get(status, 0) + 1
+
+        # Build sample results for response
+        sample_results = []
+        sample_count = min(10, len(results))
+        for vocab_type, data in list(results.items())[:sample_count]:
+            stats = data['stats']
+            sample_results.append(EpistemicStatusInfo(
+                relationship_type=vocab_type,
+                epistemic_status=data['status'],
+                stats=EpistemicStatusStats(
+                    avg_grounding=stats['avg_grounding'],
+                    std_grounding=stats['std_grounding'],
+                    min_grounding=stats['min_grounding'],
+                    max_grounding=stats['max_grounding'],
+                    measured_concepts=stats['measured_concepts'],
+                    sampled_edges=stats['sampled_edges'],
+                    total_edges=stats['total_edges']
+                ),
+                rationale=data['rationale'],
+                status_measured_at=stats['measurement_timestamp']
+            ))
+
+        client.close()
+
+        total_types = len(results)
+        stored_count = total_types if request.store else 0
+
+        return EpistemicStatusMeasureResponse(
+            success=True,
+            message=f"Measured epistemic status for {total_types} vocabulary types",
+            measurement_timestamp=datetime.utcnow().isoformat(),
+            total_types=total_types,
+            stored_count=stored_count,
+            classifications=classifications,
+            sample_results=sample_results
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to measure epistemic status: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Measurement failed: {str(e)}")
+
+
+@router.get(
+    "/epistemic-status",
+    response_model=EpistemicStatusListResponse,
+    summary="List vocabulary types with epistemic status",
+    description="Get all vocabulary types with their epistemic status classifications and statistics."
+)
+async def list_epistemic_status(
+    current_user: CurrentUser,
+    status_filter: Optional[str] = Query(None, description="Filter by status: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED")
+):
+    """
+    List all vocabulary types with their epistemic status (ADR-065 Phase 2).
+    
+    Returns types with:
+    - epistemic_status classification
+    - Grounding statistics (avg, std, min, max)
+    - Measurement timestamp
+    - Sample sizes
+    """
+    try:
+        client = AGEClient()
+        
+        # Build where clause
+        where_clauses = ["v.epistemic_status IS NOT NULL"]
+        if status_filter:
+            where_clauses.append(f"v.epistemic_status = '{status_filter}'")
+        
+        where = " AND ".join(where_clauses)
+        
+        vocab_types = client.facade.match_vocab_types(where=where, limit=1000)
+        
+        types_info = []
+        for vt in vocab_types:
+            props = vt.get('v', {}).get('properties', {})
+            
+            # Parse epistemic_stats
+            stats_data = props.get('epistemic_stats')
+            stats = None
+            if stats_data:
+                if isinstance(stats_data, str):
+                    import json
+                    stats_dict = json.loads(stats_data)
+                else:
+                    stats_dict = stats_data
+                
+                stats = EpistemicStatusStats(
+                    avg_grounding=stats_dict.get('avg_grounding', 0.0),
+                    std_grounding=stats_dict.get('std_grounding', 0.0),
+                    min_grounding=stats_dict.get('min_grounding', 0.0),
+                    max_grounding=stats_dict.get('max_grounding', 0.0),
+                    measured_concepts=stats_dict.get('measured_concepts', 0),
+                    sampled_edges=stats_dict.get('sampled_edges', 0),
+                    total_edges=stats_dict.get('total_edges', 0)
+                )
+            
+            types_info.append(EpistemicStatusInfo(
+                relationship_type=props.get('name'),
+                epistemic_status=props.get('epistemic_status', 'UNCLASSIFIED'),
+                stats=stats,
+                rationale=None,
+                status_measured_at=props.get('status_measured_at')
+            ))
+        
+        # Get staleness information from graph_metrics
+        last_measurement_at = None
+        vocabulary_changes_delta = None
+        try:
+            conn = client.pool.getconn()
+            try:
+                from api.api.services.vocabulary_metrics_service import VocabularyMetricsService
+                metrics_service = VocabularyMetricsService(conn)
+
+                # Get vocabulary_change_counter delta
+                vocabulary_changes_delta = metrics_service.get_counter_delta('vocabulary_change_counter')
+
+                # Get last measurement timestamp from any VocabType (they're all measured together)
+                if types_info and types_info[0].status_measured_at:
+                    last_measurement_at = types_info[0].status_measured_at
+            finally:
+                client.pool.putconn(conn)
+        except Exception as e:
+            logger.warning(f"Failed to fetch staleness information: {e}")
+
+        return EpistemicStatusListResponse(
+            total=len(types_info),
+            types=types_info,
+            last_measurement_at=last_measurement_at,
+            vocabulary_changes_since_measurement=vocabulary_changes_delta
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to list epistemic status: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list epistemic status: {str(e)}")
+
+
+@router.get(
+    "/epistemic-status/{relationship_type}",
+    response_model=EpistemicStatusInfo,
+    summary="Get epistemic status for specific vocabulary type",
+    description="Get detailed epistemic status information for a specific relationship type."
+)
+async def get_epistemic_status(
+    relationship_type: str,
+    current_user: CurrentUser
+):
+    """
+    Get epistemic status for a specific vocabulary type (ADR-065 Phase 2).
+    
+    Returns detailed classification and statistics for the relationship type.
+    """
+    try:
+        client = AGEClient()
+        
+        vocab_types = client.facade.match_vocab_types(
+            where=f"v.name = '{relationship_type}'",
+            limit=1
+        )
+        
+        if not vocab_types:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Vocabulary type not found: {relationship_type}"
+            )
+        
+        props = vocab_types[0].get('v', {}).get('properties', {})
+        
+        # Parse epistemic_stats
+        stats_data = props.get('epistemic_stats')
+        stats = None
+        if stats_data:
+            if isinstance(stats_data, str):
+                import json
+                stats_dict = json.loads(stats_data)
+            else:
+                stats_dict = stats_data
+            
+            stats = EpistemicStatusStats(
+                avg_grounding=stats_dict.get('avg_grounding', 0.0),
+                std_grounding=stats_dict.get('std_grounding', 0.0),
+                min_grounding=stats_dict.get('min_grounding', 0.0),
+                max_grounding=stats_dict.get('max_grounding', 0.0),
+                measured_concepts=stats_dict.get('measured_concepts', 0),
+                sampled_edges=stats_dict.get('sampled_edges', 0),
+                total_edges=stats_dict.get('total_edges', 0)
+            )
+        
+        # Get staleness information from graph_metrics
+        vocabulary_changes_delta = None
+        try:
+            conn = client.pool.getconn()
+            try:
+                from api.api.services.vocabulary_metrics_service import VocabularyMetricsService
+                metrics_service = VocabularyMetricsService(conn)
+                vocabulary_changes_delta = metrics_service.get_counter_delta('vocabulary_change_counter')
+            finally:
+                client.pool.putconn(conn)
+        except Exception as e:
+            logger.warning(f"Failed to fetch staleness information: {e}")
+
+        return EpistemicStatusInfo(
+            relationship_type=props.get('name'),
+            epistemic_status=props.get('epistemic_status', 'UNCLASSIFIED'),
+            stats=stats,
+            rationale=None,
+            status_measured_at=props.get('status_measured_at'),
+            vocabulary_changes_since_measurement=vocabulary_changes_delta
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get epistemic status for {relationship_type}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get epistemic status: {str(e)}")

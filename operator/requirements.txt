@@ -18,3 +18,6 @@ python-dotenv==1.2.1
 httpx==0.27.2  # Pinned to 0.27.x (0.28.x removed proxies parameter, breaks openai SDK)
 openai==2.7.1  # Latest stable
 anthropic==0.72.0  # Latest stable
+
+# Numeric computation (for grounding calculation in admin scripts)
+numpy==2.3.4  # Required for calculate_vocab_epistemic_status.py and other measurement tools

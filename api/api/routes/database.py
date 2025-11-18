@@ -15,9 +15,13 @@ from ..dependencies.auth import CurrentUser
 from ..models.database import (
     DatabaseStatsResponse,
     DatabaseInfoResponse,
-    DatabaseHealthResponse
+    DatabaseHealthResponse,
+    CypherQueryRequest,
+    CypherQueryResponse,
+    MetricCounter
 )
 from api.api.lib.age_client import AGEClient
+from api.api.services.vocabulary_metrics_service import VocabularyMetricsService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/database", tags=["database"])
@@ -73,6 +77,30 @@ async def get_database_stats(
             for record in (rel_types or [])
         ]
 
+        # Fetch graph metrics (change counters)
+        metrics_dict = None
+        try:
+            # Get database connection from AGE client's pool
+            import psycopg2
+            conn = client.pool.getconn()
+            try:
+                metrics_service = VocabularyMetricsService(conn)
+                all_metrics = metrics_service.get_all_metrics()
+
+                # Convert to MetricCounter objects
+                metrics_dict = {}
+                for metric_name, metric_data in all_metrics.items():
+                    metrics_dict[metric_name] = MetricCounter(
+                        counter=metric_data['counter'],
+                        delta=metric_data['delta'],
+                        last_measured_at=metric_data['last_measured_at'].isoformat() if metric_data['last_measured_at'] else None
+                    )
+            finally:
+                client.pool.putconn(conn)
+        except Exception as metrics_error:
+            logger.warning(f"Failed to fetch graph metrics: {metrics_error}")
+            # Don't fail the whole request if metrics fetch fails
+
         return DatabaseStatsResponse(
             nodes={
                 "concepts": stats['Concept'],
@@ -82,7 +110,8 @@ async def get_database_stats(
             relationships={
                 "total": total_relationships,
                 "by_type": rel_type_list
-            }
+            },
+            metrics=metrics_dict
         )
 
     except Exception as e:
@@ -232,3 +261,111 @@ async def check_database_health():
         logger.error(f"Database health check failed: {e}", exc_info=True)
 
     return DatabaseHealthResponse(**health)
+
+
+@router.post("/query", response_model=CypherQueryResponse)
+async def execute_cypher_query(
+    request: CypherQueryRequest,
+    current_user: CurrentUser
+):
+    """
+    Execute a custom openCypher/GQL query (ADR-048).
+
+    **Namespace Safety (ADR-048):**
+    - `namespace='concept'`: Query operates on Concept/Source/Instance nodes (default namespace)
+    - `namespace='vocab'`: Query operates on VocabType/VocabCategory nodes
+    - `namespace=None` (raw): Full control, no automatic label injection (use with caution)
+
+    **Warning:** Raw queries without namespace can operate on mixed node types.
+    For internal code, always use namespace-safe facade methods when possible.
+
+    **Authentication:** Requires valid OAuth token
+
+    Args:
+        request: CypherQueryRequest with query, optional params, optional namespace
+
+    Returns:
+        CypherQueryResponse with results, row count, namespace used, and any warnings
+
+    Examples:
+        ```json
+        // Concept namespace (safe)
+        {
+          "query": "MATCH (c) WHERE c.label =~ '.*recursive.*' RETURN c.label, c.concept_id LIMIT 5",
+          "namespace": "concept"
+        }
+
+        // Vocabulary namespace (safe)
+        {
+          "query": "MATCH (v) WHERE v.is_active = true RETURN v.name, v.edge_count ORDER BY v.edge_count DESC",
+          "namespace": "vocab"
+        }
+
+        // Raw query (powerful but risky)
+        {
+          "query": "MATCH (n) RETURN labels(n), count(*) GROUP BY labels(n)",
+          "namespace": null
+        }
+        ```
+    """
+    client = get_age_client()
+    try:
+        warning = None
+        namespace_used = request.namespace
+
+        # Warn if using raw queries without namespace
+        if request.namespace is None:
+            warning = "Raw query without namespace - may operate on mixed node types. Consider using namespace='concept' or 'vocab' for safety (ADR-048)."
+            logger.warning(f"User {current_user.username} executing raw cypher query: {request.query[:100]}...")
+
+        # Execute query using facade for namespace safety
+        try:
+            if request.namespace:
+                # Use facade's execute_raw with namespace awareness
+                results = client.facade.execute_raw(
+                    query=request.query,
+                    params=request.params or {},
+                    namespace=request.namespace
+                )
+            else:
+                # Raw execution - no namespace injection
+                results = client._execute_cypher(
+                    query=request.query,
+                    params=request.params or {}
+                )
+
+            # Convert results to list of dicts (handle agtype unwrapping)
+            result_list = []
+            if results:
+                for row in results:
+                    # Unwrap agtype values if present
+                    unwrapped_row = {}
+                    for key, value in row.items():
+                        try:
+                            # Try to unwrap if it's an agtype value
+                            unwrapped_row[key] = client._unwrap_agtype(value)
+                        except:
+                            # If unwrapping fails, use raw value
+                            unwrapped_row[key] = value
+                    result_list.append(unwrapped_row)
+
+            return CypherQueryResponse(
+                success=True,
+                results=result_list,
+                rows_returned=len(result_list),
+                namespace_used=namespace_used,
+                warning=warning
+            )
+
+        except Exception as query_error:
+            logger.error(f"Cypher query execution failed: {query_error}", exc_info=True)
+            return CypherQueryResponse(
+                success=False,
+                results=[],
+                rows_returned=0,
+                namespace_used=namespace_used,
+                error=str(query_error)
+            )
+
+    finally:
+        client.close()

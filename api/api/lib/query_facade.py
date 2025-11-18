@@ -146,16 +146,20 @@ class GraphQueryFacade:
         rel_types: Optional[List[str]] = None,
         where: Optional[str] = None,
         params: Optional[Dict] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        include_epistemic_status: Optional[List[str]] = None,
+        exclude_epistemic_status: Optional[List[str]] = None
     ) -> List[Dict]:
         """
-        Match relationships between concepts.
+        Match relationships between concepts with optional epistemic status filtering.
 
         Args:
             rel_types: Optional list of relationship types (e.g., ["IMPLIES", "SUPPORTS"])
             where: Optional WHERE clause
             params: Query parameters
             limit: Optional result limit
+            include_epistemic_status: Only include relationships with these epistemic statuses (ADR-065 Phase 2)
+            exclude_epistemic_status: Exclude relationships with these epistemic statuses (ADR-065 Phase 2)
 
         Returns:
             List of (source, relationship, target) dictionaries
@@ -166,7 +170,53 @@ class GraphQueryFacade:
                 rel_types=["SUPPORTS"],
                 where="r.edge_count > 5"
             )
+
+            # Find only high-confidence relationships (ADR-065)
+            affirmative = facade.match_concept_relationships(
+                include_epistemic_status=["AFFIRMATIVE"]
+            )
+
+            # Exclude historical relationships (current state only)
+            current = facade.match_concept_relationships(
+                exclude_epistemic_status=["HISTORICAL"]
+            )
+
+            # Explore dialectical tension (contested + contradictory)
+            dialectical = facade.match_concept_relationships(
+                include_epistemic_status=["CONTESTED", "CONTRADICTORY"]
+            )
         """
+        # Phase 2 (ADR-065): Get vocabulary types matching epistemic status filters
+        if include_epistemic_status or exclude_epistemic_status:
+            status_filters = []
+
+            if include_epistemic_status:
+                status_list = ", ".join([f"'{s}'" for s in include_epistemic_status])
+                status_filters.append(f"v.epistemic_status IN [{status_list}]")
+
+            if exclude_epistemic_status:
+                status_list = ", ".join([f"'{s}'" for s in exclude_epistemic_status])
+                status_filters.append(f"NOT v.epistemic_status IN [{status_list}]")
+
+            vocab_query = f"""
+                MATCH (v:VocabType)
+                WHERE {' AND '.join(status_filters)}
+                RETURN v.name as type_name
+            """
+
+            self.audit.log_query(vocab_query, namespace="vocabulary", params={})
+            vocab_results = self.db._execute_cypher(vocab_query, params={})
+            status_filtered_types = [row['type_name'] for row in vocab_results]
+
+            # Combine with explicit rel_types if provided
+            if rel_types:
+                # Intersection: only types that match both filters
+                rel_types = [t for t in rel_types if t in status_filtered_types]
+            else:
+                # Use status-filtered types as the relationship type list
+                rel_types = status_filtered_types
+
+        # Build relationship pattern
         rel_pattern = ""
         if rel_types:
             type_str = "|".join(rel_types)

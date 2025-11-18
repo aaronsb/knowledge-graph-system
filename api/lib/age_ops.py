@@ -201,7 +201,7 @@ class AGEQueries:
             WITH ontology,
                  count(DISTINCT src) as source_count,
                  count(DISTINCT src.file_path) as file_count
-            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: ontology})
+            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {document: ontology})
             WITH ontology, source_count, file_count, count(DISTINCT c) as concept_count
             OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {document: ontology})
             WITH ontology, source_count, file_count, concept_count, count(DISTINCT i) as instance_count
@@ -238,7 +238,7 @@ class AGEQueries:
             WITH s.document as ontology, collect(DISTINCT s.file_path) as files
             MATCH (src:Source {document: $ontology})
             WITH ontology, files, count(DISTINCT src) as source_count
-            OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})
+            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $ontology})
             WITH ontology, files, source_count, count(DISTINCT c) as concept_count
             OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {document: $ontology})
             WITH ontology, files, source_count, concept_count, count(DISTINCT i) as instance_count
@@ -284,9 +284,9 @@ class AGEQueries:
         result = client._execute_cypher("""
             MATCH (s:Source {document: $ontology})
             OPTIONAL MATCH (s)<-[:FROM_SOURCE]-(i:Instance)
-            OPTIONAL MATCH (s)<-[:APPEARS_IN]-(c:Concept)
+            OPTIONAL MATCH (s)<-[:APPEARS]-(c:Concept)
             WHERE NOT EXISTS {
-                MATCH (c)-[:APPEARS_IN]->(other:Source)
+                MATCH (c)-[:APPEARS]->(other:Source)
                 WHERE other.document <> $ontology
             }
             WITH s, i, c

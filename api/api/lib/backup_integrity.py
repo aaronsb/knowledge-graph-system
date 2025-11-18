@@ -299,7 +299,7 @@ class BackupIntegrityChecker:
 
             if rel_type and rel_type not in vocabulary_types:
                 # Only warn if type is not in vocabulary AND not a structural type
-                structural_types = {"APPEARS_IN", "EVIDENCED_BY", "FROM_SOURCE"}
+                structural_types = {"APPEARS", "EVIDENCED_BY", "FROM_SOURCE"}
                 if rel_type not in structural_types:
                     result.add_warning("references",
                         f"Vocabulary integrity: Relationship {idx} uses edge type '{rel_type}' which is not in vocabulary table (pre-ADR-032 data)")

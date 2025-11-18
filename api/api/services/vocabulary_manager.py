@@ -595,9 +595,18 @@ class VocabularyManager:
         Strategy:
         1. Filter out low-similarity pairs (< min_similarity)
         2. Filter out likely inverse relationships (_BY suffix patterns)
-        3. Prefer low-frequency types (easier to merge, less disruption)
-        4. Score by: (similarity * 2) - (min_edge_count / 100)
-        5. Sort by priority score descending
+        3. ADR-065: Apply epistemic quality gates (block divergent validation states)
+        4. Prefer low-frequency types (easier to merge, less disruption)
+        5. Score by: (similarity * 2) - (min_edge_count / 100)
+        6. Sort by priority score descending
+
+        Epistemic Quality Gates (ADR-065):
+        - Block INSUFFICIENT_DATA: Can't merge without epistemic measurement
+        - Block HISTORICAL: Temporal semantics require preservation
+        - Block divergent states:
+          * AFFIRMATIVE ↔ CONTRADICTORY (well-grounded vs contradicted)
+          * AFFIRMATIVE ↔ CONTESTED (established vs debated)
+          * CONTESTED ↔ CONTRADICTORY (mixed vs contradicted)
 
         Args:
             candidates: List of (SynonymCandidate, Score1, Score2) tuples
@@ -621,6 +630,41 @@ class VocabularyManager:
             if type1_base == type2_base:
                 logger.debug(f"Skipping inverse pair: {candidate.type1} / {candidate.type2}")
                 continue
+
+            # ADR-065: Epistemic quality gates - block divergent epistemic states
+            status1 = score1.epistemic_status
+            status2 = score2.epistemic_status
+
+            # Block merges with insufficient epistemic data
+            if status1 == 'INSUFFICIENT_DATA' or status2 == 'INSUFFICIENT_DATA':
+                logger.debug(
+                    f"Blocking merge with insufficient epistemic data: "
+                    f"{candidate.type1} ({status1}) / {candidate.type2} ({status2})"
+                )
+                continue
+
+            # Block HISTORICAL merges (temporal semantics matter)
+            if status1 == 'HISTORICAL' or status2 == 'HISTORICAL':
+                logger.debug(
+                    f"Blocking merge with temporal/historical vocabulary: "
+                    f"{candidate.type1} ({status1}) / {candidate.type2} ({status2})"
+                )
+                continue
+
+            # Block divergent epistemic states (incompatible validation levels)
+            if status1 and status2:  # Only apply if both have status
+                blocked_pairs = [
+                    ('AFFIRMATIVE', 'CONTRADICTORY'),
+                    ('AFFIRMATIVE', 'CONTESTED'),
+                    ('CONTESTED', 'CONTRADICTORY'),
+                ]
+
+                if (status1, status2) in blocked_pairs or (status2, status1) in blocked_pairs:
+                    logger.info(
+                        f"Blocking epistemic conflict: "
+                        f"{candidate.type1} ({status1}) ↔ {candidate.type2} ({status2})"
+                    )
+                    continue
 
             # Filter: skip high-frequency types in first pass
             min_count = min(score1.edge_count, score2.edge_count)
@@ -790,14 +834,16 @@ class VocabularyManager:
                 f"[similarity: {candidate.similarity:.1%}, priority: {priority:.3f}]"
             )
 
-            # Call LLM for decision
+            # Call LLM for decision (ADR-065: Include epistemic status context)
             decision = await llm_evaluate_merge(
                 type1=candidate.type1,
                 type2=candidate.type2,
                 type1_edge_count=score1.edge_count,
                 type2_edge_count=score2.edge_count,
                 similarity=candidate.similarity,
-                ai_provider=self.ai_provider
+                ai_provider=self.ai_provider,
+                type1_epistemic_status=score1.epistemic_status,
+                type2_epistemic_status=score2.epistemic_status
             )
 
             if not decision.should_merge:

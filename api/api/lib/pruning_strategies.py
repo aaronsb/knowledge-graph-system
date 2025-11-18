@@ -78,7 +78,9 @@ async def llm_evaluate_merge(
     type1_edge_count: int,
     type2_edge_count: int,
     similarity: float,
-    ai_provider
+    ai_provider,
+    type1_epistemic_status: Optional[str] = None,
+    type2_epistemic_status: Optional[str] = None
 ) -> MergeDecision:
     """
     Use LLM to evaluate whether two edge types should be merged.
@@ -86,6 +88,7 @@ async def llm_evaluate_merge(
     This is the core AITL worker function. It asks the LLM:
     1. Are these truly synonyms or do they have semantic distinctions?
     2. If synonyms, what's a better unified name?
+    3. ADR-065: Are their epistemic states compatible for merging?
 
     Args:
         type1: First edge type name
@@ -94,6 +97,8 @@ async def llm_evaluate_merge(
         type2_edge_count: Number of edges using type2
         similarity: Embedding similarity score (0.0-1.0)
         ai_provider: AI provider instance (OpenAI/Anthropic)
+        type1_epistemic_status: Epistemic status of type1 (ADR-065)
+        type2_epistemic_status: Epistemic status of type2 (ADR-065)
 
     Returns:
         MergeDecision with structured decision
@@ -102,13 +107,33 @@ async def llm_evaluate_merge(
         >>> from api.api.lib.ai_providers import get_provider
         >>> provider = get_provider()
         >>> decision = await llm_evaluate_merge(
-        ...     "STATUS", "HAS_STATUS", 5, 12, 0.934, provider
+        ...     "STATUS", "HAS_STATUS", 5, 12, 0.934, provider,
+        ...     "AFFIRMATIVE", "AFFIRMATIVE"
         ... )
         >>> if decision.should_merge:
         ...     print(f"Merge into: {decision.blended_term}")
     """
 
     # Construct prompt for LLM
+    # ADR-065: Include epistemic status context if available
+    epistemic_context = ""
+    if type1_epistemic_status or type2_epistemic_status:
+        epistemic_context = f"""
+**Epistemic Status Information:**
+- Type 1 Epistemic Status: {type1_epistemic_status or 'Not measured'}
+- Type 2 Epistemic Status: {type2_epistemic_status or 'Not measured'}
+
+**Epistemic Status Meanings:**
+- **AFFIRMATIVE**: Well-established, high grounding (>0.8) - strongly supported by evidence
+- **CONTESTED**: Mixed evidence, debated (0.2-0.8) - partially supported
+- **CONTRADICTORY**: Contradicted by evidence (<-0.5) - actively contradicted
+- **HISTORICAL**: Temporal/historical vocabulary - time-sensitive semantics
+- **INSUFFICIENT_DATA**: <3 measurements - not enough data to classify
+- **UNCLASSIFIED**: Doesn't fit known patterns
+
+**IMPORTANT:** Epistemic status reflects how well-grounded the relationships using each type are in the knowledge graph. Merging types with divergent epistemic states can pollute provenance quality.
+"""
+
     prompt = f"""You are evaluating whether two relationship types in a knowledge graph should be merged.
 
 **Type 1:** {type1}
@@ -117,7 +142,7 @@ async def llm_evaluate_merge(
 
 **Type 2:** {type2}
 - Current usage: {type2_edge_count} edges
-
+{epistemic_context}
 **Task:**
 Determine if these are truly synonymous and should be merged into a single type.
 
@@ -127,6 +152,7 @@ Consider:
 3. **Useful distinctions**: Would merging lose important nuance?
 4. **Graph consistency**: Would a unified term improve clarity?
 5. **Simplicity**: Always prefer the simpler, single-word term when possible
+6. **Epistemic compatibility** (if status provided): Are their validation states compatible? Don't merge AFFIRMATIVE with CONTESTED/CONTRADICTORY types.
 
 **Response format (JSON):**
 ```json

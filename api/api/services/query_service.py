@@ -38,7 +38,7 @@ class QueryService:
             YIELD node, score
             WHERE score > $min_similarity
             WITH node, score
-            MATCH (node)-[:APPEARS_IN]->(s:Source)
+            MATCH (node)-[:APPEARS]->(s:Source)
             WITH node, score, collect(DISTINCT s.document) as documents
             OPTIONAL MATCH (node)-[:EVIDENCED_BY]->(i:Instance)
             WITH node, score, documents, count(DISTINCT i) as evidence_count
@@ -67,7 +67,7 @@ class QueryService:
         return {
             "concept": """
                 MATCH (c:Concept {concept_id: $concept_id})
-                OPTIONAL MATCH (c)-[:APPEARS_IN]->(s:Source)
+                OPTIONAL MATCH (c)-[:APPEARS]->(s:Source)
                 WITH c, collect(DISTINCT s.document) as documents
                 RETURN c, documents
             """,
@@ -158,7 +158,7 @@ class QueryService:
 
         **Metadata Filtering:**
         Python code filters out paths containing non-Concept nodes:
-        - Source nodes (document metadata via APPEARS_IN)
+        - Source nodes (document metadata via APPEARS)
         - Instance nodes (evidence quotes via EVIDENCED_BY)
         This ensures paths show only semantic relationships: Concept → Concept
 

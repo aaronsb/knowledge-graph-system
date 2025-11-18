@@ -570,6 +570,33 @@ docker exec kg-operator python /workspace/operator/admin/manage_api_keys.py list
 docker exec kg-operator python /workspace/operator/admin/manage_api_keys.py delete openai
 ```
 
+### Measure Epistemic Status for Vocabulary Types
+
+Measure epistemic status patterns for vocabulary relationship types (ADR-065):
+
+```bash
+# Measure current state (100 edge sample per type)
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py
+
+# Larger sample for more precision
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --sample-size 500
+
+# Detailed output with uncertainty metrics
+docker exec kg-operator python /workspace/operator/admin/calculate_vocab_epistemic_status.py --verbose
+```
+
+**Epistemic Status (Estimated from Measurements):**
+- **AFFIRMATIVE** - Consistently high grounding (avg > 0.8)
+- **CONTESTED** - Mixed grounding (0.2 ≤ avg ≤ 0.8)
+- **CONTRADICTORY** - Consistently low/negative grounding (avg < -0.5)
+- **HISTORICAL** - Temporal vocabulary (detected by name)
+
+**Philosophy:**
+- Grounding calculated dynamically at query time (bounded locality + satisficing)
+- Sample-based measurement (not exhaustive analysis)
+- Results are temporal and observer-dependent
+- Each run is a measurement, not a classification
+
 ### Add a New AI Provider
 
 1. Create class extending `AIProvider` in `src/api/lib/ai_providers.py`

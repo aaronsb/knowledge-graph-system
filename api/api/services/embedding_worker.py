@@ -612,7 +612,7 @@ class EmbeddingWorker:
         # Build MATCH clause based on ontology filter
         if ontology:
             # Filter by ontology: match concepts that appear in sources with the ontology document name
-            match_clause = "MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $ontology})"
+            match_clause = "MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $ontology})"
             params = {"ontology": ontology}
         else:
             # All concepts

@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2025-11-09
+> Last updated: 2025-11-17
 
 ---
 
@@ -839,6 +839,7 @@ kg database [options]
 - `stats` - Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.
 - `info` - Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.
 - `health` - Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.
+- `query` - Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.*recursive.*' RETURN c.label LIMIT 5" --namespace concept
 
 ---
 
@@ -868,6 +869,27 @@ Check database health and connectivity with detailed checks for: connectivity (P
 ```bash
 kg health [options]
 ```
+
+### query
+
+Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.*recursive.*' RETURN c.label LIMIT 5" --namespace concept
+
+**Usage:**
+```bash
+kg query <query>
+```
+
+**Arguments:**
+
+- `<query>` - openCypher/GQL query string
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--namespace <type>` | Namespace for safety: "concept", "vocab", or omit for raw (ADR-048) | - |
+| `--params <json>` | Query parameters as JSON string (e.g., '{"min_score": 0.8}') | - |
+| `--limit <n>` | Convenience: Append LIMIT to query (overrides query LIMIT) | - |
 
 
 ## ontology (onto)
@@ -991,6 +1013,7 @@ kg vocabulary [options]
 - `profiles-show` - Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.
 - `profiles-create` - Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.
 - `profiles-delete` - Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.
+- `epistemic-status` - Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: AFFIRMATIVE (high avg grounding >0.8, well-established), CONTESTED (mixed grounding 0.2-0.8, debated), CONTRADICTORY (low grounding <-0.5, contradicted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements), UNCLASSIFIED (doesn't fit). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.
 
 ---
 
@@ -1246,6 +1269,68 @@ kg profiles-delete <name>
 **Arguments:**
 
 - `<name>` - Profile name to delete
+
+### epistemic-status
+
+Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: AFFIRMATIVE (high avg grounding >0.8, well-established), CONTESTED (mixed grounding 0.2-0.8, debated), CONTRADICTORY (low grounding <-0.5, contradicted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements), UNCLASSIFIED (doesn't fit). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.
+
+**Usage:**
+```bash
+kg epistemic-status [options]
+```
+
+**Subcommands:**
+
+- `list` - List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.
+- `show` - Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (AFFIRMATIVE/CONTESTED/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.
+- `measure` - Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().
+
+---
+
+#### list
+
+List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.
+
+**Usage:**
+```bash
+kg list [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--status <status>` | Filter by status: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED | - |
+
+#### show
+
+Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (AFFIRMATIVE/CONTESTED/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.
+
+**Usage:**
+```bash
+kg show <type>
+```
+
+**Arguments:**
+
+- `<type>` - Relationship type to show (e.g., IMPLIES, SUPPORTS)
+
+#### measure
+
+Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().
+
+**Usage:**
+```bash
+kg measure [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--sample-size <n>` | Edges to sample per type (default: 100) | `100` |
+| `--no-store` | Run measurement without storing to database | - |
+| `--verbose` | Include detailed statistics in output | - |
 
 
 ## admin
