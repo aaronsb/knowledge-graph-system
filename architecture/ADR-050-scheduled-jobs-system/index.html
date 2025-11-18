@@ -7200,6 +7200,13 @@
 <td><code>vocab_consolidate_worker</code></td>
 <td>Auto-consolidate vocabulary based on hysteresis</td>
 </tr>
+<tr>
+<td><code>epistemic_remeasurement</code></td>
+<td>Every hour</td>
+<td><code>EpistemicRemeasurementLauncher</code></td>
+<td><code>epistemic_remeasurement_worker</code></td>
+<td>Re-measure epistemic status when vocabulary changes exceed threshold (ADR-065 Phase 2)</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Key Point:</strong> Scheduled tasks = timing + condition check → enqueue job</p>
