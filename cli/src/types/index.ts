@@ -204,6 +204,9 @@ export interface RelatedConceptsRequest {
   concept_id: string;
   relationship_types?: string[];
   max_depth?: number;
+  // ADR-065: Epistemic status filtering
+  include_epistemic_status?: string[]; // Filter to only include relationships with these epistemic statuses
+  exclude_epistemic_status?: string[]; // Exclude relationships with these epistemic statuses
 }
 
 export interface RelatedConcept {
@@ -226,6 +229,9 @@ export interface FindConnectionRequest {
   max_hops?: number;
   include_evidence?: boolean; // Include sample evidence instances for each concept in paths
   include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-044)
+  // ADR-065: Epistemic status filtering
+  include_epistemic_status?: string[]; // Filter to only include relationships with these epistemic statuses
+  exclude_epistemic_status?: string[]; // Exclude relationships with these epistemic statuses
 }
 
 export interface PathNode {
@@ -257,6 +263,9 @@ export interface FindConnectionBySearchRequest {
   threshold?: number;
   include_evidence?: boolean; // Include sample evidence instances for each concept in paths
   include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-044)
+  // ADR-065: Epistemic status filtering
+  include_epistemic_status?: string[]; // Filter to only include relationships with these epistemic statuses
+  exclude_epistemic_status?: string[]; // Exclude relationships with these epistemic statuses
 }
 
 export interface FindConnectionBySearchResponse {

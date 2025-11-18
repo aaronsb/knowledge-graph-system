@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2025-11-17
+> Last updated: 2025-11-18
 
 ---
 
@@ -796,6 +796,8 @@ kg related <concept-id>
 |--------|-------------|---------|
 | `-d, --depth <number>` | Maximum traversal depth in hops (1-2 fast, 3-4 moderate, 5 slow) | `"2"` |
 | `-t, --types <types...>` | Filter by relationship types (IMPLIES, ENABLES, SUPPORTS, etc. - see kg vocab list) | - |
+| `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
+| `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-065) | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
 
 ### connect
@@ -823,6 +825,8 @@ kg connect <from> <to>
 | `--no-grounding` | Disable grounding strength calculation (faster) | - |
 | `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text | - |
+| `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
+| `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-065) | - |
 
 
 ## database (db)

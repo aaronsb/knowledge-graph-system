@@ -305,6 +305,17 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
               items: { type: 'string' },
               description: 'Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])',
             },
+            // ADR-065: Epistemic status filtering (for related and connect)
+            include_epistemic_status: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Only include relationships with these epistemic statuses (e.g., ["AFFIRMATIVE", "CONTESTED"])',
+            },
+            exclude_epistemic_status: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Exclude relationships with these epistemic statuses (e.g., ["HISTORICAL", "INSUFFICIENT_DATA"])',
+            },
             // For connect
             connection_mode: {
               type: 'string',
@@ -790,6 +801,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               concept_id: toolArgs.concept_id as string,
               max_depth: toolArgs.max_depth as number || DEFAULT_MAX_DEPTH,
               relationship_types: toolArgs.relationship_types as string[] | undefined,
+              // ADR-065: Epistemic status filtering
+              include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
+              exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
             });
 
             const formattedText = formatRelatedConcepts(result);
@@ -807,6 +821,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 from_id: toolArgs.from_id as string,
                 to_id: toolArgs.to_id as string,
                 max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
+                // ADR-065: Epistemic status filtering
+                include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
+                exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
               });
 
               // Segment long paths for readability
@@ -825,6 +842,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 threshold: toolArgs.threshold as number || DEFAULT_SEMANTIC_THRESHOLD,
                 include_grounding: true,
                 include_evidence: true,
+                // ADR-065: Epistemic status filtering
+                include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
+                exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
               });
 
               const formattedText = formatConnectionPaths(result);
