@@ -7,10 +7,23 @@ import { Handle, Position, type NodeProps } from 'reactflow';
 import { Network } from 'lucide-react';
 import type { BlockData, NeighborhoodBlockParams } from '../../types/blocks';
 
+// ADR-065: Available epistemic statuses
+const EPISTEMIC_STATUSES = [
+  'AFFIRMATIVE',
+  'CONTESTED',
+  'CONTRADICTORY',
+  'HISTORICAL',
+  'INSUFFICIENT_DATA',
+  'UNCLASSIFIED',
+] as const;
+
 export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
   const params = data.params as NeighborhoodBlockParams;
   const [depth, setDepth] = useState(params.depth || 2);
   const [direction, setDirection] = useState(params.direction || 'both');
+  const [includeStatuses, setIncludeStatuses] = useState<string[]>(params.includeEpistemicStatus || []);
+  const [excludeStatuses, setExcludeStatuses] = useState<string[]>(params.excludeEpistemicStatus || []);
+  const [showFilters, setShowFilters] = useState(false);
 
   const handleDepthChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newDepth = parseInt(e.target.value, 10);
@@ -21,6 +34,26 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
   const handleDirectionChange = useCallback((newDirection: 'outgoing' | 'incoming' | 'both') => {
     setDirection(newDirection);
     params.direction = newDirection;
+  }, [params]);
+
+  const toggleIncludeStatus = useCallback((status: string) => {
+    setIncludeStatuses(prev => {
+      const newStatuses = prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status];
+      params.includeEpistemicStatus = newStatuses.length > 0 ? newStatuses : undefined;
+      return newStatuses;
+    });
+  }, [params]);
+
+  const toggleExcludeStatus = useCallback((status: string) => {
+    setExcludeStatuses(prev => {
+      const newStatuses = prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status];
+      params.excludeEpistemicStatus = newStatuses.length > 0 ? newStatuses : undefined;
+      return newStatuses;
+    });
   }, [params]);
 
   return (
@@ -80,6 +113,61 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
             ↔ Both
           </button>
         </div>
+      </div>
+
+      {/* ADR-065: Epistemic Status Filters */}
+      <div className="mt-3 space-y-1">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="text-xs text-gray-600 hover:text-gray-800 flex items-center gap-1"
+        >
+          {showFilters ? '▼' : '▶'} Epistemic Filters
+          {(includeStatuses.length > 0 || excludeStatuses.length > 0) && (
+            <span className="ml-1 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px]">
+              {includeStatuses.length + excludeStatuses.length}
+            </span>
+          )}
+        </button>
+
+        {showFilters && (
+          <div className="pl-2 space-y-2">
+            {/* Include Filters */}
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wide">Include Only</label>
+              <div className="space-y-1 mt-1">
+                {EPISTEMIC_STATUSES.map(status => (
+                  <label key={`include-${status}`} className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={includeStatuses.includes(status)}
+                      onChange={() => toggleIncludeStatus(status)}
+                      className="w-3 h-3 text-purple-600 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-[11px] text-gray-700">{status}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Exclude Filters */}
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wide">Exclude</label>
+              <div className="space-y-1 mt-1">
+                {EPISTEMIC_STATUSES.map(status => (
+                  <label key={`exclude-${status}`} className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={excludeStatuses.includes(status)}
+                      onChange={() => toggleExcludeStatus(status)}
+                      className="w-3 h-3 text-red-600 rounded focus:ring-red-500"
+                    />
+                    <span className="text-[11px] text-gray-700">{status}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Handles */}
