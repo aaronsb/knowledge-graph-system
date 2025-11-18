@@ -277,9 +277,6 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         return;
       }
 
-      // Transform to graph format
-      const { transformForD3 } = await import('../../utils/graphTransform');
-
       // Build a map of internal vertex IDs to concept_ids
       // The API returns internal AGE vertex IDs, but we need concept_ids
       const internalToConceptId = new Map<string, string>();
@@ -288,30 +285,33 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         internalToConceptId.set(n.id, conceptId);
       });
 
-      const graphNodes = result.nodes.map((n: any) => ({
+      // Transform to raw API format (same as getSubgraph returns)
+      // This allows the standard transformation pipeline to handle it
+      const rawNodes = result.nodes.map((n: any) => ({
         concept_id: n.properties?.concept_id || n.id,
         label: n.label,
         ontology: n.properties?.ontology || 'default',
         grounding_strength: n.properties?.grounding_strength,
+        search_terms: n.properties?.search_terms || [],
       }));
 
       // Map relationship IDs from internal vertex IDs to concept_ids
-      const links = result.relationships.map((r: any) => ({
+      const rawLinks = result.relationships.map((r: any) => ({
         from_id: internalToConceptId.get(r.from_id) || r.from_id,
         to_id: internalToConceptId.get(r.to_id) || r.to_id,
         relationship_type: r.type,
         category: r.properties?.category,
       }));
 
-      console.log('[BlockBuilder] Transformed nodes:', graphNodes.length, 'links:', links.length);
+      console.log('[BlockBuilder] Raw nodes:', rawNodes.length, 'links:', rawLinks.length);
 
-      const graphData = transformForD3(graphNodes, links);
+      // Use the same flow as Smart Search - set raw data and let App.tsx transform it
+      // This ensures vocabulary enrichment and consistent visualization
+      const store = useGraphStore.getState();
+      store.setGraphData(null); // Clear old transformed data
+      store.setRawGraphData({ nodes: rawNodes, links: rawLinks });
 
-      console.log('[BlockBuilder] Final graph data:', graphData);
-
-      useGraphStore.getState().setGraphData(graphData);
-
-      console.log('[BlockBuilder] Graph data set in store');
+      console.log('[BlockBuilder] Raw graph data set in store (transformation will happen automatically)');
     } catch (error: any) {
       console.error('[BlockBuilder] Execution error:', error);
       setExecutionError(error.response?.data?.detail || error.message || 'Query execution failed');
