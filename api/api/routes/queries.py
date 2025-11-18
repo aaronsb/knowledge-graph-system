@@ -48,6 +48,54 @@ def get_age_client() -> AGEClient:
     return AGEClient()
 
 
+def resolve_epistemic_filters_to_rel_types(
+    age_client: AGEClient,
+    include_epistemic_status: Optional[List[str]] = None,
+    exclude_epistemic_status: Optional[List[str]] = None
+) -> Optional[List[str]]:
+    """
+    Resolve epistemic status filters to list of allowed relationship types (ADR-065).
+
+    Queries VocabType nodes to find relationship types matching the epistemic status criteria.
+    Returns None if no filtering requested, or a list of relationship types if filtering active.
+
+    Args:
+        age_client: AGE client for querying VocabType nodes
+        include_epistemic_status: Only include relationships with these epistemic statuses
+        exclude_epistemic_status: Exclude relationships with these epistemic statuses
+
+    Returns:
+        List of allowed relationship types, or None if no filtering
+    """
+    if not include_epistemic_status and not exclude_epistemic_status:
+        return None
+
+    # Build filter conditions for VocabType query
+    status_filters = []
+
+    if include_epistemic_status:
+        status_list = ", ".join([f"'{s}'" for s in include_epistemic_status])
+        status_filters.append(f"v.epistemic_status IN [{status_list}]")
+
+    if exclude_epistemic_status:
+        status_list = ", ".join([f"'{s}'" for s in exclude_epistemic_status])
+        status_filters.append(f"NOT v.epistemic_status IN [{status_list}]")
+
+    # Query VocabType nodes matching the filters
+    vocab_query = f"""
+        MATCH (v:VocabType)
+        WHERE {' AND '.join(status_filters)}
+        RETURN v.name as type_name
+    """
+
+    logger.debug(f"[EpistemicFilter] Querying VocabType nodes: {vocab_query}")
+    vocab_results = age_client._execute_cypher(vocab_query, params={})
+    allowed_types = [row['type_name'] for row in vocab_results]
+
+    logger.info(f"[EpistemicFilter] Resolved to {len(allowed_types)} relationship types: {allowed_types}")
+    return allowed_types if allowed_types else None
+
+
 @router.post("/search", response_model=SearchResponse)
 async def search_concepts(
     current_user: CurrentUser,
@@ -619,10 +667,28 @@ async def find_related_concepts(
     """
     client = get_age_client()
     try:
+        # ADR-065: Resolve epistemic status filters to relationship types
+        status_filtered_types = resolve_epistemic_filters_to_rel_types(
+            client,
+            request.include_epistemic_status,
+            request.exclude_epistemic_status
+        )
+
+        # Combine explicit relationship_types filter with epistemic status filtering
+        if request.relationship_types and status_filtered_types:
+            # Intersection: only types that match both filters
+            final_rel_types = [t for t in request.relationship_types if t in status_filtered_types]
+        elif status_filtered_types:
+            # Use epistemic status filtered types
+            final_rel_types = status_filtered_types
+        else:
+            # Use explicit types or None (all types)
+            final_rel_types = request.relationship_types
+
         # Build and execute related concepts query
         query = QueryService.build_related_concepts_query(
             request.max_depth,
-            request.relationship_types
+            final_rel_types
         )
 
         records = client._execute_cypher(
@@ -694,8 +760,15 @@ async def find_connection(
     """
     client = get_age_client()
     try:
+        # ADR-065: Resolve epistemic status filters to relationship types
+        allowed_rel_types = resolve_epistemic_filters_to_rel_types(
+            client,
+            request.include_epistemic_status,
+            request.exclude_epistemic_status
+        )
+
         # Build and execute shortest path query
-        query = QueryService.build_shortest_path_query(request.max_hops)
+        query = QueryService.build_shortest_path_query(request.max_hops, allowed_rel_types)
 
         records = client._execute_cypher(
             query.replace("$from_id", f"'{request.from_id}'")
@@ -913,8 +986,15 @@ async def find_connection_by_search(
 
         logger.info(f"Found concept matches: '{from_label}' ({from_concept_id}, {from_similarity:.1%}) -> '{to_label}' ({to_concept_id}, {to_similarity:.1%})")
 
+        # ADR-065: Resolve epistemic status filters to relationship types
+        allowed_rel_types = resolve_epistemic_filters_to_rel_types(
+            client,
+            request.include_epistemic_status,
+            request.exclude_epistemic_status
+        )
+
         # Build and execute shortest path query
-        query = QueryService.build_shortest_path_query(request.max_hops)
+        query = QueryService.build_shortest_path_query(request.max_hops, allowed_rel_types)
 
         records = client._execute_cypher(
             query.replace("$from_id", f"'{from_concept_id}'")

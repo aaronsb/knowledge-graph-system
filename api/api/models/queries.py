@@ -161,6 +161,9 @@ class RelatedConceptsRequest(BaseModel):
     concept_id: str = Field(..., description="Starting concept ID")
     relationship_types: Optional[List[str]] = Field(None, description="Filter by relationship types (e.g., ['IMPLIES', 'SUPPORTS'])")
     max_depth: int = Field(2, description="Maximum traversal depth (1-5 hops)", ge=1, le=5)
+    # ADR-065: Epistemic status filtering
+    include_epistemic_status: Optional[List[str]] = Field(None, description="Filter to only include relationships with these epistemic statuses (e.g., ['AFFIRMATIVE', 'CONTESTED'])")
+    exclude_epistemic_status: Optional[List[str]] = Field(None, description="Exclude relationships with these epistemic statuses (e.g., ['HISTORICAL', 'INSUFFICIENT_DATA'])")
 
 
 class RelatedConcept(BaseModel):
@@ -194,6 +197,9 @@ class FindConnectionRequest(BaseModel):
     max_hops: int = Field(5, description="Maximum path length to search (1-10 hops)", ge=1, le=10)
     include_evidence: bool = Field(False, description="Include sample evidence instances for each concept in paths")
     include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-044)")
+    # ADR-065: Epistemic status filtering
+    include_epistemic_status: Optional[List[str]] = Field(None, description="Filter to only include relationships with these epistemic statuses (e.g., ['AFFIRMATIVE', 'CONTESTED'])")
+    exclude_epistemic_status: Optional[List[str]] = Field(None, description="Exclude relationships with these epistemic statuses (e.g., ['HISTORICAL', 'INSUFFICIENT_DATA'])")
 
 
 class PathNode(BaseModel):
@@ -240,6 +246,9 @@ class FindConnectionBySearchRequest(BaseModel):
     threshold: float = Field(0.5, description="Minimum similarity threshold (default 50% - lower for broader matches)", ge=0.0, le=1.0)
     include_evidence: bool = Field(False, description="Include sample evidence instances for each concept in paths")
     include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-044)")
+    # ADR-065: Epistemic status filtering
+    include_epistemic_status: Optional[List[str]] = Field(None, description="Filter to only include relationships with these epistemic statuses (e.g., ['AFFIRMATIVE', 'CONTESTED'])")
+    exclude_epistemic_status: Optional[List[str]] = Field(None, description="Exclude relationships with these epistemic statuses (e.g., ['HISTORICAL', 'INSUFFICIENT_DATA'])")
 
 
 class FindConnectionBySearchResponse(BaseModel):
