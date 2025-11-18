@@ -3,9 +3,10 @@
  * Organized into Cypher Blocks (generate openCypher) and Smart Blocks (use API calls)
  */
 
-import React from 'react';
-import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban, Sparkles, Snowflake } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban, Sparkles, Snowflake, HelpCircle } from 'lucide-react';
 import type { BlockType } from '../../types/blocks';
+import { BlockHelpPopup } from './BlockHelpPopup';
 
 interface BlockPaletteProps {
   onAddBlock: (type: BlockType) => void;
@@ -205,6 +206,17 @@ const colorClasses: Record<string, { bg: string; border: string; text: string; h
 };
 
 export const BlockPalette: React.FC<BlockPaletteProps> = ({ onAddBlock }) => {
+  const [helpPopup, setHelpPopup] = useState<{ blockType: BlockType; position: { x: number; y: number } } | null>(null);
+
+  const handleHelpClick = (e: React.MouseEvent, blockType: BlockType) => {
+    e.stopPropagation();
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setHelpPopup({
+      blockType,
+      position: { x: rect.right + 10, y: rect.top },
+    });
+  };
+
   return (
     <div className="w-64 bg-muted dark:bg-gray-900 border-r border-border dark:border-gray-700 p-4 overflow-y-auto">
       <h3 className="text-sm font-semibold text-card-foreground dark:text-gray-100 mb-3">Block Palette</h3>
@@ -228,22 +240,40 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({ onAddBlock }) => {
               const colors = colorClasses[block.color];
 
               return (
-                <button
-                  key={block.type}
-                  onClick={() => onAddBlock(block.type)}
-                  className={`w-full p-3 rounded-lg border-2 ${colors.border} ${colors.bg} ${colors.hover} transition-colors text-left`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon className={`w-4 h-4 ${colors.text}`} />
-                    <span className={`font-medium text-sm ${colors.text}`}>{block.label}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground dark:text-gray-400">{block.description}</p>
-                </button>
+                <div key={block.type} className="relative group">
+                  <button
+                    onClick={() => onAddBlock(block.type)}
+                    className={`w-full p-3 rounded-lg border-2 ${colors.border} ${colors.bg} ${colors.hover} transition-colors text-left`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon className={`w-4 h-4 ${colors.text}`} />
+                      <span className={`font-medium text-sm ${colors.text}`}>{block.label}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground dark:text-gray-400">{block.description}</p>
+                  </button>
+                  {/* Help button - appears on hover */}
+                  <button
+                    onClick={(e) => handleHelpClick(e, block.type)}
+                    className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10 transition-opacity"
+                    title="Help"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground dark:text-gray-500" />
+                  </button>
+                </div>
               );
             })}
           </div>
         </div>
       ))}
+
+      {/* Help Popup */}
+      {helpPopup && (
+        <BlockHelpPopup
+          blockType={helpPopup.blockType}
+          position={helpPopup.position}
+          onClose={() => setHelpPopup(null)}
+        />
+      )}
 
       <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
         <p className="text-xs text-blue-800 dark:text-blue-300 font-medium mb-1">How to use:</p>
