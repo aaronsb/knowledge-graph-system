@@ -23,7 +23,8 @@ export type BlockType =
   | 'and'
   | 'or'
   | 'not'
-  | 'limit';
+  | 'limit'
+  | 'enrich';
 
 // ============================================================================
 // Block Parameters
@@ -98,6 +99,13 @@ export interface NotBlockParams {
   // No parameters needed - single input, single output
 }
 
+export interface EnrichBlockParams {
+  // Options for what to enrich
+  fetchOntology: boolean;
+  fetchGrounding: boolean;
+  fetchSearchTerms: boolean;
+}
+
 // ============================================================================
 // Block Data
 // ============================================================================
@@ -118,7 +126,8 @@ export interface BlockData {
     | AndBlockParams
     | OrBlockParams
     | NotBlockParams
-    | LimitBlockParams;
+    | LimitBlockParams
+    | EnrichBlockParams;
 }
 
 // ============================================================================

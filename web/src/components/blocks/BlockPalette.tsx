@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban } from 'lucide-react';
+import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban, Sparkles } from 'lucide-react';
 import type { BlockType } from '../../types/blocks';
 
 interface BlockPaletteProps {
@@ -101,6 +101,13 @@ const paletteBlocks: PaletteBlock[] = [
     description: 'Limit number of results',
     color: 'gray',
   },
+  {
+    type: 'enrich',
+    icon: Sparkles,
+    label: 'Enrich',
+    description: 'Fetch full concept details',
+    color: 'teal',
+  },
 ];
 
 const colorClasses: Record<string, { bg: string; border: string; text: string; hover: string }> = {
@@ -157,6 +164,12 @@ const colorClasses: Record<string, { bg: string; border: string; text: string; h
     border: 'border-gray-300 dark:border-gray-700',
     text: 'text-gray-700 dark:text-gray-300',
     hover: 'hover:bg-gray-100 dark:hover:bg-gray-900/50',
+  },
+  teal: {
+    bg: 'bg-teal-50 dark:bg-teal-900/30',
+    border: 'border-teal-300 dark:border-teal-700',
+    text: 'text-teal-700 dark:text-teal-300',
+    hover: 'hover:bg-teal-100 dark:hover:bg-teal-900/50',
   },
 };
 

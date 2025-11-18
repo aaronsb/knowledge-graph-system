@@ -31,12 +31,13 @@ import { AndBlock } from './AndBlock';
 import { OrBlock } from './OrBlock';
 import { NotBlock } from './NotBlock';
 import { LimitBlock } from './LimitBlock';
+import { EnrichBlock } from './EnrichBlock';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 
-import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams } from '../../types/blocks';
+import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EnrichBlockParams } from '../../types/blocks';
 
 interface BlockBuilderProps {
   onSendToEditor?: (cypher: string) => void;
@@ -80,6 +81,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       or: OrBlock,
       not: NotBlock,
       limit: LimitBlock,
+      enrich: EnrichBlock,
     }),
     []
   );
@@ -136,6 +138,10 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       case 'limit':
         params = { count: 10 } as LimitBlockParams;
         label = 'Limit Results';
+        break;
+      case 'enrich':
+        params = { fetchOntology: true, fetchGrounding: true, fetchSearchTerms: false } as EnrichBlockParams;
+        label = 'Enrich Data';
         break;
       default:
         return;
@@ -285,15 +291,55 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         internalToConceptId.set(n.id, conceptId);
       });
 
+      // Check if there's an Enrich block in the flow
+      const enrichBlock = nodes.find(node => node.data.type === 'enrich');
+      const enrichParams = enrichBlock?.data.params as EnrichBlockParams | undefined;
+      const shouldEnrich = enrichBlock && (enrichParams?.fetchOntology || enrichParams?.fetchGrounding || enrichParams?.fetchSearchTerms);
+
       // Transform to raw API format (same as getSubgraph returns)
-      // This allows the standard transformation pipeline to handle it
-      const rawNodes = result.nodes.map((n: any) => ({
+      let rawNodes = result.nodes.map((n: any) => ({
         concept_id: n.properties?.concept_id || n.id,
         label: n.label,
         ontology: n.properties?.ontology || 'default',
         grounding_strength: n.properties?.grounding_strength,
         search_terms: n.properties?.search_terms || [],
       }));
+
+      // If Enrich block is present, fetch full concept details
+      if (shouldEnrich) {
+        console.log('[BlockBuilder] Enrich block detected, fetching concept details for', rawNodes.length, 'nodes');
+
+        const enrichedNodes = await Promise.all(
+          rawNodes.map(async (node) => {
+            try {
+              const details = await apiClient.getConceptDetails(node.concept_id);
+
+              // Enrich with requested data
+              const enriched = { ...node };
+
+              if (enrichParams?.fetchOntology && details.documents && details.documents.length > 0) {
+                enriched.ontology = details.documents[0];
+              }
+
+              if (enrichParams?.fetchGrounding && details.grounding_strength !== undefined) {
+                enriched.grounding_strength = details.grounding_strength;
+              }
+
+              if (enrichParams?.fetchSearchTerms && details.search_terms) {
+                enriched.search_terms = details.search_terms;
+              }
+
+              return enriched;
+            } catch (error) {
+              console.warn(`[BlockBuilder] Failed to enrich concept ${node.concept_id}:`, error);
+              return node; // Return unenriched node on error
+            }
+          })
+        );
+
+        rawNodes = enrichedNodes;
+        console.log('[BlockBuilder] Enrichment complete');
+      }
 
       // Map relationship IDs from internal vertex IDs to concept_ids
       const rawLinks = result.relationships.map((r: any) => ({

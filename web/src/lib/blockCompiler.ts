@@ -20,6 +20,7 @@ import type {
   OrBlockParams,
   NotBlockParams,
   LimitBlockParams,
+  EnrichBlockParams,
   CompiledQuery,
 } from '../types/blocks';
 
@@ -195,6 +196,11 @@ function compileBlock(
 
     case 'limit':
       return compileLimitBlock(params as LimitBlockParams);
+
+    case 'enrich':
+      // Enrich block doesn't generate Cypher - it's a post-processing marker
+      // The execution handler will detect this block and fetch concept details
+      return { cypher: '// Enrich: fetch full concept details after query', outputVariable: inputVariable };
 
     default:
       throw new Error(`Unknown block type: ${type}`);
