@@ -10,6 +10,7 @@ import type {
   StartBlockParams,
   EndBlockParams,
   SearchBlockParams,
+  VectorSearchBlockParams,
   SelectConceptBlockParams,
   NeighborhoodBlockParams,
   PathToBlockParams,
@@ -169,6 +170,15 @@ function compileBlock(
     case 'search':
       return compileSearchBlock(params as SearchBlockParams, isFirst, counter);
 
+    case 'vectorSearch':
+      // Smart block - uses API semantic search endpoint
+      // The execution handler will detect this and use the search API
+      const vsParams = params as VectorSearchBlockParams;
+      return {
+        cypher: `// Vector Search (Smart Block): "${vsParams.query}" @ ${Math.round((vsParams.similarity || 0.7) * 100)}% similarity, limit ${vsParams.limit || 10}`,
+        outputVariable: `vs${counter}`
+      };
+
     case 'selectConcept':
       return compileSelectConceptBlock(params as SelectConceptBlockParams, isFirst);
 
@@ -188,11 +198,25 @@ function compileBlock(
       return compileNodeFilterBlock(params as NodeFilterBlockParams, inputVariable);
 
     case 'and':
+      // AND requires multiple inputs for true intersection
+      // In linear flow, it acts as a pass-through marker
+      // Full implementation needs DAG traversal support
+      return {
+        cypher: `// AND: Intersection point (requires multiple input branches for full effect)`,
+        outputVariable: inputVariable
+      };
+
     case 'or':
+      // OR requires multiple inputs for true union
+      // In linear flow, it acts as a pass-through marker
+      // Full implementation needs DAG traversal support
+      return {
+        cypher: `// OR: Union point (requires multiple input branches for full effect)`,
+        outputVariable: inputVariable
+      };
+
     case 'not':
-      // Boolean logic blocks - not yet fully implemented
-      // For now, pass through the input variable
-      return { cypher: `// ${type.toUpperCase()} gate (not yet implemented in compiler)`, outputVariable: inputVariable };
+      return compileNotBlock(params as NotBlockParams, inputVariable);
 
     case 'limit':
       return compileLimitBlock(params as LimitBlockParams);
@@ -385,6 +409,17 @@ function compileLimitBlock(params: LimitBlockParams): { cypher: string; outputVa
   const cypher = `LIMIT ${params.count}`;
 
   return { cypher, outputVariable: '' }; // Empty because LIMIT doesn't produce a variable
+}
+
+function compileNotBlock(params: NotBlockParams, inputVariable: string): { cypher: string; outputVariable: string } {
+  if (!params.excludePattern || params.excludePattern.trim() === '') {
+    throw new Error('NOT block requires an exclude pattern');
+  }
+
+  const property = params.excludeProperty || 'label';
+  const cypher = `WHERE NOT toLower(${inputVariable}.${property}) CONTAINS toLower('${escapeString(params.excludePattern)}')`;
+
+  return { cypher, outputVariable: inputVariable };
 }
 
 // ============================================================================

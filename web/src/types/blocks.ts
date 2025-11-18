@@ -13,7 +13,8 @@ import type { Node } from 'reactflow';
 export type BlockType =
   | 'start'
   | 'end'
-  | 'search'
+  // Cypher blocks (generate openCypher)
+  | 'search'        // Text contains search
   | 'selectConcept'
   | 'neighborhood'
   | 'pathTo'
@@ -24,6 +25,8 @@ export type BlockType =
   | 'or'
   | 'not'
   | 'limit'
+  // Smart blocks (use API calls)
+  | 'vectorSearch'  // Semantic search with embeddings
   | 'enrich';
 
 // ============================================================================
@@ -32,8 +35,14 @@ export type BlockType =
 
 export interface SearchBlockParams {
   query: string;
-  similarity: number; // 0.0 - 1.0
+  similarity: number; // 0.0 - 1.0 (not used in text search, kept for compatibility)
   limit?: number;
+}
+
+export interface VectorSearchBlockParams {
+  query: string;
+  similarity: number; // 0.0 - 1.0 threshold for semantic matching
+  limit: number;
 }
 
 export interface SelectConceptBlockParams {
@@ -96,7 +105,10 @@ export interface OrBlockParams {
 }
 
 export interface NotBlockParams {
-  // No parameters needed - single input, single output
+  // Pattern to exclude from results
+  excludePattern?: string;
+  // Property-based exclusion
+  excludeProperty?: 'label' | 'ontology';
 }
 
 export interface EnrichBlockParams {
@@ -117,6 +129,7 @@ export interface BlockData {
     | StartBlockParams
     | EndBlockParams
     | SearchBlockParams
+    | VectorSearchBlockParams
     | SelectConceptBlockParams
     | NeighborhoodBlockParams
     | PathToBlockParams

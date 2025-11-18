@@ -32,12 +32,13 @@ import { OrBlock } from './OrBlock';
 import { NotBlock } from './NotBlock';
 import { LimitBlock } from './LimitBlock';
 import { EnrichBlock } from './EnrichBlock';
+import { VectorSearchBlock } from './VectorSearchBlock';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 
-import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EnrichBlockParams } from '../../types/blocks';
+import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EnrichBlockParams } from '../../types/blocks';
 
 interface BlockBuilderProps {
   onSendToEditor?: (cypher: string) => void;
@@ -72,6 +73,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     () => ({
       start: StartBlock,
       end: EndBlock,
+      // Cypher blocks
       search: SearchBlock,
       neighborhood: NeighborhoodBlock,
       filterOntology: OntologyFilterBlock,
@@ -81,6 +83,8 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       or: OrBlock,
       not: NotBlock,
       limit: LimitBlock,
+      // Smart blocks
+      vectorSearch: VectorSearchBlock,
       enrich: EnrichBlock,
     }),
     []
@@ -105,7 +109,11 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         break;
       case 'search':
         params = { query: '', similarity: 0.6, limit: 1 } as SearchBlockParams;
-        label = 'Search Concepts';
+        label = 'Text Search';
+        break;
+      case 'vectorSearch':
+        params = { query: '', similarity: 0.7, limit: 10 } as VectorSearchBlockParams;
+        label = 'Vector Search';
         break;
       case 'neighborhood':
         params = { depth: 2, direction: 'both' } as NeighborhoodBlockParams;
@@ -132,8 +140,8 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         label = 'OR Gate';
         break;
       case 'not':
-        params = {} as NotBlockParams;
-        label = 'NOT Gate';
+        params = { excludePattern: '', excludeProperty: 'label' } as NotBlockParams;
+        label = 'Exclude (NOT)';
         break;
       case 'limit':
         params = { count: 10 } as LimitBlockParams;
@@ -268,14 +276,56 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     setExecutionError(null);
 
     try {
-      console.log('[BlockBuilder] Executing query:', compiledCypher);
+      console.log('[BlockBuilder] Executing annotated openCypher:', compiledCypher);
 
-      const result = await apiClient.executeCypherQuery({
-        query: compiledCypher,
-        limit: 100,
-      });
+      // Check for smart blocks that need special handling
+      const vectorSearchBlock = nodes.find(node => node.data.type === 'vectorSearch');
 
-      console.log('[BlockBuilder] API result:', result);
+      let result: any;
+
+      if (vectorSearchBlock) {
+        // Smart block execution path - use API search
+        const vsParams = vectorSearchBlock.data.params as VectorSearchBlockParams;
+        console.log('[BlockBuilder] Vector Search smart block detected:', vsParams);
+
+        if (!vsParams.query || vsParams.query.trim() === '') {
+          setExecutionError('Vector Search requires a search query');
+          return;
+        }
+
+        // Call the semantic search API
+        const searchResult = await apiClient.searchConcepts({
+          query: vsParams.query,
+          limit: vsParams.limit || 10,
+          min_similarity: vsParams.similarity || 0.7,
+        });
+
+        console.log('[BlockBuilder] Vector search result:', searchResult);
+
+        // Transform search results to match Cypher result format
+        result = {
+          nodes: searchResult.results.map((r: any) => ({
+            id: r.concept_id,
+            label: r.label,
+            properties: {
+              concept_id: r.concept_id,
+              label: r.label,
+              ontology: r.ontology,
+              grounding_strength: r.grounding_strength,
+              search_terms: r.search_terms || [],
+            }
+          })),
+          relationships: [], // Vector search returns nodes only, no relationships
+        };
+      } else {
+        // Standard Cypher execution path
+        result = await apiClient.executeCypherQuery({
+          query: compiledCypher,
+          limit: 100,
+        });
+      }
+
+      console.log('[BlockBuilder] Execution result:', result);
 
       // Check if we got any results
       if (!result.nodes || result.nodes.length === 0) {
