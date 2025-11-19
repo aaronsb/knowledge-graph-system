@@ -44,6 +44,27 @@ import { useBlockDiagramStore, type DiagramMetadata } from '../../store/blockDia
 
 import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
 
+// Define nodeTypes outside component to prevent React Flow warning
+// See: https://reactflow.dev/error#002
+const nodeTypes: NodeTypes = {
+  start: StartBlock,
+  end: EndBlock,
+  // Cypher blocks
+  search: SearchBlock,
+  neighborhood: NeighborhoodBlock,
+  filterOntology: OntologyFilterBlock,
+  filterEdge: EdgeFilterBlock,
+  filterNode: NodeFilterBlock,
+  and: AndBlock,
+  or: OrBlock,
+  not: NotBlock,
+  limit: LimitBlock,
+  // Smart blocks
+  vectorSearch: VectorSearchBlock,
+  epistemicFilter: EpistemicFilterBlock,
+  enrich: EnrichBlock,
+};
+
 interface BlockBuilderProps {
   onSendToEditor?: (cypher: string) => void;
   hidePalette?: boolean;
@@ -157,29 +178,6 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
     exportToFile,
     importFromFile,
   } = useBlockDiagramStore();
-
-  // Register custom node types
-  const nodeTypes: NodeTypes = useMemo(
-    () => ({
-      start: StartBlock,
-      end: EndBlock,
-      // Cypher blocks
-      search: SearchBlock,
-      neighborhood: NeighborhoodBlock,
-      filterOntology: OntologyFilterBlock,
-      filterEdge: EdgeFilterBlock,
-      filterNode: NodeFilterBlock,
-      and: AndBlock,
-      or: OrBlock,
-      not: NotBlock,
-      limit: LimitBlock,
-      // Smart blocks
-      vectorSearch: VectorSearchBlock,
-      epistemicFilter: EpistemicFilterBlock,
-      enrich: EnrichBlock,
-    }),
-    []
-  );
 
   // Add a block to the canvas
   const handleAddBlock = useCallback((type: BlockType) => {
