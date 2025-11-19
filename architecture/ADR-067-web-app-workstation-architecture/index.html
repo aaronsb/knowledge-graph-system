@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../DATA_CONTRACT/">
+        <link rel="prev" href="../ADR-066-published-query-endpoints/">
       
       
-        <link rel="next" href="../OAUTH_CLIENT_ANALYSIS/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Fuzzy Matching Analysis for 30-Type Relationship Taxonomy - Knowledge Graph System</title>
+        <title>ADR-067: Web Application Workstation Architecture - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#fuzzy-matching-analysis-for-30-type-relationship-taxonomy" class="md-skip">
+        <a href="#adr-067-web-application-workstation-architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
+              ADR-067: Web Application Workstation Architecture
             
           </span>
         </div>
@@ -4783,10 +4783,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-067: Web Application Workstation Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4802,6 +4829,480 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-state-visualization-centric-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current State: Visualization-Centric Application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-opportunity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Opportunity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restructure-web-application-as-multi-function-workstation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restructure Web Application as Multi-Function Workstation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category Definitions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Category Definitions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#explorers-existing-enhanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explorers (Existing, Enhanced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#block-editor-new-standalone-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Editor (New - Standalone Mode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ingest-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingest (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#report-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edit (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#admin-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Admin (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#block-editor-dual-mode-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Editor: Dual-Mode Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#routing-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints Required
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-component-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Component Library
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#existing-patterns-to-generalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing Patterns to Generalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-reuse-from-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Reuse from CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-navigation-restructure-week-1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Navigation Restructure (Week 1-2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-jobs-workspace-week-3-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Jobs Workspace (Week 3-4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-ingest-workspace-week-5-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Ingest Workspace (Week 5-6)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-admin-workspace-week-7-8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Admin Workspace (Week 7-8)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-report-workspace-week-9-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Report Workspace (Week 9-10)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-edit-workspace-week-11-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Edit Workspace (Week 11-12)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-separate-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 1: Separate Applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-tab-based-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 2: Tab-Based Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-modal-based-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 3: Modal-Based Workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -4951,37 +5452,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Fuzzy Matching Analysis for 30-Type Relationship Taxonomy
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../FUZZY_MATCHING_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -4997,175 +5471,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#problem-statement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Problem Statement
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#algorithms-tested" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Algorithms Tested
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Algorithms Tested">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-difflibsequencematcher-threshold-07" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. difflib.SequenceMatcher (threshold 0.7)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-difflibget_close_matches-cutoff-07" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. difflib.get_close_matches (cutoff 0.7)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-nltk-edit-distance-levenshtein-max-distance-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. NLTK Edit Distance (Levenshtein, max distance 3)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-hybrid-strategy-prefix-contains-fuzzy-085" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Hybrid Strategy (prefix + contains + fuzzy 0.85)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-combined-hybrid-edit-distance-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Combined (Hybrid + Edit Distance ≤3)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#comprehensive-test-results-249-variations-across-30-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Comprehensive Test Results (249 variations across 30 types)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recommended-solution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recommended Solution
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trade-offs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trade-offs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-insights" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Insights
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#remaining-failures-13-of-test-cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remaining Failures (13% of test cases)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -5873,33 +6178,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem-statement" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Problem Statement
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#algorithms-tested" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Algorithms Tested
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Algorithms Tested">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-difflibsequencematcher-threshold-07" class="md-nav__link">
+  <a href="#current-state-visualization-centric-application" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. difflib.SequenceMatcher (threshold 0.7)
+        Current State: Visualization-Centric Application
       
     </span>
   </a>
@@ -5907,43 +6201,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-difflibget_close_matches-cutoff-07" class="md-nav__link">
+  <a href="#the-opportunity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. difflib.get_close_matches (cutoff 0.7)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-nltk-edit-distance-levenshtein-max-distance-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. NLTK Edit Distance (Levenshtein, max distance 3)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-hybrid-strategy-prefix-contains-fuzzy-085" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Hybrid Strategy (prefix + contains + fuzzy 0.85)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-combined-hybrid-edit-distance-3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Combined (Hybrid + Edit Distance ≤3)
+        The Opportunity
       
     </span>
   </a>
@@ -5956,10 +6217,403 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comprehensive-test-results-249-variations-across-30-types" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comprehensive Test Results (249 variations across 30 types)
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restructure-web-application-as-multi-function-workstation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restructure Web Application as Multi-Function Workstation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category Definitions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Category Definitions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#explorers-existing-enhanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explorers (Existing, Enhanced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#block-editor-new-standalone-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Editor (New - Standalone Mode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ingest-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingest (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#report-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edit (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#admin-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Admin (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#block-editor-dual-mode-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Editor: Dual-Mode Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#routing-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints Required
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-component-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Component Library
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#existing-patterns-to-generalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing Patterns to Generalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-reuse-from-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Reuse from CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-navigation-restructure-week-1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Navigation Restructure (Week 1-2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-jobs-workspace-week-3-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Jobs Workspace (Week 3-4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-ingest-workspace-week-5-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Ingest Workspace (Week 5-6)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-admin-workspace-week-7-8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Admin Workspace (Week 7-8)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-report-workspace-week-9-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Report Workspace (Week 9-10)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-edit-workspace-week-11-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Edit Workspace (Week 11-12)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-separate-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 1: Separate Applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-tab-based-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 2: Tab-Based Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-modal-based-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 3: Modal-Based Workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Metrics
       
     </span>
   </a>
@@ -5967,54 +6621,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recommended-solution" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recommended Solution
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trade-offs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trade-offs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-insights" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Insights
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#remaining-failures-13-of-test-cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remaining Failures (13% of test cases)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation
+        References
       
     </span>
   </a>
@@ -6041,128 +6651,599 @@
   
 
 
-<h1 id="fuzzy-matching-analysis-for-30-type-relationship-taxonomy">Fuzzy Matching Analysis for 30-Type Relationship Taxonomy</h1>
-<p><strong>Date:</strong> 2025-10-09
-<strong>Context:</strong> Testing fuzzy matching algorithms for normalizing LLM relationship type outputs</p>
-<h2 id="problem-statement">Problem Statement</h2>
-<p>LLMs produce variations of canonical relationship types:
-- <strong>Prefix variations:</strong> <code>CONTRASTS</code> instead of <code>CONTRASTS_WITH</code>
-- <strong>Verb tense:</strong> <code>CAUSING</code> instead of <code>CAUSES</code>
-- <strong>Typos:</strong> <code>CAUZES</code> instead of <code>CAUSES</code>
-- <strong>Reversed relationships:</strong> <code>CAUSED_BY</code> (should be rejected)
-- <strong>Similar words:</strong> <code>CREATES</code> (should NOT match <code>REGULATES</code>)</p>
-<p>Original approach using <code>difflib.SequenceMatcher.ratio()</code> with 0.7 threshold:
-- ❌ CONTRASTS → CONTRADICTS (wrong! should be CONTRASTS_WITH)
-- ❌ COMPONENT_OF → COMPOSED_OF (false positive)
-- ❌ Only 16.7% accuracy on critical edge cases</p>
-<h2 id="algorithms-tested">Algorithms Tested</h2>
-<h3 id="1-difflibsequencematcher-threshold-07">1. difflib.SequenceMatcher (threshold 0.7)</h3>
-<p><strong>Accuracy: 16.7%</strong>
-- Ratio-based similarity: <code>SequenceMatcher(None, a, b).ratio()</code>
-- ❌ CONTRASTS → CONTRADICTS (0.800) instead of CONTRASTS_WITH (0.783)
-- ❌ Reversed relationships match (ENABLED_BY → ENABLES at 0.706)
-- ❌ False positives (CREATES → REGULATES at 0.750)</p>
-<h3 id="2-difflibget_close_matches-cutoff-07">2. difflib.get_close_matches (cutoff 0.7)</h3>
-<p><strong>Accuracy: 16.7%</strong>
-- Uses SequenceMatcher internally - same issues</p>
-<h3 id="3-nltk-edit-distance-levenshtein-max-distance-3">3. NLTK Edit Distance (Levenshtein, max distance 3)</h3>
-<p><strong>Accuracy: 66.7%</strong>
-- Character-level edit distance
-- ✅ Handles verb tense (CAUSING → CAUSES, distance 3)
-- ✅ Rejects _BY reversed (distance &gt; 3)
-- ❌ CONTRASTS → CONTAINS (distance 3) instead of CONTRASTS_WITH
-- ❌ COMPONENT_OF → COMPOSED_OF (distance 3, false positive)</p>
-<h3 id="4-hybrid-strategy-prefix-contains-fuzzy-085">4. Hybrid Strategy (prefix + contains + fuzzy 0.85)</h3>
-<p><strong>Accuracy: 66.7%</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="mf">1.</span> <span class="n">Exact</span> <span class="n">match</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="mf">2.</span> <span class="n">Reject</span> <span class="n">_BY</span> <span class="nb">reversed</span> <span class="n">relationships</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="mf">3.</span> <span class="n">Prefix</span> <span class="n">match</span> <span class="p">(</span><span class="n">CONTRASTS</span> <span class="err">→</span> <span class="n">CONTRASTS_WITH</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="mf">4.</span> <span class="n">Contains</span> <span class="n">match</span> <span class="p">(</span><span class="n">CONTRADICTS_WITH</span> <span class="err">→</span> <span class="n">CONTRADICTS</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="mf">5.</span> <span class="n">High</span><span class="o">-</span><span class="n">threshold</span> <span class="n">fuzzy</span> <span class="p">(</span><span class="mf">0.85</span><span class="p">)</span> <span class="k">for</span> <span class="n">typos</span> <span class="n">only</span>
+<h1 id="adr-067-web-application-workstation-architecture">ADR-067: Web Application Workstation Architecture</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2025-11-18
+<strong>Deciders:</strong> Engineering Team
+<strong>Related ADRs:</strong>
+- ADR-034 (Graph Visualization Architecture) - Original explorer pattern
+- ADR-064 (Specialized Visualizations) - Additional explorer types
+- ADR-066 (Published Query Endpoints) - Block flow publishing</p>
+<hr />
+<h2 id="context">Context</h2>
+<h3 id="current-state-visualization-centric-application">Current State: Visualization-Centric Application</h3>
+<p>The web application evolved from a visualization tool with a single focus:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│ Visualization Explorer              │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│                                     │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│ ┌─────────┐  ┌────────────────────┐ │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│ │Explorers│  │  Main Content      │ │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│ │• 2D     │  │  • Query tabs      │ │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│ │• 3D     │  │  • Graph canvas    │ │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│ └─────────┘  └────────────────────┘ │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└─────────────────────────────────────┘
 </code></pre></div>
-- ✅ Perfect prefix/contains matching
-- ✅ Rejects _BY reversed
-- ✅ Rejects false positives (CREATES, COMPONENT_OF)
-- ❌ Misses verb tense (threshold too high)</p>
-<h3 id="5-combined-hybrid-edit-distance-3">5. Combined (Hybrid + Edit Distance ≤3)</h3>
-<p><strong>Accuracy: 83.3% with distance=3</strong>
-- Best overall but creates new false positives at distance=3
-- Distance=2: 75% (misses verb tense)
-- Distance=3: 83% (adds CREATES → REFUTES false positive)</p>
-<h2 id="comprehensive-test-results-249-variations-across-30-types">Comprehensive Test Results (249 variations across 30 types)</h2>
-<p><strong>Using improved prefix-aware algorithm:</strong>
-- Improved: 218/249 (87%)
-- Current (buggy): 214/249 (85%)
-- Fixed: 4 critical cases including CONTRASTS bug</p>
-<h2 id="recommended-solution">Recommended Solution</h2>
-<p><strong>Use Hybrid Strategy with optimized parameters:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">normalize_relationship_type</span><span class="p">(</span><span class="n">llm_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    \<span class="s2">&quot;</span><span class="se">\&quot;\&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">Multi</span><span class="o">-</span><span class="n">stage</span> <span class="n">matching</span> <span class="n">strategy</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="mf">1.</span> <span class="n">Exact</span> <span class="n">match</span> <span class="p">(</span><span class="n">fast</span> <span class="n">path</span><span class="p">)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="mf">2.</span> <span class="n">Reject</span> <span class="n">_BY</span> <span class="nb">reversed</span> <span class="n">relationships</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="mf">3.</span> <span class="n">Prefix</span> <span class="n">match</span> <span class="p">(</span><span class="nb">input</span> <span class="ow">is</span> <span class="n">prefix</span> <span class="n">of</span> <span class="n">canonical</span><span class="p">)</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="mf">4.</span> <span class="n">Contains</span> <span class="n">match</span> <span class="p">(</span><span class="n">canonical</span> <span class="ow">is</span> <span class="n">prefix</span> <span class="n">of</span> <span class="nb">input</span><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="mf">5.</span> <span class="n">Fallback</span> <span class="n">to</span> <span class="n">difflib</span> <span class="n">SequenceMatcher</span> <span class="k">with</span> <span class="n">threshold</span> <span class="mf">0.7</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    \<span class="s2">&quot;</span><span class="se">\&quot;\&quot;</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">llm_upper</span> <span class="o">=</span> <span class="n">llm_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="c1"># 1. Exact match</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="k">if</span> <span class="n">llm_upper</span> <span class="ow">in</span> <span class="n">RELATIONSHIP_TYPES</span><span class="p">:</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">llm_upper</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="c1"># 2. Reject _BY reversed relationships</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="k">if</span> <span class="n">llm_upper</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_BY&#39;</span><span class="p">):</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="c1"># 3. Prefix match (handles CONTRASTS → CONTRASTS_WITH)</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    <span class="n">prefix_matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">RELATIONSHIP_TYPES</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">llm_upper</span><span class="p">)]</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="k">if</span> <span class="n">prefix_matches</span><span class="p">:</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="n">best</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">prefix_matches</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">)</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>    <span class="c1"># 4. Contains match (handles CONTRASTS_WITH → CONTRASTS)</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>    <span class="n">contains_matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">RELATIONSHIP_TYPES</span> <span class="k">if</span> <span class="n">llm_upper</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    <span class="k">if</span> <span class="n">contains_matches</span><span class="p">:</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>        <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">contains_matches</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">)</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>    <span class="c1"># 5. Sequence similarity fallback (0.7 threshold for typos)</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>    <span class="c1"># Use difflib.SequenceMatcher...</span>
+<p>This served well for exploring knowledge graphs, but the platform has grown capabilities that don't fit this model:</p>
+<ul>
+<li><strong>Ingestion</strong> - Currently CLI/MCP only, no web interface</li>
+<li><strong>Job management</strong> - No visibility into job queue from web</li>
+<li><strong>Graph editing</strong> - No manual CRUD operations</li>
+<li><strong>OAuth/security</strong> - Configuration via operator container only</li>
+<li><strong>Published endpoints</strong> - ADR-066 introduces flow publishing with no management UI</li>
+<li><strong>Reporting</strong> - No tabular/export views</li>
+</ul>
+<h3 id="the-opportunity">The Opportunity</h3>
+<p>Users need a <strong>knowledge graph workstation</strong> - a unified interface for:
+1. <strong>Exploring</strong> - Visualizing and querying (current strength)
+2. <strong>Creating</strong> - Ingesting content, editing graph
+3. <strong>Managing</strong> - Jobs, security, published flows
+4. <strong>Reporting</strong> - Tabular views, exports</p>
+<h2 id="decision">Decision</h2>
+<h3 id="restructure-web-application-as-multi-function-workstation">Restructure Web Application as Multi-Function Workstation</h3>
+<p>Transform the left sidebar from "Explorer selector" to "Workstation navigation" with multiple functional categories.</p>
+<h3 id="navigation-structure">Navigation Structure</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│ Knowledge Graph             │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├─────────────────────────────┤
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│ ▼ Explorers                 │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   • 2D Force Graph          │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   • 3D Force Graph          │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   • [Future visualizations] │
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│                             │
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│ ▸ Block Editor              │
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│                             │
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│ ▸ Ingest                    │
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│                             │
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│ ▸ Jobs                      │
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│                             │
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│ ▸ Report                    │
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│                             │
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│ ▸ Edit                      │
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│                             │
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│ ▸ Admin                     │
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>└─────────────────────────────┘
 </code></pre></div>
-<h2 id="trade-offs">Trade-offs</h2>
-<p><strong>Why not use NLTK edit distance?</strong>
-- Adds dependency (24MB package)
-- Slightly better verb tense handling (66.7% → 75% with distance=3)
-- But creates new false positives at distance=3
-- Hybrid achieves 87% on comprehensive test without NLTK</p>
-<p><strong>Why not lower fuzzy threshold to catch verb tense?</strong>
-- Threshold 0.6: Creates false positives (CREATES → REGULATES)
-- Threshold 0.7: Misses verb tense but avoids false positives
-- <strong>Better to miss legitimate variations than accept wrong matches</strong></p>
-<p><strong>Why reject _BY explicitly?</strong>
-- Reversed relationships (CAUSED_BY, ENABLED_BY) indicate opposite directionality
-- LLM should use RESULTS_FROM for reverse causation
-- Explicit rejection prevents directional confusion</p>
-<h2 id="key-insights">Key Insights</h2>
+<h3 id="category-definitions">Category Definitions</h3>
+<h4 id="explorers-existing-enhanced">Explorers (Existing, Enhanced)</h4>
+<p>Interactive graph visualizations with embedded query tools.</p>
+<p><strong>Each explorer includes:</strong>
+- Query mode tabs: Smart Search | Block Builder | openCypher
+- Graph canvas (2D/3D/Sankey/Heatmap/etc.)
+- Node info panel
+- Results list</p>
+<p><strong>Pattern:</strong> Build query → visualize → iterate → save</p>
+<h4 id="block-editor-new-standalone-mode">Block Editor (New - Standalone Mode)</h4>
+<p>Focused flow management environment.</p>
+<p><strong>Features:</strong>
+- Saved diagrams list (left panel)
+- Full block canvas (main area)
+- Properties panel (right):
+  - Name, description, tags
+  - Execution mode toggle (Interactive ↔ Published)
+  - Output format (Visualization/JSON/CSV)
+  - Permissions (for published flows)</p>
+<p><strong>Pattern:</strong> Organize flows → configure → publish</p>
+<h4 id="ingest-new">Ingest (New)</h4>
+<p>Web-based content ingestion.</p>
+<p><strong>Features:</strong>
+- Drag-and-drop file upload
+- URL input field
+- Batch directory selection
+- Ontology selector
+- Job preview with cost estimate
+- Submit to job queue</p>
+<p><strong>Pattern:</strong> Drop files → configure → approve → monitor</p>
+<h4 id="jobs-new">Jobs (New)</h4>
+<p>Job queue visibility and management.</p>
+<p><strong>Features:</strong>
+- Queue view (pending, running)
+- History view (completed, failed)
+- Job details (progress, logs, results)
+- Approve/cancel actions
+- Filter by status, ontology, date</p>
+<p><strong>Pattern:</strong> Monitor → approve → investigate</p>
+<h4 id="report-new">Report (New)</h4>
+<p>Tabular and export views.</p>
+<p><strong>Features:</strong>
+- Saved queries list
+- Tabular result view
+- Export formats (JSON, CSV, Markdown)
+- Column selection
+- Sort/filter
+- Pagination</p>
+<p><strong>Pattern:</strong> Query → view table → export</p>
+<h4 id="edit-new">Edit (New)</h4>
+<p>Manual graph editing.</p>
+<p><strong>Features:</strong>
+- Node browser/search
+- Create/update/delete nodes
+- Create/update/delete edges
+- Bypass upsert (direct graph manipulation)
+- LLM-mediated quality suggestions (optional)
+- Audit trail for manual edits</p>
+<p><strong>Pattern:</strong> Find node → edit properties → save</p>
+<h4 id="admin-new">Admin (New)</h4>
+<p>Platform administration.</p>
+<p><strong>Features:</strong>
+- OAuth client management
+  - Register clients
+  - View/revoke tokens
+  - Configure scopes
+- User management
+  - Create/edit users
+  - Assign roles
+- Published flow management
+  - View all published flows
+  - Revoke access
+  - Usage analytics
+- System status
+  - Database stats
+  - Embedding status
+  - AI provider status</p>
+<p><strong>Pattern:</strong> Configure → monitor → secure</p>
+<h3 id="block-editor-dual-mode-architecture">Block Editor: Dual-Mode Architecture</h3>
+<p>The Block Builder appears in two contexts with shared state:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>┌─────────────────────────────────────────────────┐
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>│           blockDiagramStore (Zustand)           │
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>│  • workingNodes/Edges (current canvas)          │
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│  • savedDiagrams list                           │
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│  • currentDiagramId                             │
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│  • hasUnsavedChanges                            │
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>└─────────────────────────────────────────────────┘
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>              ▲                    ▲
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>              │                    │
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>   ┌──────────┴──────┐    ┌───────┴────────┐
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>   │ Embedded Mode   │    │ Standalone Mode │
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>   │ (in Explorers)  │    │ (sidebar item)  │
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>   │                 │    │                 │
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>   │ • Query tabs    │    │ • Diagram list  │
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>   │ • Compact UI    │    │ • Full canvas   │
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>   │ • Quick save    │    │ • Properties    │
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>   │ • See results   │    │ • Publish config│
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>   └─────────────────┘    └─────────────────┘
+</code></pre></div>
+<p><strong>Behavior:</strong>
+- Save in embedded → appears in standalone list
+- Create in standalone → loadable in any explorer
+- Switch views → same working diagram stays loaded
+- Unsaved changes persist across view switches</p>
+<h3 id="routing-architecture">Routing Architecture</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// App.tsx routes</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="o">&lt;</span><span class="nx">Routes</span><span class="o">&gt;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">Navigate</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/explore/2d&quot;</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="p">{</span><span class="cm">/* Explorers */</span><span class="p">}</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/explore/2d&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">ForceGraph2DExplorer</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/explore/3d&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">ForceGraph3DExplorer</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/explore/sankey&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">SankeyExplorer</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="p">{</span><span class="cm">/* Block Editor */</span><span class="p">}</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/blocks&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">BlockEditorWorkspace</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/blocks/:diagramId&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">BlockEditorWorkspace</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="p">{</span><span class="cm">/* Ingest */</span><span class="p">}</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/ingest&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">IngestWorkspace</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">  </span><span class="p">{</span><span class="cm">/* Jobs */</span><span class="p">}</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/jobs&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">JobsWorkspace</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/jobs/:jobId&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">JobDetail</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">  </span><span class="p">{</span><span class="cm">/* Report */</span><span class="p">}</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/report&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">ReportWorkspace</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">  </span><span class="p">{</span><span class="cm">/* Edit */</span><span class="p">}</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/edit&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">GraphEditor</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/edit/node/:nodeId&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">NodeEditor</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">  </span><span class="p">{</span><span class="cm">/* Admin */</span><span class="p">}</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/admin&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">AdminDashboard</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/admin/clients&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">OAuthClientManager</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/admin/users&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">UserManager</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Route</span><span class="w"> </span><span class="nx">path</span><span class="o">=</span><span class="s2">&quot;/admin/flows&quot;</span><span class="w"> </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">PublishedFlowManager</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="o">&lt;</span><span class="err">/Routes&gt;</span>
+</code></pre></div>
+<h3 id="component-architecture">Component Architecture</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>src/
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── components/
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│   ├── layout/
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│   │   ├── Sidebar.tsx           # Main navigation
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│   │   ├── SidebarCategory.tsx   # Collapsible category
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>│   │   └── MainLayout.tsx        # Shell with sidebar
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>│   │
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>│   ├── explorers/                # Existing + enhanced
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│   │   ├── ForceGraph2D/
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>│   │   ├── ForceGraph3D/
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│   │   └── common/
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│   │       └── QueryTabs.tsx     # Shared query mode tabs
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│   │
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>│   ├── blocks/                   # Block Builder
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>│   │   ├── BlockBuilder.tsx      # Canvas component
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>│   │   ├── BlockEditorWorkspace.tsx  # Standalone view
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│   │   └── ...
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│   │
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>│   ├── ingest/                   # New
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>│   │   ├── IngestWorkspace.tsx
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>│   │   ├── FileDropZone.tsx
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>│   │   └── IngestionForm.tsx
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>│   │
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>│   ├── jobs/                     # New
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>│   │   ├── JobsWorkspace.tsx
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>│   │   ├── JobQueue.tsx
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>│   │   ├── JobHistory.tsx
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>│   │   └── JobDetail.tsx
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>│   │
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>│   ├── report/                   # New
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>│   │   ├── ReportWorkspace.tsx
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>│   │   ├── TabularView.tsx
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>│   │   └── ExportPanel.tsx
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>│   │
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>│   ├── edit/                     # New
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>│   │   ├── GraphEditor.tsx
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>│   │   ├── NodeEditor.tsx
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>│   │   └── EdgeEditor.tsx
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>│   │
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>│   └── admin/                    # New
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a>│       ├── AdminDashboard.tsx
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>│       ├── OAuthClientManager.tsx
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>│       ├── UserManager.tsx
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>│       └── PublishedFlowManager.tsx
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>│
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>└── store/
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>    ├── graphStore.ts
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>    ├── blockDiagramStore.ts
+<a id="__codelineno-4-49" name="__codelineno-4-49" href="#__codelineno-4-49"></a>    ├── jobStore.ts              # New
+<a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a>    └── adminStore.ts            # New
+</code></pre></div>
+<h3 id="api-endpoints-required">API Endpoints Required</h3>
+<p><strong>Existing:</strong>
+- <code>/api/v1/queries/*</code> - Graph queries
+- <code>/api/v1/ontology/*</code> - Ontology management
+- <code>/api/v1/jobs/*</code> - Job operations</p>
+<p><strong>New or Enhanced:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Ingest (enhanced for web)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">POST</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">ingest</span><span class="o">/</span><span class="n">upload</span>       <span class="c1"># Multipart file upload</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">POST</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">ingest</span><span class="o">/</span><span class="n">url</span>          <span class="c1"># URL ingestion</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Jobs (enhanced for web)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">GET</span>  <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">jobs</span>                <span class="c1"># List with filters</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">GET</span>  <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">jobs</span><span class="o">/</span><span class="p">{</span><span class="nb">id</span><span class="p">}</span><span class="o">/</span><span class="n">logs</span>      <span class="c1"># Stream job logs</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Admin</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">GET</span>  <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">clients</span>       <span class="c1"># List OAuth clients</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">POST</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">clients</span>       <span class="c1"># Register client</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">DELETE</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">clients</span><span class="o">/</span><span class="p">{</span><span class="nb">id</span><span class="p">}</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="n">GET</span>  <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">users</span>         <span class="c1"># List users</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="n">POST</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">users</span>         <span class="c1"># Create user</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="n">PATCH</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">users</span><span class="o">/</span><span class="p">{</span><span class="nb">id</span><span class="p">}</span>   <span class="c1"># Update user</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="n">GET</span>  <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">flows</span>         <span class="c1"># List all published flows</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="n">DELETE</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">flows</span><span class="o">/</span><span class="p">{</span><span class="nb">id</span><span class="p">}</span>  <span class="c1"># Unpublish flow</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="c1"># Graph editing</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="n">POST</span>   <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">graph</span><span class="o">/</span><span class="n">nodes</span>       <span class="c1"># Create node</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="n">PATCH</span>  <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">graph</span><span class="o">/</span><span class="n">nodes</span><span class="o">/</span><span class="p">{</span><span class="nb">id</span><span class="p">}</span>  <span class="c1"># Update node</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="n">DELETE</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">graph</span><span class="o">/</span><span class="n">nodes</span><span class="o">/</span><span class="p">{</span><span class="nb">id</span><span class="p">}</span>  <span class="c1"># Delete node</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="n">POST</span>   <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">graph</span><span class="o">/</span><span class="n">edges</span>       <span class="c1"># Create edge</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="n">DELETE</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v1</span><span class="o">/</span><span class="n">graph</span><span class="o">/</span><span class="n">edges</span><span class="o">/</span><span class="p">{</span><span class="nb">id</span><span class="p">}</span>  <span class="c1"># Delete edge</span>
+</code></pre></div>
+<h3 id="shared-component-library">Shared Component Library</h3>
+<p>Common UI patterns across workspaces warrant a shared component library:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>web/src/components/shared/
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── data-display/
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>│   ├── DataTable.tsx           # Sortable, filterable, paginated tables
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>│   ├── StatusBadge.tsx         # Running/Pending/Failed/Completed
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>│   ├── MetricCard.tsx          # Stats with label
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>│   └── EmptyState.tsx          # &quot;No results&quot; with action
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>│
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>├── layout/
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>│   ├── ListDetailLayout.tsx    # Left list, right detail pattern
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>│   ├── ActionToolbar.tsx       # Icon buttons with tooltips
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>│   └── PanelHeader.tsx         # Title + actions
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>│
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>├── input/
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>│   ├── SearchFilterBar.tsx     # Text + filters + sort
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>│   ├── FileDropZone.tsx        # Drag-drop with preview
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>│   ├── FormField.tsx           # Label + input + validation
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>│   └── OntologySelector.tsx    # Reusable ontology picker
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>│
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>├── feedback/
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>│   ├── ConfirmDialog.tsx       # Destructive action confirmation
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>│   ├── Toast.tsx               # Success/error/info notifications
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>│   ├── LoadingSkeleton.tsx     # Consistent loading states
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>│   └── ProgressBar.tsx         # Job/upload progress
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>│
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>└── index.ts                    # Barrel export
+</code></pre></div>
+<p><strong>Design tokens</strong> (colors, spacing, typography) should be centralized in Tailwind config or CSS variables for consistent theming across all workspaces.</p>
+<h3 id="existing-patterns-to-generalize">Existing Patterns to Generalize</h3>
+<p>The explorer codebase already has patterns that should be extracted for workstation-wide use:</p>
+<p><strong>From <code>explorers/common/</code>:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// PanelStack - auto-positioning panels with collapse support</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="o">&lt;</span><span class="nx">PanelStack</span><span class="w"> </span><span class="nx">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="w"> </span><span class="nx">gap</span><span class="o">=</span><span class="p">{</span><span class="mf">16</span><span class="p">}</span><span class="o">&gt;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">NodeInfoBox</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="o">&lt;</span><span class="nx">Legend</span><span class="w"> </span><span class="o">/&gt;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="o">&lt;</span><span class="err">/PanelStack&gt;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1">// Collapsible sections pattern (NodeInfoBox, GraphSettingsPanel)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">expanded</span><span class="p">,</span><span class="w"> </span><span class="nx">setExpanded</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useState</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="nx">onClick</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">setExpanded</span><span class="p">(</span><span class="o">!</span><span class="nx">expanded</span><span class="p">)}</span><span class="o">&gt;</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="p">{</span><span class="nx">expanded</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">ChevronDown</span><span class="w"> </span><span class="o">/&gt;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">ChevronRight</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span><span class="nx">Section</span><span class="w"> </span><span class="nx">Title</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="p">{</span><span class="nx">expanded</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">SectionContent</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">}</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="c1">// Formatted metrics (utils.ts)</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="nx">formatGrounding</span><span class="p">(</span><span class="mf">0.73</span><span class="p">)</span><span class="w">        </span><span class="c1">// &quot;+73%&quot;</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="nx">formatDiversity</span><span class="p">(</span><span class="mf">0.42</span><span class="p">)</span><span class="w">        </span><span class="c1">// &quot;42%&quot;</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="nx">formatAuthenticatedDiversity</span><span class="w"> </span><span class="c1">// &quot;✓ 42%&quot;</span>
+</code></pre></div>
+<p><strong>From <code>components/shared/</code>:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// ModeDial - radio selection with icons</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="o">&lt;</span><span class="nx">ModeDial</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nx">options</span><span class="o">=</span><span class="p">{[</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;smart&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Smart&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="kt">Search</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;blocks&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Blocks&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="kt">Blocks</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span><span class="p">]}</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="nx">selected</span><span class="o">=</span><span class="p">{</span><span class="nx">mode</span><span class="p">}</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span><span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="nx">setMode</span><span class="p">}</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="err">/&gt;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1">// Debounced input pattern (SearchBar)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">query</span><span class="p">,</span><span class="w"> </span><span class="nx">setQuery</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useState</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="kd">const</span><span class="w"> </span><span class="nx">debouncedQuery</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useDebouncedValue</span><span class="p">(</span><span class="nx">query</span><span class="p">,</span><span class="w"> </span><span class="mf">300</span><span class="p">);</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1">// Use debouncedQuery for API calls</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1">// Results dropdown pattern</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="o">&lt;</span><span class="nx">SearchResultsDropdown</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">  </span><span class="nx">results</span><span class="o">=</span><span class="p">{</span><span class="nx">results</span><span class="p">}</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">  </span><span class="nx">onSelect</span><span class="o">=</span><span class="p">{</span><span class="nx">handleSelect</span><span class="p">}</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">  </span><span class="nx">loading</span><span class="o">=</span><span class="p">{</span><span class="nx">isLoading</span><span class="p">}</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="err">/&gt;</span>
+</code></pre></div>
+<p><strong>Extraction priorities:</strong></p>
 <ol>
-<li><strong>Prefix matching is critical:</strong> CONTRASTS → CONTRASTS_WITH solves the original bug</li>
-<li><strong>No single threshold works:</strong> Verb tense needs ~0.6, false positive avoidance needs ~0.8</li>
-<li><strong>Multi-stage matching wins:</strong> Prefix → Contains → Fuzzy achieves best balance</li>
-<li><strong>Reject reversed relationships:</strong> _BY suffix indicates reversed direction, always reject</li>
-<li><strong>Accept imperfection:</strong> 87% accuracy on 249 variations is good enough for production</li>
+<li><strong>CollapsibleSection</strong> - wrap the expand/collapse pattern</li>
+<li><strong>DetailPanel</strong> - header + scrollable content + actions</li>
+<li><strong>MetricDisplay</strong> - formatted number with label and indicator</li>
+<li><strong>SearchableDropdown</strong> - debounced input + results list</li>
+<li><strong>SettingsForm</strong> - labeled fields with validation</li>
 </ol>
-<h2 id="remaining-failures-13-of-test-cases">Remaining Failures (13% of test cases)</h2>
-<p>Mostly verb tense variations that could be addressed by:
-1. Adding explicit variations to LLM prompt (CAUSING, ENABLING, etc.)
-2. Simple suffix stripping before matching (CAUSING → CAUSE)
-3. Accepting that LLMs should learn the canonical forms</p>
-<p><strong>Decision:</strong> Ship with prefix+contains+fuzzy hybrid (87% accuracy). Monitor logs for common failures and add to LLM prompt as needed.</p>
-<h2 id="implementation">Implementation</h2>
-<p>✅ Updated <code>src/api/lib/relationship_mapper.py</code> with hybrid strategy
-⏳ Update ADR-022 to document prefix-matching strategy
-⏳ Add logging for normalization with similarity scores
-⏳ Monitor production for common LLM variations to add to prompt</p>
+<p><strong>Pattern usage by workspace:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th style="text-align: center;">Explorers</th>
+<th style="text-align: center;">Blocks</th>
+<th style="text-align: center;">Ingest</th>
+<th style="text-align: center;">Jobs</th>
+<th style="text-align: center;">Report</th>
+<th style="text-align: center;">Edit</th>
+<th style="text-align: center;">Admin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DataTable</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>ListDetailLayout</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>SearchFilterBar</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>FileDropZone</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>StatusBadge</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>ConfirmDialog</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>Toast</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>EmptyState</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+</tbody>
+</table>
+<h3 id="code-reuse-from-cli">Code Reuse from CLI</h3>
+<p>The <code>cli/</code> directory contains substantial TypeScript code shared with MCP server that can be reused:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>cli/src/
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>├── api/client.ts           # API client - reuse directly
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>├── cli/
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>│   ├── jobs.ts             # Job listing, approval, cancel
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>│   ├── ingest.ts           # File/URL ingestion logic
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>│   ├── oauth.ts            # OAuth client management
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>│   ├── admin.ts            # Admin operations
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>│   ├── search.ts           # Search operations
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>│   └── vocabulary.ts       # Vocabulary operations
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>└── lib/auth/
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    ├── auth-client.ts      # Auth state management
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    ├── device-flow.ts      # Device authorization
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>    └── oauth-types.ts      # Type definitions
+</code></pre></div>
+<p><strong>Reuse strategy:</strong>
+1. Extract shared types/interfaces to common package
+2. API client methods directly portable to web
+3. Auth library adapts to browser storage (localStorage vs file)
+4. Business logic (validation, formatting) reusable as-is</p>
+<p><strong>Benefits:</strong>
+- Consistent API interactions across CLI, MCP, and web
+- Type safety shared across all clients
+- Bug fixes propagate to all consumers
+- Reduced development time for web workspaces</p>
+<h2 id="implementation-phases">Implementation Phases</h2>
+<h3 id="phase-1-navigation-restructure-week-1-2">Phase 1: Navigation Restructure (Week 1-2)</h3>
+<ul>
+<li>Refactor Sidebar to support categories</li>
+<li>Add routing for all workspaces</li>
+<li>Create placeholder components for new areas</li>
+<li>Block Editor standalone view (using existing BlockBuilder)</li>
+</ul>
+<h3 id="phase-2-jobs-workspace-week-3-4">Phase 2: Jobs Workspace (Week 3-4)</h3>
+<ul>
+<li>Job list view with filters</li>
+<li>Job detail view with logs</li>
+<li>Approve/cancel actions</li>
+<li>Real-time status updates</li>
+</ul>
+<h3 id="phase-3-ingest-workspace-week-5-6">Phase 3: Ingest Workspace (Week 5-6)</h3>
+<ul>
+<li>File drop zone component</li>
+<li>Upload API integration</li>
+<li>Ontology selector</li>
+<li>Job preview and submission</li>
+</ul>
+<h3 id="phase-4-admin-workspace-week-7-8">Phase 4: Admin Workspace (Week 7-8)</h3>
+<ul>
+<li>OAuth client management</li>
+<li>User management</li>
+<li>Published flow overview</li>
+<li>System status dashboard</li>
+</ul>
+<h3 id="phase-5-report-workspace-week-9-10">Phase 5: Report Workspace (Week 9-10)</h3>
+<ul>
+<li>Tabular result view</li>
+<li>Export functionality</li>
+<li>Saved query integration</li>
+</ul>
+<h3 id="phase-6-edit-workspace-week-11-12">Phase 6: Edit Workspace (Week 11-12)</h3>
+<ul>
+<li>Node browser/search</li>
+<li>Node/edge CRUD forms</li>
+<li>Audit trail display</li>
+</ul>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ol>
+<li><strong>Unified Interface:</strong> All platform capabilities accessible from one place</li>
+<li><strong>Reduced CLI Dependency:</strong> Web-first workflow for common operations</li>
+<li><strong>Better Discoverability:</strong> Users see full platform capabilities in sidebar</li>
+<li><strong>Consistent UX:</strong> Same patterns across all workspaces</li>
+<li><strong>Enables ADR-066:</strong> UI for publishing/managing query flows</li>
+</ol>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Increased Complexity:</strong> More routes, components, state management</li>
+<li><strong>API Surface Growth:</strong> Many new endpoints needed</li>
+<li><strong>Auth Complexity:</strong> Different capabilities need different permissions</li>
+<li><strong>Testing Burden:</strong> More UI to test across workspaces</li>
+<li><strong>Bundle Size:</strong> More code to ship (can mitigate with code splitting)</li>
+</ol>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>Migration:</strong> Existing explorer functionality unchanged</li>
+<li><strong>Documentation:</strong> Each workspace needs user guide</li>
+<li><strong>Mobile:</strong> Sidebar navigation works but some workspaces need responsive design</li>
+</ol>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="alternative-1-separate-applications">Alternative 1: Separate Applications</h3>
+<p><strong>Option:</strong> Build separate apps for admin, ingest, reporting.</p>
+<p><strong>Rejected because:</strong>
+- Users must switch between apps
+- Duplicate auth flows
+- No unified state (e.g., can't jump from job to results)</p>
+<h3 id="alternative-2-tab-based-interface">Alternative 2: Tab-Based Interface</h3>
+<p><strong>Option:</strong> Top tabs instead of sidebar categories.</p>
+<p><strong>Rejected because:</strong>
+- Limited space for 7+ categories
+- Doesn't scale with ADR-064 explorer additions
+- Sidebar pattern already established</p>
+<h3 id="alternative-3-modal-based-workflows">Alternative 3: Modal-Based Workflows</h3>
+<p><strong>Option:</strong> Keep single explorer view, use modals for other functions.</p>
+<p><strong>Rejected because:</strong>
+- Modals are disruptive for complex workflows
+- Can't see job progress while editing
+- No persistent state for lengthy operations</p>
+<h2 id="success-metrics">Success Metrics</h2>
+<p><strong>Adoption:</strong>
+- % of users accessing non-explorer workspaces
+- Web vs CLI usage for ingestion
+- Time spent in each workspace category</p>
+<p><strong>Efficiency:</strong>
+- Time to complete common workflows (ingest file, manage job, edit node)
+- Reduction in CLI usage for routine tasks</p>
+<p><strong>Discovery:</strong>
+- Users trying new workspaces after initial exposure
+- Feature awareness in user surveys</p>
+<hr />
+<h2 id="references">References</h2>
+<ul>
+<li>ADR-034: Graph Visualization Architecture</li>
+<li>ADR-066: Published Query Endpoints</li>
+<li>React Router documentation</li>
+<li>Zustand state management patterns</li>
+</ul>
 
 
 
