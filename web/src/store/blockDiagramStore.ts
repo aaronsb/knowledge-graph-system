@@ -49,7 +49,7 @@ interface BlockDiagramStore {
   clearWorkingCanvas: () => void;
 
   // Persistence operations (localStorage for now, API in future)
-  saveDiagram: (name: string, nodes: Node<BlockData>[], edges: Edge[], description?: string) => string;
+  saveDiagram: (name: string, nodes: Node<BlockData>[], edges: Edge[], description?: string, forceNew?: boolean) => string;
   loadDiagram: (id: string) => SavedDiagram | null;
   listDiagrams: () => DiagramMetadata[];
   deleteDiagram: (id: string) => boolean;
@@ -109,14 +109,14 @@ export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
     });
   },
 
-  saveDiagram: (name, nodes, edges, description) => {
+  saveDiagram: (name, nodes, edges, description, forceNew = false) => {
     if (typeof window === 'undefined') return '';
 
     const { currentDiagramId } = get();
     const now = new Date().toISOString();
 
     // Check if we're updating existing or creating new
-    let id = currentDiagramId;
+    let id = forceNew ? null : currentDiagramId;
     let createdAt = now;
 
     if (id) {
