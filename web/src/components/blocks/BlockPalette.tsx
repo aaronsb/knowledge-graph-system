@@ -10,6 +10,7 @@ import { BlockHelpPopup } from './BlockHelpPopup';
 
 interface BlockPaletteProps {
   onAddBlock: (type: BlockType) => void;
+  className?: string;
 }
 
 interface PaletteBlock {
@@ -212,7 +213,7 @@ const colorClasses: Record<string, { bg: string; border: string; text: string; h
   },
 };
 
-export const BlockPalette: React.FC<BlockPaletteProps> = ({ onAddBlock }) => {
+export const BlockPalette: React.FC<BlockPaletteProps> = ({ onAddBlock, className }) => {
   const [helpPopup, setHelpPopup] = useState<{ blockType: BlockType; position: { x: number; y: number } } | null>(null);
 
   const handleHelpClick = (e: React.MouseEvent, blockType: BlockType) => {
@@ -224,9 +225,12 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({ onAddBlock }) => {
     });
   };
 
+  // Default classes, can be overridden by className prop
+  const defaultClasses = "w-64 bg-muted dark:bg-gray-900 border-r border-border dark:border-gray-700 p-4 overflow-y-auto";
+  const containerClasses = className || defaultClasses;
+
   return (
-    <div className="w-64 bg-muted dark:bg-gray-900 border-r border-border dark:border-gray-700 p-4 overflow-y-auto">
-      <h3 className="text-sm font-semibold text-card-foreground dark:text-gray-100 mb-3">Block Palette</h3>
+    <div className={containerClasses}>
 
       {paletteSections.map((section, sectionIndex) => (
         <div key={section.title} className={sectionIndex > 0 ? 'mt-4' : ''}>

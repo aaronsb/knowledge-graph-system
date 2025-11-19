@@ -2,7 +2,7 @@
  * Block Builder - Visual drag-and-drop query construction
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -17,7 +17,8 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { Code, Play, Trash2, AlertCircle, ChevronDown, ChevronUp, Save, FolderOpen, Download, Upload } from 'lucide-react';
+import { Code, Play, Trash2, AlertCircle, ChevronDown, ChevronUp, Save, FolderOpen, Download, Upload, Undo2, Redo2, MoreVertical } from 'lucide-react';
+import { useHistoryKeyboard } from '../../hooks/useHistory';
 import { BlockPalette } from './BlockPalette';
 import { BlockContextMenu } from './BlockContextMenu';
 import { StartBlock } from './StartBlock';
@@ -43,11 +44,37 @@ import { useBlockDiagramStore, type DiagramMetadata } from '../../store/blockDia
 
 import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
 
+// Define nodeTypes outside component to prevent React Flow warning
+// See: https://reactflow.dev/error#002
+const nodeTypes: NodeTypes = {
+  start: StartBlock,
+  end: EndBlock,
+  // Cypher blocks
+  search: SearchBlock,
+  neighborhood: NeighborhoodBlock,
+  filterOntology: OntologyFilterBlock,
+  filterEdge: EdgeFilterBlock,
+  filterNode: NodeFilterBlock,
+  and: AndBlock,
+  or: OrBlock,
+  not: NotBlock,
+  limit: LimitBlock,
+  // Smart blocks
+  vectorSearch: VectorSearchBlock,
+  epistemicFilter: EpistemicFilterBlock,
+  enrich: EnrichBlock,
+};
+
 interface BlockBuilderProps {
   onSendToEditor?: (cypher: string) => void;
+  hidePalette?: boolean;
 }
 
-export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) => {
+export interface BlockBuilderHandle {
+  addBlock: (type: BlockType) => void;
+}
+
+export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({ onSendToEditor, hidePalette }, ref) => {
   // Get initial state from store (persists across view switches)
   const { workingNodes: initialNodes, workingEdges: initialEdges } = useBlockDiagramStore.getState();
 
@@ -55,6 +82,45 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [compiledCypher, setCompiledCypher] = useState('');
   const [compileErrors, setCompileErrors] = useState<string[]>([]);
+
+  // History for undo/redo
+  type Snapshot = { nodes: Node<BlockData>[]; edges: Edge[] };
+  const [past, setPast] = useState<Snapshot[]>([]);
+  const [future, setFuture] = useState<Snapshot[]>([]);
+  const maxHistory = 50;
+
+  const recordHistory = useCallback(() => {
+    setPast(prev => {
+      const newPast = [...prev, { nodes, edges }];
+      if (newPast.length > maxHistory) newPast.shift();
+      return newPast;
+    });
+    setFuture([]); // Clear redo stack on new action
+  }, [nodes, edges]);
+
+  const undo = useCallback(() => {
+    if (past.length === 0) return;
+    const previous = past[past.length - 1];
+    setPast(prev => prev.slice(0, -1));
+    setFuture(prev => [{ nodes, edges }, ...prev]);
+    setNodes(previous.nodes);
+    setEdges(previous.edges);
+  }, [past, nodes, edges, setNodes, setEdges]);
+
+  const redo = useCallback(() => {
+    if (future.length === 0) return;
+    const next = future[0];
+    setFuture(prev => prev.slice(1));
+    setPast(prev => [...prev, { nodes, edges }]);
+    setNodes(next.nodes);
+    setEdges(next.edges);
+  }, [future, nodes, edges, setNodes, setEdges]);
+
+  const canUndo = past.length > 0;
+  const canRedo = future.length > 0;
+
+  // Keyboard shortcuts for undo/redo
+  useHistoryKeyboard(undo, redo, canUndo, canRedo);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
 
@@ -80,12 +146,17 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   // Save/Load dialog state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [showSaveMenu, setShowSaveMenu] = useState(false);
+  const [isSaveAsNew, setIsSaveAsNew] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveDescription, setSaveDescription] = useState('');
   const [savedDiagrams, setSavedDiagrams] = useState<DiagramMetadata[]>([]);
 
   // File input ref for import
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Track if we're syncing from store to prevent infinite loops
+  const isSyncingFromStore = React.useRef(false);
 
   // Get theme for MiniMap styling
   const { theme } = useThemeStore();
@@ -107,29 +178,6 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     exportToFile,
     importFromFile,
   } = useBlockDiagramStore();
-
-  // Register custom node types
-  const nodeTypes: NodeTypes = useMemo(
-    () => ({
-      start: StartBlock,
-      end: EndBlock,
-      // Cypher blocks
-      search: SearchBlock,
-      neighborhood: NeighborhoodBlock,
-      filterOntology: OntologyFilterBlock,
-      filterEdge: EdgeFilterBlock,
-      filterNode: NodeFilterBlock,
-      and: AndBlock,
-      or: OrBlock,
-      not: NotBlock,
-      limit: LimitBlock,
-      // Smart blocks
-      vectorSearch: VectorSearchBlock,
-      epistemicFilter: EpistemicFilterBlock,
-      enrich: EnrichBlock,
-    }),
-    []
-  );
 
   // Add a block to the canvas
   const handleAddBlock = useCallback((type: BlockType) => {
@@ -207,17 +255,24 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       data: { type, label, params },
     };
 
+    recordHistory();
     setNodes(nds => [...nds, newNode]);
     setHasUnsavedChanges(true);
-  }, [nodes.length, setNodes, setHasUnsavedChanges]);
+  }, [nodes.length, setNodes, setHasUnsavedChanges, recordHistory]);
+
+  // Expose addBlock via ref for external palette
+  useImperativeHandle(ref, () => ({
+    addBlock: handleAddBlock,
+  }), [handleAddBlock]);
 
   // Handle edge connections
   const onConnect = useCallback(
     (connection: Connection) => {
+      recordHistory();
       setEdges(eds => addEdge(connection, eds));
       setHasUnsavedChanges(true);
     },
-    [setEdges, setHasUnsavedChanges]
+    [setEdges, setHasUnsavedChanges, recordHistory]
   );
 
   // Handle right-click on node
@@ -251,6 +306,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   // Delete a node or edge
   const handleDelete = useCallback(
     (id: string) => {
+      recordHistory();
       if (contextMenu?.type === 'edge') {
         setEdges(eds => eds.filter(e => e.id !== id));
       } else {
@@ -259,7 +315,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       }
       setHasUnsavedChanges(true);
     },
-    [contextMenu?.type, setNodes, setEdges, setHasUnsavedChanges]
+    [contextMenu?.type, setNodes, setEdges, setHasUnsavedChanges, recordHistory]
   );
 
   // Duplicate a node
@@ -278,10 +334,11 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
         },
       };
 
+      recordHistory();
       setNodes(nds => [...nds, newNode]);
       setHasUnsavedChanges(true);
     },
-    [nodes, setNodes, setHasUnsavedChanges]
+    [nodes, setNodes, setHasUnsavedChanges, recordHistory]
   );
 
   // Close context menu
@@ -321,43 +378,89 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
 
   // Sync canvas state to store (persists across view switches)
   React.useEffect(() => {
+    // Skip if we're in the middle of syncing from store
+    if (isSyncingFromStore.current) {
+      isSyncingFromStore.current = false;
+      return;
+    }
     setWorkingCanvas(nodes, edges);
   }, [nodes, edges, setWorkingCanvas]);
 
+  // Sync from store to local state when diagram is loaded externally
+  // (e.g., from the Diagrams panel in IconRailPanel)
+  React.useEffect(() => {
+    // Only update if the store has different data than local state
+    // Compare by checking if it's actually different content
+    const storeNodesJson = JSON.stringify(workingNodes.map(n => n.id).sort());
+    const localNodesJson = JSON.stringify(nodes.map(n => n.id).sort());
+
+    if (storeNodesJson !== localNodesJson) {
+      isSyncingFromStore.current = true;
+      setNodes(workingNodes);
+      setEdges(workingEdges);
+    }
+  }, [workingNodes, workingEdges]);
+
   // Clear all blocks
   const handleClear = useCallback(() => {
+    if (!window.confirm('Clear all blocks from canvas?')) {
+      return;
+    }
+
+    if (hasUnsavedChanges) {
+      const choice = window.confirm('Save changes before clearing?');
+      if (choice) {
+        // User wants to save first
+        if (currentDiagramName) {
+          saveDiagram(currentDiagramName, nodes, edges);
+        } else {
+          // Need to show save dialog - set flag and return
+          setSaveName('');
+          setSaveDescription('');
+          setShowSaveDialog(true);
+          return; // Don't clear yet - user needs to save first
+        }
+      }
+      // User chose not to save, or save completed - proceed with clear
+    }
+    recordHistory();
     setNodes([]);
     setEdges([]);
     setExecutionError(null);
-    setHasUnsavedChanges(true);
-  }, [setNodes, setEdges, setHasUnsavedChanges]);
+    clearWorkingCanvas();
+  }, [setNodes, setEdges, hasUnsavedChanges, currentDiagramName, nodes, edges, saveDiagram, clearWorkingCanvas, recordHistory]);
 
   // Save diagram
   const handleSave = useCallback(() => {
     if (currentDiagramName) {
-      // Quick save to existing diagram
-      saveDiagram(currentDiagramName, nodes, edges);
+      // Confirm before updating existing diagram
+      if (window.confirm(`Update "${currentDiagramName}"?`)) {
+        saveDiagram(currentDiagramName, nodes, edges);
+      }
     } else {
       // Open save dialog for new diagram
       setSaveName('');
       setSaveDescription('');
+      setIsSaveAsNew(false);
       setShowSaveDialog(true);
     }
   }, [currentDiagramName, nodes, edges, saveDiagram]);
 
-  // Save As (always show dialog)
+  // Save As (always show dialog for new diagram)
   const handleSaveAs = useCallback(() => {
-    setSaveName(currentDiagramName || '');
+    setSaveName('');
     setSaveDescription('');
+    setIsSaveAsNew(true);
     setShowSaveDialog(true);
-  }, [currentDiagramName]);
+  }, []);
 
   // Confirm save from dialog
   const handleConfirmSave = useCallback(() => {
     if (!saveName.trim()) return;
-    saveDiagram(saveName.trim(), nodes, edges, saveDescription.trim() || undefined);
+    saveDiagram(saveName.trim(), nodes, edges, saveDescription.trim() || undefined, isSaveAsNew);
     setShowSaveDialog(false);
-  }, [saveName, saveDescription, nodes, edges, saveDiagram]);
+    setIsSaveAsNew(false);
+  }, [saveName, saveDescription, nodes, edges, saveDiagram, isSaveAsNew]);
 
   // Open load dialog
   const handleOpenLoadDialog = useCallback(() => {
@@ -602,6 +705,15 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  // Close save menu when clicking outside
+  React.useEffect(() => {
+    if (showSaveMenu) {
+      const handleClickOutside = () => setShowSaveMenu(false);
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showSaveMenu]);
+
   // Toggle collapse
   const toggleCollapse = useCallback(() => {
     setIsCollapsed(prev => !prev);
@@ -610,9 +722,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
   const currentPanelHeight = isCollapsed ? 0 : bottomPanelHeight;
 
   return (
-    <div className="flex">
-      {/* Block Palette */}
-      <BlockPalette onAddBlock={handleAddBlock} />
+    <div className="flex h-full">
+      {/* Block Palette - hidden when provided externally via IconRailPanel */}
+      {!hidePalette && <BlockPalette onAddBlock={handleAddBlock} />}
 
       {/* Main Canvas Area */}
       <div className="flex-1 flex flex-col block-builder-container">
@@ -629,52 +741,115 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Save/Load/Export/Import buttons */}
+          <div className="flex items-center gap-1">
+            {/* File operations group */}
+            <div className="flex items-center bg-muted/50 rounded-lg p-0.5">
+              {/* Save with dropdown */}
+              <div className="relative">
+                <div className="flex">
+                  <button
+                    onClick={handleSave}
+                    disabled={nodes.length === 0}
+                    className="p-1.5 text-sm rounded-l hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={currentDiagramName ? `Save "${currentDiagramName}"` : 'Save diagram'}
+                  >
+                    <Save className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowSaveMenu(!showSaveMenu);
+                    }}
+                    disabled={nodes.length === 0}
+                    className="p-1.5 text-sm rounded-r hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed border-l border-border"
+                    title="Save options"
+                  >
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </div>
+                {showSaveMenu && (
+                  <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
+                    <button
+                      onClick={() => {
+                        handleSave();
+                        setShowSaveMenu(false);
+                      }}
+                      className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleSaveAs();
+                        setShowSaveMenu(false);
+                      }}
+                      className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent"
+                    >
+                      Save As...
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleOpenLoadDialog}
+                className="p-1.5 text-sm rounded hover:bg-background"
+                title="Open diagram"
+              >
+                <FolderOpen className="w-4 h-4" />
+              </button>
+
+              <div className="w-px h-4 bg-border mx-0.5" />
+
+              <button
+                onClick={handleExport}
+                disabled={nodes.length === 0}
+                className="p-1.5 text-sm rounded hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Download to file"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-1.5 text-sm rounded hover:bg-background"
+                title="Upload from file"
+              >
+                <Upload className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="w-px h-6 bg-border mx-1" />
+
+            {/* Undo/Redo buttons */}
             <button
-              onClick={handleSave}
-              disabled={nodes.length === 0}
-              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={currentDiagramName ? `Save "${currentDiagramName}"` : 'Save diagram'}
+              onClick={undo}
+              disabled={!canUndo}
+              className="p-1.5 text-sm rounded hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Undo (Ctrl+Z)"
             >
-              <Save className="w-4 h-4" />
+              <Undo2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className="p-1.5 text-sm rounded hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <Redo2 className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={handleOpenLoadDialog}
-              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600"
-              title="Load diagram"
-            >
-              <FolderOpen className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={handleExport}
-              disabled={nodes.length === 0}
-              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Export to file"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-2 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600"
-              title="Import from file"
-            >
-              <Upload className="w-4 h-4" />
-            </button>
-
-            <div className="w-px h-6 bg-border dark:bg-gray-600 mx-1" />
-
+            {/* Clear button */}
             <button
               onClick={handleClear}
               disabled={nodes.length === 0}
-              className="px-3 py-1.5 text-sm text-card-foreground dark:text-gray-100 bg-card dark:bg-gray-700 border border-border dark:border-gray-600 rounded hover:bg-accent dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="p-1.5 text-sm rounded hover:bg-destructive/10 hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Clear canvas"
             >
               <Trash2 className="w-4 h-4" />
-              Clear
             </button>
+
+            <div className="w-px h-6 bg-border mx-1" />
 
             <button
               onClick={handleSendToEditor}
@@ -931,4 +1106,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ onSendToEditor }) =>
       )}
     </div>
   );
-};
+});
+
+// Display name for debugging
+BlockBuilder.displayName = 'BlockBuilder';

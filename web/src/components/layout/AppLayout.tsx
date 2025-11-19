@@ -1,70 +1,172 @@
 /**
  * Main Application Layout
  *
- * Provides the overall structure:
- * - Sidebar with explorer selection
- * - Main visualization area
- * - Settings panel (collapsible)
+ * Provides the workstation structure:
+ * - Sidebar with collapsible category navigation
+ * - Main content area
+ *
+ * Navigation categories per ADR-067:
+ * - Explorers (2D, 3D, etc.)
+ * - Block Editor
+ * - Ingest
+ * - Jobs
+ * - Report
+ * - Edit
+ * - Admin
  */
 
 import React from 'react';
-import { useGraphStore } from '../../store/graphStore';
-import { getAllExplorers } from '../../explorers';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Compass,
+  Blocks,
+  Upload,
+  ListTodo,
+  FileText,
+  PencilLine,
+  Settings,
+  Shield,
+  Network,
+  Box,
+} from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
+import { SidebarCategory, SidebarItem } from './SidebarCategory';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { selectedExplorer, setSelectedExplorer } = useGraphStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const explorers = getAllExplorers();
+  // Determine active item from current path
+  const isActive = (path: string) => {
+    if (path === '/explore/2d') {
+      return location.pathname === '/' || location.pathname === '/explore/2d';
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  // Get current workspace name for toolbar
+  const getWorkspaceName = () => {
+    const path = location.pathname;
+    if (path === '/' || path.startsWith('/explore/2d')) return '2D Force Graph';
+    if (path.startsWith('/explore/3d')) return '3D Force Graph';
+    if (path.startsWith('/blocks')) return 'Block Editor';
+    if (path.startsWith('/ingest')) return 'Ingest';
+    if (path.startsWith('/jobs')) return 'Jobs';
+    if (path.startsWith('/report')) return 'Report';
+    if (path.startsWith('/edit')) return 'Edit';
+    if (path.startsWith('/preferences')) return 'Preferences';
+    if (path.startsWith('/admin')) return 'Admin';
+    return 'Knowledge Graph';
+  };
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      {/* Sidebar - Explorer Selection */}
+      {/* Sidebar - Workstation Navigation */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="p-4 border-b border-border">
           <h1 className="text-xl font-bold">Knowledge Graph</h1>
-          <p className="text-sm text-muted-foreground">Visualization Explorer</p>
+          <p className="text-sm text-muted-foreground">Workstation</p>
         </div>
 
-        <nav className="flex-1 p-4">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase">
-            Explorers
-          </h2>
+        <nav className="flex-1 p-2 overflow-y-auto">
+          {/* Explorers */}
+          <SidebarCategory title="Explorers" icon={Compass} defaultExpanded={true}>
+            <SidebarItem
+              icon={Network}
+              label="2D Force Graph"
+              description="Interactive 2D visualization"
+              isActive={isActive('/explore/2d')}
+              onClick={() => navigate('/explore/2d')}
+            />
+            <SidebarItem
+              icon={Box}
+              label="3D Force Graph"
+              description="Immersive 3D exploration"
+              isActive={isActive('/explore/3d')}
+              onClick={() => navigate('/explore/3d')}
+            />
+          </SidebarCategory>
 
-          <div className="space-y-2">
-            {explorers.map((explorer) => {
-              const Icon = explorer.config.icon;
-              const isSelected = explorer.config.type === selectedExplorer;
+          {/* Block Editor */}
+          <SidebarCategory title="Block Editor" icon={Blocks} defaultExpanded={false}>
+            <SidebarItem
+              icon={Blocks}
+              label="Flow Editor"
+              description="Visual query builder"
+              isActive={isActive('/blocks')}
+              onClick={() => navigate('/blocks')}
+            />
+          </SidebarCategory>
 
-              return (
-                <button
-                  key={explorer.config.id}
-                  onClick={() => setSelectedExplorer(explorer.config.type)}
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2 rounded-lg
-                    transition-colors text-left
-                    ${
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent hover:text-accent-foreground'
-                    }
-                  `}
-                >
-                  <Icon className="w-5 h-5" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{explorer.config.name}</div>
-                    <div className="text-xs opacity-80 truncate">
-                      {explorer.config.description}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {/* Ingest */}
+          <SidebarCategory title="Ingest" icon={Upload} defaultExpanded={false}>
+            <SidebarItem
+              icon={Upload}
+              label="Upload Content"
+              description="Import documents and URLs"
+              isActive={isActive('/ingest')}
+              onClick={() => navigate('/ingest')}
+            />
+          </SidebarCategory>
+
+          {/* Jobs */}
+          <SidebarCategory title="Jobs" icon={ListTodo} defaultExpanded={false}>
+            <SidebarItem
+              icon={ListTodo}
+              label="Job Queue"
+              description="Monitor extraction jobs"
+              isActive={isActive('/jobs')}
+              onClick={() => navigate('/jobs')}
+            />
+          </SidebarCategory>
+
+          {/* Report */}
+          <SidebarCategory title="Report" icon={FileText} defaultExpanded={false}>
+            <SidebarItem
+              icon={FileText}
+              label="Data Export"
+              description="Tabular views and exports"
+              isActive={isActive('/report')}
+              onClick={() => navigate('/report')}
+            />
+          </SidebarCategory>
+
+          {/* Edit */}
+          <SidebarCategory title="Edit" icon={PencilLine} defaultExpanded={false}>
+            <SidebarItem
+              icon={PencilLine}
+              label="Graph Editor"
+              description="Manual node/edge editing"
+              isActive={isActive('/edit')}
+              onClick={() => navigate('/edit')}
+            />
+          </SidebarCategory>
+
+          {/* Preferences */}
+          <SidebarCategory title="Preferences" icon={Settings} defaultExpanded={false}>
+            <SidebarItem
+              icon={Settings}
+              label="Settings"
+              description="Theme, profile, appearance"
+              isActive={isActive('/preferences')}
+              onClick={() => navigate('/preferences')}
+            />
+          </SidebarCategory>
+
+          {/* Admin */}
+          <SidebarCategory title="Admin" icon={Shield} defaultExpanded={false}>
+            <SidebarItem
+              icon={Shield}
+              label="Administration"
+              description="Users, OAuth, system status"
+              isActive={isActive('/admin')}
+              onClick={() => navigate('/admin')}
+            />
+          </SidebarCategory>
         </nav>
 
         <div className="p-4 border-t border-border">
@@ -80,16 +182,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Toolbar */}
         <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h2 className="font-semibold">
-              {explorers.find((e) => e.config.type === selectedExplorer)?.config.name ||
-                'Explorer'}
-            </h2>
+            <h2 className="font-semibold">{getWorkspaceName()}</h2>
           </div>
 
           <UserProfile />
         </header>
 
-        {/* Visualization Area */}
+        {/* Content Area */}
         <div className="flex-1 overflow-hidden">{children}</div>
       </main>
     </div>
