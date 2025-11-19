@@ -285,7 +285,7 @@
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🚀 Quick Start
+        Quick Start
       
     </span>
   </a>
@@ -308,7 +308,7 @@
   <a href="#manual" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📚 manual/
+        manual/
       
     </span>
   </a>
@@ -319,7 +319,7 @@
   <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📐 architecture/
+        architecture/
       
     </span>
   </a>
@@ -330,7 +330,7 @@
   <a href="#guides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📖 guides/
+        guides/
       
     </span>
   </a>
@@ -341,7 +341,7 @@
   <a href="#development" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🔨 development/
+        development/
       
     </span>
   </a>
@@ -352,7 +352,7 @@
   <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🧪 testing/
+        testing/
       
     </span>
   </a>
@@ -363,7 +363,7 @@
   <a href="#media" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🖼️ media/
+        media/
       
     </span>
   </a>
@@ -5878,7 +5878,7 @@
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🚀 Quick Start
+        Quick Start
       
     </span>
   </a>
@@ -5901,7 +5901,7 @@
   <a href="#manual" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📚 manual/
+        manual/
       
     </span>
   </a>
@@ -5912,7 +5912,7 @@
   <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📐 architecture/
+        architecture/
       
     </span>
   </a>
@@ -5923,7 +5923,7 @@
   <a href="#guides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📖 guides/
+        guides/
       
     </span>
   </a>
@@ -5934,7 +5934,7 @@
   <a href="#development" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🔨 development/
+        development/
       
     </span>
   </a>
@@ -5945,7 +5945,7 @@
   <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🧪 testing/
+        testing/
       
     </span>
   </a>
@@ -5956,7 +5956,7 @@
   <a href="#media" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🖼️ media/
+        media/
       
     </span>
   </a>
@@ -6050,14 +6050,13 @@
 
 
 <h1 id="documentation-index">Documentation Index</h1>
-<p>This directory contains all documentation for the Knowledge Graph System, organized by category.</p>
-<h2 id="quick-start">🚀 Quick Start</h2>
-<p><strong>New to the system?</strong> Get operational in under 10 minutes:</p>
-<p>→ <strong><a href="guides/QUICKSTART/">Quick Start Guide</a></strong> - Operator architecture (containerized deployment)</p>
-<p>Fully tested end-to-end on November 8, 2025. Uses the official operator pattern (ADR-061) with Docker containers - no local Python installation required.</p>
+<p>This directory contains documentation for the Knowledge Graph System.</p>
+<h2 id="quick-start">Quick Start</h2>
+<p><strong><a href="guides/QUICKSTART/">Quick Start Guide</a></strong> - Operator architecture setup (containerized deployment)</p>
+<p>Uses Docker containers with the operator pattern (ADR-061). No local Python installation required.</p>
 <h2 id="directory-structure">Directory Structure</h2>
-<h3 id="manual">📚 <code>manual/</code></h3>
-<p>Complete user manual organized into numbered sections for natural reading order.</p>
+<h3 id="manual"><code>manual/</code></h3>
+<p>User manual organized into numbered sections for reading order.</p>
 <ul>
 <li><strong>01-getting-started/</strong> - Quickstart, CLI usage, ingestion basics</li>
 <li><strong>02-configuration/</strong> - AI providers, extraction, embeddings</li>
@@ -6067,35 +6066,40 @@
 <li><strong>06-reference/</strong> - Schema, concepts, examples, query patterns</li>
 </ul>
 <p>See <code>manual/README.md</code> for detailed navigation.</p>
-<h3 id="architecture">📐 <code>architecture/</code></h3>
-<p>Architecture decisions, design documents, and ADRs (Architectural Decision Records).</p>
+<h3 id="architecture"><code>architecture/</code></h3>
+<p>Architecture decisions and design documents.</p>
 <ul>
-<li><strong>ARCHITECTURE_DECISIONS.md</strong> - Consolidated architecture decisions index</li>
+<li><strong>ARCHITECTURE_DECISIONS.md</strong> - ADR index (67 decisions)</li>
 <li><strong>ARCHITECTURE_OVERVIEW.md</strong> - System architecture overview</li>
 <li><strong>ADR-###-*.md</strong> - Individual architecture decision records</li>
 </ul>
-<h3 id="guides">📖 <code>guides/</code></h3>
-<p>Standalone guides for specific topics and workflows.</p>
+<p>Key ADRs for understanding the system:
+- <a href="architecture/ADR-044-probabilistic-truth-convergence/">ADR-044</a> - Probabilistic truth convergence
+- <a href="architecture/ADR-058-polarity-axis-triangulation/">ADR-058</a> - Truth as geometric projection
+- <a href="architecture/ADR-063-semantic-diversity-authenticity.md">ADR-063</a> - Semantic diversity as authenticity
+- <a href="architecture/ADR-052-vocabulary-expansion-consolidation.md">ADR-052</a> - Vocabulary expansion-consolidation</p>
+<h3 id="guides"><code>guides/</code></h3>
+<p>Standalone guides for specific topics.</p>
 <ul>
-<li><strong>QUICKSTART.md</strong> - Quick start guide using operator architecture</li>
-<li><strong>DEPLOYMENT.md</strong> - Comprehensive deployment guide for all environments</li>
-<li><strong>VOCABULARY_CATEGORIES.md</strong> - Understanding vocabulary category scores and confidence</li>
-<li><strong>SCHEDULED-JOBS.md</strong> - Background maintenance tasks and automated jobs</li>
-<li><strong>EPISTEMIC-STATUS-FILTERING.md</strong> - Using epistemic status to filter relationships</li>
+<li><strong>QUICKSTART.md</strong> - Quick start using operator architecture</li>
+<li><strong>DEPLOYMENT.md</strong> - Deployment strategies for all environments</li>
+<li><strong>VOCABULARY_CATEGORIES.md</strong> - Vocabulary category scores and confidence</li>
+<li><strong>SCHEDULED-JOBS.md</strong> - Background maintenance tasks</li>
+<li><strong>EPISTEMIC-STATUS-FILTERING.md</strong> - Filtering by epistemic status</li>
 </ul>
-<h3 id="development">🔨 <code>development/</code></h3>
-<p>Development journals, learnings, and internal notes.</p>
+<h3 id="development"><code>development/</code></h3>
+<p>Development journals and internal notes.</p>
 <ul>
-<li><strong>DEV_JOURNAL_chunked_ingestion.md</strong> - Chunked ingestion development journal</li>
+<li><strong>DEV_JOURNAL_chunked_ingestion.md</strong> - Chunked ingestion development</li>
 <li><strong>LEARNED_KNOWLEDGE_MCP.md</strong> - MCP integration learnings</li>
 </ul>
-<h3 id="testing">🧪 <code>testing/</code></h3>
-<p>Test coverage specifications and testing documentation.</p>
+<h3 id="testing"><code>testing/</code></h3>
+<p>Test coverage specifications.</p>
 <ul>
-<li><strong>TEST_COVERAGE.md</strong> - Comprehensive test coverage plan and philosophy</li>
+<li><strong>TEST_COVERAGE.md</strong> - Test coverage plan and philosophy</li>
 </ul>
-<h3 id="media">🖼️ <code>media/</code></h3>
-<p>Images, diagrams, and other media assets.</p>
+<h3 id="media"><code>media/</code></h3>
+<p>Images and diagrams.</p>
 <h2 id="quick-navigation">Quick Navigation</h2>
 <h3 id="new-users">New Users</h3>
 <ol>
