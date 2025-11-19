@@ -1,19 +1,17 @@
 # Documentation Index
 
-This directory contains all documentation for the Knowledge Graph System, organized by category.
+This directory contains documentation for the Knowledge Graph System.
 
-## 🚀 Quick Start
+## Quick Start
 
-**New to the system?** Get operational in under 10 minutes:
+**[Quick Start Guide](guides/QUICKSTART.md)** - Operator architecture setup (containerized deployment)
 
-→ **[Quick Start Guide](guides/QUICKSTART.md)** - Operator architecture (containerized deployment)
-
-Fully tested end-to-end on November 8, 2025. Uses the official operator pattern (ADR-061) with Docker containers - no local Python installation required.
+Uses Docker containers with the operator pattern (ADR-061). No local Python installation required.
 
 ## Directory Structure
 
-### 📚 `manual/`
-Complete user manual organized into numbered sections for natural reading order.
+### `manual/`
+User manual organized into numbered sections for reading order.
 
 - **01-getting-started/** - Quickstart, CLI usage, ingestion basics
 - **02-configuration/** - AI providers, extraction, embeddings
@@ -24,35 +22,41 @@ Complete user manual organized into numbered sections for natural reading order.
 
 See `manual/README.md` for detailed navigation.
 
-### 📐 `architecture/`
-Architecture decisions, design documents, and ADRs (Architectural Decision Records).
+### `architecture/`
+Architecture decisions and design documents.
 
-- **ARCHITECTURE_DECISIONS.md** - Consolidated architecture decisions index
+- **ARCHITECTURE_DECISIONS.md** - ADR index (67 decisions)
 - **ARCHITECTURE_OVERVIEW.md** - System architecture overview
 - **ADR-###-*.md** - Individual architecture decision records
 
-### 📖 `guides/`
-Standalone guides for specific topics and workflows.
+Key ADRs for understanding the system:
+- [ADR-044](architecture/ADR-044-probabilistic-truth-convergence.md) - Probabilistic truth convergence
+- [ADR-058](architecture/ADR-058-polarity-axis-triangulation.md) - Truth as geometric projection
+- [ADR-063](architecture/ADR-063-semantic-diversity-authenticity.md) - Semantic diversity as authenticity
+- [ADR-052](architecture/ADR-052-vocabulary-expansion-consolidation.md) - Vocabulary expansion-consolidation
 
-- **QUICKSTART.md** - Quick start guide using operator architecture
-- **DEPLOYMENT.md** - Comprehensive deployment guide for all environments
-- **VOCABULARY_CATEGORIES.md** - Understanding vocabulary category scores and confidence
-- **SCHEDULED-JOBS.md** - Background maintenance tasks and automated jobs
-- **EPISTEMIC-STATUS-FILTERING.md** - Using epistemic status to filter relationships
+### `guides/`
+Standalone guides for specific topics.
 
-### 🔨 `development/`
-Development journals, learnings, and internal notes.
+- **QUICKSTART.md** - Quick start using operator architecture
+- **DEPLOYMENT.md** - Deployment strategies for all environments
+- **VOCABULARY_CATEGORIES.md** - Vocabulary category scores and confidence
+- **SCHEDULED-JOBS.md** - Background maintenance tasks
+- **EPISTEMIC-STATUS-FILTERING.md** - Filtering by epistemic status
 
-- **DEV_JOURNAL_chunked_ingestion.md** - Chunked ingestion development journal
+### `development/`
+Development journals and internal notes.
+
+- **DEV_JOURNAL_chunked_ingestion.md** - Chunked ingestion development
 - **LEARNED_KNOWLEDGE_MCP.md** - MCP integration learnings
 
-### 🧪 `testing/`
-Test coverage specifications and testing documentation.
+### `testing/`
+Test coverage specifications.
 
-- **TEST_COVERAGE.md** - Comprehensive test coverage plan and philosophy
+- **TEST_COVERAGE.md** - Test coverage plan and philosophy
 
-### 🖼️ `media/`
-Images, diagrams, and other media assets.
+### `media/`
+Images and diagrams.
 
 ## Quick Navigation
 
