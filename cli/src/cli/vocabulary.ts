@@ -806,11 +806,11 @@ export const vocabularyCommand = setCommandHelp(
           try {
             const client = createClientFromEnv();
 
-            // Get logged-in user from auth token
+            // Get logged-in user from OAuth credentials
             const { getConfig } = require('../lib/config');
             const configManager = getConfig();
-            const authToken = configManager.getAuthToken();
-            const username = authToken?.username || 'cli-user';
+            const credentials = configManager.getOAuthCredentials();
+            const username = credentials?.username || 'cli-user';
 
             const updates: any = {
               updated_by: username
