@@ -129,6 +129,7 @@ export const ModeDial: React.FC<ModeDialProps> = ({ mode, onChange }) => {
                   top: y - 12,
                   width: 24,
                   height: 24,
+                  zIndex: 10, // Ensure icons appear above the dial circle
                 }}
                 title={modeConfig.label}
               >

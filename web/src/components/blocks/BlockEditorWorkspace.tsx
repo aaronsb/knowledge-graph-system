@@ -169,11 +169,11 @@ export const BlockEditorWorkspace: React.FC = () => {
       ) : (
         <div className="space-y-1">
           {diagrams.map((diagram) => (
-            <button
+            <div
               key={diagram.id}
               onClick={() => handleSelectDiagram(diagram.id)}
               className={`
-                w-full text-left p-2 rounded-lg transition-colors group
+                w-full text-left p-2 rounded-lg transition-colors group cursor-pointer
                 ${
                   selectedId === diagram.id
                     ? 'bg-primary text-primary-foreground'
@@ -230,7 +230,7 @@ export const BlockEditorWorkspace: React.FC = () => {
                   </button>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
