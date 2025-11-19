@@ -24,6 +24,7 @@ import {
   ListTodo,
   FileText,
   PencilLine,
+  Settings,
   Shield,
   Network,
   Box,
@@ -57,6 +58,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (path.startsWith('/jobs')) return 'Jobs';
     if (path.startsWith('/report')) return 'Report';
     if (path.startsWith('/edit')) return 'Edit';
+    if (path.startsWith('/preferences')) return 'Preferences';
     if (path.startsWith('/admin')) return 'Admin';
     return 'Knowledge Graph';
   };
@@ -141,6 +143,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               description="Manual node/edge editing"
               isActive={isActive('/edit')}
               onClick={() => navigate('/edit')}
+            />
+          </SidebarCategory>
+
+          {/* Preferences */}
+          <SidebarCategory title="Preferences" icon={Settings} defaultExpanded={false}>
+            <SidebarItem
+              icon={Settings}
+              label="Settings"
+              description="Theme, profile, appearance"
+              isActive={isActive('/preferences')}
+              onClick={() => navigate('/preferences')}
             />
           </SidebarCategory>
 

@@ -79,7 +79,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
             ? 'bg-primary text-primary-foreground'
             : disabled
             ? ''
-            : 'hover:bg-accent hover:text-accent-foreground'
+            : 'bg-muted/40 text-muted-foreground hover:bg-accent hover:text-accent-foreground'
         }
       `}
     >

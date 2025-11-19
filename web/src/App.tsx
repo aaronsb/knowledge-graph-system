@@ -24,6 +24,7 @@ import { IngestWorkspace } from './components/ingest/IngestWorkspace';
 import { JobsWorkspace } from './components/jobs/JobsWorkspace';
 import { ReportWorkspace } from './components/report/ReportWorkspace';
 import { GraphEditor } from './components/edit/GraphEditor';
+import { PreferencesWorkspace } from './components/preferences/PreferencesWorkspace';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 
 import './explorers'; // Import to register explorers
@@ -128,6 +129,9 @@ const AppContent: React.FC = () => {
 
         {/* Edit */}
         <Route path="/edit" element={<GraphEditor />} />
+
+        {/* Preferences */}
+        <Route path="/preferences" element={<PreferencesWorkspace />} />
 
         {/* Admin */}
         <Route path="/admin" element={<AdminDashboard />} />
