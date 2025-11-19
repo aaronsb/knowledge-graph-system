@@ -1039,7 +1039,7 @@ async def analyze_vocabulary_type(
         category_fit = category_scores.get(target_category, 0.0)
 
         # Get all similarities
-        similarity_response = await get_similar_types(relationship_type, limit=100, reverse=False)
+        similarity_response = await get_similar_types(relationship_type, current_user, limit=100, reverse=False)
         all_similar = similarity_response.similar_types
 
         # Split by category
