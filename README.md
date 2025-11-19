@@ -277,6 +277,38 @@ knowledge-graph-system/
     └── guides/           # Standalone guides
 ```
 
+## References
+
+The system draws on several research areas. Key foundational papers:
+
+### Large Concept Models
+- Barrault et al. (2024). [Large Concept Models: Language Modeling in a Sentence Representation Space](https://arxiv.org/abs/2412.08821). Meta AI. Introduces sentence-level semantic prediction as alternative to token-level LLMs.
+
+### Vector Symbolic Architectures
+- Kanerva (2009). [Hyperdimensional Computing: An Introduction](https://link.springer.com/article/10.1007/s12559-009-9009-8). Cognitive Computation. Foundational tutorial on high-dimensional distributed representations.
+- Plate (2003). *Holographic Reduced Representation*. CSLI Publications. Circular convolution for compositional distributed representations.
+
+### Geometric Knowledge Graph Embeddings
+- Bordes et al. (2013). [Translating Embeddings for Modeling Multi-relational Data](https://papers.nips.cc/paper/5071-translating-embeddings-for-modeling-multi-relational-data). NeurIPS. Relations as translations in embedding space.
+- Sun et al. (2019). [RotatE: Knowledge Graph Embedding by Relational Rotation](https://arxiv.org/abs/1902.10197). ICLR. Relations as rotations in complex space.
+
+### Evolutionary Epistemology
+- Popper (1972). *Objective Knowledge: An Evolutionary Approach*. Oxford University Press. Knowledge growth through conjectures and refutations.
+- Campbell (1960). Blind Variation and Selective Retention in Creative Thought. *Psychological Review*. BVSR theory of knowledge evolution.
+- Zhang et al. (2025). [Darwin Gödel Machine](https://arxiv.org/abs/2505.22954). Empirical validation replacing provable correctness for self-improving systems.
+
+### Uncertainty and Authenticity
+- Farquhar et al. (2024). [Detecting hallucinations in large language models using semantic entropy](https://www.nature.com/articles/s41586-024-07421-0). Nature. Semantic-level uncertainty estimation.
+- Manakul et al. (2023). [SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection](https://arxiv.org/abs/2303.08896). EMNLP. Consistency-based hallucination detection.
+
+### GraphRAG Systems
+- Edge et al. (2024). [From Local to Global: A Graph RAG Approach to Query-Focused Summarization](https://arxiv.org/abs/2404.16130). Microsoft Research. Community detection for corpus-level summarization.
+- DeLong et al. (2024). [Neurosymbolic AI for Reasoning over Knowledge Graphs: A Survey](https://arxiv.org/abs/2302.07200). Taxonomy of neural-symbolic hybrid approaches.
+
+### Probabilistic Knowledge Systems
+- Richardson & Domingos (2006). [Markov Logic Networks](https://link.springer.com/article/10.1007/s10994-006-5833-1). Machine Learning. Unifying first-order logic with probabilistic graphical models.
+- Dong et al. (2014). [Knowledge Vault: A Web-Scale Approach to Probabilistic Knowledge Fusion](https://research.google/pubs/pub45634/). KDD. Calibrated confidence scores for facts.
+
 ## License
 
 **Elastic License 2.0**
