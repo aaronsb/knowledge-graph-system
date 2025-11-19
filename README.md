@@ -8,7 +8,7 @@ Standard LLMs encode knowledge implicitly in neural weights. When you ask a ques
 
 This system takes a different approach: **knowledge is explicit in graph structure**.
 
-When an LLM processes a document, instead of discarding the understanding, we serialize the neural activation pattern into a persistent data structure - concepts as nodes, relationships as edges, embeddings as coordinates. The result is an externalized, queryable representation of what the LLM "understood."
+When an LLM processes a document, instead of discarding the understanding, we serialize the neural activation pattern into a persistent data structure - concepts as nodes, relationships as edges, embeddings as coordinates, while retaining the source evidence and prose. The result is an externalized, queryable representation of what the LLM "understood."
 
 This creates what might be called a **Large Concept Model**: where concepts are first-class entities that can be queried, traversed, filtered, and reasoned about directly.
 
