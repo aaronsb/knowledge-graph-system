@@ -9,7 +9,7 @@ Meta's Large Concept Models (December 2024) showed that language models can oper
 This system takes a similar approach but stores concepts in a deterministic structure rather than a neural model:
 
 - **Meta's LCM**: Concepts exist in embedding space; the model predicts the next concept
-- **This system**: Concepts exist as graph nodes; relationships are explicit edges; properties are computed at query time via openCypher
+- **This system**: Concepts exist as graph nodes; relationships are explicit edges; openCypher handles traversal; query facades compute embedding-derived properties (grounding, diversity, similarity) at query time
 
 Both operate above the token level. Meta's is generative; this is a queryable knowledge store backed by PostgreSQL with Apache AGE (a graph extension providing native openCypher support).
 
@@ -61,9 +61,17 @@ The system uses PostgreSQL with [Apache AGE](https://age.apache.org/), an extens
 - Graph traversals execute as database queries, not application code
 - Concepts and relationships are first-class graph entities (vertices and edges)
 - Complex path queries (find all paths between X and Y within 3 hops) run in the database
-- Vector operations for embeddings happen alongside graph operations
 
-The API workers construct openCypher queries and execute them against AGE. Results come back as graph structures that the MCP interface exposes to agents.
+### Query Facades
+
+On top of openCypher traversal, query facades compute embedding-derived properties:
+
+- **Similarity** - Vector distance between concept embeddings for semantic search
+- **Grounding** - Polarity axis projection across evidence embeddings
+- **Diversity** - Entropy calculation over neighbor embedding vectors
+- **Evidence retrieval** - Fetching and ranking source text by relevance
+
+The API workers orchestrate this: openCypher returns graph structure, facades compute vector properties, MCP exposes the unified result to agents.
 
 ### Three Embedding Layers
 
