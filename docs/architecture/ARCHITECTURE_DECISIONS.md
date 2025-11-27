@@ -84,6 +84,7 @@ All ADRs follow a consistent format:
 | [ADR-065](ADR-065-vocabulary-based-provenance-relationships.md) | Vocabulary-Based Provenance Relationships | Accepted | Extends vocabulary system to provenance relationships (APPEARS, EVIDENCED_BY, FROM_SOURCE) - treats structural relationships as emergent vocabulary with embeddings and semantic matching, eliminating architectural asymmetry between concept-concept and concept-source relationships |
 | [ADR-066](ADR-066-published-query-endpoints.md) | Published Query Endpoints | Proposed | Saved query flows become REST API endpoints accessible via OAuth client credentials - enables external systems to execute curated queries without user sessions, supports JSON/CSV output formats, machine-to-machine authentication |
 | [ADR-067](ADR-067-web-app-workstation-architecture.md) | Web Application Workstation Architecture | Proposed | Restructure web app from visualization tool to knowledge workstation with sidebar categories: Explorers, Block Editor, Ingest, Jobs, Report, Edit, Admin - unified interface for all platform capabilities |
+| [ADR-068](ADR-068-source-text-embeddings.md) | Source Text Embeddings for Grounding Truth Retrieval | Proposed | Async embedding generation for Source nodes with configurable chunking strategies (sentence/paragraph/count/semantic) - enables direct source passage search, hybrid concept+source queries, and completes LCM foundation where all graph elements (concepts, edges, sources) have embeddings for multi-modal retrieval |
 
 ## How to Use This Index
 
@@ -157,6 +158,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-11-18
+**Last Updated:** 2025-11-27
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
