@@ -488,15 +488,16 @@ async def get_concept_details(
         ]
 
         # Get relationships with ADR-051 edge provenance metadata and ADR-065 vocabulary epistemic status
+        # ADR-048: Read category via :IN_CATEGORY relationship (not property)
         relationships_result = client._execute_cypher(f"""
             MATCH (c:Concept {{concept_id: '{concept_id}'}})-[r]->(related:Concept)
-            OPTIONAL MATCH (v:VocabType {{name: type(r)}})
+            OPTIONAL MATCH (v:VocabType {{name: type(r)}})-[:IN_CATEGORY]->(cat:VocabCategory)
             RETURN
                 related.concept_id as to_id,
                 related.label as to_label,
                 type(r) as rel_type,
                 properties(r) as props,
-                v.category as vocab_category,
+                cat.name as vocab_category,
                 v.epistemic_status as vocab_epistemic_status,
                 v.epistemic_stats as vocab_epistemic_stats
         """)
