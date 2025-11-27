@@ -420,10 +420,16 @@ export class KnowledgeGraphClient {
    */
   async getConceptDetails(
     conceptId: string,
-    includeGrounding: boolean = false
+    includeGrounding: boolean = false,
+    includeDiversity: boolean = false,
+    diversityMaxHops: number = 2
   ): Promise<ConceptDetailsResponse> {
     const response = await this.client.get(`/query/concept/${conceptId}`, {
-      params: { include_grounding: includeGrounding }
+      params: {
+        include_grounding: includeGrounding,
+        include_diversity: includeDiversity,
+        diversity_max_hops: diversityMaxHops
+      }
     });
     return response.data;
   }

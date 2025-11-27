@@ -297,6 +297,21 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
               description: 'Include grounding_strength (default: true)',
               default: true,
             },
+            include_diversity: {
+              type: 'boolean',
+              description: 'Include diversity metrics for details action (default: false, adds ~100-500ms)',
+              default: false,
+            },
+            diversity_max_hops: {
+              type: 'number',
+              description: 'Max hops for diversity calculation (default: 2)',
+              default: 2,
+            },
+            truncate_evidence: {
+              type: 'boolean',
+              description: 'Truncate evidence full_text context to 200 chars (default: true for token efficiency). Set false for complete context.',
+              default: true,
+            },
             // For related
             max_depth: {
               type: 'number',
@@ -787,12 +802,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         switch (action) {
           case 'details': {
             const includeGrounding = toolArgs.include_grounding !== false;
+            const includeDiversity = toolArgs.include_diversity === true;
+            const diversityMaxHops = toolArgs.diversity_max_hops as number || 2;
+            const truncateEvidence = toolArgs.truncate_evidence !== false; // Default true
+
             const result = await client.getConceptDetails(
               toolArgs.concept_id as string,
-              includeGrounding
+              includeGrounding,
+              includeDiversity,
+              diversityMaxHops
             );
 
-            const formattedText = formatConceptDetails(result);
+            const formattedText = formatConceptDetails(result, truncateEvidence);
 
             return {
               content: [{ type: 'text', text: formattedText }],

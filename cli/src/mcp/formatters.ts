@@ -101,8 +101,10 @@ export function formatSearchResults(result: SearchResponse): string {
 
 /**
  * Format concept details as markdown
+ * @param concept - The concept details to format
+ * @param truncateEvidence - Whether to truncate full_text context to 200 chars (default: true)
  */
-export function formatConceptDetails(concept: ConceptDetailsResponse): string {
+export function formatConceptDetails(concept: ConceptDetailsResponse, truncateEvidence: boolean = true): string {
   let output = `# Concept: ${concept.label}\n\n`;
   if (concept.description) {
     output += `${concept.description}\n\n`;
@@ -140,10 +142,16 @@ export function formatConceptDetails(concept: ConceptDetailsResponse): string {
       if (chapterMatch) {
         output += `   Context: Chapter ${chapterMatch[1]}\n`;
       }
-      // Show first 200 chars of full context for grounding
-      const contextPreview = inst.full_text.replace(/^#[^\n]*\n+/, '').substring(0, 200);
-      if (contextPreview && contextPreview !== inst.quote) {
-        output += `   Full context: ${contextPreview}${inst.full_text.length > 200 ? '...' : ''}\n`;
+      // Show full context or truncated based on parameter
+      const cleanedContext = inst.full_text.replace(/^#[^\n]*\n+/, '');
+      if (cleanedContext && cleanedContext !== inst.quote) {
+        if (truncateEvidence && cleanedContext.length > 200) {
+          // Truncate to 200 chars for token efficiency
+          output += `   Full context: ${cleanedContext.substring(0, 200)}...\n`;
+        } else {
+          // Show complete context
+          output += `   Full context: ${cleanedContext}\n`;
+        }
       }
     }
 
