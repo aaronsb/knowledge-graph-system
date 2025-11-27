@@ -1,0 +1,20 @@
+# Claude AI exports (contains private conversation data)
+exports/
+*.json
+
+# Converted conversations (contains private data)
+conversations/
+*.md
+!README.md
+
+# Python helpers (if added later)
+venv/
+__pycache__/
+*.pyc
+
+# Credentials
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
