@@ -15,6 +15,12 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
 - `concept_id` (`string`) - Concept ID (required for details, related)
 - `include_grounding` (`boolean`) - Include grounding_strength (default: true)
   - Default: `true`
+- `include_diversity` (`boolean`) - Include diversity metrics for details action (default: false, adds ~100-500ms)
+  - Default: `false`
+- `diversity_max_hops` (`number`) - Max hops for diversity calculation (default: 2)
+  - Default: `2`
+- `truncate_evidence` (`boolean`) - Truncate evidence full_text context to 200 chars (default: true for token efficiency). Set false for complete context.
+  - Default: `true`
 - `max_depth` (`number`) - Max traversal depth for related (1-5, default: 2)
   - Default: `2`
 - `relationship_types` (`array`) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])

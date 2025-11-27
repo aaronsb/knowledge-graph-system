@@ -101,8 +101,10 @@ export function formatSearchResults(result: SearchResponse): string {
 
 /**
  * Format concept details as markdown
+ * @param concept - The concept details to format
+ * @param truncateEvidence - Whether to truncate full_text context to 200 chars (default: true)
  */
-export function formatConceptDetails(concept: ConceptDetailsResponse): string {
+export function formatConceptDetails(concept: ConceptDetailsResponse, truncateEvidence: boolean = true): string {
   let output = `# Concept: ${concept.label}\n\n`;
   if (concept.description) {
     output += `${concept.description}\n\n`;
@@ -140,10 +142,16 @@ export function formatConceptDetails(concept: ConceptDetailsResponse): string {
       if (chapterMatch) {
         output += `   Context: Chapter ${chapterMatch[1]}\n`;
       }
-      // Show first 200 chars of full context for grounding
-      const contextPreview = inst.full_text.replace(/^#[^\n]*\n+/, '').substring(0, 200);
-      if (contextPreview && contextPreview !== inst.quote) {
-        output += `   Full context: ${contextPreview}${inst.full_text.length > 200 ? '...' : ''}\n`;
+      // Show full context or truncated based on parameter
+      const cleanedContext = inst.full_text.replace(/^#[^\n]*\n+/, '');
+      if (cleanedContext && cleanedContext !== inst.quote) {
+        if (truncateEvidence && cleanedContext.length > 200) {
+          // Truncate to 200 chars for token efficiency
+          output += `   Full context: ${cleanedContext.substring(0, 200)}...\n`;
+        } else {
+          // Show complete context
+          output += `   Full context: ${cleanedContext}\n`;
+        }
       }
     }
 
@@ -169,6 +177,7 @@ export function formatConceptDetails(concept: ConceptDetailsResponse): string {
 
 /**
  * Format connection paths as markdown
+ * Enhanced to match CLI output with full concept details, evidence samples, and path visualization
  */
 export function formatConnectionPaths(result: FindConnectionBySearchResponse): string {
   let output = `# Connection: ${result.from_concept?.label || result.from_query} -> ${result.to_concept?.label || result.to_query}\n\n`;
@@ -183,37 +192,82 @@ export function formatConnectionPaths(result: FindConnectionBySearchResponse): s
 
   output += `Found ${result.count} path(s):\n\n`;
 
-  result.paths.forEach((path, i) => {
-    output += `## Path ${i + 1} (${path.hops} hops)\n\n`;
+  result.paths.forEach((path, pathIdx) => {
+    output += `## Path ${pathIdx + 1} (${path.hops} hop${path.hops !== 1 ? 's' : ''})\n\n`;
 
+    // Full path visualization with arrows
+    output += '### Path Overview\n\n';
+    const pathSegments: string[] = [];
     path.nodes.forEach((node, j) => {
-      output += `${node.label} (${node.id})\n`;
-      if (node.description) {
-        output += `${node.description}\n`;
-      }
-
-      if (node.grounding_strength !== undefined && node.grounding_strength !== null) {
-        output += `Grounding: ${formatGroundingStrength(node.grounding_strength)}\n`;
-      }
-
-      if (node.sample_evidence && node.sample_evidence.length > 0) {
-        output += `Evidence samples:\n`;
-        node.sample_evidence.forEach((inst, idx) => {
-          const truncated = inst.quote.length > 100 ? inst.quote.substring(0, 100) + '...' : inst.quote;
-          output += `  ${idx + 1}. ${inst.document} (para ${inst.paragraph}): "${truncated}"\n`;
-          // ADR-057: Indicate if this evidence has an image
-          if (inst.has_image && inst.source_id) {
-            output += `     [IMAGE] get_source_image("${inst.source_id}")\n`;
-          }
-        });
-      }
-
+      pathSegments.push(node.label);
       if (j < path.relationships.length) {
-        output += `  [${path.relationships[j]}]\n`;
+        pathSegments.push(`↓ ${path.relationships[j]}`);
       }
     });
+    output += pathSegments.join('\n') + '\n\n';
 
-    output += '\n';
+    // Detailed concept information for each node
+    path.nodes.forEach((node, nodeIdx) => {
+      output += `### ${nodeIdx + 1}. ${node.label}\n\n`;
+
+      // Concept ID and description
+      output += `**ID:** ${node.id}\n`;
+      if (node.description) {
+        output += `**Description:** ${node.description}\n`;
+      }
+
+      // Grounding strength
+      if (node.grounding_strength !== undefined && node.grounding_strength !== null) {
+        output += `**Grounding:** ${formatGroundingStrength(node.grounding_strength)}\n`;
+      }
+
+      // Diversity metrics if available
+      if (node.diversity_score !== undefined && node.diversity_score !== null && node.diversity_related_count !== undefined) {
+        output += `**Diversity:** ${(node.diversity_score * 100).toFixed(1)}% (${node.diversity_related_count} related concepts)\n`;
+      }
+
+      // Authenticated diversity if available
+      if (node.authenticated_diversity !== undefined && node.authenticated_diversity !== null) {
+        const authDiv = node.authenticated_diversity;
+        const sign = authDiv >= 0 ? '+' : '';
+        const status = authDiv > 0.3 ? 'diverse support ✅' :
+                       authDiv > 0 ? 'some support ✓' :
+                       authDiv > -0.3 ? 'weak contradiction ⚠' :
+                       'diverse contradiction ❌';
+        output += `**Authenticated:** ${sign}${(Math.abs(authDiv) * 100).toFixed(1)}% (${status})\n`;
+      }
+
+      // Evidence samples (limit to 3 for token efficiency)
+      if (node.sample_evidence && node.sample_evidence.length > 0) {
+        const evidenceCount = node.sample_evidence.length;
+        output += `\n**Evidence (${evidenceCount} sample${evidenceCount !== 1 ? 's' : ''}):**\n\n`;
+
+        node.sample_evidence.slice(0, 3).forEach((inst, idx) => {
+          const truncated = inst.quote.length > 150 ? inst.quote.substring(0, 150) + '...' : inst.quote;
+          output += `${idx + 1}. ${inst.document} (para ${inst.paragraph}):\n`;
+          output += `   "${truncated}"\n`;
+
+          // ADR-057: Image availability
+          if (inst.has_image && inst.source_id) {
+            output += `   [IMAGE AVAILABLE] Use get_source_image("${inst.source_id}") to view\n`;
+          }
+        });
+
+        if (evidenceCount > 3) {
+          output += `   ... and ${evidenceCount - 3} more samples\n`;
+          output += `   Use get_concept_details("${node.id}") for all evidence\n`;
+        }
+      }
+
+      // Show relationship to next node
+      if (nodeIdx < path.relationships.length) {
+        output += `\n**→ ${path.relationships[nodeIdx]}**\n`;
+      }
+
+      output += '\n';
+    });
+
+    output += '---\n\n';
   });
 
   return output;
