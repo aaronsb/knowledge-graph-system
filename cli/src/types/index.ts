@@ -239,6 +239,9 @@ export interface PathNode {
   label: string;
   description?: string; // Factual 1-2 sentence definition
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  diversity_score?: number; // ADR-063: Diversity score (0.0 to 1.0)
+  diversity_related_count?: number; // ADR-063: Number of related concepts
+  authenticated_diversity?: number; // ADR-063: Authenticated diversity
   sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }
 
