@@ -5615,6 +5615,12 @@
 <li><code>concept_id</code> (<code>string</code>) - Concept ID (required for details, related)</li>
 <li><code>include_grounding</code> (<code>boolean</code>) - Include grounding_strength (default: true)</li>
 <li>Default: <code>true</code></li>
+<li><code>include_diversity</code> (<code>boolean</code>) - Include diversity metrics for details action (default: false, adds ~100-500ms)</li>
+<li>Default: <code>false</code></li>
+<li><code>diversity_max_hops</code> (<code>number</code>) - Max hops for diversity calculation (default: 2)</li>
+<li>Default: <code>2</code></li>
+<li><code>truncate_evidence</code> (<code>boolean</code>) - Truncate evidence full_text context to 200 chars (default: true for token efficiency). Set false for complete context.</li>
+<li>Default: <code>true</code></li>
 <li><code>max_depth</code> (<code>number</code>) - Max traversal depth for related (1-5, default: 2)</li>
 <li>Default: <code>2</code></li>
 <li><code>relationship_types</code> (<code>array</code>) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])</li>
