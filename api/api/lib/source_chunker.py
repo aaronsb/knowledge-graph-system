@@ -71,34 +71,78 @@ SENTENCE_BOUNDARY_PATTERN = re.compile(
 )
 
 
-def _split_into_sentences(text: str) -> List[str]:
-    """
-    Split text into sentences at natural boundaries.
+@dataclass
+class _SentenceWithPosition:
+    """Internal: Sentence with position tracking in source text."""
+    text: str
+    start_offset: int
+    end_offset: int
 
-    Uses regex to detect sentence boundaries while avoiding common abbreviations.
+
+def _split_into_sentences_with_positions(text: str) -> List[_SentenceWithPosition]:
+    """
+    Split text into sentences with position tracking.
+
+    Uses regex to detect sentence boundaries while tracking character positions
+    in the original text. This avoids issues with duplicate sentences.
 
     Args:
         text: Input text to split
 
     Returns:
-        List of sentences (may be empty if text is empty)
+        List of sentences with positions (may be empty if text is empty)
 
     Example:
-        >>> _split_into_sentences("Hello world. How are you?")
-        ['Hello world.', 'How are you?']
+        >>> result = _split_into_sentences_with_positions("Hello. World.")
+        >>> result[0].text, result[0].start_offset, result[0].end_offset
+        ('Hello.', 0, 6)
     """
     if not text:
         return []
 
-    # Split on sentence boundaries
-    sentences = SENTENCE_BOUNDARY_PATTERN.split(text)
+    # Find all sentence boundaries using regex
+    boundary_positions = [m.start() for m in SENTENCE_BOUNDARY_PATTERN.finditer(text)]
 
-    # Filter out empty strings and strip whitespace
-    sentences = [s.strip() for s in sentences if s.strip()]
+    # If no boundaries found, treat entire text as one sentence
+    if not boundary_positions:
+        stripped = text.strip()
+        if not stripped:
+            return []
+        # Find where stripped text starts in original
+        start = text.index(stripped)
+        return [_SentenceWithPosition(
+            text=stripped,
+            start_offset=start,
+            end_offset=start + len(stripped)
+        )]
 
-    # If no sentences detected (no punctuation), treat entire text as one sentence
-    if not sentences:
-        sentences = [text.strip()]
+    # Build sentences from boundary positions
+    sentences = []
+    start = 0
+
+    for boundary_pos in boundary_positions:
+        # Extract sentence from start to boundary
+        sentence_text = text[start:boundary_pos].strip()
+        if sentence_text:
+            # Find where stripped sentence starts in original text
+            sentence_start = text.index(sentence_text, start)
+            sentences.append(_SentenceWithPosition(
+                text=sentence_text,
+                start_offset=sentence_start,
+                end_offset=sentence_start + len(sentence_text)
+            ))
+        start = boundary_pos
+
+    # Handle any remaining text after last boundary
+    if start < len(text):
+        remaining = text[start:].strip()
+        if remaining:
+            remaining_start = text.index(remaining, start)
+            sentences.append(_SentenceWithPosition(
+                text=remaining,
+                start_offset=remaining_start,
+                end_offset=remaining_start + len(remaining)
+            ))
 
     return sentences
 
@@ -153,51 +197,54 @@ def chunk_by_sentence(
     if not text.strip():
         return []
 
-    # Split into sentences
-    sentences = _split_into_sentences(text)
+    # Split into sentences with position tracking
+    sentences = _split_into_sentences_with_positions(text)
 
     if not sentences:
         return []
 
-    # Build chunks
+    # Build chunks by accumulating sentences
     chunks: List[SourceChunk] = []
-    current_chunk_text = ""
-    current_chunk_start = 0
+    current_sentences: List[_SentenceWithPosition] = []
+    current_length = 0
 
     for sentence in sentences:
-        # Calculate position of this sentence in original text
-        # Find next occurrence of sentence in remaining text
-        search_start = current_chunk_start + len(current_chunk_text)
-        sentence_pos = text.find(sentence, search_start)
+        # Calculate potential length if we add this sentence
+        # Account for space between sentences (except for first sentence in chunk)
+        space_length = 1 if current_sentences else 0
+        potential_length = current_length + space_length + len(sentence.text)
 
         # If adding this sentence would exceed max_chars, finalize current chunk
-        potential_length = len(current_chunk_text) + len(sentence)
-        if current_chunk_text and potential_length > max_chars:
+        if current_sentences and potential_length > max_chars:
             # Finalize current chunk
-            chunk_end = current_chunk_start + len(current_chunk_text)
+            chunk_start = current_sentences[0].start_offset
+            chunk_end = current_sentences[-1].end_offset
+            chunk_text = text[chunk_start:chunk_end]
+
             chunks.append(SourceChunk(
-                text=current_chunk_text.strip(),
-                start_offset=current_chunk_start,
+                text=chunk_text,
+                start_offset=chunk_start,
                 end_offset=chunk_end,
                 index=len(chunks)
             ))
 
-            # Start new chunk with this sentence
-            current_chunk_text = sentence + " "
-            current_chunk_start = sentence_pos
+            # Start new chunk with current sentence
+            current_sentences = [sentence]
+            current_length = len(sentence.text)
         else:
             # Add sentence to current chunk
-            if not current_chunk_text:
-                current_chunk_start = sentence_pos
-
-            current_chunk_text += sentence + " "
+            current_sentences.append(sentence)
+            current_length = potential_length
 
     # Finalize last chunk
-    if current_chunk_text.strip():
-        chunk_end = current_chunk_start + len(current_chunk_text.strip())
+    if current_sentences:
+        chunk_start = current_sentences[0].start_offset
+        chunk_end = current_sentences[-1].end_offset
+        chunk_text = text[chunk_start:chunk_end]
+
         chunks.append(SourceChunk(
-            text=current_chunk_text.strip(),
-            start_offset=current_chunk_start,
+            text=chunk_text,
+            start_offset=chunk_start,
             end_offset=chunk_end,
             index=len(chunks)
         ))
