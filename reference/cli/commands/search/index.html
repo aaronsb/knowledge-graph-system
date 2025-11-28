@@ -2238,6 +2238,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sources
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5704,6 +5715,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sources
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5744,6 +5766,7 @@
 <li><code>details</code> - Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength</li>
 <li><code>related</code> - Find concepts related through graph traversal (breadth-first search) - groups results by distance</li>
 <li><code>connect</code> - Find shortest path between two concepts using IDs or semantic phrase matching</li>
+<li><code>sources</code> - Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)</li>
 </ul>
 <hr />
 <h3 id="query">query</h3>
@@ -5952,6 +5975,57 @@
 <tr>
 <td><code>--exclude-epistemic &lt;statuses...&gt;</code></td>
 <td>Exclude relationships with these epistemic statuses (ADR-065)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sources">sources</h3>
+<p>Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>sources<span class="w"> </span>&lt;query&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;query&gt;</code> - Search query text (searches source embeddings, not concept embeddings)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-l, --limit &lt;number&gt;</code></td>
+<td>Maximum number of sources to return</td>
+<td><code>"10"</code></td>
+</tr>
+<tr>
+<td><code>--min-similarity &lt;number&gt;</code></td>
+<td>Minimum similarity score (0.0-1.0, default 0.7)</td>
+<td><code>"0.7"</code></td>
+</tr>
+<tr>
+<td><code>-o, --ontology &lt;name&gt;</code></td>
+<td>Filter by ontology/document name</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--no-concepts</code></td>
+<td>Hide concepts extracted from matched sources (shown by default)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--no-full-text</code></td>
+<td>Hide full source text (shown by default)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>Output raw JSON instead of formatted text for scripting</td>
 <td>-</td>
 </tr>
 </tbody>
