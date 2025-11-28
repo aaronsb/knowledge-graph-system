@@ -4,6 +4,19 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 
+# Constants
+DEFAULT_SOURCE_SEARCH_SIMILARITY = 0.7
+"""
+Default similarity threshold for source search.
+
+Rationale:
+- <0.5: Too many irrelevant results (high recall, low precision)
+- 0.5-0.7: Balanced recall/precision for exploratory search
+- 0.7-0.85: Good precision for targeted search (recommended default)
+- >0.85: Very high precision, may miss relevant results
+"""
+
+
 # Search Models
 class SearchRequest(BaseModel):
     """Request to search for concepts using semantic similarity.
@@ -309,3 +322,60 @@ class CypherQueryResponse(BaseModel):
     execution_time_ms: float = Field(..., description="Query execution time in milliseconds")
     row_count: int = Field(..., description="Number of rows returned")
     query: str = Field(..., description="The executed query")
+
+
+# Source Search Models (ADR-068 Phase 3)
+class SourceSearchRequest(BaseModel):
+    """Request to search source text using semantic similarity (ADR-068).
+
+    Searches source text chunks via embedding similarity, returns matched sources
+    with related concepts for evidence/provenance retrieval.
+    """
+    query: str = Field(..., description="Search query text", min_length=1)
+    limit: int = Field(10, description="Maximum number of sources to return", ge=1, le=100)
+    min_similarity: float = Field(
+        DEFAULT_SOURCE_SEARCH_SIMILARITY,
+        description="Minimum similarity score (0.0-1.0, default 0.7=70%)",
+        ge=0.0,
+        le=1.0
+    )
+    ontology: Optional[str] = Field(None, description="Filter by ontology/document name")
+    include_concepts: bool = Field(True, description="Include concepts extracted from matched sources")
+    include_full_text: bool = Field(True, description="Include full source text (not just matched chunk)")
+
+
+class SourceConcept(BaseModel):
+    """Concept extracted from a source."""
+    concept_id: str = Field(..., description="Concept identifier")
+    label: str = Field(..., description="Concept label")
+    description: Optional[str] = Field(None, description="Concept description")
+    instance_quote: str = Field(..., description="Quote from source that evidences this concept")
+
+
+class SourceChunk(BaseModel):
+    """Matched text chunk from source embedding."""
+    chunk_text: str = Field(..., description="Matched chunk text")
+    start_offset: int = Field(..., description="Character offset where chunk starts in source.full_text")
+    end_offset: int = Field(..., description="Character offset where chunk ends in source.full_text")
+    chunk_index: int = Field(..., description="Chunk number (0-based)")
+    similarity: float = Field(..., description="Cosine similarity score for this chunk (0.0-1.0)")
+
+
+class SourceSearchResult(BaseModel):
+    """Single source search result with matched chunk and related concepts."""
+    source_id: str = Field(..., description="Source node identifier")
+    document: str = Field(..., description="Document/ontology name")
+    paragraph: int = Field(..., description="Paragraph/chunk number in document")
+    similarity: float = Field(..., description="Best chunk similarity score for this source")
+    is_stale: bool = Field(..., description="True if source text changed since embeddings generated")
+    matched_chunk: SourceChunk = Field(..., description="Best matching chunk from this source")
+    full_text: Optional[str] = Field(None, description="Complete source text (if include_full_text=true)")
+    concepts: List[SourceConcept] = Field(default_factory=list, description="Concepts extracted from this source (if include_concepts=true)")
+
+
+class SourceSearchResponse(BaseModel):
+    """Source search results (ADR-068 Phase 3)."""
+    query: str = Field(..., description="Original search query")
+    count: int = Field(..., description="Number of sources returned")
+    results: List[SourceSearchResult] = Field(..., description="Ranked source results by similarity")
+    threshold_used: float = Field(..., description="Similarity threshold used")

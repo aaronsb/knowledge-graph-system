@@ -17,6 +17,7 @@ kg search [options]
 - `details` - Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength
 - `related` - Find concepts related through graph traversal (breadth-first search) - groups results by distance
 - `connect` - Find shortest path between two concepts using IDs or semantic phrase matching
+- `sources` - Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)
 
 ---
 
@@ -117,3 +118,27 @@ kg connect <from> <to>
 | `--json` | Output raw JSON instead of formatted text | - |
 | `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
 | `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-065) | - |
+
+### sources
+
+Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)
+
+**Usage:**
+```bash
+kg sources <query>
+```
+
+**Arguments:**
+
+- `<query>` - Search query text (searches source embeddings, not concept embeddings)
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-l, --limit <number>` | Maximum number of sources to return | `"10"` |
+| `--min-similarity <number>` | Minimum similarity score (0.0-1.0, default 0.7) | `"0.7"` |
+| `-o, --ontology <name>` | Filter by ontology/document name | - |
+| `--no-concepts` | Hide concepts extracted from matched sources (shown by default) | - |
+| `--no-full-text` | Hide full source text (shown by default) | - |
+| `--json` | Output raw JSON instead of formatted text for scripting | - |
