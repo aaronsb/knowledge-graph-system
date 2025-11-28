@@ -15,6 +15,8 @@ import {
   IngestRequest,
   SearchRequest,
   SearchResponse,
+  SourceSearchRequest,
+  SourceSearchResponse,
   ConceptDetailsResponse,
   RelatedConceptsRequest,
   RelatedConceptsResponse,
@@ -412,6 +414,14 @@ export class KnowledgeGraphClient {
    */
   async searchConcepts(request: SearchRequest): Promise<SearchResponse> {
     const response = await this.client.post('/query/search', request);
+    return response.data;
+  }
+
+  /**
+   * Search source text using semantic similarity (ADR-068 Phase 3)
+   */
+  async searchSources(request: SourceSearchRequest): Promise<SourceSearchResponse> {
+    const response = await this.client.post('/query/sources/search', request);
     return response.data;
   }
 

@@ -166,6 +166,49 @@ export interface SearchResponse {
   offset?: number; // Pagination offset used
 }
 
+// Source Search types (ADR-068 Phase 3)
+export interface SourceSearchRequest {
+  query: string;
+  limit?: number;
+  min_similarity?: number;
+  ontology?: string;
+  include_concepts?: boolean;
+  include_full_text?: boolean;
+}
+
+export interface SourceConcept {
+  concept_id: string;
+  label: string;
+  description?: string;
+  instance_quote: string;
+}
+
+export interface SourceChunk {
+  chunk_text: string;
+  start_offset: number;
+  end_offset: number;
+  chunk_index: number;
+  similarity: number;
+}
+
+export interface SourceSearchResult {
+  source_id: string;
+  document: string;
+  paragraph: number;
+  similarity: number;
+  is_stale: boolean;
+  matched_chunk: SourceChunk;
+  full_text?: string;
+  concepts: SourceConcept[];
+}
+
+export interface SourceSearchResponse {
+  query: string;
+  count: number;
+  results: SourceSearchResult[];
+  threshold_used: number;
+}
+
 export interface ConceptInstance {
   quote: string;
   document: string;

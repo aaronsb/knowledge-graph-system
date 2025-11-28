@@ -541,8 +541,96 @@ Notes:
         }
       });
 
+const sourcesCommand = setCommandHelp(
+  new Command('sources'),
+  'Search source text by semantic similarity',
+  'Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)'
+)
+      .showHelpAfterError()
+      .argument('<query>', 'Search query text (searches source embeddings, not concept embeddings)')
+      .option('-l, --limit <number>', 'Maximum number of sources to return', '10')
+      .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0, default 0.7)', '0.7')
+      .option('-o, --ontology <name>', 'Filter by ontology/document name')
+      .option('--no-concepts', 'Hide concepts extracted from matched sources (shown by default)')
+      .option('--no-full-text', 'Hide full source text (shown by default)')
+      .option('--json', 'Output raw JSON instead of formatted text for scripting')
+      .action(async (query, options) => {
+        try {
+          const client = createClientFromEnv();
+
+          const includeConcepts = options.concepts !== false; // Default: true
+          const includeFullText = options.fullText !== false; // Default: true
+
+          const result = await client.searchSources({
+            query,
+            limit: parseInt(options.limit),
+            min_similarity: parseFloat(options.minSimilarity),
+            ontology: options.ontology,
+            include_concepts: includeConcepts,
+            include_full_text: includeFullText
+          });
+
+          // JSON output mode
+          if (options.json) {
+            console.log(JSON.stringify(result, null, 2));
+            return;
+          }
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title(`📄 Source Search: ${query}`));
+          console.log(separator());
+          console.log(colors.status.success(`\n✓ Found ${result.count} source(s):\n`));
+
+          for (const [i, source] of result.results.entries()) {
+            console.log(colors.ui.bullet('●') + ' ' + colors.concept.label(`${i + 1}. ${source.document} (para ${source.paragraph})`));
+            console.log(`   ${colors.ui.key('Source ID:')} ${colors.concept.id(source.source_id)}`);
+            console.log(`   ${colors.ui.key('Similarity:')} ${coloredPercentage(source.similarity)}`);
+
+            if (source.is_stale) {
+              console.log(`   ${colors.status.warning('⚠ Stale embedding (source text changed)')}`);
+            }
+
+            // Display matched chunk
+            console.log(`   ${colors.ui.key('Matched chunk:')} ${colors.evidence.paragraph(`[${source.matched_chunk.start_offset}:${source.matched_chunk.end_offset}]`)}`);
+            const truncatedChunk = source.matched_chunk.chunk_text.length > 150
+              ? source.matched_chunk.chunk_text.substring(0, 150) + '...'
+              : source.matched_chunk.chunk_text;
+            console.log(`   ${colors.evidence.quote(`"${truncatedChunk}"`)}`);
+
+            // Display full text if requested
+            if (includeFullText && source.full_text) {
+              console.log(`   ${colors.ui.key('Full text:')}`);
+              const truncatedText = source.full_text.length > 200
+                ? source.full_text.substring(0, 200) + '...'
+                : source.full_text;
+              console.log(`      ${colors.status.dim(truncatedText)}`);
+            }
+
+            // Display concepts extracted from this source
+            if (includeConcepts && source.concepts && source.concepts.length > 0) {
+              console.log(`   ${colors.ui.key('Concepts:')} ${colors.status.dim(`(${source.concepts.length} extracted)`)}`);
+              for (const concept of source.concepts.slice(0, 5)) { // Show max 5 concepts
+                console.log(`      ${colors.ui.bullet('→')} ${colors.concept.label(concept.label)} ${colors.concept.id(`(${concept.concept_id})`)}`);
+                if (concept.description) {
+                  console.log(`         ${colors.status.dim(concept.description)}`);
+                }
+              }
+              if (source.concepts.length > 5) {
+                console.log(`      ${colors.status.dim(`... and ${source.concepts.length - 5} more`)}`);
+              }
+            }
+
+            console.log();
+          }
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Source search failed'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      });
+
 // Configure colored help for all search subcommands
-[queryCommand, detailsCommand, relatedCommand, connectCommand].forEach(configureColoredHelp);
+[queryCommand, detailsCommand, relatedCommand, connectCommand, sourcesCommand].forEach(configureColoredHelp);
 
 export const searchCommand = setCommandHelp(
   new Command('search'),
@@ -554,4 +642,5 @@ export const searchCommand = setCommandHelp(
   .addCommand(queryCommand)
   .addCommand(detailsCommand)
   .addCommand(relatedCommand)
-  .addCommand(connectCommand);
+  .addCommand(connectCommand)
+  .addCommand(sourcesCommand);
