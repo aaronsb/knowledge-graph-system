@@ -1,7 +1,8 @@
 # ADR-068: Source Text Embeddings for Grounding Truth Retrieval
 
-**Status:** Proposed
+**Status:** Accepted - Partially Implemented (Phase 1-2 complete, Phase 3 in progress)
 **Date:** 2025-11-27
+**Updated:** 2025-11-27 (Added philosophical foundation clarification)
 **Deciders:** System Architect
 **Tags:** #embeddings #source-retrieval #async-processing #lcm
 
@@ -65,6 +66,76 @@ Text → {Concepts, Sources, Edges} → Embeddings → Multi-modal Graph
 6. **Source Embeddings**: Grounding truth chunk search (❌ **This ADR**)
 7. **Emergent Edges**: Relationships discovered via embedding proximity
 8. **Constructive Queries**: Build knowledge paths from multi-modal signals
+
+### Philosophical Foundation: Evidence vs. Grounding
+
+**IMPORTANT:** Source embeddings serve a fundamentally different purpose than grounding calculation. This distinction is critical to understanding the architecture:
+
+#### Evidence Layer (Descriptive - This ADR)
+```
+Source Text → Extraction → Concept
+"The recursive depth tracker maintains state..."
+                ↓
+        [Concept: "Recursive Depth Tracking"]
+```
+
+**Purpose:** Provenance and evidence retrieval
+- **Nature:** Observational, neutral representation
+- **Language:** "Concept" (intentionally NOT "fact" or "truth")
+- **What it captures:** Ideas stated/observed in source text
+- **Judgment:** None - purely descriptive
+- **Query use case:** "Show me the original text where this concept came from"
+
+**Graph Traversal:**
+```cypher
+(:Concept)-[:EVIDENCED_BY]->(:Instance)-[:FROM_SOURCE]->(:Source)
+```
+
+**NOT used for grounding calculation** - only for citation and provenance.
+
+#### Grounding Layer (Evaluative - ADR-044, ADR-058)
+```
+Concept ↔ Concept (relationships)
+[:SUPPORTS], [:CONTRADICTS], [:ENABLES], etc.
+                ↓
+        Polarity projection → Grounding strength
+```
+
+**Purpose:** Truth convergence and validation
+- **Nature:** Interpretive, evaluative assessment
+- **Method:** Semantic projection of concept relationships onto polarity axis
+- **What it measures:** How concepts validate/contradict each other
+- **Source:** Concept-to-concept relationships, NOT source citations
+- **Algorithm:** Polarity Axis Triangulation (ADR-058)
+
+**Graph Traversal:**
+```cypher
+MATCH (c:Concept) <-[r]-(other:Concept)
+// Project r onto SUPPORTS ↔ CONTRADICTS axis
+```
+
+#### Why This Separation Matters
+
+**Evidence ≠ Validation:**
+- Just because source text *states* something doesn't make it *grounded*
+- Concepts from sources are neutral observations of what was written
+- Grounding emerges from how concepts relate to *each other*, not from source citations
+
+**Example:**
+```
+Source A: "The earth is flat"
+  → Concept: "Flat Earth Model" (neutral observation)
+
+Source B: "Spherical earth confirmed by gravity"
+  → Concept: "Spherical Earth Model" (neutral observation)
+
+Relationship: (Spherical Earth)-[:CONTRADICTS]->(Flat Earth)
+  → Grounding: Flat Earth has negative grounding (contradicted)
+```
+
+The source text itself doesn't determine truth - the **semantic relationships between concepts** do.
+
+**This ADR addresses evidence retrieval only.** Grounding calculation is handled separately by ADR-044 (Probabilistic Truth Convergence) and ADR-058 (Polarity Axis Triangulation).
 
 ## Decision
 
