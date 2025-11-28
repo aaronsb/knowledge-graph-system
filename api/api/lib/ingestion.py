@@ -235,6 +235,28 @@ def process_chunk(
     except Exception as e:
         raise Exception(f"Failed to create Source node: {e}")
 
+    # Step 1.5: Generate source embeddings (ADR-068 Phase 2)
+    # Synchronous call - embeddings generated as part of ingestion
+    try:
+        from api.api.workers.source_embedding_worker import generate_source_embeddings
+
+        embedding_result = generate_source_embeddings(
+            source_id=source_id,
+            source_text=chunk.text,
+            chunk_strategy="sentence",
+            max_chars=500
+        )
+
+        logger.info(
+            f"  ✓ Generated {embedding_result['chunks_created']} source embeddings "
+            f"(hash: {embedding_result['source_hash'][:16]}...)"
+        )
+    except Exception as e:
+        # Log warning but don't fail ingestion if embedding generation fails
+        logger.warning(f"  ⚠️  Source embedding generation failed: {str(e)}")
+        logger.debug(f"  Source embedding error details:", exc_info=True)
+        # Continue with ingestion - embeddings can be regenerated later
+
     # Step 2: Extract concepts via LLM (with context from recent concepts)
     try:
         extraction_response = extract_concepts(
