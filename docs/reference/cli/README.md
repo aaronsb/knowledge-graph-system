@@ -1379,7 +1379,7 @@ kg admin [options]
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (requires authentication)
 - `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
-- `regenerate-embeddings` - Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)
+- `regenerate-embeddings` - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
 - `user` - User management commands (admin only)
 - `rbac` - Manage roles, permissions, and access control (ADR-028)
 - `embedding` - Manage embedding model configuration (ADR-039)
@@ -1478,7 +1478,7 @@ kg cleanup [options]
 
 ### regenerate-embeddings
 
-Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)
+Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
 
 **Usage:**
 ```bash
@@ -1489,10 +1489,10 @@ kg regenerate-embeddings [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--concepts` | Regenerate concept embeddings (default if no options specified) | `true` |
-| `--only-missing` | Only generate for concepts without embeddings (skip existing) | `false` |
-| `--ontology <name>` | Limit regeneration to specific ontology namespace | - |
-| `--limit <n>` | Maximum number of concepts to process (useful for testing/batching) | - |
+| `--type <type>` | Type of embeddings to regenerate: concept, source, vocabulary, all (default: concept) | `"concept"` |
+| `--only-missing` | Only generate for entities without embeddings (skip existing) - applies to concept and source types | `false` |
+| `--ontology <name>` | Limit regeneration to specific ontology namespace - applies to concept and source types | - |
+| `--limit <n>` | Maximum number of entities to process (useful for testing/batching) | - |
 
 ### user
 

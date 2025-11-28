@@ -756,6 +756,36 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Unified embedding regeneration for all graph text entities (ADR-068 Phase 4).
+   *
+   * Regenerate embeddings for concepts, sources, or vocabulary (relationship types).
+   * Useful for model migrations, fixing missing/corrupted embeddings, or bulk regeneration.
+   */
+  async regenerateEmbeddings(params: {
+    embedding_type: 'concept' | 'source' | 'vocabulary' | 'all';
+    only_missing?: boolean;
+    ontology?: string;
+    limit?: number;
+  }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('embedding_type', params.embedding_type);
+
+    if (params.only_missing) {
+      queryParams.append('only_missing', 'true');
+    }
+    if (params.ontology) {
+      queryParams.append('ontology', params.ontology);
+    }
+    if (params.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+
+    const url = `/admin/regenerate-embeddings${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await this.client.post(url);
+    return response.data;
+  }
+
   // ========== RBAC Methods (ADR-028) ==========
 
   /**

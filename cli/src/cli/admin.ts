@@ -1068,23 +1068,36 @@ const schedulerCommand = new Command('scheduler')
   .addCommand(schedulerStatusCommand)
   .addCommand(schedulerCleanupCommand);
 
-// ========== Concept Embedding Regeneration Command ==========
+// ========== Unified Embedding Regeneration Command (ADR-068 Phase 4) ==========
 
 const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
-  .description('Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)')
-  .option('--concepts', 'Regenerate concept embeddings (default if no options specified)', true)
-  .option('--only-missing', 'Only generate for concepts without embeddings (skip existing)', false)
-  .option('--ontology <name>', 'Limit regeneration to specific ontology namespace')
-  .option('--limit <n>', 'Maximum number of concepts to process (useful for testing/batching)', parseInt)
+  .description('Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings')
+  .option('--type <type>', 'Type of embeddings to regenerate: concept, source, vocabulary, all (default: concept)', 'concept')
+  .option('--only-missing', 'Only generate for entities without embeddings (skip existing) - applies to concept and source types', false)
+  .option('--ontology <name>', 'Limit regeneration to specific ontology namespace - applies to concept and source types')
+  .option('--limit <n>', 'Maximum number of entities to process (useful for testing/batching)', parseInt)
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
 
+      // Validate embedding type
+      const validTypes = ['concept', 'source', 'vocabulary', 'all'];
+      const embeddingType = options.type || 'concept';
+
+      if (!validTypes.includes(embeddingType)) {
+        console.error();
+        console.error(colors.status.error(`✗ Invalid --type: ${embeddingType}`));
+        console.error(colors.status.dim(`  Valid types: ${validTypes.join(', ')}`));
+        console.error();
+        process.exit(1);
+      }
+
       console.log(colors.separator());
-      console.log(colors.ui.title('🔄 Regenerating Concept Embeddings'));
+      console.log(colors.ui.title(`🔄 Regenerating ${embeddingType.charAt(0).toUpperCase() + embeddingType.slice(1)} Embeddings`));
       console.log(colors.separator());
 
       const params: any = {
+        embedding_type: embeddingType,
         only_missing: options.onlyMissing || false
       };
 
@@ -1098,6 +1111,7 @@ const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
 
       console.log();
       console.log(colors.status.info('Starting regeneration...'));
+      console.log(colors.status.dim(`  Type: ${embeddingType}`));
       if (options.ontology) {
         console.log(colors.status.dim(`  Ontology: ${options.ontology}`));
       }
@@ -1105,31 +1119,62 @@ const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
         console.log(colors.status.dim('  Mode: Only missing embeddings'));
       }
       if (options.limit) {
-        console.log(colors.status.dim(`  Limit: ${options.limit} concepts`));
+        console.log(colors.status.dim(`  Limit: ${options.limit} entities`));
       }
       console.log();
 
-      const result = await client.regenerateConceptEmbeddings(params);
+      const result = await client.regenerateEmbeddings(params);
 
       console.log(colors.separator());
       console.log(colors.status.success('✓ Regeneration completed'));
-      console.log(`  ${colors.stats.label('Processed:')} ${colors.stats.value(result.processed_count.toString())} / ${result.target_count}`);
 
-      if (result.failed_count > 0) {
-        console.log(`  ${colors.status.error('Failed:')} ${result.failed_count}`);
-      }
+      // Handle 'all' type response (has totals and per-type results)
+      if (embeddingType === 'all' && result.totals) {
+        console.log(`  ${colors.stats.label('Total Processed:')} ${colors.stats.value(result.totals.processed_count.toString())} / ${result.totals.target_count}`);
 
-      console.log(`  ${colors.status.dim('Duration:')} ${result.duration_ms}ms`);
-      console.log(`  ${colors.status.dim('Model:')} ${result.embedding_provider}/${result.embedding_model}`);
+        if (result.totals.failed_count > 0) {
+          console.log(`  ${colors.status.error('Total Failed:')} ${result.totals.failed_count}`);
+        }
 
-      if (result.errors && result.errors.length > 0) {
+        console.log(`  ${colors.status.dim('Total Duration:')} ${result.totals.duration_ms}ms`);
+
         console.log();
-        console.log(colors.status.error('Errors:'));
-        result.errors.slice(0, 5).forEach((err: string) => {
-          console.log(colors.status.dim(`  ${err}`));
-        });
-        if (result.errors.length > 5) {
-          console.log(colors.status.dim(`  ... and ${result.errors.length - 5} more`));
+        console.log(colors.ui.header('Breakdown:'));
+
+        if (result.results.concepts) {
+          console.log(`  ${colors.ui.key('Concepts:')} ${colors.stats.value(result.results.concepts.processed_count.toString())} / ${result.results.concepts.target_count} (${result.results.concepts.duration_ms}ms)`);
+        }
+
+        if (result.results.sources) {
+          console.log(`  ${colors.ui.key('Sources:')} ${colors.stats.value(result.results.sources.processed_count.toString())} / ${result.results.sources.target_count} (${result.results.sources.duration_ms}ms)`);
+        }
+
+        if (result.results.vocabulary) {
+          console.log(`  ${colors.ui.key('Vocabulary:')} ${colors.stats.value(result.results.vocabulary.processed_count.toString())} / ${result.results.vocabulary.target_count} (${result.results.vocabulary.duration_ms}ms)`);
+        }
+      } else {
+        // Single type response
+        console.log(`  ${colors.stats.label('Processed:')} ${colors.stats.value(result.processed_count.toString())} / ${result.target_count}`);
+
+        if (result.failed_count > 0) {
+          console.log(`  ${colors.status.error('Failed:')} ${result.failed_count}`);
+        }
+
+        console.log(`  ${colors.status.dim('Duration:')} ${result.duration_ms}ms`);
+
+        if (result.embedding_model && result.embedding_provider) {
+          console.log(`  ${colors.status.dim('Model:')} ${result.embedding_provider}/${result.embedding_model}`);
+        }
+
+        if (result.errors && result.errors.length > 0) {
+          console.log();
+          console.log(colors.status.error('Errors:'));
+          result.errors.slice(0, 5).forEach((err: string) => {
+            console.log(colors.status.dim(`  ${err}`));
+          });
+          if (result.errors.length > 5) {
+            console.log(colors.status.dim(`  ... and ${result.errors.length - 5} more`));
+          }
         }
       }
 

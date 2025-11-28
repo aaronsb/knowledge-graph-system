@@ -408,3 +408,253 @@ def generate_source_embeddings(
     except Exception as e:
         logger.error(f"Failed to generate source embeddings: {str(e)}", exc_info=True)
         raise RuntimeError(f"Source embedding generation failed: {str(e)}") from e
+
+
+async def regenerate_source_embeddings(
+    only_missing: bool = False,
+    ontology: Optional[str] = None,
+    limit: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Regenerate embeddings for source nodes in bulk (ADR-068 Phase 4).
+
+    Fetches source nodes from AGE and regenerates their embeddings using
+    the current active embedding configuration. Useful for:
+    - Model migrations (changed embedding model)
+    - Bulk regeneration after embedding config changes
+    - Fixing missing/corrupted embeddings
+    - Regenerating stale embeddings (hash mismatch)
+
+    Args:
+        only_missing: Only generate for sources without embeddings (no source_embeddings rows)
+        ontology: Limit to specific ontology (optional)
+        limit: Maximum number of sources to process (for testing/batching)
+
+    Returns:
+        Dict with processing statistics:
+            - success: bool
+            - job_id: str
+            - target_count: int - Total sources found
+            - processed_count: int - Successfully processed
+            - failed_count: int - Failed to process
+            - duration_ms: int - Total processing time
+            - embedding_model: str
+            - embedding_dimension: int
+            - embedding_provider: str
+            - errors: List[str] - Error messages (if any)
+
+    Raises:
+        RuntimeError: If embedding configuration not found
+    """
+    import time
+    from uuid import uuid4
+
+    job_id = str(uuid4())
+    start_time = time.time()
+
+    logger.info(
+        f"[{job_id}] Starting source embedding regeneration "
+        f"(only_missing={only_missing}, ontology={ontology}, limit={limit})"
+    )
+
+    # Load active embedding configuration
+    embedding_config = load_active_embedding_config()
+    if not embedding_config:
+        raise RuntimeError(
+            "No active embedding configuration found. "
+            "Configure embeddings via: docker exec kg-operator python /workspace/operator/configure.py embedding"
+        )
+
+    embedding_model = embedding_config.get("model_name")
+    embedding_dimension = embedding_config.get("embedding_dimensions")
+    embedding_provider = embedding_config.get("provider")
+
+    logger.info(
+        f"[{job_id}] Using embedding config: model={embedding_model}, "
+        f"dimensions={embedding_dimension}, provider={embedding_provider}"
+    )
+
+    # Fetch sources that need regeneration
+    target_sources = []
+
+    with AGEClient() as age_client:
+        if only_missing:
+            # Find sources WITHOUT any source_embeddings entries
+            # Use PostgreSQL to check which source_ids are missing from source_embeddings
+            conn = psycopg2.connect(
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=int(os.getenv("POSTGRES_PORT", 5432)),
+                database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+                user=os.getenv("POSTGRES_USER", "admin"),
+                password=os.getenv("POSTGRES_PASSWORD")
+            )
+
+            try:
+                with conn.cursor() as cursor:
+                    # Get all source_ids that have embeddings
+                    cursor.execute("""
+                        SELECT DISTINCT source_id
+                        FROM kg_api.source_embeddings
+                    """)
+                    embedded_source_ids = {row[0] for row in cursor.fetchall()}
+            finally:
+                conn.close()
+
+            # Build Cypher query for sources WITHOUT embeddings
+            cypher_where = "WHERE NOT s.source_id IN $embedded_ids"
+            params = {"embedded_ids": list(embedded_source_ids)}
+
+            if ontology:
+                cypher_where += " AND s.document = $ontology"
+                params["ontology"] = ontology
+
+            cypher = f"""
+                MATCH (s:Source)
+                {cypher_where}
+                RETURN s.source_id, s.full_text, s.document, s.paragraph
+                ORDER BY s.document, s.paragraph
+            """
+
+            if limit:
+                cypher += f" LIMIT {limit}"
+
+            results = age_client.facade.execute_raw(
+                cypher,
+                params=params,
+                namespace="source_embedding_regeneration"
+            )
+
+        else:
+            # Get ALL sources (or filtered by ontology)
+            cypher = "MATCH (s:Source)"
+            params = {}
+
+            if ontology:
+                cypher += " WHERE s.document = $ontology"
+                params["ontology"] = ontology
+
+            cypher += """
+                RETURN s.source_id, s.full_text, s.document, s.paragraph
+                ORDER BY s.document, s.paragraph
+            """
+
+            if limit:
+                cypher += f" LIMIT {limit}"
+
+            results = age_client.facade.execute_raw(
+                cypher,
+                params=params if params else None,
+                namespace="source_embedding_regeneration"
+            )
+
+        # Extract source data
+        for row in results:
+            target_sources.append({
+                "source_id": row[0],
+                "full_text": row[1],
+                "document": row[2],
+                "paragraph": row[3]
+            })
+
+    if not target_sources:
+        logger.info(f"[{job_id}] No sources need regeneration")
+        return {
+            "success": True,
+            "job_id": job_id,
+            "target_count": 0,
+            "processed_count": 0,
+            "failed_count": 0,
+            "duration_ms": 0,
+            "embedding_model": embedding_model,
+            "embedding_dimension": embedding_dimension,
+            "embedding_provider": embedding_provider,
+            "errors": []
+        }
+
+    logger.info(f"[{job_id}] Found {len(target_sources)} sources to process")
+
+    # Process each source
+    processed_count = 0
+    failed_count = 0
+    errors = []
+
+    for idx, source_data in enumerate(target_sources, 1):
+        source_id = source_data["source_id"]
+        source_text = source_data["full_text"]
+
+        if not source_text:
+            logger.warning(f"[{job_id}] Skipping source {source_id} - no full_text")
+            failed_count += 1
+            errors.append(f"{source_id}: No full_text")
+            continue
+
+        try:
+            logger.debug(
+                f"[{job_id}] Processing {idx}/{len(target_sources)}: {source_id} "
+                f"({len(source_text)} chars)"
+            )
+
+            # Delete existing embeddings for this source (regeneration)
+            conn = psycopg2.connect(
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=int(os.getenv("POSTGRES_PORT", 5432)),
+                database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+                user=os.getenv("POSTGRES_USER", "admin"),
+                password=os.getenv("POSTGRES_PASSWORD")
+            )
+
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        DELETE FROM kg_api.source_embeddings
+                        WHERE source_id = %s
+                    """, (source_id,))
+                    conn.commit()
+                    deleted_count = cursor.rowcount
+
+                if deleted_count > 0:
+                    logger.debug(f"[{job_id}] Deleted {deleted_count} existing embeddings for {source_id}")
+            finally:
+                conn.close()
+
+            # Generate new embeddings
+            result = generate_source_embeddings(
+                source_id=source_id,
+                source_text=source_text,
+                chunk_strategy="sentence",  # Default strategy
+                max_chars=500,  # Default chunk size
+                embedding_config=embedding_config
+            )
+
+            processed_count += 1
+            logger.debug(
+                f"[{job_id}] ✓ {source_id}: {result['chunks_created']} chunks created"
+            )
+
+        except Exception as e:
+            failed_count += 1
+            error_msg = f"{source_id}: {str(e)}"
+            errors.append(error_msg)
+            logger.error(f"[{job_id}] ✗ Failed to process {source_id}: {e}", exc_info=True)
+
+    # Calculate duration
+    end_time = time.time()
+    duration_ms = int((end_time - start_time) * 1000)
+
+    logger.info(
+        f"[{job_id}] Source regeneration complete: {processed_count}/{len(target_sources)} "
+        f"sources processed in {duration_ms}ms ({failed_count} failed)"
+    )
+
+    return {
+        "success": True,
+        "job_id": job_id,
+        "target_count": len(target_sources),
+        "processed_count": processed_count,
+        "failed_count": failed_count,
+        "duration_ms": duration_ms,
+        "embedding_model": embedding_model,
+        "embedding_dimension": embedding_dimension,
+        "embedding_provider": embedding_provider,
+        "errors": errors[:10]  # Return first 10 errors
+    }
