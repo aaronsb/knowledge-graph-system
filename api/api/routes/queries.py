@@ -9,8 +9,11 @@ Provides REST API access to:
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional, List
+from typing import Optional, List, Dict
 import logging
+import numpy as np
+import os
+import psycopg2
 
 from ..dependencies.auth import CurrentUser
 from ..models.queries import (
@@ -100,6 +103,200 @@ def resolve_epistemic_filters_to_rel_types(
 
     logger.info(f"[EpistemicFilter] Resolved to {len(allowed_types)} relationship types: {allowed_types}")
     return allowed_types if allowed_types else None
+
+
+def _generate_source_search_embedding(query: str) -> np.ndarray:
+    """
+    Generate embedding for source search query.
+
+    Args:
+        query: Search query text
+
+    Returns:
+        Embedding vector as numpy array
+
+    Raises:
+        HTTPException(500): If embedding generation fails or returns empty
+    """
+    provider = get_provider()
+    embedding_result = provider.generate_embedding(query)
+
+    # Extract embedding vector
+    if isinstance(embedding_result, dict):
+        embedding = embedding_result['embedding']
+    else:
+        embedding = embedding_result
+
+    # Validate embedding is non-empty
+    if not embedding or len(embedding) == 0:
+        logger.error("Generated embedding is empty")
+        raise HTTPException(
+            status_code=500,
+            detail="Generated embedding is empty. Check embedding provider configuration."
+        )
+
+    return np.array(embedding, dtype=np.float32)
+
+
+def _search_source_embeddings_by_similarity(
+    query_embedding: np.ndarray,
+    min_similarity: float,
+    limit: int
+) -> Dict[str, Dict]:
+    """
+    Search source_embeddings table for similar chunks.
+
+    Args:
+        query_embedding: Query vector
+        min_similarity: Minimum similarity threshold (0.0-1.0)
+        limit: Maximum sources to return
+
+    Returns:
+        Dict mapping source_id to best matching chunk data:
+        {
+            "source_id": {
+                "chunk_text": str,
+                "start_offset": int,
+                "end_offset": int,
+                "chunk_index": int,
+                "similarity": float,
+                "source_hash": str
+            }
+        }
+    """
+    from api.api.lib.similarity_calculator import cosine_similarity
+
+    # Connect to PostgreSQL
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST", "localhost"),
+        port=int(os.getenv("POSTGRES_PORT", 5432)),
+        database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+        user=os.getenv("POSTGRES_USER", "admin"),
+        password=os.getenv("POSTGRES_PASSWORD")
+    )
+
+    try:
+        with conn.cursor() as cursor:
+            # Fetch all source embeddings
+            cursor.execute("""
+                SELECT
+                    se.source_id,
+                    se.chunk_index,
+                    se.chunk_text,
+                    se.start_offset,
+                    se.end_offset,
+                    se.source_hash,
+                    se.embedding
+                FROM kg_api.source_embeddings se
+                WHERE se.chunk_strategy = 'sentence'
+                ORDER BY se.source_id, se.chunk_index
+            """)
+
+            # Calculate similarities using utility
+            chunk_matches = []
+            for row in cursor.fetchall():
+                source_id, chunk_index, chunk_text, start_offset, end_offset, source_hash, embedding_bytes = row
+
+                # Convert BYTEA to numpy array
+                chunk_embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
+
+                # Use centralized similarity calculator
+                similarity = cosine_similarity(query_embedding, chunk_embedding)
+
+                # Filter by threshold
+                if similarity >= min_similarity:
+                    chunk_matches.append({
+                        'source_id': source_id,
+                        'chunk_index': chunk_index,
+                        'chunk_text': chunk_text,
+                        'start_offset': start_offset,
+                        'end_offset': end_offset,
+                        'source_hash': source_hash,
+                        'similarity': similarity
+                    })
+
+            # Sort by similarity
+            chunk_matches.sort(key=lambda x: x['similarity'], reverse=True)
+
+            # Group by source_id, keep best match per source
+            source_best_matches = {}
+            for match in chunk_matches:
+                source_id = match['source_id']
+                if source_id not in source_best_matches:
+                    source_best_matches[source_id] = match
+                elif match['similarity'] > source_best_matches[source_id]['similarity']:
+                    source_best_matches[source_id] = match
+
+            return source_best_matches
+
+    finally:
+        conn.close()
+
+
+def _build_source_search_result(
+    source_id: str,
+    best_match: Dict,
+    source_props: Dict,
+    concepts_list: List[Dict],
+    request: SourceSearchRequest
+) -> Optional[SourceSearchResult]:
+    """
+    Build a single SourceSearchResult from fetched data.
+
+    Args:
+        source_id: Source identifier
+        best_match: Best matching chunk data
+        source_props: Source node properties from AGE
+        concepts_list: List of concept dicts from batch query
+        request: Original request (for filters, flags)
+
+    Returns:
+        SourceSearchResult or None if filtered out
+    """
+    # Apply ontology filter
+    if request.ontology and source_props.get('document') != request.ontology:
+        return None
+
+    # Detect stale embeddings
+    current_hash = source_props.get('content_hash')
+    is_stale = (current_hash is not None and current_hash != best_match['source_hash'])
+
+    # Build matched chunk
+    matched_chunk = SourceChunk(
+        chunk_text=best_match['chunk_text'],
+        start_offset=best_match['start_offset'],
+        end_offset=best_match['end_offset'],
+        chunk_index=best_match['chunk_index'],
+        similarity=best_match['similarity']
+    )
+
+    # Build full_text (optional)
+    full_text = None
+    if request.include_full_text:
+        full_text = source_props.get('full_text')
+
+    # Build concepts (optional)
+    concepts = []
+    if request.include_concepts:
+        for concept_data in concepts_list:
+            concepts.append(SourceConcept(
+                concept_id=concept_data['concept_id'],
+                label=concept_data['label'],
+                description=concept_data.get('description'),
+                instance_quote=concept_data['instance_quote']
+            ))
+
+    # Build result with NULL-safe field access
+    return SourceSearchResult(
+        source_id=source_id,
+        document=source_props.get('document', 'Unknown'),
+        paragraph=source_props.get('paragraph', 0),
+        similarity=best_match['similarity'],
+        is_stale=is_stale,
+        matched_chunk=matched_chunk,
+        full_text=full_text,
+        concepts=concepts
+    )
 
 
 @router.post("/search", response_model=SearchResponse)
@@ -437,114 +634,27 @@ async def search_sources(
           "include_full_text": true
         }
     """
-    import os
-    import psycopg2
-    import numpy as np
-
     try:
-        # Generate embedding for query
-        provider = get_provider()
-        embedding_result = provider.generate_embedding(request.query)
+        # 1. Generate embedding for query
+        query_embedding = _generate_source_search_embedding(request.query)
 
-        # Extract embedding vector
-        if isinstance(embedding_result, dict):
-            embedding = embedding_result['embedding']
-        else:
-            embedding = embedding_result
-
-        # Validate embedding is non-empty
-        if not embedding or len(embedding) == 0:
-            logger.error("Generated embedding is empty")
-            raise HTTPException(
-                status_code=500,
-                detail="Generated embedding is empty. This may indicate a provider issue."
-            )
-
-        # Convert to numpy array for cosine similarity
-        query_embedding = np.array(embedding, dtype=np.float32)
-
-        # Connect to PostgreSQL to search source_embeddings table
-        conn = psycopg2.connect(
-            host=os.getenv("POSTGRES_HOST", "localhost"),
-            port=int(os.getenv("POSTGRES_PORT", 5432)),
-            database=os.getenv("POSTGRES_DB", "knowledge_graph"),
-            user=os.getenv("POSTGRES_USER", "admin"),
-            password=os.getenv("POSTGRES_PASSWORD")
+        # 2. Search source embeddings for similar chunks
+        source_best_matches = _search_source_embeddings_by_similarity(
+            query_embedding=query_embedding,
+            min_similarity=request.min_similarity,
+            limit=request.limit
         )
 
-        try:
-            with conn.cursor() as cursor:
-                # Build query to search source embeddings with cosine similarity
-                # Note: We're doing manual cosine similarity in Python for now
-                # Future: Use pgvector extension for faster similarity search
-                cursor.execute("""
-                    SELECT
-                        se.source_id,
-                        se.chunk_index,
-                        se.chunk_text,
-                        se.start_offset,
-                        se.end_offset,
-                        se.source_hash,
-                        se.embedding
-                    FROM kg_api.source_embeddings se
-                    WHERE se.chunk_strategy = 'sentence'
-                    ORDER BY se.source_id, se.chunk_index
-                """)
+        # 3. Get top source IDs sorted by similarity
+        top_source_ids = sorted(
+            source_best_matches.keys(),
+            key=lambda sid: source_best_matches[sid]['similarity'],
+            reverse=True
+        )[:request.limit]
 
-                # Calculate cosine similarity for each chunk
-                chunk_matches = []
-                for row in cursor.fetchall():
-                    source_id, chunk_index, chunk_text, start_offset, end_offset, source_hash, embedding_bytes = row
-
-                    # Convert BYTEA to numpy array
-                    chunk_embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
-
-                    # Calculate cosine similarity
-                    dot_product = np.dot(query_embedding, chunk_embedding)
-                    query_norm = np.linalg.norm(query_embedding)
-                    chunk_norm = np.linalg.norm(chunk_embedding)
-                    similarity = dot_product / (query_norm * chunk_norm)
-
-                    # Filter by minimum similarity
-                    if similarity >= request.min_similarity:
-                        chunk_matches.append({
-                            'source_id': source_id,
-                            'chunk_index': chunk_index,
-                            'chunk_text': chunk_text,
-                            'start_offset': start_offset,
-                            'end_offset': end_offset,
-                            'source_hash': source_hash,
-                            'similarity': float(similarity)
-                        })
-
-                # Sort by similarity (descending)
-                chunk_matches.sort(key=lambda x: x['similarity'], reverse=True)
-
-                # Group by source_id and take best match per source
-                source_best_matches = {}
-                for match in chunk_matches:
-                    source_id = match['source_id']
-                    if source_id not in source_best_matches:
-                        source_best_matches[source_id] = match
-                    # Only keep the highest similarity match per source
-                    elif match['similarity'] > source_best_matches[source_id]['similarity']:
-                        source_best_matches[source_id] = match
-
-                # Take top N sources by limit
-                top_source_ids = sorted(
-                    source_best_matches.keys(),
-                    key=lambda sid: source_best_matches[sid]['similarity'],
-                    reverse=True
-                )[:request.limit]
-
-        finally:
-            conn.close()
-
-        # Fetch Source nodes from AGE (batch query via facade)
+        # 4. Batch-fetch Source nodes and concepts from AGE
         client = get_age_client()
         try:
-            results = []
-
             # Batch-fetch all Source nodes at once (query safety via facade)
             sources_data = client.facade.match_sources(
                 where="s.source_id IN $source_ids",
@@ -566,7 +676,8 @@ async def search_sources(
             if request.include_concepts:
                 concepts_by_source = client.facade.match_concepts_for_sources_batch(top_source_ids)
 
-            # Assemble results from batch-fetched data
+            # 5. Assemble results using helper function
+            results = []
             for source_id in top_source_ids:
                 best_match = source_best_matches[source_id]
                 source_props = sources_by_id.get(source_id)
@@ -575,52 +686,19 @@ async def search_sources(
                     logger.warning(f"Source node not found for source_id: {source_id}")
                     continue
 
-                # Apply ontology filter if specified
-                if request.ontology and source_props.get('document') != request.ontology:
-                    continue
-
-                # Detect stale embeddings
-                current_hash = source_props.get('content_hash')
-                is_stale = (current_hash is not None and current_hash != best_match['source_hash'])
-
-                # Build matched chunk
-                matched_chunk = SourceChunk(
-                    chunk_text=best_match['chunk_text'],
-                    start_offset=best_match['start_offset'],
-                    end_offset=best_match['end_offset'],
-                    chunk_index=best_match['chunk_index'],
-                    similarity=best_match['similarity']
+                # Build result using helper (handles filtering, staleness detection, assembly)
+                result = _build_source_search_result(
+                    source_id=source_id,
+                    best_match=best_match,
+                    source_props=source_props,
+                    concepts_list=concepts_by_source.get(source_id, []),
+                    request=request
                 )
 
-                # Build full_text (optional)
-                full_text = None
-                if request.include_full_text:
-                    full_text = source_props.get('full_text')
+                if result:
+                    results.append(result)
 
-                # Get concepts from batch-fetched data
-                concepts = []
-                if request.include_concepts:
-                    concept_list = concepts_by_source.get(source_id, [])
-                    for concept_data in concept_list:
-                        concepts.append(SourceConcept(
-                            concept_id=concept_data['concept_id'],
-                            label=concept_data['label'],
-                            description=concept_data.get('description'),
-                            instance_quote=concept_data['instance_quote']
-                        ))
-
-                # Build result with NULL-safe field access
-                results.append(SourceSearchResult(
-                    source_id=source_id,
-                    document=source_props.get('document', 'Unknown'),
-                    paragraph=source_props.get('paragraph', 0),
-                    similarity=best_match['similarity'],
-                    is_stale=is_stale,
-                    matched_chunk=matched_chunk,
-                    full_text=full_text,
-                    concepts=concepts
-                ))
-
+            # 6. Return response
             return SourceSearchResponse(
                 query=request.query,
                 count=len(results),
