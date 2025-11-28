@@ -9,6 +9,14 @@
 -- - Offset-based chunk tracking for precise text highlighting
 -- - System-wide embedding_config (same dimensions as concept embeddings)
 -- - NULL content_hash for existing Sources (backfill via regenerate worker)
+--
+-- Note on Source.content_hash:
+-- - Apache AGE nodes are schemaless - properties are added dynamically when first set
+-- - Source.content_hash is NOT created by this migration (no ALTER needed)
+-- - The property is set by source_embedding_worker.py during embedding generation
+-- - Existing Source nodes will have NULL/missing content_hash until embeddings generated
+-- - Views below handle NULL content_hash gracefully (IS NULL checks)
+-- - This allows gradual backfill via regenerate embeddings worker (ADR-068)
 
 BEGIN;
 
