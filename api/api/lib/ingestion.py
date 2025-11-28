@@ -28,6 +28,7 @@ class ChunkedIngestionStats:
     def __init__(self):
         self.chunks_processed = 0
         self.sources_created = 0
+        self.source_embeddings_created = 0
         self.concepts_created = 0
         self.concepts_linked = 0
         self.instances_created = 0
@@ -40,6 +41,7 @@ class ChunkedIngestionStats:
         return {
             "chunks_processed": self.chunks_processed,
             "sources_created": self.sources_created,
+            "source_embeddings_created": self.source_embeddings_created,
             "concepts_created": self.concepts_created,
             "concepts_linked": self.concepts_linked,
             "instances_created": self.instances_created,
@@ -52,6 +54,7 @@ class ChunkedIngestionStats:
         """Load stats from dictionary."""
         self.chunks_processed = data.get("chunks_processed", 0)
         self.sources_created = data.get("sources_created", 0)
+        self.source_embeddings_created = data.get("source_embeddings_created", 0)
         self.concepts_created = data.get("concepts_created", 0)
         self.concepts_linked = data.get("concepts_linked", 0)
         self.instances_created = data.get("instances_created", 0)
@@ -234,6 +237,31 @@ def process_chunk(
         logger.info(f"  ✓ Created Source node: {source_id} (type: {content_type})")
     except Exception as e:
         raise Exception(f"Failed to create Source node: {e}")
+
+    # Step 1.5: Generate source embeddings (ADR-068 Phase 2)
+    # Synchronous call - embeddings generated as part of ingestion
+    try:
+        from api.api.workers.source_embedding_worker import generate_source_embeddings
+
+        embedding_result = generate_source_embeddings(
+            source_id=source_id,
+            source_text=chunk.text,
+            chunk_strategy="sentence",
+            max_chars=500
+        )
+
+        # Track source embedding creation in stats
+        stats.source_embeddings_created += embedding_result['chunks_created']
+
+        logger.info(
+            f"  ✓ Generated {embedding_result['chunks_created']} source embeddings "
+            f"(hash: {embedding_result['source_hash'][:16]}...)"
+        )
+    except Exception as e:
+        # Log warning but don't fail ingestion if embedding generation fails
+        logger.warning(f"  ⚠️  Source embedding generation failed: {str(e)}")
+        logger.debug(f"  Source embedding error details:", exc_info=True)
+        # Continue with ingestion - embeddings can be regenerated later
 
     # Step 2: Extract concepts via LLM (with context from recent concepts)
     try:

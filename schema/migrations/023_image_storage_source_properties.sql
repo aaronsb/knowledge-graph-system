@@ -81,3 +81,8 @@ BEGIN
     RAISE NOTICE 'New properties: storage_key, visual_embedding, content_type';
     RAISE NOTICE 'No schema changes needed - AGE graph nodes are schemaless';
 END $$;
+
+-- Record migration
+INSERT INTO public.schema_migrations (version, name)
+VALUES (23, 'image_storage_source_properties')
+ON CONFLICT (version) DO NOTHING;
