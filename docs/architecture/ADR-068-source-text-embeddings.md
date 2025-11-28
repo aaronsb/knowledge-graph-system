@@ -607,13 +607,70 @@ ORDER BY neighbor.paragraph
 - [ ] Add context window expansion (neighboring chunks)
 - [ ] Implement hash verification at query time
 
-### Phase 4: Regeneration & Optimization (Week 4)
-- [ ] Extend existing regenerate embeddings worker for sources
-- [ ] Support `--type source` flag in admin tool
-- [ ] Batch embedding generation for efficiency
-- [ ] Add automatic stale embedding regeneration
-- [ ] Performance benchmarking and tuning
-- [ ] Add MCP tools for source search
+### Phase 4: Unified Embedding Regeneration (Week 4)
+
+**Critical Infrastructure:** Enables cross-entity semantic queries and global model migrations.
+
+**Rationale:** The system currently has embeddings in three namespaces:
+1. **Concepts**: `Concept.embedding` (AGE graph nodes)
+2. **Sources**: `kg_api.source_embeddings` table (this ADR)
+3. **Vocabulary**: `kg_api.vocabulary_embeddings` table (ADR-044)
+
+Without unified regeneration:
+- ❌ Cannot switch embedding models globally (must manually regenerate 3 systems)
+- ❌ Cannot guarantee cross-entity semantic compatibility
+- ❌ Cannot execute blended queries (concept + source + relationship)
+- ❌ Cannot discover emergent relationships via embedding proximity
+
+**Phase 4 Solution: Single interface for ALL graph text embeddings**
+
+#### 4.1: Source Embedding Regeneration
+- [ ] Implement `regenerate_source_embeddings()` function in `source_embedding_worker.py`
+- [ ] Fetch sources from AGE (filter by ontology, detect missing embeddings)
+- [ ] Batch process sources with progress tracking
+- [ ] Support `--only-missing` flag (skip sources with valid embeddings)
+- [ ] Detect and regenerate stale embeddings (hash mismatch)
+
+#### 4.2: Vocabulary Embedding Regeneration
+- [ ] Implement `regenerate_vocabulary_embeddings()` function
+- [ ] Regenerate embeddings for all relationship types in vocabulary
+- [ ] Update `kg_api.vocabulary_embeddings` table
+- [ ] Support categorical filtering (semantic, structural, epistemic, etc.)
+
+#### 4.3: Unified API Endpoint
+- [ ] Add `/admin/regenerate-embeddings` endpoint (replaces `/admin/regenerate-concept-embeddings`)
+- [ ] Support `type` parameter: `concept`, `source`, `vocabulary`, `all`
+- [ ] Support filters: `ontology`, `only_missing`, `limit`, `offset`
+- [ ] Return unified progress tracking and statistics
+
+#### 4.4: CLI Enhancement
+- [ ] Update `kg admin regenerate-embeddings` command
+- [ ] Add `--type <concept|source|vocabulary|all>` flag (default: `concept`)
+- [ ] Support `--ontology <name>` (limit to specific namespace)
+- [ ] Support `--only-missing` (skip entities with valid embeddings)
+- [ ] Support `--limit <n>` and `--offset <n>` for batching
+- [ ] Unified progress display for all entity types
+
+#### 4.5: Cross-Entity Query Foundation
+- [ ] Document semantic query patterns (see "Cross-Entity Query Capabilities" below)
+- [ ] Add examples for blended search (concept + source + relationship)
+- [ ] Performance benchmarks for cross-entity queries
+- [ ] Add MCP tools for unified semantic search
+
+**Example Usage:**
+
+```bash
+# Model migration: Regenerate ALL embeddings with new model
+kg admin regenerate-embeddings --all
+
+# Selective regeneration
+kg admin regenerate-embeddings --type concept --ontology "MyDocs"
+kg admin regenerate-embeddings --type source --only-missing
+kg admin regenerate-embeddings --type vocabulary
+
+# Batch processing
+kg admin regenerate-embeddings --type source --limit 1000 --offset 0
+```
 
 ### Phase 5: Advanced Features (Future)
 - [ ] Hybrid search (concept + source combined)
@@ -621,6 +678,194 @@ ORDER BY neighbor.paragraph
 - [ ] Multiple strategies per Source
 - [ ] Cross-document source similarity
 - [ ] Edge embeddings for emergent relationships
+
+## Cross-Entity Query Capabilities
+
+**The Emergent Power of Unified Semantic Space**
+
+Once concepts, sources, and vocabulary (relationship types) share the same semantic space with compatible embeddings, powerful cross-entity query patterns emerge. This is the foundation of the **Large Concept Model (LCM)** architecture.
+
+### 1. Dynamic Query Routing
+
+Route queries to the most relevant entity type automatically:
+
+```python
+# Single query → multiple semantic entry points
+query = "recursive depth management"
+
+results = {
+    "via_concepts": search_concepts(query),           # Direct concept match
+    "via_sources": search_sources(query),             # Evidence passage match
+    "via_relationships": search_relationships(query), # Semantic edge match
+}
+
+# System automatically selects best entry point by similarity
+best_entry = max(results, key=lambda r: r.max_similarity)
+```
+
+**Use Case:** User doesn't know whether their query matches a concept name, a source passage, or a relationship type. The system finds the best match across all three and uses that as the entry point.
+
+### 2. Semantic Path Discovery
+
+Discover relationships not by exact type, but by semantic meaning:
+
+```cypher
+// Traditional: Exact relationship traversal
+MATCH (c:Concept {concept_id: $id})-[:SUPPORTS]->(target)
+
+// With embeddings: Semantic relationship discovery
+MATCH (c:Concept {concept_id: $id})-[r]->(target:Concept)
+WHERE vocabulary_embedding_similarity(type(r), "strengthens, enables, reinforces") > 0.8
+RETURN target
+ORDER BY vocabulary_embedding_similarity(type(r), $query_embedding) DESC
+```
+
+**Use Case:** Find all concepts that "support" a given concept, but include relationships with semantically similar meanings (ENABLES, REINFORCES, STRENGTHENS, etc.).
+
+### 3. Multi-Entity Blending
+
+Merge results from multiple entity types for comprehensive coverage:
+
+```python
+# Query: "How does probabilistic reasoning work?"
+
+# Strategy A: Find concepts directly
+concepts_direct = search_concepts("probabilistic reasoning", limit=10)
+
+# Strategy B: Find source passages → extract their concepts
+sources = search_sources("probabilistic reasoning", limit=10)
+concepts_from_sources = get_concepts_for_sources(sources)
+
+# Strategy C: Find relationships → traverse to concepts
+relationships = search_relationships("probabilistic reasoning", limit=10)
+concepts_via_edges = get_concepts_connected_by(relationships)
+
+# BLEND: Merge + deduplicate + rank by combined signals
+blended_results = merge_and_rank([
+    (concepts_direct, weight=1.0),          # Direct matches
+    (concepts_from_sources, weight=0.8),    # Evidence-based
+    (concepts_via_edges, weight=0.6)        # Relationship-based
+])
+```
+
+**Use Case:** Comprehensive search that considers all perspectives—concepts mentioned explicitly, concepts discussed in sources, and concepts connected via semantically relevant relationships.
+
+### 4. Contextual Re-Ranking
+
+Rank evidence by semantic relevance to the query, not just presence:
+
+```python
+# Query: "grounding strength calculation"
+
+# Step 1: Find best concept match
+concept = search_concepts("grounding strength")[0]
+
+# Step 2: Get evidence, but rank by CONTEXT similarity
+evidence = get_concept_evidence(concept.id)
+
+for source in evidence:
+    # Traditional: "This source mentions this concept" (binary)
+    # Enhanced: "This source passage is contextually relevant to the query" (scored)
+    source.relevance_score = cosine_similarity(
+        embed("grounding strength calculation"),
+        source.embedding
+    )
+
+# Return context-aware evidence ranking
+return sorted(evidence, key=lambda s: s.relevance_score, reverse=True)
+```
+
+**Use Case:** Show the most relevant evidence first—passages that not only mention the concept but discuss it in the context the user cares about.
+
+### 5. Semantic Subgraph Extraction
+
+Extract connected subgraphs based on semantic similarity, not just explicit edges:
+
+```python
+# "Show me everything semantically related to 'epistemic status'"
+
+query_emb = embed("epistemic status")
+
+# Find ALL entities semantically close (threshold = 0.7)
+semantic_neighborhood = {
+    "concepts": cosine_search(Concept.embedding, query_emb, threshold=0.7),
+    "sources": cosine_search(source_embeddings, query_emb, threshold=0.7),
+    "relationships": cosine_search(vocabulary_embeddings, query_emb, threshold=0.7)
+}
+
+# Extract connected subgraph containing these entities
+subgraph = extract_connected_subgraph(semantic_neighborhood)
+
+# Visualize: Everything semantically related, regardless of entity type
+```
+
+**Use Case:** Explore a topic by finding all concepts, sources, and relationships semantically related to it—not just those explicitly linked.
+
+### 6. Emergent Relationship Discovery
+
+Find implicit relationships via embedding proximity:
+
+```cypher
+// Find concepts that are semantically similar but not explicitly connected
+MATCH (c1:Concept), (c2:Concept)
+WHERE embedding_similarity(c1, c2) > 0.85
+  AND NOT (c1)-[]-(c2)  // Not explicitly connected
+
+// Find sources that bridge them
+MATCH (s:Source)
+WHERE source_embedding_similarity(s, c1) > 0.75
+  AND source_embedding_similarity(s, c2) > 0.75
+
+RETURN c1, c2, s
+// Result: "These concepts aren't linked, but this source passage
+//          discusses both → potential emergent relationship"
+```
+
+**Use Case:** Discover hidden connections—concepts that should be related based on semantic proximity but haven't been explicitly linked yet.
+
+### 7. Cross-Modal Query Fusion (Future)
+
+With visual embeddings (ADR-057), blend text + visual semantics:
+
+```python
+# Query: "system architecture"
+
+results = blend_multimodal([
+    search_concepts("system architecture"),
+    search_sources("architecture diagrams"),
+    search_relationships("defines structure"),
+    search_images(visual_query="architecture diagram")  # Visual similarity
+])
+
+# Result: Concepts + passages + diagrams, all ranked by semantic relevance
+```
+
+**Use Case:** Find everything related to a topic—concepts, source passages, AND diagrams/images—all ranked by unified semantic similarity.
+
+## Why This Matters: The LCM Vision
+
+Traditional RAG (Retrieval-Augmented Generation):
+```
+Documents → Chunks → Embeddings → Vector DB → Retrieve → Generate
+```
+
+Large Concept Model (LCM) with Unified Embeddings:
+```
+Documents → {Concepts, Sources, Relationships} → Embeddings → Multi-Entity Graph
+                                                       ↓
+                        Dynamic Routing + Blending + Emergent Discovery
+                                                       ↓
+                              Semantic Subgraphs + Context-Aware Ranking
+```
+
+**Key Differences:**
+1. **Multi-Entity**: Not just document chunks, but concepts + sources + relationships
+2. **Semantic Graph**: Explicit edges PLUS embedding-based proximity
+3. **Dynamic Routing**: Query finds best entry point automatically
+4. **Blended Results**: Combine signals from multiple entity types
+5. **Emergent Discovery**: Find implicit relationships via embedding similarity
+
+**This is only possible with unified embedding regeneration (Phase 4).**
 
 ## Alternatives Considered
 
