@@ -146,13 +146,12 @@ def run_source_embedding_worker(
         })
 
         # Fetch Source node from AGE to get full_text
-        age_client = AGEClient()
-
-        try:
-            result_set = age_client._execute_cypher("""
+        with AGEClient() as age_client:
+            # Use facade for namespace-safe query (ADR-048)
+            result_set = age_client.facade.execute_raw("""
                 MATCH (s:Source {source_id: $source_id})
                 RETURN s.source_id, s.full_text, s.document, s.paragraph
-            """, params={"source_id": source_id})
+            """, params={"source_id": source_id}, namespace="source_embedding")
 
             if not result_set:
                 raise ValueError(f"Source not found: {source_id}")
@@ -164,9 +163,6 @@ def run_source_embedding_worker(
                 raise ValueError(f"Source {source_id} has no full_text")
 
             logger.info(f"Fetched Source: {len(source_text)} chars")
-
-        finally:
-            age_client.close()
 
         # Update progress
         job_queue.update_job(job_id, {
@@ -378,20 +374,17 @@ def generate_source_embeddings(
             conn.close()
 
         # Step 5: Update Source.content_hash in AGE graph
-        age_client = AGEClient()
-        try:
-            # Use Cypher to update content_hash property
-            age_client._execute_cypher("""
+        with AGEClient() as age_client:
+            # Use facade for namespace-safe query (ADR-048)
+            age_client.facade.execute_raw("""
                 MATCH (s:Source {source_id: $source_id})
                 SET s.content_hash = $content_hash
                 RETURN s.source_id
             """, params={
                 "source_id": source_id,
                 "content_hash": source_hash
-            })
+            }, namespace="source_embedding")
             logger.debug(f"Updated Source.content_hash in AGE: {source_hash[:16]}...")
-        finally:
-            age_client.close()
 
         # Return success result
         result = {
