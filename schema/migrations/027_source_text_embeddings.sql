@@ -18,6 +18,10 @@
 -- - Views below handle NULL content_hash gracefully (IS NULL checks)
 -- - This allows gradual backfill via regenerate embeddings worker (ADR-068)
 
+-- Load Apache AGE extension and set search path for cypher() function
+LOAD 'age';
+SET search_path = ag_catalog, kg_api, public;
+
 BEGIN;
 
 -- ============================================================================
