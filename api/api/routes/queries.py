@@ -554,8 +554,12 @@ async def search_sources(
             # Build lookup map for sources by source_id
             sources_by_id = {}
             for source_row in sources_data:
-                source_props = source_row.get('properties', {})
-                sources_by_id[source_props.get('source_id')] = source_props
+                # AGE facade returns {'s': {"id": ..., "label": ..., "properties": {...}}}
+                source_vertex = source_row.get('s', {})
+                source_props = source_vertex.get('properties', {})
+                source_id_key = source_props.get('source_id')
+                if source_id_key:
+                    sources_by_id[source_id_key] = source_props
 
             # Batch-fetch all concepts for all sources at once (fixes N+1 query problem)
             concepts_by_source = {}
