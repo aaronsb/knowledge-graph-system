@@ -12,7 +12,18 @@ Phase 2: ✅ Full implementation with embedding generation and storage
 """
 
 import logging
+import os
+import struct
 from typing import Dict, Any, Optional
+
+import psycopg2
+import numpy as np
+
+from api.api.lib.hash_utils import sha256_text
+from api.api.lib.source_chunker import get_chunking_strategy
+from api.api.lib.embedding_config import load_active_embedding_config
+from api.api.services.embedding_worker import get_embedding_worker
+from api.api.lib.age_client import AGEClient
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +60,6 @@ def run_source_embedding_worker(
         Exception: If embedding generation fails
     """
     try:
-        from api.api.lib.embedding_config import load_active_embedding_config
-
         logger.info(f"📝 Source embedding worker started: {job_id}")
 
         # Update progress
@@ -137,7 +146,6 @@ def run_source_embedding_worker(
         })
 
         # Fetch Source node from AGE to get full_text
-        from api.api.lib.age_client import AGEClient
         age_client = AGEClient()
 
         try:
@@ -244,14 +252,6 @@ def generate_source_embeddings(
         ValueError: If invalid parameters
         RuntimeError: If embedding generation fails
     """
-    from api.api.lib.hash_utils import sha256_text
-    from api.api.lib.source_chunker import chunk_by_sentence, get_chunking_strategy
-    from api.api.lib.embedding_config import load_active_embedding_config
-    from api.api.services.embedding_worker import get_embedding_worker
-    from api.api.lib.age_client import AGEClient
-    import psycopg2
-    import os
-
     try:
         # Load embedding config if not provided
         if embedding_config is None:
@@ -309,72 +309,72 @@ def generate_source_embeddings(
         )
 
         try:
-            cursor = conn.cursor()
+            with conn.cursor() as cursor:
+                # All inserts in single transaction for atomicity
+                for chunk in chunks:
+                    # Calculate chunk hash
+                    chunk_hash = sha256_text(chunk.text)
 
-            for chunk in chunks:
-                # Calculate chunk hash
-                chunk_hash = sha256_text(chunk.text)
+                    # Generate embedding for this chunk
+                    embedding_response = embedding_worker.generate_concept_embedding(chunk.text)
+                    embedding_vector = embedding_response["embedding"]
 
-                # Generate embedding for this chunk
-                embedding_response = embedding_worker.generate_concept_embedding(chunk.text)
-                embedding_vector = embedding_response["embedding"]
+                    # Convert embedding to binary format (PostgreSQL BYTEA)
+                    # Convert to numpy array and then to bytes
+                    embedding_array = np.array(embedding_vector, dtype=np.float32)
+                    embedding_bytes = embedding_array.tobytes()
 
-                # Convert embedding to binary format (PostgreSQL BYTEA)
-                # Assuming embedding is list of floats, pack as bytes
-                import struct
-                import numpy as np
-
-                # Convert to numpy array and then to bytes
-                embedding_array = np.array(embedding_vector, dtype=np.float32)
-                embedding_bytes = embedding_array.tobytes()
-
-                # Insert into source_embeddings table
-                cursor.execute("""
-                    INSERT INTO kg_api.source_embeddings (
+                    # Insert into source_embeddings table
+                    cursor.execute("""
+                        INSERT INTO kg_api.source_embeddings (
+                            source_id,
+                            chunk_index,
+                            chunk_strategy,
+                            start_offset,
+                            end_offset,
+                            chunk_text,
+                            chunk_hash,
+                            source_hash,
+                            embedding,
+                            embedding_model,
+                            embedding_dimension,
+                            embedding_provider
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING embedding_id
+                    """, (
                         source_id,
-                        chunk_index,
+                        chunk.index,
                         chunk_strategy,
-                        start_offset,
-                        end_offset,
-                        chunk_text,
+                        chunk.start_offset,
+                        chunk.end_offset,
+                        chunk.text,
                         chunk_hash,
                         source_hash,
-                        embedding,
+                        psycopg2.Binary(embedding_bytes),
                         embedding_model,
                         embedding_dimension,
                         embedding_provider
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    RETURNING embedding_id
-                """, (
-                    source_id,
-                    chunk.index,
-                    chunk_strategy,
-                    chunk.start_offset,
-                    chunk.end_offset,
-                    chunk.text,
-                    chunk_hash,
-                    source_hash,
-                    psycopg2.Binary(embedding_bytes),
-                    embedding_model,
-                    embedding_dimension,
-                    embedding_provider
-                ))
+                    ))
 
-                embedding_id = cursor.fetchone()[0]
-                embedding_ids.append(embedding_id)
+                    embedding_id = cursor.fetchone()[0]
+                    embedding_ids.append(embedding_id)
 
-                logger.debug(
-                    f"Chunk {chunk.index}: embedding_id={embedding_id}, "
-                    f"offsets=[{chunk.start_offset}:{chunk.end_offset}], "
-                    f"hash={chunk_hash[:16]}..."
-                )
+                    logger.debug(
+                        f"Chunk {chunk.index}: embedding_id={embedding_id}, "
+                        f"offsets=[{chunk.start_offset}:{chunk.end_offset}], "
+                        f"hash={chunk_hash[:16]}..."
+                    )
 
-            # Commit all inserts
-            conn.commit()
-            logger.debug(f"Stored {len(embedding_ids)} embeddings in database")
+                # Commit all inserts (atomic transaction)
+                conn.commit()
+                logger.debug(f"Stored {len(embedding_ids)} embeddings in database")
 
+        except Exception as e:
+            # Rollback transaction on any error
+            conn.rollback()
+            logger.error(f"Failed to store embeddings, transaction rolled back: {str(e)}")
+            raise
         finally:
-            cursor.close()
             conn.close()
 
         # Step 5: Update Source.content_hash in AGE graph
