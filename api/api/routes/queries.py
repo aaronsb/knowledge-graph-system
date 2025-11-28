@@ -605,11 +605,11 @@ async def search_sources(
                             instance_quote=concept_data['instance_quote']
                         ))
 
-                # Build result
+                # Build result with NULL-safe field access
                 results.append(SourceSearchResult(
                     source_id=source_id,
-                    document=source_props['document'],
-                    paragraph=source_props['paragraph'],
+                    document=source_props.get('document', 'Unknown'),
+                    paragraph=source_props.get('paragraph', 0),
                     similarity=best_match['similarity'],
                     is_stale=is_stale,
                     matched_chunk=matched_chunk,

@@ -623,8 +623,34 @@ const sourcesCommand = setCommandHelp(
             console.log();
           }
         } catch (error: any) {
-          console.error(colors.status.error('✗ Source search failed'));
-          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          console.error(colors.status.error('\n✗ Source search failed'));
+
+          if (error.response) {
+            // API returned error response
+            const status = error.response.status;
+            const detail = error.response.data?.detail || 'Unknown error';
+
+            console.error(colors.status.warning(`\nAPI Error (${status}): ${detail}`));
+
+            if (status === 500 && detail.includes('embedding')) {
+              console.error(colors.status.dim('\n💡 Suggestion: Check embedding provider configuration:'));
+              console.error(colors.status.dim('   kg admin embedding list'));
+            } else if (status === 404) {
+              console.error(colors.status.dim('\n💡 Suggestion: Verify API endpoint exists (may need to update CLI)'));
+            } else if (status === 401 || status === 403) {
+              console.error(colors.status.dim('\n💡 Suggestion: Check authentication:'));
+              console.error(colors.status.dim('   kg login'));
+            }
+          } else if (error.request) {
+            // No response received
+            console.error(colors.status.warning('\nNo response from API server'));
+            console.error(colors.status.dim('\n💡 Suggestion: Check API is running:'));
+            console.error(colors.status.dim('   kg health'));
+          } else {
+            // Request setup error
+            console.error(colors.status.warning(`\n${error.message}`));
+          }
+
           process.exit(1);
         }
       });
