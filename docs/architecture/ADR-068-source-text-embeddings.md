@@ -70,58 +70,197 @@ Text → {Concepts, Sources, Edges} → Embeddings → Multi-modal Graph
 
 We will implement **asynchronous source text embedding generation** with the following design:
 
-### 1. Chunking Strategy
+### 1. Separate Embeddings Table with Referential Integrity
 
-Source text will be chunked using **adjustable granularity**:
+**Key Insight**: Source nodes remain the canonical source of truth. Embeddings are stored separately with offset tracking and hash verification.
 
-```python
-class SourceChunkingStrategy(Enum):
-    SENTENCE = "sentence"      # ~20-40 words per chunk
-    PARAGRAPH = "paragraph"    # ~100-200 words per chunk
-    COUNT = "count"            # Fixed word count (e.g., 250 words)
-    SEMANTIC = "semantic"      # Use existing semantic chunker
+**Understanding the Chunking Architecture:**
+```
+Document (100KB)
+    ↓ Ingestion chunking (smart chunker with overlap)
+    ├─ Source node 1 (500-1500 words) ────→ Embedding chunk(s)
+    ├─ Source node 2 (500-1500 words) ────→ Embedding chunk(s)
+    ├─ Source node 3 (500-1500 words) ────→ Embedding chunk(s)
+    ...
+    └─ Source node N (500-1500 words) ────→ Embedding chunk(s)
+                ↓
+    Concepts extracted (references Sources)
 ```
 
-**Default**: `PARAGRAPH` (aligns with existing Source nodes which store paragraph-level text)
+**Two-level chunking:**
+1. **Ingestion chunking** (existing): Document → Source nodes (500-1500 words each)
+2. **Embedding chunking** (this ADR): Source.full_text → Embedding chunks (~100-120 words each)
 
-**Configuration** (per ontology):
+**Typical scenario:**
+- Large document → 10 Source nodes (ingestion chunks)
+- 100 concepts extracted → reference those 10 Sources
+- Each Source → 1-3 embedding chunks (depending on length)
+- Total: 10-30 embeddings for entire document
+
 ```sql
-CREATE TABLE kg_api.source_embedding_config (
-    config_id SERIAL PRIMARY KEY,
-    ontology_name TEXT NOT NULL,
-    strategy TEXT NOT NULL DEFAULT 'paragraph',
-    chunk_size INT,  -- For COUNT strategy
+-- Source node (canonical truth)
+(:Source {
+    source_id: "doc123_chunk5",
+    full_text: "...",           -- Canonical text (500-1500 words from ingestion)
+    content_hash: "sha256..."   -- Hash for verification (NULL for existing Sources)
+})
+
+-- Separate embeddings table with offsets
+CREATE TABLE kg_api.source_embeddings (
+    embedding_id SERIAL PRIMARY KEY,
+    source_id TEXT NOT NULL,
+
+    -- Chunk tracking
+    chunk_index INT NOT NULL,         -- 0-based chunk number
+    chunk_strategy TEXT NOT NULL,     -- 'sentence', 'paragraph', 'semantic'
+
+    -- Offset in Source.full_text (character positions)
+    start_offset INT NOT NULL,
+    end_offset INT NOT NULL,
+    chunk_text TEXT NOT NULL,         -- Actual chunk (for verification)
+
+    -- Referential integrity (double hash verification)
+    chunk_hash TEXT NOT NULL,         -- SHA256 of chunk_text
+    source_hash TEXT NOT NULL,        -- SHA256 of Source.full_text
+
+    -- Embedding data
+    embedding BYTEA NOT NULL,
     embedding_model TEXT NOT NULL,
     embedding_dimension INT NOT NULL,
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(ontology_name)
+    UNIQUE(source_id, chunk_index, chunk_strategy)
 );
 ```
 
-### 2. Schema Changes
+**Why separate table?**
+- One Source can have multiple embedding chunks (granular retrieval)
+- Offsets enable precise text highlighting and context extraction
+- Hash verification ensures embeddings match current source text
+- Stale embeddings detectable when source text changes
+- Supports multiple strategies per Source (sentence + paragraph)
 
-Add embedding field to Source nodes:
+### 2. Chunking Strategy
 
-```cypher
-// Existing Source node (ADR-057)
-CREATE (s:Source {
-    source_id: $source_id,
-    document: $document,
-    paragraph: $paragraph,
-    full_text: $full_text,
-    content_type: $content_type,
-    storage_key: $storage_key,       // Images only
-    visual_embedding: $visual_embedding,  // Images only
-    embedding: $embedding             // ← NEW: Text embedding of full_text
-})
+Source text will be chunked using **simple, tunable strategies**:
+
+```python
+# In api/api/workers/source_embedding_worker.py
+# Tuning constants (easy to adjust, no complex config needed)
+
+CHUNKING_STRATEGIES = {
+    "sentence": {
+        "max_chars": 500,      # ~100-120 words
+        "splitter": "sentence"  # Use sentence boundaries
+    },
+    "paragraph": {
+        "max_chars": None,      # Use full Source.full_text
+        "splitter": None        # No splitting needed
+    },
+    "semantic": {
+        "max_chars": 1000,      # ~200-250 words
+        "splitter": "semantic"  # Use existing SemanticChunk logic
+    }
+}
+
+# Default strategy (simplest - no chunking)
+DEFAULT_STRATEGY = "paragraph"
 ```
 
-**New field**:
-- `embedding` - Dense vector of configurable dimension (default: 768 for Nomic, 1536 for OpenAI)
-- NULL allowed (for backward compatibility and progressive rollout)
-- Same field name as Concept.embedding for consistency
+**Key Constraints**:
+- Source.full_text already bounded (500-1500 words from ingestion chunker)
+- No chunk can exceed embedding model context window
+- Simple constants in code - easy to tune, no database config needed
 
-### 3. Async Job Processing
+**Configuration** (use existing embedding_config):
+```python
+# NO separate source_embedding_config table!
+# Source embeddings use system-wide kg_api.embedding_config:
+embedding_config = load_active_embedding_config()
+{
+    "provider": "local" | "openai",
+    "model_name": "nomic-ai/nomic-embed-text-v1.5",
+    "embedding_dimensions": 768,     # MUST match concept embeddings!
+    "precision": "float16" | "float32",
+    ...
+}
+
+# Why? Source embeddings must be comparable to concept embeddings.
+# Using different dimensions would break cosine similarity.
+```
+
+**Always Enabled:**
+- Source embedding generation is a first-class system feature
+- No opt-in/opt-out flags
+- Runs automatically for all ingested Sources
+- Can be regenerated via existing regenerate embeddings worker
+
+### 3. Migration Strategy: Add Field, Compute On-Demand
+
+**Source.content_hash field:**
+- Migration 068 adds field to Source nodes
+- **NULL for existing Sources** (no backfill in migration)
+- Computed on-demand when embeddings generated
+- Existing regenerate embeddings worker handles backfill
+
+**Rationale:**
+- Avoid expensive migration (computing hash for all existing Sources)
+- Leverage existing worker pattern (cures non-existent embeddings)
+- Operators can regenerate at their leisure
+- Non-blocking rollout
+
+**Backfill process (optional, any time after migration):**
+```bash
+# Use existing regenerate embeddings pattern
+kg admin regenerate-embeddings --type source --all
+
+# Or per ontology
+kg admin regenerate-embeddings --type source --ontology "MyDocs"
+```
+
+### 4. Hash Verification for Referential Integrity
+
+**Double verification prevents silent corruption**:
+
+```python
+# At embedding generation
+source_text = source['full_text']
+source_hash = sha256(source_text)      # Hash of full source
+
+for chunk in chunks:
+    chunk_hash = sha256(chunk.text)     # Hash of this chunk
+
+    db.insert_source_embedding(
+        source_id=source_id,
+        chunk_text=chunk.text,
+        chunk_hash=chunk_hash,          # ✓ Verifies chunk integrity
+        source_hash=source_hash,        # ✓ Verifies source hasn't changed
+        start_offset=chunk.start,
+        end_offset=chunk.end,
+        embedding=generate_embedding(chunk.text)
+    )
+
+# At query time
+current_source_hash = sha256(source['full_text'])
+for embedding in embeddings:
+    if embedding.source_hash != current_source_hash:
+        # Source text changed - embedding is stale
+        flag_for_regeneration(embedding)
+
+    # Verify chunk extraction
+    extracted_chunk = source_text[embedding.start_offset:embedding.end_offset]
+    if sha256(extracted_chunk) != embedding.chunk_hash:
+        # Corruption detected!
+        raise IntegrityError("Chunk hash mismatch")
+```
+
+**Benefits**:
+- Detect when Source.full_text changes (invalidates embeddings)
+- Verify chunk extraction matches original
+- Enable automatic regeneration triggers
+- Prevent serving stale embeddings
+
+### 5. Async Job Processing
 
 Leverage existing job system (ADR-014) for embedding generation:
 
@@ -160,22 +299,21 @@ def run_source_embedding_worker(
     """
 ```
 
-### 4. Generation Triggers
+### 6. Generation Triggers
 
-**At Ingestion Time** (immediate):
+**At Ingestion Time** (always enabled):
 ```python
 # In api/api/workers/ingestion_worker.py
 # After creating Source node
-if should_generate_source_embeddings(ontology):
-    # Dispatch async job
-    job_queue.submit_job({
-        "job_type": "source_embedding",
-        "job_data": {
-            "source_ids": [source_id],
-            "ontology": ontology,
-            ...
-        }
-    })
+# No enable/disable check - always generate embeddings
+job_queue.submit_job({
+    "job_type": "source_embedding",
+    "job_data": {
+        "source_ids": [source_id],
+        "ontology": ontology,
+        "strategy": "sentence"  # Default strategy
+    }
+})
 ```
 
 **Bulk Regeneration** (admin tool):
@@ -194,7 +332,7 @@ kg admin source-embeddings config --ontology "MyOntology" --strategy paragraph
 kg admin source-embeddings generate --ontology "MyOntology" --force
 ```
 
-### 5. Query Integration
+### 7. Query Integration
 
 **New Search Mode: Source Similarity Search**
 
@@ -247,116 +385,171 @@ RETURN neighbor
 ORDER BY neighbor.paragraph
 ```
 
-### 6. Cost and Performance
+### 8. Cost and Performance
 
 **Storage**:
-- 768-dim float16 embedding = 1.5KB per Source
-- 1M sources = ~1.5GB embedding storage
-- Acceptable for PostgreSQL bytea columns
+- 768-dim float16 embedding = 1.5KB per chunk
+- Typical: 1-2 chunks per Source (500-1500 word Sources)
+- Avg 1.5 chunks per Source = 2.25KB per Source
+- 1M sources = ~2.25GB embedding storage
+- Plus ~500 bytes metadata per chunk = ~750MB
+- Total: ~3GB for 1M sources (acceptable for PostgreSQL)
+
+**Note:** Most Sources (500-1500 words) will have 1-2 embedding chunks at 500 char (~100 word) granularity.
 
 **Generation**:
-- Local embeddings (Nomic): ~5-10ms per source (CPU fallback: ~20-50ms)
+- Local embeddings (Nomic): ~5-10ms per chunk (CPU fallback: ~20-50ms)
+- Typical: 1-2 chunks per Source = ~10-20ms per Source
 - OpenAI API: ~50-100ms per batch (rate limited)
 - Async processing prevents ingestion blocking
+- Hash calculation: <1ms (negligible)
+- Content_hash computed once per Source, cached in node
 
 **Regeneration**:
-- 1M sources @ 10ms = ~3 hours (local)
+- Leverage existing regenerate embeddings worker
+- Worker cures non-existent embeddings (NULL content_hash)
+- 1M sources @ 15ms = ~4 hours (local, 1-2 chunks per Source)
 - Progress tracking via job system
 - Resumable on failure
+- Can regenerate entire system or per-ontology
 
 ## Consequences
 
 ### Positive
 
-1. **Complete Retrieval Coverage**
+1. **Referential Integrity**
+   - Double hash verification (source + chunk)
+   - Detect stale embeddings automatically
+   - Prevent serving outdated results
+   - Enable automatic regeneration triggers
+
+2. **Granular Retrieval**
+   - 1-2 embeddings per Source (typical)
+   - Precise offset tracking for highlighting
+   - Context-aware search results
+   - Chunking overlap from ingestion ensures continuity
+
+3. **Complete Retrieval Coverage**
    - Text search (full-text)
    - Concept search (embeddings)
    - Source search (embeddings) ← NEW
    - Visual search (image embeddings)
 
-2. **Enhanced RAG**
+4. **Enhanced RAG**
    - Retrieve source passages directly
    - Combine with concept context
    - Build richer prompts for LLM generation
 
-3. **Context Discovery**
+5. **Context Discovery**
    - Find similar passages across documents
    - Identify conceptual overlap via source similarity
    - Build "source graphs" of related passages
 
-4. **LCM Foundation**
+6. **LCM Foundation**
    - All graph elements become searchable
    - Enables emergent relationship discovery
    - Supports constructive multi-modal queries
 
-5. **Provider Flexibility**
+7. **Provider Flexibility**
    - Regenerate embeddings when provider changes
    - A/B test embedding models
    - Mix providers per ontology
 
+8. **Simple Configuration**
+   - Uses existing kg_api.embedding_config (system-wide)
+   - No separate configuration table
+   - Must match concept embedding dimensions
+   - Always enabled (first-class feature)
+
+9. **Leverage Existing Patterns**
+   - Uses existing regenerate embeddings worker
+   - Worker cures NULL content_hash on-demand
+   - No expensive migration backfill
+   - Operators control regeneration timing
+
 ### Negative
 
 1. **Storage Overhead**
-   - +1.5KB per Source node
-   - For 1M sources: +1.5GB storage
+   - +2.25KB per Source (1.5 chunks @ 1.5KB each, typical)
+   - Plus ~750MB metadata (1M sources)
+   - For 1M sources: ~3GB storage
+   - Acceptable for PostgreSQL at scale
 
 2. **Ingestion Latency**
-   - Async job adds ~1-5s per source (amortized)
+   - Async job adds ~15ms per source (1-2 chunks typical)
+   - Hash calculation adds <1ms (cached in Source.content_hash)
    - Mitigated by background processing
+   - Total impact negligible
 
-3. **API Complexity**
+3. **Schema Complexity**
+   - Additional table to maintain (source_embeddings)
+   - Hash verification logic required
+   - Stale embedding detection needed
+
+4. **API Complexity**
    - New search modes to maintain
    - Hybrid search requires careful tuning
-   - More configuration options
+   - Offset extraction and highlighting logic
 
-4. **Migration Cost**
-   - Existing installations need embedding backfill
-   - Large graphs may take hours to process
-   - Requires downtime or staged rollout
+5. **Migration Cost**
+   - Migration 068 adds field only (fast, no backfill)
+   - Existing Sources have NULL content_hash initially
+   - Backfill via regenerate embeddings worker (optional, at leisure)
+   - No downtime required (graceful degradation)
 
 ### Neutral
 
-1. **Optional Feature**
-   - Ontologies can opt-in/opt-out
-   - Graceful degradation if embeddings missing
-   - Progressive enhancement
+1. **Always-On Feature**
+   - Source embedding generation runs for all ingestions
+   - No opt-in/opt-out (first-class system feature)
+   - Simplified architecture (no conditional logic)
 
 2. **Backward Compatible**
-   - Existing Source nodes work without embeddings
-   - NULL embedding field allowed
-   - Queries check for embedding presence
+   - Migration adds field, NULL for existing Sources
+   - Existing Source nodes continue working
+   - Regenerate embeddings worker handles backfill
+   - Queries gracefully handle NULL content_hash
 
 ## Implementation Plan
 
 ### Phase 1: Foundation (Week 1)
-- [ ] Add `embedding` field to Source schema (migration)
-- [ ] Create `source_embedding_config` table
-- [ ] Implement `SourceEmbeddingWorker`
+- [ ] Migration 068: Create `kg_api.source_embeddings` table
+- [ ] Migration 068: Add `Source.content_hash` field (NULL for existing)
+- [ ] Implement hash verification utilities (SHA256)
+- [ ] Implement sentence chunking with offset tracking (500 chars)
+- [ ] Implement `SourceEmbeddingWorker` skeleton
+- [ ] Query active `embedding_config` for dimensions
 - [ ] Add job type "source_embedding" to queue
 
 ### Phase 2: Generation (Week 2)
-- [ ] Implement chunking strategies (sentence, paragraph, count, semantic)
-- [ ] Add ingestion-time embedding generation (opt-in)
-- [ ] Build admin tool for bulk regeneration
-- [ ] Add progress tracking and resumption
+- [ ] Implement full `SourceEmbeddingWorker` with chunking
+- [ ] Add hash verification at generation time
+- [ ] Store embeddings in `source_embeddings` table
+- [ ] Update `Source.content_hash` field when embedding
+- [ ] Add ingestion-time embedding generation (always enabled)
+- [ ] Test with small ontology (verify chunks, offsets, hashes)
 
 ### Phase 3: Query Integration (Week 3)
 - [ ] Implement `/queries/sources/search` endpoint
-- [ ] Add hybrid search (concept + source)
-- [ ] Implement context window queries
+- [ ] Add stale embedding detection in queries
+- [ ] Return matched chunks with offsets for highlighting
+- [ ] Add context window expansion (neighboring chunks)
+- [ ] Implement hash verification at query time
+
+### Phase 4: Regeneration & Optimization (Week 4)
+- [ ] Extend existing regenerate embeddings worker for sources
+- [ ] Support `--type source` flag in admin tool
+- [ ] Batch embedding generation for efficiency
+- [ ] Add automatic stale embedding regeneration
+- [ ] Performance benchmarking and tuning
 - [ ] Add MCP tools for source search
 
-### Phase 4: Optimization (Week 4)
-- [ ] Batch embedding generation for efficiency
-- [ ] Add embedding model A/B testing
-- [ ] Implement selective regeneration (by ontology)
-- [ ] Performance benchmarking and tuning
-
-### Phase 5: LCM Vision (Future)
+### Phase 5: Advanced Features (Future)
+- [ ] Hybrid search (concept + source combined)
+- [ ] Semantic chunking strategy
+- [ ] Multiple strategies per Source
+- [ ] Cross-document source similarity
 - [ ] Edge embeddings for emergent relationships
-- [ ] Multi-modal constructive queries
-- [ ] Recursive concept attachment
-- [ ] Knowledge synthesis from embedding proximity
 
 ## Alternatives Considered
 
@@ -364,9 +557,9 @@ ORDER BY neighbor.paragraph
 
 **Rejected**: Too slow for real-time queries. Source embedding generation would block response.
 
-### Alternative 2: Store Embeddings in Separate Table
+### Alternative 2: Store Single Embedding on Source Node
 
-**Rejected**: Adds join complexity. Embedding is intrinsic to Source, should live on node.
+**Rejected**: Cannot support multiple chunks per Source. Loses granularity and offset tracking.
 
 ### Alternative 3: Only Embed Concept Descriptions (Status Quo)
 
@@ -376,13 +569,43 @@ ORDER BY neighbor.paragraph
 
 **Rejected**: Full-text search is lexical, not semantic. Misses conceptual similarity.
 
+## Key Design Decisions Summary
+
+### 1. content_hash Field: Add, Don't Backfill
+- Migration adds field to Source nodes
+- NULL for existing Sources
+- Computed on-demand during embedding generation
+- Leverage existing regenerate embeddings worker for backfill
+
+### 2. No Separate Configuration
+- Use existing `kg_api.embedding_config` (system-wide)
+- Source embeddings MUST match concept embedding dimensions
+- No opt-in/opt-out flags
+
+### 3. Chunk Size: 500 Characters (~100 words)
+- Balances granularity vs overhead
+- Most Sources (500-1500 words) → 1-2 embedding chunks
+- Large document: 10 Sources → 10-20 embeddings total
+- Chunking overlap from ingestion ensures continuity
+
+### 4. Always Enabled
+- Source embedding generation is first-class feature
+- Runs automatically for all ingestions
+- Simplified architecture (no conditional logic)
+
+### 5. Leverage Existing Patterns
+- Existing regenerate embeddings worker handles backfill
+- Worker cures NULL content_hash
+- Operators control regeneration timing
+
 ## Related ADRs
 
+- **ADR-022**: Semantic Relationship Taxonomy (Porter stemmer hybrid chunking with overlap)
 - **ADR-044**: Probabilistic Truth Convergence (relationship embeddings for grounding)
 - **ADR-045**: Unified Embedding Generation (EmbeddingWorker architecture)
 - **ADR-057**: Multimodal Image Ingestion (visual embeddings for images)
 - **ADR-014**: Job Approval Workflow (async job processing)
-- **ADR-031**: Encrypted API Key Storage (embedding provider credentials)
+- **ADR-039**: Local Embedding Service (embedding configuration system)
 
 ## References
 

@@ -33,6 +33,7 @@ from .workers.restore_worker import run_restore_worker
 from .workers.vocab_refresh_worker import run_vocab_refresh_worker
 from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
 from .workers.epistemic_remeasurement_worker import run_epistemic_remeasurement_worker
+from .workers.source_embedding_worker import run_source_embedding_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources
 from .services.embedding_worker import get_embedding_worker
@@ -150,7 +151,8 @@ async def startup_event():
     queue.register_worker("vocab_refresh", run_vocab_refresh_worker)  # ADR-050
     queue.register_worker("vocab_consolidate", run_vocab_consolidate_worker)  # ADR-050
     queue.register_worker("epistemic_remeasurement", run_epistemic_remeasurement_worker)  # ADR-065 Phase 2
-    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement")
+    queue.register_worker("source_embedding", run_source_embedding_worker)  # ADR-068 Phase 1
+    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding")
 
     # Resume interrupted jobs (jobs that were processing when server stopped)
     # Note: SQLite queue uses "processing", PostgreSQL queue uses "running"
