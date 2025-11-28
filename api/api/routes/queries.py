@@ -452,6 +452,14 @@ async def search_sources(
         else:
             embedding = embedding_result
 
+        # Validate embedding is non-empty
+        if not embedding or len(embedding) == 0:
+            logger.error("Generated embedding is empty")
+            raise HTTPException(
+                status_code=500,
+                detail="Generated embedding is empty. This may indicate a provider issue."
+            )
+
         # Convert to numpy array for cosine similarity
         query_embedding = np.array(embedding, dtype=np.float32)
 
@@ -532,31 +540,43 @@ async def search_sources(
         finally:
             conn.close()
 
-        # Fetch Source nodes from AGE
+        # Fetch Source nodes from AGE (batch query via facade)
         client = get_age_client()
         try:
             results = []
 
+            # Batch-fetch all Source nodes at once (query safety via facade)
+            sources_data = client.facade.match_sources(
+                where="s.source_id IN $source_ids",
+                params={"source_ids": top_source_ids}
+            )
+
+            # Build lookup map for sources by source_id
+            sources_by_id = {}
+            for source_row in sources_data:
+                source_props = source_row.get('properties', {})
+                sources_by_id[source_props.get('source_id')] = source_props
+
+            # Batch-fetch all concepts for all sources at once (fixes N+1 query problem)
+            concepts_by_source = {}
+            if request.include_concepts:
+                concepts_by_source = client.facade.match_concepts_for_sources_batch(top_source_ids)
+
+            # Assemble results from batch-fetched data
             for source_id in top_source_ids:
                 best_match = source_best_matches[source_id]
+                source_props = sources_by_id.get(source_id)
 
-                # Fetch Source node
-                source_query = f"""
-                    MATCH (s:Source {{source_id: '{source_id}'}})
-                    RETURN s.source_id as source_id,
-                           s.document as document,
-                           s.paragraph as paragraph,
-                           s.full_text as full_text,
-                           s.content_hash as content_hash
-                """
-                source_result = client._execute_cypher(source_query, fetch_one=True)
-
-                if not source_result:
+                if not source_props:
                     logger.warning(f"Source node not found for source_id: {source_id}")
                     continue
 
+                # Apply ontology filter if specified
+                if request.ontology and source_props.get('document') != request.ontology:
+                    continue
+
                 # Detect stale embeddings
-                current_hash = source_result.get('content_hash')
+                current_hash = source_props.get('content_hash')
                 is_stale = (current_hash is not None and current_hash != best_match['source_hash'])
 
                 # Build matched chunk
@@ -571,40 +591,25 @@ async def search_sources(
                 # Build full_text (optional)
                 full_text = None
                 if request.include_full_text:
-                    full_text = source_result.get('full_text')
+                    full_text = source_props.get('full_text')
 
-                # Traverse to find related concepts (optional)
+                # Get concepts from batch-fetched data
                 concepts = []
                 if request.include_concepts:
-                    # Traverse: (:Concept)-[:EVIDENCED_BY]->(:Instance)-[:FROM_SOURCE]->(:Source)
-                    concepts_query = f"""
-                        MATCH (c:Concept)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source {{source_id: '{source_id}'}})
-                        RETURN DISTINCT
-                            c.concept_id as concept_id,
-                            c.label as label,
-                            c.description as description,
-                            i.quote as quote
-                        ORDER BY c.label
-                    """
-                    concepts_result = client._execute_cypher(concepts_query)
-
-                    for concept_row in (concepts_result or []):
+                    concept_list = concepts_by_source.get(source_id, [])
+                    for concept_data in concept_list:
                         concepts.append(SourceConcept(
-                            concept_id=concept_row['concept_id'],
-                            label=concept_row['label'],
-                            description=concept_row.get('description'),
-                            instance_quote=concept_row['quote']
+                            concept_id=concept_data['concept_id'],
+                            label=concept_data['label'],
+                            description=concept_data.get('description'),
+                            instance_quote=concept_data['instance_quote']
                         ))
-
-                # Apply ontology filter if specified
-                if request.ontology and source_result['document'] != request.ontology:
-                    continue
 
                 # Build result
                 results.append(SourceSearchResult(
                     source_id=source_id,
-                    document=source_result['document'],
-                    paragraph=source_result['paragraph'],
+                    document=source_props['document'],
+                    paragraph=source_props['paragraph'],
                     similarity=best_match['similarity'],
                     is_stale=is_stale,
                     matched_chunk=matched_chunk,

@@ -475,6 +475,79 @@ class GraphQueryFacade:
         self.audit.log_query(query, namespace="concept", params=params)
         return self.db._execute_cypher(query, params)
 
+    def match_concepts_for_sources_batch(
+        self,
+        source_ids: List[str]
+    ) -> Dict[str, List[Dict]]:
+        """
+        Batch-fetch concepts for multiple sources (ADR-068 Phase 3).
+
+        Solves N+1 query problem by fetching all concepts for all sources
+        in a single query, then grouping results by source_id.
+
+        Args:
+            source_ids: List of source IDs to fetch concepts for
+
+        Returns:
+            Dictionary mapping source_id to list of concepts with quotes:
+            {
+                "source_id_1": [
+                    {
+                        "concept_id": "...",
+                        "label": "...",
+                        "description": "...",
+                        "instance_quote": "..."
+                    },
+                    ...
+                ],
+                "source_id_2": [...],
+                ...
+            }
+
+        Example:
+            source_ids = ["src_abc", "src_def", "src_ghi"]
+            concepts_by_source = facade.match_concepts_for_sources_batch(source_ids)
+
+            for source_id in source_ids:
+                concepts = concepts_by_source.get(source_id, [])
+                print(f"Source {source_id} has {len(concepts)} concepts")
+        """
+        if not source_ids:
+            return {}
+
+        # Single query to fetch all concepts for all sources
+        query = """
+            MATCH (s:Source)
+            WHERE s.source_id IN $source_ids
+            MATCH (c:Concept)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s)
+            RETURN DISTINCT
+                s.source_id as source_id,
+                c.concept_id as concept_id,
+                c.label as label,
+                c.description as description,
+                i.quote as instance_quote
+            ORDER BY s.source_id, c.label
+        """
+
+        params = {"source_ids": source_ids}
+        self.audit.log_query(query, namespace="concept", params=params)
+        results = self.db._execute_cypher(query, params)
+
+        # Group results by source_id
+        concepts_by_source: Dict[str, List[Dict]] = {sid: [] for sid in source_ids}
+
+        for row in results:
+            source_id = row["source_id"]
+            concept = {
+                "concept_id": row["concept_id"],
+                "label": row["label"],
+                "description": row.get("description"),
+                "instance_quote": row["instance_quote"]
+            }
+            concepts_by_source[source_id].append(concept)
+
+        return concepts_by_source
+
     # -------------------------------------------------------------------------
     # HEALTH & STATISTICS (Namespace-aware)
     # -------------------------------------------------------------------------

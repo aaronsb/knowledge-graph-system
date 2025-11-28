@@ -4,6 +4,19 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 
+# Constants
+DEFAULT_SOURCE_SEARCH_SIMILARITY = 0.7
+"""
+Default similarity threshold for source search.
+
+Rationale:
+- <0.5: Too many irrelevant results (high recall, low precision)
+- 0.5-0.7: Balanced recall/precision for exploratory search
+- 0.7-0.85: Good precision for targeted search (recommended default)
+- >0.85: Very high precision, may miss relevant results
+"""
+
+
 # Search Models
 class SearchRequest(BaseModel):
     """Request to search for concepts using semantic similarity.
@@ -320,7 +333,12 @@ class SourceSearchRequest(BaseModel):
     """
     query: str = Field(..., description="Search query text", min_length=1)
     limit: int = Field(10, description="Maximum number of sources to return", ge=1, le=100)
-    min_similarity: float = Field(0.7, description="Minimum similarity score (0.0-1.0)", ge=0.0, le=1.0)
+    min_similarity: float = Field(
+        DEFAULT_SOURCE_SEARCH_SIMILARITY,
+        description="Minimum similarity score (0.0-1.0, default 0.7=70%)",
+        ge=0.0,
+        le=1.0
+    )
     ontology: Optional[str] = Field(None, description="Filter by ontology/document name")
     include_concepts: bool = Field(True, description="Include concepts extracted from matched sources")
     include_full_text: bool = Field(True, description="Include full source text (not just matched chunk)")
