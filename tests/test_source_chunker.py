@@ -410,3 +410,71 @@ class TestIntegrationScenarios:
         # Reconstructed parts should cover the source (may have gaps due to whitespace)
         for part in reconstructed_parts:
             assert part in text
+
+    def test_duplicate_sentences(self):
+        """Test chunking with duplicate sentences (code review issue #2)."""
+        text = "Hello world. Hello world. Goodbye world."
+        chunks = chunk_by_sentence(text, max_chars=20, min_chars=0)
+
+        # Should create separate chunks
+        assert len(chunks) == 3
+
+        # Verify offsets don't overlap
+        for i in range(len(chunks) - 1):
+            assert chunks[i].end_offset <= chunks[i+1].start_offset, \
+                f"Chunks {i} and {i+1} overlap: [{chunks[i].start_offset}:{chunks[i].end_offset}] vs [{chunks[i+1].start_offset}:{chunks[i+1].end_offset}]"
+
+        # Verify offset extraction matches chunk text
+        for i, chunk in enumerate(chunks):
+            extracted = text[chunk.start_offset:chunk.end_offset]
+            assert extracted == chunk.text, \
+                f"Chunk {i} offset mismatch: expected '{chunk.text}', extracted '{extracted}'"
+
+        # Verify specific positions for duplicate "Hello world."
+        assert chunks[0].text == "Hello world."
+        assert chunks[1].text == "Hello world."
+        assert chunks[0].start_offset != chunks[1].start_offset, \
+            "Duplicate sentences should have different start offsets"
+
+    def test_duplicate_content_with_hash_verification(self):
+        """Test duplicate content with hash verification (code review issue #5)."""
+        from api.api.lib.hash_utils import sha256_text, verify_chunk_extraction
+
+        text = "The cat sat. The cat sat. The dog sat."
+        chunks = chunk_by_sentence(text, max_chars=20, min_chars=0)
+
+        # Verify each chunk with hash verification
+        for chunk in chunks:
+            chunk_hash = sha256_text(chunk.text)
+
+            # Verify extraction with hash
+            assert verify_chunk_extraction(
+                text,
+                chunk.start_offset,
+                chunk.end_offset,
+                chunk_hash
+            ), f"Hash verification failed for chunk: {chunk.text}"
+
+        # Verify hashes are same for duplicate sentences
+        if len(chunks) >= 2 and chunks[0].text == chunks[1].text:
+            hash0 = sha256_text(chunks[0].text)
+            hash1 = sha256_text(chunks[1].text)
+            assert hash0 == hash1, "Duplicate sentences should have same hash"
+
+    def test_multiple_duplicates_in_long_text(self):
+        """Test handling of multiple duplicate sentences in longer text."""
+        text = """Introduction here. Main point explained. Main point explained.
+        Supporting evidence provided. Supporting evidence provided. Conclusion drawn."""
+
+        chunks = chunk_by_sentence(text, max_chars=50, min_chars=0)
+
+        # Verify all offsets are correct
+        for chunk in chunks:
+            extracted = text[chunk.start_offset:chunk.end_offset]
+            assert extracted == chunk.text, \
+                f"Offset mismatch: '{chunk.text}' != '{extracted}'"
+
+        # Verify no overlapping offsets
+        for i in range(len(chunks) - 1):
+            assert chunks[i].end_offset <= chunks[i+1].start_offset, \
+                f"Chunks overlap at positions {chunks[i].end_offset} and {chunks[i+1].start_offset}"
