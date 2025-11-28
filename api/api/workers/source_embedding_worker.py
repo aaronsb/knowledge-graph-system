@@ -69,6 +69,23 @@ def run_source_embedding_worker(
         max_chars = job_data.get("max_chars", 500)
         regenerate = job_data.get("regenerate", False)
 
+        # Validate parameters
+        valid_strategies = {"sentence", "paragraph", "count", "semantic"}
+        if chunk_strategy not in valid_strategies:
+            raise ValueError(
+                f"Invalid chunk_strategy '{chunk_strategy}'. "
+                f"Valid strategies: {', '.join(sorted(valid_strategies))}"
+            )
+
+        if not isinstance(max_chars, int) or max_chars <= 0:
+            raise ValueError(f"max_chars must be positive integer, got {max_chars}")
+
+        if max_chars > 10000:
+            logger.warning(
+                f"max_chars ({max_chars}) is very large. "
+                f"Recommended range: 100-1000 characters"
+            )
+
         logger.info(
             f"Source embedding params: source_id={source_id}, "
             f"strategy={chunk_strategy}, max_chars={max_chars}, "
