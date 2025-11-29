@@ -339,15 +339,324 @@ experiments/semantic_gradients/SEMANTIC_PATH_GRADIENTS.md
    - Current: Grounding adds interpretability but isn't required for projection
    - **Recommendation:** Optional enhancement, not requirement
 
-## Timeline Estimate
+## Implementation Phases
 
-- **Phase 1 (Worker Service):** 2-3 days
-- **Phase 2 (API Endpoints):** 2 days
-- **Phase 3 (Caching):** 1 day
-- **Phase 4 (Documentation + ADR):** 1 day
-- **Phase 5 (CLI Integration):** 1 day
+- **Phase 1:** Worker Service
+- **Phase 2:** API Endpoints
+- **Phase 3:** Caching
+- **Phase 4:** Documentation + ADR
+- **Phase 5:** Interface Integration (MCP, CLI, Web)
 
-**Total:** 7-8 days (1.5 sprints)
+## User Interface Specifications
+
+### MCP Server (Claude Desktop Integration)
+
+**MCP Tool: `analyze_polarity_axis`**
+
+```json
+{
+  "name": "analyze_polarity_axis",
+  "description": "Analyze bidirectional semantic spectrum between two opposing concepts",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "positive_pole_query": {
+        "type": "string",
+        "description": "Search query for positive pole (e.g., 'Digital Transformation')"
+      },
+      "negative_pole_query": {
+        "type": "string",
+        "description": "Search query for negative pole (e.g., 'Legacy Systems')"
+      },
+      "auto_discover_candidates": {
+        "type": "boolean",
+        "description": "Auto-discover related concepts to project onto axis",
+        "default": true
+      }
+    },
+    "required": ["positive_pole_query", "negative_pole_query"]
+  }
+}
+```
+
+**MCP Tool: `discover_polarity_axes`**
+
+```json
+{
+  "name": "discover_polarity_axes",
+  "description": "Auto-discover polarity axes from oppositional relationships (PREVENTS, CONTRADICTS)",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "relationship_types": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "Relationship types to search (e.g., ['PREVENTS', 'CONTRADICTS'])",
+        "default": ["PREVENTS", "CONTRADICTS"]
+      },
+      "max_results": {
+        "type": "number",
+        "description": "Maximum number of axes to return",
+        "default": 10
+      }
+    }
+  }
+}
+```
+
+**Response Format:**
+```
+📊 Polarity Axis: Legacy Systems ↔ Digital Transformation
+   Semantic Distance: 1.07
+   Grounding Correlation: r=0.85 (strong)
+
+Projected Concepts:
+  ➕ Toward Digital Transformation:
+     • Agile (+0.194) - grounding: +0.227
+     • Modern Operating Model (+0.089) - grounding: +0.133
+
+  ⚖️  Neutral/Mixed:
+     • Tech Debt (-0.049) - grounding: 0.000
+
+  ➖ Toward Legacy Systems:
+     • Traditional Operating Models (-0.124) - grounding: -0.040
+
+💡 Insight: Strong correlation between axis position and grounding suggests
+   this is a meaningful semantic dimension with clear value polarity.
+```
+
+### CLI Tool (kg command)
+
+**Command Structure:**
+
+```bash
+# Analyze specific polarity axis
+kg polarity analyze <positive_concept> <negative_concept> [options]
+
+# Auto-discover axes from relationships
+kg polarity discover [--type PREVENTS] [--type CONTRADICTS] [--limit 10]
+
+# Project single concept onto axis
+kg polarity project <axis_id> <concept_id>
+
+# Quick analysis from concept IDs
+kg polarity axis <positive_id> <negative_id> [--candidates <id1> <id2> ...]
+```
+
+**Example Usage:**
+
+```bash
+$ kg polarity analyze "Digital Transformation" "Legacy Systems"
+```
+
+**Output (Table Format):**
+```
+Polarity Axis Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Positive Pole: Digital Transformation (grounding: -0.022)
+Negative Pole: Legacy Systems (grounding: -0.075)
+Semantic Distance: 1.071
+Grounding Correlation: r=0.85, p=0.023 ✓ Strong
+
+Projected Concepts (9 total)
+┌────────────────────────────────┬──────────┬──────────┬───────────┐
+│ Concept                        │ Position │ Direction│ Grounding │
+├────────────────────────────────┼──────────┼──────────┼───────────┤
+│ Agile                          │ +0.194   │ Positive │ +0.227    │
+│ Modern Operating Model         │ +0.089   │ Neutral  │ +0.133    │
+│ Tech Debt                      │ -0.049   │ Neutral  │ 0.000     │
+│ Traditional Operating Models   │ -0.124   │ Negative │ -0.040    │
+└────────────────────────────────┴──────────┴──────────┴───────────┘
+
+Visual Spectrum:
+Legacy Systems ●────────────┼────────────● Digital Transformation
+                  ^         ^         ^
+               -0.124    -0.049    +0.194
+```
+
+**Discover Mode:**
+```bash
+$ kg polarity discover --type PREVENTS --limit 5
+```
+
+**Output:**
+```
+Discovered Polarity Axes (PREVENTS relationships)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Tech Debt ↔ Technology Advantage
+   Magnitude: 0.94 | Grounding Δ: 0.22 | r=0.88
+
+2. Legacy Systems ↔ Digital Transformation
+   Magnitude: 1.07 | Grounding Δ: 0.05 | r=0.85
+
+3. Siloed Digital Transformation ↔ Digital Transformation
+   Magnitude: 0.52 | Grounding Δ: 0.12 | r=0.76
+
+4. Integration Challenges ↔ Technology Advantage
+   Magnitude: 0.89 | Grounding Δ: 0.18 | r=0.82
+
+5. Misalignment ↔ Enterprise Finance Organization
+   Magnitude: 0.95 | Grounding Δ: 0.31 | r=0.79
+
+Run 'kg polarity analyze <positive> <negative>' to explore an axis
+```
+
+**JSON Mode:**
+```bash
+$ kg polarity analyze "Modern" "Traditional" --json
+{
+  "axis": {
+    "positive_pole": {"concept_id": "...", "label": "Modern Operating Model", "grounding": 0.133},
+    "negative_pole": {"concept_id": "...", "label": "Traditional Operating Models", "grounding": -0.040},
+    "magnitude": 0.5035
+  },
+  "projections": [...],
+  "statistics": {...},
+  "grounding_correlation": {"r": 0.85, "p_value": 0.023}
+}
+```
+
+### Web Workstation (Browser Client)
+
+**Location:** Explorer → Polarity Axis Explorer (new sidebar category)
+
+**UI Components:**
+
+**1. Axis Discovery Panel**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 🔍 Discover Polarity Axes                                   │
+├─────────────────────────────────────────────────────────────┤
+│ Relationship Types: [PREVENTS ▼] [CONTRADICTS ▼]           │
+│                                                             │
+│ Discovered Axes (5):                                        │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Tech Debt ↔ Technology Advantage                        │ │
+│ │ ━━━━━━━━━━●━━━━━━━━━━━━━━━━━━━●━━━━━━━━━━              │ │
+│ │ Magnitude: 0.94 | Correlation: r=0.88 🟢                │ │
+│ │ [Explore →]                                             │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Legacy Systems ↔ Digital Transformation                 │ │
+│ │ ━━━━━━━━━━●━━━━━━━━━━━━━━━━━━━●━━━━━━━━━━              │ │
+│ │ Magnitude: 1.07 | Correlation: r=0.85 🟢                │ │
+│ │ [Explore →]                                             │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ [Load More]                                                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**2. Axis Analysis View (Interactive)**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Polarity Axis: Legacy Systems ↔ Digital Transformation     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ ◄────────────────────┼────────────────────►                │
+│ Legacy Systems     Midpoint    Digital Transformation      │
+│ Grounding: -0.075     0.00      Grounding: -0.022          │
+│                                                             │
+│ Projected Concepts:                                         │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │                            ┼                            │ │
+│ │  Traditional●          ●Tech  ●Agile                    │ │
+│ │  Operating             Debt   Modern●                   │ │
+│ │  Models                       Operating                 │ │
+│ │                               Model                      │ │
+│ │ ━━━━━━━━━━━━━━━━━━━━━━┼━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │ │
+│ │ -1.0        -0.5       0        +0.5          +1.0      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ Statistics:                                                 │
+│ • Semantic Distance: 1.071                                  │
+│ • Grounding Correlation: r=0.85 (p=0.023) 🟢 Strong        │
+│ • Mean Axis Distance: 0.753 (moderate orthogonality)       │
+│                                                             │
+│ Concept Details:                                            │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ ✓ Agile                              Position: +0.194   │ │
+│ │   Direction: Positive                Grounding: +0.227  │ │
+│ │   Axis Distance: 1.008 (orthogonal)                     │ │
+│ │   [View Concept] [View Relationships]                   │ │
+│ ├─────────────────────────────────────────────────────────┤ │
+│ │ ○ Tech Debt                          Position: -0.049   │ │
+│ │   Direction: Neutral                 Grounding: 0.000   │ │
+│ │   Axis Distance: 0.872                                  │ │
+│ │   [View Concept] [View Relationships]                   │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ [Export JSON] [Save Axis] [Share Link]                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**3. Custom Axis Creator**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Create Custom Polarity Axis                                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ Positive Pole:                                              │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ [Search concepts...                           ] [🔍]    │ │
+│ │                                                         │ │
+│ │ Selected: Digital Transformation                        │ │
+│ │ Grounding: -0.022                                       │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ Negative Pole:                                              │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ [Search concepts...                           ] [🔍]    │ │
+│ │                                                         │ │
+│ │ Selected: Legacy Systems                                │ │
+│ │ Grounding: -0.075                                       │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ Options:                                                    │
+│ ☑ Auto-discover related concepts                           │
+│ ☑ Calculate grounding correlation                          │
+│ ☐ Include only concepts with >0.5 grounding                │
+│                                                             │
+│ [Cancel] [Analyze Axis →]                                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**4. Integration with Concept View**
+
+When viewing a concept, add "Polarity Analysis" tab:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Concept: Agile                                              │
+├─────────────────────────────────────────────────────────────┤
+│ [Overview] [Relationships] [Evidence] [Polarity Analysis]   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ Position on Known Axes:                                     │
+│                                                             │
+│ Tech Debt ↔ Technology Advantage                           │
+│ ━━━━━━━━━━━━━━●━━━━━━━━━━━━━━━━━━━━━━━━━                  │
+│                +0.194 (Positive)                            │
+│                                                             │
+│ Legacy Systems ↔ Digital Transformation                    │
+│ ━━━━━━━━━━━━━━━●━━━━━━━━━━━━━━━━━━━━━━━━                  │
+│                +0.168 (Positive)                            │
+│                                                             │
+│ [Discover More Axes] [Create Custom Axis]                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Visual Design Notes:**
+- Use color gradient along axis (red → neutral → green OR custom theme)
+- Concept bubbles sized by grounding strength
+- Hover shows full stats (position, distance, grounding)
+- Click concept bubble to navigate to concept view
+- Drag concepts to see how adding them changes axis statistics
+- Export axis as PNG/SVG for documentation
 
 ## Next Steps
 

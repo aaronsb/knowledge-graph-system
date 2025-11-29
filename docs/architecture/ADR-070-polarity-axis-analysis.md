@@ -310,28 +310,81 @@ cached_projection = {
 
 ## Implementation Phases
 
-### Phase 1: Core Worker (Week 1)
+### Phase 1: Core Worker
 - [ ] Refactor `polarity_axis_analysis.py` into `PolarityAxisWorker`
 - [ ] Add to worker registry
 - [ ] Unit tests for projection algorithm
 - [ ] Integration test with real embeddings
 
-### Phase 2: API Endpoints (Week 2)
+### Phase 2: API Endpoints
 - [ ] `POST /queries/polarity-axis` (analyze axis)
 - [ ] `POST /queries/discover-polarity-axes` (auto-discover)
 - [ ] `GET /queries/polarity-axis/{axis_id}/project/{concept_id}` (project concept)
 - [ ] Pydantic models for request/response
 - [ ] OpenAPI documentation
 
-### Phase 3: Caching (Week 2)
+### Phase 3: Caching
 - [ ] Redis caching layer
 - [ ] Cache invalidation on embedding regen
 - [ ] Cache hit rate metrics
 
-### Phase 4: Documentation (Week 3)
+### Phase 4: Documentation
 - [ ] Update guides with polarity axis examples
 - [ ] CLI integration (`kg polarity ...`)
 - [ ] Video demo (optional)
+
+### Phase 5: Interface Integration
+- [ ] MCP server tools (`analyze_polarity_axis`, `discover_polarity_axes`)
+- [ ] CLI commands (`kg polarity analyze`, `kg polarity discover`, `kg polarity project`)
+- [ ] Web workstation "Polarity Axis Explorer" panel
+
+## User Interface Specifications
+
+### MCP Server Integration
+
+**Tools:**
+- `analyze_polarity_axis(positive_pole_query, negative_pole_query, auto_discover_candidates)`
+- `discover_polarity_axes(relationship_types, max_results)`
+
+**Output Format:** Markdown with emoji indicators, position visualization, grounding correlation insights
+
+**Use Cases:**
+- Claude asks "What are the key semantic dimensions in this knowledge base?"
+- Discovers PREVENTS/CONTRADICTS axes automatically
+- Projects concepts onto axes to understand positioning
+
+### CLI Tool (kg)
+
+**Commands:**
+```bash
+kg polarity analyze <positive> <negative>     # Analyze specific axis
+kg polarity discover [--type TYPE]            # Auto-discover axes
+kg polarity project <axis_id> <concept_id>    # Project concept
+```
+
+**Output:**
+- **Table mode:** Formatted tables with position, direction, grounding
+- **Visual mode:** ASCII spectrum showing concept positions
+- **JSON mode:** Machine-readable output for scripting
+
+### Web Workstation
+
+**New Explorer Panel:** "Polarity Axis Explorer"
+
+**Features:**
+1. **Axis Discovery** - Browse PREVENTS/CONTRADICTS relationship axes
+2. **Interactive Visualization** - Drag-and-drop concepts, color-coded by grounding
+3. **Custom Axis Creator** - Search and select poles, auto-discover candidates
+4. **Concept Integration** - "Polarity Analysis" tab shows where concept appears on known axes
+5. **Export Options** - JSON, PNG, SVG for documentation
+
+**Visual Design:**
+- Color gradient along axis (configurable theme)
+- Concept bubbles sized by grounding strength
+- Interactive: hover for stats, click to navigate
+- Real-time correlation metrics
+
+**See full interface specifications in:** `experiments/semantic_gradients/IMPLEMENTATION_PLAN.md`
 
 ## Success Criteria
 
