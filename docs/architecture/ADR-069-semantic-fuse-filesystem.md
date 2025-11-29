@@ -61,6 +61,78 @@ This proposal underwent external peer review to validate feasibility against the
 
 The review validated this is a "rigorous application of the 'everything is a file' philosophy to high-dimensional data," not a cursed hack.
 
+### Related Work: Other Semantic File Systems
+
+This proposal builds on a rich history of semantic filesystems, though none have applied the "Directory = Query" metaphor to vector embeddings and probabilistic similarity.
+
+#### 1. Logic & Query-Based Systems (Direct Ancestors)
+
+**Semantic File System (SFS)** - MIT, 1991
+- **Concept:** Original implementation of "transducers" extracting attributes from files
+- **Innovation:** Virtual directories interpreted as queries (`/sfs/author/jdoe` dynamically generated)
+- **Limitation:** Attribute-based (key-value pairs), not semantic
+- **Our Extension:** Replace discrete attributes with continuous similarity scores
+
+**Tagsistant** - Linux/FUSE
+- **Concept:** Directory nesting for boolean logic operations
+- **Innovation:** Path as query language (`/tags/music/+/rock/` for AND operations)
+- **Similarity:** The `/+/` operator is conceptually similar to our relationship traversal
+- **Our Extension:** Replace boolean logic with semantic similarity thresholds
+
+**JOINFS**
+- **Concept:** Dynamic directories populated by metadata query matching
+- **Innovation:** `mkdir "format=mp3"` creates persistent searches
+- **Similarity:** Query definition via directory creation (like our approach)
+- **Our Extension:** Semantic queries vs. exact metadata matching
+
+#### 2. Tag-Based Systems (Modern Implementations)
+
+**TMSU** (Tag My Sh*t Up)
+- **Concept:** SQLite-backed FUSE mount with explicit tagging
+- **Architecture:** Standard "FUSE + Database" pattern we follow
+- **Similarity:** Files exist in multiple paths (`/mnt/tmsu/tags/music/mp3/`)
+- **Difference:** Deterministic (file is tagged or not), no similarity threshold
+- **Our Extension:** Probabilistic membership based on semantic similarity
+
+**TagFS / SemFS**
+- **Concept:** RDF triples for tag storage (graph-like structure)
+- **Similarity:** Graph backend architecture (closer to our Knowledge Graph than SQL)
+- **Difference:** Explicit RDF relationships vs. emergent semantic relationships
+- **Our Extension:** Vector embeddings replace RDF triples
+
+#### 3. Partial POSIX Precedents
+
+**Google Cloud FUSE / rclone**
+- **Precedent:** Explicitly documents "Limitations and differences from POSIX"
+- **Validation:** Large-scale ML workloads accept non-compliance for utility
+- **Similar Violations:** Directories disappear, non-deterministic caching, eventual consistency
+- **Our Justification:** If users accept this for cloud storage, they'll accept it for semantic navigation
+
+#### Comparison Table
+
+| Feature | Tagsistant | TMSU | MIT SFS (1991) | **ADR-069 (This Proposal)** |
+|---------|------------|------|----------------|----------------------------|
+| **Organization** | Boolean Logic | Explicit Tags | Key-Value Attributes | **Vector Embeddings** |
+| **Navigation** | `/tag1/+/tag2/` | `/tag1/tag2/` | `/author/name/` | **`/query/threshold/`** |
+| **Determinism** | Deterministic | Deterministic | Deterministic | **Probabilistic** |
+| **Backend** | SQL/Dedup | SQLite | Transducers | **Vector DB + LLM** |
+| **Write Behavior** | Tags file | Tags file | Indexing | **Ingest & Grounding** |
+| **Membership Model** | Binary (tagged/not) | Binary | Binary | **Continuous (similarity score)** |
+
+#### The Key Innovation
+
+**Existing systems:** Map **discrete values** (tags, attributes) → directories
+- File either has tag "music" or it doesn't
+- Boolean membership: true/false
+- Deterministic listings
+
+**Our proposal:** Map **continuous values** (similarity scores) → directories
+- Concept has 73.5% similarity to query "embedding models"
+- Probabilistic membership: threshold-dependent
+- Non-deterministic listings (similarity changes as graph evolves)
+
+This is the specific innovation that justifies the "POSIX violations" in our design - we're not just organizing files by metadata, we're navigating high-dimensional semantic space through a filesystem interface.
+
 ## Motivation
 
 Traditional filesystems organize knowledge through rigid hierarchies:
@@ -789,10 +861,12 @@ Every path encodes the full context:
 
 ### Technology Stack
 
-- **FUSE:** Filesystem in Userspace
-- **Backend:** Knowledge graph MCP server
-- **Query Engine:** Semantic search API
+- **FUSE:** Filesystem in Userspace (client interface)
+- **Backend:** FastAPI REST API server
+- **Query Engine:** Semantic search API (part of backend)
 - **Cache:** TTL-based concept cache (fights non-determinism slightly)
+
+**Note:** The FUSE filesystem is a client interface, just like the MCP server, CLI, and web interface. All clients communicate with the same FastAPI backend.
 
 ### Basic Operations
 
@@ -1345,11 +1419,25 @@ echo "test" > /mnt/knowledge/shard-production/compliance/test.md
 
 ## References
 
+### Implementation Tools
+
 - [FUSE Documentation](https://github.com/libfuse/libfuse)
+- [pyfuse3 Documentation](https://pyfuse3.readthedocs.io/)
 - [rclone Architecture](https://rclone.org/docs/)
 - [rclone Backend Implementation Guide](https://rclone.org/docs/#writing-your-own-backend)
+
+### Related Semantic File Systems
+
+- [Semantic File System (SFS)](https://dl.acm.org/doi/10.1145/121132.121138) - Gifford et al., MIT, 1991 - Original virtual directories as queries
+- [Tagsistant](http://www.tagsistant.net/) - Linux FUSE semantic filesystem with boolean logic
+- [TMSU](https://tmsu.org/) - Tag My Sh*t Up - Modern SQLite-backed tagging filesystem
+- [Google Cloud Storage FUSE](https://cloud.google.com/storage/docs/gcs-fuse) - Example of widely-used partial POSIX compliance
+
+### Internal Architecture
+
 - ADR-055: Sharding and facet architecture
 - ADR-048: Query safety and namespace isolation
+- ADR-054: OAuth client management
 
 ---
 
