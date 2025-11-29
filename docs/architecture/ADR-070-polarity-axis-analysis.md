@@ -7,35 +7,24 @@
 - ADR-044: Probabilistic Truth Convergence (grounding calculation)
 - ADR-045: Unified Embedding Generation
 - ADR-048: GraphQueryFacade (namespace safety)
+- ADR-058: Polarity Axis Triangulation for Grounding (explains relationship to this ADR)
 - ADR-068: Unified Embedding Regeneration
 
 ## Context
 
-The knowledge graph captures concepts and relationships with semantic embeddings, but lacks tools to explore **bidirectional semantic dimensions** - conceptual spectrums along which concepts vary.
+The knowledge graph captures concepts and relationships with semantic embeddings, but lacks tools to explore **bidirectional semantic dimensions** - conceptual spectrums along which concepts vary. While ADR-058 introduced polarity axes for calculating grounding strength by projecting relationship edges onto axes, this ADR explores a complementary capability: using polarity axes to discover and navigate semantic dimensions by projecting concept embeddings themselves.
+
+### Understanding the Relationship to ADR-058
+
+ADR-058 uses polarity axes formed by opposing relationship types (SUPPORTS/CONTRADICTS, VALIDATES/REFUTES) to calculate how grounded a concept is based on its incoming relationship edges. This ADR uses polarity axes formed by opposing concepts (Modern Operating Model ↔ Traditional Operating Models) to determine where concepts fall on semantic spectrums. Both use the same mathematical technique (vector projection onto an axis) but apply it to different problems: ADR-058 answers "how reliable is this concept?" while this ADR answers "where does this concept fall on this conceptual spectrum?"
 
 ### Problem Statement
 
-Users need to:
-1. **Discover oppositions:** Find conceptual polarity (Modern ↔ Traditional, Centralized ↔ Decentralized)
-2. **Position concepts:** Determine where concepts fall on semantic spectrums
-3. **Explore dimensions:** Navigate knowledge along semantic axes, not just relationship graphs
-4. **Validate coherence:** Measure if concepts align with expected polarity (e.g., "Agile" closer to "Modern")
+Users need capabilities beyond relationship traversal and grounding assessment. They need to understand the semantic landscape of their knowledge - discovering implicit dimensions that organize concepts even when explicit relationships don't capture them. For example, a knowledge base about organizational transformation might contain dozens of concepts that vary along a "modern versus traditional" spectrum, but this dimension emerges from semantic similarities rather than explicit MODERN_VS_TRADITIONAL relationship edges.
 
-### Current Limitations
+Consider the question "Where does 'Agile' fall on the spectrum between modern and traditional approaches?" The graph might contain PREVENTS relationships (Legacy Systems -PREVENTS-> Digital Transformation) that hint at this dimension, but there's no direct way to position concepts along it quantitatively. Similarly, users might want to find "middle ground" or "synthesis" concepts that balance two opposing poles, but relationship traversal alone can't identify these neutral positions.
 
-**Relationship-only navigation:**
-- Users can traverse PREVENTS, SUPPORTS, CONTRADICTS edges
-- But can't see the implicit **semantic dimension** these relationships form
-- Example: "Legacy Systems -PREVENTS-> Digital Transformation" hints at a Modern ↔ Traditional axis, but this isn't explicit
-
-**Missing semantic positioning:**
-- No way to ask "Where does this concept fall on the Modern ↔ Traditional spectrum?"
-- No quantitative measure of polarity alignment
-- No way to find neutral/synthesis concepts (midpoint concepts)
-
-**Grounding correlation unexplored:**
-- Grounding scores (±values) suggest polarity but aren't connected to semantic positioning
-- Example: "Agile" (+0.227 grounding) vs "Legacy Systems" (-0.075 grounding) suggests polarity, but lacks spatial representation
+The grounding scores calculated by ADR-058 provide a clue - concepts with positive grounding tend to be beneficial while negative grounding suggests problems - but grounding is a measure of reliability, not semantic position. A highly reliable concept (strong grounding) might still sit anywhere on a modern-traditional spectrum. What's missing is the ability to project concepts onto semantic dimensions and measure their position explicitly
 
 ### Research Foundation
 
@@ -58,27 +47,17 @@ Projecting concepts onto polarity axes formed by opposing concepts (positive ↔
 
 ## Decision
 
-**Implement polarity axis analysis as a core query capability** using:
+Implement polarity axis analysis as a core query capability using on-demand calculation via background workers. This approach provides flexibility for user-defined axes while reusing existing infrastructure.
 
-1. **On-demand calculation via background workers**
-   - Compute axes when requested (not pre-computed)
-   - Use existing grounding calculation infrastructure
-   - Cache results with 1-hour TTL
+**Architecture components:**
 
-2. **Three primary API endpoints:**
-   - `POST /queries/polarity-axis` - Analyze specific axis
-   - `POST /queries/discover-polarity-axes` - Auto-discover from PREVENTS/CONTRADICTS
-   - `GET /queries/polarity-axis/{axis_id}/project/{concept_id}` - Project concept onto axis
+**Background worker processing:** Compute axes when requested rather than pre-computing them. This allows users to explore any pair of opposing concepts without requiring the system to predict which axes might be interesting. The `PolarityAxisWorker` handles calculation jobs asynchronously to avoid blocking the API, following the same pattern established for ingestion and embedding generation.
 
-3. **Worker-based architecture:**
-   - `PolarityAxisWorker` handles background jobs
-   - Reuses `AGEClient.calculate_grounding_strength_semantic()` for polarity correlation
-   - Returns structured JSON with axis definition + projections
+**Three primary API endpoints** enable different exploration patterns. The `POST /queries/polarity-axis` endpoint analyzes a specific axis given two opposing concepts, returning positions of candidate concepts along that spectrum. The `POST /queries/discover-polarity-axes` endpoint auto-discovers potential axes by examining PREVENTS and CONTRADICTS relationships in the graph, surfacing implicit dimensions users might not have considered. The `GET /queries/polarity-axis/{axis_id}/project/{concept_id}` endpoint projects individual concepts onto previously calculated axes for incremental exploration.
 
-4. **Caching strategy:**
-   - Cache axis definitions (positive/negative poles + unit vector)
-   - Cache individual projections
-   - Invalidate on embedding regeneration events
+**Reuse of existing infrastructure** keeps implementation focused. The grounding correlation validation uses `AGEClient.calculate_grounding_strength_semantic()` (from ADR-058) to measure whether axes represent value polarities. Structured JSON responses follow established patterns from other query endpoints. The worker architecture builds on the existing job queue system rather than introducing new abstractions.
+
+**Performance considerations:** Embedding operations are computationally expensive (768-dimensional dot products across potentially hundreds of concepts). While a future global caching system for embedding-based queries would significantly improve performance, this ADR focuses on establishing the core capability first. Performance optimization through caching should be addressed holistically across all embedding-dependent queries (concept search, grounding calculation, polarity analysis) rather than implementing ad-hoc caching for each feature independently.
 
 ## Consequences
 
@@ -109,23 +88,22 @@ Projecting concepts onto polarity axes formed by opposing concepts (positive ↔
 ### Negative
 
 **Performance cost:**
-- Embedding operations are expensive (768-dimensional dot products)
-- Mitigated by: Background workers, caching, batching
+- Embedding operations are expensive (768-dimensional dot products across potentially hundreds of concepts)
+- Each axis calculation requires fetching embeddings and computing projections for all candidates
+- Background workers mitigate API blocking but don't eliminate computation cost
+- Note: A future global caching system for embedding-dependent queries would address this across all query types
 
 **Interpretation complexity:**
-- Position values (-1 to +1) require explanation
-- Axis distance needs context (what's "high" orthogonality?)
-- Mitigated by: Clear documentation, examples, visual aids
-
-**Cache invalidation complexity:**
-- Axes change when embeddings regenerate
-- Concept projection changes if concept embedding changes
-- Mitigated by: Conservative 1-hour TTL, invalidate on embedding regen only
+- Position values (-1 to +1) require explanation for users unfamiliar with vector projection
+- Axis distance needs context (what constitutes "high" orthogonality varies by domain)
+- Direction classification thresholds (±0.3) are somewhat arbitrary
+- Mitigated by: Clear documentation, diverse examples, visual aids in interfaces
 
 **API surface growth:**
-- 3 new endpoints + worker infrastructure
-- More complexity in query layer
-- Mitigated by: Clear separation (polarity endpoints distinct from concept/relationship queries)
+- Adds 3 new endpoints to query layer
+- Introduces new worker type (`PolarityAxisWorker`)
+- Increases cognitive load for API users learning the system
+- Mitigated by: Clear separation from existing endpoints, consistent patterns with other query types
 
 ### Neutral
 
@@ -330,12 +308,13 @@ Projected Concepts:
 - Predictable performance
 
 **Cons:**
-- Can't handle user-defined axes
-- Requires maintenance (which axes to pre-compute?)
-- Stale data if graph changes
+- Can't handle user-defined axes (major limitation for exploratory use)
+- Requires maintenance (which axes to pre-compute? how to update?)
+- Stale data if graph changes (embeddings regenerate, concepts added/removed)
+- Assumes we know what axes users want (contradicts exploratory nature)
 
 **Decision:** ❌ Rejected
-**Reason:** On-demand + caching provides flexibility without maintenance burden
+**Reason:** On-demand calculation provides flexibility for arbitrary user-defined axes without maintenance burden of predicting interesting axes
 
 ### Alternative 2: Client-Side Computation
 
@@ -346,12 +325,12 @@ Projected Concepts:
 - Full flexibility for client
 
 **Cons:**
-- Exposes 768-dimensional embeddings (large payloads)
-- Duplicates computation across clients
-- Harder to cache centrally
+- Exposes 768-dimensional embeddings (large payloads, privacy concern)
+- Duplicates computation across clients (inefficient)
+- No central optimization or future caching possible
 
 **Decision:** ❌ Rejected
-**Reason:** Server-side calculation enables caching and keeps embeddings private
+**Reason:** Server-side calculation keeps embeddings private, enables future optimization, and provides consistent results across all clients
 
 ### Alternative 3: Persist Axis Definitions
 
@@ -361,14 +340,16 @@ Projected Concepts:
 - Historical tracking (axis evolution over time)
 - Faster retrieval (no re-computation)
 - Can link concepts to axes explicitly
+- Enables querying "which axes use this concept as a pole?"
 
 **Cons:**
 - Schema complexity (new vertex type + edges)
-- Cache invalidation more complex
-- Overhead for one-off axes
+- Invalidation complexity when embeddings regenerate
+- Storage overhead for one-off exploratory axes
+- Premature commitment to persistence before understanding usage patterns
 
 **Decision:** ⏸️ Deferred
-**Reason:** Start with cache-only, add persistence if demand warrants. Can add later without breaking changes.
+**Reason:** Start with on-demand computation only, add persistence if usage patterns reveal value. Can add later without breaking changes to API contracts.
 
 ### Alternative 4: Integrate into Existing Search
 
@@ -457,38 +438,6 @@ r, p_value = pearsonr(positions, groundings)
 - Agile (+0.227 grounding) → position +0.194 (toward positive pole)
 - Correlation: r = 0.85 (strong!)
 
-### Caching Strategy
-
-**Cache Keys:**
-```python
-# Axis definition
-axis_key = f"polarity_axis:v1:{hash(positive_id)}:{hash(negative_id)}"
-cached_axis = {
-    "positive_pole": {...},
-    "negative_pole": {...},
-    "axis_unit_vector": [...],
-    "magnitude": 1.0714,
-    "created_at": "2025-11-29T..."
-}
-# TTL: 1 hour
-
-# Individual projection
-projection_key = f"projection:v1:{axis_id}:{concept_id}"
-cached_projection = {
-    "position": 0.194,
-    "axis_distance": 1.0008,
-    "direction": "positive",
-    "grounding": 0.227,
-    "created_at": "..."
-}
-# TTL: 30 minutes
-```
-
-**Invalidation:**
-- On embedding regeneration: Clear all `projection:*:*:{concept_id}` keys
-- On axis calculation error: Clear `axis:*` key and retry
-- Manual: Allow `?force_refresh=true` parameter to bypass cache
-
 ## Implementation Phases
 
 ### Phase 1: Core Worker
@@ -504,17 +453,12 @@ cached_projection = {
 - [ ] Pydantic models for request/response
 - [ ] OpenAPI documentation
 
-### Phase 3: Caching
-- [ ] Redis caching layer
-- [ ] Cache invalidation on embedding regen
-- [ ] Cache hit rate metrics
-
-### Phase 4: Documentation
+### Phase 3: Documentation
 - [ ] Update guides with polarity axis examples
 - [ ] CLI integration (`kg polarity ...`)
 - [ ] Video demo (optional)
 
-### Phase 5: Interface Integration
+### Phase 4: Interface Integration
 - [ ] MCP server tools (`analyze_polarity_axis`, `discover_polarity_axes`)
 - [ ] CLI commands (`kg polarity analyze`, `kg polarity discover`, `kg polarity project`)
 - [ ] Web workstation "Polarity Axis Explorer" panel
@@ -573,26 +517,28 @@ kg polarity project <axis_id> <concept_id>    # Project concept
 - ✅ Polarity axis calculation produces stable results (±0.05 across runs)
 - ✅ Grounding correlation r > 0.7 for PREVENTS/CONTRADICTS axes
 - ✅ Direction accuracy >90% vs human spot checks
+- ✅ Graceful handling of edge cases (single concept, no candidates, invalid concept IDs)
 
 **Performance:**
-- ✅ Axis calculation <5s for 20 candidates
-- ✅ Cached projection <100ms
-- ✅ Cache hit rate >80% for popular axes
+- ✅ Axis calculation <5s for 20 candidates (initial implementation without caching)
+- ✅ Background worker processing prevents API blocking
 - ✅ No performance regression on existing endpoints
+- ✅ Job queue handles concurrent polarity analysis requests
 
 **Adoption:**
 - ✅ 10+ polarity axis analyses per week (within first month)
 - ✅ User feedback positive (clear value, understandable results)
 - ✅ Zero critical bugs or data corruption
+- ✅ Documentation enables self-service usage
 
 ## Risks & Mitigations
 
 | Risk | Impact | Probability | Mitigation |
 |------|--------|-------------|------------|
-| Expensive computation slows API | High | Medium | Background workers + caching |
-| Results are unintuitive | Medium | Medium | Clear docs, examples, visual aids |
-| Cache invalidation bugs | High | Low | Conservative TTL, manual refresh option |
-| Grounding correlation weak | Medium | Low | Document when axes are weak, suggest alternatives |
+| Expensive computation affects user experience | High | Medium | Background workers, job queue, progress tracking |
+| Results are unintuitive to users | Medium | Medium | Clear docs, diverse examples, visual aids in interfaces |
+| Grounding correlation weak for some axes | Medium | Low | Document when axes are weak, suggest alternatives, show correlation strength |
+| Users discover axes that don't make semantic sense | Low | Medium | Provide correlation metrics, allow filtering by correlation strength |
 
 ## References
 

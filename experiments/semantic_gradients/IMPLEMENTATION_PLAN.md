@@ -183,27 +183,7 @@ Create `PolarityAxisWorker` for background analysis jobs.
 }
 ```
 
-### Phase 3: Caching & Optimization
-
-**Problem:** Polarity axis calculation is expensive (fetch embeddings, project multiple concepts)
-
-**Solution:** Cache axis definitions and projections
-
-**Cache Strategy:**
-```python
-# Cache axis vector for reuse
-cache_key = f"polarity_axis:{positive_id}:{negative_id}"
-cached_axis = redis.get(cache_key)
-
-# TTL: 1 hour (axes are stable unless graph changes)
-# Invalidate on: concept embedding regeneration
-
-# Cache individual projections
-projection_key = f"projection:{axis_id}:{concept_id}"
-# TTL: 30 minutes
-```
-
-### Phase 4: Integration Points
+### Phase 3: Integration Points
 
 **Where this adds value:**
 
@@ -230,16 +210,16 @@ projection_key = f"projection:{axis_id}:{concept_id}"
 1. **Architectural Decision:** Adding polarity axis analysis as a core query capability
 2. **Multiple Alternatives:** Could be client-side computation, pre-computed, or on-demand
 3. **Significant Consequences:**
-   - Performance impact (embedding operations)
-   - Caching strategy required
-   - New API surface area
+   - Performance impact (embedding operations are expensive)
+   - New API surface area (3 endpoints + worker)
+   - Future optimization needs (global caching system for embedding-dependent queries)
 4. **Long-term Impact:** Affects how users explore conceptual dimensions
 
 **Proposed ADR Number:** ADR-070
 
 **Proposed Title:** "Polarity Axis Analysis for Bidirectional Semantic Dimensions"
 
-**Key Decision:** On-demand polarity axis calculation via background workers, with caching for repeated queries
+**Key Decision:** On-demand polarity axis calculation via background workers for flexible user-defined semantic exploration
 
 ## Implementation Checklist
 
@@ -257,22 +237,18 @@ projection_key = f"projection:{axis_id}:{concept_id}"
 - [ ] Add request/response Pydantic models
 - [ ] Write integration tests
 
-### Phase 3: Caching
-- [ ] Design cache key structure
-- [ ] Implement Redis caching layer
-- [ ] Add cache invalidation on embedding regeneration
-- [ ] Add cache metrics (hit rate, TTL effectiveness)
-
-### Phase 4: Documentation
+### Phase 3: Documentation
 - [ ] Write ADR-070
 - [ ] Update API documentation (OpenAPI)
 - [ ] Add usage examples to guides
 - [ ] Update kg CLI to support polarity axis commands
 
-### Phase 5: CLI Integration
+### Phase 4: CLI Integration
 - [ ] `kg polarity analyze <positive_id> <negative_id>`
 - [ ] `kg polarity discover --type PREVENTS`
 - [ ] `kg polarity project <axis_id> <concept_id>`
+
+**Note on Performance:** A future global caching system for all embedding-dependent queries (concept search, grounding calculation, polarity analysis) would significantly improve performance. However, this ADR focuses on establishing the core capability first, with optimization addressed holistically across all query types later.
 
 ## Migration from Experiments
 
@@ -295,9 +271,9 @@ experiments/semantic_gradients/SEMANTIC_PATH_GRADIENTS.md
 ## Success Metrics
 
 **Performance:**
-- Polarity axis calculation: <5s for 20 candidates
-- Cached projection: <100ms
+- Polarity axis calculation: <5s for 20 candidates (initial implementation without caching)
 - Axis discovery: <10s for 50 relationships
+- Background worker prevents API blocking during calculation
 
 **Quality:**
 - Grounding correlation >0.7 for strong axes (PREVENTS, CONTRADICTS)
@@ -306,29 +282,30 @@ experiments/semantic_gradients/SEMANTIC_PATH_GRADIENTS.md
 
 **Adoption:**
 - 10+ polarity axis analyses per week (user engagement)
-- Cache hit rate >80% for popular axes
 - Zero performance regressions on existing endpoints
+- Documentation enables self-service usage
 
 ## Risks & Mitigations
 
-**Risk 1: Expensive computation**
-- Mitigation: Background workers + caching
-- Fallback: Pre-compute popular axes (Modern ↔ Traditional, etc.)
+**Risk 1: Expensive computation affects user experience**
+- Mitigation: Background workers prevent API blocking, job queue handles concurrent requests
+- Future optimization: Global caching system for all embedding-dependent queries
+- Fallback: Pre-compute popular axes if performance becomes critical
 
 **Risk 2: Unintuitive results**
-- Mitigation: Clear documentation, examples, visual aids
+- Mitigation: Clear documentation, diverse examples, visual aids in interfaces
 - Fallback: Allow manual axis definition (override auto-discovery)
 
-**Risk 3: Cache invalidation complexity**
-- Mitigation: Conservative TTL (1 hour), invalidate on embedding regen only
-- Fallback: Allow force-refresh via query parameter
+**Risk 3: Users discover axes that don't make semantic sense**
+- Mitigation: Provide grounding correlation metrics, allow filtering by correlation strength
+- Fallback: Documentation on interpreting weak axes
 
 ## Open Questions
 
-1. **Should we persist axis definitions?**
-   - Pro: Faster retrieval, historical tracking
-   - Con: Schema overhead, invalidation complexity
-   - **Recommendation:** Start with cache-only, add persistence if demand warrants
+1. **Should we persist axis definitions in the graph?**
+   - Pro: Faster retrieval, historical tracking, can query "which axes use this concept?"
+   - Con: Schema overhead, invalidation complexity when embeddings change
+   - **Recommendation:** Start with on-demand computation only, add persistence if usage patterns reveal value
 
 2. **How to handle multi-dimensional axes?**
    - Current: 1D projection (positive ↔ negative)
@@ -343,9 +320,8 @@ experiments/semantic_gradients/SEMANTIC_PATH_GRADIENTS.md
 
 - **Phase 1:** Worker Service
 - **Phase 2:** API Endpoints
-- **Phase 3:** Caching
-- **Phase 4:** Documentation + ADR
-- **Phase 5:** Interface Integration (MCP, CLI, Web)
+- **Phase 3:** Documentation + ADR
+- **Phase 4:** Interface Integration (MCP, CLI, Web)
 
 ## User Interface Specifications
 
