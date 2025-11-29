@@ -138,6 +138,187 @@ Projecting concepts onto polarity axes formed by opposing concepts (positive ↔
 - Loses nuance, but gains interpretability
 - Future: Could extend to 2D projections (two orthogonal axes)
 
+## Example Use Cases Across Domains
+
+To illustrate the versatility of polarity axis analysis, consider how it would apply to different knowledge domains:
+
+### Software Architecture
+
+**Axis: Monolith ↔ Microservices**
+
+```
+Monolith ●────────────────────────────────────● Microservices
+         │                                    │
+    Grounding: -0.15                    Grounding: +0.08
+    (problematic)                       (beneficial)
+
+Projected Concepts:
+  Modular Monolith        (+0.35) - Neutral/Synthesis
+  Service-Oriented Arch   (+0.72) - Toward Microservices
+  Layered Architecture    (-0.18) - Toward Monolith
+  Serverless             (+0.91) - Strongly Microservices
+```
+
+**Insight:** "Modular Monolith" positioned at +0.35 reveals it as a **synthesis concept** - borrowing from both paradigms. High axis distance would indicate it's introducing a third dimension (deployment model vs design pattern).
+
+### Political Philosophy
+
+**Axis: Individualism ↔ Collectivism**
+
+```
+Individualism ●────────────────────────────────● Collectivism
+              │                                │
+         Grounding: 0.0                   Grounding: 0.0
+         (neutral)                        (neutral)
+
+Projected Concepts:
+  Libertarianism         (-0.82) - Strongly Individual
+  Social Democracy       (+0.41) - Leaning Collective
+  Communitarianism       (+0.68) - Toward Collective
+  Anarchism              (-0.15) - Slightly Individual (surprising!)
+```
+
+**Insight:** Anarchism's near-neutral position (-0.15) despite expectations reveals semantic nuance - anarchist philosophy contains both individualist and collective strains. The axis exposes this complexity that relationship-only navigation might miss.
+
+### Design Principles
+
+**Axis: Minimalism ↔ Maximalism**
+
+```
+Minimalism ●──────────────────────────────────● Maximalism
+           │                                  │
+      Grounding: +0.22                  Grounding: -0.05
+      (preferred)                       (contested)
+
+Projected Concepts:
+  Brutalism              (-0.91) - Strongly Minimal
+  Bauhaus                (-0.73) - Toward Minimal
+  Art Deco               (+0.58) - Toward Maximal
+  Baroque                (+0.89) - Strongly Maximal
+  Scandinavian Design    (-0.62) - Toward Minimal
+```
+
+**Insight:** Grounding correlation (r=0.87) shows cultural preference for minimalism in this knowledge base. "Art Deco" at +0.58 but still having moderate grounding suggests it's valued maximalism - controlled ornamentation vs excess.
+
+### Research Methodology
+
+**Axis: Empirical ↔ Theoretical**
+
+```
+Empirical ●───────────────────────────────────● Theoretical
+          │                                   │
+     Grounding: +0.31                   Grounding: +0.18
+     (valued)                           (valued)
+
+Projected Concepts:
+  Experimental Science   (-0.88) - Strongly Empirical
+  Mathematical Proof     (+0.94) - Strongly Theoretical
+  Case Study             (-0.42) - Toward Empirical
+  Simulation             (+0.12) - Slightly Theoretical
+  Meta-Analysis          (+0.03) - Nearly Neutral
+```
+
+**Insight:** Both poles have positive grounding - **not all axes are value polarities**. "Meta-Analysis" at +0.03 is almost perfectly balanced, which matches its nature as synthesis of empirical studies with theoretical frameworks.
+
+### Business Strategy
+
+**Axis: Exploitation ↔ Exploration**
+
+```
+Exploitation ●────────────────────────────────● Exploration
+             │                                │
+        Grounding: +0.15                 Grounding: +0.28
+        (stable)                         (growth-oriented)
+
+Projected Concepts:
+  Process Optimization   (-0.79) - Strongly Exploitation
+  Market Research        (+0.67) - Toward Exploration
+  Innovation             (+0.85) - Strongly Exploration
+  Continuous Improvement (-0.33) - Leaning Exploitation
+  Blue Ocean Strategy    (+0.92) - Extreme Exploration
+```
+
+**Insight:** Weak axis distance for "Continuous Improvement" (-0.33 on axis but low axis distance) suggests it's **on the spectrum** rather than orthogonal. This validates it as an exploitation activity, not a third dimension.
+
+### Environmental Science
+
+**Axis: Anthropocentric ↔ Ecocentric**
+
+```
+Anthropocentric ●─────────────────────────────● Ecocentric
+                │                             │
+           Grounding: -0.42              Grounding: +0.51
+           (problematic)                 (sustainable)
+
+Projected Concepts:
+  Human Supremacy        (-0.95) - Extreme Anthropocentric
+  Sustainable Dev        (+0.38) - Leaning Ecocentric
+  Deep Ecology           (+0.91) - Strongly Ecocentric
+  Conservation           (+0.44) - Toward Ecocentric
+  Wise Use               (-0.28) - Toward Anthropocentric
+```
+
+**Insight:** Strong grounding correlation (r=0.91) reflects value shift in environmental discourse. "Sustainable Development" at +0.38 positions it as **pragmatic ecocentrism** - balancing human needs with ecological health.
+
+### Education Philosophy
+
+**Axis: Teacher-Centered ↔ Student-Centered**
+
+```
+Teacher-Centered ●────────────────────────────● Student-Centered
+                 │                            │
+            Grounding: -0.18              Grounding: +0.37
+            (traditional)                 (progressive)
+
+Projected Concepts:
+  Lecture-Based          (-0.81) - Strongly Teacher-Centered
+  Socratic Method        (+0.15) - Slightly Student-Centered
+  Project-Based Learning (+0.76) - Strongly Student-Centered
+  Apprenticeship         (+0.42) - Leaning Student-Centered
+  Montessori             (+0.88) - Extreme Student-Centered
+```
+
+**Insight:** "Socratic Method" at +0.15 is surprisingly **near neutral** despite being ancient - reveals it has student-centered elements (questioning, dialogue) within teacher-controlled structure. Axis exposes this duality.
+
+### Cognitive Science
+
+**Axis: Nature ↔ Nurture**
+
+```
+Nature ●──────────────────────────────────────● Nurture
+       │                                      │
+  Grounding: 0.0                         Grounding: 0.0
+  (genetic)                              (environmental)
+
+Projected Concepts:
+  Nativism               (-0.89) - Strongly Nature
+  Behaviorism            (+0.84) - Strongly Nurture
+  Epigenetics            (+0.22) - Leaning Nurture (!)
+  Gene-Environment       (+0.05) - Nearly Neutral
+  Developmental Systems  (+0.18) - Slightly Nurture
+```
+
+**Insight:** "Epigenetics" at +0.22 positioned toward Nurture despite involving genes - semantically correct because epigenetics studies how **environment influences** gene expression. Axis captures this subtle distinction that "genetics-related" tagging would miss.
+
+### Key Patterns Revealed
+
+**1. Synthesis Concepts Cluster Near Zero**
+- Modular Monolith, Meta-Analysis, Sustainable Development
+- Position ~0.0 to ±0.4 indicates **integration of both poles**
+
+**2. Grounding Correlation Indicates Value Polarity**
+- Strong correlation (r > 0.7): Value-laden axis (good ↔ bad)
+- Weak correlation (r < 0.3): Descriptive axis (two valid approaches)
+
+**3. High Axis Distance Reveals Orthogonal Concerns**
+- Concept far from axis introduces **third dimension**
+- Example: "Secure by Default" might be orthogonal to Monolith ↔ Microservices axis (security ≠ architecture)
+
+**4. Unexpected Positions Expose Semantic Nuance**
+- Anarchism near-neutral on Individualism ↔ Collectivism
+- Socratic Method near-neutral on Teacher ↔ Student-Centered
+- Reveals concepts are more complex than simple categorization
+
 ## Alternatives Considered
 
 ### Alternative 1: Pre-compute Popular Axes
