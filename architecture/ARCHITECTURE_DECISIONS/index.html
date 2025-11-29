@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../ADR-068-source-text-embeddings/">
+        <link rel="prev" href="../ADR-069-semantic-fuse-filesystem/">
       
       
         <link rel="next" href="../ARCHITECTURE_OVERVIEW/">
@@ -4839,6 +4839,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-069: Semantic FUSE Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -6242,6 +6270,12 @@
 <td>Source Text Embeddings for Grounding Truth Retrieval</td>
 <td>Proposed</td>
 <td>Async embedding generation for Source nodes with configurable chunking strategies (sentence/paragraph/count/semantic) - enables direct source passage search, hybrid concept+source queries, and completes LCM foundation where all graph elements (concepts, edges, sources) have embeddings for multi-modal retrieval</td>
+</tr>
+<tr>
+<td><a href="../ADR-069-semantic-fuse-filesystem/">ADR-069</a></td>
+<td>Semantic FUSE Filesystem</td>
+<td>Proposed</td>
+<td>Expose knowledge graph as FUSE mount point enabling semantic navigation via standard Unix tools (ls, cd, cat, grep, find) - partial filesystem (like /sys/) with 4-level hierarchy (shard/facet/ontology/concepts), directory creation as semantic query, relationship navigation via subdirectories, write-as-ingest - implementation via rclone backend recommended for instant interop with cloud storage</td>
 </tr>
 </tbody>
 </table>
