@@ -509,7 +509,7 @@ kg polarity project <axis_id> <concept_id>    # Project concept
 - Interactive: hover for stats, click to navigate
 - Real-time correlation metrics
 
-**See full interface specifications in:** `experiments/semantic_gradients/IMPLEMENTATION_PLAN.md`
+**See full interface specifications in:** [Implementation Plan](../features/polarity-axis-analysis/IMPLEMENTATION_PLAN.md)
 
 ## Success Criteria
 
@@ -542,8 +542,10 @@ kg polarity project <axis_id> <concept_id>    # Project concept
 
 ## References
 
-- **Experimental findings:** `experiments/semantic_gradients/findings-results.md`
-- **Implementation guide:** `docs/guides/SEMANTIC_PATH_GRADIENTS.md`
+- **Feature Documentation:** [Polarity Axis Analysis](../features/polarity-axis-analysis/)
+  - [Implementation Plan](../features/polarity-axis-analysis/IMPLEMENTATION_PLAN.md) - Complete technical roadmap
+  - [Experimental Findings](../features/polarity-axis-analysis/FINDINGS.md) - Validation results
+  - [Experimental Code](../features/polarity-axis-analysis/experimental_code/) - Validated prototypes
 - **Research papers:**
   - [Large Concept Models](https://arxiv.org/abs/2412.08821) - Meta AI, Dec 2024
   - [Path-Constrained Retrieval](https://arxiv.org/html/2511.18313)
