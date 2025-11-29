@@ -779,6 +779,116 @@ mount -t fuse.knowledge-graph \
   /dev/knowledge /mnt/knowledge
 ```
 
+### Alternative: rclone Backend Implementation
+
+Instead of writing a custom FUSE driver, implement as an **rclone backend**.
+
+**Why rclone?**
+- rclone already handles FUSE mounting, caching, config management
+- Implement knowledge graph as "just another backend" (like S3, Google Drive)
+- Get interop between knowledge graphs and cloud storage for free
+- Users already understand rclone's model
+
+**Implementation:**
+
+```go
+// rclone backend for knowledge graphs
+package kg
+
+import (
+    "context"
+    "github.com/rclone/rclone/fs"
+)
+
+func init() {
+    fs.Register(&fs.RegInfo{
+        Name:        "kg",
+        Description: "Knowledge Graph Backend",
+        NewFs:       NewFs,
+        Options: []fs.Option{{
+            Name: "api_url",
+            Default: "http://localhost:8000",
+        }, {
+            Name: "shard",
+        }, {
+            Name: "auth_token",
+        }},
+    })
+}
+
+// List directory = semantic query
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+    facet, ontology, query := parsePath(dir)
+    concepts, err := f.client.Search(ctx, query, ontology)
+    for _, concept := range concepts {
+        entries = append(entries, conceptToEntry(concept))
+    }
+    return entries, nil
+}
+
+// Open file = read concept as markdown
+func (o *Object) Open(ctx context.Context) (io.ReadCloser, error) {
+    concept, err := o.fs.client.GetConcept(ctx, o.conceptID)
+    markdown := formatConceptMarkdown(concept)
+    return io.NopCloser(strings.NewReader(markdown)), nil
+}
+
+// Put file = ingest into knowledge graph
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+    data, _ := io.ReadAll(in)
+    facet, ontology, _ := parsePath(src.Remote())
+    result, err := f.client.Ingest(ctx, data, ontology, facet)
+    return &Object{...}, nil
+}
+```
+
+**Usage:**
+
+```bash
+# Configure knowledge graph backend
+rclone config create kg-research kg \
+  api_url=http://localhost:8000 \
+  shard=research \
+  auth_token=$TOKEN
+
+# Mount it
+rclone mount kg-research:academic/ai-research /mnt/knowledge
+
+# Works like any rclone mount
+ls /mnt/knowledge/
+cat /mnt/knowledge/embedding-models.concept
+echo "new idea" > /mnt/knowledge/new-concept.md
+```
+
+**Bonus: Cross-Backend Operations**
+
+```bash
+# Backup knowledge graph to S3
+rclone sync kg-research: s3:backup/kg-snapshot/
+
+# Ingest Google Drive docs into knowledge graph
+rclone copy gdrive:Papers/ kg-research:academic/papers/
+
+# Sync between knowledge graph shards
+rclone sync kg-shard-a: kg-shard-b:
+
+# Export concepts to git repository
+rclone sync kg-research: /tmp/kg-export/
+cd /tmp/kg-export && git init && git add . && git commit
+
+# Use rclone browser GUI to explore knowledge graph
+rclone rcd --rc-web-gui
+```
+
+**Benefits:**
+- Don't write FUSE layer (rclone handles it)
+- Get caching, retry logic, rate limiting for free
+- Instant interop with cloud storage backends
+- Existing rclone user base understands the model
+- rclone browser GUI works automatically
+
+**Implementation effort:** Minimal backend (List/Read/Write) could be prototyped in a weekend.
+
 ## Why This Will Make Unix Admins Angry
 
 ### The Angry Tweets We Expect
@@ -802,6 +912,41 @@ Correct! The number of concepts matching your context changes as you explore.
 > "This breaks `rsync`!"
 
 Have you considered that maybe `rsync` should understand semantic similarity? 🤔
+
+### The rclone Defense
+
+> "This is just like rclone for Google Drive!"
+
+**Yes. Exactly.** And millions of people use rclone daily despite its POSIX violations.
+
+**rclone for Google Drive exhibits:**
+- **Non-deterministic listings:** Files appear/disappear as others edit shared drives
+- **Multiple canonical paths:** Same file accessible via `/MyDrive/` and `/SharedDrives/` (Google's "Add to My Drive")
+- **Eventually consistent:** Write a file, read might return old content (API sync lag)
+- **Weird metadata:** Fake Unix permissions from Google's ACLs, timestamps from cloud provider
+- **Partial POSIX:** No symlinks, no memory mapping, fake chmod/chown
+
+**People accept this because the abstraction is useful.**
+
+**Semantic FUSE is actually BETTER than rclone:**
+
+| Aspect | rclone (Google Drive) | Semantic FUSE |
+|--------|----------------------|---------------|
+| Non-determinism | Network sync (unpredictable) | Semantic relevance (intentional) |
+| Multiple paths | Google's sharing model (confusing) | Semantic contexts (by design) |
+| Performance | Network latency, API rate limits | Local database (consistent) |
+| Metadata | Fake Unix perms from ACLs (awkward) | Native semantic data (grounding, similarity) |
+| Consistency | Eventually consistent (network) | Immediately consistent (local) |
+
+**rclone documentation literally says:**
+> "Note that many operations are not fully POSIX compliant. This is an inherent limitation of cloud storage systems."
+
+**Our documentation:**
+> "Note that many operations are not fully POSIX compliant. This is an inherent limitation of exposing semantic graphs as filesystems."
+
+**Same energy. Same usefulness. Same tradeoffs.**
+
+If you accept rclone's weirdness for the convenience of `grep`-ing Google Drive, you'll accept semantic FUSE's weirdness for the convenience of `grep`-ing knowledge graphs.
 
 ### The Defenses We Don't Care About
 
