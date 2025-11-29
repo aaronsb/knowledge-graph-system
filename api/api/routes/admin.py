@@ -850,3 +850,20 @@ async def regenerate_concept_embeddings(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to regenerate concept embeddings: {str(e)}"
         )
+
+
+# ====================================================================
+# Embedding Management Endpoints
+# MOVED to /admin/embedding/* router (see api/routes/embedding.py)
+# ====================================================================
+# The following endpoints have been refactored and moved to the proper
+# embedding management namespace under /admin/embedding/* (ADR-068 Phase 4):
+#
+# - GET  /admin/embedding-status      → GET  /admin/embedding/status
+# - POST /admin/regenerate-embeddings → POST /admin/embedding/regenerate
+#
+# The new endpoints include:
+# - Compatibility checking (model + dimension mismatch detection)
+# - --only-incompatible flag for model migrations
+# - Worker-based architecture for safety
+# ====================================================================

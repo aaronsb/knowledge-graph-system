@@ -756,6 +756,57 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Unified embedding regeneration for all graph text entities (ADR-068 Phase 4).
+   *
+   * Regenerate embeddings for concepts, sources, or vocabulary (relationship types).
+   * Useful for model migrations, fixing missing/corrupted embeddings, or bulk regeneration.
+   */
+  async regenerateEmbeddings(params: {
+    embedding_type: 'concept' | 'source' | 'vocabulary' | 'all';
+    only_missing?: boolean;
+    only_incompatible?: boolean;
+    ontology?: string;
+    limit?: number;
+  }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('embedding_type', params.embedding_type);
+
+    if (params.only_missing) {
+      queryParams.append('only_missing', 'true');
+    }
+    if (params.only_incompatible) {
+      queryParams.append('only_incompatible', 'true');
+    }
+    if (params.ontology) {
+      queryParams.append('ontology', params.ontology);
+    }
+    if (params.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+
+    const url = `/admin/embedding/regenerate?${queryParams.toString()}`;
+    const response = await this.client.post(url);
+    return response.data;
+  }
+
+  /**
+   * Get comprehensive embedding status for all graph text entities.
+   *
+   * Shows count, percentage, compatibility verification, and hash verification
+   * for embeddings across concepts, sources, vocabulary, and images.
+   */
+  async getEmbeddingStatus(ontology?: string): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (ontology) {
+      queryParams.append('ontology', ontology);
+    }
+
+    const url = `/admin/embedding/status${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await this.client.get(url);
+    return response.data;
+  }
+
   // ========== RBAC Methods (ADR-028) ==========
 
   /**

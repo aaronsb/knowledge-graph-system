@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2025-11-28
+> Last updated: 2025-11-29
 
 ---
 
@@ -1379,7 +1379,6 @@ kg admin [options]
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (requires authentication)
 - `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
-- `regenerate-embeddings` - Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)
 - `user` - User management commands (admin only)
 - `rbac` - Manage roles, permissions, and access control (ADR-028)
 - `embedding` - Manage embedding model configuration (ADR-039)
@@ -1475,24 +1474,6 @@ Manually trigger scheduler cleanup (cancels expired jobs, deletes old jobs)
 ```bash
 kg cleanup [options]
 ```
-
-### regenerate-embeddings
-
-Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)
-
-**Usage:**
-```bash
-kg regenerate-embeddings [options]
-```
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--concepts` | Regenerate concept embeddings (default if no options specified) | `true` |
-| `--only-missing` | Only generate for concepts without embeddings (skip existing) | `false` |
-| `--ontology <name>` | Limit regeneration to specific ontology namespace | - |
-| `--limit <n>` | Maximum number of concepts to process (useful for testing/batching) | - |
 
 ### user
 
@@ -1894,6 +1875,8 @@ kg embedding [options]
 - `protect` - Enable protection flags on an embedding configuration
 - `unprotect` - Disable protection flags on an embedding configuration
 - `delete` - Delete an embedding configuration
+- `status` - Show comprehensive embedding coverage across all graph text entities with hash verification
+- `regenerate` - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
 
 ---
 
@@ -2008,6 +1991,41 @@ kg delete <config-id>
 **Arguments:**
 
 - `<config-id>` - Configuration ID
+
+#### status
+
+Show comprehensive embedding coverage across all graph text entities with hash verification
+
+**Usage:**
+```bash
+kg status [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--ontology <name>` | Limit status to specific ontology namespace | - |
+
+#### regenerate
+
+Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
+
+**Usage:**
+```bash
+kg regenerate [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--type <type>` | Type of embeddings to regenerate: concept, source, vocabulary, all | - |
+| `--only-missing` | Only generate for entities without embeddings (skip existing) - applies to concept and source types | `false` |
+| `--only-incompatible` | Only regenerate embeddings with mismatched model/dimensions (for model migrations) | `false` |
+| `--ontology <name>` | Limit regeneration to specific ontology namespace - applies to concept and source types | - |
+| `--limit <n>` | Maximum number of entities to process (useful for testing/batching) | - |
+| `--status` | Show embedding status before regeneration (diagnostic mode) | `false` |
 
 ### extraction
 

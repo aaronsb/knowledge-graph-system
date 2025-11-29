@@ -971,6 +971,16 @@ const restoreCommand = new Command('restore')
 //
 // ==================================================
 
+// ========== Embedding Status & Regeneration Commands ==========
+// MOVED to kg admin embedding tree (see ai-config.ts)
+//
+// - kg admin embedding-status      → kg admin embedding status
+// - kg admin regenerate-embeddings → kg admin embedding regenerate
+//
+// The embedding management commands are now properly organized under
+// the embedding command group for comprehensive embedding management.
+// ================================================================
+
 // ========== Scheduler Commands (ADR-014) ==========
 
 const schedulerStatusCommand = new Command('status')
@@ -1068,82 +1078,8 @@ const schedulerCommand = new Command('scheduler')
   .addCommand(schedulerStatusCommand)
   .addCommand(schedulerCleanupCommand);
 
-// ========== Concept Embedding Regeneration Command ==========
-
-const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
-  .description('Regenerate vector embeddings for concept nodes in the graph (useful after changing embedding model or repairing missing embeddings)')
-  .option('--concepts', 'Regenerate concept embeddings (default if no options specified)', true)
-  .option('--only-missing', 'Only generate for concepts without embeddings (skip existing)', false)
-  .option('--ontology <name>', 'Limit regeneration to specific ontology namespace')
-  .option('--limit <n>', 'Maximum number of concepts to process (useful for testing/batching)', parseInt)
-  .action(async (options) => {
-    try {
-      const client = createClientFromEnv();
-
-      console.log(colors.separator());
-      console.log(colors.ui.title('🔄 Regenerating Concept Embeddings'));
-      console.log(colors.separator());
-
-      const params: any = {
-        only_missing: options.onlyMissing || false
-      };
-
-      if (options.ontology) {
-        params.ontology = options.ontology;
-      }
-
-      if (options.limit) {
-        params.limit = options.limit;
-      }
-
-      console.log();
-      console.log(colors.status.info('Starting regeneration...'));
-      if (options.ontology) {
-        console.log(colors.status.dim(`  Ontology: ${options.ontology}`));
-      }
-      if (options.onlyMissing) {
-        console.log(colors.status.dim('  Mode: Only missing embeddings'));
-      }
-      if (options.limit) {
-        console.log(colors.status.dim(`  Limit: ${options.limit} concepts`));
-      }
-      console.log();
-
-      const result = await client.regenerateConceptEmbeddings(params);
-
-      console.log(colors.separator());
-      console.log(colors.status.success('✓ Regeneration completed'));
-      console.log(`  ${colors.stats.label('Processed:')} ${colors.stats.value(result.processed_count.toString())} / ${result.target_count}`);
-
-      if (result.failed_count > 0) {
-        console.log(`  ${colors.status.error('Failed:')} ${result.failed_count}`);
-      }
-
-      console.log(`  ${colors.status.dim('Duration:')} ${result.duration_ms}ms`);
-      console.log(`  ${colors.status.dim('Model:')} ${result.embedding_provider}/${result.embedding_model}`);
-
-      if (result.errors && result.errors.length > 0) {
-        console.log();
-        console.log(colors.status.error('Errors:'));
-        result.errors.slice(0, 5).forEach((err: string) => {
-          console.log(colors.status.dim(`  ${err}`));
-        });
-        if (result.errors.length > 5) {
-          console.log(colors.status.dim(`  ... and ${result.errors.length - 5} more`));
-        }
-      }
-
-      console.log(colors.separator());
-      console.log();
-
-    } catch (error: any) {
-      console.error();
-      console.error(colors.status.error('✗ Failed to regenerate embeddings'));
-      console.error(colors.status.dim(`  ${error.message || error}`));
-      console.error();
-      process.exit(1);
-    }
-  });
+// Embedding status and regeneration commands moved to kg admin embedding tree
+// (see createEmbeddingStatusCommand and createEmbeddingRegenerateCommand in ai-config.ts)
 
 // ========== Main Admin Command ==========
 
@@ -1159,8 +1095,8 @@ export const adminCommand = setCommandHelp(
   .addCommand(listBackupsCommand)
   .addCommand(restoreCommand)
   // resetCommand removed - too dangerous for CLI, use initialize-platform.sh option 0
-  .addCommand(schedulerCommand)
-  .addCommand(regenerateEmbeddingsCommand);
+  .addCommand(schedulerCommand);
+  // embeddingStatusCommand and regenerateEmbeddingsCommand moved to embedding tree
 
 // ADR-027: Register user management commands
 registerAuthAdminCommand(adminCommand);
@@ -1185,4 +1121,4 @@ adminCommand.addCommand(extractionCommand);
 adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
-[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand, regenerateEmbeddingsCommand].forEach(configureColoredHelp);
+[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand].forEach(configureColoredHelp);
