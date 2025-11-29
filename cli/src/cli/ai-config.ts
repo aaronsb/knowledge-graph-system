@@ -504,9 +504,9 @@ function createEmbeddingStatusCommand(client: KnowledgeGraphClient): Command {
  * Regenerate embeddings (ADR-068 Phase 4)
  */
 function createEmbeddingRegenerateCommand(client: KnowledgeGraphClient): Command {
-  return new Command('regenerate')
+  const cmd = new Command('regenerate')
     .description('Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings')
-    .option('--type <type>', 'Type of embeddings to regenerate: concept, source, vocabulary, all (default: concept)', 'concept')
+    .option('--type <type>', 'Type of embeddings to regenerate: concept, source, vocabulary, all')
     .option('--only-missing', 'Only generate for entities without embeddings (skip existing) - applies to concept and source types', false)
     .option('--only-incompatible', 'Only regenerate embeddings with mismatched model/dimensions (for model migrations)', false)
     .option('--ontology <name>', 'Limit regeneration to specific ontology namespace - applies to concept and source types')
@@ -520,11 +520,40 @@ function createEmbeddingRegenerateCommand(client: KnowledgeGraphClient): Command
         return;
       }
 
+      // If no --type provided, show help and exit
+      if (!options.type) {
+        console.log();
+        console.log(colors.status.warning('⚠  No --type specified'));
+        console.log();
+        console.log(colors.ui.header('Usage:'));
+        console.log('  kg admin embedding regenerate --type <type> [options]');
+        console.log();
+        console.log(colors.ui.header('Required:'));
+        console.log('  --type <type>           Type: concept, source, vocabulary, all');
+        console.log();
+        console.log(colors.ui.header('Options:'));
+        console.log('  --only-missing          Only generate for entities without embeddings');
+        console.log('  --only-incompatible     Only regenerate embeddings with model/dimension mismatch');
+        console.log('  --ontology <name>       Limit to specific ontology (concept/source only)');
+        console.log('  --limit <n>             Maximum number of entities to process');
+        console.log('  --status                Show embedding status first (diagnostic mode)');
+        console.log();
+        console.log(colors.ui.header('Examples:'));
+        console.log('  kg admin embedding regenerate --type concept --only-missing');
+        console.log('  kg admin embedding regenerate --type source --only-incompatible');
+        console.log('  kg admin embedding regenerate --type all');
+        console.log('  kg admin embedding regenerate --status  # Show status first');
+        console.log();
+        console.log(colors.status.dim('Tip: Run "kg admin embedding status" to check current coverage'));
+        console.log();
+        process.exit(0);
+      }
+
       // Normal regeneration flow
       try {
         // Validate embedding type
         const validTypes = ['concept', 'source', 'vocabulary', 'all'];
-        const embeddingType = options.type || 'concept';
+        const embeddingType = options.type;
 
         if (!validTypes.includes(embeddingType)) {
           console.error();
@@ -644,6 +673,8 @@ function createEmbeddingRegenerateCommand(client: KnowledgeGraphClient): Command
         process.exit(1);
       }
     });
+
+  return cmd;
 }
 
 /**
