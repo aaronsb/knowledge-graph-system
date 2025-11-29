@@ -61,6 +61,49 @@ This proposal underwent external peer review to validate feasibility against the
 
 The review validated this is a "rigorous application of the 'everything is a file' philosophy to high-dimensional data," not a cursed hack.
 
+#### Performance and Consistency Engineering
+
+External research on high-dimensional semantic file systems identified critical engineering considerations that our architecture already addresses:
+
+**1. The Write Latency Trap (Mitigated)**
+- **Risk:** Synchronous embedding generation (15-50ms+) and graph linking (seconds) would block write() syscalls, hanging applications
+- **Our Solution:** Asynchronous worker pattern (ADR-014) with job queue
+  - Writes accepted immediately to staging area
+  - Background workers handle chunking, embedding, concept matching
+  - POSIX-compliant write performance maintained
+
+**2. The Read (ls) Bottleneck (Mitigated)**
+- **Risk:** Fresh vector searches or clustering on every readdir would cause sluggish directory listings
+- **Our Solution:** Query-time retrieval with caching
+  - 100-200ms retrieval target (realistic for vector search + graph traversal)
+  - PostgreSQL connection pooling for concurrent queries
+  - Directory structure is deterministic (ontology-based), not emergent clustering
+  - FUSE implementation will cache directory listings with configurable TTL
+
+**3. POSIX Stability via Deterministic Structure (Addressed)**
+- **Risk:** Purely emergent clustering causes "cluster jitter" - files randomly moving between folders as content shifts
+- **Our Solution:** Stable four-level hierarchy (Shard → Facet → Ontology → Concepts)
+  - Paths are deterministic based on ontology assignment
+  - Concepts appear in multiple semantic query directories (intentional non-determinism)
+  - But underlying storage location is stable (ontology-scoped)
+
+**4. Eventual Consistency Gap (Acknowledged)**
+- **Risk:** Async processing creates delay between write and appearance in semantic directories
+- **Mitigation:** Virtual README.md in empty query results (see Future Extensions)
+  - Explains why results are empty
+  - Suggests alternative queries or lower thresholds
+  - Future: "Processing" indicator for in-flight ingestion
+
+**5. Connection Pool Saturation (Addressed)**
+- **Risk:** "Thundering herd" when user pastes 1,000 files - every readdir hammers database
+- **Our Solution:**
+  - PostgreSQL connection pooling (existing infrastructure)
+  - FUSE TTL-based caching (mount option: `cache_ttl=60`)
+  - Query rate limiting at API layer
+  - Batch ingestion queuing (ADR-014 job scheduler)
+
+**Verdict:** The architecture decouples high-latency "thinking" (AI processing) from low-latency "acting" (filesystem I/O), which research validates as the primary requirement for functional semantic filesystems.
+
 ### Related Work: Other Semantic File Systems
 
 This proposal builds on a rich history of semantic filesystems, though none have applied the "Directory = Query" metaphor to vector embeddings and probabilistic similarity.
