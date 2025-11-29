@@ -953,10 +953,10 @@ async def regenerate_source_embeddings(
         # Extract source data
         for row in results:
             target_sources.append({
-                "source_id": row[0],
-                "full_text": row[1],
-                "document": row[2],
-                "paragraph": row[3]
+                "source_id": row["source_id"],
+                "full_text": row["full_text"],
+                "document": row["document"],
+                "paragraph": row["paragraph"]
             })
 
     if not target_sources:
