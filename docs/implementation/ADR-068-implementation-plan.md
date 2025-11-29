@@ -265,33 +265,33 @@ for embedding in embeddings:
 
 ---
 
-### Phase 2: Generation (Second PR)
+### Phase 2: Generation (Second PR) ✅ **COMPLETED**
 
 **Goal:** Full worker implementation, embeddings generated
 
 #### Tasks:
 
-- [ ] **Complete Worker Implementation**
-  - [ ] Fetch Source node by source_id
-  - [ ] Calculate source_hash
-  - [ ] Chunk using sentence strategy
-  - [ ] Generate embeddings via EmbeddingWorker
-  - [ ] Calculate chunk_hash for each chunk
-  - [ ] Insert into source_embeddings table
-  - [ ] Update Source.content_hash field
+- [x] **Complete Worker Implementation**
+  - [x] Fetch Source node by source_id
+  - [x] Calculate source_hash
+  - [x] Chunk using sentence strategy
+  - [x] Generate embeddings via EmbeddingWorker
+  - [x] Calculate chunk_hash for each chunk
+  - [x] Insert into source_embeddings table
+  - [x] Update Source.content_hash field
 
-- [ ] **Integration with Ingestion**
-  - [ ] Add to `api/api/workers/ingestion_worker.py`
-  - [ ] Dispatch job after Source creation
-  - [ ] Always enabled (no conditional logic)
-  - [ ] Test end-to-end ingestion
+- [x] **Integration with Ingestion**
+  - [x] Add to `api/api/workers/ingestion_worker.py`
+  - [x] Dispatch job after Source creation
+  - [x] Always enabled (no conditional logic)
+  - [x] Test end-to-end ingestion
 
-- [ ] **Testing**
-  - [ ] Test with small ontology (5-10 documents)
-  - [ ] Verify chunks created correctly
-  - [ ] Verify offsets match source text
-  - [ ] Verify hashes match
-  - [ ] Check embedding dimensions match config
+- [x] **Testing**
+  - [x] Test with small ontology (5-10 documents)
+  - [x] Verify chunks created correctly
+  - [x] Verify offsets match source text
+  - [x] Verify hashes match
+  - [x] Check embedding dimensions match config
 
 **Deliverables:**
 - Source embeddings generated during ingestion
@@ -307,32 +307,32 @@ for embedding in embeddings:
 
 ---
 
-### Phase 3: Query Integration (Third PR)
+### Phase 3: Query Integration (Third PR) ✅ **COMPLETED**
 
 **Goal:** Source similarity search working
 
 #### Tasks:
 
-- [ ] **Search Endpoint** (`api/api/routes/queries.py`)
-  - [ ] Create `POST /queries/sources/search`
-  - [ ] Accept: query_text, ontology, limit
-  - [ ] Generate query embedding
-  - [ ] Cosine similarity search in source_embeddings
-  - [ ] Verify source_hash (detect stale embeddings)
-  - [ ] Return chunks with offsets
+- [x] **Search Endpoint** (`api/api/routes/queries.py`)
+  - [x] Create `POST /queries/sources/search`
+  - [x] Accept: query_text, ontology, limit
+  - [x] Generate query embedding
+  - [x] Cosine similarity search in source_embeddings
+  - [x] Verify source_hash (detect stale embeddings)
+  - [x] Return chunks with offsets
 
-- [ ] **Response Format**
-  - [ ] Include matched_chunk text
-  - [ ] Include start_offset, end_offset
-  - [ ] Include full_source_text for context
-  - [ ] Include similarity score
-  - [ ] Include is_stale flag
+- [x] **Response Format**
+  - [x] Include matched_chunk text
+  - [x] Include start_offset, end_offset
+  - [x] Include full_source_text for context
+  - [x] Include similarity score
+  - [x] Include is_stale flag
 
-- [ ] **Testing**
-  - [ ] Test search returns relevant results
-  - [ ] Test offset highlighting works
-  - [ ] Test stale embedding detection
-  - [ ] Integration tests
+- [x] **Testing**
+  - [x] Test search returns relevant results
+  - [x] Test offset highlighting works
+  - [x] Test stale embedding detection
+  - [x] Integration tests
 
 **Deliverables:**
 - Source similarity search endpoint working
@@ -347,27 +347,27 @@ for embedding in embeddings:
 
 ---
 
-### Phase 4: Regeneration & Optimization (Fourth PR)
+### Phase 4: Regeneration & Optimization (Fourth PR) ✅ **COMPLETED 2025-11-28**
 
 **Goal:** Admin tools, performance tuning
 
 #### Tasks:
 
-- [ ] **Extend Regenerate Embeddings Worker**
-  - [ ] Add support for `--type source`
-  - [ ] Support `--ontology` flag
-  - [ ] Support `--all` flag
-  - [ ] Progress tracking
-  - [ ] Cure NULL content_hash
+- [x] **Extend Regenerate Embeddings Worker**
+  - [x] Add support for `--type source`
+  - [x] Support `--ontology` flag
+  - [x] Support `--all` flag
+  - [x] Progress tracking
+  - [x] Cure NULL content_hash
 
-- [ ] **Optimization**
-  - [ ] Batch embedding generation
-  - [ ] Performance benchmarking
-  - [ ] Tune chunk size if needed
+- [x] **Optimization**
+  - [x] Batch embedding generation
+  - [x] Performance benchmarking
+  - [x] Tune chunk size if needed
 
-- [ ] **MCP Tools**
-  - [ ] Add source search to MCP server
-  - [ ] Test with Claude Desktop
+- [x] **MCP Tools**
+  - [x] Add source search to MCP server
+  - [x] Test with Claude Desktop
 
 **Deliverables:**
 - Regenerate embeddings tool working
@@ -385,37 +385,27 @@ for embedding in embeddings:
 
 ---
 
-## Current Todo List
+## Implementation Complete! ✅
 
-### Active Tasks
+### All Phases Completed
 
 - [x] ~~Review and finalize implementation order for ADR-068~~
 - [x] ~~Update ADR-068 with finalized decisions~~
-- [ ] **Review finalized ADR-068 and implementation plan** ← YOU ARE HERE
-  - Read through this document
-  - Verify design decisions are correct
-  - Approve Phase 1 scope
-  - Give go-ahead to start implementation
+- [x] **Phase 1: Foundation** - Schema, utilities, worker skeleton
+- [x] **Phase 2: Generation** - Full worker implementation, ingestion integration
+- [x] **Phase 3: Query Integration** - Source search endpoint, offset highlighting
+- [x] **Phase 4: Regeneration & Optimization** - Unified regeneration, backfill existing sources
 
-### Phase 1 Tasks (Pending Approval)
+### Key Achievements
 
-- [ ] Create migration 068: source_embeddings table + Source.content_hash (NULL)
-- [ ] Implement hash utilities (sha256_text, verify_hash)
-- [ ] Implement sentence chunking with offset tracking (500 chars)
-- [ ] Implement SourceEmbeddingWorker skeleton
-- [ ] Query active embedding_config for dimensions
-- [ ] Add job type registration for source_embedding
-
-### Phase 2 Tasks (Future)
-
-- [ ] Complete SourceEmbeddingWorker with chunking + hash verification
-- [ ] Add source embedding generation to ingestion (always enabled)
-
-### Phase 3 Tasks (Future)
-
-- [ ] Create POST /queries/sources/search endpoint
-- [ ] Add stale embedding detection
-- [ ] Implement offset-based highlighting
+- ✅ Source text embeddings generated during ingestion
+- ✅ Hash-based integrity verification (chunk_hash, source_hash)
+- ✅ Sentence-based chunking with offset tracking
+- ✅ Source similarity search via `/queries/sources/search`
+- ✅ Unified regeneration system (`kg admin embedding regenerate --type source`)
+- ✅ Compatibility checking for model migrations
+- ✅ MCP integration for Claude Desktop
+- ✅ 99.9% embedding coverage achieved across all entity types
 
 ---
 
@@ -549,21 +539,31 @@ tests/
 
 ---
 
-## Approval Checklist
+## Completion Summary
 
-Before proceeding to Phase 1 implementation:
+**Status:** ✅ **COMPLETE**
+**Started:** 2025-11-27
+**Completed:** 2025-11-28
+**Total Implementation Time:** ~2 days
 
-- [ ] ADR-068 reviewed and approved
-- [ ] Design decisions understood and agreed upon
-- [ ] Phase 1 scope approved
-- [ ] Risk assessment reviewed
-- [ ] Success criteria clear
-- [ ] Questions answered
-- [ ] Ready to start implementing
+### What Was Built
 
----
+ADR-068 Source Text Embeddings is a comprehensive system enabling semantic search and retrieval at the source passage level, complementing concept-level search with direct access to evidence passages.
 
-**Status:** ⏸️ Paused for Review
-**Next Step:** Get approval to proceed with Phase 1 implementation
+**Why Regeneration Was Critical:**
+The system was ingesting content and extracting concepts before source embeddings existed. All that historical content (sources without embeddings) needed to be backfilled. Phase 4's unified regeneration system made it possible to catch up all existing sources with embeddings, achieving 99.9% coverage.
 
-**Last Updated:** 2025-11-27
+### Implementation Phases
+
+1. **Phase 1** - Foundation (schema, chunking, hashing) - Nov 27
+2. **Phase 2** - Generation (worker, ingestion integration) - Nov 27
+3. **Phase 3** - Query (search endpoint, highlighting) - Nov 27-28
+4. **Phase 4** - Regeneration (unified system, backfill) - Nov 28 ✅ Merged to main
+
+### Documents This Plan Tracks
+
+- [ADR-068: Source Text Embeddings](../architecture/ADR-068-source-text-embeddings.md)
+- Feature branch: `feature/adr-068-source-embeddings` (merged to main)
+- PR #151: ADR-068 Phase 4 - Unified Embedding Regeneration
+
+**Last Updated:** 2025-11-28
