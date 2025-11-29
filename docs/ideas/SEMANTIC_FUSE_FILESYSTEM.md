@@ -290,6 +290,182 @@ embedding-models.concept
 model-migration.concept
 ```
 
+## Practical Applications That Sound Insane But Actually Work
+
+### TAR as Temporal Snapshots
+
+```bash
+# Capture your research state RIGHT NOW
+tar czf research-$(date +%s).tar.gz /mnt/knowledge/embedding-models/
+
+# Three months later: graph has evolved, new concepts exist
+tar czf research-$(date +%s).tar.gz /mnt/knowledge/embedding-models/
+
+# DIFFERENT tar contents!
+# Same "directory", different semantic space!
+# Each tarball is a temporal snapshot of the knowledge graph
+```
+
+**Why this works:** The filesystem is a *view* of the knowledge graph at a point in time. TAR captures that view. Different views = different archives. Version your knowledge semantically!
+
+**Practical use:**
+- Archive research findings before pivoting
+- Create snapshots before major refactoring
+- Share "knowledge packs" with collaborators
+- Restore previous understanding states
+
+### Living Documentation in Development Workspaces
+
+```bash
+# Your project workspace
+cd /workspace/my-ai-project/
+
+# Symlink semantic knowledge as documentation
+ln -s /mnt/knowledge/my-project/ ./docs
+
+# Claude Code (or any IDE) can now:
+cat docs/architecture/api-design.concept          # Read current architecture
+ls docs/relationships/SUPPORTS/                    # See what supports this design
+grep -r "performance" docs/                        # Semantic search in docs!
+
+# As you work and ingest commit messages:
+git commit -m "feat: add caching layer"
+kg ingest commit HEAD -o my-project
+
+# Moments later:
+ls ./docs/
+# NEW concepts appear automatically!
+# caching-layer.concept
+# performance-optimization.concept
+```
+
+**Why this works:** The symlink points to a semantic query. The query results update as the graph evolves. Your documentation becomes a living, self-organizing entity.
+
+**Claude Code integration:**
+```bash
+# Claude can literally read your knowledge graph
+<Read file="docs/api-design.concept">
+# Gets: full concept, relationships, evidence, grounding metrics
+# Not just static markdown
+
+# Claude can explore relationships
+cd docs/api-design/relationships/REQUIRES/
+# Discovers dependencies automatically
+```
+
+### Bidirectional Ingestion
+
+```bash
+# Write support makes this a full knowledge management system
+echo "# New Architecture Decision
+
+We're adopting GraphQL for the API layer because..." > /mnt/knowledge/my-project/adr-070.md
+
+# File write triggers:
+# 1. Document chunking
+# 2. LLM concept extraction
+# 3. Semantic matching against existing concepts
+# 4. Relationship discovery
+# 5. Graph integration
+
+# Seconds later:
+ls /mnt/knowledge/api-design/
+# adr-070-graphql-adoption.concept appears!
+
+# Batch ingestion:
+cp docs/*.md /mnt/knowledge/my-project/
+# Processes all files, discovers cross-document relationships automatically
+```
+
+**Why this works:** Every write is an ingestion trigger. The filesystem becomes a natural interface for knowledge capture.
+
+**Anti-pattern prevention:**
+```bash
+# Only accept markdown/text
+cp binary-file.exe /mnt/knowledge/
+# Error: unsupported file type
+
+# Prevent knowledge pollution
+cp spam.txt /mnt/knowledge/my-project/
+# Ingests but low grounding, won't pollute semantic queries
+```
+
+### Build System Integration
+
+```bash
+# Makefile that depends on semantic queries
+API_DOCS := $(shell ls /mnt/knowledge/api-endpoints/*.concept)
+
+docs/api.html: $(API_DOCS)
+	kg export --format html /mnt/knowledge/api-endpoints/ > $@
+
+# When new API concepts appear (from code ingestion):
+# - Build automatically detects new .concept files
+# - Regenerates documentation
+# - No manual tracking needed
+```
+
+**Why this works:** The filesystem exposes semantic queries as file paths. Build tools already know how to depend on file paths.
+
+**CI/CD integration:**
+```yaml
+# GitHub Actions
+- name: Check documentation coverage
+  run: |
+    concept_count=$(ls /mnt/knowledge/my-project/*.concept | wc -l)
+    if [ $concept_count -lt 50 ]; then
+      echo "Warning: Only $concept_count concepts documented"
+    fi
+```
+
+### Event-Driven Workflows
+
+```bash
+# Watch for knowledge graph changes
+fswatch /mnt/knowledge/my-project/ | while read event; do
+    echo "Knowledge updated: $event"
+    kg admin embedding regenerate --type concept --only-missing
+done
+
+# Trigger notifications when concepts appear
+inotifywait -m /mnt/knowledge/security-vulnerabilities/ -e create |
+while read dir action file; do
+    notify-send "Security Alert" "New vulnerability concept: $file"
+done
+```
+
+**Why this works:** Filesystem events map to knowledge graph updates. Standard Linux tools (inotify, fswatch) become knowledge graph event listeners.
+
+**Knowledge-driven automation:**
+```bash
+# When AI research concepts appear, trigger model retraining
+ls /mnt/knowledge/ai-research/*.concept | entr make train-model
+
+# When architecture concepts change, validate against constraints
+ls /mnt/knowledge/architecture/*.concept | entr ./validate-architecture.sh
+```
+
+### Diff-Based Knowledge Evolution Tracking
+
+```bash
+# Semantic diff across time
+tar czf snapshot-before.tar.gz /mnt/knowledge/my-research/
+
+# ... three months of work ...
+
+tar czf snapshot-after.tar.gz /mnt/knowledge/my-research/
+tar xzf snapshot-before.tar.gz -C /tmp/before/
+tar xzf snapshot-after.tar.gz -C /tmp/after/
+
+diff -r /tmp/before/ /tmp/after/
+# Shows concept evolution:
+# - New concepts (+ files)
+# - Strengthened concepts (modified files with higher grounding)
+# - Abandoned concepts (- files, fell below similarity threshold)
+```
+
+**Why this works:** Concepts are files. Files can be diffed. Knowledge evolution becomes visible through standard Unix tools.
+
 ## Implementation Sketch
 
 ### Technology Stack
