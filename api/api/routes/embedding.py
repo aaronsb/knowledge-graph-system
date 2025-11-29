@@ -463,3 +463,309 @@ async def activate_embedding_config_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to activate config: {str(e)}"
         )
+
+
+@admin_router.get("/status")
+async def get_embedding_status(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    ontology: Optional[str] = None
+):
+    """
+    Get comprehensive embedding status report for all graph text entities.
+
+    Shows count, percentage, and compatibility status for embeddings across:
+    - Concepts (AGE graph nodes)
+    - Sources (source_embeddings table with stale/incompatible detection)
+    - Vocabulary (relationship types)
+    - Images (future - ADR-057)
+
+    **Authentication:** Requires admin role
+
+    Args:
+        ontology: Limit to specific ontology (optional, applies to concepts/sources only)
+
+    Returns:
+        Detailed embedding status with counts, percentages, compatibility verification
+
+    **Compatibility Check:**
+    Detects embeddings that don't match the active embedding configuration:
+    - Model mismatch (e.g., OpenAI vs local)
+    - Dimension mismatch (e.g., 1536 vs 768)
+    - Reports as "incompatible_embeddings" requiring regeneration
+
+    **Example Usage:**
+
+    ```bash
+    # Get global embedding status
+    curl http://localhost:8000/admin/embedding/status
+
+    # Get status for specific ontology
+    curl http://localhost:8000/admin/embedding/status?ontology=MyDocs
+    ```
+    """
+    try:
+        from ..workers.source_embedding_worker import get_embedding_status
+
+        logger.info(f"Getting embedding status (ontology={ontology})")
+
+        embedding_status = await get_embedding_status(ontology=ontology)
+
+        return {
+            "success": True,
+            "ontology": ontology,
+            **embedding_status
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get embedding status: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get embedding status: {str(e)}"
+        )
+
+
+@admin_router.post("/regenerate")
+async def regenerate_embeddings(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    embedding_type: str = "concept",
+    only_missing: bool = False,
+    only_incompatible: bool = False,
+    ontology: Optional[str] = None,
+    limit: Optional[int] = None
+):
+    """
+    Unified embedding regeneration for all graph text entities (ADR-068 Phase 4).
+
+    Regenerate embeddings for concept nodes, source text chunks, or vocabulary
+    (relationship types). Useful for model migrations, fixing missing/corrupted
+    embeddings, or updating incompatible embeddings.
+
+    **Authentication:** Requires admin role
+
+    Args:
+        embedding_type: Type of embeddings to regenerate: 'concept', 'source', 'vocabulary', 'all'
+        only_missing: Only generate for entities without embeddings
+        only_incompatible: Only regenerate embeddings with mismatched model/dimensions
+        ontology: Limit to specific ontology (concept/source only)
+        limit: Maximum number of entities to process (for testing/batching)
+
+    Returns:
+        Job result with statistics
+
+    **Example Usage:**
+
+    ```bash
+    # Model migration - regenerate ALL embeddings
+    curl -X POST http://localhost:8000/admin/embedding/regenerate?embedding_type=all
+
+    # Regenerate missing source embeddings only
+    curl -X POST http://localhost:8000/admin/embedding/regenerate?embedding_type=source&only_missing=true
+
+    # Regenerate incompatible embeddings (after model switch)
+    curl -X POST http://localhost:8000/admin/embedding/regenerate?embedding_type=source&only_incompatible=true
+    ```
+    """
+    try:
+        # Validate embedding_type
+        valid_types = ["concept", "source", "vocabulary", "all"]
+        if embedding_type not in valid_types:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid embedding_type. Must be one of: {', '.join(valid_types)}"
+            )
+
+        # Validate flag combination
+        if only_missing and only_incompatible:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot use both --only-missing and --only-incompatible flags together"
+            )
+
+        logger.info(
+            f"Starting {embedding_type} embedding regeneration "
+            f"(only_missing={only_missing}, only_incompatible={only_incompatible}, "
+            f"ontology={ontology}, limit={limit})"
+        )
+
+        # Handle 'all' type - regenerate everything
+        if embedding_type == "all":
+            from ..services.embedding_worker import get_embedding_worker
+            from ..lib.ai_providers import get_embedding_provider
+            from ..workers.source_embedding_worker import regenerate_source_embeddings
+            from ..lib.age_client import AGEClient
+
+            # Get embedding worker
+            worker = get_embedding_worker()
+            if worker is None:
+                age_client = AGEClient()
+                embedding_provider = get_embedding_provider()
+                worker = get_embedding_worker(age_client, embedding_provider)
+
+                if worker is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Embedding worker not initialized"
+                    )
+
+            # Regenerate all three types
+            results = {}
+
+            # 1. Concepts
+            logger.info("Regenerating concept embeddings...")
+            concept_result = await worker.regenerate_concept_embeddings(
+                only_missing=only_missing,
+                ontology=ontology,
+                limit=limit
+            )
+            results["concepts"] = {
+                "job_id": concept_result.job_id,
+                "target_count": concept_result.target_count,
+                "processed_count": concept_result.processed_count,
+                "failed_count": concept_result.failed_count,
+                "duration_ms": concept_result.duration_ms
+            }
+
+            # 2. Sources
+            logger.info("Regenerating source embeddings...")
+            source_result = await regenerate_source_embeddings(
+                only_missing=only_missing,
+                only_incompatible=only_incompatible,
+                ontology=ontology,
+                limit=limit
+            )
+            results["sources"] = {
+                "job_id": source_result["job_id"],
+                "target_count": source_result["target_count"],
+                "processed_count": source_result["processed_count"],
+                "failed_count": source_result["failed_count"],
+                "duration_ms": source_result["duration_ms"]
+            }
+
+            # 3. Vocabulary
+            logger.info("Regenerating vocabulary embeddings...")
+            vocab_result = await worker.regenerate_all_embeddings(
+                only_missing=only_missing
+            )
+            results["vocabulary"] = {
+                "job_id": vocab_result.job_id,
+                "target_count": vocab_result.target_count,
+                "processed_count": vocab_result.processed_count,
+                "failed_count": vocab_result.failed_count,
+                "duration_ms": vocab_result.duration_ms
+            }
+
+            # Calculate totals
+            total_target = sum(r["target_count"] for r in results.values())
+            total_processed = sum(r["processed_count"] for r in results.values())
+            total_failed = sum(r["failed_count"] for r in results.values())
+            total_duration = sum(r["duration_ms"] for r in results.values())
+
+            return {
+                "success": True,
+                "embedding_type": "all",
+                "results": results,
+                "totals": {
+                    "target_count": total_target,
+                    "processed_count": total_processed,
+                    "failed_count": total_failed,
+                    "duration_ms": total_duration
+                }
+            }
+
+        # Handle specific types
+        elif embedding_type == "concept":
+            from ..services.embedding_worker import get_embedding_worker
+            from ..lib.ai_providers import get_embedding_provider
+            from ..lib.age_client import AGEClient
+
+            worker = get_embedding_worker()
+            if worker is None:
+                age_client = AGEClient()
+                embedding_provider = get_embedding_provider()
+                worker = get_embedding_worker(age_client, embedding_provider)
+
+                if worker is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Embedding worker not initialized"
+                    )
+
+            result = await worker.regenerate_concept_embeddings(
+                only_missing=only_missing,
+                ontology=ontology,
+                limit=limit
+            )
+
+            return {
+                "success": True,
+                "embedding_type": "concept",
+                "job_id": result.job_id,
+                "target_count": result.target_count,
+                "processed_count": result.processed_count,
+                "failed_count": result.failed_count,
+                "duration_ms": result.duration_ms,
+                "embedding_model": result.embedding_model,
+                "embedding_provider": result.embedding_provider,
+                "errors": result.errors if result.errors else []
+            }
+
+        elif embedding_type == "source":
+            from ..workers.source_embedding_worker import regenerate_source_embeddings
+
+            result = await regenerate_source_embeddings(
+                only_missing=only_missing,
+                only_incompatible=only_incompatible,
+                ontology=ontology,
+                limit=limit
+            )
+
+            return {
+                "success": True,
+                "embedding_type": "source",
+                **result
+            }
+
+        elif embedding_type == "vocabulary":
+            from ..services.embedding_worker import get_embedding_worker
+            from ..lib.ai_providers import get_embedding_provider
+            from ..lib.age_client import AGEClient
+
+            worker = get_embedding_worker()
+            if worker is None:
+                age_client = AGEClient()
+                embedding_provider = get_embedding_provider()
+                worker = get_embedding_worker(age_client, embedding_provider)
+
+                if worker is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Embedding worker not initialized"
+                    )
+
+            result = await worker.regenerate_all_embeddings(
+                only_missing=only_missing
+            )
+
+            return {
+                "success": True,
+                "embedding_type": "vocabulary",
+                "job_id": result.job_id,
+                "target_count": result.target_count,
+                "processed_count": result.processed_count,
+                "failed_count": result.failed_count,
+                "duration_ms": result.duration_ms,
+                "embedding_model": result.embedding_model,
+                "embedding_provider": result.embedding_provider,
+                "errors": result.errors if result.errors else []
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to regenerate {embedding_type} embeddings: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to regenerate {embedding_type} embeddings: {str(e)}"
+        )

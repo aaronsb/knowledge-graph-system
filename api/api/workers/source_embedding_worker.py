@@ -420,24 +420,54 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
     - Vocabulary (relationship types in vocabulary_embeddings table)
     - Images (future - from ADR-057)
 
+    **Compatibility Detection:**
+    Also identifies embeddings that don't match the active embedding configuration:
+    - Model mismatch (e.g., OpenAI vs local)
+    - Dimension mismatch (e.g., 1536 vs 768)
+
     Args:
         ontology: Limit to specific ontology (optional, applies to concepts/sources only)
 
     Returns:
         Dict with detailed embedding status:
-            - concepts: {total, with_embeddings, without_embeddings, percentage}
-            - sources: {total, with_embeddings, without_embeddings, stale_embeddings, percentage}
-            - vocabulary: {total, with_embeddings, without_embeddings, percentage}
+            - concepts: {total, with_embeddings, without_embeddings, incompatible_embeddings, percentage}
+            - sources: {total, with_embeddings, without_embeddings, stale_embeddings, incompatible_embeddings, percentage}
+            - vocabulary: {total, with_embeddings, without_embeddings, incompatible_embeddings, percentage}
             - images: {total, with_embeddings, without_embeddings, percentage} (future)
-            - summary: {total_entities, total_with_embeddings, overall_percentage}
+            - summary: {total_entities, total_with_embeddings, total_incompatible, overall_percentage}
+            - active_config: {model_name, embedding_dimensions, provider}
     """
     status = {
         "concepts": {},
         "sources": {},
         "vocabulary": {},
         "images": {},
-        "summary": {}
+        "summary": {},
+        "active_config": {}
     }
+
+    # Load active embedding configuration for compatibility checking
+    embedding_config = load_active_embedding_config()
+    if embedding_config:
+        active_model = embedding_config.get("model_name")
+        active_dims = embedding_config.get("embedding_dimensions")
+        active_provider = embedding_config.get("provider")
+
+        status["active_config"] = {
+            "model_name": active_model,
+            "embedding_dimensions": active_dims,
+            "provider": active_provider
+        }
+
+        logger.debug(
+            f"Active embedding config: model={active_model}, "
+            f"dimensions={active_dims}, provider={active_provider}"
+        )
+    else:
+        logger.warning("No active embedding configuration found - skipping compatibility checks")
+        active_model = None
+        active_dims = None
+        active_provider = None
 
     # ====================================================================
     # 1. Concept Embeddings
@@ -467,10 +497,35 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
         result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
         concepts_with_embeddings = result[0]["with_embeddings"] if result else 0
 
+        # Check for incompatible embeddings (dimension mismatch)
+        # Note: AGE stores embeddings as arrays without metadata, so we check dimension by size
+        incompatible_concepts = 0
+        if active_dims and concepts_with_embeddings > 0:
+            # Fetch all concepts with embeddings and check their dimensions
+            cypher = "MATCH (c:Concept) WHERE c.embedding IS NOT NULL"
+
+            if ontology:
+                cypher += " AND c.ontology = $ontology"
+
+            cypher += " RETURN c.concept_id, size(c.embedding) as dim"
+
+            result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
+
+            for row in result:
+                embedding_dim = row["dim"]
+                if embedding_dim != active_dims:
+                    incompatible_concepts += 1
+
+            logger.debug(
+                f"Concept compatibility check: {incompatible_concepts}/{concepts_with_embeddings} "
+                f"incompatible (expected {active_dims} dims)"
+            )
+
     status["concepts"] = {
         "total": total_concepts,
         "with_embeddings": concepts_with_embeddings,
         "without_embeddings": total_concepts - concepts_with_embeddings,
+        "incompatible_embeddings": incompatible_concepts,
         "percentage": round((concepts_with_embeddings / total_concepts * 100) if total_concepts > 0 else 0, 1)
     }
 
@@ -513,34 +568,70 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
 
     try:
         with conn.cursor() as cursor:
-            # Get distinct source_ids with embeddings and their source_hash
+            # Get distinct source_ids with embeddings and their metadata
             cursor.execute("""
-                SELECT DISTINCT source_id, source_hash
+                SELECT DISTINCT
+                    source_id,
+                    source_hash,
+                    embedding_model,
+                    embedding_dimension
                 FROM kg_api.source_embeddings
             """)
 
             embedded_sources = {}
             for row in cursor.fetchall():
-                embedded_sources[row[0]] = row[1]  # {source_id: source_hash}
+                embedded_sources[row[0]] = {
+                    'source_hash': row[1],
+                    'embedding_model': row[2],
+                    'embedding_dimension': row[3]
+                }
     finally:
         conn.close()
 
-    # Calculate stale embeddings (hash mismatch)
+    # Calculate stale embeddings (hash mismatch) and incompatible embeddings
     stale_count = 0
+    incompatible_sources = 0
+
     for source_id, current_hash in sources_map.items():
         if source_id in embedded_sources:
-            embedding_hash = embedded_sources[source_id]
-            # Check if hashes match
+            embedding_data = embedded_sources[source_id]
+            embedding_hash = embedding_data['source_hash']
+            embedding_model = embedding_data['embedding_model']
+            embedding_dim = embedding_data['embedding_dimension']
+
+            # Check if hashes match (stale detection)
             if current_hash and embedding_hash and current_hash != embedding_hash:
                 stale_count += 1
 
+            # Check compatibility with active config
+            if active_model or active_dims:
+                is_incompatible = False
+
+                # Check model mismatch
+                if active_model and embedding_model and embedding_model != active_model:
+                    is_incompatible = True
+
+                # Check dimension mismatch
+                if active_dims and embedding_dim and embedding_dim != active_dims:
+                    is_incompatible = True
+
+                if is_incompatible:
+                    incompatible_sources += 1
+
     sources_with_embeddings = len(embedded_sources)
+
+    if incompatible_sources > 0:
+        logger.debug(
+            f"Source compatibility check: {incompatible_sources}/{sources_with_embeddings} "
+            f"incompatible (expected {active_model}, {active_dims} dims)"
+        )
 
     status["sources"] = {
         "total": total_sources,
         "with_embeddings": sources_with_embeddings,
         "without_embeddings": total_sources - sources_with_embeddings,
         "stale_embeddings": stale_count,
+        "incompatible_embeddings": incompatible_sources,
         "percentage": round((sources_with_embeddings / total_sources * 100) if total_sources > 0 else 0, 1)
     }
 
@@ -573,6 +664,28 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
                   AND embedding IS NOT NULL
             """)
             vocab_with_embeddings = cursor.fetchone()[0]
+
+            # Check for incompatible vocabulary embeddings
+            # Note: Vocabulary embeddings stored as JSONB arrays, check dimension by array length
+            incompatible_vocab = 0
+            if active_dims and vocab_with_embeddings > 0:
+                cursor.execute("""
+                    SELECT relationship_type, jsonb_array_length(embedding) as dim
+                    FROM kg_api.relationship_vocabulary
+                    WHERE is_active = true
+                      AND embedding IS NOT NULL
+                """)
+
+                for row in cursor.fetchall():
+                    embedding_dim = row[1]
+                    if embedding_dim != active_dims:
+                        incompatible_vocab += 1
+
+                if incompatible_vocab > 0:
+                    logger.debug(
+                        f"Vocabulary compatibility check: {incompatible_vocab}/{vocab_with_embeddings} "
+                        f"incompatible (expected {active_dims} dims)"
+                    )
     finally:
         conn.close()
 
@@ -580,6 +693,7 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
         "total": total_vocab,
         "with_embeddings": vocab_with_embeddings,
         "without_embeddings": total_vocab - vocab_with_embeddings,
+        "incompatible_embeddings": incompatible_vocab,
         "percentage": round((vocab_with_embeddings / total_vocab * 100) if total_vocab > 0 else 0, 1)
     }
 
@@ -612,10 +726,17 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
         status["images"]["with_embeddings"]
     )
 
+    total_incompatible = (
+        status["concepts"].get("incompatible_embeddings", 0) +
+        status["sources"].get("incompatible_embeddings", 0) +
+        status["vocabulary"].get("incompatible_embeddings", 0)
+    )
+
     status["summary"] = {
         "total_entities": total_entities,
         "total_with_embeddings": total_with_embeddings,
         "total_without_embeddings": total_entities - total_with_embeddings,
+        "total_incompatible": total_incompatible,
         "overall_percentage": round((total_with_embeddings / total_entities * 100) if total_entities > 0 else 0, 1)
     }
 
@@ -624,6 +745,7 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
 
 async def regenerate_source_embeddings(
     only_missing: bool = False,
+    only_incompatible: bool = False,
     ontology: Optional[str] = None,
     limit: Optional[int] = None
 ) -> Dict[str, Any]:
@@ -690,7 +812,76 @@ async def regenerate_source_embeddings(
     target_sources = []
 
     with AGEClient() as age_client:
-        if only_missing:
+        if only_incompatible:
+            # Find sources with INCOMPATIBLE embeddings (model/dimension mismatch)
+            # Use PostgreSQL to check embedding metadata
+            conn = psycopg2.connect(
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=int(os.getenv("POSTGRES_PORT", 5432)),
+                database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+                user=os.getenv("POSTGRES_USER", "admin"),
+                password=os.getenv("POSTGRES_PASSWORD")
+            )
+
+            try:
+                with conn.cursor() as cursor:
+                    # Get source_ids with incompatible embeddings
+                    cursor.execute("""
+                        SELECT DISTINCT source_id, embedding_model, embedding_dimension
+                        FROM kg_api.source_embeddings
+                        WHERE embedding_model != %s
+                           OR embedding_dimension != %s
+                    """, (embedding_model, embedding_dimension))
+
+                    incompatible_source_ids = {row[0] for row in cursor.fetchall()}
+
+                    logger.info(
+                        f"[{job_id}] Found {len(incompatible_source_ids)} sources with incompatible embeddings "
+                        f"(expected {embedding_model}, {embedding_dimension} dims)"
+                    )
+            finally:
+                conn.close()
+
+            if not incompatible_source_ids:
+                logger.info(f"[{job_id}] No incompatible sources found - all embeddings match active config")
+                return {
+                    "success": True,
+                    "job_id": job_id,
+                    "target_count": 0,
+                    "processed_count": 0,
+                    "failed_count": 0,
+                    "duration_ms": 0,
+                    "embedding_model": embedding_model,
+                    "embedding_dimension": embedding_dimension,
+                    "embedding_provider": embedding_provider,
+                    "errors": []
+                }
+
+            # Build Cypher query for sources WITH incompatible embeddings
+            cypher_where = "WHERE s.source_id IN $incompatible_ids"
+            params = {"incompatible_ids": list(incompatible_source_ids)}
+
+            if ontology:
+                cypher_where += " AND s.document = $ontology"
+                params["ontology"] = ontology
+
+            cypher = f"""
+                MATCH (s:Source)
+                {cypher_where}
+                RETURN s.source_id, s.full_text, s.document, s.paragraph
+                ORDER BY s.document, s.paragraph
+            """
+
+            if limit:
+                cypher += f" LIMIT {limit}"
+
+            results = age_client.facade.execute_raw(
+                cypher,
+                params=params,
+                namespace="source_embedding_regeneration"
+            )
+
+        elif only_missing:
             # Find sources WITHOUT any source_embeddings entries
             # Use PostgreSQL to check which source_ids are missing from source_embeddings
             conn = psycopg2.connect(
