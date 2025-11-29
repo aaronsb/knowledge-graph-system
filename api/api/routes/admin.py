@@ -852,6 +852,60 @@ async def regenerate_concept_embeddings(
         )
 
 
+@router.get("/embedding-status")
+async def get_embedding_status(
+    current_user: CurrentUser,
+    _: None = Depends(require_role("admin")),
+    ontology: Optional[str] = None
+):
+    """
+    Get comprehensive embedding status report for all graph text entities.
+
+    Shows count, percentage, and hash verification status for embeddings across:
+    - Concepts (AGE graph nodes)
+    - Sources (source_embeddings table with stale detection)
+    - Vocabulary (relationship types)
+    - Images (future - ADR-057)
+
+    **Authentication:** Requires admin role
+
+    Args:
+        ontology: Limit to specific ontology (optional, applies to concepts/sources only)
+
+    Returns:
+        Detailed embedding status with counts, percentages, and verification
+
+    **Example Usage:**
+
+    ```bash
+    # Get global embedding status
+    curl http://localhost:8000/admin/embedding-status
+
+    # Get status for specific ontology
+    curl http://localhost:8000/admin/embedding-status?ontology=MyDocs
+    ```
+    """
+    try:
+        from ..workers.source_embedding_worker import get_embedding_status
+
+        logger.info(f"Getting embedding status (ontology={ontology})")
+
+        embedding_status = await get_embedding_status(ontology=ontology)
+
+        return {
+            "success": True,
+            "ontology": ontology,
+            **embedding_status
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get embedding status: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get embedding status: {str(e)}"
+        )
+
+
 @router.post("/regenerate-embeddings")
 async def regenerate_embeddings(
     current_user: CurrentUser,

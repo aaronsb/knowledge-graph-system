@@ -18,6 +18,7 @@ kg admin [options]
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (requires authentication)
 - `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
+- `embedding-status` - Show comprehensive embedding coverage across all graph text entities with hash verification
 - `regenerate-embeddings` - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
 - `user` - User management commands (admin only)
 - `rbac` - Manage roles, permissions, and access control (ADR-028)
@@ -115,6 +116,21 @@ Manually trigger scheduler cleanup (cancels expired jobs, deletes old jobs)
 kg cleanup [options]
 ```
 
+### embedding-status
+
+Show comprehensive embedding coverage across all graph text entities with hash verification
+
+**Usage:**
+```bash
+kg embedding-status [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--ontology <name>` | Limit status to specific ontology namespace | - |
+
 ### regenerate-embeddings
 
 Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
@@ -132,6 +148,7 @@ kg regenerate-embeddings [options]
 | `--only-missing` | Only generate for entities without embeddings (skip existing) - applies to concept and source types | `false` |
 | `--ontology <name>` | Limit regeneration to specific ontology namespace - applies to concept and source types | - |
 | `--limit <n>` | Maximum number of entities to process (useful for testing/batching) | - |
+| `--status` | Show embedding status before regeneration (diagnostic mode) | `false` |
 
 ### user
 

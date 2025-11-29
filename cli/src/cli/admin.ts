@@ -1068,6 +1068,87 @@ const schedulerCommand = new Command('scheduler')
   .addCommand(schedulerStatusCommand)
   .addCommand(schedulerCleanupCommand);
 
+// ========== Embedding Status Command (ADR-068 Phase 4 Diagnostic) ==========
+
+const embeddingStatusCommand = new Command('embedding-status')
+  .description('Show comprehensive embedding coverage across all graph text entities with hash verification')
+  .option('--ontology <name>', 'Limit status to specific ontology namespace')
+  .action(async (options) => {
+    try {
+      const client = createClientFromEnv();
+
+      console.log(colors.separator());
+      console.log(colors.ui.title('📊 Embedding Coverage Status'));
+      if (options.ontology) {
+        console.log(colors.status.dim(`   Ontology: ${options.ontology}`));
+      }
+      console.log(colors.separator());
+
+      const status = await client.getEmbeddingStatus(options.ontology);
+
+      // Concepts
+      console.log();
+      console.log(colors.ui.header('Concepts (AGE Graph Nodes):'));
+      console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.concepts.total.toString())}`);
+      console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.concepts.with_embeddings.toString())} (${status.concepts.percentage}%)`);
+      if (status.concepts.without_embeddings > 0) {
+        console.log(`  ${colors.status.warning('✗ Without embeddings:')} ${colors.ui.value(status.concepts.without_embeddings.toString())}`);
+      }
+
+      // Sources
+      console.log();
+      console.log(colors.ui.header('Sources (Text Chunks):'));
+      console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.sources.total.toString())}`);
+      console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.sources.with_embeddings.toString())} (${status.sources.percentage}%)`);
+      if (status.sources.without_embeddings > 0) {
+        console.log(`  ${colors.status.warning('✗ Without embeddings:')} ${colors.ui.value(status.sources.without_embeddings.toString())}`);
+      }
+      if (status.sources.stale_embeddings > 0) {
+        console.log(`  ${colors.status.error('⚠  Stale embeddings:')} ${colors.ui.value(status.sources.stale_embeddings.toString())} (hash mismatch - source changed)`);
+      }
+
+      // Vocabulary
+      console.log();
+      console.log(colors.ui.header('Vocabulary (Relationship Types):'));
+      console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.vocabulary.total.toString())}`);
+      console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.vocabulary.with_embeddings.toString())} (${status.vocabulary.percentage}%)`);
+      if (status.vocabulary.without_embeddings > 0) {
+        console.log(`  ${colors.status.warning('✗ Without embeddings:')} ${colors.ui.value(status.vocabulary.without_embeddings.toString())}`);
+      }
+
+      // Images (future)
+      if (status.images && status.images.total > 0) {
+        console.log();
+        console.log(colors.ui.header('Images:'));
+        console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.images.total.toString())}`);
+        console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.images.with_embeddings.toString())} (${status.images.percentage}%)`);
+      } else if (status.images && status.images.note) {
+        console.log();
+        console.log(colors.ui.header('Images:'));
+        console.log(`  ${colors.status.dim(status.images.note)}`);
+      }
+
+      // Summary
+      console.log();
+      console.log(colors.separator());
+      console.log(colors.ui.header('Overall Summary:'));
+      console.log(`  ${colors.ui.key('Total Entities:')} ${colors.ui.value(status.summary.total_entities.toString())}`);
+      console.log(`  ${colors.status.success('✓ With Embeddings:')} ${colors.ui.value(status.summary.total_with_embeddings.toString())} (${status.summary.overall_percentage}%)`);
+      if (status.summary.total_without_embeddings > 0) {
+        console.log(`  ${colors.status.warning('✗ Without Embeddings:')} ${colors.ui.value(status.summary.total_without_embeddings.toString())}`);
+      }
+      console.log(colors.separator());
+      console.log();
+
+    } catch (error: any) {
+      console.error();
+      console.error(colors.status.error('✗ Failed to get embedding status'));
+      console.error(colors.status.dim(`  ${error.message || error}`));
+      console.error();
+      process.exit(1);
+    }
+  });
+
 // ========== Unified Embedding Regeneration Command (ADR-068 Phase 4) ==========
 
 const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
@@ -1076,7 +1157,57 @@ const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
   .option('--only-missing', 'Only generate for entities without embeddings (skip existing) - applies to concept and source types', false)
   .option('--ontology <name>', 'Limit regeneration to specific ontology namespace - applies to concept and source types')
   .option('--limit <n>', 'Maximum number of entities to process (useful for testing/batching)', parseInt)
+  .option('--status', 'Show embedding status before regeneration (diagnostic mode)', false)
   .action(async (options) => {
+    // If --status flag is set, show status and exit
+    if (options.status) {
+      try {
+        const client = createClientFromEnv();
+
+        console.log(colors.separator());
+        console.log(colors.ui.title('📊 Embedding Coverage Status'));
+        if (options.ontology) {
+          console.log(colors.status.dim(`   Ontology: ${options.ontology}`));
+        }
+        console.log(colors.separator());
+
+        const status = await client.getEmbeddingStatus(options.ontology);
+
+        // [Same status display logic as embeddingStatusCommand]
+        // Concepts
+        console.log();
+        console.log(colors.ui.header('Concepts:'));
+        console.log(`  Total: ${status.concepts.total}, With embeddings: ${status.concepts.with_embeddings} (${status.concepts.percentage}%)`);
+
+        // Sources
+        console.log();
+        console.log(colors.ui.header('Sources:'));
+        console.log(`  Total: ${status.sources.total}, With embeddings: ${status.sources.with_embeddings} (${status.sources.percentage}%)`);
+        if (status.sources.stale_embeddings > 0) {
+          console.log(`  ${colors.status.error(`⚠  Stale: ${status.sources.stale_embeddings}`)}`);
+        }
+
+        // Vocabulary
+        console.log();
+        console.log(colors.ui.header('Vocabulary:'));
+        console.log(`  Total: ${status.vocabulary.total}, With embeddings: ${status.vocabulary.with_embeddings} (${status.vocabulary.percentage}%)`);
+
+        console.log();
+        console.log(colors.separator());
+        console.log();
+
+        return;  // Exit after showing status
+      } catch (error: any) {
+        console.error();
+        console.error(colors.status.error('✗ Failed to get embedding status'));
+        console.error(colors.status.dim(`  ${error.message || error}`));
+        console.error();
+        process.exit(1);
+      }
+    }
+
+    // Normal regeneration flow
+
     try {
       const client = createClientFromEnv();
 
@@ -1205,6 +1336,7 @@ export const adminCommand = setCommandHelp(
   .addCommand(restoreCommand)
   // resetCommand removed - too dangerous for CLI, use initialize-platform.sh option 0
   .addCommand(schedulerCommand)
+  .addCommand(embeddingStatusCommand)
   .addCommand(regenerateEmbeddingsCommand);
 
 // ADR-027: Register user management commands

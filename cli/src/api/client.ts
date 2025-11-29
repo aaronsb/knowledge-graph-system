@@ -786,6 +786,23 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Get comprehensive embedding status for all graph text entities.
+   *
+   * Shows count, percentage, and hash verification for embeddings across
+   * concepts, sources, vocabulary, and images.
+   */
+  async getEmbeddingStatus(ontology?: string): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (ontology) {
+      queryParams.append('ontology', ontology);
+    }
+
+    const url = `/admin/embedding-status${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await this.client.get(url);
+    return response.data;
+  }
+
   // ========== RBAC Methods (ADR-028) ==========
 
   /**

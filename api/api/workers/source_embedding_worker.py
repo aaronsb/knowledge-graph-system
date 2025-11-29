@@ -410,6 +410,218 @@ def generate_source_embeddings(
         raise RuntimeError(f"Source embedding generation failed: {str(e)}") from e
 
 
+async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get comprehensive embedding status report for all graph text entities.
+
+    Shows count and percentage of entities with/without embeddings by category:
+    - Concepts (AGE graph nodes)
+    - Sources (source_embeddings table with hash verification)
+    - Vocabulary (relationship types in vocabulary_embeddings table)
+    - Images (future - from ADR-057)
+
+    Args:
+        ontology: Limit to specific ontology (optional, applies to concepts/sources only)
+
+    Returns:
+        Dict with detailed embedding status:
+            - concepts: {total, with_embeddings, without_embeddings, percentage}
+            - sources: {total, with_embeddings, without_embeddings, stale_embeddings, percentage}
+            - vocabulary: {total, with_embeddings, without_embeddings, percentage}
+            - images: {total, with_embeddings, without_embeddings, percentage} (future)
+            - summary: {total_entities, total_with_embeddings, overall_percentage}
+    """
+    status = {
+        "concepts": {},
+        "sources": {},
+        "vocabulary": {},
+        "images": {},
+        "summary": {}
+    }
+
+    # ====================================================================
+    # 1. Concept Embeddings
+    # ====================================================================
+    with AGEClient() as age_client:
+        # Count total concepts
+        cypher = "MATCH (c:Concept)"
+        params = {}
+
+        if ontology:
+            cypher += " WHERE c.ontology = $ontology"
+            params["ontology"] = ontology
+
+        cypher += " RETURN count(c) as total"
+
+        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
+        total_concepts = result[0]["total"] if result else 0
+
+        # Count concepts WITH embeddings
+        cypher = "MATCH (c:Concept) WHERE c.embedding IS NOT NULL"
+
+        if ontology:
+            cypher += " AND c.ontology = $ontology"
+
+        cypher += " RETURN count(c) as with_embeddings"
+
+        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
+        concepts_with_embeddings = result[0]["with_embeddings"] if result else 0
+
+    status["concepts"] = {
+        "total": total_concepts,
+        "with_embeddings": concepts_with_embeddings,
+        "without_embeddings": total_concepts - concepts_with_embeddings,
+        "percentage": round((concepts_with_embeddings / total_concepts * 100) if total_concepts > 0 else 0, 1)
+    }
+
+    # ====================================================================
+    # 2. Source Embeddings (with hash verification)
+    # ====================================================================
+    with AGEClient() as age_client:
+        # Count total sources
+        cypher = "MATCH (s:Source)"
+        params = {}
+
+        if ontology:
+            cypher += " WHERE s.document = $ontology"
+            params["ontology"] = ontology
+
+        cypher += " RETURN count(s) as total"
+
+        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
+        total_sources = result[0]["total"] if result else 0
+
+        # Get all sources with their content_hash
+        cypher = "MATCH (s:Source)"
+
+        if ontology:
+            cypher += " WHERE s.document = $ontology"
+
+        cypher += " RETURN s.source_id as source_id, s.content_hash as content_hash"
+
+        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
+        sources_map = {row["source_id"]: row["content_hash"] for row in result}  # {source_id: content_hash}
+
+    # Check which sources have embeddings in PostgreSQL
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST", "localhost"),
+        port=int(os.getenv("POSTGRES_PORT", 5432)),
+        database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+        user=os.getenv("POSTGRES_USER", "admin"),
+        password=os.getenv("POSTGRES_PASSWORD")
+    )
+
+    try:
+        with conn.cursor() as cursor:
+            # Get distinct source_ids with embeddings and their source_hash
+            cursor.execute("""
+                SELECT DISTINCT source_id, source_hash
+                FROM kg_api.source_embeddings
+            """)
+
+            embedded_sources = {}
+            for row in cursor.fetchall():
+                embedded_sources[row[0]] = row[1]  # {source_id: source_hash}
+    finally:
+        conn.close()
+
+    # Calculate stale embeddings (hash mismatch)
+    stale_count = 0
+    for source_id, current_hash in sources_map.items():
+        if source_id in embedded_sources:
+            embedding_hash = embedded_sources[source_id]
+            # Check if hashes match
+            if current_hash and embedding_hash and current_hash != embedding_hash:
+                stale_count += 1
+
+    sources_with_embeddings = len(embedded_sources)
+
+    status["sources"] = {
+        "total": total_sources,
+        "with_embeddings": sources_with_embeddings,
+        "without_embeddings": total_sources - sources_with_embeddings,
+        "stale_embeddings": stale_count,
+        "percentage": round((sources_with_embeddings / total_sources * 100) if total_sources > 0 else 0, 1)
+    }
+
+    # ====================================================================
+    # 3. Vocabulary Embeddings (relationship types)
+    # ====================================================================
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST", "localhost"),
+        port=int(os.getenv("POSTGRES_PORT", 5432)),
+        database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+        user=os.getenv("POSTGRES_USER", "admin"),
+        password=os.getenv("POSTGRES_PASSWORD")
+    )
+
+    try:
+        with conn.cursor() as cursor:
+            # Count total vocabulary types
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM kg_api.relationship_vocabulary
+                WHERE is_active = true
+            """)
+            total_vocab = cursor.fetchone()[0]
+
+            # Count vocabulary types WITH embeddings (embedding stored as JSONB in the table)
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM kg_api.relationship_vocabulary
+                WHERE is_active = true
+                  AND embedding IS NOT NULL
+            """)
+            vocab_with_embeddings = cursor.fetchone()[0]
+    finally:
+        conn.close()
+
+    status["vocabulary"] = {
+        "total": total_vocab,
+        "with_embeddings": vocab_with_embeddings,
+        "without_embeddings": total_vocab - vocab_with_embeddings,
+        "percentage": round((vocab_with_embeddings / total_vocab * 100) if total_vocab > 0 else 0, 1)
+    }
+
+    # ====================================================================
+    # 4. Images (future - ADR-057)
+    # ====================================================================
+    # TODO: Add image embedding status when ADR-057 is implemented
+    status["images"] = {
+        "total": 0,
+        "with_embeddings": 0,
+        "without_embeddings": 0,
+        "percentage": 0.0,
+        "note": "Image embeddings not yet implemented (ADR-057)"
+    }
+
+    # ====================================================================
+    # 5. Summary
+    # ====================================================================
+    total_entities = (
+        status["concepts"]["total"] +
+        status["sources"]["total"] +
+        status["vocabulary"]["total"] +
+        status["images"]["total"]
+    )
+
+    total_with_embeddings = (
+        status["concepts"]["with_embeddings"] +
+        status["sources"]["with_embeddings"] +
+        status["vocabulary"]["with_embeddings"] +
+        status["images"]["with_embeddings"]
+    )
+
+    status["summary"] = {
+        "total_entities": total_entities,
+        "total_with_embeddings": total_with_embeddings,
+        "total_without_embeddings": total_entities - total_with_embeddings,
+        "overall_percentage": round((total_with_embeddings / total_entities * 100) if total_entities > 0 else 0, 1)
+    }
+
+    return status
+
+
 async def regenerate_source_embeddings(
     only_missing: bool = False,
     ontology: Optional[str] = None,
