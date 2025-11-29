@@ -514,8 +514,8 @@ kg embedding [options]
 - `protect` - Enable protection flags on an embedding configuration
 - `unprotect` - Disable protection flags on an embedding configuration
 - `delete` - Delete an embedding configuration
-- `status` - Show comprehensive embedding coverage across all graph text entities with compatibility verification (ADR-068 Phase 4)
-- `regenerate` - Regenerate vector embeddings for all graph text entities (ADR-068 Phase 4) - useful for model migrations and fixing missing/incompatible embeddings
+- `status` - Show comprehensive embedding coverage across all graph text entities with hash verification
+- `regenerate` - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
 
 ---
 
@@ -633,7 +633,7 @@ kg delete <config-id>
 
 #### status
 
-Show comprehensive embedding coverage across all graph text entities with compatibility verification
+Show comprehensive embedding coverage across all graph text entities with hash verification
 
 **Usage:**
 ```bash
@@ -646,16 +646,9 @@ kg status [options]
 |--------|-------------|---------|
 | `--ontology <name>` | Limit status to specific ontology namespace | - |
 
-**Features:**
-- Shows active embedding configuration (model, dimensions, provider)
-- Reports embedding coverage by entity type (concepts, sources, vocabulary)
-- Detects incompatible embeddings (model/dimension mismatch)
-- Identifies stale embeddings (hash mismatches from content changes)
-- Provides overall summary statistics
-
 #### regenerate
 
-Regenerate vector embeddings for all graph text entities
+Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
 
 **Usage:**
 ```bash
@@ -666,18 +659,12 @@ kg regenerate [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--type <type>` | Type of embeddings to regenerate: concept, source, vocabulary, all | `"concept"` |
-| `--only-missing` | Only generate for entities without embeddings (skip existing) | `false` |
+| `--type <type>` | Type of embeddings to regenerate: concept, source, vocabulary, all | - |
+| `--only-missing` | Only generate for entities without embeddings (skip existing) - applies to concept and source types | `false` |
 | `--only-incompatible` | Only regenerate embeddings with mismatched model/dimensions (for model migrations) | `false` |
-| `--ontology <name>` | Limit regeneration to specific ontology namespace (applies to concept/source types) | - |
+| `--ontology <name>` | Limit regeneration to specific ontology namespace - applies to concept and source types | - |
 | `--limit <n>` | Maximum number of entities to process (useful for testing/batching) | - |
 | `--status` | Show embedding status before regeneration (diagnostic mode) | `false` |
-
-**Use Cases:**
-- **Model Migration**: Use `--only-incompatible` to regenerate embeddings after switching embedding models
-- **Repair Missing**: Use `--only-missing` to fill gaps without regenerating existing embeddings
-- **Complete Refresh**: Use `--type all` to regenerate all embeddings (model change or repair)
-- **Test Run**: Use `--limit 10` to test regeneration on a small batch first
 
 ### extraction
 
