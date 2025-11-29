@@ -704,6 +704,9 @@ Shard (infrastructure: database + API + resources)
 ```bash
 # Mount entire shard (all facets, all ontologies)
 mount -t fuse.knowledge-graph \
+  -o api_url=http://localhost:8000 \
+  -o client_id=fuse-client \
+  -o client_secret=$FUSE_SECRET \
   -o shard=research \
   /dev/knowledge /mnt/knowledge/research
 
@@ -712,6 +715,7 @@ academic/  industrial/
 
 # Mount specific facet (all ontologies in facet)
 mount -t fuse.knowledge-graph \
+  -o client_id=fuse-client,client_secret=$FUSE_SECRET \
   -o shard=research,facet=academic \
   /dev/knowledge /mnt/knowledge/academic
 
@@ -720,6 +724,7 @@ ai-research/  neuroscience/  ml-papers/
 
 # Mount specific ontology (direct semantic access)
 mount -t fuse.knowledge-graph \
+  -o client_id=fuse-client,client_secret=$FUSE_SECRET \
   -o shard=research,facet=academic,ontology=ai-research \
   /dev/knowledge /mnt/knowledge/ai-research
 
@@ -727,6 +732,8 @@ ls /mnt/knowledge/ai-research/
 # Shows semantic query space directly
 embedding-models/  neural-networks/  transformers/
 ```
+
+**Note:** All mount operations use OAuth client authentication (ADR-054). The same client credentials work across FUSE, MCP server, and CLI - they're all clients of the same API backend.
 
 ### Cross-Shard, Cross-Facet Queries
 
@@ -898,12 +905,17 @@ class SemanticFS(Operations):
 
 ```bash
 mount -t fuse.knowledge-graph \
-  -o threshold=0.75 \           # Default similarity threshold
-  -o cache_ttl=60 \              # Cache concepts for 60s
-  -o relationship_links=true \   # Show relationship symlinks
-  -o dynamic_discovery=true \    # Concepts appear based on access patterns
+  -o api_url=http://localhost:8000 \    # API server endpoint
+  -o client_id=fuse-client \            # OAuth client ID (ADR-054)
+  -o client_secret=$FUSE_SECRET \       # OAuth client secret
+  -o threshold=0.75 \                   # Default similarity threshold
+  -o cache_ttl=60 \                     # Cache concepts for 60s
+  -o relationship_links=true \          # Show relationship symlinks
+  -o dynamic_discovery=true \           # Concepts appear based on access patterns
   /dev/knowledge /mnt/knowledge
 ```
+
+**Authentication:** FUSE authenticates as an OAuth client (ADR-054), just like the MCP server and CLI. The same client credentials can be shared across all client interfaces, or each can have its own client ID for granular access control.
 
 ### Alternative: rclone Backend Implementation
 
@@ -937,7 +949,11 @@ func init() {
         }, {
             Name: "shard",
         }, {
-            Name: "auth_token",
+            Name: "client_id",
+            Help: "OAuth client ID (ADR-054)",
+        }, {
+            Name: "client_secret",
+            Help: "OAuth client secret",
         }},
     })
 }
@@ -971,11 +987,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo) (fs.Objec
 **Usage:**
 
 ```bash
-# Configure knowledge graph backend
+# Configure knowledge graph backend (OAuth client authentication)
 rclone config create kg-research kg \
   api_url=http://localhost:8000 \
   shard=research \
-  auth_token=$TOKEN
+  client_id=rclone-client \
+  client_secret=$RCLONE_SECRET
 
 # Mount it
 rclone mount kg-research:academic/ai-research /mnt/knowledge
@@ -985,6 +1002,8 @@ ls /mnt/knowledge/
 cat /mnt/knowledge/embedding-models.concept
 echo "new idea" > /mnt/knowledge/new-concept.md
 ```
+
+**Note:** Uses same OAuth client authentication (ADR-054) as MCP server and CLI. The same client credentials can be reused, or rclone can have its own client ID for separate access control policies.
 
 **Bonus: Cross-Backend Operations**
 
@@ -1331,6 +1350,13 @@ class SemanticFS(pyfuse3.Operations):
 - Deployment to users unfamiliar with Python infrastructure
 
 **Current stance:** Prototype with Python FUSE for local/development use. Both implementations may coexist - Python for tight integration, rclone for remote access and OAuth workflows.
+
+**Authentication (applies to both approaches):**
+Both Python FUSE and rclone implementations use the same OAuth client authentication system (ADR-054) as the MCP server and CLI. This means:
+- Same client credentials can be shared across all client interfaces
+- Consistent authentication flow regardless of client type
+- Granular access control via separate client IDs if needed
+- FUSE authenticates to the API server just like any other client
 
 ## Future Extensions
 
