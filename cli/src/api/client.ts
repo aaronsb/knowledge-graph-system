@@ -765,6 +765,7 @@ export class KnowledgeGraphClient {
   async regenerateEmbeddings(params: {
     embedding_type: 'concept' | 'source' | 'vocabulary' | 'all';
     only_missing?: boolean;
+    only_incompatible?: boolean;
     ontology?: string;
     limit?: number;
   }): Promise<any> {
@@ -774,6 +775,9 @@ export class KnowledgeGraphClient {
     if (params.only_missing) {
       queryParams.append('only_missing', 'true');
     }
+    if (params.only_incompatible) {
+      queryParams.append('only_incompatible', 'true');
+    }
     if (params.ontology) {
       queryParams.append('ontology', params.ontology);
     }
@@ -781,7 +785,7 @@ export class KnowledgeGraphClient {
       queryParams.append('limit', params.limit.toString());
     }
 
-    const url = `/admin/regenerate-embeddings${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `/admin/embedding/regenerate?${queryParams.toString()}`;
     const response = await this.client.post(url);
     return response.data;
   }
@@ -789,8 +793,8 @@ export class KnowledgeGraphClient {
   /**
    * Get comprehensive embedding status for all graph text entities.
    *
-   * Shows count, percentage, and hash verification for embeddings across
-   * concepts, sources, vocabulary, and images.
+   * Shows count, percentage, compatibility verification, and hash verification
+   * for embeddings across concepts, sources, vocabulary, and images.
    */
   async getEmbeddingStatus(ontology?: string): Promise<any> {
     const queryParams = new URLSearchParams();
@@ -798,7 +802,7 @@ export class KnowledgeGraphClient {
       queryParams.append('ontology', ontology);
     }
 
-    const url = `/admin/embedding-status${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `/admin/embedding/status${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const response = await this.client.get(url);
     return response.data;
   }

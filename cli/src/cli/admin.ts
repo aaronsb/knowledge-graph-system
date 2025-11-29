@@ -971,6 +971,16 @@ const restoreCommand = new Command('restore')
 //
 // ==================================================
 
+// ========== Embedding Status & Regeneration Commands ==========
+// MOVED to kg admin embedding tree (see ai-config.ts)
+//
+// - kg admin embedding-status      → kg admin embedding status
+// - kg admin regenerate-embeddings → kg admin embedding regenerate
+//
+// The embedding management commands are now properly organized under
+// the embedding command group for comprehensive embedding management.
+// ================================================================
+
 // ========== Scheduler Commands (ADR-014) ==========
 
 const schedulerStatusCommand = new Command('status')
@@ -1068,258 +1078,8 @@ const schedulerCommand = new Command('scheduler')
   .addCommand(schedulerStatusCommand)
   .addCommand(schedulerCleanupCommand);
 
-// ========== Embedding Status Command (ADR-068 Phase 4 Diagnostic) ==========
-
-const embeddingStatusCommand = new Command('embedding-status')
-  .description('Show comprehensive embedding coverage across all graph text entities with hash verification')
-  .option('--ontology <name>', 'Limit status to specific ontology namespace')
-  .action(async (options) => {
-    try {
-      const client = createClientFromEnv();
-
-      console.log(colors.separator());
-      console.log(colors.ui.title('📊 Embedding Coverage Status'));
-      if (options.ontology) {
-        console.log(colors.status.dim(`   Ontology: ${options.ontology}`));
-      }
-      console.log(colors.separator());
-
-      const status = await client.getEmbeddingStatus(options.ontology);
-
-      // Concepts
-      console.log();
-      console.log(colors.ui.header('Concepts (AGE Graph Nodes):'));
-      console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.concepts.total.toString())}`);
-      console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.concepts.with_embeddings.toString())} (${status.concepts.percentage}%)`);
-      if (status.concepts.without_embeddings > 0) {
-        console.log(`  ${colors.status.warning('✗ Without embeddings:')} ${colors.ui.value(status.concepts.without_embeddings.toString())}`);
-      }
-
-      // Sources
-      console.log();
-      console.log(colors.ui.header('Sources (Text Chunks):'));
-      console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.sources.total.toString())}`);
-      console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.sources.with_embeddings.toString())} (${status.sources.percentage}%)`);
-      if (status.sources.without_embeddings > 0) {
-        console.log(`  ${colors.status.warning('✗ Without embeddings:')} ${colors.ui.value(status.sources.without_embeddings.toString())}`);
-      }
-      if (status.sources.stale_embeddings > 0) {
-        console.log(`  ${colors.status.error('⚠  Stale embeddings:')} ${colors.ui.value(status.sources.stale_embeddings.toString())} (hash mismatch - source changed)`);
-      }
-
-      // Vocabulary
-      console.log();
-      console.log(colors.ui.header('Vocabulary (Relationship Types):'));
-      console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.vocabulary.total.toString())}`);
-      console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.vocabulary.with_embeddings.toString())} (${status.vocabulary.percentage}%)`);
-      if (status.vocabulary.without_embeddings > 0) {
-        console.log(`  ${colors.status.warning('✗ Without embeddings:')} ${colors.ui.value(status.vocabulary.without_embeddings.toString())}`);
-      }
-
-      // Images (future)
-      if (status.images && status.images.total > 0) {
-        console.log();
-        console.log(colors.ui.header('Images:'));
-        console.log(`  ${colors.ui.key('Total:')} ${colors.ui.value(status.images.total.toString())}`);
-        console.log(`  ${colors.status.success('✓ With embeddings:')} ${colors.ui.value(status.images.with_embeddings.toString())} (${status.images.percentage}%)`);
-      } else if (status.images && status.images.note) {
-        console.log();
-        console.log(colors.ui.header('Images:'));
-        console.log(`  ${colors.status.dim(status.images.note)}`);
-      }
-
-      // Summary
-      console.log();
-      console.log(colors.separator());
-      console.log(colors.ui.header('Overall Summary:'));
-      console.log(`  ${colors.ui.key('Total Entities:')} ${colors.ui.value(status.summary.total_entities.toString())}`);
-      console.log(`  ${colors.status.success('✓ With Embeddings:')} ${colors.ui.value(status.summary.total_with_embeddings.toString())} (${status.summary.overall_percentage}%)`);
-      if (status.summary.total_without_embeddings > 0) {
-        console.log(`  ${colors.status.warning('✗ Without Embeddings:')} ${colors.ui.value(status.summary.total_without_embeddings.toString())}`);
-      }
-      console.log(colors.separator());
-      console.log();
-
-    } catch (error: any) {
-      console.error();
-      console.error(colors.status.error('✗ Failed to get embedding status'));
-      console.error(colors.status.dim(`  ${error.message || error}`));
-      console.error();
-      process.exit(1);
-    }
-  });
-
-// ========== Unified Embedding Regeneration Command (ADR-068 Phase 4) ==========
-
-const regenerateEmbeddingsCommand = new Command('regenerate-embeddings')
-  .description('Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings')
-  .option('--type <type>', 'Type of embeddings to regenerate: concept, source, vocabulary, all (default: concept)', 'concept')
-  .option('--only-missing', 'Only generate for entities without embeddings (skip existing) - applies to concept and source types', false)
-  .option('--ontology <name>', 'Limit regeneration to specific ontology namespace - applies to concept and source types')
-  .option('--limit <n>', 'Maximum number of entities to process (useful for testing/batching)', parseInt)
-  .option('--status', 'Show embedding status before regeneration (diagnostic mode)', false)
-  .action(async (options) => {
-    // If --status flag is set, show status and exit
-    if (options.status) {
-      try {
-        const client = createClientFromEnv();
-
-        console.log(colors.separator());
-        console.log(colors.ui.title('📊 Embedding Coverage Status'));
-        if (options.ontology) {
-          console.log(colors.status.dim(`   Ontology: ${options.ontology}`));
-        }
-        console.log(colors.separator());
-
-        const status = await client.getEmbeddingStatus(options.ontology);
-
-        // [Same status display logic as embeddingStatusCommand]
-        // Concepts
-        console.log();
-        console.log(colors.ui.header('Concepts:'));
-        console.log(`  Total: ${status.concepts.total}, With embeddings: ${status.concepts.with_embeddings} (${status.concepts.percentage}%)`);
-
-        // Sources
-        console.log();
-        console.log(colors.ui.header('Sources:'));
-        console.log(`  Total: ${status.sources.total}, With embeddings: ${status.sources.with_embeddings} (${status.sources.percentage}%)`);
-        if (status.sources.stale_embeddings > 0) {
-          console.log(`  ${colors.status.error(`⚠  Stale: ${status.sources.stale_embeddings}`)}`);
-        }
-
-        // Vocabulary
-        console.log();
-        console.log(colors.ui.header('Vocabulary:'));
-        console.log(`  Total: ${status.vocabulary.total}, With embeddings: ${status.vocabulary.with_embeddings} (${status.vocabulary.percentage}%)`);
-
-        console.log();
-        console.log(colors.separator());
-        console.log();
-
-        return;  // Exit after showing status
-      } catch (error: any) {
-        console.error();
-        console.error(colors.status.error('✗ Failed to get embedding status'));
-        console.error(colors.status.dim(`  ${error.message || error}`));
-        console.error();
-        process.exit(1);
-      }
-    }
-
-    // Normal regeneration flow
-
-    try {
-      const client = createClientFromEnv();
-
-      // Validate embedding type
-      const validTypes = ['concept', 'source', 'vocabulary', 'all'];
-      const embeddingType = options.type || 'concept';
-
-      if (!validTypes.includes(embeddingType)) {
-        console.error();
-        console.error(colors.status.error(`✗ Invalid --type: ${embeddingType}`));
-        console.error(colors.status.dim(`  Valid types: ${validTypes.join(', ')}`));
-        console.error();
-        process.exit(1);
-      }
-
-      console.log(colors.separator());
-      console.log(colors.ui.title(`🔄 Regenerating ${embeddingType.charAt(0).toUpperCase() + embeddingType.slice(1)} Embeddings`));
-      console.log(colors.separator());
-
-      const params: any = {
-        embedding_type: embeddingType,
-        only_missing: options.onlyMissing || false
-      };
-
-      if (options.ontology) {
-        params.ontology = options.ontology;
-      }
-
-      if (options.limit) {
-        params.limit = options.limit;
-      }
-
-      console.log();
-      console.log(colors.status.info('Starting regeneration...'));
-      console.log(colors.status.dim(`  Type: ${embeddingType}`));
-      if (options.ontology) {
-        console.log(colors.status.dim(`  Ontology: ${options.ontology}`));
-      }
-      if (options.onlyMissing) {
-        console.log(colors.status.dim('  Mode: Only missing embeddings'));
-      }
-      if (options.limit) {
-        console.log(colors.status.dim(`  Limit: ${options.limit} entities`));
-      }
-      console.log();
-
-      const result = await client.regenerateEmbeddings(params);
-
-      console.log(colors.separator());
-      console.log(colors.status.success('✓ Regeneration completed'));
-
-      // Handle 'all' type response (has totals and per-type results)
-      if (embeddingType === 'all' && result.totals) {
-        console.log(`  ${colors.stats.label('Total Processed:')} ${colors.stats.value(result.totals.processed_count.toString())} / ${result.totals.target_count}`);
-
-        if (result.totals.failed_count > 0) {
-          console.log(`  ${colors.status.error('Total Failed:')} ${result.totals.failed_count}`);
-        }
-
-        console.log(`  ${colors.status.dim('Total Duration:')} ${result.totals.duration_ms}ms`);
-
-        console.log();
-        console.log(colors.ui.header('Breakdown:'));
-
-        if (result.results.concepts) {
-          console.log(`  ${colors.ui.key('Concepts:')} ${colors.stats.value(result.results.concepts.processed_count.toString())} / ${result.results.concepts.target_count} (${result.results.concepts.duration_ms}ms)`);
-        }
-
-        if (result.results.sources) {
-          console.log(`  ${colors.ui.key('Sources:')} ${colors.stats.value(result.results.sources.processed_count.toString())} / ${result.results.sources.target_count} (${result.results.sources.duration_ms}ms)`);
-        }
-
-        if (result.results.vocabulary) {
-          console.log(`  ${colors.ui.key('Vocabulary:')} ${colors.stats.value(result.results.vocabulary.processed_count.toString())} / ${result.results.vocabulary.target_count} (${result.results.vocabulary.duration_ms}ms)`);
-        }
-      } else {
-        // Single type response
-        console.log(`  ${colors.stats.label('Processed:')} ${colors.stats.value(result.processed_count.toString())} / ${result.target_count}`);
-
-        if (result.failed_count > 0) {
-          console.log(`  ${colors.status.error('Failed:')} ${result.failed_count}`);
-        }
-
-        console.log(`  ${colors.status.dim('Duration:')} ${result.duration_ms}ms`);
-
-        if (result.embedding_model && result.embedding_provider) {
-          console.log(`  ${colors.status.dim('Model:')} ${result.embedding_provider}/${result.embedding_model}`);
-        }
-
-        if (result.errors && result.errors.length > 0) {
-          console.log();
-          console.log(colors.status.error('Errors:'));
-          result.errors.slice(0, 5).forEach((err: string) => {
-            console.log(colors.status.dim(`  ${err}`));
-          });
-          if (result.errors.length > 5) {
-            console.log(colors.status.dim(`  ... and ${result.errors.length - 5} more`));
-          }
-        }
-      }
-
-      console.log(colors.separator());
-      console.log();
-
-    } catch (error: any) {
-      console.error();
-      console.error(colors.status.error('✗ Failed to regenerate embeddings'));
-      console.error(colors.status.dim(`  ${error.message || error}`));
-      console.error();
-      process.exit(1);
-    }
-  });
+// Embedding status and regeneration commands moved to kg admin embedding tree
+// (see createEmbeddingStatusCommand and createEmbeddingRegenerateCommand in ai-config.ts)
 
 // ========== Main Admin Command ==========
 
@@ -1335,9 +1095,8 @@ export const adminCommand = setCommandHelp(
   .addCommand(listBackupsCommand)
   .addCommand(restoreCommand)
   // resetCommand removed - too dangerous for CLI, use initialize-platform.sh option 0
-  .addCommand(schedulerCommand)
-  .addCommand(embeddingStatusCommand)
-  .addCommand(regenerateEmbeddingsCommand);
+  .addCommand(schedulerCommand);
+  // embeddingStatusCommand and regenerateEmbeddingsCommand moved to embedding tree
 
 // ADR-027: Register user management commands
 registerAuthAdminCommand(adminCommand);
@@ -1362,4 +1121,4 @@ adminCommand.addCommand(extractionCommand);
 adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
-[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand, regenerateEmbeddingsCommand].forEach(configureColoredHelp);
+[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand, schedulerStatusCommand, schedulerCleanupCommand].forEach(configureColoredHelp);
