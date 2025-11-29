@@ -4946,6 +4946,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#architectural-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5741,6 +5752,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Implementation Recommendation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reconsidering-python-fuse-option-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reconsidering Python FUSE (Option A)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -5751,6 +5779,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Future Extensions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usability-enhancements-from-peer-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usability Enhancements (From Peer Review)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -6520,6 +6576,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#architectural-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7315,6 +7382,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Implementation Recommendation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reconsidering-python-fuse-option-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reconsidering Python FUSE (Option A)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -7325,6 +7409,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Future Extensions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usability-enhancements-from-peer-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usability Enhancements (From Peer Review)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -7393,6 +7505,26 @@
 - Multi-ontology federation (shard/facet architecture from ADR-055)
 - Cross-domain linking (automatic concept merging)</p>
 <p>FUSE could expose these capabilities through filesystem metaphors that users already understand.</p>
+<h3 id="architectural-validation">Architectural Validation</h3>
+<p>This proposal underwent external peer review to validate feasibility against the existing codebase. Key findings:</p>
+<ul>
+<li><strong>Architectural Fit:</strong> The FUSE operations map directly to existing services without requiring new core logic</li>
+<li><code>ls</code> (semantic query) → <code>QueryService.build_search_query</code></li>
+<li><code>cd relationships/</code> (graph traversal) → <code>QueryService.build_concept_details_query</code></li>
+<li>
+<p>Write operations → existing async ingestion pipeline</p>
+</li>
+<li>
+<p><strong>Implementation Feasibility:</strong> High - essentially re-skinning existing services into FUSE protocol</p>
+</li>
+<li>
+<p><strong>Discovery Value:</strong> Solves the "I don't know what to search for" problem by allowing users to browse valid semantic pathways</p>
+</li>
+<li>
+<p><strong>Standard Tool Integration:</strong> Turns every Unix utility (<code>grep</code>, <code>diff</code>, <code>tar</code>) into a knowledge graph tool for free</p>
+</li>
+</ul>
+<p>The review validated this is a "rigorous application of the 'everything is a file' philosophy to high-dimensional data," not a cursed hack.</p>
 <h2 id="motivation">Motivation</h2>
 <p>Traditional filesystems organize knowledge through rigid hierarchies:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/docs/
@@ -8398,16 +8530,53 @@
 <strong>Cons:</strong> Exposes tables/rows, not semantic concepts, wrong abstraction level
 <strong>Decision:</strong> Need semantic layer, not raw database access</p>
 <h2 id="implementation-recommendation">Implementation Recommendation</h2>
-<p><strong>Start with rclone backend (Option B):</strong></p>
+<p><strong>Update (Post Peer Review):</strong> After architectural review, we are <strong>strongly leaning toward Python FUSE (Option A)</strong> for the MVP, though not yet committed.</p>
+<h3 id="reconsidering-python-fuse-option-a">Reconsidering Python FUSE (Option A)</h3>
+<p><strong>Advantages for our specific architecture:</strong></p>
 <ol>
-<li><strong>Faster to MVP</strong> - Leverage rclone's FUSE layer, caching, config management</li>
-<li><strong>Instant Interop</strong> - Get cross-backend sync for free</li>
-<li><strong>Smaller Codebase</strong> - ~500 lines Go vs ~2500 lines Python</li>
-<li><strong>Existing User Base</strong> - rclone users understand the model</li>
-<li><strong>Fallback Path</strong> - Can always build custom FUSE driver later if needed</li>
+<li><strong>Shared Logic Layer</strong> - All core services (<code>QueryService</code>, <code>EmbeddingModel</code>, <code>GraphQueryFacade</code>) are Python</li>
+<li>Can import services directly without HTTP overhead</li>
+<li>Zero-latency local operations during development</li>
+<li>
+<p>No schema drift between FUSE layer and graph layer</p>
+</li>
+<li>
+<p><strong>Complex Traversal Support</strong> - Deep graph schema knowledge (ADR-048)</p>
+</li>
+<li>Relationship navigation requires VocabType awareness</li>
+<li>Dynamic relationship discovery easier in Python</li>
+<li>
+<p>Access to full graph context without API round-trips</p>
+</li>
+<li>
+<p><strong>Tight Integration</strong> - Same runtime as API server</p>
+</li>
+<li>Can mount on same machine as database for testing</li>
+<li>Direct access to PostgreSQL connection pool</li>
+<li>Shared caching layer with existing services</li>
 </ol>
-<p><strong>Prototype scope:</strong> Implement List/Read/Write operations for single shard/facet, validate concept with users.</p>
+<p><strong>Implementation with <code>pyfuse3</code>:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pyfuse3</span>
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.services.query_service</span><span class="w"> </span><span class="kn">import</span> <span class="n">QueryService</span>
+<a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>
+<a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">SemanticFS</span><span class="p">(</span><span class="n">pyfuse3</span><span class="o">.</span><span class="n">Operations</span><span class="p">):</span>
+<a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-53-6" name="__codelineno-53-6" href="#__codelineno-53-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">query_service</span> <span class="o">=</span> <span class="n">QueryService</span><span class="p">()</span>  <span class="c1"># Direct import!</span>
+<a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a>
+<a id="__codelineno-53-8" name="__codelineno-53-8" href="#__codelineno-53-8"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">readdir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inode</span><span class="p">,</span> <span class="n">off</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+<a id="__codelineno-53-9" name="__codelineno-53-9" href="#__codelineno-53-9"></a>        <span class="c1"># Direct service call, no HTTP</span>
+<a id="__codelineno-53-10" name="__codelineno-53-10" href="#__codelineno-53-10"></a>        <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_service</span><span class="o">.</span><span class="n">execute_search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<a id="__codelineno-53-11" name="__codelineno-53-11" href="#__codelineno-53-11"></a>        <span class="k">for</span> <span class="n">concept</span> <span class="ow">in</span> <span class="n">concepts</span><span class="p">:</span>
+<a id="__codelineno-53-12" name="__codelineno-53-12" href="#__codelineno-53-12"></a>            <span class="n">pyfuse3</span><span class="o">.</span><span class="n">readdir_reply</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">concept</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">.concept&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>When to use rclone instead (Option B):</strong>
+- Remote mounting (laptop → cloud server)
+- OAuth management for remote instances
+- Cross-backend sync requirements (knowledge graph ↔ S3/Google Drive)
+- Deployment to users unfamiliar with Python infrastructure</p>
+<p><strong>Current stance:</strong> Prototype with Python FUSE for local/development use. Both implementations may coexist - Python for tight integration, rclone for remote access and OAuth workflows.</p>
 <h2 id="future-extensions_1">Future Extensions</h2>
+<h3 id="core-features">Core Features</h3>
 <ul>
 <li>Relationship-based symbolic links (<code>ln -s concept relationships/SUPPORTS/</code>)</li>
 <li>Query operators (<code>/search/AND/</code>, <code>/search/OR/</code>, <code>/search/NOT/</code>)</li>
@@ -8415,6 +8584,64 @@
 <li>Write support for relationship creation</li>
 <li>Multi-shard federated views</li>
 </ul>
+<h3 id="usability-enhancements-from-peer-review">Usability Enhancements (From Peer Review)</h3>
+<p><strong>1. Empty Directory Problem Solution</strong></p>
+<p>When semantic queries return no results, generate a virtual <code>README.md</code> explaining why:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>mkdir<span class="w"> </span>/mnt/knowledge/research/unicorn-physics/
+<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>ls<span class="w"> </span>/mnt/knowledge/research/unicorn-physics/
+<a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a><span class="c1"># Empty directory - no matching concepts</span>
+<a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a>
+<a id="__codelineno-54-5" name="__codelineno-54-5" href="#__codelineno-54-5"></a>cat<span class="w"> </span>/mnt/knowledge/research/unicorn-physics/README.md
+<a id="__codelineno-54-6" name="__codelineno-54-6" href="#__codelineno-54-6"></a><span class="c1"># Query &#39;unicorn physics&#39; (Threshold: 0.7) matched 0 concepts in ontology &#39;research&#39;.</span>
+<a id="__codelineno-54-7" name="__codelineno-54-7" href="#__codelineno-54-7"></a><span class="c1">#</span>
+<a id="__codelineno-54-8" name="__codelineno-54-8" href="#__codelineno-54-8"></a><span class="c1"># Suggestions:</span>
+<a id="__codelineno-54-9" name="__codelineno-54-9" href="#__codelineno-54-9"></a><span class="c1"># - Lower threshold: /mnt/knowledge/search/0.5/unicorn+physics/</span>
+<a id="__codelineno-54-10" name="__codelineno-54-10" href="#__codelineno-54-10"></a><span class="c1"># - Try broader query: /mnt/knowledge/research/physics/</span>
+<a id="__codelineno-54-11" name="__codelineno-54-11" href="#__codelineno-54-11"></a><span class="c1"># - Check available ontologies: ls /mnt/knowledge/</span>
+</code></pre></div>
+<p><strong>Benefits:</strong> Users understand empty results instead of wondering if the system is broken.</p>
+<p><strong>2. Tarball Snapshots with Temporal Metadata</strong></p>
+<p>Include a <code>.manifest</code> file in every tarball to enable "time travel":</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>tar<span class="w"> </span>czf<span class="w"> </span>snapshot-<span class="k">$(</span>date<span class="w"> </span>+%s<span class="k">)</span>.tar.gz<span class="w"> </span>/mnt/knowledge/research/
+<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a>tar<span class="w"> </span>tzf<span class="w"> </span>snapshot-*.tar.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-5
+<a id="__codelineno-55-4" name="__codelineno-55-4" href="#__codelineno-55-4"></a>.manifest
+<a id="__codelineno-55-5" name="__codelineno-55-5" href="#__codelineno-55-5"></a>embedding-models.concept
+<a id="__codelineno-55-6" name="__codelineno-55-6" href="#__codelineno-55-6"></a>neural-networks.concept
+<a id="__codelineno-55-7" name="__codelineno-55-7" href="#__codelineno-55-7"></a>...
+<a id="__codelineno-55-8" name="__codelineno-55-8" href="#__codelineno-55-8"></a>
+<a id="__codelineno-55-9" name="__codelineno-55-9" href="#__codelineno-55-9"></a>cat<span class="w"> </span>.manifest
+<a id="__codelineno-55-10" name="__codelineno-55-10" href="#__codelineno-55-10"></a><span class="o">{</span>
+<a id="__codelineno-55-11" name="__codelineno-55-11" href="#__codelineno-55-11"></a><span class="w">  </span><span class="s2">&quot;snapshot_timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2025-11-28T23:45:00Z&quot;</span>,
+<a id="__codelineno-55-12" name="__codelineno-55-12" href="#__codelineno-55-12"></a><span class="w">  </span><span class="s2">&quot;graph_revision&quot;</span>:<span class="w"> </span><span class="s2">&quot;a3b2c1d4&quot;</span>,
+<a id="__codelineno-55-13" name="__codelineno-55-13" href="#__codelineno-55-13"></a><span class="w">  </span><span class="s2">&quot;shard&quot;</span>:<span class="w"> </span><span class="s2">&quot;research&quot;</span>,
+<a id="__codelineno-55-14" name="__codelineno-55-14" href="#__codelineno-55-14"></a><span class="w">  </span><span class="s2">&quot;facet&quot;</span>:<span class="w"> </span><span class="s2">&quot;academic&quot;</span>,
+<a id="__codelineno-55-15" name="__codelineno-55-15" href="#__codelineno-55-15"></a><span class="w">  </span><span class="s2">&quot;ontology&quot;</span>:<span class="w"> </span><span class="s2">&quot;ai-research&quot;</span>,
+<a id="__codelineno-55-16" name="__codelineno-55-16" href="#__codelineno-55-16"></a><span class="w">  </span><span class="s2">&quot;query_threshold&quot;</span>:<span class="w"> </span><span class="m">0</span>.7,
+<a id="__codelineno-55-17" name="__codelineno-55-17" href="#__codelineno-55-17"></a><span class="w">  </span><span class="s2">&quot;concept_count&quot;</span>:<span class="w"> </span><span class="m">127</span>,
+<a id="__codelineno-55-18" name="__codelineno-55-18" href="#__codelineno-55-18"></a><span class="w">  </span><span class="s2">&quot;embedding_model&quot;</span>:<span class="w"> </span><span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span>
+<a id="__codelineno-55-19" name="__codelineno-55-19" href="#__codelineno-55-19"></a><span class="o">}</span>
+</code></pre></div>
+<p><strong>Benefits:</strong>
+- Restore semantic state from snapshots
+- Track knowledge evolution over time
+- Debug "why did this concept disappear?"</p>
+<p><strong>3. RBAC Integration via Filesystem Permissions</strong></p>
+<p>Map filesystem permission bits to OAuth scopes from ADR-054/055:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>ls<span class="w"> </span>-l<span class="w"> </span>/mnt/knowledge/shard-production/
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>drwxr-xr-x<span class="w">  </span>engineering/<span class="w">     </span><span class="c1"># User has write:engineering scope</span>
+<a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>drwxr-xr--<span class="w">  </span>compliance/<span class="w">      </span><span class="c1"># User has read:compliance scope (no write)</span>
+<a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a>d---------<span class="w">  </span>finance/<span class="w">         </span><span class="c1"># User has no access</span>
+<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a>
+<a id="__codelineno-56-6" name="__codelineno-56-6" href="#__codelineno-56-6"></a><span class="c1"># Attempting to write without scope:</span>
+<a id="__codelineno-56-7" name="__codelineno-56-7" href="#__codelineno-56-7"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/mnt/knowledge/shard-production/compliance/test.md
+<a id="__codelineno-56-8" name="__codelineno-56-8" href="#__codelineno-56-8"></a><span class="c1"># Permission denied (requires write:compliance scope)</span>
+</code></pre></div>
+<p><strong>Implementation:</strong> Check OAuth scopes during FUSE <code>access()</code> and <code>open()</code> operations.</p>
+<p><strong>Benefits:</strong>
+- Familiar Unix permission model
+- Natural RBAC enforcement
+- Tools like <code>ls -l</code> show access levels automatically</p>
 <h2 id="references">References</h2>
 <ul>
 <li><a href="https://github.com/libfuse/libfuse">FUSE Documentation</a></li>
