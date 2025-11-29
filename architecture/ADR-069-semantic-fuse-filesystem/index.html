@@ -4955,6 +4955,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architectural Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-and-consistency-engineering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance and Consistency Engineering
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -6696,6 +6713,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architectural Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-and-consistency-engineering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance and Consistency Engineering
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -7747,6 +7781,41 @@
 </li>
 </ul>
 <p>The review validated this is a "rigorous application of the 'everything is a file' philosophy to high-dimensional data," not a cursed hack.</p>
+<h4 id="performance-and-consistency-engineering">Performance and Consistency Engineering</h4>
+<p>External research on high-dimensional semantic file systems identified critical engineering considerations that our architecture already addresses:</p>
+<p><strong>1. The Write Latency Trap (Mitigated)</strong>
+- <strong>Risk:</strong> Synchronous embedding generation (15-50ms+) and graph linking (seconds) would block write() syscalls, hanging applications
+- <strong>Our Solution:</strong> Asynchronous worker pattern (ADR-014) with job queue
+  - Writes accepted immediately to staging area
+  - Background workers handle chunking, embedding, concept matching
+  - POSIX-compliant write performance maintained</p>
+<p><strong>2. The Read (ls) Bottleneck (Mitigated)</strong>
+- <strong>Risk:</strong> Fresh vector searches or clustering on every readdir would cause sluggish directory listings
+- <strong>Our Solution:</strong> Query-time retrieval with caching
+  - 100-200ms retrieval target (realistic for vector search + graph traversal)
+  - PostgreSQL connection pooling for concurrent queries
+  - Directory structure is deterministic (ontology-based), not emergent clustering
+  - FUSE implementation will cache directory listings with configurable TTL</p>
+<p><strong>3. POSIX Stability via Deterministic Structure (Addressed)</strong>
+- <strong>Risk:</strong> Purely emergent clustering causes "cluster jitter" - files randomly moving between folders as content shifts
+- <strong>Our Solution:</strong> Stable four-level hierarchy (Shard → Facet → Ontology → Concepts)
+  - Paths are deterministic based on ontology assignment
+  - Concepts appear in multiple semantic query directories (intentional non-determinism)
+  - But underlying storage location is stable (ontology-scoped)</p>
+<p><strong>4. Eventual Consistency Gap (Acknowledged)</strong>
+- <strong>Risk:</strong> Async processing creates delay between write and appearance in semantic directories
+- <strong>Mitigation:</strong> Virtual README.md in empty query results (see Future Extensions)
+  - Explains why results are empty
+  - Suggests alternative queries or lower thresholds
+  - Future: "Processing" indicator for in-flight ingestion</p>
+<p><strong>5. Connection Pool Saturation (Addressed)</strong>
+- <strong>Risk:</strong> "Thundering herd" when user pastes 1,000 files - every readdir hammers database
+- <strong>Our Solution:</strong>
+  - PostgreSQL connection pooling (existing infrastructure)
+  - FUSE TTL-based caching (mount option: <code>cache_ttl=60</code>)
+  - Query rate limiting at API layer
+  - Batch ingestion queuing (ADR-014 job scheduler)</p>
+<p><strong>Verdict:</strong> The architecture decouples high-latency "thinking" (AI processing) from low-latency "acting" (filesystem I/O), which research validates as the primary requirement for functional semantic filesystems.</p>
 <h3 id="related-work-other-semantic-file-systems">Related Work: Other Semantic File Systems</h3>
 <p>This proposal builds on a rich history of semantic filesystems, though none have applied the "Directory = Query" metaphor to vector embeddings and probabilistic similarity.</p>
 <h4 id="1-logic-query-based-systems-direct-ancestors">1. Logic &amp; Query-Based Systems (Direct Ancestors)</h4>
