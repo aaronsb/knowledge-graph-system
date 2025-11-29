@@ -1,13 +1,48 @@
-# Semantic FUSE Filesystem: A Love Letter to POSIX Violations
+# ADR-069: Semantic FUSE Filesystem
+
+**Status:** Proposed
+**Date:** 2025-11-28
+**Related ADRs:** ADR-055 (Sharding), ADR-048 (GraphQueryFacade)
 
 > "Everything is a file" - Traditional Unix Philosophy
 > "Everything is a file, but which file depends on what you're thinking about" - Semantic Unix Philosophy
 
 ## Abstract
 
-What if your filesystem understood semantics instead of just hierarchy? What if `cd` could traverse conceptual space instead of directory trees? What if the same file could exist in multiple places without hard links or symlinks, simply because it *semantically belongs* in multiple contexts?
+This ADR proposes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, enabling semantic navigation and querying through standard Unix tools (`ls`, `cd`, `cat`, `grep`, `find`). Like `/sys/` or `/proc/`, this is a **partial filesystem** that implements only operations that make semantic sense, providing a familiar interface to knowledge graph exploration.
 
-This document proposes a FUSE-based semantic filesystem backed by the knowledge graph, designed to violate POSIX in the most beautiful ways possible.
+## Context
+
+### The Problem: Hierarchies Don't Fit Knowledge
+
+Traditional filesystems organize knowledge through rigid hierarchies:
+```
+/docs/
+  /architecture/
+    /decisions/
+      adr-068.md
+  /guides/
+    embedding-guide.md
+```
+
+But knowledge doesn't fit in trees. ADR-068 is simultaneously:
+- An architecture decision
+- A guide for operators
+- An embedding system reference
+- A bug fix chronicle
+- A compatibility management strategy
+
+Why force it into one directory when it semantically belongs in multiple conceptual spaces?
+
+### The Opportunity: FUSE as Semantic Interface
+
+The knowledge graph already provides:
+- Semantic search (vector similarity)
+- Relationship traversal (graph navigation)
+- Multi-ontology federation (shard/facet architecture from ADR-055)
+- Cross-domain linking (automatic concept merging)
+
+FUSE could expose these capabilities through filesystem metaphors that users already understand.
 
 ## Motivation
 
@@ -1019,34 +1054,174 @@ $ cd /mnt/knowledge/grounding/strong/embedding-models/
 # Only concepts with strong grounding (>0.5)
 ```
 
-## Conclusion
+## Decision
 
-Yes, this violates POSIX. Yes, it breaks traditional filesystem assumptions. Yes, Unix admins will hate it.
+**Implement knowledge graph access as a FUSE filesystem** with the following design choices:
 
-But imagine:
-- `cd` through your thoughts
-- `ls` your knowledge by semantic relevance
-- `cat` concepts that exist in multiple contexts simultaneously
-- `find` ideas by meaning, not filename
+1. **Partial Filesystem Model** - Like `/sys/` or `/proc/`, implement only semantically meaningful operations
+   - Support: `ls` (query), `cd` (navigate), `cat` (read), `grep`/`find` (search), `echo`/`cp` (ingest), `tar` (snapshot)
+   - Do not support: `mv`, `chmod`, `chown`, `touch`, `dd` (operations that don't map to semantic concepts)
 
-Knowledge doesn't fit in trees. It forms graphs. Your filesystem should too.
+2. **Four-Level Hierarchy** - Map infrastructure to semantics:
+   - **Shard** (infrastructure: database + API + resources)
+   - **Facet** (logical grouping: RBAC + resource isolation)
+   - **Ontology** (knowledge domain namespace)
+   - **Concepts** (semantic content)
 
-## Try It
+3. **Directory Creation = Semantic Query** - User creates directories with query names
+   - `mkdir "embedding models"` defines a semantic query
+   - `cd embedding-models/` executes the query
+   - `ls` shows concepts matching the query at configured similarity threshold
 
+4. **Relationship Navigation** - Concepts expose `relationships/` subdirectory
+   - `cd concept.concept/relationships/SUPPORTS/` traverses graph edges
+   - Path represents traversal history (deterministic structure, semantic content)
+
+5. **Write = Ingest** - File writes trigger automatic ingestion
+   - `echo "content" > file.md` ingests into current ontology/facet context
+   - File may not reappear with same name (concept extraction determines label)
+   - Embraces non-determinism as feature (concepts appear based on semantic relevance)
+
+6. **Implementation Options** - Two paths forward:
+   - **Option A:** Custom FUSE driver in Python (full control, more code)
+   - **Option B:** rclone backend in Go (leverage existing infrastructure, instant interop)
+
+## Consequences
+
+### Benefits
+
+**1. Familiar Interface for Semantic Exploration**
+- Users already understand `cd`, `ls`, `cat`, `grep`
+- No need to learn custom query language or web UI
+- Standard Unix tools become knowledge graph query engines
+
+**2. Distributed Queries via Standard Tools**
 ```bash
-# Coming soon to a cursed-but-brilliant-ideas repo near you
-git clone https://github.com/aaronsb/semantic-fuse-fs
-cd semantic-fuse-fs
-./mount-knowledge.sh /mnt/knowledge
-
-# Welcome to non-deterministic filesystem hell
-# (It's actually quite nice once you embrace the chaos)
+# Transparently searches local + remote shards
+find /mnt/knowledge/ -name "*.concept" | grep "pattern"
+# - Local shards: FUSE → local PostgreSQL
+# - Remote shards: SSHFS → SSH → remote FUSE → remote PostgreSQL
 ```
+
+**3. Cross-Backend Interoperability** (if rclone implementation)
+```bash
+# Backup knowledge graph to S3
+rclone sync kg:research s3:backup/
+
+# Ingest from Google Drive
+rclone copy gdrive:Papers/ kg:research/papers/
+
+# Export to git repository
+rclone sync kg:research /tmp/export/
+```
+
+**4. TAR as Temporal Snapshots**
+```bash
+tar czf snapshot-$(date +%s).tar.gz /mnt/knowledge/my-research/
+# Same path, different contents over time
+# Version your semantic space
+```
+
+**5. Living Documentation in Workspaces**
+```bash
+ln -s /mnt/knowledge/my-project/ ./docs
+# Documentation auto-updates as concepts evolve
+# Claude Code can read semantic graph directly
+```
+
+### Drawbacks
+
+**1. Non-Determinism Can Be Confusing**
+- `ls` results change as graph evolves
+- Same query returns different results over time
+- Mitigation: Clear documentation, caching options, embrace as feature
+
+**2. POSIX Violations Require Education**
+- Many standard file operations won't work
+- Users expect traditional filesystem behavior
+- Mitigation: Follow rclone precedent, document limitations clearly
+
+**3. Performance Considerations**
+- Semantic queries slower than filesystem metadata operations
+- Graph traversal can be expensive for deep relationships
+- Mitigation: Caching layer, configurable similarity thresholds, limit traversal depth
+
+**4. Implementation Complexity**
+- Custom FUSE: ~2000-3000 lines of Python
+- rclone backend: ~500-1000 lines of Go + API wrapper
+- Either requires ongoing maintenance
+
+### Risks
+
+**1. User Confusion** - Non-deterministic behavior violates expectations
+- Mitigation: Clear "partial filesystem" designation, precedent from rclone
+
+**2. Performance at Scale** - Large knowledge graphs may be slow
+- Mitigation: Shard/facet architecture limits query scope
+
+**3. Adoption Barrier** - Requires FUSE support, mount permissions
+- Mitigation: Provide alternative interfaces (web UI, CLI, MCP)
+
+## Alternatives Considered
+
+### 1. WebDAV/HTTP Filesystem
+
+**Pros:** Cross-platform, no FUSE required, browser-compatible
+**Cons:** Poorer performance, limited caching, no local integration
+**Decision:** FUSE provides better Unix integration, can add WebDAV later
+
+### 2. Git-Like Interface
+
+**Pros:** Familiar to developers, built-in versioning, distributed
+**Cons:** Concepts aren't commits, relationships aren't branches, poor semantic fit
+**Decision:** Git is for version control, not semantic navigation
+
+### 3. Custom CLI Only
+
+**Pros:** Full control, no filesystem abstraction mismatch
+**Cons:** Users must learn new commands, can't use standard Unix tools
+**Decision:** CLI exists (kg command), FUSE adds complementary interface
+
+### 4. SQL/GraphQL Query Interface
+
+**Pros:** Powerful queries, precise results, standard protocols
+**Cons:** Requires learning query language, no filesystem metaphor benefits
+**Decision:** APIs exist, FUSE provides filesystem convenience layer
+
+### 5. Database-as-Filesystem (Direct PostgreSQL Mount)
+
+**Pros:** Tools exist (pgfuse), direct database access
+**Cons:** Exposes tables/rows, not semantic concepts, wrong abstraction level
+**Decision:** Need semantic layer, not raw database access
+
+## Implementation Recommendation
+
+**Start with rclone backend (Option B):**
+
+1. **Faster to MVP** - Leverage rclone's FUSE layer, caching, config management
+2. **Instant Interop** - Get cross-backend sync for free
+3. **Smaller Codebase** - ~500 lines Go vs ~2500 lines Python
+4. **Existing User Base** - rclone users understand the model
+5. **Fallback Path** - Can always build custom FUSE driver later if needed
+
+**Prototype scope:** Implement List/Read/Write operations for single shard/facet, validate concept with users.
+
+## Future Extensions
+
+- Relationship-based symbolic links (`ln -s concept relationships/SUPPORTS/`)
+- Query operators (`/search/AND/`, `/search/OR/`, `/search/NOT/`)
+- Grounding filters (`/grounding/strong/`, `/grounding/weak/`)
+- Write support for relationship creation
+- Multi-shard federated views
+
+## References
+
+- [FUSE Documentation](https://github.com/libfuse/libfuse)
+- [rclone Architecture](https://rclone.org/docs/)
+- [rclone Backend Implementation Guide](https://rclone.org/docs/#writing-your-own-backend)
+- ADR-055: Sharding and facet architecture
+- ADR-048: Query safety and namespace isolation
 
 ---
 
-*"In the beginning, Unix created the filesystem and the directory tree. And the directory tree was without form, and void; and hierarchy was upon the face of the filesystem. And Unix said, Let there be files: and there were files. And Unix saw the files, that it was good."*
-
-*But knowledge isn't a tree. Knowledge is a graph. And graphs are beautiful chaos.*
-
-*Embrace the violations. Your thoughts will thank you.* 🌳→🕸️
+*Knowledge doesn't fit in trees. It forms graphs. Your filesystem should too.* 🌳→🕸️
