@@ -8,6 +8,8 @@ gradient analysis on actual reasoning paths.
 import numpy as np
 from path_analysis import SemanticPathAnalyzer, Concept
 import json
+import psycopg2
+import os
 
 # Path from MCP query results:
 # Embedding Models → Model Migration → Unified Embedding Regeneration → Bug Fix
@@ -38,23 +40,60 @@ concepts_data = [
 ]
 
 
-def fetch_embedding_from_api(concept_id: str) -> np.ndarray:
+def get_db_connection():
+    """Get PostgreSQL database connection"""
+    return psycopg2.connect(
+        host=os.getenv('POSTGRES_HOST', 'localhost'),
+        port=os.getenv('POSTGRES_PORT', '5432'),
+        database=os.getenv('POSTGRES_DB', 'knowledge_graph'),
+        user=os.getenv('POSTGRES_USER', 'admin'),
+        password=os.getenv('POSTGRES_PASSWORD', 'admin123')
+    )
+
+
+def fetch_embedding_from_db(concept_id: str) -> np.ndarray:
     """
-    Fetch embedding from API
+    Fetch actual embedding from PostgreSQL database using AGE Cypher
 
-    In production, this would call:
-    GET /queries/concepts/{concept_id}
-
-    For now, simulate with random embeddings of correct dimension
+    Returns the embedding vector stored in the Concept vertex
     """
-    # TODO: Replace with actual API call
-    # response = requests.get(f"http://localhost:8000/queries/concepts/{concept_id}")
-    # return np.array(response.json()['embedding'], dtype=np.float32)
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Load AGE extension
+            cur.execute("LOAD 'age';")
+            cur.execute("SET search_path = ag_catalog, '$user', public;")
 
-    # Simulated embedding (768 dimensions like nomic-embed)
-    # In reality these would be the actual embeddings from the database
-    np.random.seed(hash(concept_id) % (2**32))  # Deterministic based on ID
-    return np.random.randn(768).astype(np.float32)
+            # Use AGE Cypher to query the Concept vertex
+            # AGE requires parameters in agtype format
+            query = f"""
+                SELECT * FROM ag_catalog.cypher('knowledge_graph', $$
+                    MATCH (c:Concept {{concept_id: '{concept_id}'}})
+                    RETURN c.embedding
+                $$) AS (embedding agtype);
+            """
+            cur.execute(query)
+
+            result = cur.fetchone()
+            if result and result[0]:
+                # AGE returns agtype, need to parse it
+                embedding_agtype = result[0]
+
+                # Convert agtype to Python object
+                if isinstance(embedding_agtype, str):
+                    embedding_data = json.loads(embedding_agtype)
+                else:
+                    embedding_data = embedding_agtype
+
+                # Extract the actual list of floats
+                if isinstance(embedding_data, list):
+                    return np.array(embedding_data, dtype=np.float32)
+                else:
+                    raise ValueError(f"Unexpected embedding format: {type(embedding_data)}")
+            else:
+                raise ValueError(f"No embedding found for concept {concept_id}")
+    finally:
+        conn.close()
 
 
 def analyze_path(concepts_data: list):
@@ -65,17 +104,21 @@ def analyze_path(concepts_data: list):
     print("=" * 70)
 
     # Build Concept objects with embeddings
-    print("\n📥 Fetching embeddings for concepts...")
+    print("\n📥 Fetching embeddings from database...")
     concepts = []
     for c_data in concepts_data:
-        embedding = fetch_embedding_from_api(c_data['concept_id'])
-        concepts.append(Concept(
-            concept_id=c_data['concept_id'],
-            label=c_data['label'],
-            embedding=embedding,
-            grounding=c_data.get('grounding', 0.0)
-        ))
-        print(f"  ✓ {c_data['label']}")
+        try:
+            embedding = fetch_embedding_from_db(c_data['concept_id'])
+            concepts.append(Concept(
+                concept_id=c_data['concept_id'],
+                label=c_data['label'],
+                embedding=embedding,
+                grounding=c_data.get('grounding', 0.0)
+            ))
+            print(f"  ✓ {c_data['label']} (dim: {len(embedding)})")
+        except Exception as e:
+            print(f"  ✗ {c_data['label']}: {e}")
+            raise
 
     # Analyze path
     print("\n📊 Analyzing path with gradient-based metrics...")
@@ -185,19 +228,19 @@ def analyze_semantic_momentum():
         Concept(
             concept_id="sha256:62dc3_chunk1_9360a498",
             label="Embedding Models",
-            embedding=fetch_embedding_from_api("sha256:62dc3_chunk1_9360a498"),
+            embedding=fetch_embedding_from_db("sha256:62dc3_chunk1_9360a498"),
             grounding=0.070
         ),
         Concept(
             concept_id="sha256:62dc3_chunk1_45a7faf6",
             label="Model Migration",
-            embedding=fetch_embedding_from_api("sha256:62dc3_chunk1_45a7faf6"),
+            embedding=fetch_embedding_from_db("sha256:62dc3_chunk1_45a7faf6"),
             grounding=0.0
         ),
         Concept(
             concept_id="sha256:95454_chunk1_76de0274",
             label="Unified Embedding Regeneration",
-            embedding=fetch_embedding_from_api("sha256:95454_chunk1_76de0274"),
+            embedding=fetch_embedding_from_db("sha256:95454_chunk1_76de0274"),
             grounding=0.168
         ),
     ]
@@ -207,17 +250,17 @@ def analyze_semantic_momentum():
         Concept(
             concept_id="sha256:95454_chunk1_6a25165c",
             label="Bug Fix in Source Embedding Regeneration",
-            embedding=fetch_embedding_from_api("sha256:95454_chunk1_6a25165c"),
+            embedding=fetch_embedding_from_db("sha256:95454_chunk1_6a25165c"),
         ),
         Concept(
             concept_id="sha256:95454_chunk1_6cf7348c",
             label="Testing and Verification",
-            embedding=fetch_embedding_from_api("sha256:95454_chunk1_6cf7348c"),
+            embedding=fetch_embedding_from_db("sha256:95454_chunk1_6cf7348c"),
         ),
         Concept(
             concept_id="sha256:95454_chunk1_1f44c138",
             label="GraphQueryFacade",
-            embedding=fetch_embedding_from_api("sha256:95454_chunk1_1f44c138"),
+            embedding=fetch_embedding_from_db("sha256:95454_chunk1_1f44c138"),
         ),
     ]
 
